@@ -91,13 +91,15 @@ val is_valid_bir_immtype_size_REWRS = save_thm ("is_valid_bir_immtype_size_REWRS
   SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) [size_of_bir_immtype_def] is_valid_bir_immtype_size_def);
 
 
-val size_of_bir_immtype_EQ_REWRS0 = prove (
-  ``!ty n. is_valid_bir_immtype_size n ==>
-           ((size_of_bir_immtype ty = n) <=> (ty = THE (bir_immtype_of_size n)))``,
+Theorem size_of_bir_immtype_EQ_REWRS0[local]:
+  !ty n. is_valid_bir_immtype_size n ==>
+           ((size_of_bir_immtype ty = n) <=> (ty = THE (bir_immtype_of_size n)))
+Proof
 Cases >> (
   SIMP_TAC (std_ss++bir_imm_ss) [is_valid_bir_immtype_size_REWRS, DISJ_IMP_THM, FORALL_AND_THM,
     bir_immtype_of_size_def, size_of_bir_immtype_def]
-));
+)
+QED
 
 val size_of_bir_immtype_EQ_REWRS = save_thm("size_of_bir_immtype_EQ_REWRS",
   SIMP_RULE std_ss [size_of_bir_immtype_def, is_valid_bir_immtype_size_REWRS, DISJ_IMP_THM,
@@ -135,8 +137,11 @@ val bir_immtype_of_size_REWRS_SOME = save_thm ("bir_immtype_of_size_REWRS_SOME",
 
 val bir_immtype_of_size_REWRS_NONE = save_thm ("bir_immtype_of_size_REWRS_NONE",
 let
-  val thm_none_aux = prove (``!n. ~(is_valid_bir_immtype_size n) ==> (bir_immtype_of_size n = NONE)``,
-    SIMP_TAC std_ss [is_valid_bir_immtype_size_IS_SOME]);
+Theorem thm_none_aux[local]:
+  !n. ~(is_valid_bir_immtype_size n) ==> (bir_immtype_of_size n = NONE)
+Proof
+SIMP_TAC std_ss [is_valid_bir_immtype_size_IS_SOME]
+QED
   val thm_none = SIMP_RULE std_ss [is_valid_bir_immtype_size_REWRS] thm_none_aux
 in
   thm_none
@@ -233,8 +238,11 @@ Cases >> (
 )
 QED
 
-val w2n_lt_trans = prove (``!w:'a word. dimword (:'a) <= m ==> (w2n w < m)``,
-METIS_TAC[w2n_lt, arithmeticTheory.LESS_LESS_EQ_TRANS]);
+Theorem w2n_lt_trans[local]:
+  !w:'a word. dimword (:'a) <= m ==> (w2n w < m)
+Proof
+METIS_TAC[w2n_lt, arithmeticTheory.LESS_LESS_EQ_TRANS]
+QED
 
 Theorem b2n_lt:
   !b. b2n b < 2 ** (size_of_bir_immtype (type_of_bir_imm b))
@@ -486,9 +494,11 @@ SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_EQ_ELIMS]
 QED
 
 
-val bool2b_NEQ_IMM_ELIMS_AUX = prove (
-  ``(!i b. (type_of_bir_imm i <> Bit1) ==> (bool2b b <> i))``,
-Cases >> SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, type_of_bir_imm_def]);
+Theorem bool2b_NEQ_IMM_ELIMS_AUX[local]:
+  (!i b. (type_of_bir_imm i <> Bit1) ==> (bool2b b <> i))
+Proof
+Cases >> SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, type_of_bir_imm_def]
+QED
 
 val bool2b_NEQ_IMM_ELIMS = save_thm ("bool2b_NEQ_IMM_ELIMS",
   SIMP_RULE (std_ss++bir_imm_ss++DatatypeSimps.expand_type_quants_ss [``:bir_imm_t``]) [

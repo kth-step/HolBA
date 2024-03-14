@@ -300,48 +300,55 @@ SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val awc_BIR_Z_nzcv_BIR_SUB_Z_fold = prove (
-  ``!(w0:'a word) w1 c. nzcv_BIR_SUB_Z (w0 - w1) (if c then 0w else 1w) =
-                        awc_BIR_Z w0 (~w1) c``,
-
+Theorem awc_BIR_Z_nzcv_BIR_SUB_Z_fold[local]:
+  !(w0:'a word) w1 c. nzcv_BIR_SUB_Z (w0 - w1) (if c then 0w else 1w) =
+                        awc_BIR_Z w0 (~w1) c
+Proof
 SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, GSYM nzcv_SUB_Z_fold_ARM8,
-  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB]);
+  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB]
+QED
 
-val awc_BIR_Z_nzcv_BIR_ADD_Z_fold = prove (
-  ``!(w0:'a word) w1 c. nzcv_BIR_ADD_Z (w0 + w1) (if c then 1w else 0w) =
-                        awc_BIR_Z w0 w1 c``,
+Theorem awc_BIR_Z_nzcv_BIR_ADD_Z_fold[local]:
+  !(w0:'a word) w1 c. nzcv_BIR_ADD_Z (w0 + w1) (if c then 1w else 0w) =
+                        awc_BIR_Z w0 w1 c
+Proof
 SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, GSYM nzcv_ADD_Z_fold_ARM8,
-  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB]);
+  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB]
+QED
 
-val awc_BIR_Z_nzcv_BIR_ADD_Z_fold_ngcs = prove (
-  ``!(w1:'a word) c. nzcv_BIR_ADD_Z (~w1) (if c then 1w else 0w) =
-                     awc_BIR_Z 0w (~w1) c``,
-
+Theorem awc_BIR_Z_nzcv_BIR_ADD_Z_fold_ngcs[local]:
+  !(w1:'a word) c. nzcv_BIR_ADD_Z (~w1) (if c then 1w else 0w) =
+                     awc_BIR_Z 0w (~w1) c
+Proof
 SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8_ngcs, GSYM nzcv_ADD_Z_fold_ARM8,
-  awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_FOLD_SUB_ngcs]);
+  awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_FOLD_SUB_ngcs]
+QED
 
 
-val awc_BIR_Z_nzcv_BIR_SUB_N_fold = prove (
-  ``!(w0:'a word) w1 c. nzcv_BIR_SUB_N (w0 - w1) (if c then 0w else 1w) =
-                        awc_BIR_N w0 (~w1) c``,
-
+Theorem awc_BIR_Z_nzcv_BIR_SUB_N_fold[local]:
+  !(w0:'a word) w1 c. nzcv_BIR_SUB_N (w0 - w1) (if c then 0w else 1w) =
+                        awc_BIR_N w0 (~w1) c
+Proof
 SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, GSYM nzcv_SUB_N_fold_ARM8,
-  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB, GSYM word_msb_n2w]);
+  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB, GSYM word_msb_n2w]
+QED
 
 
-val awc_BIR_Z_nzcv_BIR_ADD_N_fold = prove (
-  ``!(w0:'a word) w1 c. nzcv_BIR_ADD_N (w0 + w1) (if c then 1w else 0w) =
-                        awc_BIR_N w0 w1 c``,
-
+Theorem awc_BIR_Z_nzcv_BIR_ADD_N_fold[local]:
+  !(w0:'a word) w1 c. nzcv_BIR_ADD_N (w0 + w1) (if c then 1w else 0w) =
+                        awc_BIR_N w0 w1 c
+Proof
 SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, GSYM nzcv_ADD_N_fold_ARM8,
-  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB, GSYM word_msb_n2w]);
+  awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB, GSYM word_msb_n2w]
+QED
 
-val awc_BIR_Z_nzcv_BIR_ADD_N_fold_ngcs = prove (
-  ``!(w1:'a word) c. nzcv_BIR_ADD_N (~w1) (if c then 1w else 0w) =
-                     awc_BIR_N 0w (~w1) c``,
-
+Theorem awc_BIR_Z_nzcv_BIR_ADD_N_fold_ngcs[local]:
+  !(w1:'a word) c. nzcv_BIR_ADD_N (~w1) (if c then 1w else 0w) =
+                     awc_BIR_N 0w (~w1) c
+Proof
 SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8_ngcs, GSYM nzcv_ADD_N_fold_ARM8,
-  awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_FOLD_SUB_ngcs, GSYM word_msb_n2w]);
+  awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_FOLD_SUB_ngcs, GSYM word_msb_n2w]
+QED
 
 
 val awc_BIR_NZCV_FOLDS_ARM8_GEN = save_thm ("awc_BIR_NZCV_FOLDS_ARM8_GEN", let

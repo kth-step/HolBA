@@ -253,47 +253,52 @@ Cases_on `c` >> Cases_on `b` >> Cases_on `v` >> (
 QED
 
 
-val bir_eval_load_NONE_REWRS1 = prove (
-  ``(!mem en t. bir_eval_load mem NONE en t = NONE) /\
-    (!mem en t aty vty mmap. bir_eval_load mem (SOME (BVal_Mem aty vty mmap)) en t = NONE)``,
-
+Theorem bir_eval_load_NONE_REWRS1[local]:
+  (!mem en t. bir_eval_load mem NONE en t = NONE) /\
+    (!mem en t aty vty mmap. bir_eval_load mem (SOME (BVal_Mem aty vty mmap)) en t = NONE)
+Proof
 SIMP_TAC std_ss [bir_eval_load_def] >>
 REPEAT CONJ_TAC >>
-Cases_on `mem` >> (TRY (Cases_on `x`)) >> SIMP_TAC std_ss [bir_eval_load_def]);
+Cases_on `mem` >> (TRY (Cases_on `x`)) >> SIMP_TAC std_ss [bir_eval_load_def]
+QED
 
-val bir_eval_load_NONE_REWRS2 = prove (
-  ``(!a en t. bir_eval_load NONE a en t = NONE) /\
-    (!a en t i. bir_eval_load (SOME (BVal_Imm i)) a en t = NONE)``,
+Theorem bir_eval_load_NONE_REWRS2[local]:
+  (!a en t. bir_eval_load NONE a en t = NONE) /\
+    (!a en t i. bir_eval_load (SOME (BVal_Imm i)) a en t = NONE)
+Proof
+SIMP_TAC std_ss [bir_eval_load_def]
+QED
 
-SIMP_TAC std_ss [bir_eval_load_def]);
-
-val bir_eval_load_NONE_REWRS3 = prove (
-  ``!a en t i aty vty mmap.
+Theorem bir_eval_load_NONE_REWRS3[local]:
+  !a en t i aty vty mmap.
       (type_of_bir_imm i <> aty) ==>
-      (bir_eval_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) en t = NONE)``,
+      (bir_eval_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) en t = NONE)
+Proof
+SIMP_TAC std_ss [bir_eval_load_def]
+QED
 
-SIMP_TAC std_ss [bir_eval_load_def]);
 
-
-val bir_eval_load_NONE_REWRS4 = prove (
-  ``!a en t i aty vty mmap.
+Theorem bir_eval_load_NONE_REWRS4[local]:
+  !a en t i aty vty mmap.
       (t <> vty) ==>
-      (bir_eval_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) BEnd_NoEndian t = NONE)``,
-
+      (bir_eval_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) BEnd_NoEndian t = NONE)
+Proof
 SIMP_TAC std_ss [bir_eval_load_def] >>
 REPEAT STRIP_TAC >>
 Cases_on `t` >> Cases_on `vty` >> SIMP_TAC std_ss [] >>
-ASM_SIMP_TAC std_ss [bir_load_from_mem_NO_ENDIAN]);
+ASM_SIMP_TAC std_ss [bir_load_from_mem_NO_ENDIAN]
+QED
 
-val bir_eval_load_NONE_REWRS5 = prove (
-  ``!a en t i aty vty mmap en.
+Theorem bir_eval_load_NONE_REWRS5[local]:
+  !a en t i aty vty mmap en.
       (bir_number_of_mem_splits vty t aty = NONE) ==>
-      (bir_eval_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) en t = NONE)``,
-
+      (bir_eval_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) en t = NONE)
+Proof
 SIMP_TAC std_ss [bir_eval_load_def] >>
 REPEAT STRIP_TAC >>
 Cases_on `t` >> Cases_on `vty` >> SIMP_TAC std_ss [] >>
-ASM_SIMP_TAC std_ss [bir_load_from_mem_def]);
+ASM_SIMP_TAC std_ss [bir_load_from_mem_def]
+QED
 
 
 val bir_eval_load_NONE_REWRS = save_thm ("bir_eval_load_NONE_REWRS",
@@ -333,7 +338,8 @@ QED
 
 val bir_eval_load_FULL_REWRS = save_thm ("bir_eval_load_FULL_REWRS",
 let
-  val thm_prune0 = prove (``(!ta a.
+Theorem thm_prune0[local]:
+  (!ta a.
       (type_of_bir_imm a <> ta) ==>
       (bir_eval_load (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm a)) en tr = NONE)) /\
       (!tr tv.
@@ -341,8 +347,10 @@ let
       (bir_eval_load (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm i)) BEnd_NoEndian tr = NONE)) /\
       (!tr tv.
       (bir_number_of_mem_splits tv tr ta = NONE) ==>
-      (bir_eval_load (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm i)) en tr = NONE))``,
-   SIMP_TAC std_ss [bir_eval_load_NONE_REWRS])
+      (bir_eval_load (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm i)) en tr = NONE))
+Proof
+SIMP_TAC std_ss [bir_eval_load_NONE_REWRS]
+QED
 
   val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def] thm_prune0
 
@@ -371,58 +379,65 @@ end);
 
 
 
-val bir_eval_store_NONE_REWRS1 = prove (
-  ``(!mem en v. bir_eval_store mem NONE en v = NONE) /\
-    (!mem en v aty vty mmap. bir_eval_store mem (SOME (BVal_Mem aty vty mmap)) en v = NONE)``,
-
+Theorem bir_eval_store_NONE_REWRS1[local]:
+  (!mem en v. bir_eval_store mem NONE en v = NONE) /\
+    (!mem en v aty vty mmap. bir_eval_store mem (SOME (BVal_Mem aty vty mmap)) en v = NONE)
+Proof
 SIMP_TAC std_ss [bir_eval_store_def] >>
 REPEAT CONJ_TAC >>
-Cases_on `mem` >> (TRY (Cases_on `x`)) >> SIMP_TAC std_ss [bir_eval_store_def]);
+Cases_on `mem` >> (TRY (Cases_on `x`)) >> SIMP_TAC std_ss [bir_eval_store_def]
+QED
 
-val bir_eval_store_NONE_REWRS2 = prove (
-  ``(!a en v. bir_eval_store NONE a en v = NONE) /\
-    (!a en v i. bir_eval_store (SOME (BVal_Imm i)) a en v = NONE)``,
+Theorem bir_eval_store_NONE_REWRS2[local]:
+  (!a en v. bir_eval_store NONE a en v = NONE) /\
+    (!a en v i. bir_eval_store (SOME (BVal_Imm i)) a en v = NONE)
+Proof
+SIMP_TAC std_ss [bir_eval_store_def]
+QED
 
-SIMP_TAC std_ss [bir_eval_store_def]);
 
-
-val bir_eval_store_NONE_REWRS3 = prove (
-  ``(!a en mem. bir_eval_store mem a en NONE = NONE) /\
-    (!a en mem ta tv mmap. bir_eval_store mem a en (SOME (BVal_Mem ta tv mmap)) = NONE)``,
-
+Theorem bir_eval_store_NONE_REWRS3[local]:
+  (!a en mem. bir_eval_store mem a en NONE = NONE) /\
+    (!a en mem ta tv mmap. bir_eval_store mem a en (SOME (BVal_Mem ta tv mmap)) = NONE)
+Proof
 REPEAT CONJ_TAC >>
 Cases_on `mem` >> Cases_on `a` >> (TRY (Cases_on `x`)) >>
-  ((TRY (Cases_on `x'`)) >> SIMP_TAC std_ss [bir_eval_store_def]));
+  ((TRY (Cases_on `x'`)) >> SIMP_TAC std_ss [bir_eval_store_def])
+QED
 
 
-val bir_eval_store_NONE_REWRS4 = prove (
-  ``!en v i aty vty mmap.
+Theorem bir_eval_store_NONE_REWRS4[local]:
+  !en v i aty vty mmap.
       (type_of_bir_imm i <> aty) ==>
-      (bir_eval_store (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) en v = NONE)``,
+      (bir_eval_store (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm i)) en v = NONE)
+Proof
 Cases_on `v` >> (TRY (Cases_on `x`)) >> (
-  SIMP_TAC std_ss [bir_eval_store_def]));
+  SIMP_TAC std_ss [bir_eval_store_def])
+QED
 
 
-val bir_eval_store_NONE_REWRS5 = prove (
-  ``!a en v aty vty mmap.
+Theorem bir_eval_store_NONE_REWRS5[local]:
+  !a en v aty vty mmap.
       (type_of_bir_imm v <> vty) ==>
-      (bir_eval_store (SOME (BVal_Mem aty vty mmap)) a BEnd_NoEndian (SOME (BVal_Imm v)) = NONE)``,
-
+      (bir_eval_store (SOME (BVal_Mem aty vty mmap)) a BEnd_NoEndian (SOME (BVal_Imm v)) = NONE)
+Proof
 Cases_on `a` >> SIMP_TAC std_ss [bir_eval_store_def] >>
 REPEAT STRIP_TAC >>
 Cases_on `v` >> Cases_on `vty` >> Cases_on `x` >> SIMP_TAC std_ss [bir_eval_store_def] >>
-ASM_SIMP_TAC std_ss [bir_store_in_mem_NO_ENDIAN]);
+ASM_SIMP_TAC std_ss [bir_store_in_mem_NO_ENDIAN]
+QED
 
 
-val bir_eval_store_NONE_REWRS6 = prove (
-  ``!a en v aty vty mmap en.
+Theorem bir_eval_store_NONE_REWRS6[local]:
+  !a en v aty vty mmap en.
       (bir_number_of_mem_splits vty (type_of_bir_imm v) aty = NONE) ==>
-      (bir_eval_store (SOME (BVal_Mem aty vty mmap)) a en (SOME (BVal_Imm v)) = NONE)``,
-
+      (bir_eval_store (SOME (BVal_Mem aty vty mmap)) a en (SOME (BVal_Imm v)) = NONE)
+Proof
 Cases_on `a` >> SIMP_TAC std_ss [LET_DEF] >>
 REPEAT STRIP_TAC >>
 Cases_on `v` >> Cases_on `vty` >> TRY (Cases_on `x`) >> SIMP_TAC std_ss [bir_eval_store_def] >>
-ASM_SIMP_TAC std_ss [bir_store_in_mem_def, LET_DEF]);
+ASM_SIMP_TAC std_ss [bir_store_in_mem_def, LET_DEF]
+QED
 
 
 val bir_eval_store_NONE_REWRS = save_thm ("bir_eval_store_NONE_REWRS",
@@ -460,7 +475,8 @@ QED
 
 val bir_eval_store_FULL_REWRS = save_thm ("bir_eval_store_FULL_REWRS",
 let
-  val thm_prune0 = prove (``(!ta a.
+Theorem thm_prune0[local]:
+  (!ta a.
       (type_of_bir_imm a <> ta) ==>
       (bir_eval_store (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm a)) en v = NONE)) /\
       (!i tv.
@@ -468,8 +484,10 @@ let
       (bir_eval_store (SOME (BVal_Mem ta tv mmap)) a BEnd_NoEndian (SOME (BVal_Imm i)) = NONE)) /\
       (!i tv.
       (bir_number_of_mem_splits tv (type_of_bir_imm i) ta = NONE) ==>
-      (bir_eval_store (SOME (BVal_Mem ta tv mmap)) a en (SOME (BVal_Imm i)) = NONE))``,
-   SIMP_TAC std_ss [bir_eval_store_NONE_REWRS])
+      (bir_eval_store (SOME (BVal_Mem ta tv mmap)) a en (SOME (BVal_Imm i)) = NONE))
+Proof
+SIMP_TAC std_ss [bir_eval_store_NONE_REWRS]
+QED
 
   val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def, FORALL_AND_THM] thm_prune0
 

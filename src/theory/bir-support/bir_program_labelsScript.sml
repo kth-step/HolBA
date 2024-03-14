@@ -238,16 +238,17 @@ Definition bir_immediate_of_label_string_def:
 End
 
 
-val INDEX_OF_b2s_STRCAT = prove (
-  ``!b s. INDEX_OF #"_" (STRCAT (b2s b) (STRING #"_" s)) = SOME (LENGTH (b2s b))``,
-
+Theorem INDEX_OF_b2s_STRCAT[local]:
+  !b s. INDEX_OF #"_" (STRCAT (b2s b) (STRING #"_" s)) = SOME (LENGTH (b2s b))
+Proof
 SIMP_TAC (list_ss++QI_ss) [INDEX_OF_def, bir_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
 SIMP_TAC list_ss [rich_listTheory.EL_APPEND1, rich_listTheory.EL_APPEND2] >>
 REPEAT STRIP_TAC >>
 `MEM #"_" (b2s b)` by METIS_TAC[MEM_EL] >>
 Q.PAT_X_ASSUM `#"_" = _` (K ALL_TAC) >>
 MP_TAC (Q.SPECL [`b`, `#"_"`] b2s_CHARS) >>
-ASM_SIMP_TAC (list_ss++stringSimps.STRING_ss) []);
+ASM_SIMP_TAC (list_ss++stringSimps.STRING_ss) []
+QED
 
 
 Theorem BL_Label_of_addr_SPLIT:

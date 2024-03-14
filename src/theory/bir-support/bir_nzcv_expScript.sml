@@ -189,75 +189,90 @@ GSYM awc_BIR_NZVC_INTROS);
    BIR expressions. So let's introduce equivalent, easily expressable
    formulations. *)
 
-val nzcv_BIR_SUB_N_raw = prove (
-  ``!w1 w2. nzcv_BIR_SUB_N w1 w2 = (w1 - w2 < 0w)``,
+Theorem nzcv_BIR_SUB_N_raw[local]:
+  !w1 w2. nzcv_BIR_SUB_N w1 w2 = (w1 - w2 < 0w)
+Proof
 SIMP_TAC std_ss [nzcv_BIR_SUB_N_def, nzcv_def, LET_THM, GSYM word_add_def, GSYM word_sub_def,
-  word_msb_neg]);
+  word_msb_neg]
+QED
 
-val nzcv_BIR_SUB_Z_raw = prove (
-  ``!w1 w2. nzcv_BIR_SUB_Z w1 w2 = (w1 - w2 = 0w)``,
+Theorem nzcv_BIR_SUB_Z_raw[local]:
+  !w1 w2. nzcv_BIR_SUB_Z w1 w2 = (w1 - w2 = 0w)
+Proof
 SIMP_TAC std_ss [nzcv_BIR_SUB_Z_def, nzcv_def, LET_THM, GSYM word_add_def, GSYM word_sub_def,
-  word_msb_neg]);
+  word_msb_neg]
+QED
 
-val nzcv_BIR_SUB_C_raw = prove (
-  ``!w1 w2. nzcv_BIR_SUB_C w1 w2 = (w1 >=+ w2)``,
-SIMP_TAC std_ss [nzcv_BIR_SUB_C_def, nzcv_def, word_hs_def, LET_THM]);
+Theorem nzcv_BIR_SUB_C_raw[local]:
+  !w1 w2. nzcv_BIR_SUB_C w1 w2 = (w1 >=+ w2)
+Proof
+SIMP_TAC std_ss [nzcv_BIR_SUB_C_def, nzcv_def, word_hs_def, LET_THM]
+QED
 
-val nzcv_BIR_SUB_V_raw = prove (
-  ``!w1 w2. nzcv_BIR_SUB_V w1 w2 = ((w1 - w2 < 0w) <=> (w1 >= w2))``,
-
+Theorem nzcv_BIR_SUB_V_raw[local]:
+  !w1 w2. nzcv_BIR_SUB_V w1 w2 = ((w1 - w2 < 0w) <=> (w1 >= w2))
+Proof
 SIMP_TAC std_ss [word_ge_def, GSYM nzcv_BIR_SUB_N_raw] >>
 REPEAT STRIP_TAC >>
 `?n z c v. (nzcv w1 w2 = (n, z, c, v))` by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [LET_THM, nzcv_BIR_SUB_V_def, nzcv_BIR_SUB_N_def] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
-val nzcv_BIR_ADD_C_raw = prove (
-  ``!w1 w2. nzcv_BIR_ADD_C w1 w2 = ((w1 >=+ -w2) /\ (w2 <> 0w))``,
+Theorem nzcv_BIR_ADD_C_raw[local]:
+  !w1 w2. nzcv_BIR_ADD_C w1 w2 = ((w1 >=+ -w2) /\ (w2 <> 0w))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [nzcv_BIR_SUB_C_def, nzcv_def, LET_THM, nzcv_BIR_ADD_C_def,
   WORD_NEG_NEG, GSYM nzcv_BIR_SUB_C_raw, WORD_NEG_EQ_0] >>
 Cases_on `w2 = 0w` >> ASM_REWRITE_TAC [] >>
 SIMP_TAC std_ss [w2n_n2w, ZERO_LT_dimword] >>
 MATCH_MP_TAC bitTheory.NOT_BIT_GT_TWOEXP >>
-SIMP_TAC std_ss [GSYM dimword_def, w2n_lt]);
+SIMP_TAC std_ss [GSYM dimword_def, w2n_lt]
+QED
 
 
-val nzcv_BIR_ADD_C_raw_aux = prove (``!w1 w2. ((w1 >=+ -w2) /\ (w2 <> 0w)) <=> (w1 >+ ~w2)``,
+Theorem nzcv_BIR_ADD_C_raw_aux[local]:
+  !w1 w2. ((w1 >=+ -w2) /\ (w2 <> 0w)) <=> (w1 >+ ~w2)
+Proof
 REPEAT Cases >>
 ASM_SIMP_TAC arith_ss [WORD_HS, w2n_n2w, word_2comp_n2w, n2w_11,
   ZERO_LT_dimword] >>
 ASM_SIMP_TAC (arith_ss++boolSimps.CONJ_ss) [] >>
-ASM_SIMP_TAC arith_ss [word_1comp_n2w, w2n_n2w, word_hi_n2w]);
+ASM_SIMP_TAC arith_ss [word_1comp_n2w, w2n_n2w, word_hi_n2w]
+QED
 
 
-val awc_BIR_C_raw = prove (
-  ``!w1 w2 c. awc_BIR_C w1 w2 c = (if c then w1 >=+ ~w2 else (w1 >+ ~w2))``,
-
+Theorem awc_BIR_C_raw[local]:
+  !w1 w2 c. awc_BIR_C w1 w2 c = (if c then w1 >=+ ~w2 else (w1 >+ ~w2))
+Proof
 REPEAT GEN_TAC >>
 Tactical.REVERSE (Cases_on `c`) >> SIMP_TAC std_ss [awc_BIR_NZVC_ELIMS] >- (
   SIMP_TAC std_ss [nzcv_BIR_ADD_C_raw, nzcv_BIR_ADD_C_raw_aux]
 ) >>
 Q.SUBGOAL_THEN `w2 = ~(~w2)` SUBST1_TAC >- REWRITE_TAC[WORD_NOT_NOT] >>
-SIMP_TAC std_ss [awc_BIR_NZVC_ELIMS, nzcv_BIR_SUB_C_raw, WORD_NOT_NOT]);
+SIMP_TAC std_ss [awc_BIR_NZVC_ELIMS, nzcv_BIR_SUB_C_raw, WORD_NOT_NOT]
+QED
 
 
-val nzcv_BIR_SUB_V_raw = prove (
-  ``!w1 w2. nzcv_BIR_SUB_V w1 w2 = ((w1 - w2 < 0w) <=> (w1 >= w2))``,
-
+Theorem nzcv_BIR_SUB_V_raw[local]:
+  !w1 w2. nzcv_BIR_SUB_V w1 w2 = ((w1 - w2 < 0w) <=> (w1 >= w2))
+Proof
 SIMP_TAC std_ss [word_ge_def, GSYM nzcv_BIR_SUB_N_raw] >>
 REPEAT STRIP_TAC >>
 `?n z c v. (nzcv w1 w2 = (n, z, c, v))` by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [LET_THM, nzcv_BIR_SUB_V_def, nzcv_BIR_SUB_N_def] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 (* I don't have a good idea here, so let's use a dummy translation. *)
-val nzcv_BIR_ADD_V_raw = prove (
-  ``!w1 w2. nzcv_BIR_ADD_V w1 w2 = ((w1 < 0w <=> w2 < 0w) /\ (w1 + w2 < 0w <=/=> w1 < 0w))``,
-
-SIMP_TAC std_ss [word_msb_neg, nzcv_BIR_ADD_V_def]);
+Theorem nzcv_BIR_ADD_V_raw[local]:
+  !w1 w2. nzcv_BIR_ADD_V w1 w2 = ((w1 < 0w <=> w2 < 0w) /\ (w1 + w2 < 0w <=/=> w1 < 0w))
+Proof
+SIMP_TAC std_ss [word_msb_neg, nzcv_BIR_ADD_V_def]
+QED
 
 
 

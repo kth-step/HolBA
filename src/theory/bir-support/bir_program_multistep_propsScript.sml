@@ -145,11 +145,14 @@ SIMP_TAC (std_ss) [bir_exec_infinite_steps_fun_PC_COND_SET_def,
 QED
 
 
-val INTER_INSERT_aux = prove (``(s1 INTER (e INSERT s2)) =
-  if (e IN s1) then e INSERT (s1 INTER s2) else (s1 INTER s2)``,
+Theorem INTER_INSERT_aux[local]:
+  (s1 INTER (e INSERT s2)) =
+  if (e IN s1) then e INSERT (s1 INTER s2) else (s1 INTER s2)
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++boolSimps.EQUIV_EXTRACT_ss) [EXTENSION,
   IN_INTER, IN_INSERT] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 Theorem bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF:

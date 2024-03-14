@@ -43,9 +43,12 @@ val EQ_15w_EVAL = save_thm ("EQ_15w_EVAL",
 
 
 val RName_distinct = save_thm ("RName_distinct", let
-  val thm0 = prove (``!r r'.
-     r < 17 ==> r' < r ==> ((num2RName r = num2RName r') <=> (r = r'))``,
-    SIMP_TAC arith_ss [m0Theory.num2RName_11])
+Theorem thm0[local]:
+  !r r'.
+     r < 17 ==> r' < r ==> ((num2RName r = num2RName r') <=> (r = r'))
+Proof
+SIMP_TAC arith_ss [m0Theory.num2RName_11]
+QED
 
   val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] thm0
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
@@ -452,12 +455,13 @@ SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_lsl_def,
 QED
 
 
-val m0_Shift_N_aux = prove (
-``!m n w:'a word.  (m <= dimindex (:'a) - 1) /\ (n <= m) ==>
-    (word_bit m (w << n) = word_bit (m - n) w)``,
-
+Theorem m0_Shift_N_aux[local]:
+  !m n w:'a word.  (m <= dimindex (:'a) - 1) /\ (n <= m) ==>
+    (word_bit m (w << n) = word_bit (m - n) w)
+Proof
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss) [word_lsl_def,
-  fcpTheory.FCP_BETA, w2w, word_bit_def]);
+  fcpTheory.FCP_BETA, w2w, word_bit_def]
+QED
 
 val m0_Shift_N = save_thm ("m0_Shift_N", let
   val thm0 = SPEC ``31:num`` (INST_TYPE [``:'a`` |-> ``:32``] m0_Shift_N_aux)
@@ -467,10 +471,10 @@ in
 end);
 
 
-val m0_mask_last_bit_REWR_aux = prove (
-``!w. (((31 >< 1) w): (31 word) @@ (0w:word1)):word32 =
-      w && ~(1w)``,
-
+Theorem m0_mask_last_bit_REWR_aux[local]:
+  !w. (((31 >< 1) w): (31 word) @@ (0w:word1)):word32 =
+      w && ~(1w)
+Proof
 Cases >>
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
@@ -484,7 +488,8 @@ REPEAT STRIP_TAC >>
   Q.SUBGOAL_THEN `(1:num) = (2:num) ** 0` SUBST1_TAC >- SIMP_TAC arith_ss [] >>
   REWRITE_TAC [bitTheory.BIT_TWO_POW]
 ) >>
-Cases_on `i` >> FULL_SIMP_TAC arith_ss []);
+Cases_on `i` >> FULL_SIMP_TAC arith_ss []
+QED
 
 
 val m0_mask_last_bit_REWR = save_thm ("m0_mask_last_bit_REWR",

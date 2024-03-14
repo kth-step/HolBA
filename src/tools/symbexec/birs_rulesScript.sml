@@ -173,8 +173,8 @@ QED
 (* ******************************************************* *)
 (*      SUBST rule                                         *)
 (* ******************************************************* *)
-val symb_rule_SUBST_SING_thm = prove(``
-!sr.
+Theorem symb_rule_SUBST_SING_thm[local]:
+  !sr.
 !sys L sys2 var symbexp symbexp'.
   (symb_symbols_f_sound sr) ==>
   (symb_ARB_val_sound sr) ==>
@@ -185,15 +185,15 @@ val symb_rule_SUBST_SING_thm = prove(``
   (symb_simplification sr (symb_symbst_pcond sys2) symbexp symbexp') ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, {symb_symbst_store_update var symbexp' sys2}))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   `({sys2} DIFF {sys2}) UNION {symb_symbst_store_update var symbexp' sys2} = {symb_symbst_store_update var symbexp' sys2}` by (
     METIS_TAC [pred_setTheory.DIFF_EQ_EMPTY, pred_setTheory.UNION_EMPTY]
   ) >>
 
   METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
-);
+QED
 
 Theorem birs_rule_SUBST_spec_thm:
   !prog sys L sys2 sys2' lbl envl status pcond vn symbexp symbexp'.
@@ -635,15 +635,15 @@ REPEAT STRIP_TAC >>
   )
 QED
 
-val birs_exec_step_NO_FRESH_SYMBS = prove(``
-!prog bsys.
+Theorem birs_exec_step_NO_FRESH_SYMBS[local]:
+  !prog bsys.
 (*
   (* this assumption is only needed because of the proof with the soundness of steps *)
   (bir_prog_has_no_halt prog) ==>
 *)
   birs_set_NO_fresh_symbs bsys (birs_exec_step prog bsys)
-``,
-  SIMP_TAC std_ss [birs_exec_step_def] >>
+Proof
+SIMP_TAC std_ss [birs_exec_step_def] >>
   REPEAT STRIP_TAC >>
   Cases_on `birs_state_is_terminated bsys` >- (
     ASM_SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
@@ -675,7 +675,7 @@ val birs_exec_step_NO_FRESH_SYMBS = prove(``
   MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT2_thm >>
   SIMP_TAC (std_ss++birs_state_ss) [] >>
   METIS_TAC []
-);
+QED
 
 
 (* ******************************************************* *)
@@ -732,7 +732,11 @@ bir_symbTheory.birs_state_t_accfupds
 val bprog_tm = ``
 BirProgram [] : 'obs_type bir_program_t
 ``;
-val no_halt_thm = prove(``bir_prog_has_no_halt (^bprog_tm)``, cheat);
+Theorem no_halt_thm[local]:
+  bir_prog_has_no_halt (^bprog_tm)
+Proof
+cheat
+QED
 *)
 
 val _ = export_theory();

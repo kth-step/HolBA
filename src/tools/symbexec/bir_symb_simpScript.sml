@@ -843,19 +843,19 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-val mem_simp_8_helper_thm = prove(``
+Theorem mem_simp_8_helper_thm[local]:
   (size_of_bir_immtype Bit8 MOD size_of_bir_immtype Bit8 = 0) /\
   (size_of_bir_immtype Bit8 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
-``,
-  EVAL_TAC
-);
+Proof
+EVAL_TAC
+QED
 
-val mem_simp_32_helper_thm = prove(``
+Theorem mem_simp_32_helper_thm[local]:
   (size_of_bir_immtype Bit32 MOD size_of_bir_immtype Bit8 = 0) /\
   (size_of_bir_immtype Bit32 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
-``,
-  EVAL_TAC
-);
+Proof
+EVAL_TAC
+QED
 
 val birs_simplification_Mem_Match_32_8_8_thm = save_thm(
    "birs_simplification_Mem_Match_32_8_8_thm",

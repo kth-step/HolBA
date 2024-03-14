@@ -105,26 +105,27 @@ QED
 (* w2w *)
 (*******)
 
-val w2w_REMOVE_1 = prove (
-  ``!w : 'a word.
+Theorem w2w_REMOVE_1[local]:
+  !w : 'a word.
            dimindex (:'a) < dimindex (:'b) ==>
            dimindex (:'b) <> dimindex (:'c) ==>
            (((w2w ((w2w w):'b word)):'c word) =
-                  w2w w)``,
-
+                  w2w w)
+Proof
 Cases >>
 ASM_SIMP_TAC arith_ss [w2w_def,n2w_w2n, w2n_n2w,
-  wordsTheory.dimindex_dimword_le_iso]);
+  wordsTheory.dimindex_dimword_le_iso]
+QED
 
 
-val w2w_REMOVE_2 = prove (
-  ``!w : 'a word.
+Theorem w2w_REMOVE_2[local]:
+  !w : 'a word.
            ~(dimindex (:'a) <= dimindex (:'b)) ==>
            dimindex (:'c) < dimindex (:'b) ==>
 
            (((w2w ((w2w w):'b word)):'c word) =
-                  w2w w)``,
-
+                  w2w w)
+Proof
 Cases >>
 ASM_SIMP_TAC arith_ss [w2w_def,n2w_w2n, w2n_n2w,
   wordsTheory.dimindex_dimword_le_iso] >>
@@ -135,7 +136,8 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC arith_ss [arithmeticTheory.LESS_EQ_EXISTS,
   arithmeticTheory.EXP_ADD] >>
 METIS_TAC[bitTheory.ZERO_LT_TWOEXP, arithmeticTheory.MOD_MULT_MOD,
-  DIMINDEX_GT_0, arithmeticTheory.MULT_COMM]);
+  DIMINDEX_GT_0, arithmeticTheory.MULT_COMM]
+QED
 
 
 

@@ -667,19 +667,19 @@ subgoal `bir_eval_exp post s'.bst_environ = SOME bir_val_true` >- (
 FULL_SIMP_TAC std_ss []
 QED
 
-val bir_env_vars_are_initialised_observe_INSERT = prove(
-  ``!e oid ec el obf.
+Theorem bir_env_vars_are_initialised_observe_INSERT[local]:
+  !e oid ec el obf.
       bir_env_vars_are_initialised e
         (bir_vars_of_stmtB (BStmt_Observe oid ec el obf)) ==>
-      bir_env_vars_are_initialised e (bir_vars_of_exp ec)``,
-
+      bir_env_vars_are_initialised e (bir_vars_of_exp ec)
+Proof
 REPEAT GEN_TAC >>
 FULL_SIMP_TAC std_ss [bir_vars_of_stmtB_def,
                       listTheory.LIST_TO_SET,
                       pred_setTheory.IMAGE_INSERT,
                       pred_setTheory.BIGUNION_INSERT,
                       bir_env_vars_are_initialised_UNION]
-);
+QED
 
 (*
  TODO: this and similar theorems should maybe be moved to bir-support
@@ -834,8 +834,8 @@ FULL_SIMP_TAC std_ss [bir_wp_exec_stmtsB_def, listTheory.EVERY_DEF,
                       bir_wp_exec_stmtB_bool_thm]
 QED
 
-val exec_preserves_initialized_vars_thm = prove(
-  ``!r h st stmts.
+Theorem exec_preserves_initialized_vars_thm[local]:
+  !r h st stmts.
       (r = bir_exec_stmtB_state (h:'a bir_stmt_basic_t) st) ==>
       (EVERY (\stmt:'a bir_stmt_basic_t.
                bir_env_vars_are_initialised st.bst_environ
@@ -846,8 +846,8 @@ val exec_preserves_initialized_vars_thm = prove(
                bir_env_vars_are_initialised r.bst_environ
                  (bir_vars_of_stmtB stmt)
              ) stmts
-      )``,
-
+      )
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 ASSUME_TAC (ISPECL [``(\stmt:'a bir_stmt_basic_t.
                         bir_env_vars_are_initialised st.bst_environ
@@ -857,7 +857,7 @@ ASSUME_TAC (ISPECL [``(\stmt:'a bir_stmt_basic_t.
                           (bir_vars_of_stmtB stmt))``]
                    listTheory.EVERY_MONOTONIC) >>
 REV_FULL_SIMP_TAC std_ss [bir_varinit_invar_bstmt]
-);
+QED
 
 Theorem bir_assumviol_exec_stmtsB:
   !obs c s stmts.
@@ -985,10 +985,10 @@ Definition bir_exec_block_jmp_triple_def:
       )
 End
 
-val SUBSET_BIGUNION_IMAGE_thm = prove(
-  ``!x s f.
-      (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))``,
-
+Theorem SUBSET_BIGUNION_IMAGE_thm[local]:
+  !x s f.
+      (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))
+Proof
 SIMP_TAC pure_ss [pred_setTheory.IMAGE_DEF,
                   pred_setTheory.BIGUNION,
                   pred_setTheory.SUBSET_DEF] >>
@@ -998,10 +998,10 @@ Q.EXISTS_TAC `f x` >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
 Q.EXISTS_TAC `x` >>
 METIS_TAC []
-);
+QED
 
-val bir_vars_are_initialized_block_then_every_stmts_thm = prove(
-  ``!st bl.
+Theorem bir_vars_are_initialized_block_then_every_stmts_thm[local]:
+  !st bl.
       (bir_env_vars_are_initialised st.bst_environ
                                     (bir_vars_of_block bl)) ==>
       (EVERY
@@ -1009,8 +1009,8 @@ val bir_vars_are_initialized_block_then_every_stmts_thm = prove(
           bir_env_vars_are_initialised st.bst_environ
             (bir_vars_of_stmtB stmt)
         ) bl.bb_statements
-      )``,
-
+      )
+Proof
 FULL_SIMP_TAC std_ss [bir_vars_of_block_def,
                       listTheory.EVERY_MEM] >>
 REPEAT STRIP_TAC >>
@@ -1018,7 +1018,7 @@ REPEAT STRIP_TAC >>
 METIS_TAC [bir_env_vars_are_initialised_UNION,
            SUBSET_BIGUNION_IMAGE_thm,
            bir_env_vars_are_initialised_SUBSET]
-);
+QED
 
 Theorem bir_exec_block_jmp_triple_wp_thm:
   !p bl post l.
@@ -1293,14 +1293,14 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
                bir_val_true_def, bir_eval_exp_def, word1_distinct]
 QED
 
-val bir_env_vars_are_initialised_prog_block_thm = prove(
-  ``!p l bl env.
+Theorem bir_env_vars_are_initialised_prog_block_thm[local]:
+  !p l bl env.
       bir_is_valid_program p ==>
       bir_env_vars_are_initialised env (bir_vars_of_program p) ==>
       MEM l (bir_labels_of_program p) ==>
       (SND (THE (bir_get_program_block_info_by_label p l)) = bl) ==>
-      bir_env_vars_are_initialised env (bir_vars_of_block bl)``,
-
+      bir_env_vars_are_initialised env (bir_vars_of_block bl)
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 Cases_on `p` >>
 FULL_SIMP_TAC std_ss [bir_vars_of_program_def] >>
@@ -1317,14 +1317,14 @@ subgoal `bl IN (set l')` >- (
 METIS_TAC [bir_env_vars_are_initialised_UNION,
            SUBSET_BIGUNION_IMAGE_thm,
            bir_env_vars_are_initialised_SUBSET]
-);
+QED
     
-val bir_get_current_block_SOME_MEM = prove(
-  ``!l pc bl.
+Theorem bir_get_current_block_SOME_MEM[local]:
+  !l pc bl.
       bir_is_valid_program (BirProgram l) ==>
       (bir_get_current_block (BirProgram l) pc = SOME bl) ==>
-      (MEM bl l)``,
-
+      (MEM bl l)
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 FULL_SIMP_TAC std_ss [bir_get_current_block_def] >>
 Cases_on `bir_get_program_block_info_by_label (BirProgram l)
@@ -1338,14 +1338,14 @@ Cases_on `x` >>
     listTheory.MEM_EL] >>
 EXISTS_TAC ``q:num`` >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
-val bir_exec_block_running_at_least_one_step = prove(
-  ``!p bl st l' c' st'.
+Theorem bir_exec_block_running_at_least_one_step[local]:
+  !p bl st l' c' st'.
       (bir_exec_block p bl st = (l',c',st')) ==>
       (st'.bst_status = BST_Running) ==>
-      (0 < c')``,
-
+      (0 < c')
+Proof
 RW_TAC std_ss [bir_exec_block_def] >>
 Q.ABBREV_TAC `s' = bir_exec_stmtsB bl.bb_statements ([],0,st)` >>
 pairLib.PairCases_on `s'` >>
@@ -1357,7 +1357,7 @@ Cases_on `s'2.bst_status <> BST_Running` >- (
 ) >>
 FULL_SIMP_TAC (srw_ss()) []>>
 RW_TAC std_ss []
-);
+QED
 
 (*
 FIRST CHANGE TO a PROOF for POST MAP
@@ -1982,15 +1982,15 @@ QED
 val bir_stmt_end_ss = rewrites (type_rws ``:bir_stmt_end_t``);
 val bir_label_exp_ss = rewrites (type_rws ``:bir_label_exp_t``);
 
-val FEVERY_FEVERY_DRESTRICT_thm = prove(
-  ``!P M S.
-      FEVERY P M ==> FEVERY P (DRESTRICT M S)``,
-
+Theorem FEVERY_FEVERY_DRESTRICT_thm[local]:
+  !P M S.
+      FEVERY P M ==> FEVERY P (DRESTRICT M S)
+Proof
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
               [finite_mapTheory.FEVERY_DEF,
                finite_mapTheory.FDOM_DRESTRICT,
                finite_mapTheory.DRESTRICT_DEF]
-);
+QED
 
 Theorem bir_wp_exec_of_block_bool_thm:
   !p l ls wps wps' post.

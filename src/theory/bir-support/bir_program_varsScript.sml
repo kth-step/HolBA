@@ -511,31 +511,32 @@ FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++pairSimps.gen_beta_ss) [LET_THM, 
 QED
 
 
-val bir_vars_exec_steps_THM_aux_SOME = prove (
-``!p vs st1 st2 st1' ol c c'.
+Theorem bir_vars_exec_steps_THM_aux_SOME[local]:
+  !p vs st1 st2 st1' ol c c'.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (bir_exec_steps p st1 = BER_Ended ol c c' st1') ==>
     (?st2'. (bir_exec_steps p st2 = BER_Ended ol c c' st2') /\
-            (bir_state_EQ_FOR_VARS vs st1' st2'))``,
-
+            (bir_state_EQ_FOR_VARS vs st1' st2'))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_TO_bir_exec_step_n] >>
 `?l1 c1 st2'. bir_exec_step_n p st2 c = (l1, c1, st2')` by METIS_TAC[pairTheory.PAIR] >>
 MP_TAC (Q.SPECL [`p`, `vs`, `c`, `st1`, `st2`] bir_vars_exec_step_n_THM) >>
 FULL_SIMP_TAC std_ss [LET_THM, bir_state_is_terminated_def, bir_state_EQ_FOR_VARS_ALT_DEF] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 
-val bir_vars_exec_steps_THM_aux_NONE = prove (
-``!p vs st1 st2 st1' ll1 ll2.
+Theorem bir_vars_exec_steps_THM_aux_NONE[local]:
+  !p vs st1 st2 st1' ll1 ll2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (bir_exec_steps p st1 = BER_Looping ll1) ==>
     (bir_exec_steps p st2 = BER_Looping ll2) ==>
-    (ll1 = ll2)``,
-
+    (ll1 = ll2)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_EQ_Looping,
   bir_exec_steps_observe_llist_def] >>
@@ -546,7 +547,8 @@ REPEAT BasicProvers.VAR_EQ_TAC >>
 GEN_TAC >>
 MP_TAC (Q.SPECL [`p`, `bir_exec_infinite_steps_fun p st1 i`, `bir_exec_infinite_steps_fun p st2 i`, `vs`] bir_vars_exec_step_THM) >>
 MP_TAC (Q.SPECL [`p`, `vs`, `i`, `st1`, `st2`] bir_vars_exec_infinite_step_fun_THM) >>
-ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_THM]);
+ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_THM]
+QED
 
 
 

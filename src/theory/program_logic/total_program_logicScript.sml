@@ -329,10 +329,9 @@ val loop_fun_ind_spec =
 val inductive_invariant_goal = fst $ dest_imp $ concl loop_fun_ind_spec;
 
 
-val inductive_invariant = prove(``
+Theorem inductive_invariant[local]:
   ^inductive_invariant_goal
-``,
-
+Proof
 rpt strip_tac >>
 fs [] >>
 rpt strip_tac >>
@@ -394,7 +393,7 @@ qexistsl_tac [`{l}`, `s'`] >>
 Q.SUBGOAL_THEN `l NOTIN le` (fn thm => fs [thm]) >- (
   fs [total_loop_jgmt_def, pred_setTheory.IN_SING]
 )
-);
+QED
 
 (* Now just some final touches to get the theorem in the exact shape we want *)
 val total_loop_rule_thm_tmp = MP loop_fun_ind_spec inductive_invariant;

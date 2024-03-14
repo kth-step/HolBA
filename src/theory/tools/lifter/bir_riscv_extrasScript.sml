@@ -312,8 +312,8 @@ SIMP_TAC std_ss [riscv_mem_store_dword_def, elim_zero_for_def_thm,
 QED
 
 (* TODO: For generalizing...
-val bir_is_lifted_mem_exp_STORE0_RISCV = prove (
-``!guard sr env em ea (va :word64) er (vr : word64) mem_f.
+Theorem bir_is_lifted_mem_exp_STORE0_RISCV[local]:
+  !guard sr env em ea (va :word64) er (vr : word64) mem_f.
     (size_of_bir_immtype sr = (dimindex (:'r))) ==>
     guard sr ==>
     bir_is_lifted_mem_exp env em (mem_f : word64 -> word8) ==>
@@ -322,8 +322,7 @@ val bir_is_lifted_mem_exp_STORE0_RISCV = prove (
     (!r.
     (bir_store_in_mem_words Bit8 Bit64 (w2bs ((w2w vr):'r word) sr) mem_f BEnd_LittleEndian va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast er sr)) r))
-``,
-
+Proof
 (* TODO: Rewrite this mess of a proof... *)
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
   bir_is_lifted_mem_exp_def, PULL_EXISTS,
@@ -356,7 +355,7 @@ subgoal `size_of_bir_immtype Bit64 = dimindex (:64)` >- (
 STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++boolSimps.ETA_ss++wordsLib.WORD_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n, w2w_w2w] >>
 cheat
-);
+QED
 *)
 
 val riscv_is_lifted_mem_exp_STORE0_LSB_TAC =
@@ -400,44 +399,41 @@ subgoal `size_of_bir_immtype Bit64 = dimindex (:64)` >- (
 FULL_SIMP_TAC (std_ss++boolSimps.ETA_ss++wordsLib.WORD_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n, w2w_w2w, w2w_id]
 ;
 
-val riscv_is_lifted_mem_exp_STORE0_8LSB = prove (
-``!env em ea (va :word64) er (vr : word64) mem_f.
+Theorem riscv_is_lifted_mem_exp_STORE0_8LSB[local]:
+  !env em ea (va :word64) er (vr : word64) mem_f.
     bir_is_lifted_mem_exp env em (mem_f : word64 -> word8) ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env er (Imm64 vr) ==>
     (!r.
     (bir_store_in_mem_words Bit8 Bit64 (Imm8 (w2w vr)) mem_f BEnd_LittleEndian va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast er Bit8)) r))
-``,
-
+Proof
 riscv_is_lifted_mem_exp_STORE0_LSB_TAC
-);
+QED
 
-val riscv_is_lifted_mem_exp_STORE0_16LSB = prove (
-``!env em ea (va :word64) er (vr : word64) mem_f.
+Theorem riscv_is_lifted_mem_exp_STORE0_16LSB[local]:
+  !env em ea (va :word64) er (vr : word64) mem_f.
     bir_is_lifted_mem_exp env em (mem_f : word64 -> word8) ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env er (Imm64 vr) ==>
     (!r.
     (bir_store_in_mem_words Bit8 Bit64 (Imm16 (w2w vr)) mem_f BEnd_LittleEndian va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast er Bit16)) r))
-``,
-
+Proof
 riscv_is_lifted_mem_exp_STORE0_LSB_TAC
-);
+QED
 
-val riscv_is_lifted_mem_exp_STORE0_32LSB = prove (
-``!env em ea (va :word64) er (vr : word64) mem_f.
+Theorem riscv_is_lifted_mem_exp_STORE0_32LSB[local]:
+  !env em ea (va :word64) er (vr : word64) mem_f.
     bir_is_lifted_mem_exp env em (mem_f : word64 -> word8) ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env er (Imm64 vr) ==>
     (!r.
     (bir_store_in_mem_words Bit8 Bit64 (Imm32 (w2w vr)) mem_f BEnd_LittleEndian va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast er Bit32)) r))
-``,
-
+Proof
 riscv_is_lifted_mem_exp_STORE0_LSB_TAC
-);
+QED
 
 
 val STORE_SIMP_RULE = SIMP_RULE std_ss [bir_store_in_mem_words_REWRS];
@@ -626,55 +622,59 @@ val thm_t =
   bir_is_lifted_imm_exp env (BExp_BinExp BIExp_And (BExp_Const (Imm64 (^(get_bitmask_word 6 64)))) e)
     (Imm64 ((w2w (((5 >< 0) w):word6)):word64))``;
 
-val riscv_is_lifted_imm_exp_6LSBs = prove (``^thm_t``,
-
+Theorem riscv_is_lifted_imm_exp_6LSBs[local]:
+  ^thm_t
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
    bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY] >>
 blastLib.BBLAST_TAC
-);
+QED
 
 (*************************************************)
 (* 5 LSBs (32-bit) - for RV64I SLLW, SRLW, et.c. *)
 (*************************************************)
 
-val riscv_is_lifted_imm_exp_5LSBs = prove (``!env w e.
+Theorem riscv_is_lifted_imm_exp_5LSBs[local]:
+  !env w e.
   bir_is_lifted_imm_exp env e (Imm64 w) ==>
   bir_is_lifted_imm_exp env (BExp_BinExp BIExp_And (BExp_Const (Imm32 (^(get_bitmask_word 5 32)))) (BExp_Cast BIExp_LowCast e Bit32))
-    (Imm32 ((w2w (((4 >< 0) w):word5)):word32))``,
-
+    (Imm32 ((w2w (((4 >< 0) w):word5)):word32))
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
    bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY] >>
 blastLib.BBLAST_TAC
-);
+QED
 
 (********************************************************************)
 (* 32 LSBs - for 32-bit instructions (ending in "W") of RV64I       *)
 (********************************************************************)
 
-val riscv_is_lifted_imm_exp_32LSBsLC = prove (``!env w e.
+Theorem riscv_is_lifted_imm_exp_32LSBsLC[local]:
+  !env w e.
   bir_is_lifted_imm_exp env e (Imm64 w) ==>
   bir_is_lifted_imm_exp env (BExp_Cast BIExp_LowCast e Bit32)
-    (Imm32 ((31 >< 0) w))``,
-
+    (Imm32 ((31 >< 0) w))
+Proof
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
 blastLib.BBLAST_TAC
-);
+QED
 
 (*************************************************************************)
 (* 64 MSBs (of 128-bit) - for multiplication instructions in RV64M       *)
 (*************************************************************************)
 
-val riscv_is_lifted_imm_exp_64MSBs = prove (``!env w e.
+Theorem riscv_is_lifted_imm_exp_64MSBs[local]:
+  !env w e.
   bir_is_lifted_imm_exp env e (Imm128 w) ==>
   bir_is_lifted_imm_exp env (BExp_Cast BIExp_HighCast e Bit64)
-    (Imm64 ((127 >< 64) w))``,
-
+    (Imm64 ((127 >< 64) w))
+Proof
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2wh_def]
-);
+QED
 
 (*******************************)
 (* Greater-than-or-equal       *)
@@ -756,8 +756,9 @@ val thm_t = build_immtype_t_conj
       bir_is_lifted_imm_exp env (BExp_Cast BIExp_UnsignedCast (BExp_BinPred bo e1 e2) Bit64)
         (Imm64 (v2w [bir_bin_pred_GET_OPER bo w1 w2]))``;
 
-val riscv_is_lifted_imm_exp_BIN_PRED0 = prove (``^thm_t``,
-
+Theorem riscv_is_lifted_imm_exp_BIN_PRED0[local]:
+  ^thm_t
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
   bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
   bool2b_def] >>
@@ -766,7 +767,7 @@ REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [bool2w_def, v2w_ground1]
   )
 )
-);
+QED
 
 
 val riscv_is_lifted_imm_exp_BIN_PRED = save_thm ("bir_is_lifted_imm_exp_BIN_PRED",

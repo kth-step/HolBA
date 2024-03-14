@@ -27,52 +27,61 @@ val _ = new_theory "bir_arm8_extras";
 (* Some silly auxiliary rewrites *)
 (*********************************)
 
-val shift_neg1w_rewr = prove (
-``(-1w << n):'a word = -(n2w (2**n))``,
-METIS_TAC [WORD_NEG_MUL, WORD_MUL_LSL, WORD_MULT_COMM])
+Theorem shift_neg1w_rewr[local]:
+  (-1w << n):'a word = -(n2w (2**n))
+Proof
+METIS_TAC [WORD_NEG_MUL, WORD_MUL_LSL, WORD_MULT_COMM]
+QED
 
-val shift_neg1w_rewr2 = prove (
-``(-1w << n):'a word = (n2w (dimword (:'a) - 2 ** n MOD dimword (:'a)))``,
-
+Theorem shift_neg1w_rewr2[local]:
+  (-1w << n):'a word = (n2w (dimword (:'a) - 2 ** n MOD dimword (:'a)))
+Proof
 SIMP_TAC std_ss [shift_neg1w_rewr] >>
-SIMP_TAC std_ss [word_2comp_n2w]);
+SIMP_TAC std_ss [word_2comp_n2w]
+QED
 
 
-val shift_neg1w_rewr3 = prove (
-``~(-1w << n):'a word =
+Theorem shift_neg1w_rewr3[local]:
+  ~(-1w << n):'a word =
 n2w
   (dimword (:'a) -
-   ((dimword (:'a) - 2 ** n MOD dimword (:'a)) MOD dimword (:'a) + 1))``,
-SIMP_TAC arith_ss [shift_neg1w_rewr2, word_1comp_n2w]);
+   ((dimword (:'a) - 2 ** n MOD dimword (:'a)) MOD dimword (:'a) + 1))
+Proof
+SIMP_TAC arith_ss [shift_neg1w_rewr2, word_1comp_n2w]
+QED
 
 
-val SHIFT_ZERO_bv = prove (
-  ``(!a. a <<~ 0w = a) /\ (!a. a >>~ 0w = a) /\ (!a. a >>>~ 0w = a) /\
-    (!a. a #<<~ 0w = a) /\ (!a. a #>>~ 0w = a)``,
+Theorem SHIFT_ZERO_bv[local]:
+  (!a. a <<~ 0w = a) /\ (!a. a >>~ 0w = a) /\ (!a. a >>>~ 0w = a) /\
+    (!a. a #<<~ 0w = a) /\ (!a. a #>>~ 0w = a)
+Proof
+SIMP_TAC arith_ss [SHIFT_ZERO, word_lsl_bv_def, w2n_n2w, ZERO_LT_dimword,
+    word_lsr_bv_def, word_asr_bv_def, word_rol_bv_def, word_ror_bv_def]
+QED
 
-  SIMP_TAC arith_ss [SHIFT_ZERO, word_lsl_bv_def, w2n_n2w, ZERO_LT_dimword,
-    word_lsr_bv_def, word_asr_bv_def, word_rol_bv_def, word_ror_bv_def]);
-
-val MOD_DIMINDEX_DIMWORD = prove (
-``!m. ((m MOD dimindex (:'a)) MOD dimword (:'a)) =
-      (m MOD dimindex (:'a))``,
+Theorem MOD_DIMINDEX_DIMWORD[local]:
+  !m. ((m MOD dimindex (:'a)) MOD dimword (:'a)) =
+      (m MOD dimindex (:'a))
+Proof
 GEN_TAC >>
 `m MOD dimindex (:'a) < dimindex (:'a)` by
   ASM_SIMP_TAC arith_ss [DIMINDEX_GT_0] >>
 `m MOD dimindex (:'a) < dimword (:'a)` by
   METIS_TAC [dimindex_lt_dimword, arithmeticTheory.LESS_TRANS] >>
-ASM_SIMP_TAC arith_ss []);
+ASM_SIMP_TAC arith_ss []
+QED
 
 
 (***********************)
 (* Evaluate "w && -1w" *)
 (***********************)
 
-val arm8_and_neg_1w_GEN = prove (``
+Theorem arm8_and_neg_1w_GEN[local]:
   (!w:'a word. (w && -1w) = w) /\
-  (!w:'a word. (-1w && w) = w)``,
-
-SIMP_TAC std_ss [WORD_NEG_1, WORD_AND_CLAUSES]);
+  (!w:'a word. (-1w && w) = w)
+Proof
+SIMP_TAC std_ss [WORD_NEG_1, WORD_AND_CLAUSES]
+QED
 
 
 val arm8_and_neg_1w_FOLDS = save_thm ("arm8_and_neg_1w_FOLDS",
@@ -92,11 +101,11 @@ end)
 (* FOLD "w <<~ n2w x"  *)
 (***********************)
 
-val arm8_lsl_FOLD_GEN = prove (
-``!n w.  n < dimword (:'a) ==>
+Theorem arm8_lsl_FOLD_GEN[local]:
+  !n w.  n < dimword (:'a) ==>
 (((((w:'a word) #>> (dimindex (:'a) - n)) && (-1w << n))) =
- (w <<~ n2w n))``,
-
+ (w <<~ n2w n))
+Proof
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [word_and_def, fcpTheory.FCP_BETA,
@@ -105,7 +114,8 @@ ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [word_and_def, fcpTheory.FCP
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `i + dimindex (:'a) - n = dimindex (:'a) + (i - n)` SUBST1_TAC >- DECIDE_TAC >>
 SIMP_TAC std_ss [DIMINDEX_GT_0, arithmeticTheory.ADD_MODULUS] >>
-ASM_SIMP_TAC arith_ss []);
+ASM_SIMP_TAC arith_ss []
+QED
 
 
 val arm8_lsl_FOLDS = save_thm ("arm8_lsl_FOLDS",
@@ -127,14 +137,15 @@ end)
 
 
 
-val arm8_lsl_FOLD_NO_IMM_GEN = prove (
-``!(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
-  ((w1 << (w2n w2 MOD dimindex (:'a))) = (w1 <<~ (w2 && n2w (2 ** n - 1))))``,
-
+Theorem arm8_lsl_FOLD_NO_IMM_GEN[local]:
+  !(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
+  ((w1 << (w2n w2 MOD dimindex (:'a))) = (w1 <<~ (w2 && n2w (2 ** n - 1))))
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `w2` >> rename1 `m < dimword (:'a)` >>
 ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_lsl_bv_def, w2n_n2w,
-  MOD_DIMINDEX_DIMWORD]);
+  MOD_DIMINDEX_DIMWORD]
+QED
 
 
 val arm8_lsl_no_imm_FOLDS = save_thm ("arm8_lsl_no_imm_FOLDS",
@@ -157,17 +168,18 @@ end)
 (* FOLD "w >>>~ n2w x" *)
 (***********************)
 
-val arm8_lsr_FOLD_GEN = prove (
-``!n w.  n < dimword (:'a) ==>
+Theorem arm8_lsr_FOLD_GEN[local]:
+  !n w.  n < dimword (:'a) ==>
 (((((w:'a word) #>> n) && ~(-1w << (dimindex (:'a) - n)))) =
- (w >>>~ n2w n))``,
-
+ (w >>>~ n2w n))
+Proof
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [word_and_def, fcpTheory.FCP_BETA,
   word_lsr_def, WORD_NEG_1_T, word_ror_def, word_lsr_bv_def, w2n_n2w,
   dimindex_lt_dimword, word_lsl_def, arithmeticTheory.NOT_LESS_EQUAL,
-  word_1comp_def]);
+  word_1comp_def]
+QED
 
 
 val arm8_lsr_FOLDS = save_thm ("arm8_lsr_FOLDS",
@@ -187,14 +199,15 @@ end)
 
 
 
-val arm8_lsr_FOLD_NO_IMM_GEN = prove (
-``!(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
-  ((w1 >>> (w2n w2 MOD dimindex (:'a))) = (w1 >>>~ (w2 && n2w (2 ** n - 1))))``,
-
+Theorem arm8_lsr_FOLD_NO_IMM_GEN[local]:
+  !(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
+  ((w1 >>> (w2n w2 MOD dimindex (:'a))) = (w1 >>>~ (w2 && n2w (2 ** n - 1))))
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `w2` >> rename1 `m < dimword (:'a)` >>
 ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_lsr_bv_def, w2n_n2w,
-  MOD_DIMINDEX_DIMWORD]);
+  MOD_DIMINDEX_DIMWORD]
+QED
 
 
 
@@ -223,21 +236,21 @@ end)
 (* FOLD "w >>~ n2w x" *)
 (**********************)
 
-val arm8_asr_FOLD_GEN = prove (
-``!n (w:'a word).  n < dimindex (:'a) ==>
+Theorem arm8_asr_FOLD_GEN[local]:
+  !n (w:'a word).  n < dimindex (:'a) ==>
 
 ((((if word_bit (dimindex (:'a) - 1) w then -1w else 0w) &&
    ~~(-1w << (dimindex (:'a) - n))) || (w >>>~ n2w n)) =
 (w >>~ n2w n))
-``,
-
+Proof
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 `dimindex (:'a) < dimword (:'a)` by METIS_TAC[dimindex_lt_dimword] >>
 ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [word_or_def, fcpTheory.FCP_BETA,
   word_and_def, WORD_NEG_1_T, word_0, word_lsl_def, word_asr_def,
   word_asr_bv_def, word_lsr_bv_def, w2n_n2w, GSYM word_msb,
-  word_lsr_def, word_1comp_def, word_msb_def]);
+  word_lsr_def, word_1comp_def, word_msb_def]
+QED
 
 
 val arm8_asr_FOLDS = save_thm ("arm8_asr_FOLDS",
@@ -259,14 +272,15 @@ end);
 
 
 
-val arm8_asr_FOLD_NO_IMM_GEN = prove (
-``!(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
-  ((w1 >> (w2n w2 MOD dimindex (:'a))) = (w1 >>~ (w2 && n2w (2 ** n - 1))))``,
-
+Theorem arm8_asr_FOLD_NO_IMM_GEN[local]:
+  !(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
+  ((w1 >> (w2n w2 MOD dimindex (:'a))) = (w1 >>~ (w2 && n2w (2 ** n - 1))))
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `w2` >> rename1 `m < dimword (:'a)` >>
 ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_asr_bv_def, w2n_n2w,
-  MOD_DIMINDEX_DIMWORD]);
+  MOD_DIMINDEX_DIMWORD]
+QED
 
 
 val arm8_asr_no_imm_FOLDS = save_thm ("arm8_asr_no_imm_FOLDS",
@@ -303,12 +317,12 @@ in thm2 end);
 (* FOLD for extr *)
 (*****************)
 
-val arm8_extr_FOLD0 = prove (
-``!(w1:'a word) (w2:'a word) n.
+Theorem arm8_extr_FOLD0[local]:
+  !(w1:'a word) (w2:'a word) n.
    (MEM n (COUNT_LIST (dimindex(:'a)))) ==> (
    (v2w (BUTLASTN n (w2v w1 ++ w2v w2))): 'a word =
-   word_shift_extract w1 w2 n)``,
-
+   word_shift_extract w1 w2 n)
+Proof
 ONCE_REWRITE_TAC[fcpTheory.CART_EQ] >>
 REWRITE_TAC[bitstringTheory.word_index_v2w, rich_listTheory.MEM_COUNT_LIST] >>
 REPEAT STRIP_TAC >>
@@ -330,16 +344,17 @@ Cases_on ` i < dimindex (:'a) - n` >- (
   ASM_SIMP_TAC arith_ss [] >>
   AP_TERM_TAC >>
   DECIDE_TAC
-));
+)
+QED
 
 
-val arm8_extr_FOLD1 = prove (
-``!(w1:'a word) (w2:'a word) n.
+Theorem arm8_extr_FOLD1[local]:
+  !(w1:'a word) (w2:'a word) n.
    (dimindex (:'a) < dimindex (:'b)) ==>
    (MEM n (COUNT_LIST (dimindex(:'a)))) ==> (
    (v2w (LASTN (dimindex (:'a)) ((BUTLASTN n (w2v w1 ++ w2v w2))))): 'b word =
-   w2w (word_shift_extract w1 w2 n))``,
-
+   w2w (word_shift_extract w1 w2 n))
+Proof
 ONCE_REWRITE_TAC[fcpTheory.CART_EQ] >>
 REWRITE_TAC[bitstringTheory.word_index_v2w, rich_listTheory.MEM_COUNT_LIST] >>
 REPEAT STRIP_TAC >>
@@ -362,7 +377,8 @@ Cases_on ` i + n < dimindex (:'a)` >- (
   ASM_SIMP_TAC arith_ss [] >>
   AP_TERM_TAC >>
   DECIDE_TAC
-));
+)
+QED
 
 
 val arm8_extr_FOLDS = save_thm ("arm8_extr_FOLDS",
@@ -389,14 +405,13 @@ in thm6 end);
 (* Sign cast 32 -> 64 bit *)
 (**************************)
 
-val arm8_sxtw_FOLD_GEN = prove (
-``!w.
+Theorem arm8_sxtw_FOLD_GEN[local]:
+  !w.
 
   ((if word_bit (dimindex (:'a) - 1) (w:'b word) then (-1w) else (0w:'b word)) &&
     ~~((-1w << (dimindex (:'a)))) || (w && ~(-1w << (dimindex (:'a)))) && ~((-1w << (dimindex (:'a))))) =
-  sw2sw ((w2w w):'a word)``,
-
-
+  sw2sw ((w2w w):'a word)
+Proof
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 `dimindex (:'a) <> 0` by METIS_TAC [DIMINDEX_GT_0, prim_recTheory.LESS_REFL] >>
@@ -412,7 +427,8 @@ REPEAT STRIP_TAC >>
 Cases_on `BIT (dimindex (:'a) - 1) n` >> Cases_on `dimindex (:'a) <= dimindex (:'b)` >> (
   ASM_SIMP_TAC arith_ss [WORD_NEG_1_T, word_0, arithmeticTheory.NOT_LESS_EQUAL] >>
   METIS_TAC[arithmeticTheory.NOT_LESS_EQUAL]
-));
+)
+QED
 
 
 
@@ -685,12 +701,12 @@ val ExtendValue_REWR = save_thm ("ExtendValue_REWR",
     DatatypeSimps.cases_to_top_RULE arm8Theory.ExtendValue_def));
 
 
-val ExtendValue_Unsigned_REWR = prove (
-``(ExtendValue (w, ExtendType_UXTB, n) = (w2w ((w2w w):word8):word64) << n) /\
+Theorem ExtendValue_Unsigned_REWR[local]:
+  (ExtendValue (w, ExtendType_UXTB, n) = (w2w ((w2w w):word8):word64) << n) /\
   (ExtendValue (w, ExtendType_UXTH, n) = (w2w ((w2w w):word16):word64) << n) /\
   (ExtendValue (w, ExtendType_UXTW, n) = (w2w ((w2w w):word32):word64) << n) /\
-  (ExtendValue (w, ExtendType_UXTX, n) = (w << n))``,
-
+  (ExtendValue (w, ExtendType_UXTX, n) = (w << n))
+Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR,
   GSYM bitstringTheory.word_lsl_v2w] >>
 Q.SUBGOAL_THEN `w2v w = fixwidth (dimindex (:64)) (w2v w)` SUBST1_TAC >- (
@@ -700,13 +716,14 @@ REWRITE_TAC [GSYM bitstringTheory.word_bits_v2w, v2w_w2v] >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [w2w,
   wordsTheory.word_bits_def, fcpTheory.FCP_BETA, word_lsl_def] >>
-SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]);
+SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]
+QED
 
-val ExtendValue_Unsigned_32_REWR = prove (
-``(ExtendValue (w, ExtendType_UXTB, n) = (w2w ((w2w w):word8):word32) << n) /\
+Theorem ExtendValue_Unsigned_32_REWR[local]:
+  (ExtendValue (w, ExtendType_UXTB, n) = (w2w ((w2w w):word8):word32) << n) /\
   (ExtendValue (w, ExtendType_UXTH, n) = (w2w ((w2w w):word16):word32) << n) /\
-  (ExtendValue (w, ExtendType_UXTW, n) = (w << n))``,
-
+  (ExtendValue (w, ExtendType_UXTW, n) = (w << n))
+Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR,
   GSYM bitstringTheory.word_lsl_v2w] >>
 Q.SUBGOAL_THEN `w2v w = fixwidth (dimindex (:32)) (w2v w)` SUBST1_TAC >- (
@@ -716,15 +733,16 @@ REWRITE_TAC [GSYM bitstringTheory.word_bits_v2w, v2w_w2v] >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [w2w,
   wordsTheory.word_bits_def, fcpTheory.FCP_BETA, word_lsl_def] >>
-SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]);
+SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]
+QED
 
 
-val ExtendValue_Signed_REWR_aux = prove (
-``!n w. n < 64 ==> (dimindex(:'b) <= 64) ==> (
+Theorem ExtendValue_Signed_REWR_aux[local]:
+  !n w. n < 64 ==> (dimindex(:'b) <= 64) ==> (
 (v2w
    (sign_extend 64 (shiftl (field (MIN (dimindex(:'b)) (64 - n) - 1) 0 (w2v (w:word64))) n)):word64 =
- sw2sw ((w2w w):'b word) << n))``,
-
+ sw2sw ((w2w w):'b word) << n))
+Proof
 REPEAT STRIP_TAC >>
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR] >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
@@ -752,14 +770,15 @@ ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [GSYM lis
 Q.UNABBREV_TAC `m` >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [arithmeticTheory.MIN_DEF] >>
 CCONTR_TAC >>
-FULL_SIMP_TAC arith_ss [])
+FULL_SIMP_TAC arith_ss []
+QED
 
-val ExtendValue_Signed_32_REWR_aux = prove (
-``!n w. n < 32 ==> (dimindex(:'b) <= 32) ==> (
+Theorem ExtendValue_Signed_32_REWR_aux[local]:
+  !n w. n < 32 ==> (dimindex(:'b) <= 32) ==> (
 (v2w
    (sign_extend 32 (shiftl (field (MIN (dimindex(:'b)) (32 - n) - 1) 0 (w2v (w:word32))) n)):word32 =
- sw2sw ((w2w w):'b word) << n))``,
-
+ sw2sw ((w2w w):'b word) << n))
+Proof
 REPEAT STRIP_TAC >>
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR] >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
@@ -787,34 +806,37 @@ ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [GSYM lis
 Q.UNABBREV_TAC `m` >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [arithmeticTheory.MIN_DEF] >>
 CCONTR_TAC >>
-FULL_SIMP_TAC arith_ss [])
+FULL_SIMP_TAC arith_ss []
+QED
 
 
 
-val ExtendValue_Signed_REWR = prove (
-``(!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTB, n) = ((sw2sw ((w2w w):word8):word64) << n))) /\
+Theorem ExtendValue_Signed_REWR[local]:
+  (!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTB, n) = ((sw2sw ((w2w w):word8):word64) << n))) /\
   (!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTH, n) = ((sw2sw ((w2w w):word16):word64) << n))) /\
   (!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTW, n) = ((sw2sw ((w2w w):word32):word64) << n))) /\
-  (!w:word64 n. n < 64 ==> (ExtendValue (w, ExtendType_SXTX, n) = (w << n)))``,
-
+  (!w:word64 n. n < 64 ==> (ExtendValue (w, ExtendType_SXTX, n) = (w << n)))
+Proof
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:8``] ExtendValue_Signed_REWR_aux) >>
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:16``] ExtendValue_Signed_REWR_aux) >>
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:32``] ExtendValue_Signed_REWR_aux) >>
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:64``] ExtendValue_Signed_REWR_aux) >>
 
-FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]);
+FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]
+QED
 
 (* Used for W-registers *)
-val ExtendValue_Signed_32_REWR = prove (
-``(!w n. n < 32 ==> (ExtendValue (w, ExtendType_SXTB, n) = ((sw2sw ((w2w w):word8):word32) << n))) /\
+Theorem ExtendValue_Signed_32_REWR[local]:
+  (!w n. n < 32 ==> (ExtendValue (w, ExtendType_SXTB, n) = ((sw2sw ((w2w w):word8):word32) << n))) /\
   (!w n. n < 32 ==> (ExtendValue (w, ExtendType_SXTH, n) = ((sw2sw ((w2w w):word16):word32) << n))) /\
-  (!w:word32 n. n < 32 ==> (ExtendValue (w, ExtendType_SXTW, n) = (w << n)))``,
-
+  (!w:word32 n. n < 32 ==> (ExtendValue (w, ExtendType_SXTW, n) = (w << n)))
+Proof
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:8``] ExtendValue_Signed_32_REWR_aux) >>
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:16``] ExtendValue_Signed_32_REWR_aux) >>
 ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:32``] ExtendValue_Signed_32_REWR_aux) >>
 
-FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]);
+FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]
+QED
 
 
 val ExtendValue_REWRS = save_thm ("ExtendValue_REWRS", let
@@ -933,8 +955,8 @@ QED
 
 
 
-val arm8_movk_fold_base_r = prove (
-``!n (w:'a word).
+Theorem arm8_movk_fold_base_r[local]:
+  !n (w:'a word).
    (FINITE univ(:'b)) ==>
    (FINITE univ(:'c)) ==>
    (dimindex (:'c) <= dimindex (:'a)) ==>
@@ -944,7 +966,7 @@ val arm8_movk_fold_base_r = prove (
     (((((dimindex (:'a) - 1) >< (dimindex (:'c))) w):'b word) @@ ((n2w n):'c word)):'a word =
      ((w && ~(n2w (2 ** (dimindex (:'c)) - 1))) || n2w (n MOD 2 ** (dimindex (:'c))))
    )
-``,
+Proof
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 REWRITE_TAC [GSYM wordsTheory.WORD_AND_EXP_SUB1] >>
 Q.ABBREV_TAC `ii = (2:num) ** (dimindex (:'c))` >>
@@ -960,11 +982,11 @@ REPEAT STRIP_TAC >>
 ASM_SIMP_TAC std_ss [] >>
 Cases_on `i < (dimindex (:'c))` >> ASM_SIMP_TAC arith_ss [] >>
 ASM_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [word_index]
-);
+QED
 
 
-val arm8_movk_16_fold_base_l = prove (
-``!n (w:'a word).
+Theorem arm8_movk_16_fold_base_l[local]:
+  !n (w:'a word).
    (FINITE univ(:'b)) ==>
    (16 <= dimindex (:'a)) ==>
    (dimindex (:'b) = dimindex (:'a) - 16) ==>
@@ -975,7 +997,7 @@ val arm8_movk_16_fold_base_l = prove (
      =
      ( ((n2w (n MOD 2 ** 16)) << (dimindex (:'a) - 16)) || (w && ~((n2w ((2 ** 16) - 1)) << (dimindex (:'a) - 16)) ) )
    )
-``,
+Proof
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 REWRITE_TAC [GSYM wordsTheory.WORD_AND_EXP_SUB1] >>
 Q.ABBREV_TAC `ii = (2:num) ** 16` >>
@@ -999,10 +1021,10 @@ Cases_on `i < dimindex (:'a) − 16` >> ASM_SIMP_TAC arith_ss [] >>
 
 Q.UNABBREV_TAC `ia`  >>
 ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA, n2w_def]
-);
+QED
 
-val arm8_movk_16_fold_base_m = prove (
-``!n (w:'a word).
+Theorem arm8_movk_16_fold_base_m[local]:
+  !n (w:'a word).
    FINITE univ(:'b) ==>
    FINITE univ(:'c) ==>
    FINITE univ(:'d) ==>
@@ -1017,7 +1039,7 @@ val arm8_movk_16_fold_base_m = prove (
       =
       ( (w && ((n2w (2 ** (dimindex (:'b)) - 1)) << (dimindex (:'d)))) || ((n2w (n MOD 2 ** 16)) << (dimindex (:'c))) || (w && (n2w (2 ** (dimindex (:'c)) - 1))) )
    )
-``,
+Proof
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 REWRITE_TAC [GSYM wordsTheory.WORD_AND_EXP_SUB1] >>
 Q.ABBREV_TAC `ii = (2:num) ** 16` >>
@@ -1059,7 +1081,7 @@ ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA, n2w_def] >>
 
 Q.UNABBREV_TAC `ii`  >>
 ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA, n2w_def, bitTheory.BIT_EXP_SUB1]
-);
+QED
 
 
 
@@ -1159,12 +1181,12 @@ REWRITE_TAC [arm8_count_leading_eq_bir,
                bir_word_countleadingsigns_def]
 QED
 
-val cast_thm = prove (``
+Theorem cast_thm[local]:
   !n. w2w (n2w n :word32) = (n2w (BITS 31 0 n) :word64)
-``,
-  REWRITE_TAC [wordsTheory.w2w_def, wordsTheory.w2n_n2w, bitTheory.BITS_ZERO3] >>
+Proof
+REWRITE_TAC [wordsTheory.w2w_def, wordsTheory.w2n_n2w, bitTheory.BITS_ZERO3] >>
   SIMP_TAC (arith_ss++wordsLib.SIZES_ss) []
-);
+QED
 
 Theorem arm8_count_leading_zero_32:
   !w:word32. (n2w (BITS 31 0 (arm8$CountLeadingZeroBits w)) :word64) = w2w (bir_word_countleadingzeros w)

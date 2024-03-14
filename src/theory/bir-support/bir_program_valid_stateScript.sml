@@ -254,29 +254,37 @@ QED
    bir_is_valid_state is an invariant
    ------------------------------------------------------------------------- *)
 
-val bir_exec_stmtB_well_typed_env_assign = prove (
-  ``!st v ex. bir_is_well_typed_env st.bst_environ ==>
-              bir_is_well_typed_env (bir_exec_stmt_assign v ex st).bst_environ``,
-METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
+Theorem bir_exec_stmtB_well_typed_env_assign[local]:
+  !st v ex. bir_is_well_typed_env st.bst_environ ==>
+              bir_is_well_typed_env (bir_exec_stmt_assign v ex st).bst_environ
+Proof
+METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]
+QED
 
 
-val bir_exec_stmtB_well_typed_env_assert = prove (
-  ``!st ex. bir_is_well_typed_env st.bst_environ ==>
-            bir_is_well_typed_env (bir_exec_stmt_assert ex st).bst_environ``,
-METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
+Theorem bir_exec_stmtB_well_typed_env_assert[local]:
+  !st ex. bir_is_well_typed_env st.bst_environ ==>
+            bir_is_well_typed_env (bir_exec_stmt_assert ex st).bst_environ
+Proof
+METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]
+QED
 
 
-val bir_exec_stmtB_well_typed_env_assume = prove (
-  ``!st ex. bir_is_well_typed_env st.bst_environ ==>
-            bir_is_well_typed_env (bir_exec_stmt_assume ex st).bst_environ``,
-METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
+Theorem bir_exec_stmtB_well_typed_env_assume[local]:
+  !st ex. bir_is_well_typed_env st.bst_environ ==>
+            bir_is_well_typed_env (bir_exec_stmt_assume ex st).bst_environ
+Proof
+METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]
+QED
 
 
-val bir_exec_stmtB_well_typed_env_observe = prove (
-  ``!st el ec.
+Theorem bir_exec_stmtB_well_typed_env_observe[local]:
+  !st el ec.
       bir_is_well_typed_env st.bst_environ ==>
-      bir_is_well_typed_env (bir_exec_stmt_observe_state ec el st).bst_environ``,
-METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
+      bir_is_well_typed_env (bir_exec_stmt_observe_state ec el st).bst_environ
+Proof
+METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]
+QED
 
 
 Theorem bir_exec_stmtB_well_typed_env:
@@ -344,16 +352,19 @@ REPEAT STRIP_TAC >> CASE_TAC >> (
 QED
 
 
-val bir_exec_stmtE_valid_pc_jmp = prove (
-  ``!p st l. bir_is_valid_pc p st.bst_pc ==>
-             bir_is_valid_pc p (bir_exec_stmtE p (BStmt_Jmp l) st).bst_pc``,
-SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_jmp_valid_pc]);
+Theorem bir_exec_stmtE_valid_pc_jmp[local]:
+  !p st l. bir_is_valid_pc p st.bst_pc ==>
+             bir_is_valid_pc p (bir_exec_stmtE p (BStmt_Jmp l) st).bst_pc
+Proof
+SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_jmp_valid_pc]
+QED
 
 
-val bir_exec_stmtE_valid_pc_cjmp = prove (
-  ``!p st ex l1 l2.
+Theorem bir_exec_stmtE_valid_pc_cjmp[local]:
+  !p st ex l1 l2.
        bir_is_valid_pc p st.bst_pc ==>
-       bir_is_valid_pc p (bir_exec_stmtE p (BStmt_CJmp ex l1 l2) st).bst_pc``,
+       bir_is_valid_pc p (bir_exec_stmtE p (BStmt_CJmp ex l1 l2) st).bst_pc
+Proof
 SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_cjmp_def] >>
 REPEAT STRIP_TAC >>
 Cases_on `option_CASE (bir_eval_exp ex st.bst_environ) NONE bir_dest_bool_val` >- (
@@ -364,19 +375,20 @@ Cases_on `option_CASE (bir_eval_exp ex st.bst_environ) NONE bir_dest_bool_val` >
 rename1 `SOME c` >>
 Cases_on `c` >> (
   ASM_SIMP_TAC std_ss [bir_exec_stmt_jmp_valid_pc, LET_DEF]
-));
+)
+QED
 
 
-val bir_exec_stmtE_valid_pc_halt = prove (
-  ``!p st ex.  bir_is_valid_pc p st.bst_pc ==>
+Theorem bir_exec_stmtE_valid_pc_halt[local]:
+  !p st ex.  bir_is_valid_pc p st.bst_pc ==>
                bir_is_valid_pc p (bir_exec_stmtE p (BStmt_Halt ex) st).bst_pc
-``,
-  SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def, bir_exec_stmt_halt_def] >>
+Proof
+SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def, bir_exec_stmt_halt_def] >>
   REPEAT STRIP_TAC >>
   Cases_on `bir_eval_exp ex st.bst_environ` >> (
     ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_set_typeerror_def, LET_DEF]
   )
-);
+QED
 
 
 Theorem bir_exec_stmtE_valid_pc:

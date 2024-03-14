@@ -447,17 +447,17 @@ REPEAT CASE_TAC >> FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
 
-val bir_exec_stmtB_status_typeerror_cond_exp_aux = prove (
- ``!v. (type_of_bir_val v = BType_Bool) <=>
+Theorem bir_exec_stmtB_status_typeerror_cond_exp_aux[local]:
+  !v. (type_of_bir_val v = BType_Bool) <=>
        (case bir_dest_bool_val v of
          | NONE => F
-         | SOME _ => T)``,
-
+         | SOME _ => T)
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [GSYM bir_val_checker_TO_type_of,
   optionTheory.option_case_compute] >>
 METIS_TAC[bir_dest_bool_val_EQ_NONE, optionTheory.option_CLAUSES]
-);
+QED
 
 
 Theorem bir_exec_stmtB_status_typeerror_Assert:

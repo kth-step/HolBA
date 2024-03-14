@@ -240,10 +240,13 @@ Definition bir_cast_def:
   bir_cast r s = n2bs (b2n r) s
 End
 
-val bir_cast_REWRS0_aux = prove (``!s1 s (w:'a word).
+Theorem bir_cast_REWRS0_aux[local]:
+  !s1 s (w:'a word).
   (size_of_bir_immtype s1 = dimindex (:'a)) ==>
-  (bir_cast (w2bs w s1) s = w2bs w s)``,
-SIMP_TAC std_ss [bir_cast_def, w2bs_def, b2n_n2bs, w2n_MOD_2EXP_ID]);
+  (bir_cast (w2bs w s1) s = w2bs w s)
+Proof
+SIMP_TAC std_ss [bir_cast_def, w2bs_def, b2n_n2bs, w2n_MOD_2EXP_ID]
+QED
 
 val bir_cast_REWRS0 = save_thm ("bir_cast_REWRS0",
   REWRITE_RULE [w2bs_REWRS, w2w_id] (LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex
@@ -327,13 +330,15 @@ QED
 
 
 
-val bir_hcast_REWRS_aux = prove (``!s1 s2 (w:'a word).
+Theorem bir_hcast_REWRS_aux[local]:
+  !s1 s2 (w:'a word).
   (size_of_bir_immtype s1 = dimindex (:'a)) ==>
   (size_of_bir_immtype s2 = dimindex (:'b)) ==>
-  (bir_hcast (w2bs w s1) s2 = w2bs ((w2wh w):'b word) s2)``,
-
+  (bir_hcast (w2bs w s1) s2 = w2bs ((w2wh w):'b word) s2)
+Proof
 SIMP_TAC std_ss [bir_hcast_def, type_of_w2bs, w2bs_def, w2n_w2wh,
-  b2n_n2bs, w2n_MOD_2EXP_ID]);
+  b2n_n2bs, w2n_MOD_2EXP_ID]
+QED
 
 
 val bir_hcast_REWRS = save_thm ("bir_hcast_REWRS", let
@@ -360,15 +365,17 @@ Definition bir_scast_def:
 End
 
 
-val bir_scast_REWRS_aux = prove (``!s1 s2 (w:'a word).
+Theorem bir_scast_REWRS_aux[local]:
+  !s1 s2 (w:'a word).
   (size_of_bir_immtype s1 = dimindex (:'a)) ==>
   (size_of_bir_immtype s2 = dimindex (:'b)) ==>
-  (bir_scast (w2bs w s1) s2 = w2bs (if (s1 = Bit1) then (w2w w) else (sw2sw w):'b word) s2)``,
-
+  (bir_scast (w2bs w s1) s2 = w2bs (if (s1 = Bit1) then (w2w w) else (sw2sw w):'b word) s2)
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_scast_def, type_of_w2bs, w2bs_def, w2w_def,
   b2n_n2bs, w2n_MOD_2EXP_ID, wordsTheory.sw2sw_def, w2n_n2w, wordsTheory.dimword_def,
   GSYM bitTheory.MOD_2EXP_def] >>
-METIS_TAC[n2bs_MOD_size_of_bir_immtype]);
+METIS_TAC[n2bs_MOD_size_of_bir_immtype]
+QED
 
 
 val bir_scast_REWRS = save_thm ("bir_scast_REWRS", let

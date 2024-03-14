@@ -255,17 +255,17 @@ QED
 (* BIR (~a \/ b) is equivalent to HOL material conditional
  * a ==> b  provided the variables in a and b are initialised and
  * the subexpressions are Boolean. *)
-val bir_vars_init_not = prove(
-  ``!ex. (bir_vars_of_exp ex) =
+Theorem bir_vars_init_not[local]:
+  !ex. (bir_vars_of_exp ex) =
          (bir_vars_of_exp (BExp_UnaryExp BIExp_Not ex))
-  ``,
-  SIMP_TAC std_ss [bir_vars_of_exp_def]
-);
-val bir_is_bool_exp_not = prove(
-  ``!ex. (bir_is_bool_exp ex) =
+Proof
+SIMP_TAC std_ss [bir_vars_of_exp_def]
+QED
+Theorem bir_is_bool_exp_not[local]:
+  !ex. (bir_is_bool_exp ex) =
          (bir_is_bool_exp (BExp_UnaryExp BIExp_Not ex))
-  ``,
-  SIMP_TAC std_ss [bir_is_bool_exp_def, type_of_bir_exp_def] >>
+Proof
+SIMP_TAC std_ss [bir_is_bool_exp_def, type_of_bir_exp_def] >>
   Cases_on `type_of_bir_exp ex` >| [
     SIMP_TAC std_ss [],
     rename1 `SOME x` >>
@@ -279,7 +279,7 @@ val bir_is_bool_exp_not = prove(
       SIMP_TAC (std_ss++holBACore_ss) [bir_type_is_Imm_def]
     ]
   ]
-);
+QED
 
 (***************)
 (* Implication *)

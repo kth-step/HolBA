@@ -540,16 +540,17 @@ Cases >> SIMP_TAC std_ss [OPT_NUM_PRE_def, OPT_NUM_SUC_def]
 QED
 
 
-val OPT_NUM_MIN_SOME_SUC_aux = prove (
-``(!no n. (OPT_NUM_MIN no (SOME (SUC n))) = if (no = SOME 0) then SOME 0 else
-     SOME (SUC (THE (OPT_NUM_MIN (OPT_NUM_PRE no) (SOME n)))))``,
-
+Theorem OPT_NUM_MIN_SOME_SUC_aux[local]:
+  (!no n. (OPT_NUM_MIN no (SOME (SUC n))) = if (no = SOME 0) then SOME 0 else
+     SOME (SUC (THE (OPT_NUM_MIN (OPT_NUM_PRE no) (SOME n)))))
+Proof
 Cases >> (
   SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, arithmeticTheory.MIN_DEF, OPT_NUM_PRE_def]
 ) >>
 GEN_TAC >>
 rename1 `x < SUC n` >>
-Cases_on `x` >> SIMP_TAC arith_ss []);
+Cases_on `x` >> SIMP_TAC arith_ss []
+QED
 
 
 val OPT_NUM_MIN_SOME_SUC = save_thm ("OPT_NUM_MIN_SOME_SUC",
@@ -557,10 +558,10 @@ val OPT_NUM_MIN_SOME_SUC = save_thm ("OPT_NUM_MIN_SOME_SUC",
        (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_SOME_SUC_aux));
 
 
-val OPT_NUM_MIN_OPT_NUM_SUC_aux = prove (
-``(!no1 no2. (OPT_NUM_MIN no1 (OPT_NUM_SUC no2)) = if (no1 = SOME 0) then SOME 0 else
-     OPT_NUM_SUC (OPT_NUM_MIN (OPT_NUM_PRE no1) no2))``,
-
+Theorem OPT_NUM_MIN_OPT_NUM_SUC_aux[local]:
+  (!no1 no2. (OPT_NUM_MIN no1 (OPT_NUM_SUC no2)) = if (no1 = SOME 0) then SOME 0 else
+     OPT_NUM_SUC (OPT_NUM_MIN (OPT_NUM_PRE no1) no2))
+Proof
 Cases_on `no2` >- (
   Cases_on `no1` >> (
     SIMP_TAC std_ss [OPT_NUM_SUC_def, OPT_NUM_PRE_def, OPT_NUM_MIN_REWRS]
@@ -570,7 +571,8 @@ Cases_on `no2` >- (
 SIMP_TAC std_ss [OPT_NUM_SUC_def, OPT_NUM_MIN_SOME_SUC] >>
 Cases_on `no1` >> (
    SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, OPT_NUM_PRE_def, OPT_NUM_SUC_def]
-));
+)
+QED
 
 val OPT_NUM_MIN_OPT_NUM_SUC = save_thm ("OPT_NUM_MIN_OPT_NUM_SUC",
   CONJ OPT_NUM_MIN_OPT_NUM_SUC_aux
@@ -1145,12 +1147,13 @@ Definition FRESH_INDEXED_STRINGS_def:
 End
 
 
-val FRESH_INDEXED_STRING_AUX_PROPS = prove (``!s pre n i.
+Theorem FRESH_INDEXED_STRING_AUX_PROPS[local]:
+  !s pre n i.
   FINITE s ==>
   let i = FRESH_INDEXED_STRING_AUX pre n s in
   (n <= i) /\ ~(FRESH_INDEXED_STRING_MK pre i IN s) /\
-  (!i'. (n <= i' /\ i' < i) ==> ((FRESH_INDEXED_STRING_MK pre i') IN s))``,
-
+  (!i'. (n <= i' /\ i' < i) ==> ((FRESH_INDEXED_STRING_MK pre i') IN s))
+Proof
 SIMP_TAC std_ss [LET_THM, FRESH_INDEXED_STRING_AUX_def] >>
 REPEAT GEN_TAC >> STRIP_TAC >>
 numLib.LEAST_ELIM_TAC >>
@@ -1171,7 +1174,8 @@ Q.ABBREV_TAC `S2 = (IMAGE (FRESH_INDEXED_STRING_MK pre) S1)` >>
 `?ns. ns IN S2 /\ ~(ns IN s)` by METIS_TAC[pred_setTheory.IN_INFINITE_NOT_FINITE] >>
 UNABBREV_ALL_TAC >>
 FULL_SIMP_TAC arith_ss [IN_IMAGE, IN_DIFF, IN_COUNT, IN_UNIV, arithmeticTheory.NOT_LESS] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 

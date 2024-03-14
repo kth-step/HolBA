@@ -424,13 +424,13 @@ REPEAT CONJ_TAC >> (
 QED
 
 
-val type_of_bir_exp_NOT_SOME_Imm = prove(
-  ``!ex env. 
+Theorem type_of_bir_exp_NOT_SOME_Imm[local]:
+  !ex env. 
     (!ity. type_of_bir_exp ex <> SOME (BType_Imm ity)) ==>
     (?aty vty. (type_of_bir_exp ex = SOME (BType_Mem aty vty)) \/
      (type_of_bir_exp ex = NONE)
-    )``,
-
+    )
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `type_of_bir_exp ex` >> (
   FULL_SIMP_TAC (std_ss) []
@@ -438,10 +438,10 @@ Cases_on `type_of_bir_exp ex` >> (
 Cases_on `x` >> (
   FULL_SIMP_TAC (std_ss++bir_type_ss) []
 )
-);
+QED
 
-val type_of_2bir_exp_NOT_SOME_Imm = prove(
-  ``!ex ex'. 
+Theorem type_of_2bir_exp_NOT_SOME_Imm[local]:
+  !ex ex'. 
     (!ity.
      type_of_bir_exp ex <> SOME (BType_Imm ity) \/
      type_of_bir_exp ex' <> SOME (BType_Imm ity)) ==>
@@ -454,8 +454,8 @@ val type_of_2bir_exp_NOT_SOME_Imm = prove(
       (type_of_bir_exp ex' = SOME (BType_Imm ity'')) /\
       (ity' <> ity'')
      )
-    )``,
-
+    )
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `type_of_bir_exp ex` >> (
   FULL_SIMP_TAC std_ss []
@@ -466,7 +466,7 @@ Cases_on `type_of_bir_exp ex'` >> (
 Cases_on `x` >> Cases_on `x'` >> (
   FULL_SIMP_TAC (std_ss++bir_type_ss) []
 )
-);
+QED
 
 Theorem bir_type_of_bir_exp_NONE:
   !ex env.

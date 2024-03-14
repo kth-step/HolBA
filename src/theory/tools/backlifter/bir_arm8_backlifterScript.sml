@@ -343,11 +343,11 @@ Definition default_arm8_bir_state_def:
 End
 
 
-val default_arm8_bir_state_satisfies_rel_thm = prove(
-  ``!ms.
+Theorem default_arm8_bir_state_satisfies_rel_thm[local]:
+  !ms.
     arm8_bmr.bmr_extra ms ==>
-    bmr_rel arm8_bmr (default_arm8_bir_state ms) ms``,
-
+    bmr_rel arm8_bmr (default_arm8_bir_state ms) ms
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [default_arm8_bir_state_def,
   bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
@@ -365,17 +365,17 @@ FULL_SIMP_TAC std_ss [bir_valuesTheory.type_of_bir_val_def,
 FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_extra_ARM8] >>
 FULL_SIMP_TAC (srw_ss()) [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm] >>
 METIS_TAC []
-);
+QED
 
 
-val exist_bir_of_arm8_thm = prove(
-  ``!ms vars.
+Theorem exist_bir_of_arm8_thm[local]:
+  !ms vars.
     arm8_wf_varset vars ==>
     arm8_bmr.bmr_extra ms ==>
     ?bs.
       (bmr_rel arm8_bmr bs ms /\ (bs.bst_status = BST_Running) /\
-       bir_env_vars_are_initialised bs.bst_environ vars)``,
-
+       bir_env_vars_are_initialised bs.bst_environ vars)
+Proof
 REPEAT STRIP_TAC >> 
 EXISTS_TAC ``default_arm8_bir_state ms`` >>
 ASSUME_TAC (SPEC ``ms:arm8_state`` default_arm8_bir_state_satisfies_rel_thm) >>
@@ -397,17 +397,17 @@ EVAL_TAC  >>
 FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_t_11,
                       bir_immTheory.type_of_bir_imm_def,
                       bir_valuesTheory.type_of_bir_val_EQ_ELIMS]
-);
+QED
 
 
-val set_of_address_in_all_address_labels_thm = prove (
-  ``!l adds.
+Theorem set_of_address_in_all_address_labels_thm[local]:
+  !l adds.
     l IN {BL_Address (Imm64 ml') | ml' IN adds} ==>
-    l IN {l | IS_BL_Address l}``,
-
+    l IN {l | IS_BL_Address l}
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS_BL_Address_def]
-);
+QED
 
 
 Theorem bir_exec_to_labels_TO_exec_to_addr_label_n:
@@ -443,9 +443,8 @@ QED
 
 
 (* Just a version of bir_is_lifted_prog_MULTI_STEP_EXEC phrased in a more handy way *)
-val bir_is_lifted_prog_MULTI_STEP_EXEC_compute =
-  prove(
-  ``!mu bs bs' ms ml (p:'a bir_program_t) (r:(64, 8, 'b) bir_lifting_machine_rec_t)
+Theorem bir_is_lifted_prog_MULTI_STEP_EXEC_compute[local]:
+  !mu bs bs' ms ml (p:'a bir_program_t) (r:(64, 8, 'b) bir_lifting_machine_rec_t)
       mms n' lo c_st c_addr_labels.
     bir_is_lifted_prog r mu mms p ==>
     bmr_rel r bs ms ==>
@@ -463,8 +462,7 @@ val bir_is_lifted_prog_MULTI_STEP_EXEC_compute =
     (bs'.bst_pc = bir_block_pc (BL_Address li)) /\
     MEM (BL_Address li) (bir_labels_of_program p) /\
     bmr_rel r bs' ms'
-``,
-
+Proof
 REPEAT STRIP_TAC >>
 ASSUME_TAC (ISPECL [``r:(64, 8, 'b) bir_lifting_machine_rec_t``, ``mu:64 word_interval_t``,
                     ``mms:(word64# word8 list) list``,
@@ -472,25 +470,25 @@ ASSUME_TAC (ISPECL [``r:(64, 8, 'b) bir_lifting_machine_rec_t``, ``mu:64 word_in
 REV_FULL_SIMP_TAC std_ss [] >>
 QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
-);
+QED
 
 
-val bir_arm8_block_pc = prove(
-  ``!bs ms ml.
+Theorem bir_arm8_block_pc[local]:
+  !bs ms ml.
     bmr_rel arm8_bmr bs ms ==>
     (arm_ts.ctrl ms = ml) ==>
     (bs.bst_status = BST_Running) ==>
-    (bs.bst_pc = bir_block_pc (BL_Address (Imm64 ml)))``,
-
+    (bs.bst_pc = bir_block_pc (BL_Address (Imm64 ml)))
+Proof
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS)
   [arm8_bmr_rel_EVAL, bir_block_pc_def, arm_ts_def]
-);
+QED
 
 
-val bir_get_ht_conseq_from_m_ante = prove(
-  ``!bs p bpre bpost mpre ms ml mls.
+Theorem bir_get_ht_conseq_from_m_ante[local]:
+  !bs p bpre bpost mpre ms ml mls.
     bir_cont p bir_exp_true (BL_Address (Imm64 ml))
       {BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
     bir_pre_arm8_to_bir mpre bpre ==>
@@ -505,8 +503,8 @@ val bir_get_ht_conseq_from_m_ante = prove(
        SOME bs') /\
      (bir_eval_exp (bpost bs'.bst_pc.bpc_label) bs'.bst_environ =
        SOME bir_val_true)
-    )``,
-
+    )
+Proof
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
@@ -525,10 +523,11 @@ FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
    bir_bool_expTheory.bir_is_bool_exp_env_REWRS,
    bir_block_pc_def] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
-val bir_arm8_exec_in_end_label_set = prove(
-  ``!c_addr_labels ms' bs bs' mls p n n' lo li.
+
+Theorem bir_arm8_exec_in_end_label_set[local]:
+  !c_addr_labels ms' bs bs' mls p n n' lo li.
     (* Execution from BIR HT *)
     (bir_exec_to_addr_label_n p bs n' = BER_Ended lo n c_addr_labels bs') ==>
     (n' > 0) ==>
@@ -539,8 +538,8 @@ val bir_arm8_exec_in_end_label_set = prove(
     (* BMR relation between the final states *)
     bmr_rel arm8_bmr bs' ms' ==>
     c_addr_labels > 0 /\
-    ms'.PC IN mls``,
-
+    ms'.PC IN mls
+Proof
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 subgoal `c_addr_labels > 0` >- (
@@ -562,10 +561,62 @@ subgoal `ms'.PC IN mls` >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
-val bir_arm8_inter_exec = prove(
-  ``!n' c_addr_labels n0 ms ml mls bs bs' p lo l c_st n mu mms.
+
+Theorem bir_arm8_inter_exec_notin_end_label_set[local]:
+  !mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
+    (bir_exec_to_labels {BL_Address (Imm64 ml') | ml' IN mls} p bs =
+       BER_Ended l c_st n0 bs') ==>
+    (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
+    c_st' < c_st ==>
+    n'' > 0 ==>
+    ~bir_state_is_terminated bs'' ==>
+    bs''.bst_pc.bpc_label NOTIN
+      {BL_Address (Imm64 ml') | ml' IN mls}
+Proof
+REPEAT STRIP_TAC >>
+(* NOTE: The number of taken statement steps is c_st for both the to-label execution
+ * and the to-addr-label-execution. *)
+(* The number of PCs counted (= in mls) at c_st' statement steps must be 0. *)
+subgoal `~bir_state_COUNT_PC (F,
+	  (\pc.
+	       (pc.bpc_index = 0) /\
+	       pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls}))
+	      (bir_exec_infinite_steps_fun p bs c_st')` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
+			bir_exec_steps_GEN_SOME_EQ_Ended] >>
+  (* Ergo, at c_st' statement steps, the PC label is not in mls, which follows after
+   * some arithmetic. *)
+  QSPECL_X_ASSUM ``!(n:num). (n < c_st) ==> _`` [`c_st'`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  subgoal `c_st' > 0` >- (
+    METIS_TAC [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def,
+	       bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps,
+	       bir_state_is_terminated_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ, bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+  QSPECL_X_ASSUM ``!j. _`` [`PRE c_st'`] >>
+  SUBGOAL_THEN ``SUC (PRE (c_st':num)) = c_st'`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  METIS_TAC [NUM_PRE_LT]
+) >>
+(* So either PC at c_st' statement steps has index 0, or it is not in mls.
+ * But PC has index 0... *)
+subgoal `bs''.bst_pc.bpc_index = 0` >- (
+  METIS_TAC [bir_exec_to_addr_label_n_ended_running, bir_state_is_terminated_def]
+) >>
+(* ... which proves the goal, after some identification of states. *)
+FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_exec_to_addr_label_n_def,
+		      bir_exec_to_labels_n_def,
+		      bir_exec_steps_GEN_SOME_EQ_Ended] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
+QED
+
+
+Theorem bir_arm8_inter_exec[local]:
+  !n' c_addr_labels n0 ms ml mls bs bs' p lo l c_st n mu mms.
     bir_is_lifted_prog arm8_bmr mu mms p ==>
     EVERY (bmr_ms_mem_contains arm8_bmr ms) mms ==>
     (arm_ts.ctrl ms = ml) ==>
@@ -581,8 +632,8 @@ val bir_arm8_inter_exec = prove(
        ?ms''.
 	 (FUNPOW_OPT arm8_bmr.bmr_step_fun n'' ms = SOME ms'') /\
 	 ms''.PC NOTIN mls
-    )``,
-
+    )
+Proof
 REPEAT STRIP_TAC >>
 (* The given number of address labels has been reached by bir_exec_to_addr_label_n when
  * resulting Ended state bs' is not terminated *)
@@ -643,7 +694,7 @@ subgoal `bs''.bst_pc = bir_block_pc (BL_Address (Imm64 ms''.PC))` >- (
 ) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS++pred_setLib.PRED_SET_ss)
   [bir_block_pc_def]
-);
+QED
 
 
 Theorem arm8_lift_contract_thm:

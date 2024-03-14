@@ -840,14 +840,14 @@ QED
 
 
 
-val bir_exec_steps_GEN_Ended_PROGRAM_EQ = prove (
-``!p1 p2 pc_cond st mo st' l c_st c_pc.
+Theorem bir_exec_steps_GEN_Ended_PROGRAM_EQ[local]:
+  !p1 p2 pc_cond st mo st' l c_st c_pc.
   bir_program_eq p1 p2 ==>
   bir_is_valid_labels p2 ==>
 
   (bir_exec_steps_GEN pc_cond p1 st mo = BER_Ended l c_st c_pc st') ==>
-  (bir_exec_steps_GEN pc_cond p2 st mo = BER_Ended l c_st c_pc st')``,
-
+  (bir_exec_steps_GEN pc_cond p2 st mo = BER_Ended l c_st c_pc st')
+Proof
 NTAC 3 GEN_TAC >>
 Induct_on `c_st` >- (
   SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended_0]
@@ -861,7 +861,8 @@ FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended_SUC,LET_THM] >>
 Q.ABBREV_TAC `mo' = (if bir_state_COUNT_PC pc_cond st'' then OPT_NUM_PRE mo else mo)` >>
 
 Q.PAT_X_ASSUM `!st'' mo'. _` (MP_TAC o Q.SPECL [`st''`, `mo'`]) >>
-ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []);
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
+QED
 
 
 

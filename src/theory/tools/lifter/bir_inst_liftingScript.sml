@@ -703,12 +703,12 @@ End
 (* Proving optimised thm *)
 (*-----------------------*)
 
-val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM = prove (
-``!r ms ms' imm_ups updates. bmr_ok r ==>
+Theorem bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM[local]:
+  !r ms ms' imm_ups updates. bmr_ok r ==>
    (bir_is_lifted_inst_block_COMPUTE_imm_ups_COND r ms ms' imm_ups updates <=>
     (bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
-     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates))``,
-
+     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates))
+Proof
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES_def,
   bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def,
   bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_def,
@@ -726,16 +726,17 @@ Cases_on `use_temp` >> (
   METIS_TAC[pairTheory.FST]
 ) >>
 FULL_SIMP_TAC std_ss [bir_machine_lifted_imm_OK_def] >>
-METIS_TAC[bir_is_temp_var_name_REWR]);
+METIS_TAC[bir_is_temp_var_name_REWR]
+QED
 
 
 
-val bir_is_lifted_inst_block_COMPUTE_mem_COND_THM = prove (
-``!r bs ms ms' mem_up updates. bmr_ok r ==>
+Theorem bir_is_lifted_inst_block_COMPUTE_mem_COND_THM[local]:
+  !r bs ms ms' mem_up updates. bmr_ok r ==>
    (bir_is_lifted_inst_block_COMPUTE_mem_COND r bs ms ms' mem_up updates <=>
     (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' mem_up /\
-     bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates))``,
-
+     bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates))
+Proof
 GEN_TAC >>
 Cases_on `r.bmr_mem` >> rename1 `BMLM mv lf` >>
 ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``: 'a option``]) [
@@ -751,26 +752,28 @@ Cases_on `use_temp` >> (
     bir_temp_var_REWRS]
 ) >>
 REV_FULL_SIMP_TAC std_ss [bmr_ok_def, bir_machine_lifted_mem_OK_def] >>
-METIS_TAC[bir_is_temp_var_name_REWR]);
+METIS_TAC[bir_is_temp_var_name_REWR]
+QED
 
 
-val bir_is_lifted_inst_block_COMPUTE_eup_COND_remove_var = prove (
-``!r eup eup_temp ms'.
+Theorem bir_is_lifted_inst_block_COMPUTE_eup_COND_remove_var[local]:
+  !r eup eup_temp ms'.
 bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms' ==>
 bir_is_lifted_inst_block_COMPUTE_eup_COND r
-  (if eup_temp then eup else bir_updateE_desc_remove_var eup) ms'``,
-
+  (if eup_temp then eup else bir_updateE_desc_remove_var eup) ms'
+Proof
 Cases_on `eup_temp` >> SIMP_TAC std_ss [] >>
 SIMP_TAC (std_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_def,
-   bir_updateE_desc_remove_var_REWRS]);
+   bir_updateE_desc_remove_var_REWRS]
+QED
 
 
-val bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_THM = prove (
-``!r bs eup ms'.
+Theorem bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_THM[local]:
+  !r bs eup ms'.
     bmr_ok r ==>
     bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r bs eup ms' ==>
-    bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms'``,
-
+    bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms'
+Proof
 REPEAT GEN_TAC >>
 FULL_SIMP_TAC list_ss [bmr_ok_def, bmr_varnames_distinct_def,
   bir_is_lifted_inst_block_COMPUTE_eup_COND_def, ALL_DISTINCT_APPEND,
@@ -794,12 +797,13 @@ REPEAT STRIP_TAC >- (
 Cases_on `r.bmr_mem` >> rename1 `BMLM mv lf_mem` >>
 FULL_SIMP_TAC (std_ss++bmr_ss) [] >>
 `MEM mv (bmr_vars r)` suffices_by METIS_TAC[] >>
-FULL_SIMP_TAC (list_ss++bmr_ss) [bmr_vars_def]);
+FULL_SIMP_TAC (list_ss++bmr_ss) [bmr_vars_def]
+QED
 
 
 
-val bir_is_lifted_inst_block_COMPUTE_updates_FULL_THM = prove (
-``!r bs ms ms' mem_up imm_ups eup eup_temp updates.
+Theorem bir_is_lifted_inst_block_COMPUTE_updates_FULL_THM[local]:
+  !r bs ms ms' mem_up imm_ups eup eup_temp updates.
      bmr_ok r ==>
      bmr_rel r bs ms ==>
      bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups ==>
@@ -809,8 +813,8 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_THM = prove (
 
      (bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates /\
       bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates /\
-      bir_update_block_desc_OK bs.bst_environ (if eup_temp then eup else bir_updateE_desc_remove_var eup) updates)``,
-
+      bir_update_block_desc_OK bs.bst_environ (if eup_temp then eup else bir_updateE_desc_remove_var eup) updates)
+Proof
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
 FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_updates_FULL_def] >>
 `!upd. MEM upd updates_imm ==>
@@ -1059,7 +1063,8 @@ REPEAT CONJ_TAC >- (
 ) >- (
   Cases_on `eup_temp` >> SIMP_TAC std_ss [bir_updateE_desc_remove_var_REWRS] >>
   METIS_TAC[]
-));
+)
+QED
 
 
 
@@ -1340,8 +1345,8 @@ Definition bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL_def:
 End
 
 
-val bir_is_lifted_inst_block_COMPUTE_updates_FULL_INTRO_raw = prove (
-``!r bs mem_up imm_ups all_var_names updates_imm update_mem_opt eup eup_temp.
+Theorem bir_is_lifted_inst_block_COMPUTE_updates_FULL_INTRO_raw[local]:
+  !r bs mem_up imm_ups all_var_names updates_imm update_mem_opt eup eup_temp.
 
       (bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs mem_up imm_ups all_var_names updates_imm update_mem_opt /\
 
@@ -1358,9 +1363,8 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_INTRO_raw = prove (
         bir_var_name v <> bir_var_name v')) ==>
 
 bir_is_lifted_inst_block_COMPUTE_updates_FULL
-  r bs mem_up imm_ups eup eup_temp (updates_imm ++ (option_CASE update_mem_opt [] (\x. [x])))``,
-
-
+  r bs mem_up imm_ups eup eup_temp (updates_imm ++ (option_CASE update_mem_opt [] (\x. [x])))
+Proof
 SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_updates_FULL_def,
   bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL_def, LET_THM] >>
 REPEAT STRIP_TAC >>
@@ -1372,7 +1376,8 @@ REPEAT STRIP_TAC >- (
   Cases_on `mem_up` >> FULL_SIMP_TAC list_ss []
 ) >> (
   METIS_TAC[]
-));
+)
+QED
 
 
 Definition bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS_def:

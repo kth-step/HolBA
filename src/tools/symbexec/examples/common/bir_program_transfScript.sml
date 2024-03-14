@@ -1098,9 +1098,8 @@ examples/tutorial/7-composition/tutorial_backliftingScript.sml
 
 (* TODO: stolen and adjusted/generalized from "bir_arm8_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute" *)
 (* =================================================================================== *)
-val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm =
-  prove(
-  ``!mu bs bs' ms mla (p:'a bir_program_t) (r:('c, 'd, 'b) bir_lifting_machine_rec_t)
+Theorem bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm[local]:
+  !mu bs bs' ms mla (p:'a bir_program_t) (r:('c, 'd, 'b) bir_lifting_machine_rec_t)
       mms n' lo c_st c_addr_labels.
     bir_is_lifted_prog r mu mms p ==>
     bmr_rel r bs ms ==>
@@ -1118,8 +1117,7 @@ val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm =
     (bs'.bst_pc = bir_block_pc (BL_Address li)) /\
     MEM (BL_Address li) (bir_labels_of_program p) /\
     bmr_rel r bs' ms'
-``,
-
+Proof
 REPEAT STRIP_TAC >>
 ASSUME_TAC (ISPECL [``r:('c, 'd, 'b) bir_lifting_machine_rec_t``, ``mu:'c word_interval_t``,
                     ``mms:(('c word)# ('d word) list) list``,
@@ -1127,7 +1125,7 @@ ASSUME_TAC (ISPECL [``r:('c, 'd, 'b) bir_lifting_machine_rec_t``, ``mu:'c word_i
 REV_FULL_SIMP_TAC std_ss [] >>
 bir_auxiliaryLib.QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_state_is_terminated_def]
-);
+QED
 
 val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_32_8_thm =
   INST_TYPE
@@ -1459,14 +1457,14 @@ open bir_auxiliaryLib;
 in
 
 (* TODO: copied and adjusted *)
-val set_of_address_in_all_address_labels_thm = prove (
-  ``!l adds.
+Theorem set_of_address_in_all_address_labels_thm[local]:
+  !l adds.
     l IN (IMAGE BL_Address adds) ==>
-    l IN {l | IS_BL_Address l}``,
-
+    l IN {l | IS_BL_Address l}
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS_BL_Address_def, IMAGE_DEF]
-);
+QED
 
 (* TODO: copied and adjusted "bir_arm8_backlifterTheory.bir_exec_to_labels_TO_exec_to_addr_label_n" *)
 Theorem bir_exec_to_labels_TO_exec_to_addr_label_n_GEN:
@@ -1531,14 +1529,14 @@ REPEAT STRIP_TAC >>
   METIS_TAC [bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts]
 QED
 
-val bir_exec_addr_label_n_NONZERO_labels = prove(
-  ``!c_addr_labels ms' bs bs' mls (p:'a bir_program_t) n n' lo li.
+Theorem bir_exec_addr_label_n_NONZERO_labels[local]:
+  !c_addr_labels ms' bs bs' mls (p:'a bir_program_t) n n' lo li.
     (* Execution from BIR HT *)
     (bir_exec_to_addr_label_n p bs n' = BER_Ended lo n c_addr_labels bs') ==>
     ~bir_state_is_terminated bs' ==>
     (n' > 0) ==>
-    c_addr_labels > 0``,
-
+    c_addr_labels > 0
+Proof
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 
@@ -1549,10 +1547,10 @@ REPEAT DISCH_TAC >>
     FULL_SIMP_TAC arith_ss []
   ) >>
   FULL_SIMP_TAC arith_ss []
-);
+QED
 
-val bir_m0_mod_exec_in_end_label_set = prove(
-  ``!ms' bs' mls li.
+Theorem bir_m0_mod_exec_in_end_label_set[local]:
+  !ms' bs' mls li.
     (bs'.bst_pc = bir_block_pc (BL_Address li)) ==>
     (bs'.bst_pc.bpc_label IN (IMAGE (\l. BL_Address (Imm32 l)) mls)) ==>
 
@@ -1560,8 +1558,8 @@ val bir_m0_mod_exec_in_end_label_set = prove(
     ~bir_state_is_terminated bs' ==>
     bmr_rel (m0_mod_bmr (F,T)) bs' ms' ==>
 
-    ms'.base.REG RName_PC IN mls``,
-
+    ms'.base.REG RName_PC IN mls
+Proof
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 
@@ -1575,18 +1573,18 @@ REPEAT DISCH_TAC >>
   REV_FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss)
     [bir_programTheory.bir_block_pc_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
 (* TODO: this is copied "bir_arm8_backlifterTheory.bir_arm8_inter_exec_notin_end_label_set" and adapted *)
-val bir_inter_exec_notin_end_label_set_GEN = prove(
-  ``!mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
+Theorem bir_inter_exec_notin_end_label_set_GEN[local]:
+  !mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
     (bir_exec_to_labels (IMAGE (\l. BL_Address l) mls) p bs = BER_Ended l c_st n0 bs') ==>
     (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
     c_st' < c_st ==>
     n'' > 0 ==>
     ~bir_state_is_terminated bs'' ==>
-    bs''.bst_pc.bpc_label NOTIN (IMAGE (\l. BL_Address l) mls)``,
-
+    bs''.bst_pc.bpc_label NOTIN (IMAGE (\l. BL_Address l) mls)
+Proof
 REPEAT STRIP_TAC >>
 (* NOTE: The number of taken statement steps is c_st for both the to-label execution
  * and the to-addr-label-execution. *)
@@ -1624,18 +1622,18 @@ FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_exec_to_addr_label_n_def,
 		      bir_exec_to_labels_n_def,
 		      bir_exec_steps_GEN_SOME_EQ_Ended] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
-);
+QED
 
-val bir_inter_exec_notin_end_label_set_m0 = prove(
-  ``!mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
+Theorem bir_inter_exec_notin_end_label_set_m0[local]:
+  !mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
     (bir_exec_to_labels (IMAGE (\l. BL_Address (Imm32 l)) mls) p bs = BER_Ended l c_st n0 bs') ==>
     (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
     c_st' < c_st ==>
     n'' > 0 ==>
     ~bir_state_is_terminated bs'' ==>
-    bs''.bst_pc.bpc_label NOTIN (IMAGE (\l. BL_Address (Imm32 l)) mls)``,
-
-  REPEAT STRIP_TAC >>
+    bs''.bst_pc.bpc_label NOTIN (IMAGE (\l. BL_Address (Imm32 l)) mls)
+Proof
+REPEAT STRIP_TAC >>
 
   `IMAGE (\l. BL_Address (Imm32 l)) mls = IMAGE BL_Address (IMAGE Imm32 mls)` by (
     FULL_SIMP_TAC std_ss [EXTENSION, IN_IMAGE] >>
@@ -1643,7 +1641,7 @@ val bir_inter_exec_notin_end_label_set_m0 = prove(
   ) >>
   FULL_SIMP_TAC std_ss [] >>
   METIS_TAC [bir_inter_exec_notin_end_label_set_GEN]
-);
+QED
 
 end;
 (* ================================================================================= *)

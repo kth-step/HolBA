@@ -271,7 +271,8 @@ End
 (* We will show theorems for the first and the second part of the block
    separately and then combine them *)
 
-val bir_update_blockB_SEM1 = prove (``!st c l updates.
+Theorem bir_update_blockB_SEM1[local]:
+  !st c l updates.
 
   (* the initial state is not terminated and the updates are fine in this
      states environment *)
@@ -294,8 +295,8 @@ val bir_update_blockB_SEM1 = prove (``!st c l updates.
 
   (* All other vars have still the same value *)
   (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_temp_var up)) updates) ==>
-        (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
-
+        (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))
+Proof
 NTAC 3 GEN_TAC >>
 listLib.SNOC_INDUCT_TAC >- (
   SIMP_TAC list_ss [bir_exec_stmtsB_REWRS]
@@ -384,13 +385,14 @@ subgoal `bir_exec_stmt_assign (bir_temp_var use_temp var) e st' =
 FULL_SIMP_TAC (std_ss++holBACore_ss) [DISJ_IMP_THM, FORALL_AND_THM,
   bir_temp_var_REWRS, bir_env_lookup_UPDATE, bir_env_read_UPDATE,
   bir_state_is_terminated_def, EVERY_MEM]
-);
+QED
 
 
 
 
 
-val bir_update_blockB_SEM2 = prove (``!st c l updates.
+Theorem bir_update_blockB_SEM2[local]:
+  !st c l updates.
 
 (* Now we only update the vars previously stored in a temp value. *)
 let updatesT = FILTER bir_updateB_desc_use_temp updates in
@@ -426,8 +428,8 @@ EVERY (\up.
 
 (* And all other vars remain unchanged *)
 (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_var up)) updatesT) ==>
-      (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
-
+      (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))
+Proof
 NTAC 3 GEN_TAC >>
 listLib.SNOC_INDUCT_TAC >- (
   SIMP_TAC list_ss [bir_exec_stmtsB_REWRS, LET_THM]
@@ -484,7 +486,7 @@ subgoal `bir_exec_stmt_assign var (BExp_Den (bir_temp_var T var)) st' =
 ) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def,
   bir_env_lookup_UPDATE, EVERY_MEM]
-);
+QED
 
 
 (* Now combine it! This is what we are really interested in. *)
@@ -1304,16 +1306,17 @@ FULL_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [IN_UNION, IN_INSERT, NOT_IN_
 QED
 
 
-val bir_changed_vars_of_update_assert_block_AUX = prove (
-``bir_changed_vars_of_block (((bir_update_assert_block l al eup dl)):'a bir_block_t) =
-  bir_changed_vars_of_block ((bir_update_block l eup dl):'a bir_block_t)``,
-
+Theorem bir_changed_vars_of_update_assert_block_AUX[local]:
+  bir_changed_vars_of_block (((bir_update_assert_block l al eup dl)):'a bir_block_t) =
+  bir_changed_vars_of_block ((bir_update_block l eup dl):'a bir_block_t)
+Proof
 SIMP_TAC (list_ss++bir_TYPES_ss) [bir_changed_vars_of_block_def, bir_update_block_def,
   bir_update_assert_block_def, IMAGE_UNION, BIGUNION_UNION] >>
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [EXTENSION, IN_UNION] >>
 SIMP_TAC list_ss [bir_assert_block_def, GSYM listTheory.LIST_TO_SET_MAP,
   MAP_MAP_o, combinTheory.o_DEF, bir_changed_vars_of_stmtB_def] >>
-SIMP_TAC std_ss [listTheory.LIST_TO_SET_MAP, IN_BIGUNION_IMAGE, NOT_IN_EMPTY]);
+SIMP_TAC std_ss [listTheory.LIST_TO_SET_MAP, IN_BIGUNION_IMAGE, NOT_IN_EMPTY]
+QED
 
 
 Theorem bir_changed_vars_of_update_assert_block:

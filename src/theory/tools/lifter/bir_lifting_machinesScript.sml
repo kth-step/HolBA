@@ -642,12 +642,14 @@ SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
   ``bmr_temp_vars arm8_bmr``);
 
-val arm8_bmr_varnames_distinct = prove (``
-  bmr_varnames_distinct arm8_bmr``,
+Theorem arm8_bmr_varnames_distinct[local]:
+  bmr_varnames_distinct arm8_bmr
+Proof
 SIMP_TAC std_ss [bmr_varnames_distinct_def,
   arm8_bmr_vars_EVAL, arm8_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
   APPEND] >>
-SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]
+QED
 
 
 Theorem arm8_bmr_OK:
@@ -790,12 +792,14 @@ SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
   ``bmr_temp_vars (m0_bmr (ef, sel))``);
 
-val m0_bmr_varnames_distinct = prove (``
-  bmr_varnames_distinct (m0_bmr (ef, sel))``,
+Theorem m0_bmr_varnames_distinct[local]:
+  bmr_varnames_distinct (m0_bmr (ef, sel))
+Proof
 SIMP_TAC std_ss [bmr_varnames_distinct_def,
   m0_bmr_vars_EVAL, m0_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
   APPEND] >>
-SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]
+QED
 
 
 Theorem m0_bmr_OK:
@@ -1060,15 +1064,15 @@ SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
 );
 
 (* The property of all varnames being distinct. *)
-val riscv_bmr_varnames_distinct = prove(
-``bmr_varnames_distinct riscv_bmr``,
-
+Theorem riscv_bmr_varnames_distinct[local]:
+  bmr_varnames_distinct riscv_bmr
+Proof
 SIMP_TAC std_ss [bmr_varnames_distinct_def,
                  riscv_bmr_vars_EVAL, riscv_bmr_temp_vars_EVAL,
                  MAP, bir_var_name_def,
                  APPEND] >>
 SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]
-);
+QED
 
 (* Theorem stating that the BIR machine record stored in riscv_bmr is
  * OK (in the sense of bmr_ok). *)
@@ -1236,12 +1240,14 @@ SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
   ``bmr_temp_vars (m0_mod_bmr (ef, sel))``);
 
-val m0_mod_bmr_varnames_distinct = prove (``
-  bmr_varnames_distinct (m0_mod_bmr (ef, sel))``,
+Theorem m0_mod_bmr_varnames_distinct[local]:
+  bmr_varnames_distinct (m0_mod_bmr (ef, sel))
+Proof
 SIMP_TAC std_ss [bmr_varnames_distinct_def,
   m0_mod_bmr_vars_EVAL, m0_mod_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
   APPEND] >>
-SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]
+QED
 
 
 Theorem m0_mod_bmr_OK:

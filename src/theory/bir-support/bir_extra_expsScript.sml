@@ -61,12 +61,15 @@ QED
 
 
 val align_AND_INTROS = save_thm ("align_AND_INTROS", let
-  val thm0 = prove (``!w:'a word p.
+Theorem thm0[local]:
+  !w:'a word p.
      (MEM p (COUNT_LIST (dimindex (:'a)))) ==> (0 < p) ==>
      (((w && n2w (dimword (:'a) - 2 ** p) = align p w)) /\
-      (((n2w (dimword (:'a) - 2 ** p) && w) = align p w)))``,
-   SIMP_TAC std_ss [alignmentTheory.align_bitwise_and, LSL_UINT_MAX] >>
-   METIS_TAC[wordsTheory.WORD_AND_COMM]);
+      (((n2w (dimword (:'a) - 2 ** p) && w) = align p w)))
+Proof
+SIMP_TAC std_ss [alignmentTheory.align_bitwise_and, LSL_UINT_MAX] >>
+   METIS_TAC[wordsTheory.WORD_AND_COMM]
+QED
 
   val words_sizes = List.map (fn sz => fcpLib.index_type (Arbnum.fromInt sz))
           bir_immSyntax.known_imm_sizes;
@@ -423,44 +426,46 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val word_reverse_8_32_ALT_DEF_aux = prove (
-``!w:word32. word_reverse_8_32 w = (w >>> 24) || (word_extract_byte (w >>> 8) 8) ||
-                                  (word_extract_byte (w << 8) 16) || (w << 24)``,
-
+Theorem word_reverse_8_32_ALT_DEF_aux[local]:
+  !w:word32. word_reverse_8_32 w = (w >>> 24) || (word_extract_byte (w >>> 8) 8) ||
+                                  (word_extract_byte (w << 8) 16) || (w << 24)
+Proof
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
   word_reverse_8_32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_byte_index, word_lsl_def, word_lsr_def] >>
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 val word_reverse_8_32_ALT_DEF = save_thm ("word_reverse_8_32_ALT_DEF",
   SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_32_ALT_DEF_aux);
 
 
-val word_reverse_8_64_ALT_DEF_aux = prove (
-``!w:word64. word_reverse_8_64 w = (w >>> 56) || (word_extract_byte (w >>> 40) 8) ||
+Theorem word_reverse_8_64_ALT_DEF_aux[local]:
+  !w:word64. word_reverse_8_64 w = (w >>> 56) || (word_extract_byte (w >>> 40) 8) ||
                                   (word_extract_byte (w >>> 24) 16) ||
                                   (word_extract_byte (w >>> 8) 24) ||
                                   (word_extract_byte (w << 8) 32) ||
                                   (word_extract_byte (w << 24) 40) ||
                                   (word_extract_byte (w << 40) 48) ||
-                                  (w << 56)``,
-
+                                  (w << 56)
+Proof
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
   word_reverse_8_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_byte_index, word_lsl_def, word_lsr_def] >>
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 
 val word_reverse_8_64_ALT_DEF = save_thm ("word_reverse_8_64_ALT_DEF",
   SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_64_ALT_DEF_aux);
 
 
-val word_reverse_8_128_ALT_DEF_aux = prove (
-``!w:word128. word_reverse_8_128 w = (w >>> 120) || (word_extract_byte (w >>> 104) 8) ||
+Theorem word_reverse_8_128_ALT_DEF_aux[local]:
+  !w:word128. word_reverse_8_128 w = (w >>> 120) || (word_extract_byte (w >>> 104) 8) ||
                                     (word_extract_byte (w >>> 88) 16)  ||
                                     (word_extract_byte (w >>> 72) 24)  ||
                                     (word_extract_byte (w >>> 56) 32)  ||
@@ -474,14 +479,15 @@ val word_reverse_8_128_ALT_DEF_aux = prove (
                                     (word_extract_byte (w <<  72) 96)  ||
                                     (word_extract_byte (w <<  88) 104) ||
                                     (word_extract_byte (w << 104) 112) ||
-                                    (w << 120)``,
-
+                                    (w << 120)
+Proof
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
   word_reverse_8_128_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_byte_index, word_lsl_def, word_lsr_def] >>
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 
 val word_reverse_8_128_ALT_DEF = save_thm ("word_reverse_8_128_ALT_DEF",
@@ -872,38 +878,40 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val word_reverse_16_64_ALT_DEF_aux = prove (
-``!w:word64. word_reverse_16_64 w = (w >>> 48) || (word_extract_16bit (w >>> 16) 16) ||
-                                  (word_extract_16bit (w << 16) 32) || (w << 48)``,
-
+Theorem word_reverse_16_64_ALT_DEF_aux[local]:
+  !w:word64. word_reverse_16_64 w = (w >>> 48) || (word_extract_16bit (w >>> 16) 16) ||
+                                  (word_extract_16bit (w << 16) 32) || (w << 48)
+Proof
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
   word_reverse_16_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_16bit_index, word_lsl_def, word_lsr_def] >>
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 
 val word_reverse_16_64_ALT_DEF = save_thm ("word_reverse_16_64_ALT_DEF",
   SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_16bit_def, word_lsl_n2w] word_reverse_16_64_ALT_DEF_aux);
 
 
-val word_reverse_16_128_ALT_DEF_aux = prove (
-``!w:word128. word_reverse_16_128 w = (w >>> 112) ||
+Theorem word_reverse_16_128_ALT_DEF_aux[local]:
+  !w:word128. word_reverse_16_128 w = (w >>> 112) ||
                                       (word_extract_16bit (w >>> 80) 16) ||
                                       (word_extract_16bit (w >>> 48) 32) ||
                                       (word_extract_16bit (w >>> 16) 48) ||
                                       (word_extract_16bit (w <<  16) 64) ||
                                       (word_extract_16bit (w <<  48) 80) ||
                                       (word_extract_16bit (w <<  80) 96) ||
-                                      (w << 112)``,
-
+                                      (w << 112)
+Proof
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
   word_reverse_16_128_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_16bit_index, word_lsl_def, word_lsr_def] >>
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 
 val word_reverse_16_128_ALT_DEF = save_thm ("word_reverse_16_128_ALT_DEF",
@@ -1154,18 +1162,19 @@ FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheo
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
-val word_reverse_32_128_ALT_DEF_aux = prove (
-``!w:word128. word_reverse_32_128 w = (w >>> 96) ||
+Theorem word_reverse_32_128_ALT_DEF_aux[local]:
+  !w:word128. word_reverse_32_128 w = (w >>> 96) ||
                                       (word_extract_32bit (w >>> 32) 32) ||
                                       (word_extract_32bit (w <<  32) 64) ||
-                                      (w << 96)``,
-
+                                      (w << 96)
+Proof
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
   word_reverse_32_128_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_32bit_index, word_lsl_def, word_lsr_def] >>
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 val word_reverse_32_128_ALT_DEF = save_thm ("word_reverse_32_128_ALT_DEF",
   SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_32bit_def, word_lsl_n2w] word_reverse_32_128_ALT_DEF_aux);
@@ -1481,14 +1490,17 @@ QED
 (* word_lsb *)
 (************)
 
-val bool2b_word_lsb = prove (``!w. bool2w (word_lsb w) = w2w w``,
+Theorem bool2b_word_lsb[local]:
+  !w. bool2w (word_lsb w) = w2w w
+Proof
 SIMP_TAC std_ss [bir_immTheory.bool2w_def, word_lsb_def] >>
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 Cases >> SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [] >>
 FULL_SIMP_TAC (arith_ss++wordsLib.WORD_ss ++
   boolSimps.LIFT_COND_ss) [
-  fcpTheory.FCP_BETA, w2w]);
+  fcpTheory.FCP_BETA, w2w]
+QED
 
 Definition BExp_LSB_def:
   BExp_LSB e = BExp_Cast BIExp_LowCast e Bit1
@@ -1537,14 +1549,17 @@ QED
 (* Word-Bit-Constant *)
 (*********************)
 
-val word_bit_ALT_DEF = prove (``!w n. (word_bit n w = ((w && n2w (2**n)) <> 0w))``,
+Theorem word_bit_ALT_DEF[local]:
+  !w n. (word_bit n w = ((w && n2w (2**n)) <> 0w))
+Proof
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 `0 < dimindex (:'a)` by METIS_TAC[DIMINDEX_GT_0] >>
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [
   word_bit_def, word_0, word_and_def, fcpTheory.FCP_BETA, word_index,
   bitTheory.BIT_TWO_POW] >>
-DECIDE_TAC);
+DECIDE_TAC
+QED
 
 
 Definition BExp_word_bit_def:

@@ -515,10 +515,13 @@ REPEAT STRIP_TAC >| [
 ]));
 
 
-val bitstring_split_aux_REWR2 = prove (``!n acc x xs.
+Theorem bitstring_split_aux_REWR2[local]:
+  !n acc x xs.
   (bitstring_split_aux (SUC n) acc (x::xs) =
-  (bitstring_split_aux (SUC n) ((TAKE (SUC n) (x::xs))::acc) (DROP (SUC n) (x::xs))))``,
-REWRITE_TAC[bitstring_split_aux_def]);
+  (bitstring_split_aux (SUC n) ((TAKE (SUC n) (x::xs))::acc) (DROP (SUC n) (x::xs))))
+Proof
+REWRITE_TAC[bitstring_split_aux_def]
+QED
 
 
 Theorem bitstring_split_REWRS:
