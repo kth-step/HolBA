@@ -33,7 +33,7 @@ val _ = new_theory "bir_ts";
 (******************************************************************)
 
 (* The transition of the BIR transition system *)
-val bir_trs_def = Define `
+Definition bir_trs_def:
   bir_trs (prog:'a bir_program_t) st =
   let
     (_, _, _, st') = bir_exec_block_n prog st 1
@@ -41,11 +41,11 @@ val bir_trs_def = Define `
    if ~(bir_state_is_terminated st')
    then SOME st'
    else NONE
-`;
+End
 
 
 (* The weak transition of the BIR transition system *)
-val bir_weak_trs_def = Define `
+Definition bir_weak_trs_def:
   bir_weak_trs ls prog st =
     case (bir_exec_to_labels ls prog st) of
       BER_Ended _ _ _ st' =>
@@ -53,21 +53,22 @@ val bir_weak_trs_def = Define `
         then SOME st'
         else NONE
     | BER_Looping _ => NONE
-`;
+End
 
 
 (* The BIR transition system which is later proven to obey the property
  * "first_enc". *)
-val bir_ts_def =
-  Define `bir_ts (prog :'a bir_program_t) = <|
+Definition bir_ts_def:
+  bir_ts (prog :'a bir_program_t) = <|
     trs  := bir_trs prog;
     weak := (\ls st st'.
 	       (bir_weak_trs ls prog st = SOME st')
 	    );
     ctrl   := (\st. st.bst_pc.bpc_label)
-  |>`;
+  |>
+End
 
-val bir_exec_to_labels_triple_precond_def = Define `
+Definition bir_exec_to_labels_triple_precond_def:
   bir_exec_to_labels_triple_precond st pre prog =
     ((bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
     (bir_env_vars_are_initialised st.bst_environ
@@ -75,11 +76,11 @@ val bir_exec_to_labels_triple_precond_def = Define `
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
     (bir_is_bool_exp_env st.bst_environ pre))
-`;
+End
 
 (* We don't need the condition that st.bst_pc.bpc_label IN ls here,
  * since we can obtain that result from weak_ctrl_in. *)
-val bir_exec_to_labels_triple_postcond_def = Define `
+Definition bir_exec_to_labels_triple_postcond_def:
   bir_exec_to_labels_triple_postcond st post prog =
     ((bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
        SOME bir_val_true) /\
@@ -88,18 +89,18 @@ val bir_exec_to_labels_triple_postcond_def = Define `
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
     (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label)))
-`;
+End
 
 
 (* BIR contract, mirroring t_ext_jgmt *)
-val bir_cont_def = Define `
+Definition bir_cont_def:
   bir_cont prog invariant (l:bir_label_t) ls ls' pre post =
     t_ext_jgmt (bir_ts prog)
       (\s. bir_exec_to_labels_triple_precond s invariant prog)
       l ls ls'
       (\s. bir_exec_to_labels_triple_precond s pre prog)
       (\s'. bir_exec_to_labels_triple_postcond s' post prog)
-`;
+End
 
 
 (******************************************************************)
@@ -109,13 +110,12 @@ val bir_cont_def = Define `
 (******************************)
 (* bir_trs + bir_exec_block_n *)
 
-val bir_exec_block_n_to_FUNPOW_OPT_bir_trs =
-  store_thm("bir_exec_block_n_to_FUNPOW_OPT_bir_trs",
-  ``!prog st m l n c_l' st'.
+Theorem bir_exec_block_n_to_FUNPOW_OPT_bir_trs:
+  !prog st m l n c_l' st'.
       (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
       ~(bir_state_is_terminated st') ==>
-      (FUNPOW_OPT (bir_trs prog) m st = SOME st')``,
-
+      (FUNPOW_OPT (bir_trs prog) m st = SOME st')
+Proof
 Induct_on `m` >- (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_exec_block_n_REWR_0, FUNPOW_OPT_REWRS]
@@ -158,16 +158,15 @@ subgoal `bir_trs prog st = SOME st''` >- (
   FULL_SIMP_TAC arith_ss []
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
 
-val FUNPOW_OPT_bir_trs_to_bir_exec_block_n =
-  store_thm("FUNPOW_OPT_bir_trs_to_bir_exec_block_n",
-  ``!prog st m st'.
+Theorem FUNPOW_OPT_bir_trs_to_bir_exec_block_n:
+  !prog st m st'.
       (FUNPOW_OPT (bir_trs prog) m st = SOME st') ==>
       ?l n c_l'.
-      (bir_exec_block_n prog st m = (l,n,c_l',st'))``,
-
+      (bir_exec_block_n prog st m = (l,n,c_l',st'))
+Proof
 Induct_on `m` >- (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_exec_block_n_REWR_0, FUNPOW_OPT_REWRS]
@@ -189,50 +188,47 @@ Cases_on `x.bst_status = BST_Running` >> (
   Cases_on `r'` >>
   FULL_SIMP_TAC std_ss [LET_DEF]
 )
-);
+QED
 
 
 (***********)
 (* bir_trs *)
 
-val bir_trs_term =
-  store_thm("bir_trs_term",
-  ``!prog st.
+Theorem bir_trs_term:
+  !prog st.
     bir_state_is_terminated st ==>
-    (bir_trs prog st = NONE)``,
-
+    (bir_trs prog st = NONE)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_trs_def] >>
 IMP_RES_TAC bir_exec_block_n_REWR_TERMINATED >>
 QSPECL_X_ASSUM ``!p n. _``
 	       [`prog`, `1`] >>
 FULL_SIMP_TAC std_ss [bir_state_is_terminated_def, LET_DEF]
-);
+QED
 
 
-val bir_trs_FUNPOW_term =
-  store_thm("bir_trs_FUNPOW_term",
-  ``!prog n st.
+Theorem bir_trs_FUNPOW_term:
+  !prog n st.
     bir_state_is_terminated st ==>
     n > 0 ==>
-    (FUNPOW_OPT (bir_trs prog) n st = NONE)``,
-
+    (FUNPOW_OPT (bir_trs prog) n st = NONE)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `n` >| [
   FULL_SIMP_TAC arith_ss [],
 
   FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS, bir_trs_term]
 ]
-);
+QED
 
 
-val FUNPOW_OPT_bir_trs_running_invar =
-  store_thm("FUNPOW_OPT_bir_trs_running_invar",
-  ``!prog st m st'.
+Theorem FUNPOW_OPT_bir_trs_running_invar:
+  !prog st m st'.
       (FUNPOW_OPT (bir_trs prog) m st = SOME st') ==>
       ~(bir_state_is_terminated st) ==>
-      ~(bir_state_is_terminated st')``,
-
+      ~(bir_state_is_terminated st')
+Proof
 Induct_on `m` >> (
   REV_FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS]
 ) >>
@@ -245,16 +241,15 @@ Cases_on `~bir_state_is_terminated r` >> (
   FULL_SIMP_TAC std_ss [] >>
   METIS_TAC []
 )
-);
+QED
 
 
-val FUNPOW_OPT_bir_trs_running =
-  store_thm("FUNPOW_OPT_bir_trs_running",
-  ``!prog n st st'.
+Theorem FUNPOW_OPT_bir_trs_running:
+  !prog n st st'.
     (FUNPOW_OPT (bir_trs prog) n st = SOME st') ==>
     n > 0 ==>
-    ~(bir_state_is_terminated st')``,
-
+    ~(bir_state_is_terminated st')
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `st.bst_status = BST_Running` >- (
   IMP_RES_TAC FUNPOW_OPT_bir_trs_running_invar >>
@@ -266,19 +261,18 @@ Cases_on `n` >| [
   FULL_SIMP_TAC (std_ss++holBACore_ss) [FUNPOW_OPT_REWRS,
                                         bir_trs_term]
 ]
-);
+QED
 
 
-val bir_weak_trs_EQ = store_thm("bir_weak_trs_EQ",
-  ``!ls prog st st'.
+Theorem bir_weak_trs_EQ:
+  !ls prog st st'.
     (bir_weak_trs ls prog st = SOME st') <=>
        (?l n n0.
        bir_exec_to_labels ls prog st =
          BER_Ended l n n0 st') /\
     ~bir_state_is_terminated st' /\
     (st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls
-``,
-
+Proof
 REPEAT STRIP_TAC >>
 EQ_TAC >| [
   DISCH_TAC >>
@@ -292,17 +286,17 @@ EQ_TAC >| [
   DISCH_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def]
 ]
-);
+QED
 
 
 (******************************************************************)
 (*        Proof BIR transition system is first-encounter          *)
 (******************************************************************)
 
-val bir_ts_first_enc = store_thm("bir_ts_first_enc",
-  ``!(prog: 'a bir_program_t).
-      first_enc (bir_ts prog)``,
-
+Theorem bir_ts_first_enc:
+  !(prog: 'a bir_program_t).
+      first_enc (bir_ts prog)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
               [first_enc_def, bir_ts_def] >>
@@ -484,20 +478,19 @@ CASE_TAC >| [
   IMP_RES_TAC bir_exec_to_labels_looping_not_reached_ls >>
   REV_FULL_SIMP_TAC arith_ss []
 ]
-);
+QED
 
 (*****************************************************)
 (* BIR map triple theorems                           *)
 (*****************************************************)
 
 (* Obtaining a bir_cont from a bir_exec_to_labels_triple *)
-val bir_label_jgmt_impl_weak_jgmt =
-  store_thm("bir_label_jgmt_impl_weak_jgmt",
-  ``!prog l ls pre post.
+Theorem bir_label_jgmt_impl_weak_jgmt:
+  !prog l ls pre post.
     ls <> {} ==>
     bir_exec_to_labels_triple prog l ls pre post ==>
-    bir_cont prog bir_exp_true l ls {} pre post``,
-
+    bir_cont prog bir_exp_true l ls {} pre post
+Proof
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
               [bir_cont_def, t_ext_jgmt_def,
                t_jgmt_def, bir_ts_def,
@@ -515,18 +508,18 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def,
 IMP_RES_TAC bir_exec_to_labels_n_ENV_ORDER >>
 IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
 ASM_SIMP_TAC std_ss [bir_eval_exp_TF, bir_is_bool_exp_env_REWRS]
-);
+QED
 
 (* This theorem moves ending labels which are implicitly
  * excluded by the postcondition from the include list of a bir_cont to the exclude list. *)
-val bir_il_to_el_rule_thm = store_thm("bir_il_to_el_rule_thm",
-  ``!prog inv l ilist elist pre post elabel.
+Theorem bir_il_to_el_rule_thm:
+  !prog inv l ilist elist pre post elabel.
     bir_cont prog inv l ilist elist pre post ==>
     elabel IN ilist ==>
     ilist DELETE elabel <> {} ==>
     (post elabel = bir_exp_false) ==>
-    bir_cont prog inv l (ilist DELETE elabel) (elabel INSERT elist) pre post``,
-
+    bir_cont prog inv l (ilist DELETE elabel) (elabel INSERT elist) pre post
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def] >>
 irule total_ext_il_to_el_rule_thm >>
@@ -536,16 +529,16 @@ FULL_SIMP_TAC std_ss [] >>
 GEN_TAC >> DISCH_TAC >>
 SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def, bir_eval_exp_TF, bir_val_TF_dist]
-);
+QED
 
-val bir_il_to_el_set_rule_thm = store_thm("bir_il_to_el_set_rule_thm",
-  ``!prog inv l ilist elist pre post elabels.
+Theorem bir_il_to_el_set_rule_thm:
+  !prog inv l ilist elist pre post elabels.
     bir_cont prog inv l ilist elist pre post ==>
     FINITE elabels ==>
     elabels PSUBSET ilist ==>
     (!elabel. elabel IN elabels ==> (post elabel = bir_exp_false)) ==>
-    bir_cont prog inv l (ilist DIFF elabels) (elabels UNION elist) pre post``,
-
+    bir_cont prog inv l (ilist DIFF elabels) (elabels UNION elist) pre post
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def, Once pred_setTheory.UNION_COMM] >>
 irule total_ext_il_to_el_set_rule_thm >>
@@ -556,19 +549,19 @@ NTAC 2 STRIP_TAC >>
 QSPECL_X_ASSUM ``!prog. _`` [`(bir_ts prog).ctrl s`] >>
 SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def, bir_eval_exp_TF, bir_val_TF_dist]
-);
+QED
 
 
-val bir_post_weak_rule_thm = store_thm("bir_post_weak_rule_thm",
-  ``!prog invariant l ls ls' pre post1 post2.
+Theorem bir_post_weak_rule_thm:
+  !prog invariant l ls ls' pre post1 post2.
     (!st.
      st.bst_pc.bpc_label IN ls ==>
      (bir_eval_exp (post1 st.bst_pc.bpc_label) st.bst_environ = SOME bir_val_true) ==>
      (bir_eval_exp (post2 st.bst_pc.bpc_label) st.bst_environ = SOME bir_val_true)
     ) ==>
     bir_cont prog invariant l ls ls' pre post1 ==>
-    bir_cont prog invariant l ls ls' pre post2``,
-
+    bir_cont prog invariant l ls ls' pre post2
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def] >>
 irule total_ext_post_weak_rule_thm >>
@@ -587,18 +580,18 @@ REPEAT STRIP_TAC >| [
 
   FULL_SIMP_TAC std_ss []
 ]
-);
+QED
 
 
-val bir_taut_pre_str_rule_thm = store_thm("bir_taut_pre_str_rule_thm",
-  ``!prog invariant l ls ls' pre1 pre2 post.
+Theorem bir_taut_pre_str_rule_thm:
+  !prog invariant l ls ls' pre1 pre2 post.
     ((bir_vars_of_exp pre2) SUBSET (bir_vars_of_program prog)) ==>
     ((bir_vars_of_exp pre1) SUBSET (bir_vars_of_program prog)) ==>
     bir_exp_is_taut
       (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre2) pre1) ==>
     bir_cont prog invariant l ls ls' pre1 post ==>
-    bir_cont prog invariant l ls ls' pre2 post``,
-
+    bir_cont prog invariant l ls ls' pre2 post
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def, t_ext_jgmt_def, t_jgmt_def,
                       bir_exec_to_labels_triple_precond_def] >>
@@ -630,19 +623,19 @@ subgoal `bir_is_bool_exp_env s.bst_environ pre1` >- (
                         bir_is_bool_exp_env_def]
 ) >>
 METIS_TAC []
-);
+QED
 
 
-val bir_taut_post_weak_rule_thm = store_thm("bir_taut_post_weak_rule_thm",
-  ``!prog invariant l ls l2 ls' pre post1 post2.
+Theorem bir_taut_post_weak_rule_thm:
+  !prog invariant l ls l2 ls' pre post1 post2.
     ((bir_vars_of_exp (post1 l2)) SUBSET (bir_vars_of_program prog)) ==>
     ((bir_vars_of_exp (post2 l2)) SUBSET (bir_vars_of_program prog)) ==>
     (!l'. (l' <> l2) ==> (post1 l' = post2 l')) ==>
     bir_exp_is_taut
       (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not (post1 l2)) (post2 l2)) ==>
     bir_cont prog invariant l ls ls' pre post1 ==>
-    bir_cont prog invariant l ls ls' pre post2``,
-
+    bir_cont prog invariant l ls ls' pre post2
+Proof
 FULL_SIMP_TAC std_ss [bir_cont_def, t_ext_jgmt_def, t_jgmt_def,
                       bir_exec_to_labels_triple_postcond_def] >>
 REPEAT STRIP_TAC >>
@@ -673,18 +666,17 @@ subgoal `bir_is_bool_exp_env s'.bst_environ (post2 l2)` >- (
 ) >>
 
 METIS_TAC [bir_exp_equivTheory.bir_impl_equiv, bir_exp_tautologiesTheory.bir_exp_is_taut_def]
-);
+QED
 
 
-val bir_std_seq_rule_thm =
-  store_thm("bir_std_seq_rule_thm",
-  ``!prog ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
+Theorem bir_std_seq_rule_thm:
+  !prog ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     ls1' SUBSET ls2 ==>
     (ls1 INTER ls1' = EMPTY) ==>
     bir_cont prog invariant l ls1 ls2 pre1 post1 ==>
     (!l1. (l1 IN ls1) ==> (bir_cont prog invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-    bir_cont prog invariant l ls1' (ls2 INTER ls2') pre1 post2``,
-
+    bir_cont prog invariant l ls1' (ls2 INTER ls2') pre1 post2
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def] >>
 irule total_ext_std_seq_rule_thm >>
@@ -708,15 +700,15 @@ REPEAT STRIP_TAC >> (
                                      bir_exec_to_labels_triple_postcond_def,
                                      bir_ts_def]
 ]
-);
+QED
 
 
-val iv2i_def = Define `
-    iv2i (BVal_Imm i) = i
-`;
+Definition iv2i_def:
+  iv2i (BVal_Imm i) = i
+End
 
-val bir_signed_loop_rule_thm = store_thm("bir_signed_loop_rule_thm",
-  ``!prog l il el invariant C1 variant post.
+Theorem bir_signed_loop_rule_thm:
+  !prog l il el invariant C1 variant post.
     (* Compute in place using proof procedures: *)
     (*   These two needed to use abstract_simp_loop_rule_thm *)
     (type_of_bir_exp variant = SOME (BType_Imm Bit64)) ==>
@@ -747,8 +739,8 @@ val bir_signed_loop_rule_thm = store_thm("bir_signed_loop_rule_thm",
       (BExp_BinExp BIExp_And invariant (BExp_UnaryExp BIExp_Not C1)) post ==>
     bir_cont prog bir_exp_true l il el
       invariant
-      post``,
-
+      post
+Proof
 FULL_SIMP_TAC std_ss [bir_cont_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC bir_ts_first_enc >>
@@ -865,11 +857,11 @@ STRIP_TAC >| [
   Q.EXISTS_TAC `s'` >>
   FULL_SIMP_TAC std_ss []
 ]
-);
+QED
 
 
-val bir_unsigned_loop_rule_thm = store_thm("bir_unsigned_loop_rule_thm",
-  ``!prog l il el invariant C1 variant post.
+Theorem bir_unsigned_loop_rule_thm:
+  !prog l il el invariant C1 variant post.
     (* Compute in place using proof procedures: *)
     (*   These two needed to use abstract_simp_loop_rule_thm *)
     (type_of_bir_exp variant = SOME (BType_Imm Bit64)) ==>
@@ -900,8 +892,8 @@ val bir_unsigned_loop_rule_thm = store_thm("bir_unsigned_loop_rule_thm",
       (BExp_BinExp BIExp_And invariant (BExp_UnaryExp BIExp_Not C1)) post ==>
     bir_cont prog bir_exp_true l il el
       invariant
-      post``,
-
+      post
+Proof
 FULL_SIMP_TAC std_ss [bir_cont_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC bir_ts_first_enc >>
@@ -1016,20 +1008,19 @@ STRIP_TAC >| [
   Q.EXISTS_TAC `s'` >>
   FULL_SIMP_TAC std_ss []
 ]
-);
+QED
 
 (* Shrinking the include list is possible if the corresponding
  * postcondition never holds. *)
-val bir_il_subset_rule_thm =
- store_thm("bir_il_subset_rule_thm",
-  ``!prog l ls1 ls2 pre post.
+Theorem bir_il_subset_rule_thm:
+  !prog l ls1 ls2 pre post.
     ls1 <> {} ==>
     (!st. (bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ = SOME bir_val_true) ==>
           (~(st.bst_pc.bpc_label IN ls2))
     ) ==>
     bir_cont prog bir_exp_true l (ls1 UNION ls2) {} pre post ==>
-    bir_cont prog bir_exp_true l ls1 {} pre post``,
-
+    bir_cont prog bir_exp_true l ls1 {} pre post
+Proof
 REPEAT STRIP_TAC >>
 REV_FULL_SIMP_TAC std_ss [bir_cont_def, t_ext_jgmt_def,
                           t_jgmt_def] >>
@@ -1047,41 +1038,38 @@ REPEAT STRIP_TAC >> (
   ) >>
   FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def]
 )
-);
+QED
 
-val bir_el_subset_rule_thm =
-  store_thm("bir_el_subset_rule_thm",
-  ``!prog invariant l il el el' pre post.
+Theorem bir_el_subset_rule_thm:
+  !prog invariant l il el el' pre post.
     el' SUBSET el ==>
     bir_cont prog invariant l il el pre post ==>
-    bir_cont prog invariant l il el' pre post``,
-
+    bir_cont prog invariant l il el' pre post
+Proof
 METIS_TAC [bir_cont_def, bir_ts_first_enc,
            total_ext_el_subset_rule_thm]
-);
+QED
 
 (* TODO: Move this? *)
-val bir_exec_to_labels_triple_precond_subprogram =
-  store_thm("bir_exec_to_labels_triple_precond_subprogram",
-  ``!prog1 prog2 s pre.
+Theorem bir_exec_to_labels_triple_precond_subprogram:
+  !prog1 prog2 s pre.
     bir_is_subprogram prog1 prog2 ==>
     bir_exec_to_labels_triple_precond s pre prog2 ==>
-    bir_exec_to_labels_triple_precond s pre prog1``,
-
+    bir_exec_to_labels_triple_precond s pre prog1
+Proof
 METIS_TAC [bir_exec_to_labels_triple_precond_def,
            bir_env_vars_are_initialised_SUBPROGRAM]
-);
+QED
 
 (* TODO: Move this? *)
-val bir_is_valid_pc_exec =
-  store_thm("bir_is_valid_pc_exec",
-  ``!s pre prog ls l' n n0 s'.
+Theorem bir_is_valid_pc_exec:
+  !s pre prog ls l' n n0 s'.
     (bir_exec_to_labels ls prog s = BER_Ended l' n n0 s') ==>
     (* TODO: Why is this assumption required? *)
     bir_exec_to_labels_triple_precond s pre prog ==>
     ~bir_state_is_terminated s' ==>
-    bir_is_valid_pc prog s.bst_pc``,
-
+    bir_is_valid_pc prog s.bst_pc
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def] >>
 subgoal `~bir_state_is_terminated s` >- (
@@ -1115,16 +1103,15 @@ Cases_on `bir_get_current_statement prog s.bst_pc` >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ) >>
 FULL_SIMP_TAC std_ss [GSYM bir_get_current_statement_IS_SOME]
-);
+QED
 
-val bir_prog_comp_rule_thm =
-  store_thm("bir_prog_comp_rule_thm",
-  ``!prog1 prog2 invariant il el l pre post.
+Theorem bir_prog_comp_rule_thm:
+  !prog1 prog2 invariant il el l pre post.
     bir_is_subprogram prog1 prog2 ==>
     bir_is_valid_labels prog2 ==>
     bir_cont prog1 invariant l il el pre post ==>
-    bir_cont prog2 invariant l il el pre post``,
-
+    bir_cont prog2 invariant l il el pre post
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def, t_ext_jgmt_def] >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [t_jgmt_def,
@@ -1157,17 +1144,16 @@ CONJ_TAC >> (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
   METIS_TAC [bir_program_env_orderTheory.bir_exec_to_labels_n_ENV_ORDER]
 )
-);
+QED
 
 (* Sketch for alternative proof using total_ext_ts_emb_rule_thm
-val bir_map_prog_comp_alt_thm =
-  store_thm("bir_map_prog_comp_alt_thm",
-  ``!prog1 prog2 invariant il el l pre post.
+Theorem bir_map_prog_comp_alt_thm:
+  !prog1 prog2 invariant il el l pre post.
     bir_is_subprogram prog1 prog2 ==>
     bir_is_valid_labels prog2 ==>
     bir_cont prog1 invariant l il el pre post ==>
-    bir_cont prog2 invariant l il el pre post``,
-
+    bir_cont prog2 invariant l il el pre post
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def] >>
 irule total_ext_ts_emb_rule_thm >>
@@ -1217,7 +1203,7 @@ REPEAT STRIP_TAC >| [
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
   METIS_TAC [bir_program_env_orderTheory.bir_exec_to_labels_n_ENV_ORDER]
 ]
-);
+QED
 *)
 
 val _ = export_theory();

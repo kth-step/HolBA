@@ -37,99 +37,94 @@ val _ = new_theory "bir_symb_sound_core";
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
-val birs_symb_symbols_def = Define `
-    birs_symb_symbols sys =
+Definition birs_symb_symbols_def:
+  birs_symb_symbols sys =
       (BIGUNION {bir_vars_of_exp e | ?vn. sys.bsst_environ vn = SOME e}) UNION (bir_vars_of_exp sys.bsst_pcond)
-`;
+End
 
-val birs_symb_symbols_EQ_thm = store_thm(
-   "birs_symb_symbols_EQ_thm", ``
-!prog sys. symb_symbols (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) = birs_symb_symbols sys
-``,
-  Cases_on `sys` >>
+Theorem birs_symb_symbols_EQ_thm:
+  !prog sys. symb_symbols (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) = birs_symb_symbols sys
+Proof
+Cases_on `sys` >>
   SIMP_TAC (std_ss++symb_TYPES_ss)
     [symb_symbols_def, bir_symb_rec_sbir_def, symb_symbols_store_def,
      symb_symbst_pcond_def, birs_symb_symbols_def] >>
 
   SIMP_TAC (std_ss++birs_state_ss) [birs_symb_to_symbst_def, symb_symbst_pcond_def, symb_symbst_store_def]
-);
+QED
 
-val birs_interpr_welltyped_def = Define `
-    birs_interpr_welltyped H =
+Definition birs_interpr_welltyped_def:
+  birs_interpr_welltyped H =
       !sy. sy IN (symb_interpr_dom H) ==> type_of_bir_val (THE (symb_interpr_get H sy)) = bir_var_type sy
-`;
+End
 
-val birs_interpr_welltyped_EQ_thm = store_thm(
-   "birs_interpr_welltyped_EQ_thm", ``
-!prog H.
+Theorem birs_interpr_welltyped_EQ_thm:
+  !prog H.
 symb_interpr_welltyped (bir_symb_rec_sbir prog) H = birs_interpr_welltyped H
-``,
-  SIMP_TAC (std_ss)
+Proof
+SIMP_TAC (std_ss)
     [symb_interpr_welltyped_def, birs_interpr_welltyped_def] >>
   SIMP_TAC (std_ss++symb_TYPES_ss)
     [bir_symb_rec_sbir_def] >>
 
   METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, option_CLAUSES]
-);
+QED
 
-val birs_interpret_fun_EQ_thm = store_thm(
-   "birs_interpret_fun_EQ_thm", ``
-!prog H e vo.
+Theorem birs_interpret_fun_EQ_thm:
+  !prog H e vo.
 ((bir_symb_rec_sbir prog).sr_interpret_f H e = vo)
 <=>
 (birs_interpret_fun H e = vo)
-``,
-  SIMP_TAC (std_ss++symb_TYPES_ss)
+Proof
+SIMP_TAC (std_ss++symb_TYPES_ss)
     [bir_symb_rec_sbir_def]
-);
+QED
 
-val birs_matchenv_def = Define `
-    birs_matchenv H senv env =
+Definition birs_matchenv_def:
+  birs_matchenv H senv env =
       (!var. (bir_env_lookup var env <> NONE \/ senv var <> NONE) ==>
          ?e v.
             senv   var = SOME e /\
             bir_env_lookup var env = SOME v /\
             birs_interpret_fun H e = SOME v)
-`;
+End
 
-val birs_matchenv_EQ_thm = store_thm(
-   "birs_matchenv_EQ_thm", ``
-!prog H f s.
+Theorem birs_matchenv_EQ_thm:
+  !prog H f s.
 symb_interpr_symbstore (bir_symb_rec_sbir prog) H f
        (symb_concst_store (birs_symb_to_concst s)) =
   birs_matchenv H f s.bst_environ
-``,
-  Cases_on `s` >>
+Proof
+Cases_on `s` >>
   SIMP_TAC (std_ss++holBACore_ss)
     [symb_interpr_symbstore_def, birs_matchenv_def, symb_concst_store_def, birs_symb_to_concst_def] >>
   SIMP_TAC (std_ss++symb_TYPES_ss)
     [bir_symb_rec_sbir_def] >>
 
   METIS_TAC []
-);
+QED
 
-val birs_symb_matchstate_def = Define `
-    birs_symb_matchstate sys H s = (
+Definition birs_symb_matchstate_def:
+  birs_symb_matchstate sys H s = (
       (symb_interpr_for_symbs (birs_symb_symbols sys) H) /\
       (birs_interpr_welltyped H) /\
       (sys.bsst_pc = s.bst_pc) /\
       (birs_matchenv H sys.bsst_environ s.bst_environ) /\
       (birs_interpret_fun H sys.bsst_pcond = SOME bir_val_true) /\
       (sys.bsst_status = s.bst_status))
-`;
+End
 
-val birs_symb_matchonestate_def = Define `
-    birs_symb_matchonestate Pi H s =
+Definition birs_symb_matchonestate_def:
+  birs_symb_matchonestate Pi H s =
       ?sys. sys IN Pi /\ birs_symb_matchstate sys H s
-`;
+End
 
-val birs_symb_matchstate_EQ_thm = store_thm(
-   "birs_symb_matchstate_EQ_thm", ``
-!prog sys H s.
+Theorem birs_symb_matchstate_EQ_thm:
+  !prog sys H s.
 symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_to_concst s) =
   birs_symb_matchstate sys H s
-``,
-  Cases_on `sys` >>
+Proof
+Cases_on `sys` >>
 
   SIMP_TAC (std_ss)
     [symb_matchstate_def, symb_suitable_interpretation_def, birs_symb_symbols_EQ_thm, birs_matchenv_EQ_thm, birs_interpr_welltyped_EQ_thm] >>
@@ -146,15 +141,14 @@ symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_
   Cases_on `s` >>
   SIMP_TAC (std_ss++holBACore_ss)
     [symb_concst_pc_def, birs_symb_to_concst_def, symb_concst_store_def, symb_concst_extra_def]
-);
+QED
 
-val birs_interpret_subst_PRESERVES_type_thm = store_thm(
-   "birs_interpret_subst_PRESERVES_type_thm", ``
-!sv H.
+Theorem birs_interpret_subst_PRESERVES_type_thm:
+  !sv H.
   (birs_interpr_welltyped H) ==>
   (type_of_bir_exp (birs_interpret_subst H sv) = type_of_bir_exp sv)
-``,
-  REWRITE_TAC [birs_interpret_subst_def, birs_interpret_subst_fmap_def] >>
+Proof
+REWRITE_TAC [birs_interpret_subst_def, birs_interpret_subst_fmap_def] >>
   REPEAT STRIP_TAC >>
 
   MATCH_MP_TAC bir_exp_subst_TYPE_EQ >>
@@ -170,16 +164,15 @@ val birs_interpret_subst_PRESERVES_type_thm = store_thm(
     FULL_SIMP_TAC std_ss [bir_val_to_constexp_def, type_of_bir_exp_def] >>
     METIS_TAC [type_of_bir_val_def]
   )
-);
+QED
 
-val birs_interpret_fun_PRESERVES_type_thm = store_thm(
-   "birs_interpret_fun_PRESERVES_type_thm", ``
-!sv H v.
+Theorem birs_interpret_fun_PRESERVES_type_thm:
+  !sv H v.
   (birs_interpr_welltyped H) ==>
   (birs_interpret_fun H sv = SOME v) ==>
   (type_of_bir_exp sv = SOME (type_of_bir_val v))
-``,
-  REWRITE_TAC [birs_interpret_fun_def] >>
+Proof
+REWRITE_TAC [birs_interpret_fun_def] >>
   REPEAT STRIP_TAC >>
 
   `type_of_bir_exp (birs_interpret_subst H sv) = type_of_bir_exp sv` by (
@@ -187,18 +180,17 @@ val birs_interpret_fun_PRESERVES_type_thm = store_thm(
   ) >>
 
   METIS_TAC [bir_eval_exp_IS_SOME_IMPLIES_TYPE]
-);
+QED
 
-val birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm = store_thm(
-   "birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm", ``
-!H senv env vs.
+Theorem birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm:
+  !H senv env vs.
   (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   (bir_envty_includes_vs (birs_envty_of_senv senv) vs
    <=>
    bir_envty_includes_vs (bir_envty_of_env env) vs)
-``,
-  Cases_on `env` >>
+Proof
+Cases_on `env` >>
   SIMP_TAC std_ss [bir_envty_includes_vs_def, bir_envty_includes_v_def, birs_envty_of_senv_def, bir_envty_of_env_def, birs_matchenv_def, bir_env_lookup_def] >>
   REPEAT STRIP_TAC >>
 
@@ -209,32 +201,30 @@ val birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm = store_thm(
 
     METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, option_CLAUSES]
   )
-);
+QED
 
-val birs_interpret_fun_sound_NONE_thm = store_thm(
-   "birs_interpret_fun_sound_NONE_thm", ``
-!H senv env e.
+Theorem birs_interpret_fun_sound_NONE_thm:
+  !H senv env e.
   (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   (birs_eval_exp e senv = NONE) ==>
   (bir_eval_exp e env = NONE)
-``,
-  METIS_TAC
+Proof
+METIS_TAC
     [birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm,
      bir_eval_exp_NONE_EQ_bir_exp_env_type_thm,
      birs_eval_exp_NONE_EQ_bir_exp_env_type_thm]
-);
+QED
 
 
-val birs_interpret_fun_sound_thm = store_thm(
-   "birs_interpret_fun_sound_thm", ``
-!H senv env e sv ty v.
+Theorem birs_interpret_fun_sound_thm:
+  !H senv env e sv ty v.
   (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   (birs_eval_exp e senv = SOME (sv, ty)) ==>
   (?v. birs_interpret_fun H sv = SOME v /\ bir_eval_exp e env = SOME v)
-``,
-  Induct_on `e` >- (
+Proof
+Induct_on `e` >- (
     (* BExp_Const *)
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def, birs_interpret_fun_def, birs_interpret_subst_def] >>
@@ -623,19 +613,18 @@ val birs_interpret_fun_sound_thm = store_thm(
     CASE_TAC >>
     METIS_TAC [option_CLAUSES]
   )
-);
+QED
 
-val birs_eval_exp_sound_thm = store_thm(
-   "birs_eval_exp_sound_thm", ``
-!H senv env e.
+Theorem birs_eval_exp_sound_thm:
+  !H senv env e.
   (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   ((birs_eval_exp e senv = NONE /\ bir_eval_exp e env = NONE) \/
    (?sv ty v.
       birs_eval_exp e senv = SOME (sv, ty) /\ bir_eval_exp e env = SOME v /\
       birs_interpret_fun H sv = SOME v))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   Cases_on `birs_eval_exp e senv = NONE` >- (
     METIS_TAC [bir_eval_exp_NONE_EQ_bir_exp_env_type_thm, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, birs_eval_exp_NONE_EQ_bir_exp_env_type_thm]
@@ -654,16 +643,15 @@ val birs_eval_exp_sound_thm = store_thm(
   ) >>
 
   METIS_TAC [birs_interpret_fun_sound_thm]
-);
+QED
 
-val symb_interpr_for_symbs_EQ_set_typeerror_thm = store_thm(
-   "symb_interpr_for_symbs_EQ_set_typeerror_thm", ``
-!sys H.
+Theorem symb_interpr_for_symbs_EQ_set_typeerror_thm:
+  !sys H.
   (symb_interpr_for_symbs (birs_symb_symbols (birs_state_set_typeerror sys)) H) =
   (symb_interpr_for_symbs (birs_symb_symbols sys) H)
-``,
-  SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def, birs_symb_symbols_def]
-);
+Proof
+SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def, birs_symb_symbols_def]
+QED
 
 
 val _ = export_theory();

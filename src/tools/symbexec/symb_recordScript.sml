@@ -13,93 +13,92 @@ val _ = new_theory "symb_record";
 RECORD FOR REPRESENTING GENERIC CONCRETE AND SYMBOLIC TRANSITION SYSTEM
 =======================================================
 *)
-val _ = Datatype `symb_concst_t =
+Datatype:
+  symb_concst_t =
    SymbConcSt 'a_label ('b_var -> 'c_val option) 'd_extra
-`;
-val symb_concst_pc_def = Define `
+End
+Definition symb_concst_pc_def:
   symb_concst_pc (SymbConcSt lbl _ _) = lbl
-`;
-val symb_concst_store_def = Define `
+End
+Definition symb_concst_store_def:
   symb_concst_store (SymbConcSt _ store _) = store
-`;
-val symb_concst_extra_def = Define `
+End
+Definition symb_concst_extra_def:
   symb_concst_extra (SymbConcSt _ _ extra) = extra
-`;
+End
 (*
 ``SymbConcSt (0w:word64) (K (SOME "hallo"))``
 *)
 
-val _ = Datatype `symb_symbst_t =
+Datatype:
+  symb_symbst_t =
    SymbSymbSt 'a_label ('b_var -> 'c_symbexpr option) 'c_symbexpr 'd_extra
-`;
-val symb_symbst_pc_def = Define `
+End
+Definition symb_symbst_pc_def:
   symb_symbst_pc (SymbSymbSt lbl _ _ _) = lbl
-`;
-val symb_symbst_store_def = Define `
+End
+Definition symb_symbst_store_def:
   symb_symbst_store (SymbSymbSt _ store _ _) = store
-`;
-val symb_symbst_store_update_def = Define `
+End
+Definition symb_symbst_store_update_def:
   symb_symbst_store_update var symbexpr (SymbSymbSt lbl store pcond extra) =
     SymbSymbSt lbl ((var =+ (SOME symbexpr)) store) pcond extra
-`;
-val symb_symbst_pcond_def = Define `
+End
+Definition symb_symbst_pcond_def:
   symb_symbst_pcond (SymbSymbSt _ _ pcond _) = pcond
-`;
-val symb_symbst_pcond_update_def = Define `
+End
+Definition symb_symbst_pcond_update_def:
   symb_symbst_pcond_update pcond_f (SymbSymbSt lbl store pcond extra) =
     SymbSymbSt lbl store (pcond_f pcond) extra
-`;
-val symb_symbst_extra_def = Define `
+End
+Definition symb_symbst_extra_def:
   symb_symbst_extra (SymbSymbSt _ _ _ extra) = extra
-`;
+End
 
 
-val symb_symbst_store_update_READ_thm = store_thm(
-   "symb_symbst_store_update_READ_thm", ``
-!var1 var2 symbexp sys.
+Theorem symb_symbst_store_update_READ_thm:
+  !var1 var2 symbexp sys.
   (symb_symbst_store (symb_symbst_store_update var1 symbexp sys) var2 =
    if var1 = var2 then SOME symbexp else symb_symbst_store sys var2)
-``,
-  Cases_on `sys` >>
+Proof
+Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_symbst_store_update_def, symb_symbst_store_def, APPLY_UPDATE_THM]
-);
-val symb_symbst_store_update_UNCHANGED_thm = store_thm(
-   "symb_symbst_store_update_UNCHANGED_thm", ``
-!var symbexp sys.
+QED
+Theorem symb_symbst_store_update_UNCHANGED_thm:
+  !var symbexp sys.
   (symb_symbst_pc (symb_symbst_store_update var symbexp sys) = symb_symbst_pc sys) /\
   (symb_symbst_pcond (symb_symbst_store_update var symbexp sys) = symb_symbst_pcond sys) /\
   (symb_symbst_extra (symb_symbst_store_update var symbexp sys) = symb_symbst_extra sys)
-``,
-  Cases_on `sys` >>
+Proof
+Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_symbst_store_update_def, symb_symbst_pc_def, symb_symbst_pcond_def, symb_symbst_extra_def]
-);
+QED
 
-val symb_symbst_pcond_update_READ_thm = store_thm(
-   "symb_symbst_pcond_update_READ_thm", ``
-!pcond_f sys.
+Theorem symb_symbst_pcond_update_READ_thm:
+  !pcond_f sys.
   (symb_symbst_pcond (symb_symbst_pcond_update pcond_f sys) =
    pcond_f (symb_symbst_pcond sys))
-``,
-  Cases_on `sys` >>
+Proof
+Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_symbst_pcond_update_def, symb_symbst_pcond_def]
-);
-val symb_symbst_pcond_update_UNCHANGED_thm = store_thm(
-   "symb_symbst_pcond_update_UNCHANGED_thm", ``
-!pcond_f sys.
+QED
+Theorem symb_symbst_pcond_update_UNCHANGED_thm:
+  !pcond_f sys.
   (symb_symbst_pc (symb_symbst_pcond_update pcond_f sys) = symb_symbst_pc sys) /\
   (symb_symbst_store (symb_symbst_pcond_update pcond_f sys) = symb_symbst_store sys) /\
   (symb_symbst_extra (symb_symbst_pcond_update pcond_f sys) = symb_symbst_extra sys)
-``,
-  Cases_on `sys` >>
+Proof
+Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_symbst_pcond_update_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_extra_def]
-);
+QED
 
 
 (*
 NOTION: INSTANTIATION DATATYPE (SYMB RECORD)
 =======================================================
 *)
-val _ = Datatype `symb_rec_t =
+Datatype:
+  symb_rec_t =
    <|
       (* required symbolic expression building blocks *)
       sr_val_true        : 'c_val;
@@ -141,7 +140,8 @@ val _ = Datatype `symb_rec_t =
       sr_step_symb       : (('a_label, 'b_var, 'f_symbexpr, 'd_extra) symb_symbst_t) ->
                            ((('a_label, 'b_var, 'f_symbexpr, 'd_extra) symb_symbst_t) ->
                            bool);
-   |>`;
+   |>
+End
 
 
 (*
@@ -149,86 +149,80 @@ NOTION: SYMBOL DEPENDENCE FOR STORE AND STATE AND SET OF STATES
 =======================================================
 *)
 
-val symb_symbols_store_def = Define `
-    symb_symbols_store sr store =
+Definition symb_symbols_store_def:
+  symb_symbols_store sr store =
       BIGUNION ({sr.sr_symbols_f symbexp | ?var. store var = SOME symbexp})
-`;
-val symb_symbols_def = Define `
-    symb_symbols sr sys =
+End
+Definition symb_symbols_def:
+  symb_symbols sr sys =
       (symb_symbols_store sr (symb_symbst_store sys) UNION
        sr.sr_symbols_f (symb_symbst_pcond sys))
-`;
+End
 
-val symb_symbols_SUBSET_pcond_thm = store_thm(
-   "symb_symbols_SUBSET_pcond_thm", ``
-!sr.
+Theorem symb_symbols_SUBSET_pcond_thm:
+  !sr.
 !sys.
   (sr.sr_symbols_f (symb_symbst_pcond sys))
   SUBSET
   (symb_symbols sr sys)
-``,
-  METIS_TAC [symb_symbols_def, SUBSET_UNION]
-);
+Proof
+METIS_TAC [symb_symbols_def, SUBSET_UNION]
+QED
 
-val symb_symbols_SUBSET_store_thm = store_thm(
-   "symb_symbols_SUBSET_store_thm", ``
-!sr.
+Theorem symb_symbols_SUBSET_store_thm:
+  !sr.
 !sys.
   (symb_symbols_store sr (symb_symbst_store sys))
   SUBSET
   (symb_symbols sr sys)
-``,
-  METIS_TAC [symb_symbols_def, SUBSET_UNION]
-);
+Proof
+METIS_TAC [symb_symbols_def, SUBSET_UNION]
+QED
 
-val symb_symbols_SUBSET_store_exps_thm = store_thm(
-   "symb_symbols_SUBSET_store_exps_thm", ``
-!sr.
+Theorem symb_symbols_SUBSET_store_exps_thm:
+  !sr.
 !store var symbexp.
   ((store var) = SOME symbexp) ==>
   ((sr.sr_symbols_f symbexp)
    SUBSET
    (symb_symbols_store sr store))
-``,
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_store_def, SUBSET_DEF] >>
+Proof
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_store_def, SUBSET_DEF] >>
   METIS_TAC []
-);
+QED
 
-val symb_symbols_SUBSET_store_exps_thm2 = store_thm(
-   "symb_symbols_SUBSET_store_exps_thm2", ``
-!sr.
+Theorem symb_symbols_SUBSET_store_exps_thm2:
+  !sr.
 !sys var symbexp.
   (((symb_symbst_store sys) var) = SOME symbexp) ==>
   ((sr.sr_symbols_f symbexp)
    SUBSET
    (symb_symbols sr sys))
-``,
-  METIS_TAC [symb_symbols_def, symb_symbols_SUBSET_store_exps_thm, symb_symbols_SUBSET_store_thm, UNION_SUBSET, SUBSET_TRANS]
-);
+Proof
+METIS_TAC [symb_symbols_def, symb_symbols_SUBSET_store_exps_thm, symb_symbols_SUBSET_store_thm, UNION_SUBSET, SUBSET_TRANS]
+QED
 
-val symb_symbols_set_def = Define `
-    symb_symbols_set sr Pi =
+Definition symb_symbols_set_def:
+  symb_symbols_set sr Pi =
       BIGUNION ({symb_symbols sr sys | sys IN Pi})
-`;
+End
 
-val symb_symbols_set_SUBSET_thm = store_thm(
-   "symb_symbols_set_SUBSET_thm", ``
-!sr.
+Theorem symb_symbols_set_SUBSET_thm:
+  !sr.
 !sys Pi.
   (sys IN Pi) ==>
   ((symb_symbols sr sys) SUBSET (symb_symbols_set sr Pi))
-``,
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_set_def, BIGUNION, SUBSET_DEF] >>
+Proof
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_set_def, BIGUNION, SUBSET_DEF] >>
   METIS_TAC []
-);
+QED
 
-val symb_symbols_of_symb_symbst_store_update_SUBSET_store_exps_thm2 = store_thm(
-   "symb_symbols_of_symb_symbst_store_update_SUBSET_store_exps_thm2", ``
-!sr.
+Theorem symb_symbols_of_symb_symbst_store_update_SUBSET_store_exps_thm2:
+  !sr.
 !var symbexp sys.
   (sr.sr_symbols_f symbexp) SUBSET (symb_symbols sr (symb_symbst_store_update var symbexp sys))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [symb_symbst_store_update_def, symb_symbols_def,
@@ -238,16 +232,15 @@ val symb_symbols_of_symb_symbst_store_update_SUBSET_store_exps_thm2 = store_thm(
     [symb_symbols_store_def, SUBSET_DEF] >>
 
   METIS_TAC [APPLY_UPDATE_THM]
-);
+QED
 
-val symb_symbols_of_symb_symbst_store_update_SUBSET1_thm = store_thm(
-   "symb_symbols_of_symb_symbst_store_update_SUBSET1_thm", ``
-!sr.
+Theorem symb_symbols_of_symb_symbst_store_update_SUBSET1_thm:
+  !sr.
 !var symbexp sys.
   ((symb_symbols sr (symb_symbst_store_update var symbexp sys)) SUBSET
    ((symb_symbols sr sys) UNION (sr.sr_symbols_f symbexp)))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [symb_symbst_store_update_def, symb_symbols_def,
@@ -270,19 +263,18 @@ val symb_symbols_of_symb_symbst_store_update_SUBSET1_thm = store_thm(
   ) >>
 
   METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
-);
+QED
 
-val symb_symbols_of_symb_symbst_store_update_SUBSET2_thm = store_thm(
-   "symb_symbols_of_symb_symbst_store_update_SUBSET2_thm", ``
-!sr.
+Theorem symb_symbols_of_symb_symbst_store_update_SUBSET2_thm:
+  !sr.
 !var symbexp symbexp' sys.
   ((symb_symbst_store sys) var = SOME symbexp') ==>
   ((symb_symbols sr sys) SUBSET
    ((symb_symbols sr (symb_symbst_store_update var symbexp sys)) UNION
     (sr.sr_symbols_f (symbexp')))
   )
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [symb_symbst_store_update_def, symb_symbols_def,
@@ -305,62 +297,59 @@ val symb_symbols_of_symb_symbst_store_update_SUBSET2_thm = store_thm(
   ) >>
 
   METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
-);
+QED
 
-val symb_symbols_of_symb_symbst_pcond_update_SUBSET1_thm = store_thm(
-   "symb_symbols_of_symb_symbst_pcond_update_SUBSET1_thm", ``
-!sr.
+Theorem symb_symbols_of_symb_symbst_pcond_update_SUBSET1_thm:
+  !sr.
 !pcond_f sys.
   ((symb_symbols sr (symb_symbst_pcond_update pcond_f sys)) SUBSET
    ((symb_symbols sr sys) UNION (sr.sr_symbols_f (pcond_f (symb_symbst_pcond sys)))))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [symb_symbst_pcond_update_def, symb_symbols_def,
      symb_symbst_store_def, symb_symbst_pcond_def] >>
   METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
-);
+QED
 
-val symb_symbols_of_symb_symbst_pcond_update_SUBSET2_thm = store_thm(
-   "symb_symbols_of_symb_symbst_pcond_update_SUBSET2_thm", ``
-!sr.
+Theorem symb_symbols_of_symb_symbst_pcond_update_SUBSET2_thm:
+  !sr.
 !pcond_f sys.
   ((symb_symbols sr sys) SUBSET
    ((symb_symbols sr (symb_symbst_pcond_update pcond_f sys)) UNION
     (sr.sr_symbols_f (symb_symbst_pcond sys)))
   )
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [symb_symbst_pcond_update_def, symb_symbols_def,
      symb_symbst_store_def, symb_symbst_pcond_def] >>
   METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
-);
+QED
 
 (*
 NOTATION: WELL-TYPED INTERPRETATION
 =======================================================
 *)
-val symb_interpr_welltyped_def = Define `
-    symb_interpr_welltyped sr H =
+Definition symb_interpr_welltyped_def:
+  symb_interpr_welltyped sr H =
       (!symb.
          (symb IN symb_interpr_dom H) ==>
          (?v. symb_interpr_get H symb = SOME v /\
               sr.sr_typeof_symb symb = sr.sr_typeof_val v))
-`;
+End
 
-val symb_interpr_welltyped_thm = store_thm(
-   "symb_interpr_welltyped_thm", ``
-!sr.
+Theorem symb_interpr_welltyped_thm:
+  !sr.
 !H.
   (symb_interpr_welltyped sr H) =
   (!symb v.
     (symb_interpr_get H symb = SOME v) ==>
     (sr.sr_typeof_symb symb = sr.sr_typeof_val v))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_interpr_dom_thm] >>
 
   EQ_TAC >> (
@@ -370,29 +359,27 @@ val symb_interpr_welltyped_thm = store_thm(
       METIS_TAC [optionTheory.option_CLAUSES]
     )
   )
-);
+QED
 
-val symb_interpr_ext_welltyped_IMP_thm = store_thm(
-   "symb_interpr_ext_welltyped_IMP_thm", ``
-!sr.
+Theorem symb_interpr_ext_welltyped_IMP_thm:
+  !sr.
 !H1 H2.
   (symb_interpr_ext H2 H1) ==>
   (symb_interpr_welltyped sr H2) ==>
   (symb_interpr_welltyped sr H1)
-``,
-  FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def, symb_interpr_welltyped_def] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def, symb_interpr_welltyped_def] >>
   METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, symb_interpr_dom_thm]
-);
+QED
 
-val symb_interpr_extend_welltyped_IMP_thm = store_thm(
-   "symb_interpr_extend_welltyped_IMP_thm", ``
-!sr.
+Theorem symb_interpr_extend_welltyped_IMP_thm:
+  !sr.
 !H_base H_extra.
   (symb_interpr_welltyped sr H_base) ==>
   (symb_interpr_welltyped sr H_extra) ==>
   (symb_interpr_welltyped sr (symb_interpr_extend H_extra H_base))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [symb_interpr_ext_def, symb_interprs_eq_for_def,
@@ -407,16 +394,15 @@ val symb_interpr_extend_welltyped_IMP_thm = store_thm(
   ) >>
 
   METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm]
-);
+QED
 
-val symb_interpr_update_NONE_IMP_welltyped_thm = store_thm(
-   "symb_interpr_update_NONE_IMP_welltyped_thm", ``
-!sr.
+Theorem symb_interpr_update_NONE_IMP_welltyped_thm:
+  !sr.
 !H symb.
   (symb_interpr_welltyped sr H) ==>
   (symb_interpr_welltyped sr (symb_interpr_update H (symb,NONE)))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   REWRITE_TAC [symb_interpr_welltyped_def, symb_interpr_get_update_thm,
                symb_interpr_dom_UPDATE_NONE_thm] >>
   REPEAT STRIP_TAC >>
@@ -426,35 +412,33 @@ val symb_interpr_update_NONE_IMP_welltyped_thm = store_thm(
 
   FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def] >>
   METIS_TAC [DELETE_SUBSET, SUBSET_DEF]
-);
+QED
 
-val symb_interpr_update_SOME_IMP_welltyped_thm = store_thm(
-   "symb_interpr_update_SOME_IMP_welltyped_thm", ``
-!sr.
+Theorem symb_interpr_update_SOME_IMP_welltyped_thm:
+  !sr.
 !H symb v.
   (symb_interpr_welltyped sr H) ==>
   (sr.sr_typeof_symb symb = sr.sr_typeof_val v) ==>
   (symb_interpr_welltyped sr (symb_interpr_update H (symb, SOME v)))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   REWRITE_TAC [symb_interpr_welltyped_def, symb_interpr_get_update_thm,
                symb_interpr_dom_UPDATE_SOME_thm] >>
   REPEAT STRIP_TAC >>
   Cases_on `symb = symb'` >> (
     FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, IN_INSERT]
   )
-);
+QED
 
-val symb_interpr_update_SOME_IMP_welltyped_thm2 = store_thm(
-   "symb_interpr_update_SOME_IMP_welltyped_thm2", ``
-!sr.
+Theorem symb_interpr_update_SOME_IMP_welltyped_thm2:
+  !sr.
 !H symb vo v.
   (symb_interpr_get H symb = SOME v) ==>
   (symb_interpr_welltyped sr (symb_interpr_update H (symb, vo))) ==>
   (sr.sr_typeof_symb symb = sr.sr_typeof_val v) ==>
   (symb_interpr_welltyped sr H)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_interpr_get_update_thm] >>
   REPEAT STRIP_TAC >>
   Cases_on `symb = symb'` >> (
@@ -467,17 +451,16 @@ val symb_interpr_update_SOME_IMP_welltyped_thm2 = store_thm(
   ) >>
 
   METIS_TAC []
-);
+QED
 
-val symb_interpr_update_SOME_IMP_welltyped_thm3 = store_thm(
-   "symb_interpr_update_SOME_IMP_welltyped_thm3", ``
-!sr.
+Theorem symb_interpr_update_SOME_IMP_welltyped_thm3:
+  !sr.
 !H symb vo v.
   (symb_interpr_get H symb = NONE) ==>
   (symb_interpr_welltyped sr (symb_interpr_update H (symb, vo))) ==>
   (symb_interpr_welltyped sr H)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   `~(symb IN symb_interpr_dom H)` by FULL_SIMP_TAC std_ss [symb_interpr_dom_thm] >>
 
   FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_interpr_get_update_thm] >>
@@ -493,7 +476,7 @@ val symb_interpr_update_SOME_IMP_welltyped_thm3 = store_thm(
   ) >>
 
   METIS_TAC []
-);
+QED
 
 
 
@@ -503,18 +486,17 @@ val symb_interpr_update_SOME_IMP_welltyped_thm3 = store_thm(
 NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 =======================================================
 *)
-val symb_interpr_symbstore_def = Define `
+Definition symb_interpr_symbstore_def:
   symb_interpr_symbstore sr H store cstore =
     (!var. (store var <> NONE \/ cstore var <> NONE) ==>
          ?symbexp v.
             store  var = SOME symbexp /\
             cstore var = SOME v /\
             sr.sr_interpret_f H symbexp = SOME v)
-`;
+End
 
-val symb_symbst_store_update_IMP_EQ_thm = store_thm(
-   "symb_symbst_store_update_IMP_EQ_thm", ``
-!sr.
+Theorem symb_symbst_store_update_IMP_EQ_thm:
+  !sr.
 !H sys1 sys2 var symbexp symbexp' cstore.
   ((symb_symbst_store sys1) var = SOME symbexp) ==>
   (sys2 = symb_symbst_store_update var symbexp' sys1) ==>
@@ -524,8 +506,8 @@ val symb_symbst_store_update_IMP_EQ_thm = store_thm(
 
   ((symb_interpr_symbstore sr H (symb_symbst_store sys1) cstore) =
    (symb_interpr_symbstore sr H (symb_symbst_store sys2) cstore))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def] >>
 
   (* proof as two implications considering all variables var' *)
@@ -537,27 +519,25 @@ val symb_symbst_store_update_IMP_EQ_thm = store_thm(
       REV_FULL_SIMP_TAC std_ss []
     )
   )
-);
+QED
 
-val symb_interpr_symbpcond_def = Define `
+Definition symb_interpr_symbpcond_def:
   symb_interpr_symbpcond sr H sys =
     (sr.sr_interpret_f H (symb_symbst_pcond sys) = SOME sr.sr_val_true)
-`;
+End
 
-val symb_symbst_pcond_IMP_EQ_thm = store_thm(
-   "symb_symbst_pcond_IMP_EQ_thm", ``
-!sr.
+Theorem symb_symbst_pcond_IMP_EQ_thm:
+  !sr.
 !H sys1 sys2 s.
   (symb_symbst_pcond sys1 = symb_symbst_pcond sys2) ==>
   ((symb_interpr_symbpcond sr H sys1) =
    (symb_interpr_symbpcond sr H sys2))
-``,
-  FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def]
-);
+Proof
+FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def]
+QED
 
-val symb_symbst_pcond_update_IMP_EQ_thm = store_thm(
-   "symb_symbst_pcond_update_IMP_EQ_thm", ``
-!sr.
+Theorem symb_symbst_pcond_update_IMP_EQ_thm:
+  !sr.
 !H sys1 sys2 pcond pcond_f.
   (symb_symbst_pcond sys1 = pcond) ==>
   (sys2 = symb_symbst_pcond_update pcond_f sys1) ==>
@@ -567,78 +547,74 @@ val symb_symbst_pcond_update_IMP_EQ_thm = store_thm(
 
   ((symb_interpr_symbpcond sr H sys1) =
    (symb_interpr_symbpcond sr H sys2))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys1` >>
   FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def, symb_symbst_pcond_update_READ_thm]
-);
+QED
 
 
 (*
 NOTATION: STATE MATCHING
 =======================================================
 *)
-val symb_suitable_interpretation_def = Define `
-    symb_suitable_interpretation sr sys H =
+Definition symb_suitable_interpretation_def:
+  symb_suitable_interpretation sr sys H =
       symb_interpr_for_symbs (symb_symbols sr sys) H
-`;
+End
 
-val symb_suitable_interpretation_SUBSET_dom_thm = store_thm(
-   "symb_suitable_interpretation_SUBSET_dom_thm", ``
-!sr.
+Theorem symb_suitable_interpretation_SUBSET_dom_thm:
+  !sr.
 !sys H.
   (symb_suitable_interpretation sr sys H) =
   ((symb_symbols sr sys) SUBSET (symb_interpr_dom H))
-``,
-  REWRITE_TAC [symb_suitable_interpretation_def, symb_interpr_for_symbs_def]
-);
+Proof
+REWRITE_TAC [symb_suitable_interpretation_def, symb_interpr_for_symbs_def]
+QED
 
-val symb_suitable_interpretation_UPDATE_SOME_thm = store_thm(
-   "symb_suitable_interpretation_UPDATE_SOME_thm", ``
-!sr.
+Theorem symb_suitable_interpretation_UPDATE_SOME_thm:
+  !sr.
 !sys H symb v.
   (symb_suitable_interpretation sr sys H) ==>
   (symb_suitable_interpretation sr sys (symb_interpr_update H (symb,SOME v)))
-``,
-  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+Proof
+FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
      symb_interpr_for_symbs_def, symb_interpr_dom_UPDATE_SOME_thm] >>
   METIS_TAC [SUBSET_TRANS, SUBSET_INSERT_RIGHT, SUBSET_REFL]
-);
+QED
 
-val symb_suitable_interpretation_UPDATE_SOME_thm2 = store_thm(
-   "symb_suitable_interpretation_UPDATE_SOME_thm2", ``
-!sr.
+Theorem symb_suitable_interpretation_UPDATE_SOME_thm2:
+  !sr.
 !sys H symb v.
   (symb IN symb_interpr_dom H) ==>
   (symb_suitable_interpretation sr sys (symb_interpr_update H (symb,SOME v))) ==>
   (symb_suitable_interpretation sr sys H)
-``,
-  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+Proof
+FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
      symb_interpr_for_symbs_def, symb_interpr_dom_UPDATE_SOME_thm] >>
   METIS_TAC [SUBSET_TRANS, INSERT_SUBSET, SUBSET_REFL]
-);
+QED
 
-val symb_minimal_interpretation_def = Define `
-    symb_minimal_interpretation sr sys H =
+Definition symb_minimal_interpretation_def:
+  symb_minimal_interpretation sr sys H =
       symb_interpr_for_symbs_min (symb_symbols sr sys) H
-`;
+End
 
-val symb_minimal_interpretation_EQ_dom_thm = store_thm(
-   "symb_minimal_interpretation_EQ_dom_thm", ``
-!sr.
+Theorem symb_minimal_interpretation_EQ_dom_thm:
+  !sr.
 !sys H.
   (symb_minimal_interpretation sr sys H) =
   (symb_symbols sr sys = symb_interpr_dom H)
-``,
-  REWRITE_TAC [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def]
-);
+Proof
+REWRITE_TAC [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def]
+QED
 
 local
   val symb_rec_t_tm       = ``: ('a, 'b, 'c, 'd, 'e, 'f, 'g) symb_rec_t``;
   val symb_concst_t_tm    = ``: ('a, 'b, 'c, 'd) symb_concst_t``;
 in
-  val symb_matchstate_def = Define `
-      symb_matchstate ^(mk_var("sr", symb_rec_t_tm))
+Definition symb_matchstate_def:
+  symb_matchstate ^(mk_var("sr", symb_rec_t_tm))
                       sys
                       H
                       ^(mk_var("s", symb_concst_t_tm)) =
@@ -648,21 +624,19 @@ in
      symb_interpr_symbstore sr H (symb_symbst_store sys) (symb_concst_store s) /\
      symb_interpr_symbpcond sr H sys /\
      symb_symbst_extra sys = symb_concst_extra s)
-`;
+End
 end;
 
-val matchstate_IMP_symbols_SUBSET_interpr_dom_thm = store_thm(
-   "matchstate_IMP_symbols_SUBSET_interpr_dom_thm", ``
-!sr sys H s.
+Theorem matchstate_IMP_symbols_SUBSET_interpr_dom_thm:
+  !sr sys H s.
   (symb_matchstate sr sys H s) ==>
   ((symb_symbols sr sys) SUBSET symb_interpr_dom H)
-``,
-  METIS_TAC [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def]
-);
+Proof
+METIS_TAC [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def]
+QED
 
-val symb_symbst_store_update_IMP_matchstate_EQ_thm = store_thm(
-   "symb_symbst_store_update_IMP_matchstate_EQ_thm", ``
-!sr.
+Theorem symb_symbst_store_update_IMP_matchstate_EQ_thm:
+  !sr.
 !H sys1 sys2 var symbexp symbexp' s.
   ((symb_symbst_store sys1) var = SOME symbexp) ==>
   (sys2 = symb_symbst_store_update var symbexp' sys1) ==>
@@ -675,8 +649,8 @@ val symb_symbst_store_update_IMP_matchstate_EQ_thm = store_thm(
 
   ((symb_matchstate sr sys1 H s) =
    (symb_matchstate sr sys2 H s))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_matchstate_def] >>
 
   EQ_TAC >> (
@@ -689,11 +663,10 @@ val symb_symbst_store_update_IMP_matchstate_EQ_thm = store_thm(
         symb_symbols_of_symb_symbst_store_update_SUBSET2_thm]
     )
   )
-);
+QED
 
-val symb_symbst_pcond_update_IMP_matchstate_EQ_thm = store_thm(
-   "symb_symbst_pcond_update_IMP_matchstate_EQ_thm", ``
-!sr.
+Theorem symb_symbst_pcond_update_IMP_matchstate_EQ_thm:
+  !sr.
 !H sys1 sys2 pcond pcond_f s.
   (symb_symbst_pcond sys1 = pcond) ==>
   (sys2 = symb_symbst_pcond_update pcond_f sys1) ==>
@@ -706,8 +679,8 @@ val symb_symbst_pcond_update_IMP_matchstate_EQ_thm = store_thm(
 
   ((symb_matchstate sr sys1 H s) =
    (symb_matchstate sr sys2 H s))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_matchstate_def] >>
 
   EQ_TAC >> (
@@ -721,20 +694,19 @@ val symb_symbst_pcond_update_IMP_matchstate_EQ_thm = store_thm(
         symb_symbst_pcond_update_UNCHANGED_thm]
     )
   )
-);
+QED
 
 
 (* matching gives a UNIQUE store *)
-val symb_matchstate_UNIQUE_store_thm = store_thm(
-   "symb_matchstate_UNIQUE_store_thm", ``
-!sr.
+Theorem symb_matchstate_UNIQUE_store_thm:
+  !sr.
 !sys H s s'.
   (symb_matchstate sr sys H s) ==>
   (symb_matchstate sr sys H s') ==>
 
   (symb_concst_store s = symb_concst_store s')
-``,
-  REPEAT GEN_TAC >>
+Proof
+REPEAT GEN_TAC >>
   Cases_on `sys` >> Cases_on `s` >> Cases_on `s'` >>
   FULL_SIMP_TAC (std_ss)
     [symb_matchstate_def,
@@ -749,19 +721,18 @@ val symb_matchstate_UNIQUE_store_thm = store_thm(
   Cases_on `f x` >> Cases_on `f' x` >> Cases_on `f'' x` >> (
     FULL_SIMP_TAC std_ss []
   )
-);
+QED
 
 (* matching is unique *)
-val symb_matchstate_UNIQUE_thm = store_thm(
-   "symb_matchstate_UNIQUE_thm", ``
-!sr.
+Theorem symb_matchstate_UNIQUE_thm:
+  !sr.
 !sys H s s'.
   (symb_matchstate sr sys H s) ==>
   (symb_matchstate sr sys H s') ==>
 
   (s = s')
-``,
-  REPEAT GEN_TAC >>
+Proof
+REPEAT GEN_TAC >>
   Cases_on `s` >> Cases_on `s'` >>
   FULL_SIMP_TAC (std_ss) (type_rws ``:('a, 'b, 'c, 'd) symb_concst_t``) >>
 
@@ -776,30 +747,28 @@ val symb_matchstate_UNIQUE_thm = store_thm(
   (* and now the extra *)
   FULL_SIMP_TAC (std_ss)
     [symb_matchstate_def, symb_concst_extra_def, symb_symbst_extra_def]
-);
+QED
 
-val symb_matchstate_IMP_interpret_exp_SOME_thm = store_thm(
-   "symb_matchstate_IMP_interpret_exp_SOME_thm", ``
-!sr.
+Theorem symb_matchstate_IMP_interpret_exp_SOME_thm:
+  !sr.
 !sys var symbexp H s.
   (symb_symbst_store sys var = SOME symbexp) ==>
 
   (symb_matchstate sr sys H s) ==>
 
   (?v. sr.sr_interpret_f H symbexp = SOME v)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
 
   PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`])) >>
   FULL_SIMP_TAC std_ss [] >>
   REV_FULL_SIMP_TAC std_ss []
-);
+QED
 
-val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
-   "symb_matchstate_ext_IMP_SAME_interpret_exp_thm", ``
-!sr.
+Theorem symb_matchstate_ext_IMP_SAME_interpret_exp_thm:
+  !sr.
 !sys var symbexp H H' s v.
   (symb_symbst_store sys var = SOME symbexp) ==>
 
@@ -808,8 +777,8 @@ val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
 
   (sr.sr_interpret_f H  symbexp =
    sr.sr_interpret_f H' symbexp)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
 
@@ -818,27 +787,26 @@ val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
   REV_FULL_SIMP_TAC std_ss [] >>
 
   FULL_SIMP_TAC std_ss []
-);
+QED
 
 
 
-val symb_matchstate_ext_def = Define `
+Definition symb_matchstate_ext_def:
   symb_matchstate_ext sr sys H s =
     (?H'. symb_interpr_ext H' H /\
           symb_matchstate sr sys H' s)
-`;
+End
 
-val symb_matchstate_ext_w_ext_thm = store_thm(
-   "symb_matchstate_ext_w_ext_thm", ``
-!sr.
+Theorem symb_matchstate_ext_w_ext_thm:
+  !sr.
 !H H' sys s.
   (symb_interpr_ext H' H) ==>
 
   (symb_matchstate_ext sr sys H' s) ==>
   (symb_matchstate_ext sr sys H  s)
-``,
-  METIS_TAC [symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm]
-);
+Proof
+METIS_TAC [symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm]
+QED
 
 
 (*
@@ -847,88 +815,83 @@ NOTATION: MULTISTEP WITH LABEL SET
 *)
 
 (* n steps deterministic transition relation with using FUNPOW *)
-val step_n_def = Define `
+Definition step_n_def:
   (step_n stepf s n s' = (FUNPOW stepf n s = s'))
-`;
+End
 
-val step_n_deterministic_thm = store_thm(
-   "step_n_deterministic_thm", ``
-!stepf.
+Theorem step_n_deterministic_thm:
+  !stepf.
 !s n s' s''.
 (step_n stepf s n s') ==>
 (step_n stepf s n s'') ==>
 (s' = s'')
-``,
-  SIMP_TAC std_ss [step_n_def]
-);
-val step_n_total_thm = store_thm(
-   "step_n_total_thm", ``
-!stepf.
+Proof
+SIMP_TAC std_ss [step_n_def]
+QED
+Theorem step_n_total_thm:
+  !stepf.
 !s n.
 ?s'.
 step_n stepf s n s'
-``,
-  SIMP_TAC std_ss [step_n_def]
-);
+Proof
+SIMP_TAC std_ss [step_n_def]
+QED
 
-val step_n_in_L_relaxed_def = Define `
+Definition step_n_in_L_relaxed_def:
   step_n_in_L_relaxed pcf stepf s n L s' =
     (step_n stepf s n s' /\
      (n > 0) /\
      (!n'. 0 < n' ==> n' < n ==>
         ?s''. step_n stepf s n' s'' /\ pcf(s'') IN L))
-`;
+End
 
-val step_n_in_L_def = Define `
+Definition step_n_in_L_def:
   step_n_in_L pcf stepf s n L s' =
     ((pcf s) IN L /\
      (step_n_in_L_relaxed pcf stepf s n L s'))
-`;
+End
 
 val step_n_in_L_thm = save_thm("step_n_in_L_thm",
   REWRITE_RULE [step_n_in_L_relaxed_def] step_n_in_L_def
 );
 
-val step_n_in_L_onlyL_thm = store_thm(
-   "step_n_in_L_onlyL_thm", ``
-!pcf stepf.
+Theorem step_n_in_L_onlyL_thm:
+  !pcf stepf.
 !s n L s'.
 (step_n_in_L pcf stepf s n L s') ==>
 (
   (* ((pcf s) IN L) /\ *)
   (!n' s''. n' < n ==> step_n stepf s n' s'' ==> pcf(s'') IN L)
 )
-``,
-  SIMP_TAC std_ss [step_n_in_L_thm] >>
+Proof
+SIMP_TAC std_ss [step_n_in_L_thm] >>
   REPEAT STRIP_TAC >>
   Cases_on `n'` >- (
     FULL_SIMP_TAC std_ss [step_n_def, FUNPOW]
   ) >>
   `0 < SUC n''` by (SIMP_TAC arith_ss []) >>
   METIS_TAC [step_n_deterministic_thm]
-);
+QED
 
-val step_n_in_L_IMP_SUPER_thm = store_thm(
-   "step_n_in_L_IMP_SUPER_thm", ``
-!pcf stepf.
+Theorem step_n_in_L_IMP_SUPER_thm:
+  !pcf stepf.
 !s n L L' s'.
   (L SUBSET L') ==>
   (step_n_in_L pcf stepf s n L  s') ==>
   (step_n_in_L pcf stepf s n L' s')
-``,
-  REWRITE_TAC [step_n_in_L_thm, SUBSET_DEF] >>
+Proof
+REWRITE_TAC [step_n_in_L_thm, SUBSET_DEF] >>
   METIS_TAC []
-);
+QED
 
-val step_n_in_L_SEQ_thm = store_thm(
-   "step_n_in_L_SEQ_thm", ``
-!pcf stepf.
+Theorem step_n_in_L_SEQ_thm:
+  !pcf stepf.
 !s n_A L_A s' n_B L_B s''.
   (step_n_in_L pcf stepf s  n_A L_A s') ==>
   (step_n_in_L pcf stepf s' n_B L_B s'') ==>
   (step_n_in_L pcf stepf s (n_A + n_B) (L_A UNION L_B) s'')
-``,
-  REWRITE_TAC [step_n_in_L_thm, step_n_def] >>
+Proof
+REWRITE_TAC [step_n_in_L_thm, step_n_def] >>
   REPEAT STRIP_TAC >> (
     ASM_SIMP_TAC (arith_ss++pred_setSimps.PRED_SET_ss) []
   ) >> (
@@ -954,28 +917,26 @@ val step_n_in_L_SEQ_thm = store_thm(
   Cases_on `diff = 0` >> (
     FULL_SIMP_TAC (arith_ss) [FUNPOW_ADD, FUNPOW_0]
   )
-);
+QED
 
-val FUNPOW_ABS_thm = store_thm(
-   "FUNPOW_ABS_thm", ``
-!f g.
+Theorem FUNPOW_ABS_thm:
+  !f g.
   (!x. g (f x) = x) ==>
   !stepf.
   !s n s'.
     FUNPOW (f o stepf o g) n (f s)
     =
     f (FUNPOW stepf n s)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [step_n_def] >>
   Induct_on `n` >> (
     FULL_SIMP_TAC std_ss [arithmeticTheory.FUNPOW_0, arithmeticTheory.FUNPOW_SUC]
   )
-);
+QED
 
-val step_n_ABS_thm = store_thm(
-   "step_n_ABS_thm", ``
-!f g.
+Theorem step_n_ABS_thm:
+  !f g.
   (!x y. (f x = f y) <=> (x = y)) ==>
   (!x. g (f x) = x) ==>
   !stepf.
@@ -983,13 +944,12 @@ val step_n_ABS_thm = store_thm(
     step_n (f o stepf o g) (f s) n (f s')
     =
     step_n stepf s n s'
-``,
-  FULL_SIMP_TAC std_ss [step_n_def, FUNPOW_ABS_thm]
-);
+Proof
+FULL_SIMP_TAC std_ss [step_n_def, FUNPOW_ABS_thm]
+QED
 
-val step_n_in_L_ABS_thm = store_thm(
-   "step_n_in_L_ABS_thm", ``
-!f g.
+Theorem step_n_in_L_ABS_thm:
+  !f g.
   (!x y. (f x = f y) <=> (x = y)) ==>
   (!x. g (f x) = x) ==>
   (!x. ?y. (f y) = x) ==>
@@ -998,8 +958,8 @@ val step_n_in_L_ABS_thm = store_thm(
     step_n_in_L pcf (f o stepf o g) (f s) n L (f s')
     =
     step_n_in_L (pcf o f) stepf s n L s'
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [step_n_in_L_def, step_n_in_L_relaxed_def] >>
 
   EQ_TAC >> (
@@ -1009,26 +969,25 @@ val step_n_in_L_ABS_thm = store_thm(
     REV_FULL_SIMP_TAC std_ss [] >>
     METIS_TAC [step_n_ABS_thm]
   )
-);
+QED
 
 
-val conc_step_n_in_L_relaxed_def = Define `
+Definition conc_step_n_in_L_relaxed_def:
   conc_step_n_in_L_relaxed sr = step_n_in_L_relaxed symb_concst_pc sr.sr_step_conc
-`;
+End
 
-val conc_step_n_in_L_def = Define `
+Definition conc_step_n_in_L_def:
   conc_step_n_in_L sr = step_n_in_L symb_concst_pc sr.sr_step_conc
-`;
+End
 
-val conc_step_n_in_L_IMP_relaxed_thm = store_thm(
-   "conc_step_n_in_L_IMP_relaxed_thm", ``
-!sr.
+Theorem conc_step_n_in_L_IMP_relaxed_thm:
+  !sr.
 !s n L s'.
 (conc_step_n_in_L sr s n L s') ==>
 (conc_step_n_in_L_relaxed sr s n L s')
-``,
-  METIS_TAC [conc_step_n_in_L_def, conc_step_n_in_L_relaxed_def, step_n_in_L_def]
-);
+Proof
+METIS_TAC [conc_step_n_in_L_def, conc_step_n_in_L_relaxed_def, step_n_in_L_def]
+QED
 
 
 
@@ -1036,7 +995,7 @@ val conc_step_n_in_L_IMP_relaxed_thm = store_thm(
 GOAL: MULTISTEP SOUNDNESS
 =======================================================
 *)
-val symb_hl_step_in_L_sound_def = Define `
+Definition symb_hl_step_in_L_sound_def:
   symb_hl_step_in_L_sound sr (sys, L, Pi) =
     !s H.
     (symb_minimal_interpretation sr sys H) ==>
@@ -1045,7 +1004,7 @@ val symb_hl_step_in_L_sound_def = Define `
       (conc_step_n_in_L sr s n L s') /\
       (?sys'. sys' IN Pi /\ symb_matchstate_ext sr sys' H s')
     )
-`;
+End
 
 (* TODO: for rules use DELETE (..) instead of DIFF {..} *)
 
@@ -1057,9 +1016,8 @@ WIP: SANITY: MULTISTEP SOUNDNESS IMPLIES INCLUSION OF ALL STARTING STATES IN REA
 (* something similar could be proven for the transformations of Pi with the rules,
    i.e. path conditions in the reachable states as a whole can only get less restrictive and never more restrictive *)
 (* no underapproximation *)
-val symb_hl_step_in_L_sound_IMP_overapprox_thm = store_thm(
-   "symb_hl_step_in_L_sound_IMP_overapprox_thm", ``
-!sr.
+Theorem symb_hl_step_in_L_sound_IMP_overapprox_thm:
+  !sr.
 !sys L Pi.
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   (!s H.
@@ -1067,9 +1025,9 @@ val symb_hl_step_in_L_sound_IMP_overapprox_thm = store_thm(
      (?sys'. sys' IN Pi /\ )
 symb_interpr_ext H' H
   )
-``,
-  cheat
-);
+Proof
+cheat
+QED
 *)
 
 
@@ -1079,32 +1037,31 @@ symb_interpr_ext H' H
 SUBSTITUTION OF SYMBOLIC EXPRESSIONS
 =======================================================
 *)
-val symb_subst_store_def = Define `
-    symb_subst_store sr subst store =
+Definition symb_subst_store_def:
+  symb_subst_store sr subst store =
       (\var. OPTION_MAP (sr.sr_subst_f subst) (store var))
-`;
-val symb_subst_def = Define `
-    symb_subst sr subst sys =
+End
+Definition symb_subst_def:
+  symb_subst sr subst sys =
       (SymbSymbSt
         (symb_symbst_pc sys)
         (symb_subst_store sr subst (symb_symbst_store sys))
         (sr.sr_subst_f subst (symb_symbst_pcond sys))
         (symb_symbst_extra sys))
-`;
-val symb_subst_set_def = Define `
-    symb_subst_set sr subst Pi =
+End
+Definition symb_subst_set_def:
+  symb_subst_set sr subst Pi =
       (IMAGE (symb_subst sr subst) Pi)
-`;
+End
 
-val symb_subst_store_thm = store_thm(
-   "symb_subst_store_thm", ``
-!sr.
+Theorem symb_subst_store_thm:
+  !sr.
 !subst store var.
   ((store var = NONE) ==> ((symb_subst_store sr subst store) var = NONE)) /\
   (!e. (store var = SOME e) ==> ((symb_subst_store sr subst store) var = SOME (sr.sr_subst_f subst e)))
-``,
-  METIS_TAC [symb_subst_store_def, optionTheory.OPTION_MAP_DEF]
-);
+Proof
+METIS_TAC [symb_subst_store_def, optionTheory.OPTION_MAP_DEF]
+QED
 
 
 

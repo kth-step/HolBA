@@ -440,43 +440,50 @@ end);
 
 
 
-val arm8_LIFT_LOAD_DWORD = store_thm ("arm8_LIFT_LOAD_DWORD",
-``!env em ea va ms.
+Theorem arm8_LIFT_LOAD_DWORD:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit64)
-       (Imm64 (mem_dword ms.MEM va))``,
-SIMP_TAC std_ss [mem_dword_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm64 (mem_dword ms.MEM va))
+Proof
+SIMP_TAC std_ss [mem_dword_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
 
-val arm8_LIFT_LOAD_WORD = store_thm ("arm8_LIFT_LOAD_WORD",
-``!env em ea va ms.
+Theorem arm8_LIFT_LOAD_WORD:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit32)
-       (Imm32 (mem_word ms.MEM va))``,
-SIMP_TAC std_ss [mem_word_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm32 (mem_word ms.MEM va))
+Proof
+SIMP_TAC std_ss [mem_word_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
 
 
-val arm8_LIFT_LOAD_HALF = store_thm ("arm8_LIFT_LOAD_HALF",
-``!env em ea va ms.
+Theorem arm8_LIFT_LOAD_HALF:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit16)
-       (Imm16 (mem_half ms.MEM va))``,
-SIMP_TAC std_ss [mem_half_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm16 (mem_half ms.MEM va))
+Proof
+SIMP_TAC std_ss [mem_half_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
 
-val arm8_LIFT_LOAD_BYTE = store_thm ("arm8_LIFT_LOAD_BYTE",
-``!env em ea va ms.
+Theorem arm8_LIFT_LOAD_BYTE:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit8)
-       (Imm8 (ms.MEM va))``,
-
+       (Imm8 (ms.MEM va))
+Proof
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]);
+ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]
+QED
 
 
 
@@ -484,7 +491,8 @@ ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]);
 (* Store for arm8 *)
 (******************)
 
-val mem_store_dword_def = Define `mem_store_dword (a:word64) (w:word64) (mmap : (word64 -> word8)) =
+Definition mem_store_dword_def:
+  mem_store_dword (a:word64) (w:word64) (mmap : (word64 -> word8)) =
    (a + 7w =+ (63 >< 56) w)
   ((a + 6w =+ (55 >< 48) w)
   ((a + 5w =+ (47 >< 40) w)
@@ -492,20 +500,27 @@ val mem_store_dword_def = Define `mem_store_dword (a:word64) (w:word64) (mmap : 
   ((a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a + 0w  =+ (7  >< 0)  w) mmap)))))))`;
+  ((a + 0w  =+ (7  >< 0)  w) mmap)))))))
+End
 
-val mem_store_word_def = Define `mem_store_word (a:word64) (w:word32) (mmap : (word64 -> word8)) =
+Definition mem_store_word_def:
+  mem_store_word (a:word64) (w:word32) (mmap : (word64 -> word8)) =
    (a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a + 0w =+ (7  >< 0)  w) mmap)))`;
+  ((a + 0w =+ (7  >< 0)  w) mmap)))
+End
 
-val mem_store_half_def = Define `mem_store_half (a:word64) (w:word16) (mmap : (word64 -> word8)) =
+Definition mem_store_half_def:
+  mem_store_half (a:word64) (w:word16) (mmap : (word64 -> word8)) =
    (a + 1w =+ (15 >< 8)  w)
-  ((a + 0w =+ (7  >< 0)  w) mmap)`;
+  ((a + 0w =+ (7  >< 0)  w) mmap)
+End
 
-val mem_store_byte_def = Define `mem_store_byte (a:word64) (w:word8) (mmap : (word64 -> word8)) =
-  ((a      =+ w) mmap)`;
+Definition mem_store_byte_def:
+  mem_store_byte (a:word64) (w:word8) (mmap : (word64 -> word8)) =
+  ((a      =+ w) mmap)
+End
 
 val elim_zero_for_def_thm = GEN_ALL (SIMP_CONV (std_ss++wordsLib.WORD_ss) [] ``a + 0w  =+ w``);
 
@@ -536,83 +551,93 @@ let
 in LIST_CONJ [def_THMS_apz, def_THMS, zero_THM0, zero_THM1, zero_THM2] end);
 
 
-val arm8_LIFT_STORE_DWORD = store_thm ("arm8_LIFT_STORE_DWORD",
-``!env em ea va ev vv ms mem_f.
+Theorem arm8_LIFT_STORE_DWORD:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_dword va vv mem_f)``,
+       (mem_store_dword va vv mem_f)
+Proof
+SIMP_TAC std_ss [mem_store_dword_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [mem_store_dword_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val arm8_LIFT_STORE_WORD = store_thm ("arm8_LIFT_STORE_WORD",
-``!env em ea va ev vv ms mem_f.
+Theorem arm8_LIFT_STORE_WORD:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm32 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_word va vv mem_f)``,
+       (mem_store_word va vv mem_f)
+Proof
+SIMP_TAC std_ss [mem_store_word_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [mem_store_word_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val arm8_LIFT_STORE_HALF = store_thm ("arm8_LIFT_STORE_HALF",
-``!env em ea va ev vv ms mem_f.
+Theorem arm8_LIFT_STORE_HALF:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm16 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_half va vv mem_f)``,
+       (mem_store_half va vv mem_f)
+Proof
+SIMP_TAC std_ss [mem_store_half_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [mem_store_half_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val arm8_LIFT_STORE_BYTE = store_thm ("arm8_LIFT_STORE_BYTE",
-``!env em ea va ev vv ms mem_f.
+Theorem arm8_LIFT_STORE_BYTE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm8 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_byte va vv mem_f)``,
+       (mem_store_byte va vv mem_f)
+Proof
+SIMP_TAC std_ss [mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]
+QED
 
-SIMP_TAC std_ss [mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]);
+Theorem arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 8 (mem_store_dword va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_dword_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
-val arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 8 (mem_store_dword va vv mem_f) mem_f``,
 
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_dword_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem arm8_LIFT_STORE_WORD_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (mem_store_word va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_word_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
+Theorem arm8_LIFT_STORE_HALF_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (mem_store_half va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_half_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
-val arm8_LIFT_STORE_WORD_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_WORD_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (mem_store_word va vv mem_f) mem_f``,
-
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_word_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
-
-val arm8_LIFT_STORE_HALF_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_HALF_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (mem_store_half va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_half_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
-
-val arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 1 (mem_store_byte va vv mem_f) mem_f``,
-
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 1 (mem_store_byte va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
 
 (****************)
 (* Add to sub   *)
 (****************)
 
-val word_add_to_sub_GEN = store_thm ("word_add_to_sub_GEN",
-``!w:'a word n.
+Theorem word_add_to_sub_GEN:
+  !w:'a word n.
 
    INT_MAX (:'a) < n /\ n < dimword (:'a) ==>
-   (w + n2w n = w - n2w (dimword (:'a) - n))``,
-
+   (w + n2w n = w - n2w (dimword (:'a) - n))
+Proof
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC arith_ss [wordsTheory.word_sub_def,
-  wordsTheory.word_2comp_n2w]);
+  wordsTheory.word_2comp_n2w]
+QED
 
 
 val word_add_to_sub_TYPES = save_thm ("word_add_to_sub_TYPES",
@@ -631,12 +656,12 @@ end)
 (* ExtendValue *)
 (***************)
 
-val Extend_ALT_DEF = store_thm ("Extend_ALT_DEF",
-``!l unsigned.
+Theorem Extend_ALT_DEF:
+  !l unsigned.
      arm8$Extend (l,unsigned) : 'a word =
      if unsigned then v2w l
-     else v2w (sign_extend (dimindex (:'a)) l)``,
-
+     else v2w (sign_extend (dimindex (:'a)) l)
+Proof
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [arm8Theory.Extend_def] >>
 Cases_on `unsigned` >> ASM_REWRITE_TAC [] >>
@@ -651,7 +676,8 @@ Cases_on `dimindex (:'a) <= LENGTH l` >- (
  fixwidth (dimindex (:'a)) l` by (
   ASM_SIMP_TAC arith_ss [fixwidth_def, LET_THM, zero_extend_def]
 ) >>
-ASM_SIMP_TAC std_ss [v2w_fixwidth, sign_extend_def]);
+ASM_SIMP_TAC std_ss [v2w_fixwidth, sign_extend_def]
+QED
 
 
 val ExtendValue_REWR = save_thm ("ExtendValue_REWR",
@@ -804,8 +830,8 @@ in thm3 end);
 (* misc *)
 (********)
 
-val arm8_rev_folds = store_thm ("arm8_rev_folds",
-`` (!(w :word64).
+Theorem arm8_rev_folds:
+  (!(w :word64).
       (((((39 :num) >< (32 :num)) w :word8) @@
         (((((47 :num) >< (40 :num)) w :word8) @@
          (((((55 :num) >< (48 :num)) w :word8) @@
@@ -847,19 +873,24 @@ val arm8_rev_folds = store_thm ("arm8_rev_folds",
             :word16))
            :word24))
          :word32) =
-      word_reverse_16_32 (word_reverse_8_32 w))``,
-
+      word_reverse_16_32 (word_reverse_8_32 w))
+Proof
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
   w2w, word_bits_def, fcpTheory.FCP_BETA] >>
-SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []
+QED
 
 (*
-val g_low_def = Define `g_low(x:word64) = 0xFFFFFFFFw && x`;
-val g_high_def = Define `g_high(x:word64) = x >>> 32`;
-val arm8_high_u_mul_internal = store_thm ("arm8_high_u_mul_internal",
-``!w1:word64 w2:word64. ((127 >< 64) ((w2w (w1)):word128 * w2w (w2)))
+Definition g_low_def:
+  g_low(x:word64) = 0xFFFFFFFFw && x
+End
+Definition g_high_def:
+  g_high(x:word64) = x >>> 32
+End
+Theorem arm8_high_u_mul_internal:
+  !w1:word64 w2:word64. ((127 >< 64) ((w2w (w1)):word128 * w2w (w2)))
 = 
 g_high(
    g_high (g_low(w1) * g_low(w2)) +
@@ -869,25 +900,27 @@ g_high(
   g_high(g_high(w1) * g_low(w2)) + 
   g_high(g_low(w1) * g_high(w2)) +
 (g_high(w1) * g_high(w2))
-``,
- cheat);
+Proof
+cheat
+QED
 val arm8_high_u_mul = REWRITE_RULE [g_low_def, g_high_def] arm8_high_u_mul_internal;
 *)
 
 
-val arm8_ngc64_fold = store_thm ("arm8_ngc64_fold",
- ``!w:word64 c.
+Theorem arm8_ngc64_fold:
+  !w:word64 c.
      n2w (w2n (~w) + if c then 1 else 0) =
-     ~w + w2w (bool2w c)``,
-
+     ~w + w2w (bool2w c)
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.SIZES_ss) [GSYM word_add_n2w, n2w_w2n, bir_immTheory.bool2w_def,
-  w2w_def, w2n_n2w]);
+  w2w_def, w2n_n2w]
+QED
 
-val arm8_ngc32_fold = store_thm ("arm8_ngc32_fold",
- ``!w:word32 c.
+Theorem arm8_ngc32_fold:
+  !w:word32 c.
      n2w (BITS 31 0 (w2n (~w) + if c then 1 else 0)) =
-     (w2w (~w + w2w (bool2w c))):word64``,
-
+     (w2w (~w + w2w (bool2w c))):word64
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:64``] w2w_n2w)) >>
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [] >>
@@ -895,7 +928,8 @@ STRIP_TAC >> POP_ASSUM (K ALL_TAC) >>
 SIMP_TAC std_ss [w2w_def, n2w_w2n, GSYM word_add_n2w] >>
 Cases_on `c` >> (
   SIMP_TAC (std_ss++wordsLib.SIZES_ss) [bir_immTheory.bool2w_def, w2n_n2w]
-));
+)
+QED
 
 
 
@@ -1035,36 +1069,40 @@ val arm8_movk64_fold0  = save_thm  ("arm8_movk64_fold0",
   SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
      INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:48``, ``:'c`` |-> ``:16``] arm8_movk_fold_base_r));
 
-val arm8_movk64_fold16 = store_thm ("arm8_movk64_fold16",
-  ``!n (w:word64). ((63 >< 32) w : word32) @@ ((((n2w:num->word16) n) @@ ((15 >< 0) w : word16)): word32) = (w && 0xFFFFFFFF00000000w) || (((n2w:num->word64) (n MOD 65536)) << 16) || (w && 0x000000000000FFFFw)``,
-  ASSUME_TAC ( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+Theorem arm8_movk64_fold16:
+  !n (w:word64). ((63 >< 32) w : word32) @@ ((((n2w:num->word16) n) @@ ((15 >< 0) w : word16)): word32) = (w && 0xFFFFFFFF00000000w) || (((n2w:num->word64) (n MOD 65536)) << 16) || (w && 0x000000000000FFFFw)
+Proof
+ASSUME_TAC ( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
      INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:32``, ``:'c`` |-> ``:16``, ``:'d`` |-> ``:32``] arm8_movk_16_fold_base_m)) >>
   FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []
-);
+QED
 
-val arm8_movk64_fold32 = store_thm ("arm8_movk64_fold32",
-  ``!n (w:word64). ((63 >< 48) w : word16) @@ ((((n2w:num->word16) n) @@ ((31 >< 0) w : word32)) : word48) = (w && 0xFFFF000000000000w) || (((n2w:num->word64) (n MOD 65536)) << 32) || (w && 0x00000000FFFFFFFFw)``,
-  ASSUME_TAC ( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+Theorem arm8_movk64_fold32:
+  !n (w:word64). ((63 >< 48) w : word16) @@ ((((n2w:num->word16) n) @@ ((31 >< 0) w : word32)) : word48) = (w && 0xFFFF000000000000w) || (((n2w:num->word64) (n MOD 65536)) << 32) || (w && 0x00000000FFFFFFFFw)
+Proof
+ASSUME_TAC ( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
      INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:16``, ``:'c`` |-> ``:32``, ``:'d`` |-> ``:48``] arm8_movk_16_fold_base_m)) >>
   FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []
-);
+QED
 
-val arm8_movk64_fold48 = store_thm ("arm8_movk64_fold48",
-  ``!n (w:word64). ((n2w:num->word16) n) @@ ((47 >< 0) w : word48) = (((n2w:num->word64) (n MOD 65536)) << 48) || (w && 0x0000FFFFFFFFFFFFw)``,
-  SIMP_TAC (std_ss++wordsLib.WORD_ss) [( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+Theorem arm8_movk64_fold48:
+  !n (w:word64). ((n2w:num->word16) n) @@ ((47 >< 0) w : word48) = (((n2w:num->word64) (n MOD 65536)) << 48) || (w && 0x0000FFFFFFFFFFFFw)
+Proof
+SIMP_TAC (std_ss++wordsLib.WORD_ss) [( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
      INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:48``] arm8_movk_16_fold_base_l))]
-);
+QED
 
 
 val arm8_movk32_fold0  = save_thm  ("arm8_movk32_fold0",
   SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
      INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``, ``:'c`` |-> ``:16``] arm8_movk_fold_base_r));
 
-val arm8_movk32_fold16 = store_thm ("arm8_movk32_fold16",
-  ``!n (w:word32). ((n2w:num->word16) n) @@ ((15 >< 0) w : word16) = (((n2w:num->word32) (n MOD 65536)) << 16) || (w && 0x0000FFFFw)``,
-  SIMP_TAC (std_ss++wordsLib.WORD_ss) [( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+Theorem arm8_movk32_fold16:
+  !n (w:word32). ((n2w:num->word16) n) @@ ((15 >< 0) w : word16) = (((n2w:num->word32) (n MOD 65536)) << 16) || (w && 0x0000FFFFw)
+Proof
+SIMP_TAC (std_ss++wordsLib.WORD_ss) [( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
      INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``] arm8_movk_16_fold_base_l))]
-);
+QED
 
 val arm8_movk32_folds = save_thm ("arm8_movk32_folds", LIST_CONJ [arm8_movk32_fold0, arm8_movk32_fold16]);
 val arm8_movk64_folds = save_thm ("arm8_movk64_folds", LIST_CONJ [arm8_movk64_fold0, arm8_movk64_fold16, arm8_movk64_fold32, arm8_movk64_fold48]);
@@ -1094,32 +1132,32 @@ val arm8_CHANGE_INTERVAL_THMS = save_thm ("arm8_CHANGE_INTERVAL_THMS",
     arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
 
 
-val arm8_count_leading_eq_bir = store_thm ("arm8_count_leading_eq_bir",
- ``!w:'a word. (arm8$CountLeadingZeroBits w = bir_CountLeadingZeroBits w) /\
-               (arm8$CountLeadingSignBits w = bir_CountLeadingSignBits w)``,
-
-  REWRITE_TAC [arm8Theory.CountLeadingZeroBits_def,
+Theorem arm8_count_leading_eq_bir:
+  !w:'a word. (arm8$CountLeadingZeroBits w = bir_CountLeadingZeroBits w) /\
+               (arm8$CountLeadingSignBits w = bir_CountLeadingSignBits w)
+Proof
+REWRITE_TAC [arm8Theory.CountLeadingZeroBits_def,
                arm8Theory.HighestSetBit_def,
                arm8Theory.CountLeadingSignBits_def,
                bir_CountLeadingZeroBits_def,
                bir_HighestSetBit_def,
                bir_CountLeadingSignBits_def]
-);
+QED
 
 
-val arm8_count_leading_zero = store_thm ("arm8_count_leading_zero",
- ``!w:'a word. (n2w (arm8$CountLeadingZeroBits w)) = bir_word_countleadingzeros w``,
-
-  REWRITE_TAC [arm8_count_leading_eq_bir,
+Theorem arm8_count_leading_zero:
+  !w:'a word. (n2w (arm8$CountLeadingZeroBits w)) = bir_word_countleadingzeros w
+Proof
+REWRITE_TAC [arm8_count_leading_eq_bir,
                bir_word_countleadingzeros_def]
-);
+QED
 
-val arm8_count_leading_sign = store_thm ("arm8_count_leading_sign",
- ``!w:'a word. (n2w (arm8$CountLeadingSignBits w)) = bir_word_countleadingsigns w``,
-
-  REWRITE_TAC [arm8_count_leading_eq_bir,
+Theorem arm8_count_leading_sign:
+  !w:'a word. (n2w (arm8$CountLeadingSignBits w)) = bir_word_countleadingsigns w
+Proof
+REWRITE_TAC [arm8_count_leading_eq_bir,
                bir_word_countleadingsigns_def]
-);
+QED
 
 val cast_thm = prove (``
   !n. w2w (n2w n :word32) = (n2w (BITS 31 0 n) :word64)
@@ -1128,17 +1166,17 @@ val cast_thm = prove (``
   SIMP_TAC (arith_ss++wordsLib.SIZES_ss) []
 );
 
-val arm8_count_leading_zero_32 = store_thm ("arm8_count_leading_zero_32",
- ``!w:word32. (n2w (BITS 31 0 (arm8$CountLeadingZeroBits w)) :word64) = w2w (bir_word_countleadingzeros w)``,
+Theorem arm8_count_leading_zero_32:
+  !w:word32. (n2w (BITS 31 0 (arm8$CountLeadingZeroBits w)) :word64) = w2w (bir_word_countleadingzeros w)
+Proof
+REWRITE_TAC [arm8_count_leading_zero, GSYM cast_thm]
+QED
 
-  REWRITE_TAC [arm8_count_leading_zero, GSYM cast_thm]
-);
-
-val arm8_count_leading_sign_32 = store_thm ("arm8_count_leading_sign_32",
- ``!w:word32. (n2w (BITS 31 0 (arm8$CountLeadingSignBits w)) :word64) = w2w (bir_word_countleadingsigns w)``,
-
-  REWRITE_TAC [arm8_count_leading_sign, GSYM cast_thm]
-);
+Theorem arm8_count_leading_sign_32:
+  !w:word32. (n2w (BITS 31 0 (arm8$CountLeadingSignBits w)) :word64) = w2w (bir_word_countleadingsigns w)
+Proof
+REWRITE_TAC [arm8_count_leading_sign, GSYM cast_thm]
+QED
       
 val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,

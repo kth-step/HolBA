@@ -39,53 +39,65 @@ val _ = new_theory "bir_lifter_general_aux";
    rewrite rules can distinguish between it and common if-then-else expressions
    while lifting. *)
 
-val PROTECTED_COND_def = Define `PROTECTED_COND = $COND`
+Definition PROTECTED_COND_def:
+  PROTECTED_COND = $COND
+End
 
-val PROTECTED_COND_ID = store_thm ("PROTECTED_COND_ID",
-``!c t. PROTECTED_COND c t t = t``,
-SIMP_TAC std_ss [PROTECTED_COND_def]);
+Theorem PROTECTED_COND_ID:
+  !c t. PROTECTED_COND c t t = t
+Proof
+SIMP_TAC std_ss [PROTECTED_COND_def]
+QED
 
-val PROTECTED_COND_RAND = store_thm ("PROTECTED_COND_RAND",
-``!f b x y. f (PROTECTED_COND b x y) = PROTECTED_COND b (f x) (f y)``,
-SIMP_TAC std_ss [PROTECTED_COND_def, COND_RAND]);
+Theorem PROTECTED_COND_RAND:
+  !f b x y. f (PROTECTED_COND b x y) = PROTECTED_COND b (f x) (f y)
+Proof
+SIMP_TAC std_ss [PROTECTED_COND_def, COND_RAND]
+QED
 
-val PROTECTED_COND_RATOR = store_thm ("PROTECTED_COND_RATOR",
-``!b f g x. (PROTECTED_COND b f g) x = PROTECTED_COND b (f x) (g x)``,
-SIMP_TAC std_ss [PROTECTED_COND_def, COND_RATOR]);
+Theorem PROTECTED_COND_RATOR:
+  !b f g x. (PROTECTED_COND b f g) x = PROTECTED_COND b (f x) (g x)
+Proof
+SIMP_TAC std_ss [PROTECTED_COND_def, COND_RATOR]
+QED
 
-val PROTECTED_COND_NEG_COND = store_thm ("PROTECTED_COND_NEG_COND",
-``!b x y. (PROTECTED_COND (~b) x y) = PROTECTED_COND b y x``,
-
+Theorem PROTECTED_COND_NEG_COND:
+  !b x y. (PROTECTED_COND (~b) x y) = PROTECTED_COND b y x
+Proof
 Cases >>
-SIMP_TAC std_ss [PROTECTED_COND_def]);
+SIMP_TAC std_ss [PROTECTED_COND_def]
+QED
 
 
-val PROTECTED_COND_NEG_COND_CONJ = store_thm ("PROTECTED_COND_NEG_COND_CONJ",
-``!b1 b2 x y. (PROTECTED_COND (~b1 \/ ~b2) x y) = PROTECTED_COND (b1 /\ b2) y x``,
-
+Theorem PROTECTED_COND_NEG_COND_CONJ:
+  !b1 b2 x y. (PROTECTED_COND (~b1 \/ ~b2) x y) = PROTECTED_COND (b1 /\ b2) y x
+Proof
 Cases >> Cases >>
-SIMP_TAC std_ss [PROTECTED_COND_def]);
+SIMP_TAC std_ss [PROTECTED_COND_def]
+QED
 
 
-val COMBINE_TWO_STEP_THMS_SIMPLE = store_thm ("COMBINE_TWO_STEP_THMS_SIMPLE",
-``!next cond1 cond2 ms ms1 ms2.
+Theorem COMBINE_TWO_STEP_THMS_SIMPLE:
+  !next cond1 cond2 ms ms1 ms2.
      (cond1 ==> (next ms = SOME ms1)) ==>
      (cond2 ==> (next ms = SOME ms2)) ==>
      (cond1 <=> ~cond2) ==>
-     (next ms = SOME (PROTECTED_COND cond1 ms1 ms2))``,
-
+     (next ms = SOME (PROTECTED_COND cond1 ms1 ms2))
+Proof
 REPEAT STRIP_TAC >>
-Cases_on `cond2` >> FULL_SIMP_TAC std_ss [PROTECTED_COND_def]);
+Cases_on `cond2` >> FULL_SIMP_TAC std_ss [PROTECTED_COND_def]
+QED
 
-val COMBINE_TWO_STEP_THMS_SIMPLE_2 = store_thm ("COMBINE_TWO_STEP_THMS_SIMPLE_2",
-``!next cond1 cond2 cond3 ms ms1 ms2.
+Theorem COMBINE_TWO_STEP_THMS_SIMPLE_2:
+  !next cond1 cond2 cond3 ms ms1 ms2.
      (cond3 ==> cond1 ==> (next ms = SOME ms1)) ==>
      (cond3 ==> cond2 ==> (next ms = SOME ms2)) ==>
      (cond1 <=> ~cond2) ==>
      (cond3) ==> 
-     (next ms = SOME (PROTECTED_COND cond1 ms1 ms2))``,
-
-SIMP_TAC std_ss [COMBINE_TWO_STEP_THMS_SIMPLE]);
+     (next ms = SOME (PROTECTED_COND cond1 ms1 ms2))
+Proof
+SIMP_TAC std_ss [COMBINE_TWO_STEP_THMS_SIMPLE]
+QED
 
 
 

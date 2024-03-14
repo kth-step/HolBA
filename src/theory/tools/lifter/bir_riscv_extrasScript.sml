@@ -37,74 +37,83 @@ val _ = wordsLib.guess_lengths()
 (********)
 
 (* TODO: Can use same as for ARMv8? *)
-val riscv_mem_load_half_def = Define `riscv_mem_load_half (m : (word64 -> word8)) (a:word64) =
-  ((m (a + 1w) @@ m a):word16)`;
+Definition riscv_mem_load_half_def:
+  riscv_mem_load_half (m : (word64 -> word8)) (a:word64) =
+  ((m (a + 1w) @@ m a):word16)
+End
 
-val riscv_mem_load_word_def = Define `
+Definition riscv_mem_load_word_def:
   riscv_mem_load_word (m : word64 -> word8) a =
-    (m (a + 3w) @@ m (a + 2w) @@ m (a + 1w) @@ m a) : word32`;
+    (m (a + 3w) @@ m (a + 2w) @@ m (a + 1w) @@ m a) : word32
+End
 
-val riscv_mem_load_dword_def = Define `riscv_mem_load_dword (m : (word64 -> word8)) (a:word64) =
+Definition riscv_mem_load_dword_def:
+  riscv_mem_load_dword (m : (word64 -> word8)) (a:word64) =
   (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
-      m (a + 3w) @@ m (a + 2w) @@ m (a + 1w) @@ m a) : word64`;
+      m (a + 3w) @@ m (a + 2w) @@ m (a + 1w) @@ m a) : word64
+End
 
 
-val riscv_mem_load_word_half = store_thm ("riscv_mem_load_word_half",
-  ``!m a. riscv_mem_load_word m a = (m (a + 3w) @@ m (a + 2w) @@ (riscv_mem_load_half m a))``,
-
+Theorem riscv_mem_load_word_half:
+  !m a. riscv_mem_load_word m a = (m (a + 3w) @@ m (a + 2w) @@ (riscv_mem_load_half m a))
+Proof
 SIMP_TAC std_ss [riscv_mem_load_half_def, riscv_mem_load_word_def]
-);
+QED
 
-val riscv_mem_load_dword_half = store_thm ("riscv_mem_load_dword_half",
-  ``!m a. riscv_mem_load_dword m a = (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
-      m (a + 3w) @@ m (a + 2w) @@ (riscv_mem_load_half m a))``,
-
+Theorem riscv_mem_load_dword_half:
+  !m a. riscv_mem_load_dword m a = (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
+      m (a + 3w) @@ m (a + 2w) @@ (riscv_mem_load_half m a))
+Proof
 SIMP_TAC std_ss [riscv_mem_load_half_def, riscv_mem_load_dword_def]
-);
+QED
 
-val riscv_mem_load_dword_word = store_thm ("riscv_mem_load_dword_word",
-  ``!m a. riscv_mem_load_dword m a = (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
-      (riscv_mem_load_word m a))``,
-
+Theorem riscv_mem_load_dword_word:
+  !m a. riscv_mem_load_dword m a = (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
+      (riscv_mem_load_word m a))
+Proof
 SIMP_TAC std_ss [riscv_mem_load_word_def, riscv_mem_load_dword_def]
-);
+QED
 
-val riscv_LIFT_LOAD_DWORD = store_thm ("riscv_LIFT_LOAD_DWORD",
-``!env em ea va ms.
+Theorem riscv_LIFT_LOAD_DWORD:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM8 ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit64)
-       (Imm64 (riscv_mem_load_dword ms.MEM8 va))``,
-SIMP_TAC std_ss [riscv_mem_load_dword_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm64 (riscv_mem_load_dword ms.MEM8 va))
+Proof
+SIMP_TAC std_ss [riscv_mem_load_dword_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
-val riscv_LIFT_LOAD_WORD = store_thm ("riscv_LIFT_LOAD_WORD",
-``!env em ea va ms.
+Theorem riscv_LIFT_LOAD_WORD:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM8 ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit32)
-       (Imm32 (riscv_mem_load_word ms.MEM8 va))``,
-SIMP_TAC std_ss [riscv_mem_load_word_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm32 (riscv_mem_load_word ms.MEM8 va))
+Proof
+SIMP_TAC std_ss [riscv_mem_load_word_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
-val riscv_LIFT_LOAD_HALF = store_thm ("riscv_LIFT_LOAD_HALF",
-``!env em ea va ms.
+Theorem riscv_LIFT_LOAD_HALF:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM8 ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit16)
-       (Imm16 (riscv_mem_load_half ms.MEM8 va))``,
-
+       (Imm16 (riscv_mem_load_half ms.MEM8 va))
+Proof
 SIMP_TAC std_ss [riscv_mem_load_half_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
-);
+QED
 
-val riscv_LIFT_LOAD_BYTE = store_thm ("riscv_LIFT_LOAD_BYTE",
-``!env em ea va ms.
+Theorem riscv_LIFT_LOAD_BYTE:
+  !env em ea va ms.
      bir_is_lifted_mem_exp env em ms.MEM8 ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit8)
-       (Imm8 (ms.MEM8 va))``,
-
+       (Imm8 (ms.MEM8 va))
+Proof
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]
-);
+QED
 
 (* TODO: Make riscv_mem_load_FOLDS with riscv_mem_half_def et.c. *)
 
@@ -114,7 +123,8 @@ ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]
 (**********)
 
 (* TODO: Can use same as for ARMv8? *)
-val riscv_mem_store_dword_def = Define `riscv_mem_store_dword (a:word64) w (mmap : (word64 -> word8)) =
+Definition riscv_mem_store_dword_def:
+  riscv_mem_store_dword (a:word64) w (mmap : (word64 -> word8)) =
    (a + 7w =+ (63 >< 56) w)
   ((a + 6w =+ (55 >< 48) w)
   ((a + 5w =+ (47 >< 40) w)
@@ -122,20 +132,27 @@ val riscv_mem_store_dword_def = Define `riscv_mem_store_dword (a:word64) w (mmap
   ((a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a + 0w  =+ (7  >< 0)  w) mmap)))))))`;
+  ((a + 0w  =+ (7  >< 0)  w) mmap)))))))
+End
 
-val riscv_mem_store_word_def = Define `riscv_mem_store_word (a:word64) w (mmap : (word64 -> word8)) =
+Definition riscv_mem_store_word_def:
+  riscv_mem_store_word (a:word64) w (mmap : (word64 -> word8)) =
    (a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a + 0w =+ (7  >< 0)  w) mmap)))`;
+  ((a + 0w =+ (7  >< 0)  w) mmap)))
+End
 
-val riscv_mem_store_half_def = Define `riscv_mem_store_half (a:word64) w (mmap : (word64 -> word8)) =
+Definition riscv_mem_store_half_def:
+  riscv_mem_store_half (a:word64) w (mmap : (word64 -> word8)) =
    (a + 1w =+ (15 >< 8)  w)
-  ((a + 0w =+ (7  >< 0)  w) mmap)`;
+  ((a + 0w =+ (7  >< 0)  w) mmap)
+End
 (*
-val riscv_mem_store_byte_def = Define `riscv_mem_store_byte (a:word64) w (mmap : (word64 -> word8)) =
-  ((a + 0w =+ (7  >< 0)  w) mmap)`;
+Definition riscv_mem_store_byte_def:
+  riscv_mem_store_byte (a:word64) w (mmap : (word64 -> word8)) =
+  ((a + 0w =+ (7  >< 0)  w) mmap)
+End
 *)
 
 (* The below theorem are for rewriting the memory representations
@@ -144,17 +161,17 @@ val riscv_mem_store_byte_def = Define `riscv_mem_store_byte (a:word64) w (mmap :
  * finite map updates is the reverse of that in ARMv8 lifter output
  * due to differences in the models. *)
 
-val mem_half_word_rev = store_thm("mem_half_word_rev",
-``!(a:word64) w (mmap:(word64 -> word8)).
+Theorem mem_half_word_rev:
+  !(a:word64) w (mmap:(word64 -> word8)).
   (a  + 0w =+ (7 >< 0)  w)
   ((a + 1w =+ (15  >< 8)  w) mmap) =
     (a + 1w =+ (15 >< 8)  w)
-    ((a + 0w =+ (7  >< 0)  w) mmap)``,
-
+    ((a + 0w =+ (7  >< 0)  w) mmap)
+Proof
 REPEAT STRIP_TAC >>
 irule UPDATE_COMMUTES >>
 FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss++wordsLib.WORD_ARITH_EQ_ss) []
-);
+QED
 
 val mem_half_word_rev_simp = SIMP_RULE (std_ss++wordsLib.WORD_ss++wordsLib.WORD_ARITH_EQ_ss) [] mem_half_word_rev;
 
@@ -196,8 +213,8 @@ val WORD_CONTR_TAC =
     )
   );
 
-val mem_word_rev = store_thm("mem_word_rev",
-``!(a:word64) w (mmap:(word64 -> word8)).
+Theorem mem_word_rev:
+  !(a:word64) w (mmap:(word64 -> word8)).
   (a  + 0w =+ (7 >< 0) w)
   ((a + 1w =+ (15 >< 8) w)
   ((a + 2w =+ (23 >< 16)  w)
@@ -205,19 +222,19 @@ val mem_word_rev = store_thm("mem_word_rev",
     (a + 3w =+ (31 >< 24) w)
     ((a + 2w =+ (23 >< 16) w)
     ((a + 1w =+ (15 >< 8)  w)
-    ((a + 0w =+ (7  >< 0)  w) mmap)))``,
-
+    ((a + 0w =+ (7  >< 0)  w) mmap)))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [UPDATE_def] >>
 FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
 STRIP_TAC >>
 WORD_CONTR_TAC
-);
+QED
 
 val mem_word_rev_simp = SIMP_RULE (std_ss++wordsLib.WORD_ss++wordsLib.WORD_ARITH_EQ_ss) [] mem_word_rev;
 
-val mem_dword_rev = store_thm("mem_dword_rev",
-``!(a:word64) w (mmap:(word64 -> word8)).
+Theorem mem_dword_rev:
+  !(a:word64) w (mmap:(word64 -> word8)).
   (a  + 0w =+ (7 >< 0) w)
   ((a + 1w =+ (15 >< 8) w)
   ((a + 2w =+ (23 >< 16) w)
@@ -233,14 +250,14 @@ val mem_dword_rev = store_thm("mem_dword_rev",
     ((a + 3w =+ (31 >< 24) w)
     ((a + 2w =+ (23 >< 16) w)
     ((a + 1w =+ (15 >< 8)  w)
-    ((a + 0w =+ (7  >< 0)  w) mmap)))))))``,
-
+    ((a + 0w =+ (7  >< 0)  w) mmap)))))))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [UPDATE_def] >>
 FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
 STRIP_TAC >>
 WORD_CONTR_TAC
-);
+QED
 
 val mem_dword_rev_simp = SIMP_RULE (std_ss++wordsLib.WORD_ss++wordsLib.WORD_ARITH_EQ_ss) [] mem_dword_rev;
 
@@ -281,19 +298,18 @@ let
 
 in LIST_CONJ [mem_rev_simp_FOLDS, def_THMS_apz, def_THMS, THM0, THM1, THM2] end);
 
-val riscv_LIFT_STORE_DWORD = store_thm ("riscv_LIFT_STORE_DWORD",
-``!env em ea va ev vv ms mem_f.
+Theorem riscv_LIFT_STORE_DWORD:
+  !env em ea va ev vv ms mem_f.
     bir_is_lifted_mem_exp env em mem_f ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
     bir_is_lifted_mem_exp env
       (BExp_Store em ea BEnd_LittleEndian ev)
       (riscv_mem_store_dword va vv mem_f)
-``,
-
+Proof
 SIMP_TAC std_ss [riscv_mem_store_dword_def, elim_zero_for_def_thm,
                  bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
-);
+QED
 
 (* TODO: For generalizing...
 val bir_is_lifted_mem_exp_STORE0_RISCV = prove (
@@ -437,38 +453,34 @@ val riscv_is_lifted_mem_exp_STORE0_32LSB_SIMP =
 
 (* Specialised versions of bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE *)
 
-val riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_8LSB =
-  store_thm("riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_8LSB",
-``
-(!env em ea va er vr mem_f.
+Theorem riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_8LSB:
+  (!env em ea va er vr mem_f.
  bir_is_lifted_mem_exp env em mem_f ==>
  bir_is_lifted_imm_exp env ea (Imm64 va) ==>
  bir_is_lifted_imm_exp env er (Imm64 vr) ==>
  bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast er Bit8))
    mem_f(|
      va |-> (7 >< 0) vr
-   |))``,
-
+   |))
+Proof
 REPEAT STRIP_TAC >>
 IMP_RES_TAC riscv_is_lifted_mem_exp_STORE0_8LSB_SIMP >>
 subgoal `((w2w vr):word8) = (7 >< 0) vr` >- (
   blastLib.BBLAST_TAC
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
-val riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_16LSB =
-  store_thm("riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_16LSB",
-``
-(!env em ea va er vr mem_f.
+Theorem riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_16LSB:
+  (!env em ea va er vr mem_f.
  bir_is_lifted_mem_exp env em mem_f ==>
  bir_is_lifted_imm_exp env ea (Imm64 va) ==>
  bir_is_lifted_imm_exp env er (Imm64 vr) ==>
  bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast er Bit16))
    mem_f(|
      va + 1w |->(15 >< 8) vr; va |-> (7 >< 0) vr
-   |))``,
-
+   |))
+Proof
 REPEAT STRIP_TAC >>
 IMP_RES_TAC riscv_is_lifted_mem_exp_STORE0_16LSB_SIMP >>
 subgoal `(15 >< 8) ((w2w vr):word16) = (15 >< 8) vr` >- (
@@ -478,12 +490,10 @@ subgoal `(7 >< 0) ((w2w vr):word16) = (7 >< 0) vr` >- (
   blastLib.BBLAST_TAC
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
-val riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_32LSB =
-  store_thm("riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_32LSB",
-``
-(!env em ea va er vr mem_f.
+Theorem riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_32LSB:
+  (!env em ea va er vr mem_f.
  bir_is_lifted_mem_exp env em mem_f ==>
  bir_is_lifted_imm_exp env ea (Imm64 va) ==>
  bir_is_lifted_imm_exp env er (Imm64 vr) ==>
@@ -491,8 +501,8 @@ val riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_32LSB =
    mem_f(|
      va + 3w |-> (31 >< 24) vr; va + 2w |-> (23 >< 16) vr;
      va + 1w |->(15 >< 8) vr; va |-> (7 >< 0) vr
-   |))``,
-
+   |))
+Proof
 REPEAT STRIP_TAC >>
 IMP_RES_TAC riscv_is_lifted_mem_exp_STORE0_32LSB_SIMP >>
 subgoal `(31 >< 24) ((w2w vr):word32) = (31 >< 24) vr` >- (
@@ -508,102 +518,92 @@ subgoal `(7 >< 0) ((w2w vr):word32) = (7 >< 0) vr` >- (
   blastLib.BBLAST_TAC
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
 
-val riscv_LIFT_STORE_WORD = store_thm ("riscv_LIFT_STORE_WORD",
-``!env em ea va ev vv ms mem_f.
+Theorem riscv_LIFT_STORE_WORD:
+  !env em ea va ev vv ms mem_f.
     bir_is_lifted_mem_exp env em mem_f ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast ev Bit32))
       (riscv_mem_store_word va (vv:word64) mem_f)
-``,
-
+Proof
 SIMP_TAC std_ss [riscv_mem_store_word_def, elim_zero_for_def_thm,
                  riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_32LSB]
-);
+QED
 
-val riscv_LIFT_STORE_HALF = store_thm ("riscv_LIFT_STORE_HALF",
-``!env em ea va ev vv ms mem_f.
+Theorem riscv_LIFT_STORE_HALF:
+  !env em ea va ev vv ms mem_f.
     bir_is_lifted_mem_exp env em mem_f ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast ev Bit16))
       (riscv_mem_store_half va vv mem_f)
-``,
-
+Proof
 SIMP_TAC std_ss [riscv_mem_store_half_def, elim_zero_for_def_thm,
                  riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_16LSB]
-);
+QED
 
-val riscv_LIFT_STORE_BYTE = store_thm ("riscv_LIFT_STORE_BYTE",
-``!env em ea va ev vv ms mem_f.
+Theorem riscv_LIFT_STORE_BYTE:
+  !env em ea va ev vv ms mem_f.
     bir_is_lifted_mem_exp env em mem_f ==>
     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
     bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian (BExp_Cast BIExp_LowCast ev Bit8))
-      (mem_store_byte va ((7 >< 0) vv) mem_f)``,
-
+      (mem_store_byte va ((7 >< 0) vv) mem_f)
+Proof
 REPEAT STRIP_TAC >>
 IMP_RES_TAC riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_8LSB >>
 Q.SUBGOAL_THEN `(7 >< 0) (vv:word64) = ((w2w vv):word8)` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
   blastLib.BBLAST_TAC
 ) >>
 FULL_SIMP_TAC std_ss [mem_store_byte_def]
-);
+QED
 
-val riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL =
-  store_thm ("riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL",
-``!va vv mem_f.
+Theorem riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL:
+  !va vv mem_f.
     FUNS_EQ_OUTSIDE_WI_size va 8 (riscv_mem_store_dword va vv mem_f)
                             mem_f
-``,
-
+Proof
 SIMP_TAC (list_ss++wordsLib.WORD_ss)
          [riscv_mem_store_dword_def, WI_MEM_WI_size, WI_ELEM_LIST_compute,
           w2n_n2w, updateTheory.APPLY_UPDATE_THM,
           FUNS_EQ_OUTSIDE_WI_size_def]
-);
+QED
 
-val riscv_LIFT_STORE_WORD_CHANGE_INTERVAL =
-  store_thm ("riscv_LIFT_STORE_WORD_CHANGE_INTERVAL",
-``!va vv mem_f.
+Theorem riscv_LIFT_STORE_WORD_CHANGE_INTERVAL:
+  !va vv mem_f.
     FUNS_EQ_OUTSIDE_WI_size va 4 (riscv_mem_store_word va vv mem_f)
                             mem_f
-``,
-
+Proof
 SIMP_TAC (list_ss++wordsLib.WORD_ss)
          [riscv_mem_store_word_def, WI_MEM_WI_size, WI_ELEM_LIST_compute,
           w2n_n2w, updateTheory.APPLY_UPDATE_THM,
           FUNS_EQ_OUTSIDE_WI_size_def]
-);
+QED
 
-val riscv_LIFT_STORE_HALF_CHANGE_INTERVAL =
-  store_thm ("riscv_LIFT_STORE_HALF_CHANGE_INTERVAL",
-``!va vv mem_f.
+Theorem riscv_LIFT_STORE_HALF_CHANGE_INTERVAL:
+  !va vv mem_f.
     FUNS_EQ_OUTSIDE_WI_size va 2 (riscv_mem_store_half va vv mem_f)
                             mem_f
-``,
-
+Proof
 SIMP_TAC (list_ss++wordsLib.WORD_ss)
          [riscv_mem_store_half_def, WI_MEM_WI_size, WI_ELEM_LIST_compute,
           w2n_n2w, updateTheory.APPLY_UPDATE_THM,
           FUNS_EQ_OUTSIDE_WI_size_def]
-);
+QED
 
-val riscv_LIFT_STORE_BYTE_CHANGE_INTERVAL =
-  store_thm ("riscv_LIFT_STORE_BYTE_CHANGE_INTERVAL",
-``!va vv mem_f.
+Theorem riscv_LIFT_STORE_BYTE_CHANGE_INTERVAL:
+  !va vv mem_f.
     FUNS_EQ_OUTSIDE_WI_size va 1 (mem_store_byte va vv mem_f)
                             mem_f
-``,
-
+Proof
 SIMP_TAC (list_ss++wordsLib.WORD_ss)
          [mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute,
           w2n_n2w, updateTheory.APPLY_UPDATE_THM,
           FUNS_EQ_OUTSIDE_WI_size_def]
-);
+QED
 
 (**************************************)
 (* 6 LSBs - for RV64I SLL, SRL, et.c. *)
@@ -680,46 +680,49 @@ SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
 (* Greater-than-or-equal       *)
 (*******************************)
 
-val riscv_is_lifted_imm_exp_GE = store_thm ("riscv_is_lifted_imm_exp_GE",
-  ``!env w1 w2 e1 e2.
+Theorem riscv_is_lifted_imm_exp_GE:
+  !env w1 w2 e1 e2.
       bir_is_lifted_imm_exp env e1 (Imm64 w1) ==>
       bir_is_lifted_imm_exp env e2 (Imm64 w2) ==>
       bir_is_lifted_imm_exp env (BExp_UnaryExp BIExp_Not (BExp_BinPred BIExp_SignedLessThan e1 e2))
-        (bool2b (w1 >= w2))``,
+        (bool2b (w1 >= w2))
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
   bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
   bir_unary_exp_BOOL_OPER_EVAL, WORD_NOT_LESS,
                       WORD_GREATER_EQ]
-);
+QED
 
 (****************************************)
 (* Unsigned greater-than-or-equal       *)
 (****************************************)
 
-val riscv_is_lifted_imm_exp_GEU = store_thm ("riscv_is_lifted_imm_exp_GEU",
-  ``!env w1 w2 e1 e2.
+Theorem riscv_is_lifted_imm_exp_GEU:
+  !env w1 w2 e1 e2.
       bir_is_lifted_imm_exp env e1 (Imm64 w1) ==>
       bir_is_lifted_imm_exp env e2 (Imm64 w2) ==>
       bir_is_lifted_imm_exp env (BExp_UnaryExp BIExp_Not (BExp_BinPred BIExp_LessThan e1 e2))
-        (bool2b (w1 >=+ w2))``,
+        (bool2b (w1 >=+ w2))
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
   bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
   bir_unary_exp_BOOL_OPER_EVAL, GSYM WORD_NOT_LOWER_EQUAL, GSYM WORD_HIGHER_EQ]
-);
+QED
 
 
 (****************)
 (* Add to sub   *)
 (****************)
 
-val word_add_to_sub_GEN = store_thm ("word_add_to_sub_GEN",
-``!w:'a word n.
+Theorem word_add_to_sub_GEN:
+  !w:'a word n.
    INT_MAX (:'a) < n /\ n < dimword (:'a) ==>
-   (w + n2w n = w - n2w (dimword (:'a) - n))``,
-
+   (w + n2w n = w - n2w (dimword (:'a) - n))
+Proof
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC arith_ss [word_sub_def,
-  word_2comp_n2w]);
+  word_2comp_n2w]
+QED
 
 val word_add_to_sub_TYPES = save_thm ("word_add_to_sub_TYPES",
 let
@@ -739,11 +742,11 @@ end)
  * simple rewriting to a format compatible with existing
  * lifting theorems. *)
 (* TODO: Move to auxiliary *)
-val v2w_ground1 = store_thm("v2w_ground1",
-  ``(v2w [T] = 1w) /\ (v2w [F] = 0w)``,
-
+Theorem v2w_ground1:
+  (v2w [T] = 1w) /\ (v2w [F] = 0w)
+Proof
 SIMP_TAC (std_ss++bitstringLib.v2w_n2w_ss) []
-);
+QED
 
 
 val thm_t = build_immtype_t_conj

@@ -31,9 +31,8 @@ type_of_bir_exp_THM_with_envty
     (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))``,
 *)
 
-val bir_eval_exp_NONE_IMP_bir_type_of_bir_exp_thm = store_thm(
-   "bir_eval_exp_NONE_IMP_bir_type_of_bir_exp_thm", ``
-!env envty e.
+Theorem bir_eval_exp_NONE_IMP_bir_type_of_bir_exp_thm:
+  !env envty e.
 (bir_envty_of_env env = envty) ==>
 (
   (bir_eval_exp e env = NONE)
@@ -41,8 +40,8 @@ val bir_eval_exp_NONE_IMP_bir_type_of_bir_exp_thm = store_thm(
   ((type_of_bir_exp e = NONE) \/
    (~bir_envty_includes_vs envty (bir_vars_of_exp e)))
 )
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   CCONTR_TAC >>
 
   `?ty. type_of_bir_exp e = SOME ty` by (
@@ -52,17 +51,16 @@ val bir_eval_exp_NONE_IMP_bir_type_of_bir_exp_thm = store_thm(
   METIS_TAC [type_of_bir_exp_THM_with_envty,
              NOT_NONE_SOME,
              bir_env_satisfies_envty_of_env]
-);
+QED
 
-val NOT_bir_v_in_envty_env_IMP = store_thm(
-   "NOT_bir_v_in_envty_env_IMP", ``
-!envty env bv vo.
+Theorem NOT_bir_v_in_envty_env_IMP:
+  !envty env bv vo.
   (~bir_envty_includes_v envty bv) ==>
   (bir_envty_of_env env = envty) ==>
   (bir_env_lookup (bir_var_name bv) env = vo) ==>
   (OPTION_ALL (\v. ~(type_of_bir_val v = bir_var_type bv)) vo)
-``,
-  Cases_on `envty` >> Cases_on `env` >>
+Proof
+Cases_on `envty` >> Cases_on `env` >>
   FULL_SIMP_TAC std_ss [bir_envty_includes_v_def, bir_envty_of_env_def, bir_env_lookup_def] >>
 
   REPEAT STRIP_TAC >>
@@ -75,17 +73,16 @@ val NOT_bir_v_in_envty_env_IMP = store_thm(
     METIS_TAC [OPTION_ALL_def]
   ) >>
   FULL_SIMP_TAC std_ss [OPTION_ALL_def]
-);
+QED
 
-val bir_eval_exp_with_var_not_in_env_thm = store_thm(
-   "bir_eval_exp_with_var_not_in_env_thm", ``
-!bv env vo e.
+Theorem bir_eval_exp_with_var_not_in_env_thm:
+  !bv env vo e.
   (bv IN (bir_vars_of_exp e)) ==>
   (bir_env_lookup (bir_var_name bv) env = vo) ==>
   (OPTION_ALL (\v. ~(type_of_bir_val v = bir_var_type bv)) vo) ==>
   (bir_eval_exp e env = NONE)
-``,
-  Induct_on `e` >- (
+Proof
+Induct_on `e` >- (
     (* BExp_Const *)
     METIS_TAC [bir_vars_of_exp_def, NOT_IN_EMPTY]
   ) >- (
@@ -115,19 +112,18 @@ val bir_eval_exp_with_var_not_in_env_thm = store_thm(
        bir_eval_load_NONE_REWRS,
        bir_eval_store_NONE_REWRS]
   )
-);
+QED
 
-val NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm = store_thm(
-   "NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm", ``
-!env envty e.
+Theorem NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm:
+  !env envty e.
 (bir_envty_of_env env = envty) ==>
 (
   (~bir_envty_includes_vs envty (bir_vars_of_exp e))
   ==>
   (bir_eval_exp e env = NONE)
 )
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   `?bv vo. (bv IN (bir_vars_of_exp e)) /\
    (bir_env_lookup (bir_var_name bv) env = vo) /\
@@ -136,11 +132,10 @@ val NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm = store_thm(
   ) >>
 
   METIS_TAC [bir_eval_exp_with_var_not_in_env_thm]
-);
+QED
 
-val bir_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
-   "bir_eval_exp_NONE_EQ_bir_exp_env_type_thm", ``
-!env envty e.
+Theorem bir_eval_exp_NONE_EQ_bir_exp_env_type_thm:
+  !env envty e.
 (bir_envty_of_env env = envty) ==>
 (
   ((type_of_bir_exp e = NONE) \/
@@ -148,34 +143,32 @@ val bir_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
   <=>
   (bir_eval_exp e env = NONE)
 )
-``,
-  METIS_TAC [bir_type_of_bir_exp_NONE,
+Proof
+METIS_TAC [bir_type_of_bir_exp_NONE,
              bir_eval_exp_NONE_IMP_bir_type_of_bir_exp_thm,
              NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm]
-);
+QED
 
-val bir_number_of_mem_splits_1_IMP_types_thm = store_thm(
-   "bir_number_of_mem_splits_1_IMP_types_thm", ``
-!vty rty aty.
+Theorem bir_number_of_mem_splits_1_IMP_types_thm:
+  !vty rty aty.
   (bir_number_of_mem_splits vty rty aty = SOME 1) ==>
   (vty = rty)
-``,
-  FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+Proof
+FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
   REPEAT STRIP_TAC >>
 
   Cases_on `rty` >> Cases_on `vty` >> (
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
   )
-);
+QED
 
-val bir_load_from_mem_BEnd_NoEndian_IMP_types_thm = store_thm(
-   "bir_load_from_mem_BEnd_NoEndian_IMP_types_thm", ``
-!vty rty aty mmap en a v.
+Theorem bir_load_from_mem_BEnd_NoEndian_IMP_types_thm:
+  !vty rty aty mmap en a v.
   (bir_load_from_mem vty rty aty mmap en a = SOME v) ==>
   (en = BEnd_NoEndian) ==>
   (vty = rty)
-``,
-  FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_load_from_mem_def] >>
+Proof
+FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_load_from_mem_def] >>
   REPEAT GEN_TAC >>
   Cases_on `bir_number_of_mem_splits vty rty aty` >> (
     FULL_SIMP_TAC std_ss []
@@ -185,29 +178,27 @@ val bir_load_from_mem_BEnd_NoEndian_IMP_types_thm = store_thm(
   CASE_TAC >>
 
   METIS_TAC [bir_number_of_mem_splits_1_IMP_types_thm]
-);
+QED
 
-val bir_load_from_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm = store_thm(
-   "bir_load_from_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm", ``
-!vty rty aty mmap en a v.
+Theorem bir_load_from_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm:
+  !vty rty aty mmap en a v.
   (bir_load_from_mem vty rty aty mmap en a = SOME v) ==>
   (~(en = BEnd_NoEndian)) ==>
   (~(bir_number_of_mem_splits vty rty aty = NONE))
-``,
-  FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_load_from_mem_def] >>
+Proof
+FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_load_from_mem_def] >>
   Cases_on `bir_number_of_mem_splits vty rty aty` >> (
     FULL_SIMP_TAC std_ss []
   )
-);
+QED
 
-val bir_store_in_mem_BEnd_NoEndian_IMP_types_thm = store_thm(
-   "bir_store_in_mem_BEnd_NoEndian_IMP_types_thm", ``
-!vty aty res mmap en a v.
+Theorem bir_store_in_mem_BEnd_NoEndian_IMP_types_thm:
+  !vty aty res mmap en a v.
   (bir_store_in_mem vty aty res mmap en a = SOME v) ==>
   (en = BEnd_NoEndian) ==>
   (type_of_bir_imm res = vty)
-``,
-  FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_store_in_mem_def] >>
+Proof
+FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_store_in_mem_def] >>
   FULL_SIMP_TAC std_ss [LET_DEF] >>
   REPEAT GEN_TAC >>
   Cases_on `bir_number_of_mem_splits vty (type_of_bir_imm res) aty` >> (
@@ -217,32 +208,30 @@ val bir_store_in_mem_BEnd_NoEndian_IMP_types_thm = store_thm(
   CASE_TAC >>
 
   METIS_TAC [bir_number_of_mem_splits_1_IMP_types_thm]
-);
+QED
 
-val bir_store_in_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm = store_thm(
-   "bir_store_in_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm", ``
-!vty aty res mmap en a v.
+Theorem bir_store_in_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm:
+  !vty aty res mmap en a v.
   (bir_store_in_mem vty aty res mmap en a = SOME v) ==>
   (~(en = BEnd_NoEndian)) ==>
   (~(bir_number_of_mem_splits vty (type_of_bir_imm res) aty = NONE))
-``,
-  FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_store_in_mem_def] >>
+Proof
+FULL_SIMP_TAC std_ss [bir_exp_memTheory.bir_store_in_mem_def] >>
   FULL_SIMP_TAC std_ss [LET_DEF] >>
   REPEAT GEN_TAC >>
   Cases_on `bir_number_of_mem_splits vty (type_of_bir_imm res) aty` >> (
     FULL_SIMP_TAC std_ss []
   )
-);
+QED
 
 
-val bir_eval_exp_SOME_IMP_type_of_bir_exp_thm = store_thm(
-   "bir_eval_exp_SOME_IMP_type_of_bir_exp_thm", ``
-!env e v ty.
+Theorem bir_eval_exp_SOME_IMP_type_of_bir_exp_thm:
+  !env e v ty.
   ((bir_eval_exp e env) = SOME v) ==>
   (type_of_bir_val v = ty) ==>
   (type_of_bir_exp e = SOME ty)
-``,
-  Induct_on `e` >- (
+Proof
+Induct_on `e` >- (
     (* BExp_Const *)
     FULL_SIMP_TAC std_ss [type_of_bir_exp_def, type_of_bir_val_def, bir_eval_exp_def]
   ) >- (
@@ -536,12 +525,11 @@ val bir_eval_exp_SOME_IMP_type_of_bir_exp_thm = store_thm(
     (* OTHER ENDIANNESS *)
     METIS_TAC [bir_store_in_mem_NOT_BEnd_NoEndian_IMP_mem_splits_thm, type_of_bir_val_def]
   ]
-);
+QED
 
 
-val bir_eval_exp_SOME_IMP_type_of_bir_exp_envty_incl_thm = store_thm(
-   "bir_eval_exp_SOME_IMP_type_of_bir_exp_envty_incl_thm", ``
-!env envty e ty.
+Theorem bir_eval_exp_SOME_IMP_type_of_bir_exp_envty_incl_thm:
+  !env envty e ty.
 (bir_envty_of_env env = envty) ==>
 (
   (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))
@@ -549,18 +537,17 @@ val bir_eval_exp_SOME_IMP_type_of_bir_exp_envty_incl_thm = store_thm(
   ((type_of_bir_exp e = SOME ty) /\
   (bir_envty_includes_vs envty (bir_vars_of_exp e)))
 )
-``,
-  REPEAT STRIP_TAC >- (
+Proof
+REPEAT STRIP_TAC >- (
     METIS_TAC [bir_eval_exp_SOME_IMP_type_of_bir_exp_thm]
   ) >>
 
   CCONTR_TAC >>
   METIS_TAC [NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm, NOT_NONE_SOME]
-);
+QED
 
-val bir_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
-   "bir_eval_exp_SOME_EQ_bir_exp_env_type_thm", ``
-!env envty e ty.
+Theorem bir_eval_exp_SOME_EQ_bir_exp_env_type_thm:
+  !env envty e ty.
 (bir_envty_of_env env = envty) ==>
 (
   (type_of_bir_exp e = SOME ty) /\
@@ -568,40 +555,38 @@ val bir_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
   <=>
   (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))
 )
-``,
-  METIS_TAC [type_of_bir_exp_THM_with_envty,
+Proof
+METIS_TAC [type_of_bir_exp_THM_with_envty,
              bir_eval_exp_SOME_IMP_type_of_bir_exp_envty_incl_thm,
              bir_env_satisfies_envty_of_env]
-);
+QED
 
-val bir_eval_exp_SOME_EQ_bir_exp_env_type_EMPTY_thm = store_thm(
-   "bir_eval_exp_SOME_EQ_bir_exp_env_type_EMPTY_thm", ``
-!env e ty.
+Theorem bir_eval_exp_SOME_EQ_bir_exp_env_type_EMPTY_thm:
+  !env e ty.
 (bir_vars_of_exp e = EMPTY) ==>
 (
   (type_of_bir_exp e = SOME ty)
   <=>
   (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))
 )
-``,
-  METIS_TAC
+Proof
+METIS_TAC
     [bir_eval_exp_SOME_EQ_bir_exp_env_type_thm,
      bir_envty_includes_vs_def,
      NOT_IN_EMPTY]
-);
+QED
 
 
 
 
 
-val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm = store_thm(
-   "bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm", ``
-!vs f e.
+Theorem bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm:
+  !vs f e.
   (FINITE vs) ==>
   (bir_exp_subst (FUN_FMAP f (vs UNION bir_vars_of_exp e)) e) =
   (bir_exp_subst (FUN_FMAP f (bir_vars_of_exp e)) e)
-``,
-  Induct_on `e` >> (
+Proof
+Induct_on `e` >> (
     SIMP_TAC (std_ss++PRED_SET_ss) [bir_exp_subst_def, bir_vars_of_exp_def, bir_exp_subst_var_def, FLOOKUP_FUN_FMAP]
   ) >> (
     ASM_SIMP_TAC (std_ss++PRED_SET_ss) [bir_exp_t_11, UNION_ASSOC]
@@ -618,16 +603,15 @@ val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm = store_thm(
      METIS_TAC [UNION_COMM, UNION_ASSOC]
     )
   )
-);
+QED
 
-val bir_load_from_mem_IS_SOME_thm = store_thm(
-   "bir_load_from_mem_IS_SOME_thm", ``
-!vty sz aty mmap en anum.
+Theorem bir_load_from_mem_IS_SOME_thm:
+  !vty sz aty mmap en anum.
   (if en = BEnd_NoEndian then vty = sz
         else bir_number_of_mem_splits vty sz aty <> NONE) ==>
   (?v. bir_load_from_mem vty sz aty mmap en anum = SOME v /\ type_of_bir_imm v = sz)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   `?abc. bir_number_of_mem_splits vty sz aty = SOME abc` by (
     Cases_on `en = BEnd_NoEndian` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_number_of_mem_splits_def]
@@ -650,27 +634,25 @@ val bir_load_from_mem_IS_SOME_thm = store_thm(
   ) >> (
     METIS_TAC [bir_load_from_mem_EQ_SOME, bir_number_of_mem_splits_ID, type_of_bir_mem_concat]
   )
-);
+QED
 
-val bir_load_from_mem_IS_SOME_thm1 = store_thm(
-   "bir_load_from_mem_IS_SOME_thm1", ``
-!vty sz aty mmap en anum.
+Theorem bir_load_from_mem_IS_SOME_thm1:
+  !vty sz aty mmap en anum.
   (if en = BEnd_NoEndian then vty = sz
         else bir_number_of_mem_splits vty sz aty <> NONE) ==>
   (?v. bir_load_from_mem vty sz aty mmap en anum = SOME v)
-``,
-  METIS_TAC [bir_load_from_mem_IS_SOME_thm]
-);
+Proof
+METIS_TAC [bir_load_from_mem_IS_SOME_thm]
+QED
 
-val bir_store_in_mem_IS_SOME_thm = store_thm(
-   "bir_store_in_mem_IS_SOME_thm", ``
-!sz vty aty v mmap en anum.
+Theorem bir_store_in_mem_IS_SOME_thm:
+  !sz vty aty v mmap en anum.
   (type_of_bir_imm v = sz) ==>
   (if en = BEnd_NoEndian then vty = sz
         else bir_number_of_mem_splits vty sz aty <> NONE) ==>
   (?vm. bir_store_in_mem vty aty v mmap en anum = SOME vm)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   `?abc. bir_number_of_mem_splits vty sz aty = SOME abc` by (
     Cases_on `en = BEnd_NoEndian` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_number_of_mem_splits_def]
@@ -693,7 +675,7 @@ val bir_store_in_mem_IS_SOME_thm = store_thm(
   ) >> (
     METIS_TAC [bir_store_in_mem_EQ_SOME, bir_number_of_mem_splits_ID]
   )
-);
+QED
 
 
 

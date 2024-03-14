@@ -17,15 +17,16 @@ val _ = new_theory "bir_nzcv_intros";
 (* ARM 8 general cmp / sub *)
 (***************************)
 
-val nzcv_SUB_V_fold_ARM8 = store_thm ("nzcv_SUB_V_fold_ARM8",
-``!w1 w0:'a word.
+Theorem nzcv_SUB_V_fold_ARM8:
+  !w1 w0:'a word.
   ((word_msb w0 <=> word_msb (~w1)) /\
   (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + w2n (~w1) + 1))) =
-  nzcv_BIR_SUB_V w0 w1``,
-
+  nzcv_BIR_SUB_V w0 w1
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [nzcv_BIR_SUB_V_CARRY_DEF, awc_BIR_V_def,
-  add_with_carry_def, LET_THM, word_msb_n2w]);
+  add_with_carry_def, LET_THM, word_msb_n2w]
+QED
 
 
 val nzcv_NEGS_V_fold_ARM8 = save_thm ("nzcv_NEGS_V_fold_ARM8",
@@ -36,25 +37,30 @@ val nzcv_NEGS_V_fold_ARM8 = save_thm ("nzcv_NEGS_V_fold_ARM8",
 );
 
 
-val nzcv_SUB_C_fold_ARM8 = store_thm ("nzcv_SUB_C_fold_ARM8",
-``!w1 w0.
+Theorem nzcv_SUB_C_fold_ARM8:
+  !w1 w0.
   ((if w2n w0 + w2n (~(w1:'a word)) + 1 < dimword (:'a) then w2n w0 + w2n (~w1) + 1
    else (w2n w0 + w2n (~w1) + 1) MOD (dimword (:'a))) <>
-  w2n w0 + w2n (~w1) + 1) = nzcv_BIR_SUB_C w0 w1``,
-
+  w2n w0 + w2n (~w1) + 1) = nzcv_BIR_SUB_C w0 w1
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [nzcv_BIR_SUB_C_CARRY_DEF, add_with_carry_def, LET_THM,
-   ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]);
+   ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]
+QED
 
 
-val nzcv_SUB_Z_fold_ARM8 = store_thm ("nzcv_SUB_Z_fold_ARM8",
-``!w1 w0. ((w0:'a word - w1) = 0w) = nzcv_BIR_SUB_Z w0 w1``,
-SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_Z_def, GSYM word_add_def, word_sub_def]);
+Theorem nzcv_SUB_Z_fold_ARM8:
+  !w1 w0. ((w0:'a word - w1) = 0w) = nzcv_BIR_SUB_Z w0 w1
+Proof
+SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_Z_def, GSYM word_add_def, word_sub_def]
+QED
 
 
-val nzcv_SUB_N_fold_ARM8 = store_thm ("nzcv_SUB_N_fold_ARM8",
-``!w1 w0. word_msb ((w0:'a word) - w1) = nzcv_BIR_SUB_N w0 w1``,
-SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_N_def, GSYM word_add_def, word_sub_def]);
+Theorem nzcv_SUB_N_fold_ARM8:
+  !w1 w0. word_msb ((w0:'a word) - w1) = nzcv_BIR_SUB_N w0 w1
+Proof
+SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_N_def, GSYM word_add_def, word_sub_def]
+QED
 
 
 val nzcv_SUB_FOLDS_ARM8_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_GEN",
@@ -69,43 +75,51 @@ val nzcv_SUB_FOLDS_ARM8_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_GEN",
 
 (* cmp uses w2 - w1, we also need a version for w1 + w2. *)
 
-val nzcv_ADD_V_fold_ARM8 = store_thm ("nzcv_ADD_V_fold_ARM8",
-``!w1:'a word w0:'a word.
+Theorem nzcv_ADD_V_fold_ARM8:
+  !w1:'a word w0:'a word.
   ((word_msb w0 <=> word_msb w1) /\
-  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1))) = nzcv_BIR_ADD_V w0 w1``,
-
+  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1))) = nzcv_BIR_ADD_V w0 w1
+Proof
 SIMP_TAC std_ss [nzcv_BIR_ADD_V_CARRY_DEF, awc_BIR_V_def,
-  add_with_carry_def, LET_THM, GSYM word_msb_n2w]);
+  add_with_carry_def, LET_THM, GSYM word_msb_n2w]
+QED
 
 
 (* We need a special case for w0 = w1 *)
-val nzcv_ADD_V_fold_ARM8_ID = store_thm ("nzcv_ADD_V_fold_ARM8_ID",
-``!w:'a word.
+Theorem nzcv_ADD_V_fold_ARM8_ID:
+  !w:'a word.
   (word_msb w <=/=> BIT  (dimindex (:'a) - 1) (w2n w + w2n w)) =
-  nzcv_BIR_ADD_V w w``,
-SIMP_TAC std_ss [GSYM nzcv_ADD_V_fold_ARM8]);
+  nzcv_BIR_ADD_V w w
+Proof
+SIMP_TAC std_ss [GSYM nzcv_ADD_V_fold_ARM8]
+QED
 
 
-val nzcv_ADD_C_fold_ARM8 = store_thm ("nzcv_ADD_C_fold_ARM8",
-``!w1 w0.
+Theorem nzcv_ADD_C_fold_ARM8:
+  !w1 w0.
   ((if w2n w0 + w2n ((w1:'a word)) < dimword (:'a) then w2n w0 + w2n w1
    else (w2n w0 + w2n w1) MOD (dimword (:'a))) <>
-  w2n w0 + w2n w1) = nzcv_BIR_ADD_C w0 w1``,
-
+  w2n w0 + w2n w1) = nzcv_BIR_ADD_C w0 w1
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [nzcv_BIR_ADD_C_CARRY_DEF, add_with_carry_def,
-  LET_THM, ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]);
+  LET_THM, ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]
+QED
 
 
-val nzcv_ADD_Z_fold_ARM8 = store_thm ("nzcv_ADD_Z_fold_ARM8",
-``!w1 w0. (((w0:'a word) + w1) = 0w) = nzcv_BIR_ADD_Z w0 w1``,
+Theorem nzcv_ADD_Z_fold_ARM8:
+  !w1 w0. (((w0:'a word) + w1) = 0w) = nzcv_BIR_ADD_Z w0 w1
+Proof
 SIMP_TAC std_ss [nzcv_BIR_ADD_Z_def, GSYM nzcv_SUB_Z_fold_ARM8,
-  word_sub_def, WORD_NEG_NEG]);
+  word_sub_def, WORD_NEG_NEG]
+QED
 
-val nzcv_ADD_N_fold_ARM8 = store_thm ("nzcv_ADD_N_fold_ARM8",
-``!w1 w0. word_msb ((w0:'a word) + w1) = nzcv_BIR_ADD_N (w0:'a word) w1``,
+Theorem nzcv_ADD_N_fold_ARM8:
+  !w1 w0. word_msb ((w0:'a word) + w1) = nzcv_BIR_ADD_N (w0:'a word) w1
+Proof
 SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, GSYM nzcv_SUB_N_fold_ARM8,
-  word_sub_def, WORD_NEG_NEG]);
+  word_sub_def, WORD_NEG_NEG]
+QED
 
 
 val nzcv_ADD_FOLDS_ARM8_GEN = save_thm ("nzcv_ADD_FOLDS_ARM8_GEN",
@@ -120,88 +134,104 @@ val nzcv_ADD_FOLDS_ARM8_GEN = save_thm ("nzcv_ADD_FOLDS_ARM8_GEN",
 
 (* cmp uses w2 - w1, we also need a version for w1 + w2. *)
 
-val awc_BIR_V_fold_ARM8 = store_thm ("awc_BIR_V_fold_ARM8",
-``!w1:'a word w0:'a word c.
+Theorem awc_BIR_V_fold_ARM8:
+  !w1:'a word w0:'a word c.
   ((word_msb w0 <=> word_msb w1) /\
-  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1 + (if c then 1 else 0)))) = awc_BIR_V w0 w1 c``,
-
+  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1 + (if c then 1 else 0)))) = awc_BIR_V w0 w1 c
+Proof
 SIMP_TAC std_ss [awc_BIR_V_def,
-  add_with_carry_def, LET_THM, GSYM word_msb_n2w]);
+  add_with_carry_def, LET_THM, GSYM word_msb_n2w]
+QED
 
 
-val awc_BIR_V_fold_ARM8_ID = store_thm ("awc_BIR_V_fold_ARM8_ID",
-``!w:'a word c.
-  (word_msb w <=/=> BIT (dimindex (:'a) - 1) (w2n w + w2n w + (if c then 1 else 0))) = awc_BIR_V w w c``,
-SIMP_TAC std_ss [GSYM awc_BIR_V_fold_ARM8]);
+Theorem awc_BIR_V_fold_ARM8_ID:
+  !w:'a word c.
+  (word_msb w <=/=> BIT (dimindex (:'a) - 1) (w2n w + w2n w + (if c then 1 else 0))) = awc_BIR_V w w c
+Proof
+SIMP_TAC std_ss [GSYM awc_BIR_V_fold_ARM8]
+QED
 
 
-val awc_BIR_V_fold_ARM8_ngcs = store_thm ("awc_BIR_V_fold_ARM8_ngcs",
-``!w:'a word c.
+Theorem awc_BIR_V_fold_ARM8_ngcs:
+  !w:'a word c.
   ((~word_msb (~w)) /\
   (BIT (dimindex (:'a) - 1) (w2n (~w) + (if c then 1 else 0)))) =
-   awc_BIR_V 0w (~w) c``,
-
+   awc_BIR_V 0w (~w) c
+Proof
 SIMP_TAC arith_ss [awc_BIR_V_def,
   add_with_carry_def, LET_THM, GSYM word_msb_n2w, WORD_0_POS, w2n_n2w,
-  wordsTheory.ZERO_LT_dimword]);
+  wordsTheory.ZERO_LT_dimword]
+QED
 
 
 
-val awc_BIR_C_fold_ARM8 = store_thm ("awc_BIR_C_fold_ARM8",
-``!w0 w1 c.
+Theorem awc_BIR_C_fold_ARM8:
+  !w0 w1 c.
   ((if w2n w0 + ((w2n (w1:'a word)) + if c then 1 else (0:num)) < dimword (:'a) then
        w2n w0 + (w2n w1 + if c then 1 else 0)
   else (w2n w0 + (w2n w1 + if c then 1 else 0)) MOD (dimword (:'a))) <>
-  w2n w0 + (w2n w1 + if c then 1 else 0)) = awc_BIR_C w0 w1 c``,
-
+  w2n w0 + (w2n w1 + if c then 1 else 0)) = awc_BIR_C w0 w1 c
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [add_with_carry_def,
-  LET_THM, ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]);
+  LET_THM, ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]
+QED
 
 
-val awc_BIR_C_fold_ARM8_ngcs = store_thm ("awc_BIR_C_fold_ARM8_ngcs",
-``!w1 c.
+Theorem awc_BIR_C_fold_ARM8_ngcs:
+  !w1 c.
   ((if ((w2n (~(w1:'a word))) + if c then 1 else (0:num)) < dimword (:'a) then
        (w2n (~w1) + if c then 1 else 0)
   else ((w2n (~w1) + if c then 1 else 0)) MOD (dimword (:'a))) <>
-  (w2n (~w1) + if c then 1 else 0)) = awc_BIR_C 0w (~w1) c``,
+  (w2n (~w1) + if c then 1 else 0)) = awc_BIR_C 0w (~w1) c
+Proof
+SIMP_TAC std_ss [GSYM awc_BIR_C_fold_ARM8, word_0_n2w]
+QED
 
-SIMP_TAC std_ss [GSYM awc_BIR_C_fold_ARM8, word_0_n2w]);
 
-
-val awc_BIR_Z_fold_ARM8 = store_thm ("awc_BIR_Z_fold_ARM8",
-``!w1 (w0 : 'a word) c.
+Theorem awc_BIR_Z_fold_ARM8:
+  !w1 (w0 : 'a word) c.
      ((n2w (w2n w0 + ((w2n w1 + if c then 1 else 0)))) = (0w:'a word)) <=>
-     awc_BIR_Z w0 w1 c``,
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [awc_BIR_Z_def, GSYM word_add_n2w, n2w_w2n]);
+     awc_BIR_Z w0 w1 c
+Proof
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [awc_BIR_Z_def, GSYM word_add_n2w, n2w_w2n]
+QED
 
 
-val awc_BIR_Z_fold_ARM8_ngcs = store_thm ("awc_BIR_Z_fold_ARM8_ngcs",
-``!(w1 : 'a word) c.
+Theorem awc_BIR_Z_fold_ARM8_ngcs:
+  !(w1 : 'a word) c.
      ((n2w ((w2n (~w1) + if c then 1 else 0))) = (0w:'a word)) <=>
-     awc_BIR_Z 0w (~w1) c``,
-SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, word_0_n2w]);
+     awc_BIR_Z 0w (~w1) c
+Proof
+SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, word_0_n2w]
+QED
 
 
-val awc_BIR_N_fold_ARM8 = store_thm ("awc_BIR_N_fold_ARM8",
-``!w1 w0 c. BIT (dimindex (:'a) - 1) ((w2n w0 + ((w2n w1 + if c then 1 else 0)))) =
-            awc_BIR_N (w0:'a word) w1 c``,
+Theorem awc_BIR_N_fold_ARM8:
+  !w1 w0 c. BIT (dimindex (:'a) - 1) ((w2n w0 + ((w2n w1 + if c then 1 else 0)))) =
+            awc_BIR_N (w0:'a word) w1 c
+Proof
 SIMP_TAC std_ss [awc_BIR_N_def, GSYM word_msb_n2w, GSYM word_add_n2w,
   n2w_w2n, word_msb_neg] >>
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) []);
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) []
+QED
 
 
-val awc_BIR_N_fold_ARM8_ngcs = store_thm ("awc_BIR_N_fold_ARM8_ngcs",
-``!w1:'a word c. BIT (dimindex (:'a) - 1) ((((w2n (~w1) + if c then 1 else 0)))) =
-            awc_BIR_N 0w (~w1) c``,
-SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, word_0_n2w]);
+Theorem awc_BIR_N_fold_ARM8_ngcs:
+  !w1:'a word c. BIT (dimindex (:'a) - 1) ((((w2n (~w1) + if c then 1 else 0)))) =
+            awc_BIR_N 0w (~w1) c
+Proof
+SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, word_0_n2w]
+QED
 
 
-val awc_BIR_RES_fold_ARM8 = store_thm ("awc_BIR_RES_fold_ARM8",
-``!w0 w1 c. (n2w (w2n w0 + ((w2n w1 + if c then 1 else 0)))) =
-            (w0 + w1 + (if c then 1w else 0w))``,
+Theorem awc_BIR_RES_fold_ARM8:
+  !w0 w1 c. (n2w (w2n w0 + ((w2n w1 + if c then 1 else 0)))) =
+            (w0 + w1 + (if c then 1w else 0w))
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
-  GSYM word_add_n2w, n2w_w2n]);
+  GSYM word_add_n2w, n2w_w2n]
+QED
 
 
 (*
@@ -217,51 +247,57 @@ val maxword_w2n_thm = save_thm ("maxword_w2n_thm",
 );
 
 
-val awc_BIR_RES_fold_ARM8_ngcs = store_thm ("awc_BIR_RES_fold_ARM8_ngcs",
-``!w1 c. (n2w (((w2n w1 + if c then 1 else 0)))) =
-            (w1 + (if c then 1w else 0w))``,
+Theorem awc_BIR_RES_fold_ARM8_ngcs:
+  !w1 c. (n2w (((w2n w1 + if c then 1 else 0)))) =
+            (w1 + (if c then 1w else 0w))
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
-  GSYM word_add_n2w, n2w_w2n]);
+  GSYM word_add_n2w, n2w_w2n]
+QED
 
 
-val awc_BIR_RES_fold_ARM8_BITS = store_thm ("awc_BIR_RES_fold_ARM8_BITS",
-``!(w0:'a word) w1 c.
+Theorem awc_BIR_RES_fold_ARM8_BITS:
+  !(w0:'a word) w1 c.
             (dimindex (:'a) < dimindex (:'b)) ==>
             ((n2w (BITS (dimindex (:'a) -1) 0 (w2n w0 + ((w2n w1 + if c then 1 else 0))))):'b word =
-             w2w (w0 + w1 + (if c then 1w else 0w)))``,
-
+             w2w (w0 + w1 + (if c then 1w else 0w)))
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (GSYM wordsTheory.w2w_n2w) >>
-ASM_SIMP_TAC arith_ss [awc_BIR_RES_fold_ARM8]);
+ASM_SIMP_TAC arith_ss [awc_BIR_RES_fold_ARM8]
+QED
 
 
-val awc_BIR_RES_fold_ARM8_ngcs_BITS = store_thm ("awc_BIR_RES_fold_ARM8_ngcs_BITS",
-``!(w1:'a word) c.
+Theorem awc_BIR_RES_fold_ARM8_ngcs_BITS:
+  !(w1:'a word) c.
             (dimindex (:'a) < dimindex (:'b)) ==>
             ((n2w (BITS (dimindex (:'a) -1) 0 (((w2n w1 + if c then 1 else 0))))):'b word =
-             w2w (w1 + (if c then 1w else 0w)))``,
-
+             w2w (w1 + (if c then 1w else 0w)))
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (GSYM wordsTheory.w2w_n2w) >>
-ASM_SIMP_TAC arith_ss [awc_BIR_RES_fold_ARM8_ngcs]);
+ASM_SIMP_TAC arith_ss [awc_BIR_RES_fold_ARM8_ngcs]
+QED
 
 
-val awc_BIR_RES_FOLD_SUB = store_thm ("awc_BIR_RES_FOLD_SUB",
-``!w1:'a word w2 c.
+Theorem awc_BIR_RES_FOLD_SUB:
+  !w1:'a word w2 c.
      (w1 + (~w2) + (if c then 1w else 0w)) =
-     (w1 - w2 - (if c then 0w else 1w))``,
-
+     (w1 - w2 - (if c then 0w else 1w))
+Proof
 SIMP_TAC std_ss [WORD_NEG, word_sub_def] >>
-SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 
-val awc_BIR_RES_FOLD_SUB_ngcs = store_thm ("awc_BIR_RES_FOLD_SUB_ngcs",
-``!w1:'a word w2 c.
+Theorem awc_BIR_RES_FOLD_SUB_ngcs:
+  !w1:'a word w2 c.
      ((~w2) + (if c then 1w else 0w)) =
-     ((if c then 0w else -1w) - w2)``,
-
+     ((if c then 0w else -1w) - w2)
+Proof
 SIMP_TAC std_ss [WORD_NEG, word_sub_def] >>
-SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
+QED
 
 
 val awc_BIR_Z_nzcv_BIR_SUB_Z_fold = prove (
@@ -356,44 +392,50 @@ in thm3 end);
 (* We can ignore the case "n < INT_MIN (:'a)" since
    n is computed from a small immediate and should for all
    relevant cases be that large. *)
-val nzcv_SUB_V_fold_ARM8_CONST = store_thm ("nzcv_SUB_V_fold_ARM8_CONST",
-``!w0 n. n < dimword (:'a) ==> INT_MIN (:'a) <= n ==>
+Theorem nzcv_SUB_V_fold_ARM8_CONST:
+  !w0 n. n < dimword (:'a) ==> INT_MIN (:'a) <= n ==>
    (((word_msb w0) /\
     (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + n + 1))) =
 
-   (nzcv_BIR_SUB_V (w0:'a word) (n2w (dimword (:'a) - SUC n))))``,
-
+   (nzcv_BIR_SUB_V (w0:'a word) (n2w (dimword (:'a) - SUC n))))
+Proof
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC arith_ss [GSYM nzcv_SUB_V_fold_ARM8,
-  word_1comp_n2w, w2n_n2w, word_msb_n2w_numeric]);
+  word_1comp_n2w, w2n_n2w, word_msb_n2w_numeric]
+QED
 
 
-val nzcv_ADD_V_fold_ARM8_CONST = store_thm ("nzcv_ADD_V_fold_ARM8_CONST",
-``!(w0 : 'a word) n. n < dimword (:'a) ==> (n < INT_MIN (:'a)) ==>
+Theorem nzcv_ADD_V_fold_ARM8_CONST:
+  !(w0 : 'a word) n. n < dimword (:'a) ==> (n < INT_MIN (:'a)) ==>
    ((~(word_msb w0) /\
     (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + n))) =
-   nzcv_BIR_ADD_V w0 (n2w n))``,
-
+   nzcv_BIR_ADD_V w0 (n2w n))
+Proof
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC arith_ss [GSYM nzcv_ADD_V_fold_ARM8,
-  word_1comp_n2w, w2n_n2w, word_msb_n2w_numeric]);
+  word_1comp_n2w, w2n_n2w, word_msb_n2w_numeric]
+QED
 
 
 
-val nzcv_SUB_C_fold_ARM8_CONST = store_thm ("nzcv_SUB_C_fold_ARM8_CONST",
-``!w0 n. n < dimword (:'a) ==>
+Theorem nzcv_SUB_C_fold_ARM8_CONST:
+  !w0 n. n < dimword (:'a) ==>
  ( ((if w2n w0 + n + 1 < dimword (:'a) then w2n w0 + n + 1
    else (w2n w0 + n + 1) MOD (dimword (:'a))) <>
-  w2n w0 + n + 1) = (nzcv_BIR_SUB_C (w0:'a word) (n2w (dimword (:'a) - SUC n))))``,
-SIMP_TAC arith_ss [GSYM nzcv_SUB_C_fold_ARM8,  word_1comp_n2w, w2n_n2w]);
+  w2n w0 + n + 1) = (nzcv_BIR_SUB_C (w0:'a word) (n2w (dimword (:'a) - SUC n))))
+Proof
+SIMP_TAC arith_ss [GSYM nzcv_SUB_C_fold_ARM8,  word_1comp_n2w, w2n_n2w]
+QED
 
 
-val nzcv_ADD_C_fold_ARM8_CONST = store_thm ("nzcv_ADD_C_fold_ARM8_CONST",
-``!w0 n. n < dimword (:'a) ==>
+Theorem nzcv_ADD_C_fold_ARM8_CONST:
+  !w0 n. n < dimword (:'a) ==>
  ( ((if w2n w0 + n < dimword (:'a) then w2n w0 + n
    else (w2n w0 + n) MOD (dimword (:'a))) <>
-  w2n w0 + n) = (nzcv_BIR_ADD_C (w0:'a word) (n2w n)))``,
-SIMP_TAC arith_ss [GSYM nzcv_ADD_C_fold_ARM8, w2n_n2w]);
+  w2n w0 + n) = (nzcv_BIR_ADD_C (w0:'a word) (n2w n)))
+Proof
+SIMP_TAC arith_ss [GSYM nzcv_ADD_C_fold_ARM8, w2n_n2w]
+QED
 
 
 (* For Z and N no special constant rewrites are needed, the standard ones
@@ -401,32 +443,35 @@ SIMP_TAC arith_ss [GSYM nzcv_ADD_C_fold_ARM8, w2n_n2w]);
    introduce nzcv_BIR_SUB_Z and nzcv_BIR_SUB_C.
    So let us rewrite, if constants are two large. *)
 
-val nzcv_ADD_Z_to_SUB = store_thm ("nzcv_ADD_Z_to_SUB",
-``!(w0:'a word) n.
+Theorem nzcv_ADD_Z_to_SUB:
+  !(w0:'a word) n.
          (n < dimword (:'a)) /\ (dimword (:'a) - n < n) ==>
          (nzcv_BIR_ADD_Z w0 (n2w n) <=>
-          nzcv_BIR_SUB_Z w0 (n2w (dimword (:'a) - n)))``,
-
+          nzcv_BIR_SUB_Z w0 (n2w (dimword (:'a) - n)))
+Proof
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_Z_def, word_2comp_n2w]);
+ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_Z_def, word_2comp_n2w]
+QED
 
 
-val nzcv_ADD_N_to_SUB = store_thm ("nzcv_ADD_N_to_SUB",
-``!(w0:'a word) n.
+Theorem nzcv_ADD_N_to_SUB:
+  !(w0:'a word) n.
          (n < dimword (:'a)) /\ (dimword (:'a) - n < n) ==>
          (nzcv_BIR_ADD_N w0 (n2w n) <=>
-          nzcv_BIR_SUB_N w0 (n2w (dimword (:'a) - n)))``,
-
+          nzcv_BIR_SUB_N w0 (n2w (dimword (:'a) - n)))
+Proof
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, word_2comp_n2w]);
+ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, word_2comp_n2w]
+QED
 
 (* For 0 it does not matter, which constant is smaller, but SUB is more canonical *)
-val nzcv_ADD_ZN_to_SUB_0 = store_thm ("nzcv_ADD_ZN_to_SUB_0",
-``(!(w0:'a word). (nzcv_BIR_ADD_Z w0 (n2w 0) <=>  nzcv_BIR_SUB_Z w0 (n2w 0))) /\
-  (!(w0:'a word). (nzcv_BIR_ADD_N w0 (n2w 0) <=>  nzcv_BIR_SUB_N w0 (n2w 0)))``,
-
+Theorem nzcv_ADD_ZN_to_SUB_0:
+  (!(w0:'a word). (nzcv_BIR_ADD_Z w0 (n2w 0) <=>  nzcv_BIR_SUB_Z w0 (n2w 0))) /\
+  (!(w0:'a word). (nzcv_BIR_ADD_N w0 (n2w 0) <=>  nzcv_BIR_SUB_N w0 (n2w 0)))
+Proof
 ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_Z_def, nzcv_BIR_ADD_N_def, word_2comp_n2w,
-  ZERO_LT_dimword, n2w_dimword]);
+  ZERO_LT_dimword, n2w_dimword]
+QED
 
 
 
@@ -543,82 +588,97 @@ test_nzcv_folds_hex "DA020000";
 (* ARM 0 *)
 (*********)
 
-val awc_BIR_C_fold_M0 = store_thm ("awc_BIR_C_fold_M0",
-``!w1 w0 c. CARRY_OUT w0 w1 c = awc_BIR_C w0 w1 c``,
-REWRITE_TAC[awc_BIR_C_def]);
+Theorem awc_BIR_C_fold_M0:
+  !w1 w0 c. CARRY_OUT w0 w1 c = awc_BIR_C w0 w1 c
+Proof
+REWRITE_TAC[awc_BIR_C_def]
+QED
 
-val awc_BIR_RES_fold_M0 = store_thm ("awc_BIR_RES_fold_M0",
-``!w0 w1 c. FST (add_with_carry (w0,w1,c)) =
-            w0 + w1 + (if c then 1w else 0w)``,
+Theorem awc_BIR_RES_fold_M0:
+  !w0 w1 c. FST (add_with_carry (w0,w1,c)) =
+            w0 + w1 + (if c then 1w else 0w)
+Proof
 SIMP_TAC arith_ss [add_with_carry_def, LET_THM,
-  awc_BIR_RES_fold_ARM8]);
+  awc_BIR_RES_fold_ARM8]
+QED
 
-val awc_BIR_Z_fold_M0 = store_thm ("awc_BIR_Z_fold_M0",
-``!w1 w0 c. ((w0 + w1 + (if c then 1w else 0w)) = 0w) <=> awc_BIR_Z w0 w1 c``,
-REWRITE_TAC[awc_BIR_Z_def]);
+Theorem awc_BIR_Z_fold_M0:
+  !w1 w0 c. ((w0 + w1 + (if c then 1w else 0w)) = 0w) <=> awc_BIR_Z w0 w1 c
+Proof
+REWRITE_TAC[awc_BIR_Z_def]
+QED
 
-val awc_BIR_V_fold_M0 = store_thm ("awc_BIR_V_fold_M0",
-``!w1 w0 c. OVERFLOW w0 w1 c = awc_BIR_V w0 w1 c``,
-REWRITE_TAC[awc_BIR_V_def]);
+Theorem awc_BIR_V_fold_M0:
+  !w1 w0 c. OVERFLOW w0 w1 c = awc_BIR_V w0 w1 c
+Proof
+REWRITE_TAC[awc_BIR_V_def]
+QED
 
-val nzcv_SUB_N_fold_M0 = store_thm ("nzcv_SUB_N_fold_M0",
-``!w1:word32 w0. (word_bit 31 (w0 - w1)) = nzcv_BIR_SUB_N w0 w1``,
+Theorem nzcv_SUB_N_fold_M0:
+  !w1:word32 w0. (word_bit 31 (w0 - w1)) = nzcv_BIR_SUB_N w0 w1
+Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [nzcv_BIR_SUB_N_def, nzcv_def, LET_THM, word_msb,
-  GSYM word_add_def, word_sub_def])
+  GSYM word_add_def, word_sub_def]
+QED
 
-val nzcv_ADD_N_fold_M0 = store_thm ("nzcv_ADD_N_fold_M0",
-``!w1:word32 w0. (word_bit 31 (w0 + w1)) = nzcv_BIR_ADD_N w0 w1``,
+Theorem nzcv_ADD_N_fold_M0:
+  !w1:word32 w0. (word_bit 31 (w0 + w1)) = nzcv_BIR_ADD_N w0 w1
+Proof
 SIMP_TAC std_ss [nzcv_BIR_ADD_N_def,
-  GSYM nzcv_SUB_N_fold_M0, word_sub_def, WORD_NEG_NEG]);
+  GSYM nzcv_SUB_N_fold_M0, word_sub_def, WORD_NEG_NEG]
+QED
 
-val nzcv_SUB_Z_fold_M0 = store_thm ("nzcv_SUB_Z_fold_M0",
-``!w1 w0. (w0 - w1 = 0w) = nzcv_BIR_SUB_Z w0 w1``,
-REWRITE_TAC[nzcv_SUB_Z_fold_ARM8]);
+Theorem nzcv_SUB_Z_fold_M0:
+  !w1 w0. (w0 - w1 = 0w) = nzcv_BIR_SUB_Z w0 w1
+Proof
+REWRITE_TAC[nzcv_SUB_Z_fold_ARM8]
+QED
 
-val nzcv_ADD_Z_fold_M0 = store_thm ("nzcv_ADD_Z_fold_M0",
-``!w1 w0. (w0 + w1 = 0w) = nzcv_BIR_ADD_Z w0 w1``,
-REWRITE_TAC[nzcv_ADD_Z_fold_ARM8]);
+Theorem nzcv_ADD_Z_fold_M0:
+  !w1 w0. (w0 + w1 = 0w) = nzcv_BIR_ADD_Z w0 w1
+Proof
+REWRITE_TAC[nzcv_ADD_Z_fold_ARM8]
+QED
 
 
-val lsrs_C_fold_M0 = store_thm ("lsrs_C_fold_M0",
-``!(w1:word8) (w2:word32) c.
+Theorem lsrs_C_fold_M0:
+  !(w1:word8) (w2:word32) c.
   (if w2n w1 = 0 then c else
      w2n w1 <= 32 /\ word_bit (w2n w1 - 1) w2) =
   (if w1 = 0w then c else
     (w1 <=+ 32w /\ word_bit (w2n (w1 - 1w)) w2))
-``,
-
+Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
-  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w]);
+  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w]
+QED
 
 
-val asrs_C_fold_M0 = store_thm ("asrs_C_fold_M0",
-``!(w1:word8) (w2:word32) c.
+Theorem asrs_C_fold_M0:
+  !(w1:word8) (w2:word32) c.
   (if w2n w1 = 0 then c else
      word_bit ((MIN 32 (w2n w1)) - 1) w2) =
   (if w1 = 0w then c else
     (if w1 <=+ 32w then
         word_bit (w2n (w1 - 1w)) w2
      else word_bit 31 w2))
-``,
-
+Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
   word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w, arithmeticTheory.MIN_DEF,
   word_msb_def] >>
 REPEAT STRIP_TAC >>
-Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []);
+Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []
+QED
 
 
 
-val lsls_C_fold_M0 = store_thm ("lsls_C_fold_M0",
-``!(w1:word8) (w2:word32) c.
+Theorem lsls_C_fold_M0:
+  !(w1:word8) (w2:word32) c.
   (if w2n w1 = 0 then c else
      (((w2w w2): 33 word) << w2n w1) ' 32) =
   (if w1 = 0w then c else word_bit (w2n (32w - w1)) w2)
-``,
-
+Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
   word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w] >>
@@ -626,18 +686,20 @@ Cases_on `n1 = 0` >> ASM_SIMP_TAC arith_ss [] >>
 
 ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_lsl_def,
   fcpTheory.FCP_BETA, w2w, word_bit_def] >>
-Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []);
+Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []
+QED
 
 
-val rors_C_fold_M0 = store_thm ("rors_C_fold_M0",
-``!(w1:word8) (w2:word32) c.
+Theorem rors_C_fold_M0:
+  !(w1:word8) (w2:word32) c.
   (if w2n w1 = 0 then c else
     word_msb w2) =
-  (if (w1 = 0w) then c else word_msb w2)``,
-
+  (if (w1 = 0w) then c else word_msb w2)
+Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
-  w2w_def]);
+  w2w_def]
+QED
 
 
 val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",

@@ -30,9 +30,9 @@ val _ = new_theory "bir_program_transf_example";
 val birenvtyl_def = bir_program_transfTheory.birenvtyl_def;
 
 val bmemms_t = List.nth((snd o strip_comb o concl) bin_small_exampleTheory.bin_small_example_thm, 2);
-val bmemms_def = Define `
-    bmemms = ^(bmemms_t)
-`;
+Definition bmemms_def:
+  bmemms = ^(bmemms_t)
+End
 
 val bprog_def = exampleTheory.bprog_def;
 val bprog_tm = (fst o dest_eq o concl) bprog_def;
@@ -45,18 +45,18 @@ val (sys_tm, L_tm, Pi_tm) = (birs_stepLib.symb_sound_struct_get_sysLPi_fun o con
 val bir_frag_l_tm = (birs_driveLib.birs_get_pc o snd o dest_comb) sys_tm;
 val bir_frag_l_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl o EVAL) ``(^bir_frag_l_tm).bpc_label``;
 
-val bir_frag_l_def = Define `
-    bir_frag_l = ^bir_frag_l_tm
-`;
+Definition bir_frag_l_def:
+  bir_frag_l = ^bir_frag_l_tm
+End
 
-val bir_frag_L_def = Define `
-    bir_frag_L = ^L_tm
-`;
+Definition bir_frag_L_def:
+  bir_frag_L = ^L_tm
+End
 val bir_frag_l_exit_ml_tm = ``2828w:word32``;
 val bir_frag_l_exit_tm = ``<|bpc_label := BL_Address (Imm32 ^bir_frag_l_exit_ml_tm); bpc_index := 0|>``;
 
-val bprecond_def = Define `
-    bprecond = BExp_BinExp BIExp_And
+Definition bprecond_def:
+  bprecond = BExp_BinExp BIExp_And
                      (BExp_BinExp BIExp_And
                        (BExp_BinPred BIExp_LessOrEqual
                          (BExp_Const (Imm32 0xFFFFFFw))
@@ -65,22 +65,22 @@ val bprecond_def = Define `
                      (BExp_BinPred BIExp_LessOrEqual
                        (BExp_Den (BVar "countw" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
-`;
+End
 
-val pre_bir_def = Define `
-    pre_bir bs =
+Definition pre_bir_def:
+  pre_bir bs =
        (bir_eval_exp bprecond bs.bst_environ = SOME bir_val_true)
-`;
+End
 
-val post_bir_def = Define `
-    post_bir bs1 bs2 =
+Definition post_bir_def:
+  post_bir bs1 bs2 =
       (?v1 v2. bir_env_lookup "R7" bs1.bst_environ = SOME (BVal_Imm (Imm32 v1)) /\
                bir_env_lookup "R3" bs2.bst_environ = SOME (BVal_Imm (Imm32 v2)) /\
                (v2 = v1 + 15w))
-`;
+End
 
-val pre_bir_nL_def = Define `
-    pre_bir_nL st =
+Definition pre_bir_nL_def:
+  pre_bir_nL st =
       (
        st.bst_status = BST_Running /\
        st.bst_pc.bpc_index = 0 /\
@@ -88,16 +88,16 @@ val pre_bir_nL_def = Define `
 
        pre_bir st
       )
-`;
-val post_bir_nL_def = Define `
-    post_bir_nL (st:bir_state_t) st' =
+End
+Definition post_bir_nL_def:
+  post_bir_nL (st:bir_state_t) st' =
       (
          (st'.bst_pc = ^bir_frag_l_exit_tm) /\
          st'.bst_status = BST_Running /\
 
          post_bir st st'
       )
-`;
+End
 
 val bir_step_n_in_L_jgmt_example_thm = 
   prove (``
@@ -224,8 +224,8 @@ val bmr_rel_m0_mod_bmr_IMP_R7_lookup_thm = prove(``
 
 
 
-val pre_m0_mod_def = Define `
-    pre_m0_mod ms =
+Definition pre_m0_mod_def:
+  pre_m0_mod ms =
       (
         (EVERY (bmr_ms_mem_contains (m0_mod_bmr (F,T)) ms) bmemms) /\
         ((m0_mod_bmr (F,T)).bmr_extra ms) /\
@@ -234,13 +234,13 @@ val pre_m0_mod_def = Define `
          ms.base.REG RName_SP_process && 0x3w = 0w /\
          ms.countw <=+ 0xFFFFFFFFFFFFFF00w)
       )
-`;
-val post_m0_mod_def = Define `
-    post_m0_mod ms ms' =
+End
+Definition post_m0_mod_def:
+  post_m0_mod ms ms' =
       (
         (ms'.base.REG RName_3 = ms.base.REG RName_7 + 15w)
       )
-`;
+End
 
 val backlift_bir_m0_mod_pre_abstr_ex_thm = prove(``
   backlift_bir_m0_mod_pre_abstr pre_m0_mod pre_bir_nL
@@ -390,8 +390,8 @@ val m0_mod_R_IMP_bmr_extra_thm = prove(``
   ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
 );
 
-val pre_m0_def = Define `
-    pre_m0 ms =
+Definition pre_m0_def:
+  pre_m0 ms =
       (
         (EVERY (bmr_ms_mem_contains (m0_bmr (F,T)) ms) bmemms) /\
         ((m0_bmr (F,T)).bmr_extra ms) /\
@@ -400,13 +400,13 @@ val pre_m0_def = Define `
          ms.REG RName_SP_process && 0x3w = 0w /\
          ms.count <= 0xFFFFFFFFFFFFFF00:num)
       )
-`;
-val post_m0_def = Define `
-    post_m0 ms ms' =
+End
+Definition post_m0_def:
+  post_m0 ms ms' =
       (
         (ms'.REG RName_3 = ms.REG RName_7 + 15w)
       )
-`;
+End
 
 val m0_mod_R_IMP_count_EQ_countw_thm = prove(``
 !mms ms.
@@ -459,17 +459,15 @@ val backlift_m0_mod_m0_post_concr_ex_thm = prove(``
   METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
 );
 
-val m0_thm = store_thm(
-   "m0_thm", ``
-abstract_jgmt_rel
+Theorem m0_thm:
+  abstract_jgmt_rel
   m0_weak_model
   (^bir_frag_l_ml_tm)
   {^bir_frag_l_exit_ml_tm}
   (pre_m0)
   (post_m0)
-``,
-
-  ASSUME_TAC
+Proof
+ASSUME_TAC
     (Q.SPECL
       [`pre_m0`, `pre_m0_mod`, `post_m0_mod`, `post_m0`, `(^bir_frag_l_ml_tm)`, `{^bir_frag_l_exit_ml_tm}`]
       bir_program_transfTheory.backlift_m0_mod_m0_contract_thm) >>
@@ -491,7 +489,7 @@ abstract_jgmt_rel
   ASSUME_TAC backlift_m0_mod_m0_post_concr_ex_thm >>
 
   FULL_SIMP_TAC std_ss [m0_mod_thm]
-);
+QED
 
 
 val _ = export_theory();

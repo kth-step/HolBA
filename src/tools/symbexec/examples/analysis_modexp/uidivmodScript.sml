@@ -24,9 +24,9 @@ val bprog = List.nth((snd o strip_comb o concl) bin_balrob_smallprogs_thm, 3);
 
 List.nth ((fst o listSyntax.dest_list o snd o dest_comb) bprog, 13)
 *)
-val bprog_def = Define `
-    bprog = ^(bprog)
-`;
+Definition bprog_def:
+  bprog = ^(bprog)
+End
 val bprog_tm_ = (fst o dest_eq o concl) bprog_def;
 (* ........................... *)
 

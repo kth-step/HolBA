@@ -14,26 +14,28 @@ val _ = new_theory "m0_mod_step";
 
 
 (* modified state with word representation of clock cycle counter *)
-val _ = Datatype `m0_mod_state = <|
+Datatype:
+  m0_mod_state = <|
   base   : m0_state;
   countw : word64
-|>`;
+|>
+End
 
 
 (* Definitions *)
-val m0_mod_def = Define `
+Definition m0_mod_def:
   m0_mod s = if s.count < (2 ** 64) then SOME (<| base := s; countw := n2w s.count |>) else NONE
-`;
+End
 
-val m0_mod_inv_def = Define `
+Definition m0_mod_inv_def:
   m0_mod_inv sm = sm.base with <| count := w2n sm.countw |>
-`;
+End
 
-val NextStateM0_mod_def = Define `
-                     NextStateM0_mod sm = case NextStateM0 (m0_mod_inv sm) of
+Definition NextStateM0_mod_def:
+  NextStateM0_mod sm = case NextStateM0 (m0_mod_inv sm) of
                        | NONE    => NONE
                        | SOME s' => m0_mod s'
-`;
+End
 
 (* helper rewrite sets and theorems *)
 val m0_state_type_ss = rewrites (type_rws ``:m0_state``);
@@ -48,7 +50,7 @@ val num_repr_max_thm = (TRANS (EVAL ``w2n (0xFFFFFFFFFFFFFFFFw:word64)``)
 			      (GSYM (EVAL ``(2 ** 64) - (1:num)``)));
 
 (* mod step theorem gen *)
-val m0_mod_step_thm = store_thm("m0_mod_step_thm", ``
+Theorem m0_mod_step_thm:
   !s s' (d:word64) sm.
     (s = m0_mod_inv sm) ==>
     (NextStateM0 s = SOME s') ==>
@@ -56,9 +58,8 @@ val m0_mod_step_thm = store_thm("m0_mod_step_thm", ``
 
     (sm.countw <=+ (n2w ((2 ** 64) - 1)) - d) ==>
     (NextStateM0_mod sm = SOME (<| base := s'; countw := sm.countw + d |>))
-``,
-
-  REPEAT GEN_TAC >> STRIP_TAC >>
+Proof
+REPEAT GEN_TAC >> STRIP_TAC >>
 
   ASM_REWRITE_TAC [] >>
   POP_ASSUM (K ALL_TAC) >>
@@ -95,22 +96,22 @@ val m0_mod_step_thm = store_thm("m0_mod_step_thm", ``
 
   SIMP_TAC (std_ss++m0_state_type_ss++m0_mod_state_type_ss)
            [m0_mod_inv_def, word_add_def]
-);
+QED
 
 (* simplified theorem for use by the step function *)
-val m0_mod_step_gen_thm = store_thm("m0_mod_step_gen_thm", ``
+Theorem m0_mod_step_gen_thm:
   !s' (d:word64) sm.
     (NextStateM0 (m0_mod_inv sm) = SOME s') ==>
     (s'.count = (m0_mod_inv sm).count + (w2n d)) ==>
 
     (sm.countw <=+ (n2w ((2 ** 64) - 1)) - d) ==>
     (NextStateM0_mod sm = SOME (<| base := s'; countw := sm.countw + d |>))
-``,
-  SIMP_TAC std_ss [m0_mod_step_thm]
-);
+Proof
+SIMP_TAC std_ss [m0_mod_step_thm]
+QED
 
 (* simplified relaxed theorem for use by the step function *)
-val m0_mod_step_gen_relaxed_thm = store_thm("m0_mod_step_gen_relaxed_thm", ``
+Theorem m0_mod_step_gen_relaxed_thm:
   !s' (d:word64) (dmax:word64) sm.
     (NextStateM0 (m0_mod_inv sm) = SOME s') ==>
     (d <=+ dmax) ==>
@@ -118,8 +119,8 @@ val m0_mod_step_gen_relaxed_thm = store_thm("m0_mod_step_gen_relaxed_thm", ``
 
     (sm.countw <=+ (n2w ((2 ** 64) - 1)) - dmax) ==>
     (NextStateM0_mod sm = SOME (<| base := s'; countw := sm.countw + d |>))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   ASSUME_TAC (Q.SPECL [`s'`, `d`, `sm`] m0_mod_step_gen_thm) >>
 
   `sm.countw <=+ n2w (2 ** 64 − 1) − d` by (
@@ -138,7 +139,7 @@ val m0_mod_step_gen_relaxed_thm = store_thm("m0_mod_step_gen_relaxed_thm", ``
   ) >>
 
   ASM_SIMP_TAC std_ss []
-);
+QED
 
 
 val _ = export_theory();
