@@ -10,6 +10,7 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/tools/lifter \
            $(HOLBADIR)/src/tools/exec \
            $(HOLBADIR)/src/theory/tools/backlifter \
+           $(HOLBADIR)/src/tools/comp \
            $(HOLBADIR)/src/tools/backlifter
 
 all: $(DEFAULT_TARGETS)

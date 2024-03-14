@@ -31,3 +31,11 @@ val _ = print_and_check_thm
    bir_swap_progbin
    (bir_swap_prog : 'observation_type bir_program_t)
   ``;
+
+val _ = print_and_check_thm
+  "swap RISC-V backlifted theorem"
+  riscv_swap_contract_thm
+  ``riscv_cont
+     bir_swap_progbin
+     0w {20w}
+     riscv_swap_pre riscv_swap_post``;
