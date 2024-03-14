@@ -3,7 +3,8 @@ open HolKernel boolLib Parse bossLib;
 (* FIXME: needed to avoid quse errors *)
 open m0_stepLib;
 
-open bir_programSyntax bir_program_labelsTheory bir_immTheory bir_tsTheory;
+open bir_programSyntax bir_program_labelsTheory bir_immTheory;
+open bir_tsTheory bir_bool_expTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
@@ -49,13 +50,13 @@ End
 Theorem swap_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir riscv_swap_pre bir_swap_pre
 Proof
- cheat
+ EVAL_TAC >> rw []
 QED
 
 Theorem swap_riscv_post_imp_bir_post_thm:
  !ls. bir_post_bir_to_riscv riscv_swap_post (\l. bir_swap_post) ls
 Proof
- cheat
+ EVAL_TAC >> rw []
 QED
 
 Theorem bir_cont_swap:
@@ -64,11 +65,10 @@ Theorem bir_cont_swap:
   bir_swap_pre
   (\l. if l = BL_Address (Imm64 20w) then bir_swap_post else bir_exp_false)
 Proof
- (* this is supposed to be proved by symbolic exec + SMT *)
  cheat
 QED
 
-(* for debugging:
+(* For debugging:
 
 val bir_ct = bir_cont_swap;
 val prog_bin = ``bir_swap_progbin``;
