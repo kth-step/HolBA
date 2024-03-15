@@ -139,15 +139,6 @@ FULL_SIMP_TAC std_ss [bir_expTheory.bir_eval_load_FULL_REWRS, arm8_load_64_def] 
 FULL_SIMP_TAC (srw_ss()) []
 QED
 
-Theorem bool2w_and[local]:
-  !a b. ((bool2w a) && (bool2w b)) = (bool2w (a /\ b))
-Proof
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bool2w_def] >>
-Cases_on `a` >>
-Cases_on `b` >>
-EVAL_TAC
-QED
 
 
 
