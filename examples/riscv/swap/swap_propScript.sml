@@ -3,12 +3,19 @@ open HolKernel boolLib Parse bossLib;
 (* FIXME: needed to avoid quse errors *)
 open m0_stepLib;
 
-open bir_programSyntax bir_program_labelsTheory bir_immTheory;
+open bir_programSyntax bir_program_labelsTheory;
+open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
 open bir_compositionLib;
+
+open bir_wpLib bir_wp_expLib;
+open bir_wpTheory bir_htTheory;
+open bir_wp_interfaceLib;
+
+open tutorial_smtSupportLib;
 
 open swapTheory;
 
@@ -32,7 +39,7 @@ Definition swap_spec_def:
 End
 
 Definition riscv_swap_pre_def:
- riscv_swap_pre (m : riscv_state) = T
+ riscv_swap_pre (m : riscv_state) = F
 End
 
 Definition riscv_swap_post_def:
@@ -40,7 +47,7 @@ Definition riscv_swap_post_def:
 End
 
 Definition bir_swap_pre_def:
-  bir_swap_pre : bir_exp_t = bir_exp_true
+  bir_swap_pre : bir_exp_t = bir_exp_false
 End
 
 Definition bir_swap_post_def:
@@ -59,14 +66,33 @@ Proof
  EVAL_TAC >> rw []
 QED
 
-Theorem bir_cont_swap:
-  bir_cont bir_swap_prog bir_exp_true
-   (BL_Address (Imm64 0w)) {BL_Address (Imm64 20w)} {}
-  bir_swap_pre
-  (\l. if l = BL_Address (Imm64 20w) then bir_swap_post else bir_exp_false)
-Proof
- cheat
-QED
+val prog_tm = (lhs o concl) bir_swap_prog_def;
+val prefix = "swap_entry_";
+val first_block_label_tm = ``BL_Address (Imm64 0w)``;
+val ending_set = ``{BL_Address (Imm64 20w)}``;
+val postcond_tm = ``\l : bir_label_t . if l = BL_Address (Imm64 20w) then bir_swap_post else bir_exp_false``;
+val defs = [bir_swap_prog_def, bir_swap_post_def, bir_swap_pre_def, type_of_bir_exp_def,
+            bir_exp_false_def, bir_exp_true_def, BType_Bool_def,bir_is_bool_exp_def,
+            type_of_bir_imm_def];
+
+val (bir_swap_entry_ht, bir_swap_entry_wp_tm) =
+  bir_obtain_ht prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
+
+Definition bir_swap_entry_wp_def:
+ bir_swap_entry_wp = ^bir_swap_entry_wp_tm
+End
+val _ = save_thm("bir_swap_entry_ht", bir_swap_entry_ht);
+
+val bir_swap_pre_tm = (lhs o concl) bir_swap_pre_def;
+val bir_swap_pre_imp = bimp (bir_swap_pre_tm, bir_swap_entry_wp_tm);
+val bir_swap_pre_imp_taut_thm = prove_exp_is_taut bir_swap_pre_imp;
+
+val bir_cont_swap =
+  bir_exec_to_labels_triple_to_bir_cont_predset bir_swap_entry_ht bir_swap_pre_imp_taut_thm;
+val _= save_thm ("bir_cont_swap", bir_cont_swap);
 
 (* For debugging:
 
