@@ -195,12 +195,6 @@ val birs_state_final_ = ``<|
 ``;
 
 
-(*
-val result = prove(,
-  cheat
-);
-*)
-
 val result = mk_oracle_thm "BIRS_EXTERNAL_WCET" ([], ``
   symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
        (birs_symb_to_symbst
