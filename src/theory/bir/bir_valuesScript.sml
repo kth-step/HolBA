@@ -60,9 +60,10 @@ Definition bir_val_is_Mem_def:
   bir_val_is_Mem v = ?at vt mmap. (v = BVal_Mem at vt mmap)
 End
 
-val bir_val_checker_DEFS = save_thm ("bir_val_checker_DEFS", LIST_CONJ [
+Theorem bir_val_checker_DEFS = LIST_CONJ [
   bir_val_is_Imm_def, bir_val_is_Imm_s_def,
-  bir_val_is_Bool_def, bir_val_is_Mem_def]);
+  bir_val_is_Bool_def, bir_val_is_Mem_def]
+
 
 
 Theorem bir_val_is_Imm_s_ALT_DEF:
@@ -221,9 +222,10 @@ Definition bir_type_is_Mem_def:
   bir_type_is_Mem ty = (?at vt. ty = BType_Mem at vt)
 End
 
-val bir_type_checker_DEFS = save_thm ("bir_type_checker_DEFS", LIST_CONJ [
+Theorem bir_type_checker_DEFS = LIST_CONJ [
   bir_type_is_Imm_def, bir_type_is_Imm_s_def,
-  bir_type_is_Bool_def, bir_type_is_Mem_def]);
+  bir_type_is_Bool_def, bir_type_is_Mem_def]
+
 
 
 Theorem bir_type_checker_REWRS:
@@ -295,7 +297,8 @@ Definition bir_type_t_LIST_def:
   (FLAT (MAP (\f. MAP f bir_immtype_t_LIST) (MAP BType_Mem bir_immtype_t_LIST)))
 End
 
-val bir_type_t_LIST_EVAL = save_thm ("bir_type_t_LIST_EVAL", EVAL ``bir_type_t_LIST``);
+Theorem bir_type_t_LIST_EVAL = EVAL ``bir_type_t_LIST``
+
 
 Theorem bir_type_t_LIST_THM:
   !ty. MEM ty bir_type_t_LIST

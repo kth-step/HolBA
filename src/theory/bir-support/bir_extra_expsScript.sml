@@ -438,8 +438,8 @@ FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheo
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
-val word_reverse_8_32_ALT_DEF = save_thm ("word_reverse_8_32_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_32_ALT_DEF_aux);
+Theorem word_reverse_8_32_ALT_DEF = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_32_ALT_DEF_aux
+
 
 
 Theorem word_reverse_8_64_ALT_DEF_aux[local]:
@@ -460,8 +460,8 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val word_reverse_8_64_ALT_DEF = save_thm ("word_reverse_8_64_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_64_ALT_DEF_aux);
+Theorem word_reverse_8_64_ALT_DEF = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_64_ALT_DEF_aux
+
 
 
 Theorem word_reverse_8_128_ALT_DEF_aux[local]:
@@ -490,8 +490,8 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val word_reverse_8_128_ALT_DEF = save_thm ("word_reverse_8_128_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_128_ALT_DEF_aux);
+Theorem word_reverse_8_128_ALT_DEF = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_128_ALT_DEF_aux
+
 
 
 Definition BExp_word_reverse_8_128_def:
@@ -891,8 +891,8 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val word_reverse_16_64_ALT_DEF = save_thm ("word_reverse_16_64_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_16bit_def, word_lsl_n2w] word_reverse_16_64_ALT_DEF_aux);
+Theorem word_reverse_16_64_ALT_DEF = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_16bit_def, word_lsl_n2w] word_reverse_16_64_ALT_DEF_aux
+
 
 
 Theorem word_reverse_16_128_ALT_DEF_aux[local]:
@@ -914,8 +914,8 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
 
-val word_reverse_16_128_ALT_DEF = save_thm ("word_reverse_16_128_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_16bit_def, word_lsl_n2w] word_reverse_16_128_ALT_DEF_aux);
+Theorem word_reverse_16_128_ALT_DEF = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_16bit_def, word_lsl_n2w] word_reverse_16_128_ALT_DEF_aux
+
 
 
 
@@ -1176,8 +1176,8 @@ FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheo
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []
 QED
 
-val word_reverse_32_128_ALT_DEF = save_thm ("word_reverse_32_128_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_32bit_def, word_lsl_n2w] word_reverse_32_128_ALT_DEF_aux);
+Theorem word_reverse_32_128_ALT_DEF = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_32bit_def, word_lsl_n2w] word_reverse_32_128_ALT_DEF_aux
+
 
 
 
@@ -1356,8 +1356,7 @@ QED
 (* Reverse Word ALL *)
 (********************)
 
-val BExp_word_reverse_REWRS = save_thm ("BExp_word_reverse_REWRS",
-LIST_CONJ [
+Theorem BExp_word_reverse_REWRS = LIST_CONJ [
   BExp_word_reverse_1_8_def,
   BExp_word_reverse_1_16_def,
   BExp_word_reverse_1_32_def,
@@ -1373,10 +1372,10 @@ LIST_CONJ [
   BExp_word_reverse_32_64_def,
   BExp_word_reverse_32_128_def,
   BExp_word_reverse_64_128_def
-]);
+]
 
-val word_reverse_REWRS = save_thm ("word_reverse_REWRS",
-LIST_CONJ [
+
+Theorem word_reverse_REWRS = LIST_CONJ [
   word_reverse_8_16_def,
   word_reverse_8_32_def,
   word_reverse_8_64_def,
@@ -1387,10 +1386,10 @@ LIST_CONJ [
   word_reverse_32_64_def,
   word_reverse_32_128_def,
   word_reverse_64_128_def
-]);
+]
 
-val BExp_word_reverse_vars_of = save_thm ("BExp_word_reverse_vars_of",
-LIST_CONJ [
+
+Theorem BExp_word_reverse_vars_of = LIST_CONJ [
   BExp_word_reverse_1_vars_of,
   BExp_word_reverse_8_16_vars_of,
   BExp_word_reverse_8_32_vars_of,
@@ -1402,10 +1401,10 @@ LIST_CONJ [
   BExp_word_reverse_32_64_vars_of,
   BExp_word_reverse_32_128_vars_of,
   BExp_word_reverse_64_128_vars_of
-]);
+]
 
-val BExp_word_reverse_type_of = save_thm ("BExp_word_reverse_type_of",
-LIST_CONJ [
+
+Theorem BExp_word_reverse_type_of = LIST_CONJ [
   BExp_word_reverse_1_type_of,
   BExp_word_reverse_8_16_type_of,
   BExp_word_reverse_8_32_type_of,
@@ -1417,11 +1416,11 @@ LIST_CONJ [
   BExp_word_reverse_32_64_type_of,
   BExp_word_reverse_32_128_type_of,
   BExp_word_reverse_64_128_type_of
-]);
+]
 
 
-val BExp_word_reverse_eval = save_thm ("BExp_word_reverse_eval",
-LIST_CONJ [
+
+Theorem BExp_word_reverse_eval = LIST_CONJ [
   BExp_word_reverse_1_eval,
   BExp_word_reverse_8_16_eval,
   BExp_word_reverse_8_32_eval,
@@ -1433,7 +1432,8 @@ LIST_CONJ [
   BExp_word_reverse_32_64_eval,
   BExp_word_reverse_32_128_eval,
   BExp_word_reverse_64_128_eval
-]);
+]
+
 
 
 

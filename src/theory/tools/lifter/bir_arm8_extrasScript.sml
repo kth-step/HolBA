@@ -696,9 +696,9 @@ ASM_SIMP_TAC std_ss [v2w_fixwidth, sign_extend_def]
 QED
 
 
-val ExtendValue_REWR = save_thm ("ExtendValue_REWR",
-  SIMP_RULE (std_ss) [LET_THM, Extend_ALT_DEF, word_len_def] (
-    DatatypeSimps.cases_to_top_RULE arm8Theory.ExtendValue_def));
+Theorem ExtendValue_REWR = SIMP_RULE (std_ss) [LET_THM, Extend_ALT_DEF, word_len_def] (
+    DatatypeSimps.cases_to_top_RULE arm8Theory.ExtendValue_def)
+
 
 
 Theorem ExtendValue_Unsigned_REWR[local]:
@@ -1087,9 +1087,9 @@ QED
 
 
 
-val arm8_movk64_fold0  = save_thm  ("arm8_movk64_fold0",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
-     INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:48``, ``:'c`` |-> ``:16``] arm8_movk_fold_base_r));
+Theorem arm8_movk64_fold0 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+     INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:48``, ``:'c`` |-> ``:16``] arm8_movk_fold_base_r)
+
 
 Theorem arm8_movk64_fold16:
   !n (w:word64). ((63 >< 32) w : word32) @@ ((((n2w:num->word16) n) @@ ((15 >< 0) w : word16)): word32) = (w && 0xFFFFFFFF00000000w) || (((n2w:num->word64) (n MOD 65536)) << 16) || (w && 0x000000000000FFFFw)
@@ -1115,9 +1115,9 @@ SIMP_TAC (std_ss++wordsLib.WORD_ss) [( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [wo
 QED
 
 
-val arm8_movk32_fold0  = save_thm  ("arm8_movk32_fold0",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
-     INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``, ``:'c`` |-> ``:16``] arm8_movk_fold_base_r));
+Theorem arm8_movk32_fold0 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+     INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``, ``:'c`` |-> ``:16``] arm8_movk_fold_base_r)
+
 
 Theorem arm8_movk32_fold16:
   !n (w:word32). ((n2w:num->word16) n) @@ ((15 >< 0) w : word16) = (((n2w:num->word32) (n MOD 65536)) << 16) || (w && 0x0000FFFFw)
@@ -1126,16 +1126,17 @@ SIMP_TAC (std_ss++wordsLib.WORD_ss) [( SIMP_RULE (std_ss++wordsLib.SIZES_ss) [wo
      INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``] arm8_movk_16_fold_base_l))]
 QED
 
-val arm8_movk32_folds = save_thm ("arm8_movk32_folds", LIST_CONJ [arm8_movk32_fold0, arm8_movk32_fold16]);
-val arm8_movk64_folds = save_thm ("arm8_movk64_folds", LIST_CONJ [arm8_movk64_fold0, arm8_movk64_fold16, arm8_movk64_fold32, arm8_movk64_fold48]);
+Theorem arm8_movk32_folds = LIST_CONJ [arm8_movk32_fold0, arm8_movk32_fold16]
+
+Theorem arm8_movk64_folds = LIST_CONJ [arm8_movk64_fold0, arm8_movk64_fold16, arm8_movk64_fold32, arm8_movk64_fold48]
+
 
 
 (****************)
 (* Combinations *)
 (****************)
 
-val arm8_extra_LIFTS = save_thm ("arm8_extra_LIFTS",
-  LIST_CONJ [
+Theorem arm8_extra_LIFTS = LIST_CONJ [
     arm8_LIFT_LOAD_BYTE,
     arm8_LIFT_LOAD_HALF,
     arm8_LIFT_LOAD_WORD,
@@ -1144,14 +1145,15 @@ val arm8_extra_LIFTS = save_thm ("arm8_extra_LIFTS",
     arm8_LIFT_STORE_HALF,
     arm8_LIFT_STORE_WORD,
     arm8_LIFT_STORE_DWORD
-]);
+]
 
-val arm8_CHANGE_INTERVAL_THMS = save_thm ("arm8_CHANGE_INTERVAL_THMS",
-  LIST_CONJ [
+
+Theorem arm8_CHANGE_INTERVAL_THMS = LIST_CONJ [
     arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL,
     arm8_LIFT_STORE_WORD_CHANGE_INTERVAL,
     arm8_LIFT_STORE_HALF_CHANGE_INTERVAL,
-    arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
+    arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]
+
 
 
 Theorem arm8_count_leading_eq_bir:
@@ -1200,8 +1202,7 @@ Proof
 REWRITE_TAC [arm8_count_leading_sign, GSYM cast_thm]
 QED
       
-val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
-  LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
+Theorem arm8_extra_FOLDS = LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
       arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, w2w_REMOVE_FOLDS,
       arm8_mem_store_FOLDS, GSYM word_reverse_REWRS,
@@ -1211,6 +1212,7 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
 (*      arm8_high_u_mul, *)
       arm8_count_leading_zero, arm8_count_leading_sign,
       arm8_count_leading_zero_32, arm8_count_leading_sign_32
-]);
+]
+
 
 val _ = export_theory();

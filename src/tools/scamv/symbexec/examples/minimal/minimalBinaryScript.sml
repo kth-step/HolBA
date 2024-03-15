@@ -18,6 +18,7 @@ val (thm_arm8, errors) = bmil_arm8.bir_lift_prog_gen ((Arbnum.fromInt 0),
  (Arbnum.fromInt 0x1000000)) minimal_sections
 
 val _ = new_theory "minimalBinary";
-val _ = save_thm ("minimal_arm8_THM", thm_arm8);
+Theorem minimal_arm8_THM = thm_arm8
+
 val _ = export_theory();
 

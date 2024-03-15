@@ -851,9 +851,8 @@ Definition step_n_in_L_def:
      (step_n_in_L_relaxed pcf stepf s n L s'))
 End
 
-val step_n_in_L_thm = save_thm("step_n_in_L_thm",
-  REWRITE_RULE [step_n_in_L_relaxed_def] step_n_in_L_def
-);
+Theorem step_n_in_L_thm = REWRITE_RULE [step_n_in_L_relaxed_def] step_n_in_L_def
+
 
 Theorem step_n_in_L_onlyL_thm:
   !pcf stepf.

@@ -97,6 +97,7 @@ val _ = Portable.pprint Tag.pp_tag (tag result);
 
 
 
-val _ = save_thm ("bin_small_example_analysis_thm", result);
+Theorem bin_small_example_analysis_thm = result
+
 
 val _ = export_theory();

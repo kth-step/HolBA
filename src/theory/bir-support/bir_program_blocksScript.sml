@@ -30,9 +30,9 @@ Definition bir_states_EQ_EXCEPT_PC_def:
   ((st1 with bst_pc := ARB) = (st2 with bst_pc := ARB))
 End
 
-val bir_states_EQ_EXCEPT_PC_REWRS = save_thm ("bir_states_EQ_EXCEPT_PC_REWRS",
-  SIMP_RULE (std_ss++holBACore_ss) [bir_state_t_component_equality]
-    bir_states_EQ_EXCEPT_PC_def);
+Theorem bir_states_EQ_EXCEPT_PC_REWRS = SIMP_RULE (std_ss++holBACore_ss) [bir_state_t_component_equality]
+    bir_states_EQ_EXCEPT_PC_def
+
 
 Theorem bir_states_EQ_EXCEPT_PC_IS_EQUIV:
   (!st. bir_states_EQ_EXCEPT_PC st st) /\

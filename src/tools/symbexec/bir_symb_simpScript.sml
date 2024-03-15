@@ -857,17 +857,13 @@ Proof
 EVAL_TAC
 QED
 
-val birs_simplification_Mem_Match_32_8_8_thm = save_thm(
-   "birs_simplification_Mem_Match_32_8_8_thm",
-   (SIMP_RULE std_ss [mem_simp_8_helper_thm] o
+Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_8_helper_thm] o
     Q.SPECL [`Bit32`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1
-);
 
-val birs_simplification_Mem_Match_32_8_32_thm = save_thm(
-   "birs_simplification_Mem_Match_32_8_32_thm",
-   (SIMP_RULE std_ss [mem_simp_32_helper_thm] o
+
+Theorem birs_simplification_Mem_Match_32_8_32_thm = (SIMP_RULE std_ss [mem_simp_32_helper_thm] o
     Q.SPECL [`Bit32`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1
-);
+
 
 
 Theorem bool2w_OR_AND_REWRS_thm:
@@ -1070,10 +1066,8 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-val birs_simplification_Mem_Bypass_32_8_thm = save_thm(
-   "birs_simplification_Mem_Bypass_32_8_thm",
-   SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_thm1
-);
+Theorem birs_simplification_Mem_Bypass_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_thm1
+
 
 Theorem bir_mem_acc_disjoint_32_32_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1300,10 +1294,8 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-val birs_simplification_Mem_Bypass_32_32_thm = save_thm(
-   "birs_simplification_Mem_Bypass_32_32_thm",
-   SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_32_thm1
-);
+Theorem birs_simplification_Mem_Bypass_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_32_thm1
+
 
 Theorem bir_mem_acc_disjoint_8_8_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1508,10 +1500,8 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-val birs_simplification_Mem_Bypass_8_8_thm = save_thm(
-   "birs_simplification_Mem_Bypass_8_8_thm",
-   SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_8_thm1
-);
+Theorem birs_simplification_Mem_Bypass_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_8_thm1
+
 
 Theorem bir_mem_acc_disjoint_8_32_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1701,10 +1691,8 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-val birs_simplification_Mem_Bypass_8_32_thm = save_thm(
-   "birs_simplification_Mem_Bypass_8_32_thm",
-   SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_32_thm1
-);
+Theorem birs_simplification_Mem_Bypass_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_32_thm1
+
 
 
 

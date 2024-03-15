@@ -553,9 +553,9 @@ Cases_on `x` >> SIMP_TAC arith_ss []
 QED
 
 
-val OPT_NUM_MIN_SOME_SUC = save_thm ("OPT_NUM_MIN_SOME_SUC",
-  CONJ OPT_NUM_MIN_SOME_SUC_aux
-       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_SOME_SUC_aux));
+Theorem OPT_NUM_MIN_SOME_SUC = CONJ OPT_NUM_MIN_SOME_SUC_aux
+       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_SOME_SUC_aux)
+
 
 
 Theorem OPT_NUM_MIN_OPT_NUM_SUC_aux[local]:
@@ -574,9 +574,9 @@ Cases_on `no1` >> (
 )
 QED
 
-val OPT_NUM_MIN_OPT_NUM_SUC = save_thm ("OPT_NUM_MIN_OPT_NUM_SUC",
-  CONJ OPT_NUM_MIN_OPT_NUM_SUC_aux
-       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_OPT_NUM_SUC_aux));
+Theorem OPT_NUM_MIN_OPT_NUM_SUC = CONJ OPT_NUM_MIN_OPT_NUM_SUC_aux
+       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_OPT_NUM_SUC_aux)
+
 
 Definition OPT_CONS_def:
   OPT_CONS eo l = option_CASE eo l (\e. CONS e l)
@@ -629,8 +629,8 @@ Induct_on `n` >> (
 )
 QED
 
-val FUNPOW_OPT_compute = save_thm ("FUNPOW_OPT_compute",
-  CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS);
+Theorem FUNPOW_OPT_compute = CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS
+
 
 Theorem FUNPOW_OPT_ADD_thm:
   !f n n' ms ms' ms''.

@@ -571,8 +571,8 @@ Definition arm8_REGS_lifted_imms_LIST_def:
                (\ms:arm8_state. Imm64 (ms.REG (n2w n)))))  (COUNT_LIST 32))
 End
 
-val arm8_REGS_lifted_imms_LIST_EVAL = save_thm ("arm8_REGS_lifted_imms_LIST_EVAL",
-  EVAL ``arm8_REGS_lifted_imms_LIST``);
+Theorem arm8_REGS_lifted_imms_LIST_EVAL = EVAL ``arm8_REGS_lifted_imms_LIST``
+
 
 
 (* Lifting PSTATE *)
@@ -625,22 +625,21 @@ Definition arm8_bmr_def:
   bmr_step_fun := NextStateARM8 |>
 End
 
-val arm8_bmr_EVAL = save_thm ("arm8_bmr_EVAL",
-  SIMP_CONV list_ss [arm8_bmr_def, arm8_state_is_OK_def,
+Theorem arm8_bmr_EVAL = SIMP_CONV list_ss [arm8_bmr_def, arm8_state_is_OK_def,
     arm8_REGS_lifted_imms_LIST_EVAL, arm8_PSTATE_lifted_imms_LIST_def,
     arm8_EXTRA_lifted_imms_LIST_def, arm8_lifted_mem_def,
     arm8_lifted_pc_def, bir_temp_var_name_def, arm8_state_is_OK_def]
     ``arm8_bmr``
-);
 
 
-val arm8_bmr_vars_EVAL = save_thm ("arm8_bmr_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def] ``bmr_vars arm8_bmr``);
 
-val arm8_bmr_temp_vars_EVAL = save_thm ("arm8_bmr_temp_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+Theorem arm8_bmr_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def] ``bmr_vars arm8_bmr``
+
+
+Theorem arm8_bmr_temp_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
-  ``bmr_temp_vars arm8_bmr``);
+  ``bmr_temp_vars arm8_bmr``
+
 
 Theorem arm8_bmr_varnames_distinct[local]:
   bmr_varnames_distinct arm8_bmr
@@ -664,14 +663,14 @@ SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss
   bmr_varnames_distinct_def]
 QED
 
-val arm8_bmr_rel_EVAL = save_thm ("arm8_bmr_rel_EVAL",
-SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
+Theorem arm8_bmr_rel_EVAL = SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
   bmr_rel_def, arm8_bmr_EVAL,
   bir_machine_lifted_mem_def, bir_machine_lifted_imm_def,
   bir_is_temp_var_name_def, BType_Bool_def, bir_temp_var_name_def,
   bir_machine_lifted_pc_def, bir_temp_var_def,
   GSYM CONJ_ASSOC]
-``bmr_rel arm8_bmr bs ms``);
+``bmr_rel arm8_bmr bs ms``
+
 
 
 val arm8_bmr_LIFTED = save_thm ("arm8_bmr_LIFTED",
@@ -747,8 +746,8 @@ Definition m0_REGS_lifted_imms_LIST_def:
 End
 
 
-val m0_REGS_lifted_imms_LIST_REWRS = save_thm ("m0_REGS_lifted_imms_LIST_REWRS",
-  SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_REGS_lifted_imms_LIST_def);
+Theorem m0_REGS_lifted_imms_LIST_REWRS = SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_REGS_lifted_imms_LIST_def
+
 
 Definition m0_lifted_mem_def:
   m0_lifted_mem = BMLM (BVar "MEM" (BType_Mem Bit32 Bit8)) (\ms:m0_state. ms.MEM)
@@ -777,20 +776,19 @@ Definition m0_bmr_def:
 End
 
 
-val m0_bmr_EVAL = save_thm ("m0_bmr_EVAL",
-  GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_bmr_def, R_name_def,
+Theorem m0_bmr_EVAL = GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_bmr_def, R_name_def,
     m0_REGS_lifted_imms_LIST_def, m0_lifted_mem_def, m0_state_is_OK_def,
     m0_lifted_pc_def, bir_temp_var_name_def]
     ``m0_bmr (ef, sel)``)
-);
 
-val m0_bmr_vars_EVAL = save_thm ("m0_bmr_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def] ``bmr_vars (m0_bmr (ef, sel))``);
 
-val m0_bmr_temp_vars_EVAL = save_thm ("m0_bmr_temp_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+Theorem m0_bmr_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def] ``bmr_vars (m0_bmr (ef, sel))``
+
+
+Theorem m0_bmr_temp_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
-  ``bmr_temp_vars (m0_bmr (ef, sel))``);
+  ``bmr_temp_vars (m0_bmr (ef, sel))``
+
 
 Theorem m0_bmr_varnames_distinct[local]:
   bmr_varnames_distinct (m0_bmr (ef, sel))
@@ -992,9 +990,8 @@ Definition riscv_GPRS_lifted_imms_LIST_def:
     (MAP (\n. (BMLI (BVar (STRCAT "x" (n2s 10 HEX n)) (BType_Imm Bit64))
                (\ms:riscv_state. Imm64 (ms.c_gpr ms.procID (n2w n) ))))  (COUNT_LIST 32))
 End
-val riscv_GPRS_lifted_imms_LIST_EVAL = save_thm("riscv_GPRS_lifted_imms_LIST_EVAL",
-  EVAL ``riscv_GPRS_lifted_imms_LIST``
-);
+Theorem riscv_GPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_GPRS_lifted_imms_LIST``
+
 
 (* Lifting RISC-V HardFloat registers. *)
 Definition riscv_FPRS_lifted_imms_LIST_def:
@@ -1002,9 +999,8 @@ Definition riscv_FPRS_lifted_imms_LIST_def:
     (MAP (\n. (BMLI (BVar (STRCAT "f" (n2s 10 HEX n)) (BType_Imm Bit64))
                (\ms:riscv_state. Imm64 (ms.c_fpr ms.procID (n2w n) ))))  (COUNT_LIST 32))
 End
-val riscv_FPRS_lifted_imms_LIST_EVAL = save_thm("riscv_FPRS_lifted_imms_LIST_EVAL",
-  EVAL ``riscv_FPRS_lifted_imms_LIST``
-);
+Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
+
 
 (* Note: For some reason, MEM is named MEM8 in the RISC-V state.
  * Since memory is shared between processes, this does not require
@@ -1044,24 +1040,21 @@ Definition riscv_bmr_def:
 End
 
 (* Evaluation theorem of RISC-V BMR. *)
-val riscv_bmr_EVAL = save_thm("riscv_bmr_EVAL",
-SIMP_CONV list_ss [riscv_bmr_def, riscv_state_is_OK_def,
+Theorem riscv_bmr_EVAL = SIMP_CONV list_ss [riscv_bmr_def, riscv_state_is_OK_def,
                    riscv_GPRS_lifted_imms_LIST_EVAL, riscv_FPRS_lifted_imms_LIST_EVAL,
                    riscv_lifted_mem_def,
                    riscv_lifted_pc_def, bir_temp_var_name_def]
           ``riscv_bmr``
-);
+
 
 (* Evaluation theorem of variables in a RISC-V BMR. *)
-val riscv_bmr_vars_EVAL = save_thm("riscv_bmr_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def] ``bmr_vars riscv_bmr``
-);
+Theorem riscv_bmr_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def] ``bmr_vars riscv_bmr``
+
 (* Evaluation theorem of variables + temporary variables (???) in a RISC-V BMR. *)
-val riscv_bmr_temp_vars_EVAL = save_thm ("riscv_bmr_temp_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+Theorem riscv_bmr_temp_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
                              bir_temp_var_def, bir_temp_var_name_def]
           ``bmr_temp_vars riscv_bmr``
-);
+
 
 (* The property of all varnames being distinct. *)
 Theorem riscv_bmr_varnames_distinct[local]:
@@ -1087,14 +1080,14 @@ SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss
           bmr_varnames_distinct_def]
 QED
 
-val riscv_bmr_rel_EVAL = save_thm ("riscv_bmr_rel_EVAL",
-SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
+Theorem riscv_bmr_rel_EVAL = SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
   bmr_rel_def, riscv_bmr_EVAL,
   bir_machine_lifted_mem_def, bir_machine_lifted_imm_def,
   bir_is_temp_var_name_def, BType_Bool_def, bir_temp_var_name_def,
   bir_machine_lifted_pc_def, bir_temp_var_def,
   GSYM CONJ_ASSOC]
-``bmr_rel riscv_bmr bs ms``);
+``bmr_rel riscv_bmr bs ms``
+
 
 (**********************************************************************)
 (* 2. riscv_bmr_LIFTED                                                *)
@@ -1195,8 +1188,8 @@ Definition m0_mod_REGS_lifted_imms_LIST_def:
 End
 
 
-val m0_mod_REGS_lifted_imms_LIST_REWRS = save_thm ("m0_mod_REGS_lifted_imms_LIST_REWRS",
-  SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_mod_REGS_lifted_imms_LIST_def);
+Theorem m0_mod_REGS_lifted_imms_LIST_REWRS = SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_mod_REGS_lifted_imms_LIST_def
+
 
 Definition m0_mod_lifted_mem_def:
   m0_mod_lifted_mem = BMLM (BVar "MEM" (BType_Mem Bit32 Bit8)) (\ms:m0_mod_state. ms.base.MEM)
@@ -1225,20 +1218,19 @@ Definition m0_mod_bmr_def:
 End
 
 
-val m0_mod_bmr_EVAL = save_thm ("m0_mod_bmr_EVAL",
-  GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_mod_bmr_def, R_name_def,
+Theorem m0_mod_bmr_EVAL = GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_mod_bmr_def, R_name_def,
     m0_mod_REGS_lifted_imms_LIST_def, m0_mod_lifted_mem_def, m0_mod_state_is_OK_def,
     m0_mod_lifted_pc_def, bir_temp_var_name_def]
     ``m0_mod_bmr (ef, sel)``)
-);
 
-val m0_mod_bmr_vars_EVAL = save_thm ("m0_mod_bmr_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def] ``bmr_vars (m0_mod_bmr (ef, sel))``);
 
-val m0_mod_bmr_temp_vars_EVAL = save_thm ("m0_mod_bmr_temp_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+Theorem m0_mod_bmr_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def] ``bmr_vars (m0_mod_bmr (ef, sel))``
+
+
+Theorem m0_mod_bmr_temp_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
-  ``bmr_temp_vars (m0_mod_bmr (ef, sel))``);
+  ``bmr_temp_vars (m0_mod_bmr (ef, sel))``
+
 
 Theorem m0_mod_bmr_varnames_distinct[local]:
   bmr_varnames_distinct (m0_mod_bmr (ef, sel))

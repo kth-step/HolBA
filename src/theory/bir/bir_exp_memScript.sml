@@ -156,8 +156,8 @@ SIMP_TAC std_ss [bir_load_bitstring_from_mmap_def, GSYM w2v_v2w, v2w_n2v]
 QED
 
 
-val bir_load_bitstring_from_mmap_w2v_SIZES = save_thm ("bir_load_bitstring_from_mmap_w2v_SIZES",
-  LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_load_bitstring_from_mmap_w2v));
+Theorem bir_load_bitstring_from_mmap_w2v_SIZES = LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_load_bitstring_from_mmap_w2v)
+
 
 
 Definition bir_mem_addr_def:
@@ -183,8 +183,8 @@ FULL_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, dimword_def, bitTheory.MOD_2EXP
 QED
 
 
-val bir_mem_addr_w2n_SIZES = save_thm ("bir_mem_addr_w2n_SIZES",
-  LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n));
+Theorem bir_mem_addr_w2n_SIZES = LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n)
+
 
 
 Theorem bir_mem_addr_w2n_add:
@@ -198,8 +198,8 @@ ASM_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, wordsTheory.word_add_n2w,
 QED
 
 
-val bir_mem_addr_w2n_add_SIZES = save_thm ("bir_mem_addr_w2n_add_SIZES",
-  LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n_add));
+Theorem bir_mem_addr_w2n_add_SIZES = LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n_add)
+
 
 
 Definition bir_load_from_mem_def:

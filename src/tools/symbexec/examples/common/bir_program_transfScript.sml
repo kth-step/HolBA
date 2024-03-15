@@ -1244,10 +1244,8 @@ m0_mod_REGS_lifted_imms_LIST
 m0_mod_lifted_mem
 bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL
 *)
-val birenvtyl_EVAL_thm = save_thm(
-   "birenvtyl_EVAL_thm",
-  (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl``
-);
+Theorem birenvtyl_EVAL_thm = (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl``
+
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 

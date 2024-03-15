@@ -248,13 +248,13 @@ Proof
 SIMP_TAC std_ss [bir_cast_def, w2bs_def, b2n_n2bs, w2n_MOD_2EXP_ID]
 QED
 
-val bir_cast_REWRS0 = save_thm ("bir_cast_REWRS0",
-  REWRITE_RULE [w2bs_REWRS, w2w_id] (LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex
-     bir_cast_REWRS0_aux)));
+Theorem bir_cast_REWRS0 = REWRITE_RULE [w2bs_REWRS, w2w_id] (LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex
+     bir_cast_REWRS0_aux))
 
-val bir_cast_REWRS = save_thm ("bir_cast_REWRS",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [bir_immtype_t_ty])
-    [GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id] bir_cast_REWRS0);
+
+Theorem bir_cast_REWRS = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [bir_immtype_t_ty])
+    [GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id] bir_cast_REWRS0
+
 
 
 (* ============= *)
@@ -265,11 +265,11 @@ Definition bir_lcast_def:
   bir_lcast = bir_cast
 End
 
-val bir_lcast_REWRS0 = save_thm ("bir_lcast_REWRS0",
-  REWRITE_RULE [GSYM bir_lcast_def] bir_cast_REWRS0);
+Theorem bir_lcast_REWRS0 = REWRITE_RULE [GSYM bir_lcast_def] bir_cast_REWRS0
 
-val bir_lcast_REWRS = save_thm ("bir_lcast_REWRS",
-  REWRITE_RULE [GSYM bir_lcast_def] bir_cast_REWRS);
+
+Theorem bir_lcast_REWRS = REWRITE_RULE [GSYM bir_lcast_def] bir_cast_REWRS
+
 
 
 
@@ -409,11 +409,11 @@ Definition bir_gencast_def:
   (bir_gencast BIExp_LowCast = bir_lcast)
 End
 
-val bir_casts_DEFS = save_thm ("bir_casts_DEFS",
-  LIST_CONJ [bir_cast_def, bir_scast_def, bir_hcast_def, bir_lcast_def]);
+Theorem bir_casts_DEFS = LIST_CONJ [bir_cast_def, bir_scast_def, bir_hcast_def, bir_lcast_def]
 
-val bir_casts_REWRS = save_thm ("bir_casts_REWRS",
-  LIST_CONJ [bir_cast_REWRS, bir_scast_REWRS, bir_hcast_REWRS, bir_lcast_REWRS]);
+
+Theorem bir_casts_REWRS = LIST_CONJ [bir_cast_REWRS, bir_scast_REWRS, bir_hcast_REWRS, bir_lcast_REWRS]
+
 
 
 Theorem type_of_bir_gencast:
@@ -437,13 +437,13 @@ val bir_casts_list = TypeBase.constructors_of ``:bir_cast_t``;
 fun inst_CONJ_THM tms thm =
   REWRITE_RULE [GSYM CONJ_ASSOC] (LIST_CONJ (map (fn t => SPEC t thm) tms));
 
-val bir_casts_ID = save_thm ("bir_casts_ID",
-REWRITE_RULE [bir_gencast_def] (
-  inst_CONJ_THM bir_casts_list bir_gencast_ID));
+Theorem bir_casts_ID = REWRITE_RULE [bir_gencast_def] (
+  inst_CONJ_THM bir_casts_list bir_gencast_ID)
 
-val type_of_bir_casts = save_thm ("type_of_bir_casts",
-REWRITE_RULE [bir_gencast_def] (
-   inst_CONJ_THM bir_casts_list type_of_bir_gencast));
+
+Theorem type_of_bir_casts = REWRITE_RULE [bir_gencast_def] (
+   inst_CONJ_THM bir_casts_list type_of_bir_gencast)
+
 
 
 Theorem bir_casts_Bit1:

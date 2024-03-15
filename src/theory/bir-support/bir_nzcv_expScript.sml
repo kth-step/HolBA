@@ -165,8 +165,7 @@ METIS_TAC[]
 QED
 
 
-val awc_BIR_NZVC_INTROS = save_thm ("awc_BIR_NZVC_INTROS",
-LIST_CONJ [
+Theorem awc_BIR_NZVC_INTROS = LIST_CONJ [
   nzcv_BIR_SUB_N_CARRY_DEF,
   nzcv_BIR_SUB_Z_CARRY_DEF,
   nzcv_BIR_SUB_V_CARRY_DEF,
@@ -174,10 +173,11 @@ LIST_CONJ [
   nzcv_BIR_ADD_N_CARRY_DEF,
   nzcv_BIR_ADD_Z_CARRY_DEF,
   nzcv_BIR_ADD_V_CARRY_DEF,
-  nzcv_BIR_ADD_C_CARRY_DEF]);
+  nzcv_BIR_ADD_C_CARRY_DEF]
 
-val awc_BIR_NZVC_ELIMS = save_thm ("awc_BIR_NZVC_ELIMS",
-GSYM awc_BIR_NZVC_INTROS);
+
+Theorem awc_BIR_NZVC_ELIMS = GSYM awc_BIR_NZVC_INTROS
+
 
 
 
@@ -465,8 +465,7 @@ SIMP_TAC arith_ss [nzcv_BIR_SUB_NZCV_REWRS, WORD_LESS_EQ_REFL,
 QED
 
 
-val nzcv_BIR_SIMPS = save_thm ("nzcv_BIR_SIMPS",
-LIST_CONJ [
+Theorem nzcv_BIR_SIMPS = LIST_CONJ [
   nzcv_BIR_SUB_Z_ID,
   nzcv_BIR_SUB_N_ID,
   nzcv_BIR_SUB_C_ID,
@@ -481,7 +480,8 @@ LIST_CONJ [
   nzcv_BIR_SUB_Z_0,
   awc_BIR_NZVC_ELIMS,
   awc_BIR_NZVC_ELIMS_SYM
-]);
+]
+
 
 
 (*************************)
@@ -655,8 +655,8 @@ Definition BExp_nzcv_SUB_V_def:
 End
 
 
-val BExp_nzcv_SUB_DEFS = save_thm ("BExp_nzcv_SUB_DEFS",
-  LIST_CONJ [BExp_nzcv_SUB_N_def, BExp_nzcv_SUB_Z_def, BExp_nzcv_SUB_C_def, BExp_nzcv_SUB_V_def]);
+Theorem BExp_nzcv_SUB_DEFS = LIST_CONJ [BExp_nzcv_SUB_N_def, BExp_nzcv_SUB_Z_def, BExp_nzcv_SUB_C_def, BExp_nzcv_SUB_V_def]
+
 
 
 Theorem BExp_nzcv_SUB_type_of:
@@ -849,8 +849,8 @@ Definition BExp_nzcv_ADD_V_def:
 End
 
 
-val BExp_nzcv_ADD_DEFS = save_thm ("BExp_nzcv_ADD_DEFS",
-  LIST_CONJ [BExp_nzcv_ADD_N_def, BExp_nzcv_ADD_Z_def, BExp_nzcv_ADD_C_def, BExp_nzcv_ADD_V_def]);
+Theorem BExp_nzcv_ADD_DEFS = LIST_CONJ [BExp_nzcv_ADD_N_def, BExp_nzcv_ADD_Z_def, BExp_nzcv_ADD_C_def, BExp_nzcv_ADD_V_def]
+
 
 
 Theorem BExp_nzcv_ADD_type_of:
@@ -1052,11 +1052,11 @@ Definition BExp_ADD_WITH_CARRY_V_def:
 End
 
 
-val BExp_ADD_WITH_CARRY_DEFS = save_thm ("BExp_ADD_WITH_CARRY_DEFS",
-  LIST_CONJ [BExp_ADD_WITH_CARRY_N_def,
+Theorem BExp_ADD_WITH_CARRY_DEFS = LIST_CONJ [BExp_ADD_WITH_CARRY_N_def,
              BExp_ADD_WITH_CARRY_Z_def,
              BExp_ADD_WITH_CARRY_C_def,
-             BExp_ADD_WITH_CARRY_V_def]);
+             BExp_ADD_WITH_CARRY_V_def]
+
 
 
 Theorem BExp_ADD_WITH_CARRY_type_of:

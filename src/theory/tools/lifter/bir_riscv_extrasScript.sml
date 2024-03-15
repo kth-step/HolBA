@@ -783,8 +783,7 @@ end);
 (* Combinations *)
 (****************)
 
-val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
-  LIST_CONJ [
+Theorem riscv_extra_LIFTS = LIST_CONJ [
     riscv_LIFT_LOAD_DWORD,
     riscv_LIFT_LOAD_WORD,
     riscv_LIFT_LOAD_HALF,
@@ -800,19 +799,16 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
     riscv_is_lifted_imm_exp_64MSBs,
     riscv_is_lifted_imm_exp_GE,
     riscv_is_lifted_imm_exp_GEU]
-);
+
 
 (* TODO: What should be here? *)
-val riscv_CHANGE_INTERVAL_THMS =
-  save_thm ("riscv_CHANGE_INTERVAL_THMS",
-  LIST_CONJ [riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL,
+Theorem riscv_CHANGE_INTERVAL_THMS = LIST_CONJ [riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL,
              riscv_LIFT_STORE_WORD_CHANGE_INTERVAL,
              riscv_LIFT_STORE_HALF_CHANGE_INTERVAL,
              riscv_LIFT_STORE_BYTE_CHANGE_INTERVAL]
-);
 
-val riscv_extra_FOLDS = save_thm ("riscv_extra_FOLDS",
-  LIST_CONJ [GSYM riscv_mem_load_dword_def,
+
+Theorem riscv_extra_FOLDS = LIST_CONJ [GSYM riscv_mem_load_dword_def,
              GSYM riscv_mem_load_word_def,
              GSYM riscv_mem_load_half_def,
              GSYM riscv_mem_load_word_half,
@@ -822,6 +818,6 @@ val riscv_extra_FOLDS = save_thm ("riscv_extra_FOLDS",
              word_shift_extract_ID,
              (* For REM and REMW instructions *)
              word_rem_def]
-);
+
 
 val _ = export_theory();

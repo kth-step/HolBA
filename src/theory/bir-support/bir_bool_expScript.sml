@@ -519,10 +519,9 @@ Cases_on `uo` >> (
 )
 QED
 
-val bir_bin_exp_BOOL_OPER_EVAL = save_thm ("bir_bin_exp_BOOL_OPER_EVAL",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_exp_t``]) [
+Theorem bir_bin_exp_BOOL_OPER_EVAL = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_exp_t``]) [
      FORALL_AND_THM, bir_bin_exp_GET_BOOL_OPER_def] bir_bin_exp_GET_BOOL_OPER_THM
-);
+
 
 
 Theorem bir_eval_bool_exp_BExp_BinExp:
@@ -546,15 +545,15 @@ ASM_SIMP_TAC std_ss [bir_mk_bool_val_inv, GSYM bir_mk_bool_val_def]
 QED
 
 
-val bir_eval_bool_exp_BExp_BinExp_REWRS = save_thm ("bir_eval_bool_exp_BExp_BinExp_REWRS",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_exp_t``]) [
+Theorem bir_eval_bool_exp_BExp_BinExp_REWRS = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_exp_t``]) [
     bir_bin_exp_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS, FORALL_AND_THM]
-    bir_eval_bool_exp_BExp_BinExp);
+    bir_eval_bool_exp_BExp_BinExp
 
-val bir_eval_bool_exp_BExp_BinExp_REWRS_GSYM = save_thm ("bir_eval_bool_exp_BExp_BinExp_REWRS_GSYM",
-  GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_exp_t``]) [
+
+Theorem bir_eval_bool_exp_BExp_BinExp_REWRS_GSYM = GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_exp_t``]) [
     bir_bin_exp_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS, FORALL_AND_THM]
-    (SPEC T bir_eval_bool_exp_BExp_BinExp)));
+    (SPEC T bir_eval_bool_exp_BExp_BinExp))
+
 
 
 
@@ -584,10 +583,9 @@ Cases_on `uo` >> (
 QED
 
 
-val bir_bin_pred_BOOL_OPER_EVAL = save_thm ("bir_bin_pred_BOOL_OPER_EVAL",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_pred_t``]) [
+Theorem bir_bin_pred_BOOL_OPER_EVAL = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_pred_t``]) [
      FORALL_AND_THM, bir_bin_pred_GET_BOOL_OPER_def] bir_bin_pred_GET_BOOL_OPER_THM
-);
+
 
 Theorem bir_eval_bool_exp_BExp_BinPred:
   !de uo bop env e1 e2.
@@ -611,15 +609,15 @@ ASM_SIMP_TAC std_ss [bir_mk_bool_val_inv, GSYM bir_mk_bool_val_def]
 QED
 
 
-val bir_eval_bool_exp_BExp_BinPred_REWRS = save_thm ("bir_eval_bool_exp_BExp_BinPred_REWRS",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
+Theorem bir_eval_bool_exp_BExp_BinPred_REWRS = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
     bir_bin_pred_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS, FORALL_AND_THM]
-    bir_eval_bool_exp_BExp_BinPred);
+    bir_eval_bool_exp_BExp_BinPred
 
-val bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM = save_thm ("bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM",
-  GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
+
+Theorem bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM = GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
     bir_bin_pred_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS, FORALL_AND_THM]
-    (SPEC T bir_eval_bool_exp_BExp_BinPred)));
+    (SPEC T bir_eval_bool_exp_BExp_BinPred))
+
 
 
 (* the first bool seems to be indicating whether the second function is
@@ -658,10 +656,9 @@ Cases_on `uo` >> (
 QED
 
 
-val bir_unary_exp_BOOL_OPER_EVAL = save_thm ("bir_unary_exp_BOOL_OPER_EVAL",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_unary_exp_t``]) [
+Theorem bir_unary_exp_BOOL_OPER_EVAL = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_unary_exp_t``]) [
      FORALL_AND_THM, bir_unary_exp_GET_BOOL_OPER_def] bir_unary_exp_GET_BOOL_OPER_THM
-);
+
 
 
 Theorem bir_eval_bool_exp_BExp_UnaryExp:
@@ -683,18 +680,18 @@ QED
 
 
 
-val bir_eval_bool_exp_BExp_UnaryExp_REWRS = save_thm ("bir_eval_bool_exp_BExp_UnaryExp_REWRS",
-  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_unary_exp_t``]) [
+Theorem bir_eval_bool_exp_BExp_UnaryExp_REWRS = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_unary_exp_t``]) [
     bir_unary_exp_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS,
     FORALL_AND_THM]
-    bir_eval_bool_exp_BExp_UnaryExp);
+    bir_eval_bool_exp_BExp_UnaryExp
 
 
-val bir_eval_bool_exp_BExp_UnaryExp_REWRS_GSYM = save_thm ("bir_eval_bool_exp_BExp_UnaryExp_REWRS_GSYM",
-  GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_unary_exp_t``]) [
+
+Theorem bir_eval_bool_exp_BExp_UnaryExp_REWRS_GSYM = GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_unary_exp_t``]) [
     bir_unary_exp_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS,
     FORALL_AND_THM]
-    (SPEC T bir_eval_bool_exp_BExp_UnaryExp)));
+    (SPEC T bir_eval_bool_exp_BExp_UnaryExp))
+
 
 
 

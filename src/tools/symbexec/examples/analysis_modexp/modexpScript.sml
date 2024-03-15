@@ -282,7 +282,8 @@ val _ = print "countw increments = [";
 val _ = List.map (fn countw_inc => (print (term_to_string countw_inc); print "; ")) countw_incs;
 val _ = print "]\n";
 
-val _ = save_thm ("bin_smallprog_thm", result);
+Theorem bin_smallprog_thm = result
+
 *)
 
 val _ = export_theory();

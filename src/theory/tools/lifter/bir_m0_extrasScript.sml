@@ -35,11 +35,11 @@ in
 end);
 
 
-val EQ_13w_EVAL = save_thm ("EQ_13w_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``^w = 13w:word4``) word4_list))
+Theorem EQ_13w_EVAL = LIST_CONJ (map (fn w => EVAL ``^w = 13w:word4``) word4_list)
 
-val EQ_15w_EVAL = save_thm ("EQ_15w_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_list))
+
+Theorem EQ_15w_EVAL = LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_list)
+
 
 
 val RName_distinct = save_thm ("RName_distinct", let
@@ -492,8 +492,8 @@ Cases_on `i` >> FULL_SIMP_TAC arith_ss []
 QED
 
 
-val m0_mask_last_bit_REWR = save_thm ("m0_mask_last_bit_REWR",
-SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] m0_mask_last_bit_REWR_aux);
+Theorem m0_mask_last_bit_REWR = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] m0_mask_last_bit_REWR_aux
+
 
 
 
@@ -644,54 +644,54 @@ QED
 (* Combinations *)
 (****************)
 
-val m0_extra_LIFTS_LE = save_thm ("m0_extra_LIFTS_LE",
-  LIST_CONJ [
+Theorem m0_extra_LIFTS_LE = LIST_CONJ [
     m0_LIFT_LOAD_BYTE_LE,
     m0_LIFT_LOAD_HALF_LE,
     m0_LIFT_LOAD_WORD_LE,
     m0_LIFT_STORE_BYTE_LE,
     m0_LIFT_STORE_HALF_LE,
     m0_LIFT_STORE_WORD_LE
-]);
+]
 
 
-val m0_extra_LIFTS_BE = save_thm ("m0_extra_LIFTS_BE",
-  LIST_CONJ [
+
+Theorem m0_extra_LIFTS_BE = LIST_CONJ [
     m0_LIFT_LOAD_BYTE_BE,
     m0_LIFT_LOAD_HALF_BE,
     m0_LIFT_LOAD_WORD_BE,
     m0_LIFT_STORE_BYTE_BE,
     m0_LIFT_STORE_HALF_BE,
     m0_LIFT_STORE_WORD_BE
-]);
+]
 
 
-val m0_CHANGE_INTERVAL_THMS = save_thm ("m0_CHANGE_INTERVAL_THMS",
-  LIST_CONJ [
+
+Theorem m0_CHANGE_INTERVAL_THMS = LIST_CONJ [
     m0_LIFT_STORE_WORD_LE_CHANGE_INTERVAL,
     m0_LIFT_STORE_WORD_BE_CHANGE_INTERVAL,
     m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL,
     m0_LIFT_STORE_HALF_BE_CHANGE_INTERVAL,
-    m0_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
+    m0_LIFT_STORE_BYTE_CHANGE_INTERVAL]
+
 
 
 val extract_byte_RULE = SIMP_RULE std_ss [m0_extract_byte, m0_extract_half];
 
 
-val m0_extra_FOLDS_GEN = save_thm ("m0_extra_FOLDS_GEN",
-  LIST_CONJ [GSYM m0_mem_word_LE_def, GSYM m0_mem_half_LE_def,
+Theorem m0_extra_FOLDS_GEN = LIST_CONJ [GSYM m0_mem_word_LE_def, GSYM m0_mem_half_LE_def,
              GSYM m0_mem_word_BE_def, GSYM m0_mem_half_BE_def,
              m0_extract_byte, m0_extract_half, m0_mask_last_bit_REWR, m0_Shift_C, m0_Shift_N,
              GSYM word_reverse_REWRS, align_AND_INTROS, m0_word_bit_0_ms_aligned,
-             m0_rev_folds, m0_revs_folds, m0_ror_w2w_remove])
+             m0_rev_folds, m0_revs_folds, m0_ror_w2w_remove]
 
-val m0_extra_FOLDS_LE = save_thm ("m0_extra_FOLDS_LE",
-  extract_byte_RULE (
-  LIST_CONJ [m0_mem_store_LE_FOLDS]))
 
-val m0_extra_FOLDS_BE = save_thm ("m0_extra_FOLDS_BE",
-  extract_byte_RULE (
-  (LIST_CONJ [m0_mem_store_BE_FOLDS])))
+Theorem m0_extra_FOLDS_LE = extract_byte_RULE (
+  LIST_CONJ [m0_mem_store_LE_FOLDS])
+
+
+Theorem m0_extra_FOLDS_BE = extract_byte_RULE (
+  (LIST_CONJ [m0_mem_store_BE_FOLDS]))
+
 
 
 val _ = export_theory();

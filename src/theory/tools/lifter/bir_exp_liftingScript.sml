@@ -708,13 +708,13 @@ end);
 
 
 (* combine everything *)
-val bir_is_lifted_imm_exp_CASTS = save_thm ("bir_is_lifted_imm_exp_CASTS",
-  SIMP_RULE std_ss [GSYM CONJ_ASSOC] (
+Theorem bir_is_lifted_imm_exp_CASTS = SIMP_RULE std_ss [GSYM CONJ_ASSOC] (
   LIST_CONJ [bir_is_lifted_imm_exp_NO_CAST,
              bir_is_lifted_imm_exp_LCAST,
              bir_is_lifted_imm_exp_HCAST,
              bir_is_lifted_imm_exp_UNSIGNED_CAST,
-             bir_is_lifted_imm_exp_SIGNED_CAST]));
+             bir_is_lifted_imm_exp_SIGNED_CAST])
+
 
 
 
@@ -745,8 +745,8 @@ in
   thm1
 end);
 
-val bir_is_lifted_imm_exp_PROTECTED_COND = save_thm ("bir_is_lifted_imm_exp_PROTECTED_COND",
-  PURE_REWRITE_RULE [GSYM PROTECTED_COND_def] bir_is_lifted_imm_exp_COND);
+Theorem bir_is_lifted_imm_exp_PROTECTED_COND = PURE_REWRITE_RULE [GSYM PROTECTED_COND_def] bir_is_lifted_imm_exp_COND
+
 
 
 (****************)
@@ -814,14 +814,14 @@ fun mk_bir_is_lifted_imm_exp_LOAD addr_size value_size result_size endian =
 
 
 (* Build the theorem for common values *)
-val bir_is_lifted_imm_exp_LOAD_ENDIAN = save_thm ("bir_is_lifted_imm_exp_LOAD_ENDIAN",
-  bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv <> sr) /\ (sa <> Bit1) /\ (sv <> Bit1)``);
+Theorem bir_is_lifted_imm_exp_LOAD_ENDIAN = bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv <> sr) /\ (sa <> Bit1) /\ (sv <> Bit1)``
 
-val bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE = save_thm ("bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE",
-  bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa <> Bit1) /\ (sv <> sr) /\ (sv = Bit8)``);
 
-val bir_is_lifted_imm_exp_LOAD_NO_ENDIAN = save_thm ("bir_is_lifted_imm_exp_LOAD_NO_ENDIAN",
-  bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv = sr)``);
+Theorem bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE = bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa <> Bit1) /\ (sv <> sr) /\ (sv = Bit8)``
+
+
+Theorem bir_is_lifted_imm_exp_LOAD_NO_ENDIAN = bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv = sr)``
+
 
 
 
@@ -1055,14 +1055,14 @@ fun mk_bir_is_lifted_mem_exp_STORE addr_size value_size result_size endian =
 
 
 (* Build the theorem for common values *)
-val bir_is_lifted_mem_exp_STORE_ENDIAN = save_thm ("bir_is_lifted_mem_exp_STORE_ENDIAN",
-  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv <> sr) /\ (sa <> Bit1) /\ (sv <> Bit1)``);
+Theorem bir_is_lifted_mem_exp_STORE_ENDIAN = bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv <> sr) /\ (sa <> Bit1) /\ (sv <> Bit1)``
 
-val bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE = save_thm ("bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE",
-  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa <> Bit1) /\ (sv <> sr) /\ (sv = Bit8)``);
 
-val bir_is_lifted_mem_exp_STORE_NO_ENDIAN = save_thm ("bir_is_lifted_mem_exp_STORE_NO_ENDIAN",
-  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv = sr)``);
+Theorem bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE = bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa <> Bit1) /\ (sv <> sr) /\ (sv = Bit8)``
+
+
+Theorem bir_is_lifted_mem_exp_STORE_NO_ENDIAN = bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv = sr)``
+
 
 
 
@@ -1166,12 +1166,12 @@ val bir_is_lifted_imm_exp_bool2b_BinPred =
 
 
 
-val bir_is_lifted_imm_exp_bool2b = save_thm ("bir_is_lifted_imm_exp_bool2b",
-  LIST_CONJ [bir_is_lifted_imm_exp_bool2b_TF,
+Theorem bir_is_lifted_imm_exp_bool2b = LIST_CONJ [bir_is_lifted_imm_exp_bool2b_TF,
              bir_is_lifted_imm_exp_bool2b_UnaryExp,
              bir_is_lifted_imm_exp_bool2b_BinExp,
              bir_is_lifted_imm_exp_bool2b_COND,
-             bir_is_lifted_imm_exp_bool2b_BinPred]);
+             bir_is_lifted_imm_exp_bool2b_BinPred]
+
 
 
 
@@ -1612,15 +1612,15 @@ SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
 QED
 
 
-val bir_is_lifted_imm_exp_WORD_REVERSE = save_thm ("bir_is_lifted_imm_exp_WORD_REVERSE",
-LIST_CONJ [
+Theorem bir_is_lifted_imm_exp_WORD_REVERSE = LIST_CONJ [
   bir_is_lifted_imm_exp_WORD_REVERSE_1,
   bir_is_lifted_imm_exp_WORD_REVERSE_8_16,
   bir_is_lifted_imm_exp_WORD_REVERSE_8_32,
   bir_is_lifted_imm_exp_WORD_REVERSE_8_64,
   bir_is_lifted_imm_exp_WORD_REVERSE_16_32,
   bir_is_lifted_imm_exp_WORD_REVERSE_16_64,
-  bir_is_lifted_imm_exp_WORD_REVERSE_32_64])
+  bir_is_lifted_imm_exp_WORD_REVERSE_32_64]
+
 
 
 
@@ -1882,8 +1882,7 @@ end);
 (* Combination  *)
 (****************)
 
-val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAULT_THMS",
-  LIST_CONJ [bir_is_lifted_imm_exp_UNARY_EXP,
+Theorem bir_is_lifted_imm_exp_DEFAULT_THMS = LIST_CONJ [bir_is_lifted_imm_exp_UNARY_EXP,
              bir_is_lifted_imm_exp_BIN_EXP,
              bir_is_lifted_imm_exp_SHIFTS_n2w,
              bir_is_lifted_imm_exp_SHIFTS_w2n,
@@ -1910,7 +1909,8 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_ROL,
              bir_is_lifted_imm_exp_EXTR,
              bir_is_lifted_imm_exp_ALIGN,
-             bir_is_lifted_imm_exp_ALIGNED]);
+             bir_is_lifted_imm_exp_ALIGNED]
+
 
 
 val _ = export_theory();

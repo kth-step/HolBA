@@ -301,11 +301,11 @@ ASM_SIMP_TAC std_ss [bir_load_from_mem_def]
 QED
 
 
-val bir_eval_load_NONE_REWRS = save_thm ("bir_eval_load_NONE_REWRS",
-  REWRITE_RULE [GSYM CONJ_ASSOC] (
+Theorem bir_eval_load_NONE_REWRS = REWRITE_RULE [GSYM CONJ_ASSOC] (
   LIST_CONJ [bir_eval_load_NONE_REWRS1, bir_eval_load_NONE_REWRS2,
              bir_eval_load_NONE_REWRS3, bir_eval_load_NONE_REWRS4,
-             bir_eval_load_NONE_REWRS5]));
+             bir_eval_load_NONE_REWRS5])
+
 
 
 Theorem bir_eval_load_SINGLE_REWR:
@@ -440,11 +440,11 @@ ASM_SIMP_TAC std_ss [bir_store_in_mem_def, LET_DEF]
 QED
 
 
-val bir_eval_store_NONE_REWRS = save_thm ("bir_eval_store_NONE_REWRS",
-  SIMP_RULE std_ss [GSYM CONJ_ASSOC] (
+Theorem bir_eval_store_NONE_REWRS = SIMP_RULE std_ss [GSYM CONJ_ASSOC] (
   LIST_CONJ [bir_eval_store_NONE_REWRS1, bir_eval_store_NONE_REWRS2,
              bir_eval_store_NONE_REWRS3, bir_eval_store_NONE_REWRS4,
-             bir_eval_store_NONE_REWRS5, bir_eval_store_NONE_REWRS6]));
+             bir_eval_store_NONE_REWRS5, bir_eval_store_NONE_REWRS6])
+
 
 Theorem bir_eval_store_SINGLE_REWR:
   !a en t i aty v vty mmap en.

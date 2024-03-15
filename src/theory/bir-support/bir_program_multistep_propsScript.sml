@@ -1859,9 +1859,9 @@ SIMP_TAC std_ss [bir_exec_step_n_SUC]
 QED
 
 
-val bir_exec_step_n_REWRS = save_thm ("bir_exec_step_n_REWRS",
-  LIST_CONJ [bir_exec_step_n_REWR_0, bir_exec_step_n_REWR_1,
-    bir_exec_step_n_REWR_NOT_TERMINATED, bir_exec_step_n_REWR_TERMINATED]);
+Theorem bir_exec_step_n_REWRS = LIST_CONJ [bir_exec_step_n_REWR_0, bir_exec_step_n_REWR_1,
+    bir_exec_step_n_REWR_NOT_TERMINATED, bir_exec_step_n_REWR_TERMINATED]
+
 
 
 Theorem bir_exec_step_n_COUNT_0:

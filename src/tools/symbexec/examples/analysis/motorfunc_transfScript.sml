@@ -74,20 +74,14 @@ val bprecond = (fst o dest_eq o concl) bprecond_def;
 Definition bsysprecond_def:
   bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
 End
-val bprecond_birs_eval_exp_thm = save_thm(
-   "bprecond_birs_eval_exp_thm",
-  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
+Theorem bprecond_birs_eval_exp_thm = (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
    birs_stepLib.birs_eval_exp_CONV)
      ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
-);
-val bsysprecond_thm = save_thm(
-   "bsysprecond_thm",
-  (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond``
-);
-val bprecond_birs_eval_exp_thm2 = save_thm(
-   "bprecond_birs_eval_exp_thm2",
-  REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
-);
+
+Theorem bsysprecond_thm = (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond``
+
+Theorem bprecond_birs_eval_exp_thm2 = REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
+
 val bsysprecond = (fst o dest_eq o concl) bsysprecond_def;
 
 
@@ -521,14 +515,12 @@ REPEAT STRIP_TAC >>
 QED
 
 (* finish translation to pure BIR property *)
-val bprog_bir_prop_thm = save_thm(
-   "bprog_bir_prop_thm",
-  REWRITE_RULE
+Theorem bprog_bir_prop_thm = REWRITE_RULE
     [bprog_P_thm, bprecond_def, bprog_Q_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM motor_analysis_L_def]
     (REWRITE_RULE
       []
       bprog_to_concst_prop_thm)
-);
+
 (* ........................... *)
 
 val bir_frag_l_tm = ``<|bpc_label := BL_Address (Imm32 2824w); bpc_index := 0|>``;
@@ -1075,14 +1067,12 @@ ASSUME_TAC
   FULL_SIMP_TAC std_ss [m0_mod_thm]
 QED
 
-val m0_EVAL_thm = save_thm(
-   "m0_EVAL_thm",
-  REWRITE_RULE
+Theorem m0_EVAL_thm = REWRITE_RULE
    [pre_m0_def, post_m0_def,
     prove(``pre_m0 = (\ms. pre_m0 ms)``, MATCH_MP_TAC boolTheory.EQ_EXT >> FULL_SIMP_TAC std_ss []),
     prove(``post_m0 = (\ms ms'. post_m0 ms ms')``, MATCH_MP_TAC boolTheory.EQ_EXT >> FULL_SIMP_TAC std_ss [] >> GEN_TAC >> MATCH_MP_TAC boolTheory.EQ_EXT >> FULL_SIMP_TAC std_ss [])]
    m0_thm
-);
+
 
 val _ = export_theory();
 

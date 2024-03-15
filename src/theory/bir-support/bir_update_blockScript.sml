@@ -69,10 +69,10 @@ Definition bir_vars_of_updateB_desc_def:
    (bir_vars_of_exp (bir_updateB_desc_exp d)))
 End
 
-val bir_updateB_desc_ACCESSORS = save_thm ("bir_updateB_desc_ACCESSORS",
-  LIST_CONJ [bir_updateB_desc_var_def, bir_updateB_desc_temp_var_def,
+Theorem bir_updateB_desc_ACCESSORS = LIST_CONJ [bir_updateB_desc_var_def, bir_updateB_desc_temp_var_def,
              bir_updateB_desc_exp_def, bir_updateB_desc_value_def,
-             bir_updateB_desc_use_temp_def]);
+             bir_updateB_desc_use_temp_def]
+
 
 
 
