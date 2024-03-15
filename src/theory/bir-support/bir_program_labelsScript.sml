@@ -17,21 +17,23 @@ val _ = new_theory "bir_program_labels";
    we need to convert BIR immediates to strings and back. This is implemented by
    b2s and s2b *)
 
-val num_to_hex_string_fix_width_def = Define
-`num_to_hex_string_fix_width w n =
+Definition num_to_hex_string_fix_width_def:
+  num_to_hex_string_fix_width w n =
   let s = num_to_hex_string n in
-  "0x" ++ (if LENGTH s < w then APPEND (REPLICATE (w - LENGTH s) #"0") s else s)`
+  "0x" ++ (if LENGTH s < w then APPEND (REPLICATE (w - LENGTH s) #"0") s else s)
+End
 
-val LENGTH_num_to_hex_string = store_thm (
-  "LENGTH_num_to_hex_string",
-``LENGTH (num_to_hex_string n) = (if n = 0 then 1 else SUC (LOG 16 n))``,
-SIMP_TAC list_ss [num_to_hex_string_def, n2s_def, numposrepTheory.LENGTH_n2l]);
+Theorem LENGTH_num_to_hex_string:
+  LENGTH (num_to_hex_string n) = (if n = 0 then 1 else SUC (LOG 16 n))
+Proof
+SIMP_TAC list_ss [num_to_hex_string_def, n2s_def, numposrepTheory.LENGTH_n2l]
+QED
 
 
-val LENGTH_num_to_hex_string_fixwidth = store_thm ("LENGTH_num_to_hex_string_fixwidth",
-``!w n. (0 < w /\ n < 16 ** w) ==>
-        (LENGTH (num_to_hex_string_fix_width w n) = w+2)``,
-
+Theorem LENGTH_num_to_hex_string_fixwidth:
+  !w n. (0 < w /\ n < 16 ** w) ==>
+        (LENGTH (num_to_hex_string_fix_width w n) = w+2)
+Proof
 REPEAT STRIP_TAC >>
 SIMP_TAC list_ss [num_to_hex_string_fix_width_def, LET_DEF] >>
 `LENGTH (num_to_hex_string n) <= w` by (
@@ -51,17 +53,20 @@ SIMP_TAC list_ss [num_to_hex_string_fix_width_def, LET_DEF] >>
 Cases_on `LENGTH (num_to_hex_string n) = w` >- (
   ASM_SIMP_TAC arith_ss []
 ) >>
-FULL_SIMP_TAC list_ss [rich_listTheory.LENGTH_REPLICATE]);
+FULL_SIMP_TAC list_ss [rich_listTheory.LENGTH_REPLICATE]
+QED
 
 
-val MEM_REPLICATE_EQ = store_thm ("MEM_REPLICATE_EQ",
-``!x y n. MEM x (REPLICATE n y) <=> ((0 < n) /\ (x = y))``,
-Induct_on `n` >> ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [rich_listTheory.REPLICATE]);
+Theorem MEM_REPLICATE_EQ:
+  !x y n. MEM x (REPLICATE n y) <=> ((0 < n) /\ (x = y))
+Proof
+Induct_on `n` >> ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [rich_listTheory.REPLICATE]
+QED
 
 
-val num_from_hex_string_fix_width = store_thm ("num_from_hex_string_fix_width",
-``!w n. num_from_hex_string (DROP 2 (num_to_hex_string_fix_width w n)) = n``,
-
+Theorem num_from_hex_string_fix_width:
+  !w n. num_from_hex_string (DROP 2 (num_to_hex_string_fix_width w n)) = n
+Proof
 REPEAT GEN_TAC >>
 `(num_from_hex_string ∘ num_to_hex_string) n = I n` by REWRITE_TAC [num_hex_string] >>
 FULL_SIMP_TAC (list_ss++boolSimps.LIFT_COND_ss) [num_to_hex_string_fix_width_def, LET_DEF, combinTheory.o_DEF] >>
@@ -74,25 +79,29 @@ FULL_SIMP_TAC list_ss [rich_listTheory.MAP_REVERSE] >>
   suffices_by FULL_SIMP_TAC list_ss [listTheory.dropWhile_APPEND_EVERY] >>
 
 SIMP_TAC list_ss [EVERY_MEM, MEM_MAP, PULL_EXISTS, MEM_REPLICATE_EQ,
-  UNHEX_def]);
+  UNHEX_def]
+QED
 
-val num_to_hex_string_PREFIX = store_thm ("num_to_hex_string_PREFIX",
-``!w n. TAKE 2 (num_to_hex_string_fix_width w n) = "0x"``,
-SIMP_TAC list_ss [num_to_hex_string_fix_width_def, LET_DEF]);
+Theorem num_to_hex_string_PREFIX:
+  !w n. TAKE 2 (num_to_hex_string_fix_width w n) = "0x"
+Proof
+SIMP_TAC list_ss [num_to_hex_string_fix_width_def, LET_DEF]
+QED
 
 
 
-val b2s_def = Define `
+Definition b2s_def:
   (b2s ( Imm1   w ) = num_to_hex_string_fix_width 1  (w2n w)) /\
   (b2s ( Imm8   w ) = num_to_hex_string_fix_width 2  (w2n w)) /\
   (b2s ( Imm16  w ) = num_to_hex_string_fix_width 4  (w2n w)) /\
   (b2s ( Imm32  w ) = num_to_hex_string_fix_width 8  (w2n w)) /\
   (b2s ( Imm64  w ) = num_to_hex_string_fix_width 16 (w2n w)) /\
   (b2s ( Imm128 w ) = num_to_hex_string_fix_width 32 (w2n w))
-`;
+End
 
 
-val s2b_def = Define `s2b s =
+Definition s2b_def:
+  s2b s =
   if (TAKE 2 s <> "0x") then NONE else
   (let n = num_from_hex_string (DROP 2 s) in
   (case (LENGTH s) of
@@ -102,18 +111,19 @@ val s2b_def = Define `s2b s =
     | 10 => SOME (n2bs n Bit32)
     | 18 => SOME (n2bs n Bit64)
     | 34 => SOME (n2bs n Bit128)
-    | _ => NONE))`
+    | _ => NONE))
+End
 
 
-val LENGTH_b2s = store_thm ("LENGTH_b2s",
-``!i. LENGTH (b2s i) = case type_of_bir_imm i of
+Theorem LENGTH_b2s:
+  !i. LENGTH (b2s i) = case type_of_bir_imm i of
      Bit1   => 3
    | Bit8   => 4
    | Bit16  => 6
    | Bit32  => 10
    | Bit64  => 18
-   | Bit128 => 34``,
-
+   | Bit128 => 34
+Proof
 Cases >> (
   ASM_SIMP_TAC (arith_ss++bir_TYPES_ss) [b2s_def, type_of_bir_imm_def]
 ) >| [
@@ -140,27 +150,31 @@ Cases >> (
   MP_TAC (Q.SPEC `32` LENGTH_num_to_hex_string_fixwidth) >>
   MP_TAC (Q.SPEC `c` (INST_TYPE [``:'a`` |-> ``:128``] wordsTheory.w2n_lt)) >>
   ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) []
-])
+]
+QED
 
-val s2b_b2s = store_thm ("s2b_b2s",
-``!b. s2b (b2s b) = SOME b``,
-
+Theorem s2b_b2s:
+  !b. s2b (b2s b) = SOME b
+Proof
 SIMP_TAC std_ss [s2b_def, LENGTH_b2s] >>
 Cases >> (
   SIMP_TAC (std_ss++bir_TYPES_ss) [type_of_bir_imm_def,
     b2s_def, num_from_hex_string_fix_width, LET_DEF, n2bs_def,
     wordsTheory.n2w_w2n, num_to_hex_string_PREFIX]
-));
+)
+QED
 
-val b2s_11 = store_thm ("b2s_11",
-``!b1 b2. (b2s b1 = b2s b2) <=> (b1 = b2)``,
-METIS_TAC[s2b_b2s, optionTheory.SOME_11])
+Theorem b2s_11:
+  !b1 b2. (b2s b1 = b2s b2) <=> (b1 = b2)
+Proof
+METIS_TAC[s2b_b2s, optionTheory.SOME_11]
+QED
 
-val num_to_hex_string_CHARS = store_thm ("num_to_hex_string_CHARS",
-``!n c. MEM c (num_to_hex_string n) ==> MEM c [
+Theorem num_to_hex_string_CHARS:
+  !n c. MEM c (num_to_hex_string n) ==> MEM c [
      #"0"; #"1"; #"2"; #"3"; #"4"; #"5"; #"6";
-     #"7"; #"8"; #"9"; #"A"; #"B"; #"C"; #"D"; #"E";  #"F"]``,
-
+     #"7"; #"8"; #"9"; #"A"; #"B"; #"C"; #"D"; #"E";  #"F"]
+Proof
 SIMP_TAC list_ss [num_to_hex_string_def, n2s_def, MEM_MAP, PULL_EXISTS] >>
 REPEAT STRIP_TAC >>
 rename1 `HEX y` >>
@@ -172,14 +186,15 @@ rename1 `HEX y` >>
 ) >>
 FULL_SIMP_TAC std_ss [rich_listTheory.COUNT_LIST_compute,
   rich_listTheory.COUNT_LIST_AUX_compute] >>
-FULL_SIMP_TAC std_ss [MEM, HEX_def]);
+FULL_SIMP_TAC std_ss [MEM, HEX_def]
+QED
 
 
-val num_to_hex_string_fix_width_CHARS = store_thm ("num_to_hex_string_fix_width_CHARS",
-``!n w c. MEM c (num_to_hex_string_fix_width w n) ==> MEM c [
+Theorem num_to_hex_string_fix_width_CHARS:
+  !n w c. MEM c (num_to_hex_string_fix_width w n) ==> MEM c [
      #"x"; #"0"; #"1"; #"2"; #"3"; #"4"; #"5"; #"6";
-     #"7"; #"8"; #"9"; #"A"; #"B"; #"C"; #"D"; #"E";  #"F"]``,
-
+     #"7"; #"8"; #"9"; #"A"; #"B"; #"C"; #"D"; #"E";  #"F"]
+Proof
 REPEAT GEN_TAC >>
 MP_TAC (Q.SPECL [`n`, `c`] num_to_hex_string_CHARS) >>
 SIMP_TAC (list_ss++boolSimps.LIFT_COND_ss) [num_to_hex_string_fix_width_def, LET_DEF,
@@ -187,20 +202,22 @@ SIMP_TAC (list_ss++boolSimps.LIFT_COND_ss) [num_to_hex_string_fix_width_def, LET
 REPEAT STRIP_TAC >>
 Cases_on `LENGTH (num_to_hex_string n) < w` >> (
   FULL_SIMP_TAC std_ss []
-));
+)
+QED
 
 
-val b2s_CHARS = store_thm ("b2s_CHARS",
-``!b c. MEM c (b2s b) ==> MEM c [
+Theorem b2s_CHARS:
+  !b c. MEM c (b2s b) ==> MEM c [
      #"x"; #"0"; #"1"; #"2"; #"3"; #"4"; #"5"; #"6";
-     #"7"; #"8"; #"9"; #"A"; #"B"; #"C"; #"D"; #"E";  #"F"]``,
-
+     #"7"; #"8"; #"9"; #"A"; #"B"; #"C"; #"D"; #"E";  #"F"]
+Proof
 REPEAT STRIP_TAC >>
 MATCH_MP_TAC num_to_hex_string_fix_width_CHARS >>
 Cases_on `b` >> (
   FULL_SIMP_TAC std_ss [b2s_def] >>
   METIS_TAC[]
-));
+)
+QED
 
 
 
@@ -208,34 +225,38 @@ Cases_on `b` >> (
 (* Labels for adresses + string *)
 (********************************)
 
-val BL_Label_of_addr_def = Define `BL_Label_of_addr (i:bir_imm_t) s =
-  BL_Label (STRCAT (b2s i) (#"_"::s))`
+Definition BL_Label_of_addr_def:
+  BL_Label_of_addr (i:bir_imm_t) s =
+  BL_Label (STRCAT (b2s i) (#"_"::s))
+End
 
-val bir_immediate_of_label_string_def = Define `
-   bir_immediate_of_label_string s =
+Definition bir_immediate_of_label_string_def:
+  bir_immediate_of_label_string s =
    case INDEX_OF #"_" s of
       NONE => NONE
-    | SOME i => s2b (TAKE i s)`
+    | SOME i => s2b (TAKE i s)
+End
 
 
-val INDEX_OF_b2s_STRCAT = prove (
-  ``!b s. INDEX_OF #"_" (STRCAT (b2s b) (STRING #"_" s)) = SOME (LENGTH (b2s b))``,
-
+Theorem INDEX_OF_b2s_STRCAT[local]:
+  !b s. INDEX_OF #"_" (STRCAT (b2s b) (STRING #"_" s)) = SOME (LENGTH (b2s b))
+Proof
 SIMP_TAC (list_ss++QI_ss) [INDEX_OF_def, bir_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
 SIMP_TAC list_ss [rich_listTheory.EL_APPEND1, rich_listTheory.EL_APPEND2] >>
 REPEAT STRIP_TAC >>
 `MEM #"_" (b2s b)` by METIS_TAC[MEM_EL] >>
 Q.PAT_X_ASSUM `#"_" = _` (K ALL_TAC) >>
 MP_TAC (Q.SPECL [`b`, `#"_"`] b2s_CHARS) >>
-ASM_SIMP_TAC (list_ss++stringSimps.STRING_ss) []);
+ASM_SIMP_TAC (list_ss++stringSimps.STRING_ss) []
+QED
 
 
-val BL_Label_of_addr_SPLIT = store_thm ("BL_Label_of_addr_SPLIT",
-``!b s s'. (BL_Label_of_addr b s' = BL_Label s) <=>
+Theorem BL_Label_of_addr_SPLIT:
+  !b s s'. (BL_Label_of_addr b s' = BL_Label s) <=>
            (?i. (INDEX_OF #"_" s = SOME i) /\
                 (TAKE i s = b2s b) /\
-                (DROP (SUC i) s = s'))``,
-
+                (DROP (SUC i) s = s'))
+Proof
 SIMP_TAC (list_ss++bir_TYPES_ss) [BL_Label_of_addr_def] >>
 REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
   BasicProvers.VAR_EQ_TAC >>
@@ -249,21 +270,23 @@ REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
     bir_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
   REPEAT BasicProvers.VAR_EQ_TAC >>
   ASM_SIMP_TAC list_ss [rich_listTheory.DROP_CONS_EL]
-));
+)
+QED
 
 
-val bir_immediate_of_label_string_THM = store_thm ("bir_immediate_of_label_string_THM",
-``!b s' s. (BL_Label_of_addr b s' = BL_Label s) ==>
-           (bir_immediate_of_label_string s = SOME b)``,
-
+Theorem bir_immediate_of_label_string_THM:
+  !b s' s. (BL_Label_of_addr b s' = BL_Label s) ==>
+           (bir_immediate_of_label_string s = SOME b)
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`b`, `s`, `s'`] BL_Label_of_addr_SPLIT) >>
-FULL_SIMP_TAC std_ss [bir_immediate_of_label_string_def, PULL_EXISTS, s2b_b2s]);
+FULL_SIMP_TAC std_ss [bir_immediate_of_label_string_def, PULL_EXISTS, s2b_b2s]
+QED
 
 
-val BL_Label_of_addr_11 = store_thm ("BL_Label_of_addr_11",
-``!b1 b2 s1 s2. (BL_Label_of_addr b1 s1 = BL_Label_of_addr b2 s2) <=> ((b1 = b2) /\ (s1 = s2))``,
-
+Theorem BL_Label_of_addr_11:
+  !b1 b2 s1 s2. (BL_Label_of_addr b1 s1 = BL_Label_of_addr b2 s2) <=> ((b1 = b2) /\ (s1 = s2))
+Proof
 REPEAT STRIP_TAC >> Tactical.REVERSE EQ_TAC >- METIS_TAC[] >>
 STRIP_TAC >>
 
@@ -273,7 +296,8 @@ STRIP_TAC >>
 
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [BL_Label_of_addr_def]
 ) >>
-FULL_SIMP_TAC (list_ss++bir_TYPES_ss) [BL_Label_of_addr_def]);
+FULL_SIMP_TAC (list_ss++bir_TYPES_ss) [BL_Label_of_addr_def]
+QED
 
 
 
@@ -287,8 +311,10 @@ FULL_SIMP_TAC (list_ss++bir_TYPES_ss) [BL_Label_of_addr_def]);
    This string carries no information. It is as an annotation by the
    instruction lifter. *)
 
-val BL_Address_HC_def = Define `BL_Address_HC b (hc:string) =
-  BL_Address b`
+Definition BL_Address_HC_def:
+  BL_Address_HC b (hc:string) =
+  BL_Address b
+End
 
 
 
@@ -296,56 +322,72 @@ val BL_Address_HC_def = Define `BL_Address_HC b (hc:string) =
 (* Recognisers and destructors *)
 (*******************************)
 
-val IS_BL_Label_def = Define `
+Definition IS_BL_Label_def:
   (IS_BL_Label (BL_Label _) = T) /\
-  (IS_BL_Label _ = F)`;
+  (IS_BL_Label _ = F)
+End
 
-val IS_BL_Address_def = Define `
+Definition IS_BL_Address_def:
   (IS_BL_Address (BL_Address _) = T) /\
-  (IS_BL_Address _ = F)`;
+  (IS_BL_Address _ = F)
+End
 
-val IS_BL_Address_NOT = store_thm ("IS_BL_Address_NOT",
- ``!l. ~(IS_BL_Address l) <=> IS_BL_Label l``,
-Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def])
+Theorem IS_BL_Address_NOT:
+  !l. ~(IS_BL_Address l) <=> IS_BL_Label l
+Proof
+Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def]
+QED
 
-val IS_BL_Label_NOT = store_thm ("IS_BL_Label_NOT",
- ``!l. ~(IS_BL_Label l) <=> IS_BL_Address l``,
-Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def])
+Theorem IS_BL_Label_NOT:
+  !l. ~(IS_BL_Label l) <=> IS_BL_Address l
+Proof
+Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def]
+QED
 
-val IS_BL_Address_EXISTS = store_thm ("IS_BL_Address_EXISTS",
-``!l. IS_BL_Address l <=> ?i. (l = BL_Address i)``,
-Cases_on `l` >> SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Address_def]);
+Theorem IS_BL_Address_EXISTS:
+  !l. IS_BL_Address l <=> ?i. (l = BL_Address i)
+Proof
+Cases_on `l` >> SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Address_def]
+QED
 
-val IS_BL_Label_EXISTS = store_thm ("IS_BL_Label_EXISTS",
-``!l. IS_BL_Label l <=> ?s. (l = BL_Label s)``,
-Cases_on `l` >> SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Label_def]);
+Theorem IS_BL_Label_EXISTS:
+  !l. IS_BL_Label l <=> ?s. (l = BL_Label s)
+Proof
+Cases_on `l` >> SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Label_def]
+QED
 
-val BL_recognisers = store_thm ("BL_recognisers",
-``(!l. (IS_BL_Label (BL_Label l))) /\
+Theorem BL_recognisers:
+  (!l. (IS_BL_Label (BL_Label l))) /\
   (!l. ~(IS_BL_Label (BL_Address l))) /\
   (!b s. (IS_BL_Label (BL_Label_of_addr b s))) /\
   (!l s. ~(IS_BL_Label (BL_Address_HC l s))) /\
   (!l. ~(IS_BL_Address (BL_Label l))) /\
   (!l. (IS_BL_Address (BL_Address l))) /\
   (!b s. ~(IS_BL_Address (BL_Label_of_addr b s))) /\
-  (!l s. IS_BL_Address (BL_Address_HC l s))``,
-
+  (!l s. IS_BL_Address (BL_Address_HC l s))
+Proof
 SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def, BL_Label_of_addr_def,
-  BL_Address_HC_def]);
+  BL_Address_HC_def]
+QED
 
 
-val dest_BL_Label_def = Define `dest_BL_Label (BL_Label l) = l`
-val dest_BL_Address_def = Define `dest_BL_Address (BL_Address b) = b`;
+Definition dest_BL_Label_def:
+  dest_BL_Label (BL_Label l) = l
+End
+Definition dest_BL_Address_def:
+  dest_BL_Address (BL_Address b) = b
+End
 
 
-val BL_destructors = store_thm ("BL_destructors",
-``(!l. dest_BL_Label (BL_Label l) = l) /\
+Theorem BL_destructors:
+  (!l. dest_BL_Label (BL_Label l) = l) /\
   (!b s. dest_BL_Label (BL_Label_of_addr b s) = (b2s b ++ #"_"::s)) /\
   (!b. dest_BL_Address (BL_Address b) = b) /\
-  (!b s. dest_BL_Address (BL_Address_HC b s) = b)``,
-
+  (!b s. dest_BL_Address (BL_Address_HC b s) = b)
+Proof
 SIMP_TAC std_ss [dest_BL_Label_def, BL_Label_of_addr_def,
-  dest_BL_Address_def, BL_Address_HC_def]);
+  dest_BL_Address_def, BL_Address_HC_def]
+QED
 
 
 
@@ -354,28 +396,33 @@ SIMP_TAC std_ss [dest_BL_Label_def, BL_Label_of_addr_def,
 (********************************)
 
 
-val bir_label_addresses_of_program_labels_def = Define `
+Definition bir_label_addresses_of_program_labels_def:
   bir_label_addresses_of_program_labels l =
-   (MAP (b2n o dest_BL_Address) (FILTER IS_BL_Address l))`
+   (MAP (b2n o dest_BL_Address) (FILTER IS_BL_Address l))
+End
 
-val bir_label_addresses_of_program_def = Define `
+Definition bir_label_addresses_of_program_def:
   bir_label_addresses_of_program p =
-  bir_label_addresses_of_program_labels (bir_labels_of_program p)`;
+  bir_label_addresses_of_program_labels (bir_labels_of_program p)
+End
 
-val bir_program_addr_labels_sorted_def = Define `
+Definition bir_program_addr_labels_sorted_def:
   bir_program_addr_labels_sorted p <=>
-  SORTED $< (bir_label_addresses_of_program p)`
+  SORTED $< (bir_label_addresses_of_program p)
+End
 
 
-val bir_labels_of_program_REWRS = store_thm ("bir_labels_of_program_REWRS",
-``(bir_labels_of_program (BirProgram []) = []) /\
+Theorem bir_labels_of_program_REWRS:
+  (bir_labels_of_program (BirProgram []) = []) /\
   (!bl bls. bir_labels_of_program (BirProgram (bl::bls)) =
-            (bl.bb_label :: bir_labels_of_program (BirProgram bls)))``,
-SIMP_TAC list_ss [bir_labels_of_program_def])
+            (bl.bb_label :: bir_labels_of_program (BirProgram bls)))
+Proof
+SIMP_TAC list_ss [bir_labels_of_program_def]
+QED
 
 
-val bir_label_addresses_of_program_REWRS = store_thm ("bir_label_addresses_of_program_REWRS",
-  ``(bir_label_addresses_of_program_labels [] = []) /\
+Theorem bir_label_addresses_of_program_REWRS:
+  (bir_label_addresses_of_program_labels [] = []) /\
     (!l ls. (bir_label_addresses_of_program_labels ((BL_Label l)::ls) =
              bir_label_addresses_of_program_labels ls)) /\
     (!l i ls. (bir_label_addresses_of_program_labels ((BL_Label_of_addr i l)::ls) =
@@ -383,17 +430,19 @@ val bir_label_addresses_of_program_REWRS = store_thm ("bir_label_addresses_of_pr
     (!i ls. (bir_label_addresses_of_program_labels ((BL_Address i)::ls) =
                (b2n i)::(bir_label_addresses_of_program_labels ls))) /\
     (!i s ls. (bir_label_addresses_of_program_labels ((BL_Address_HC i s)::ls) =
-               (b2n i)::(bir_label_addresses_of_program_labels ls)))``,
-
+               (b2n i)::(bir_label_addresses_of_program_labels ls)))
+Proof
 SIMP_TAC list_ss [bir_label_addresses_of_program_labels_def,
-  BL_recognisers, BL_destructors]);
+  BL_recognisers, BL_destructors]
+QED
 
 
-val bir_program_string_labels_guarded_def = Define `
-    bir_program_string_labels_guarded p <=>
+Definition bir_program_string_labels_guarded_def:
+  bir_program_string_labels_guarded p <=>
     EVERY (\l. IS_BL_Label l ==> ?i s. (BL_Label_of_addr i s = l) /\
                                        (MEM (BL_Address i) (bir_labels_of_program p)))
-      (bir_labels_of_program p)`;
+      (bir_labels_of_program p)
+End
 
 
 val _ = export_theory();

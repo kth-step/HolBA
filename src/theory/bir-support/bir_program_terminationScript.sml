@@ -27,13 +27,13 @@ val _ = new_theory "bir_program_termination";
    that we can easily examine which statement went wrong. *)
 
 (* The property holds for basic statements *)
-val bir_exec_stmtB_terminates_no_change = store_thm ("bir_exec_stmtB_terminates_no_change",
-``!st stmt fe st'.
+Theorem bir_exec_stmtB_terminates_no_change:
+  !st stmt fe st'.
      ~(bir_state_is_terminated st) ==>
      (bir_exec_stmtB stmt st = (fe, st')) ==>
      (bir_state_is_terminated st') ==>
-     (((st' with bst_status := BST_Running) = st) /\ (fe = NONE))``,
-
+     (((st' with bst_status := BST_Running) = st) /\ (fe = NONE))
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def,
   bir_state_t_component_equality, bir_exec_stmtB_pc_unchanged] >>
 Cases_on `stmt` >> (
@@ -45,25 +45,27 @@ Cases_on `stmt` >> (
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
     bir_state_is_terminated_def, bir_state_t_component_equality]
-));
+)
+QED
 
-val bir_exec_stmtB_terminates_no_change_state = store_thm ("bir_exec_stmtB_terminates_no_change_state",
-``!st stmt. ~(bir_state_is_terminated st) ==>
+Theorem bir_exec_stmtB_terminates_no_change_state:
+  !st stmt. ~(bir_state_is_terminated st) ==>
               (bir_state_is_terminated (bir_exec_stmtB_state stmt st)) ==>
-              (((bir_exec_stmtB_state stmt st) with bst_status := BST_Running) = st)``,
-
+              (((bir_exec_stmtB_state stmt st) with bst_status := BST_Running) = st)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `bir_exec_stmtB stmt st` >>
 FULL_SIMP_TAC std_ss [bir_exec_stmtB_state_def] >>
-METIS_TAC[bir_exec_stmtB_terminates_no_change]);
+METIS_TAC[bir_exec_stmtB_terminates_no_change]
+QED
 
 
 (* And for end statements *)
-val bir_exec_stmtE_terminates_no_change = store_thm ("bir_exec_stmtE_terminates_no_change",
-``!p st stmt. ~(bir_state_is_terminated st) ==>
+Theorem bir_exec_stmtE_terminates_no_change:
+  !p st stmt. ~(bir_state_is_terminated st) ==>
               (bir_state_is_terminated (bir_exec_stmtE p stmt st)) ==>
-              (((bir_exec_stmtE p stmt st) with bst_status := BST_Running) = st)``,
-
+              (((bir_exec_stmtE p stmt st) with bst_status := BST_Running) = st)
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def,
   bir_state_t_component_equality, bir_exec_stmtB_pc_unchanged] >>
 Cases_on `stmt` >> (
@@ -72,16 +74,17 @@ Cases_on `stmt` >> (
   REPEAT GEN_TAC >> STRIP_TAC >>
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
-));
+)
+QED
 
 
 (* Thus it holds for all statements. *)
-val bir_exec_stmt_terminates_no_change = store_thm ("bir_exec_stmt_terminates_no_change",
-``!p st (stmt:'a bir_stmt_t) fe st'. ~(bir_state_is_terminated st) ==>
+Theorem bir_exec_stmt_terminates_no_change:
+  !p st (stmt:'a bir_stmt_t) fe st'. ~(bir_state_is_terminated st) ==>
               (bir_exec_stmt p stmt st = (fe, st')) ==>
               (bir_state_is_terminated st') ==>
-              (((st' with bst_status := BST_Running) = st) /\ (fe = NONE))``,
-
+              (((st' with bst_status := BST_Running) = st) /\ (fe = NONE))
+Proof
 Cases_on `stmt:'a bir_stmt_t` >| [
   REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
   rename1 `BStmtB (stmtB:'a bir_stmt_basic_t)` >>
@@ -95,27 +98,29 @@ Cases_on `stmt:'a bir_stmt_t` >| [
   ),
 
   SIMP_TAC std_ss [bir_exec_stmt_def, bir_exec_stmtE_terminates_no_change]
-]);
+]
+QED
 
 
-val bir_exec_stmt_terminates_no_change_state = store_thm ("bir_exec_stmt_terminates_no_change_state",
-``!p st (stmt:'a bir_stmt_t). ~(bir_state_is_terminated st) ==>
+Theorem bir_exec_stmt_terminates_no_change_state:
+  !p st (stmt:'a bir_stmt_t). ~(bir_state_is_terminated st) ==>
               (bir_state_is_terminated (bir_exec_stmt_state p stmt st)) ==>
-             (((bir_exec_stmt_state p stmt st) with bst_status := BST_Running) = st)``,
-
+             (((bir_exec_stmt_state p stmt st) with bst_status := BST_Running) = st)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `bir_exec_stmt p stmt st` >>
 FULL_SIMP_TAC std_ss [bir_exec_stmt_state_def] >>
-METIS_TAC[bir_exec_stmt_terminates_no_change]);
+METIS_TAC[bir_exec_stmt_terminates_no_change]
+QED
 
 
 (* It holds for single steps *)
-val bir_exec_step_terminates_no_change = store_thm ("bir_exec_step_terminates_no_change",
-``!p st fe st'. ~(bir_state_is_terminated st) ==>
+Theorem bir_exec_step_terminates_no_change:
+  !p st fe st'. ~(bir_state_is_terminated st) ==>
               (bir_exec_step p st = (fe, st')) ==>
               (bir_state_is_terminated st') ==>
-              (((st' with bst_status := BST_Running) = st) /\ (fe = NONE))``,
-
+              (((st' with bst_status := BST_Running) = st) /\ (fe = NONE))
+Proof
 SIMP_TAC std_ss [bir_exec_step_def] >>
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
 Cases_on `bir_get_current_statement p st.bst_pc` >| [
@@ -124,31 +129,32 @@ Cases_on `bir_get_current_statement p st.bst_pc` >| [
 
   FULL_SIMP_TAC std_ss [] >>
   METIS_TAC[bir_exec_stmt_terminates_no_change]
-]);
+]
+QED
 
 
-val bir_exec_step_terminates_no_change_state = store_thm (
-"bir_exec_step_terminates_no_change_state",
-``!p st. ~(bir_state_is_terminated st) ==>
+Theorem bir_exec_step_terminates_no_change_state:
+  !p st. ~(bir_state_is_terminated st) ==>
          (bir_state_is_terminated (bir_exec_step_state p st)) ==>
-         (((bir_exec_step_state p st) with bst_status := BST_Running) = st)``,
-
+         (((bir_exec_step_state p st) with bst_status := BST_Running) = st)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `bir_exec_step p st` >>
 FULL_SIMP_TAC std_ss [bir_exec_step_state_def] >>
-METIS_TAC[bir_exec_step_terminates_no_change]);
+METIS_TAC[bir_exec_step_terminates_no_change]
+QED
 
 
 
 (* We can iterate with same effect *)
-val bir_exec_step_n_last_step_terminates = store_thm ("bir_exec_step_n_last_step_terminates",
-``!p st n st' l i.
+Theorem bir_exec_step_n_last_step_terminates:
+  !p st n st' l i.
      (bir_exec_step_n p st n = (l, SUC i, st')) ==>
      (bir_state_is_terminated st') ==> (
      ?st''. (bir_exec_step_n p st i = (l, i, st'')) /\
             (st'' = st' with bst_status := BST_Running) /\
-            (bir_exec_step p st'' = (NONE, st')))``,
-
+            (bir_exec_step p st'' = (NONE, st')))
+Proof
 REPEAT STRIP_TAC >>
 `bir_exec_step_n p st (SUC i) = (l, SUC i, st')` by METIS_TAC[bir_exec_step_n_LIMIT_STEP_NO] >>
 `(?l' c' st''. bir_exec_step_n p st i = (l', c', st''))` by
@@ -164,16 +170,17 @@ FULL_SIMP_TAC std_ss [] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 `(fe = NONE) /\ (st'' = (st' with bst_status := BST_Running))` by
   METIS_TAC[bir_exec_step_terminates_no_change] >>
-FULL_SIMP_TAC list_ss [OPT_CONS_REWRS]);
+FULL_SIMP_TAC list_ss [OPT_CONS_REWRS]
+QED
 
 
 (*****************)
 (* Status Halted *)
 (*****************)
 
-val bir_exec_stmtB_status_not_halted = store_thm ("bir_exec_stmtB_status_not_halted",
-``!st stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmtB_state stmt st).bst_status <> BST_Halted v))``,
-
+Theorem bir_exec_stmtB_status_not_halted:
+  !st stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmtB_state stmt st).bst_status <> BST_Halted v))
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
@@ -182,12 +189,13 @@ Cases_on `stmt` >> (
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
-));
+)
+QED
 
 
-val bir_exec_stmtE_status_halted = store_thm ("bir_exec_stmtE_status_halted",
-``!st p stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmtE p stmt st).bst_status = BST_Halted v)) ==> (?e. (stmt = BStmt_Halt e) /\ (SOME v = bir_eval_exp e st.bst_environ))``,
-
+Theorem bir_exec_stmtE_status_halted:
+  !st p stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmtE p stmt st).bst_status = BST_Halted v)) ==> (?e. (stmt = BStmt_Halt e) /\ (SOME v = bir_eval_exp e st.bst_environ))
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
     bir_exec_stmt_jmp_def, bir_state_set_typeerror_def, bir_exec_stmt_jmp_to_label_def,
@@ -206,31 +214,34 @@ Cases_on `stmt` >> (
     COND_CASES_TAC >>
     SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
   )
-));
+)
+QED
 
 
 
-val bir_exec_stmt_status_halted = store_thm ("bir_exec_stmt_status_halted",
-``!st p stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmt_state p stmt st).bst_status = BST_Halted v)) ==> (?e. (stmt = BStmtE (BStmt_Halt e)) /\ (SOME v = bir_eval_exp e st.bst_environ))``,
-
+Theorem bir_exec_stmt_status_halted:
+  !st p stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmt_state p stmt st).bst_status = BST_Halted v)) ==> (?e. (stmt = BStmtE (BStmt_Halt e)) /\ (SOME v = bir_eval_exp e st.bst_environ))
+Proof
 Cases_on `stmt` >| [
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [bir_exec_stmt_state_REWRS, LET_DEF] >>
   METIS_TAC[bir_exec_stmtB_status_not_halted],
 
   SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_state_REWRS] >>
   METIS_TAC[bir_exec_stmtE_status_halted]
-]);
+]
+QED
 
 
-val bir_exec_step_status_halted = store_thm ("bir_exec_step_status_halted",
-``!st p v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_step_state p st).bst_status = BST_Halted v)) ==> (?e. ((bir_get_current_statement p st.bst_pc = SOME (BStmtE (BStmt_Halt e)))) /\ (SOME v = bir_eval_exp e st.bst_environ))``,
-
+Theorem bir_exec_step_status_halted:
+  !st p v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_step_state p st).bst_status = BST_Halted v)) ==> (?e. ((bir_get_current_statement p st.bst_pc = SOME (BStmtE (BStmt_Halt e)))) /\ (SOME v = bir_eval_exp e st.bst_environ))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def] >>
 CASE_TAC >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def, GSYM bir_exec_stmt_state_def]
 ) >>
-METIS_TAC[bir_exec_stmt_status_halted]);
+METIS_TAC[bir_exec_stmt_status_halted]
+QED
 
 
 
@@ -238,9 +249,9 @@ METIS_TAC[bir_exec_stmt_status_halted]);
 (* Status JumpOutside *)
 (**********************)
 
-val bir_exec_stmtB_status_not_jumped = store_thm ("bir_exec_stmtB_status_not_jumped",
-``!st stmt l. (st.bst_status <> BST_JumpOutside l) ==> (((bir_exec_stmtB_state stmt st).bst_status <> BST_JumpOutside l))``,
-
+Theorem bir_exec_stmtB_status_not_jumped:
+  !st stmt l. (st.bst_status <> BST_JumpOutside l) ==> (((bir_exec_stmtB_state stmt st).bst_status <> BST_JumpOutside l))
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
@@ -249,19 +260,22 @@ Cases_on `stmt` >> (
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
-));
+)
+QED
 
 
-val bir_stmtE_is_jmp_to_label_def = Define `bir_stmtE_is_jmp_to_label env l stmt <=>
+Definition bir_stmtE_is_jmp_to_label_def:
+  bir_stmtE_is_jmp_to_label env l stmt <=>
                 ((?le. (stmt = BStmt_Jmp le) /\ (bir_eval_label_exp le env = SOME l)) \/
                  (?le1 le2 ce c. (stmt = BStmt_CJmp ce le1 le2) /\
                                  (bir_eval_exp ce env = SOME (BVal_Imm (bool2b c))) /\
-                                 (bir_eval_label_exp (if c then le1 else le2) env = SOME l)))`;
+                                 (bir_eval_label_exp (if c then le1 else le2) env = SOME l)))
+End
 
 
 
-val bir_stmtE_is_jmp_to_label_REWRS = store_thm ("bir_stmtE_is_jmp_to_label_REWRS",
-  ``(!le env l. (bir_stmtE_is_jmp_to_label env l (BStmt_Jmp le) <=>
+Theorem bir_stmtE_is_jmp_to_label_REWRS:
+  (!le env l. (bir_stmtE_is_jmp_to_label env l (BStmt_Jmp le) <=>
        (bir_eval_label_exp le env = SOME l))) /\
     (!ce le1 le2 env l. (bir_stmtE_is_jmp_to_label env l (BStmt_CJmp ce le1 le2) <=>
        case (bir_eval_exp ce env) of
@@ -273,8 +287,8 @@ val bir_stmtE_is_jmp_to_label_REWRS = store_thm ("bir_stmtE_is_jmp_to_label_REWR
 		| SOME F => (bir_eval_label_exp le2 env = SOME l)
            )
     )) /\
-    (!l env e. (bir_stmtE_is_jmp_to_label env l (BStmt_Halt e) <=> F))``,
-
+    (!l env e. (bir_stmtE_is_jmp_to_label env l (BStmt_Halt e) <=> F))
+Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_stmtE_is_jmp_to_label_def] >>
 REPEAT GEN_TAC >> EQ_TAC >- (
   STRIP_TAC >>
@@ -282,28 +296,30 @@ REPEAT GEN_TAC >> EQ_TAC >- (
   METIS_TAC[]
 ) >>
 REPEAT CASE_TAC >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_dest_bool_val_EQ_SOME] >> METIS_TAC[]);
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_dest_bool_val_EQ_SOME] >> METIS_TAC[]
+QED
 
 
-val bir_stmtE_is_jmp_to_label_SEM = store_thm ("bir_stmtE_is_jmp_to_label_SEM",
-  ``!p stmt st l. (bir_stmtE_is_jmp_to_label st.bst_environ l stmt) ==>
-                  (bir_exec_stmtE p stmt st = bir_exec_stmt_jmp_to_label p l st)``,
-
+Theorem bir_stmtE_is_jmp_to_label_SEM:
+  !p stmt st l. (bir_stmtE_is_jmp_to_label st.bst_environ l stmt) ==>
+                  (bir_exec_stmtE p stmt st = bir_exec_stmt_jmp_to_label p l st)
+Proof
 Cases_on `stmt` >> (
   SIMP_TAC std_ss [bir_stmtE_is_jmp_to_label_REWRS, bir_exec_stmtE_def,
     bir_exec_stmt_jmp_def, bir_exec_stmt_cjmp_def, LET_DEF] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC
-));
+)
+QED
 
 
 
-val bir_exec_stmtE_status_jumped = store_thm ("bir_exec_stmtE_status_jumped",
-``!st p stmt l. (st.bst_status <> BST_JumpOutside l) ==>
+Theorem bir_exec_stmtE_status_jumped:
+  !st p stmt l. (st.bst_status <> BST_JumpOutside l) ==>
                 (((bir_exec_stmtE p stmt st).bst_status = BST_JumpOutside l)) ==>
                 ((~(MEM l (bir_labels_of_program p))) /\
-                 (bir_stmtE_is_jmp_to_label st.bst_environ l stmt))``,
-
+                 (bir_stmtE_is_jmp_to_label st.bst_environ l stmt))
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
     bir_exec_stmt_jmp_def, bir_state_set_typeerror_def, bir_exec_stmt_jmp_to_label_def,
@@ -315,56 +331,61 @@ Cases_on `stmt` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
   ) >>
   METIS_TAC[]
-));
+)
+QED
 
 
-val bir_stmt_is_jmp_to_label_def = Define `
+Definition bir_stmt_is_jmp_to_label_def:
   (bir_stmt_is_jmp_to_label env l (BStmtB _) <=> F) /\
-  (bir_stmt_is_jmp_to_label env l (BStmtE stmt) = bir_stmtE_is_jmp_to_label env l stmt)`
+  (bir_stmt_is_jmp_to_label env l (BStmtE stmt) = bir_stmtE_is_jmp_to_label env l stmt)
+End
 
 
-val bir_stmt_is_jmp_to_label_SEM = store_thm ("bir_stmt_is_jmp_to_label_SEM",
-  ``!p stmt st l. (bir_stmt_is_jmp_to_label st.bst_environ l stmt) ==>
-                  (bir_exec_stmt p stmt st = (NONE, bir_exec_stmt_jmp_to_label p l st))``,
-
+Theorem bir_stmt_is_jmp_to_label_SEM:
+  !p stmt st l. (bir_stmt_is_jmp_to_label st.bst_environ l stmt) ==>
+                  (bir_exec_stmt p stmt st = (NONE, bir_exec_stmt_jmp_to_label p l st))
+Proof
 Cases_on `stmt` >>
 SIMP_TAC std_ss [bir_stmt_is_jmp_to_label_def, bir_exec_stmt_def,
-  bir_stmtE_is_jmp_to_label_SEM]);
+  bir_stmtE_is_jmp_to_label_SEM]
+QED
 
 
-val bir_exec_stmt_status_jumped = store_thm ("bir_exec_stmt_status_jumped",
-``!st p stmt l. (st.bst_status <> BST_JumpOutside l) ==>
+Theorem bir_exec_stmt_status_jumped:
+  !st p stmt l. (st.bst_status <> BST_JumpOutside l) ==>
                 (((bir_exec_stmt_state p stmt st).bst_status = BST_JumpOutside l)) ==>
                 (~(MEM l (bir_labels_of_program p)) /\
-                (bir_stmt_is_jmp_to_label st.bst_environ l stmt))``,
-
+                (bir_stmt_is_jmp_to_label st.bst_environ l stmt))
+Proof
 Cases_on `stmt` >| [
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [bir_exec_stmt_state_REWRS, LET_DEF] >>
   METIS_TAC[bir_exec_stmtB_status_not_jumped],
 
   SIMP_TAC std_ss [bir_exec_stmt_state_REWRS, bir_stmt_is_jmp_to_label_def] >>
   METIS_TAC[bir_exec_stmtE_status_jumped]
-]);
+]
+QED
 
 
-val bir_exec_step_status_jumped = store_thm ("bir_exec_step_status_jumped",
-``!st p l. (st.bst_status <> BST_JumpOutside l) ==>
+Theorem bir_exec_step_status_jumped:
+  !st p l. (st.bst_status <> BST_JumpOutside l) ==>
            (((bir_exec_step_state p st).bst_status = BST_JumpOutside l)) ==>
 
                 (~(MEM l (bir_labels_of_program p)) /\
                 ((?stmt. (bir_get_current_statement p st.bst_pc = SOME stmt) /\
-                         (bir_stmt_is_jmp_to_label st.bst_environ l stmt))))``,
-
+                         (bir_stmt_is_jmp_to_label st.bst_environ l stmt))))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def] >>
 CASE_TAC >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def, GSYM bir_exec_stmt_state_def]
 ) >>
-METIS_TAC[bir_exec_stmt_status_jumped]);
+METIS_TAC[bir_exec_stmt_status_jumped]
+QED
 
 
-val bir_exec_step_n_status_jumped = store_thm ("bir_exec_step_n_status_jumped",
-``!st p n l ol n' st'.
+Theorem bir_exec_step_n_status_jumped:
+  !st p n l ol n' st'.
            (bir_exec_step_n p st n = (ol, SUC n', st')) ==>
            (st'.bst_status = BST_JumpOutside l) ==>
            ((~(MEM l (bir_labels_of_program p))) /\
@@ -373,14 +394,15 @@ val bir_exec_step_n_status_jumped = store_thm ("bir_exec_step_n_status_jumped",
                    (bir_stmt_is_jmp_to_label st'.bst_environ l stmt)) /\
            (?st''. (bir_exec_step_n p st n' = (ol, n', st'')) /\
              (st'' = st' with bst_status := BST_Running) /\
-             (bir_exec_step p st'' = (NONE, st'))))``,
-
+             (bir_exec_step p st'' = (NONE, st'))))
+Proof
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
 MP_TAC (Q.SPECL [`p`, `st`, `n`] bir_exec_step_n_last_step_terminates) >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
 STRIP_TAC >>
 MP_TAC (Q.SPECL [`st' with bst_status := BST_Running`, `p`] bir_exec_step_status_jumped) >>
-ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_state_def]);
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_state_def]
+QED
 
 
 (********************)
@@ -398,8 +420,8 @@ ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_state_def]);
   it is shown separately for each statement. *)
 
 
-val bir_exec_stmtB_status_typeerror_Assign = store_thm ("bir_exec_stmtB_status_typeerror_Assign",
-  ``!st stmt v e.
+Theorem bir_exec_stmtB_status_typeerror_Assign:
+  !st stmt v e.
     (st.bst_status <> BST_TypeError) ==>
     (((bir_exec_stmtB_state (BStmt_Assign v e) st).bst_status = BST_TypeError) <=>
       (* The expression e assigned to v must not evaluate to NONE *)
@@ -413,8 +435,8 @@ val bir_exec_stmtB_status_typeerror_Assign = store_thm ("bir_exec_stmtB_status_t
          )
        )
       )
-    )``,
-
+    )
+Proof
 REPEAT GEN_TAC >>
 Cases_on `st.bst_environ` >> rename1 `BEnv env` >>
 ASM_SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
@@ -422,24 +444,24 @@ ASM_SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
   LET_DEF, bir_env_write_def, bir_env_oldTheory.bir_env_var_is_declared_ALT_DEF,
   bir_env_lookup_def] >>
 REPEAT CASE_TAC >> FULL_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
 
-val bir_exec_stmtB_status_typeerror_cond_exp_aux = prove (
- ``!v. (type_of_bir_val v = BType_Bool) <=>
+Theorem bir_exec_stmtB_status_typeerror_cond_exp_aux[local]:
+  !v. (type_of_bir_val v = BType_Bool) <=>
        (case bir_dest_bool_val v of
          | NONE => F
-         | SOME _ => T)``,
-
+         | SOME _ => T)
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [GSYM bir_val_checker_TO_type_of,
   optionTheory.option_case_compute] >>
 METIS_TAC[bir_dest_bool_val_EQ_NONE, optionTheory.option_CLAUSES]
-);
+QED
 
 
-val bir_exec_stmtB_status_typeerror_Assert = store_thm ("bir_exec_stmtB_status_typeerror_Assert",
-``!st stmt e.
+Theorem bir_exec_stmtB_status_typeerror_Assert:
+  !st stmt e.
   (st.bst_status <> BST_TypeError) ==>
   (((bir_exec_stmtB_state (BStmt_Assert e) st).bst_status = BST_TypeError) <=>
     ((bir_eval_exp e st.bst_environ = NONE) \/
@@ -447,8 +469,8 @@ val bir_exec_stmtB_status_typeerror_Assert = store_thm ("bir_exec_stmtB_status_t
       (bir_eval_exp e st.bst_environ = SOME va) /\
       (type_of_bir_val va <> BType_Bool))
     )
-  )``,
-
+  )
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
   bir_exec_stmt_assert_def, bir_exec_stmtB_status_typeerror_cond_exp_aux,
@@ -456,11 +478,11 @@ SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
 Cases_on `bir_eval_exp e st.bst_environ` >> (
   SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_state_set_typeerror_def]
 )
-);
+QED
 
 
-val bir_exec_stmtB_status_typeerror_Assume = store_thm ("bir_exec_stmtB_status_typeerror_Assume",
-``!st stmt e.
+Theorem bir_exec_stmtB_status_typeerror_Assume:
+  !st stmt e.
   (st.bst_status <> BST_TypeError) ==>
   (((bir_exec_stmtB_state (BStmt_Assume e) st).bst_status = BST_TypeError) <=>
     ((bir_eval_exp e st.bst_environ = NONE) \/
@@ -469,8 +491,8 @@ val bir_exec_stmtB_status_typeerror_Assume = store_thm ("bir_exec_stmtB_status_t
       (type_of_bir_val va <> BType_Bool)
      )
     )
-  )``,
-
+  )
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
   bir_exec_stmt_assume_def, bir_exec_stmtB_status_typeerror_cond_exp_aux,
@@ -478,11 +500,11 @@ SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
 Cases_on `bir_eval_exp e st.bst_environ` >> (
   SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_state_set_typeerror_def]
 )
-);
+QED
 
 
-val bir_exec_stmtB_status_typeerror_Observe = store_thm ("bir_exec_stmtB_status_typeerror_Observe",
-``!st stmt oid ec es osf.
+Theorem bir_exec_stmtB_status_typeerror_Observe:
+  !st stmt oid ec es osf.
   (st.bst_status <> BST_TypeError) ==>
   (((bir_exec_stmtB_state (BStmt_Observe oid ec es osf) st).bst_status = BST_TypeError) <=>
     ((bir_eval_exp ec st.bst_environ = NONE) \/
@@ -493,8 +515,8 @@ val bir_exec_stmtB_status_typeerror_Observe = store_thm ("bir_exec_stmtB_status_
       )
      )
     )
-  )``,
-
+  )
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
   bir_exec_stmt_observe_def, LET_DEF] >>
@@ -511,46 +533,46 @@ Cases_on `bir_eval_exp ec st.bst_environ` >| [
       [BType_Bool_def, bir_state_set_typeerror_def]
   ]
 ]
-);
+QED
 
 
-val bir_exec_stmtE_status_typeerror_jmp_to_label = store_thm ("bir_exec_stmtE_status_typeerror_jmp_to_label",
-``!st stmt p l. (st.bst_status <> BST_TypeError) ==>
-                ((bir_exec_stmt_jmp_to_label p l st).bst_status <> BST_TypeError)``,
-
+Theorem bir_exec_stmtE_status_typeerror_jmp_to_label:
+  !st stmt p l. (st.bst_status <> BST_TypeError) ==>
+                ((bir_exec_stmt_jmp_to_label p l st).bst_status <> BST_TypeError)
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_TYPES_ss) [bir_exec_stmt_jmp_to_label_def]
-);
+QED
 
 
-val bir_eval_label_exp_EQ_NONE = store_thm ("bir_eval_label_exp_EQ_NONE",
-``!le env. (bir_eval_label_exp le env = NONE) <=>
+Theorem bir_eval_label_exp_EQ_NONE:
+  !le env. (bir_eval_label_exp le env = NONE) <=>
            (?e. (le = BLE_Exp e) /\
-                ~(?va. (bir_eval_exp e env = SOME va) /\ (bir_val_is_Imm va)))``,
-
+                ~(?va. (bir_eval_exp e env = SOME va) /\ (bir_val_is_Imm va)))
+Proof
 Cases >> (
   SIMP_TAC (std_ss++bir_TYPES_ss) [bir_eval_label_exp_def,
     bir_val_is_Imm_def]
 ) >>
 REPEAT GEN_TAC >> CASE_TAC >> CASE_TAC
-);
+QED
 
 
-val bir_exec_stmtE_status_typeerror_Jmp = store_thm ("bir_exec_stmtE_status_typeerror_Jmp",
-``!st stmt p le. (st.bst_status <> BST_TypeError) ==>
+Theorem bir_exec_stmtE_status_typeerror_Jmp:
+  !st stmt p le. (st.bst_status <> BST_TypeError) ==>
                  (((bir_exec_stmtE p (BStmt_Jmp le) st).bst_status = BST_TypeError) <=>
-                 (bir_eval_label_exp le st.bst_environ = NONE))``,
-
+                 (bir_eval_label_exp le st.bst_environ = NONE))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_jmp_def] >>
 CASE_TAC >> (
   SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_stmtE_status_typeerror_jmp_to_label,
                                    bir_state_set_typeerror_def]
 )
-);
+QED
 
 
-val bir_exec_stmtE_status_typeerror_CJmp = store_thm ("bir_exec_stmtE_status_typeerror_CJmp",
-``!st stmt p ce le1 le2.
+Theorem bir_exec_stmtE_status_typeerror_CJmp:
+  !st stmt p ce le1 le2.
      (st.bst_status <> BST_TypeError) ==>
      (((bir_exec_stmtE p (BStmt_CJmp ce le1 le2) st).bst_status = BST_TypeError) <=>
       case bir_eval_exp ce st.bst_environ of
@@ -560,8 +582,8 @@ val bir_exec_stmtE_status_typeerror_CJmp = store_thm ("bir_exec_stmtE_status_typ
 		   NONE => T
 		 | SOME T => (bir_eval_label_exp le1 st.bst_environ = NONE)
 		 | SOME F => (bir_eval_label_exp le2 st.bst_environ = NONE)
-           ))``,
-
+           ))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_cjmp_def,
   bir_exec_stmt_jmp_def] >>
@@ -570,22 +592,22 @@ REPEAT CASE_TAC >> (
     bir_exec_stmtE_status_typeerror_jmp_to_label,
     bir_state_set_typeerror_def, LET_DEF]
 )
-);
+QED
 
 
-val bir_exec_stmtE_status_typeerror_Halt = store_thm ("bir_exec_stmtE_status_typeerror_Halt",
-``!st stmt p e.
+Theorem bir_exec_stmtE_status_typeerror_Halt:
+  !st stmt p e.
   (st.bst_status <> BST_TypeError) ==>
   (((bir_exec_stmtE p (BStmt_Halt e) st).bst_status = BST_TypeError) <=>
     (bir_eval_exp e st.bst_environ = NONE)
-  )``,
-
+  )
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_halt_def] >>
 Cases_on `bir_eval_exp e st.bst_environ` >> (
   SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_state_set_typeerror_def]
 )
-);
+QED
 
 
 (*****************************)
@@ -593,11 +615,11 @@ Cases_on `bir_eval_exp e st.bst_environ` >> (
 (*****************************)
 
 
-val bir_exec_stmtB_status_assumption = store_thm ("bir_exec_stmtB_status_assumption",
-``!st stmt. (st.bst_status <> BST_AssumptionViolated) ==>
+Theorem bir_exec_stmtB_status_assumption:
+  !st stmt. (st.bst_status <> BST_AssumptionViolated) ==>
             ((bir_exec_stmtB_state stmt st).bst_status = BST_AssumptionViolated) ==>
-            (?e. (stmt = BStmt_Assume e) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))``,
-
+            (?e. (stmt = BStmt_Assume e) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
@@ -609,13 +631,14 @@ Cases_on `stmt` >> (
   Cases_on `bir_eval_exp b st.bst_environ` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   )
-));
+)
+QED
 
 
-val bir_exec_stmtE_status_not_assumption = store_thm ("bir_exec_stmtE_status_not_assumption",
-``!st p stmt. (st.bst_status <> BST_AssumptionViolated) ==>
-              ~((bir_exec_stmtE p stmt st).bst_status = BST_AssumptionViolated)``,
-
+Theorem bir_exec_stmtE_status_not_assumption:
+  !st p stmt. (st.bst_status <> BST_AssumptionViolated) ==>
+              ~((bir_exec_stmtE p stmt st).bst_status = BST_AssumptionViolated)
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
     bir_exec_stmt_jmp_def, bir_state_set_typeerror_def, bir_exec_stmt_jmp_to_label_def,
@@ -632,14 +655,15 @@ Cases_on `stmt` >> (
     CASE_TAC >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
   )
-));
+)
+QED
 
 
-val bir_exec_stmt_status_assumption = store_thm ("bir_exec_stmt_status_assumption",
-``!st p stmt. (st.bst_status <> BST_AssumptionViolated) ==>
+Theorem bir_exec_stmt_status_assumption:
+  !st p stmt. (st.bst_status <> BST_AssumptionViolated) ==>
               (((bir_exec_stmt_state p stmt st).bst_status = BST_AssumptionViolated)) ==>
-              (?e. (stmt = BStmtB (BStmt_Assume e)) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))``,
-
+              (?e. (stmt = BStmtB (BStmt_Assume e)) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))
+Proof
 Cases_on `stmt` >| [
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [
     bir_exec_stmt_state_REWRS, LET_DEF] >>
@@ -647,32 +671,34 @@ Cases_on `stmt` >| [
 
   SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_state_REWRS] >>
   METIS_TAC[bir_exec_stmtE_status_not_assumption]
-]);
+]
+QED
 
 
-val bir_exec_step_status_assumption = store_thm ("bir_exec_step_status_assumption",
-``!st p. (st.bst_status <> BST_AssumptionViolated) ==>
+Theorem bir_exec_step_status_assumption:
+  !st p. (st.bst_status <> BST_AssumptionViolated) ==>
          ((bir_exec_step_state p st).bst_status = BST_AssumptionViolated) ==>
          (?e. (bir_get_current_statement p st.bst_pc = SOME (BStmtB (BStmt_Assume e))) /\
-              (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))``,
-
+              (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def] >>
 CASE_TAC >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def, GSYM bir_exec_stmt_state_def]
 ) >>
-METIS_TAC[bir_exec_stmt_status_assumption]);
+METIS_TAC[bir_exec_stmt_status_assumption]
+QED
 
 
 (*****************************)
 (* Status AssertionViolated *)
 (*****************************)
 
-val bir_exec_stmtB_status_assertion = store_thm ("bir_exec_stmtB_status_assertion",
-``!st stmt. (st.bst_status <> BST_AssertionViolated) ==>
+Theorem bir_exec_stmtB_status_assertion:
+  !st stmt. (st.bst_status <> BST_AssertionViolated) ==>
             ((bir_exec_stmtB_state stmt st).bst_status = BST_AssertionViolated) ==>
-            (?e. (stmt = BStmt_Assert e) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))``,
-
+            (?e. (stmt = BStmt_Assert e) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
@@ -684,13 +710,14 @@ Cases_on `stmt` >> (
     Cases_on `bir_eval_exp b st.bst_environ` >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
   )
-));
+)
+QED
 
 
-val bir_exec_stmtE_status_not_assertion = store_thm ("bir_exec_stmtE_status_not_assertion",
-``!st p stmt. (st.bst_status <> BST_AssertionViolated) ==>
-              ~((bir_exec_stmtE p stmt st).bst_status = BST_AssertionViolated)``,
-
+Theorem bir_exec_stmtE_status_not_assertion:
+  !st p stmt. (st.bst_status <> BST_AssertionViolated) ==>
+              ~((bir_exec_stmtE p stmt st).bst_status = BST_AssertionViolated)
+Proof
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
     bir_exec_stmt_jmp_def, bir_state_set_typeerror_def, bir_exec_stmt_jmp_to_label_def,
@@ -707,14 +734,15 @@ Cases_on `stmt` >> (
     CASE_TAC >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
   )
-));
+)
+QED
 
 
-val bir_exec_stmt_status_assertion = store_thm ("bir_exec_stmt_status_assertion",
-``!st p stmt. (st.bst_status <> BST_AssertionViolated) ==>
+Theorem bir_exec_stmt_status_assertion:
+  !st p stmt. (st.bst_status <> BST_AssertionViolated) ==>
               (((bir_exec_stmt_state p stmt st).bst_status = BST_AssertionViolated)) ==>
-              (?e. (stmt = BStmtB (BStmt_Assert e)) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))``,
-
+              (?e. (stmt = BStmtB (BStmt_Assert e)) /\ (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))
+Proof
 Cases_on `stmt` >| [
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [
     bir_exec_stmt_state_REWRS, LET_DEF] >>
@@ -722,21 +750,23 @@ Cases_on `stmt` >| [
 
   SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_state_REWRS] >>
   METIS_TAC[bir_exec_stmtE_status_not_assertion]
-]);
+]
+QED
 
 
-val bir_exec_step_status_assertion = store_thm ("bir_exec_step_status_assertion",
-``!st p. (st.bst_status <> BST_AssertionViolated) ==>
+Theorem bir_exec_step_status_assertion:
+  !st p. (st.bst_status <> BST_AssertionViolated) ==>
          ((bir_exec_step_state p st).bst_status = BST_AssertionViolated) ==>
          (?e. (bir_get_current_statement p st.bst_pc = SOME (BStmtB (BStmt_Assert e))) /\
-              (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))``,
-
+              (bir_eval_exp e st.bst_environ = SOME (BVal_Imm (Imm1 0w))))
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def] >>
 CASE_TAC >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def, GSYM bir_exec_stmt_state_def]
 ) >>
-METIS_TAC[bir_exec_stmt_status_assertion]);
+METIS_TAC[bir_exec_stmt_status_assertion]
+QED
 
 
 (*****************)
@@ -762,14 +792,13 @@ METIS_TAC[bir_exec_stmt_status_assertion]);
  * quadruple with the same final state and same number of
  * statement-steps taken as the to-label execution, with m
  * block-steps taken. *)
-val bir_exec_to_labels_TO_bir_exec_block_n_SUC_term =
-  store_thm("bir_exec_to_labels_TO_bir_exec_block_n_SUC_term",
-  ``!ls prog st l' n' n0 st'.
+Theorem bir_exec_to_labels_TO_bir_exec_block_n_SUC_term:
+  !ls prog st l' n' n0 st'.
     (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
     bir_state_is_terminated st' ==>
     ?m.
-    (bir_exec_block_n prog st (SUC m) = (l',n',m,st'))``,
-
+    (bir_exec_block_n prog st (SUC m) = (l',n',m,st'))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
 IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
@@ -789,7 +818,7 @@ subgoal
   FULL_SIMP_TAC std_ss []
 ) >>
 FULL_SIMP_TAC arith_ss []
-);
+QED
 
 
 (* If to-labels execution starting from a non-terminated state
@@ -800,16 +829,15 @@ FULL_SIMP_TAC arith_ss []
  * quadruple with the same final state and same number of
  * statement-steps taken as the to-label execution, with m+1
  * block-steps taken. *)
-val bir_exec_to_labels_TO_bir_exec_block_n_SUC_both_term =
-  store_thm("bir_exec_to_labels_TO_bir_exec_block_n_SUC_both_term",
-  ``!ls prog st l' n' n0 st' b.
+Theorem bir_exec_to_labels_TO_bir_exec_block_n_SUC_both_term:
+  !ls prog st l' n' n0 st' b.
     (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
     ~(bir_state_is_terminated st) ==>
     (st'.bst_status = BST_JumpOutside b) ==>
     ((bir_block_pc b).bpc_index = 0) ==>
     ?m.
-    (bir_exec_block_n prog st (SUC m) = (l',n',SUC m,st'))``,
-
+    (bir_exec_block_n prog st (SUC m) = (l',n',SUC m,st'))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
 IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_step_n >>
@@ -848,15 +876,14 @@ subgoal
   FULL_SIMP_TAC std_ss []
 ) >>
 FULL_SIMP_TAC arith_ss [LET_DEF]
-);
+QED
 
 (* For to-label execution Ending through termination, there exists
  * block execution with m and m+1 steps such that m+1 steps
  * results in the same state as to-label execution and m steps
  * results in some non-terminated state. *)
-val bir_exec_to_labels_bir_exec_block_n_term =
-  store_thm("bir_exec_to_labels_bir_exec_block_n_term",
-  ``!ls prog st l' n' c_l' st'.
+Theorem bir_exec_to_labels_bir_exec_block_n_term:
+  !ls prog st l' n' c_l' st'.
     (bir_exec_to_labels ls prog st =
        BER_Ended l' n' c_l' st') ==>
     ~(bir_state_is_terminated st) ==>
@@ -865,8 +892,8 @@ val bir_exec_to_labels_bir_exec_block_n_term =
     ?l''' n'''  st'''.
     (bir_exec_block_n prog st (SUC m) = (l', n', m', st')) /\
     (bir_exec_block_n prog st m = (l''', n''', m, st''')) /\
-    ~(bir_state_is_terminated st''')``,
-
+    ~(bir_state_is_terminated st''')
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `!b. st'.bst_status <> BST_JumpOutside b` >- (
   IMP_RES_TAC bir_exec_to_labels_TO_bir_exec_block_n_SUC_term >>
@@ -941,23 +968,22 @@ Cases_on `(bir_block_pc b).bpc_index = 0` >| [
   ) >>
   FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
 ]
-);
+QED
 
 
 (* For Ended to-label execution, there exists block execution
  * taking a fewer number of statement-steps resulting in a 
  * non-terminated state with PC label outside ending label set. *)
-val bir_exec_to_labels_block_n_notin_ls =
-  store_thm("bir_exec_to_labels_block_n_notin_ls",
-  ``!ls prog st l l' n n' n0 c_l' c_l'' m m' st' st''.
+Theorem bir_exec_to_labels_block_n_notin_ls:
+  !ls prog st l l' n n' n0 c_l' c_l'' m m' st' st''.
     (bir_exec_to_labels ls prog st = BER_Ended l n n0 st') ==>
     (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
     (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
     (m' < m) ==>
     (0 < m') ==>
     ~(bir_state_is_terminated st'') ==>
-    st''.bst_pc.bpc_label NOTIN ls``,
-
+    st''.bst_pc.bpc_label NOTIN ls
+Proof
 REPEAT STRIP_TAC >>
 subgoal `n' < n` >- (
   METIS_TAC [bir_exec_block_n_block_ls_running_step_ls]
@@ -995,19 +1021,18 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
 METIS_TAC [arithmeticTheory.SUC_PRE,
            bir_exec_block_n_block_nz_final_running,
            bir_state_is_terminated_def]
-);
+QED
 
 
-val bir_exec_to_labels_reached_ls =
-  store_thm("bir_exec_to_labels_reached_ls",
-  ``!prog ls st m m' l l' n n' n0 c_l' c_l'' st' st''.
+Theorem bir_exec_to_labels_reached_ls:
+  !prog ls st m m' l l' n n' n0 c_l' c_l'' st' st''.
     (bir_exec_to_labels ls prog st = BER_Ended l n n0 st'') ==>
     (bir_exec_block_n prog st m' = (l',n',c_l'',st')) ==>
     st'.bst_pc.bpc_label IN ls ==>
     ~bir_state_is_terminated st'' ==>
     m' > 0 ==>
-    ~(n' < n)``,
-
+    ~(n' < n)
+Proof
 REPEAT STRIP_TAC >>
 subgoal `?m c_l'. bir_exec_block_n prog st m = (l,n,c_l',st'')` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
@@ -1022,20 +1047,19 @@ subgoal `~bir_state_is_terminated st'` >- (
 ) >>
 IMP_RES_TAC bir_exec_to_labels_block_n_notin_ls >>
 REV_FULL_SIMP_TAC arith_ss []
-);
+QED
 
 
-val bir_exec_to_labels_not_reached_ls =
-  store_thm("bir_exec_to_labels_not_reached_ls",
-  ``!prog ls st m m' l' l'' l''' n' n'' n''' n0 c_l' c_l'' c_l'''
+Theorem bir_exec_to_labels_not_reached_ls:
+  !prog ls st m m' l' l'' l''' n' n'' n''' n0 c_l' c_l'' c_l'''
      st' st'' st'''.
     (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
     (bir_exec_block_n prog st m' = (l'',n'',c_l'',st'')) ==>
     ~bir_state_is_terminated st ==>
     st''.bst_pc.bpc_label IN ls ==>
     m' > 0 ==>
-    ~(n'' < n')``,
-
+    ~(n'' < n')
+Proof
 REPEAT STRIP_TAC >>
 subgoal `~bir_state_is_terminated st''` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
@@ -1090,17 +1114,16 @@ subgoal `st''.bst_pc.bpc_index = 0` >- (
     [bir_exec_block_n_EQ_THM, bir_state_COUNT_PC_def,
      bir_state_is_terminated_def]
 )
-);
+QED
 
 
-val bir_exec_to_labels_nz_blocks =
-  store_thm("bir_exec_to_labels_nz_blocks",
-  ``!ls prog st l m l' n c_l' st'.
+Theorem bir_exec_to_labels_nz_blocks:
+  !ls prog st l m l' n c_l' st'.
     (bir_exec_to_labels ls prog st = BER_Looping l) ==>
     (bir_exec_block_n prog st m = (l',n,c_l',st')) ==>
     m > 0 ==>
-    n > 0``,
-
+    n > 0
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
 		      bir_exec_to_labels_n_def,
@@ -1115,17 +1138,16 @@ subgoal `~bir_state_is_terminated st` >- (
 ) >>
 IMP_RES_TAC bir_exec_block_n_block_nz_init_running >>
 REV_FULL_SIMP_TAC arith_ss []
-);
+QED
 
 
-val bir_exec_to_labels_looping_not_reached_ls =
-  store_thm("bir_exec_to_labels_looping_not_reached_ls",
-  ``!ls prog st l m l' n c_l' st'.
+Theorem bir_exec_to_labels_looping_not_reached_ls:
+  !ls prog st l m l' n c_l' st'.
     (bir_exec_to_labels ls prog st = BER_Looping l) ==>
     (bir_exec_block_n prog st m = (l',n,c_l',st')) ==>
     0 < m ==>
-    st'.bst_pc.bpc_label NOTIN ls``,
-
+    st'.bst_pc.bpc_label NOTIN ls
+Proof
 REPEAT STRIP_TAC >>
 subgoal `0 < n` >- (
   IMP_RES_TAC bir_exec_to_labels_nz_blocks >>
@@ -1144,12 +1166,11 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 	      [bir_state_is_terminated_def] >>
 IMP_RES_TAC bir_exec_block_n_block_nz_final_running >>
 REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def]
-);
+QED
 
 
-val bir_exec_to_labels_term_ls =
-  store_thm("bir_exec_to_labels_term_ls",
-  ``!prog st ls m m' l' l'' l''' n' n'' n''' n0 c_l' c_l'' c_l'''
+Theorem bir_exec_to_labels_term_ls:
+  !prog st ls m m' l' l'' l''' n' n'' n''' n0 c_l' c_l'' c_l'''
      st' st'' st'''.
     (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
     (bir_exec_block_n prog st m = (l''',n''',c_l''',st''')) ==>
@@ -1160,8 +1181,8 @@ val bir_exec_to_labels_term_ls =
     ~bir_state_is_terminated st'' ==>
     st''.bst_pc.bpc_label IN ls ==>
     bir_state_is_terminated st' ==>
-    ~(m' < (SUC m))``, 
-
+    ~(m' < (SUC m))
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `n'' = n'` >- (
   subgoal `m' >= SUC m` >- (
@@ -1180,6 +1201,6 @@ subgoal `n'' > n'` >- (
 ) >>
 IMP_RES_TAC bir_exec_block_n_step_ls_running >>
 REV_FULL_SIMP_TAC arith_ss []
-);
+QED
 
 val _ = export_theory();

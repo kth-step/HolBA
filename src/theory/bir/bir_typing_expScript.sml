@@ -19,7 +19,7 @@ val bir_val_ss = rewrites (type_rws ``:bir_val_t``);
 val bir_type_ss = rewrites (type_rws ``:bir_type_t``);
 
 
-val type_of_bir_exp_def = Define `
+Definition type_of_bir_exp_def:
   (type_of_bir_exp (BExp_Const i) = SOME (BType_Imm (type_of_bir_imm i))) /\
 
   (type_of_bir_exp (BExp_MemConst aty vty mmap) = SOME (BType_Mem aty vty)) /\
@@ -66,13 +66,14 @@ val type_of_bir_exp_def = Define `
        (SOME (BType_Mem aty vty), SOME (BType_Imm aty'), SOME (BType_Imm rty)) => (if (
             (aty = aty') /\ (if en = BEnd_NoEndian then (vty = rty) else (bir_number_of_mem_splits vty rty aty <> NONE))
            ) then SOME (BType_Mem aty vty) else NONE)
-       | _, _, _ => NONE))`;
+       | _, _, _ => NONE))
+End
 
 
-val type_of_bir_exp_THM = store_thm ("type_of_bir_exp_THM",
- ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
-              ((bir_eval_exp e env = NONE) \/ (?v. (bir_eval_exp e env = SOME v) /\ (type_of_bir_val v = ty)))``,
-
+Theorem type_of_bir_exp_THM:
+  !env e ty. (type_of_bir_exp e = SOME ty) ==>
+              ((bir_eval_exp e env = NONE) \/ (?v. (bir_eval_exp e env = SOME v) /\ (type_of_bir_val v = ty)))
+Proof
 GEN_TAC >>
 Induct >> (
   SIMP_TAC (list_ss++bir_val_ss) [bir_eval_exp_def, type_of_bir_exp_def,
@@ -122,10 +123,11 @@ Induct >> (
   FULL_SIMP_TAC std_ss [bir_eval_store_NONE_REWRS] >>
   FULL_SIMP_TAC std_ss [type_of_bir_val_EQ_ELIMS, bir_eval_store_def] >>
   REPEAT GEN_TAC >> REPEAT CASE_TAC
-));
+)
+QED
 
 
-val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",``
+Theorem type_of_bir_exp_EQ_SOME_REWRS:
   (!i ty. (type_of_bir_exp (BExp_Const i) = SOME ty) <=> (ty = BType_Imm (type_of_bir_imm i))) /\
 
   (!aty vty mmap ty. (type_of_bir_exp (BExp_MemConst aty vty mmap) = SOME ty) <=> (ty = BType_Mem aty vty)) /\
@@ -166,8 +168,7 @@ val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",`
              (type_of_bir_exp v = SOME (BType_Imm rty)) /\
              (if en = BEnd_NoEndian then (vt = rty) else
                                   (bir_number_of_mem_splits vt rty at <> NONE))))
-``,
-
+Proof
 REPEAT CONJ_TAC >> (
   SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [type_of_bir_exp_def]
 ) >- (
@@ -195,16 +196,16 @@ REPEAT CONJ_TAC >> (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
-));
+)
+QED
 
 
-val bir_eval_exp_IS_SOME_IMPLIES_TYPE =
-  store_thm("bir_eval_exp_IS_SOME_IMPLIES_TYPE",
-  ``!env e va ty.
+Theorem bir_eval_exp_IS_SOME_IMPLIES_TYPE:
+  !env e va ty.
     (bir_eval_exp e env = SOME va) ==>
     (type_of_bir_val va = ty) ==>
-    (type_of_bir_exp e = SOME ty)``,
-
+    (type_of_bir_exp e = SOME ty)
+Proof
 Induct_on `e` >> (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_eval_exp_def, type_of_bir_exp_EQ_SOME_REWRS]
@@ -343,10 +344,10 @@ Induct_on `e` >> (
     FULL_SIMP_TAC std_ss [bir_number_of_mem_splits_EQ_SOME1]
   )
 ]
-);
+QED
 
 
-val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",``
+Theorem type_of_bir_exp_EQ_NONE_REWRS:
   (!i. ~(type_of_bir_exp (BExp_Const i) = NONE)) /\
 
   (!aty vty mmap. ~(type_of_bir_exp (BExp_MemConst aty vty mmap) = NONE)) /\
@@ -389,8 +390,7 @@ val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",`
              (type_of_bir_exp v = SOME (BType_Imm rty)) ==>
              (if en = BEnd_NoEndian then (vt <> rty) else
                                   (bir_number_of_mem_splits vt rty at = NONE))))
-``,
-
+Proof
 REPEAT CONJ_TAC >> (
   SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [type_of_bir_exp_def]
 ) >- (
@@ -420,16 +420,17 @@ REPEAT CONJ_TAC >> (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
-));
+)
+QED
 
 
-val type_of_bir_exp_NOT_SOME_Imm = prove(
-  ``!ex env. 
+Theorem type_of_bir_exp_NOT_SOME_Imm[local]:
+  !ex env. 
     (!ity. type_of_bir_exp ex <> SOME (BType_Imm ity)) ==>
     (?aty vty. (type_of_bir_exp ex = SOME (BType_Mem aty vty)) \/
      (type_of_bir_exp ex = NONE)
-    )``,
-
+    )
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `type_of_bir_exp ex` >> (
   FULL_SIMP_TAC (std_ss) []
@@ -437,10 +438,10 @@ Cases_on `type_of_bir_exp ex` >> (
 Cases_on `x` >> (
   FULL_SIMP_TAC (std_ss++bir_type_ss) []
 )
-);
+QED
 
-val type_of_2bir_exp_NOT_SOME_Imm = prove(
-  ``!ex ex'. 
+Theorem type_of_2bir_exp_NOT_SOME_Imm[local]:
+  !ex ex'. 
     (!ity.
      type_of_bir_exp ex <> SOME (BType_Imm ity) \/
      type_of_bir_exp ex' <> SOME (BType_Imm ity)) ==>
@@ -453,8 +454,8 @@ val type_of_2bir_exp_NOT_SOME_Imm = prove(
       (type_of_bir_exp ex' = SOME (BType_Imm ity'')) /\
       (ity' <> ity'')
      )
-    )``,
-
+    )
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `type_of_bir_exp ex` >> (
   FULL_SIMP_TAC std_ss []
@@ -465,13 +466,13 @@ Cases_on `type_of_bir_exp ex'` >> (
 Cases_on `x` >> Cases_on `x'` >> (
   FULL_SIMP_TAC (std_ss++bir_type_ss) []
 )
-);
+QED
 
-val bir_type_of_bir_exp_NONE = store_thm("bir_type_of_bir_exp_NONE",
-  ``!ex env.
+Theorem bir_type_of_bir_exp_NONE:
+  !ex env.
     (type_of_bir_exp ex = NONE) ==>
-    (bir_eval_exp ex env = NONE)``,
-
+    (bir_eval_exp ex env = NONE)
+Proof
 REPEAT STRIP_TAC >>
 Induct_on `ex` >> (
   REPEAT STRIP_TAC >>
@@ -624,14 +625,14 @@ Induct_on `ex` >> (
     FULL_SIMP_TAC std_ss [bir_number_of_mem_splits_EQ_SOME1]
   )
 ]
-);
+QED
 
 
 (* ------------------------------------------------------------------------- *)
 (*  Looking at  variables used somewhere in an expression                    *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_vars_of_exp_def = Define `
+Definition bir_vars_of_exp_def:
   (bir_vars_of_exp (BExp_Const _) = {}) /\
   (bir_vars_of_exp (BExp_MemConst _ _ _) = {}) /\
   (bir_vars_of_exp (BExp_Den v) = {v}) /\
@@ -642,43 +643,48 @@ val bir_vars_of_exp_def = Define `
   (bir_vars_of_exp (BExp_MemEq e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_IfThenElse ec e1 e2) = (bir_vars_of_exp ec UNION bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_Load me ae _ _) = (bir_vars_of_exp me UNION bir_vars_of_exp ae)) /\
-  (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))`;
+  (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))
+End
 
 
-val bir_vars_of_exp_THM = store_thm ("bir_vars_of_exp_THM",
-``!env1 env2 e. (!v. v IN (bir_vars_of_exp e) ==>
+Theorem bir_vars_of_exp_THM:
+  !env1 env2 e. (!v. v IN (bir_vars_of_exp e) ==>
                      (bir_env_read v env1 = bir_env_read v env2)) ==>
-                (bir_eval_exp e env1 = bir_eval_exp e env2)``,
-
+                (bir_eval_exp e env1 = bir_eval_exp e env2)
+Proof
 GEN_TAC >> GEN_TAC >> Induct >> REPEAT STRIP_TAC >> (
   FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pred_setTheory.IN_UNION,
     pred_setTheory.NOT_IN_EMPTY, pred_setTheory.IN_INSERT,
     bir_eval_exp_def]
-));
+)
+QED
 
 
-val bir_vars_of_exp_THM_EQ_FOR_VARS = store_thm ("bir_vars_of_exp_THM_EQ_FOR_VARS",
-``!env1 env2 e. (bir_env_EQ_FOR_VARS (bir_vars_of_exp e) env1 env2) ==>
-                (bir_eval_exp e env1 = bir_eval_exp e env2)``,
-METIS_TAC[bir_vars_of_exp_THM, bir_env_EQ_FOR_VARS_read_IMPL]);
+Theorem bir_vars_of_exp_THM_EQ_FOR_VARS:
+  !env1 env2 e. (bir_env_EQ_FOR_VARS (bir_vars_of_exp e) env1 env2) ==>
+                (bir_eval_exp e env1 = bir_eval_exp e env2)
+Proof
+METIS_TAC[bir_vars_of_exp_THM, bir_env_EQ_FOR_VARS_read_IMPL]
+QED
 
 
-val bir_vars_of_exp_FINITE = store_thm ("bir_vars_of_exp_FINITE",
-``!e. FINITE (bir_vars_of_exp e)``,
-
+Theorem bir_vars_of_exp_FINITE:
+  !e. FINITE (bir_vars_of_exp e)
+Proof
 Induct >> (
   ASM_SIMP_TAC std_ss [bir_vars_of_exp_def,
     pred_setTheory.FINITE_INSERT, pred_setTheory.FINITE_EMPTY,
     pred_setTheory.FINITE_UNION]
-));
+)
+QED
 
 
-val type_of_bir_exp_THM_with_envty = store_thm ("type_of_bir_exp_THM_with_envty",
-  ``!env envty e ty. (type_of_bir_exp e = SOME ty) ==>
+Theorem type_of_bir_exp_THM_with_envty:
+  !env envty e ty. (type_of_bir_exp e = SOME ty) ==>
                      (bir_envty_includes_vs envty (bir_vars_of_exp e)) ==>
                      (bir_env_satisfies_envty env envty) ==>
-                     (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))``,
-
+                     (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))
+Proof
 GEN_TAC >> GEN_TAC >> Induct >> (
   SIMP_TAC (std_ss++bir_val_ss) [bir_eval_exp_def, BType_Bool_def,
     type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def,
@@ -726,26 +732,27 @@ GEN_TAC >> GEN_TAC >> Induct >> (
     )
   ) >>
   ASM_SIMP_TAC (std_ss++bir_val_ss) []
-));
+)
+QED
 
 (* TODO: move elsewhere *)
 open bir_env_oldTheory;
-val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
-  ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
+Theorem type_of_bir_exp_THM_with_init_vars:
+  !env e ty. (type_of_bir_exp e = SOME ty) ==>
                (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
-               (?va. (bir_eval_exp e env = SOME va) /\ (type_of_bir_val va = ty))``,
-  METIS_TAC [type_of_bir_exp_THM_with_envty, bir_env_vars_are_initialised_EQ_envty, bir_env_satisfies_envty_of_env]
-);
+               (?va. (bir_eval_exp e env = SOME va) /\ (type_of_bir_val va = ty))
+Proof
+METIS_TAC [type_of_bir_exp_THM_with_envty, bir_env_vars_are_initialised_EQ_envty, bir_env_satisfies_envty_of_env]
+QED
 
 
 (* This is the general theorem for eliminating initialisation requirements via evaluations
  * of expressions in assumptions *)
-val bir_eval_exp_IS_SOME_IMPLIES_INIT =
-  store_thm("bir_eval_exp_IS_SOME_IMPLIES_INIT",
-  ``!env e va.
+Theorem bir_eval_exp_IS_SOME_IMPLIES_INIT:
+  !env e va.
     (bir_eval_exp e env = SOME va) ==>
-    bir_env_vars_are_initialised env (bir_vars_of_exp e)``,
-
+    bir_env_vars_are_initialised env (bir_vars_of_exp e)
+Proof
 Induct_on `e` >> (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_vars_of_exp_def,
@@ -835,7 +842,7 @@ Induct_on `e` >> (
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION]
 ]
-);
+QED
 
 
 
@@ -850,9 +857,11 @@ Induct_on `e` >> (
    More subtly, one needs also make sure that variables occuring in the expression
    are having consistent type annotations. This is expressed as follows: *)
 
-val bir_exp_is_well_typed_def = Define `bir_exp_is_well_typed e <=>
+Definition bir_exp_is_well_typed_def:
+  bir_exp_is_well_typed e <=>
   (IS_SOME (type_of_bir_exp e) /\
-   bir_vs_consistent (bir_vars_of_exp e))`
+   bir_vs_consistent (bir_vars_of_exp e))
+End
 
 
 

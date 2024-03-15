@@ -35,17 +35,20 @@ in
 end);
 
 
-val EQ_13w_EVAL = save_thm ("EQ_13w_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``^w = 13w:word4``) word4_list))
+Theorem EQ_13w_EVAL = LIST_CONJ (map (fn w => EVAL ``^w = 13w:word4``) word4_list)
 
-val EQ_15w_EVAL = save_thm ("EQ_15w_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_list))
+
+Theorem EQ_15w_EVAL = LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_list)
+
 
 
 val RName_distinct = save_thm ("RName_distinct", let
-  val thm0 = prove (``!r r'.
-     r < 17 ==> r' < r ==> ((num2RName r = num2RName r') <=> (r = r'))``,
-    SIMP_TAC arith_ss [m0Theory.num2RName_11])
+Theorem thm0[local]:
+  !r r'.
+     r < 17 ==> r' < r ==> ((num2RName r = num2RName r') <=> (r = r'))
+Proof
+SIMP_TAC arith_ss [m0Theory.num2RName_11]
+QED
 
   val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] thm0
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
@@ -59,148 +62,178 @@ in thm3 end);
 (* Lifting Load for m0 *)
 (***********************)
 
-val m0_mem_half_LE_def = Define`
-   m0_mem_half_LE (m:word32 -> word8) a = (m (a + 1w) @@ m a) : word16`
+Definition m0_mem_half_LE_def:
+  m0_mem_half_LE (m:word32 -> word8) a = (m (a + 1w) @@ m a) : word16
+End
 
-val m0_mem_word_LE_def = Define`
-   m0_mem_word_LE (m:word32 -> word8) a =
-     (m (a + 3w) @@ ((m (a + 2w) @@ ((m (a + 1w) @@ m a):word16)):word24)) : word32`
+Definition m0_mem_word_LE_def:
+  m0_mem_word_LE (m:word32 -> word8) a =
+     (m (a + 3w) @@ ((m (a + 2w) @@ ((m (a + 1w) @@ m a):word16)):word24)) : word32
+End
 
-val m0_mem_half_BE_def = Define`
-   m0_mem_half_BE (m:word32 -> word8) a = (m a @@ m (a+1w)) : word16`
+Definition m0_mem_half_BE_def:
+  m0_mem_half_BE (m:word32 -> word8) a = (m a @@ m (a+1w)) : word16
+End
 
-val m0_mem_word_BE_def = Define`
-   m0_mem_word_BE (m:word32 -> word8) a =
-     (m a @@ ((m (a + 1w) @@ ((m (a + 2w) @@ m (a + 3w)):word16)):word24)) : word32`
+Definition m0_mem_word_BE_def:
+  m0_mem_word_BE (m:word32 -> word8) a =
+     (m a @@ ((m (a + 1w) @@ ((m (a + 2w) @@ m (a + 3w)):word16)):word24)) : word32
+End
 
-val m0_LIFT_LOAD_WORD_LE = store_thm ("m0_LIFT_LOAD_WORD_LE",
-``!env em ea va (ms:m0_state).
+Theorem m0_LIFT_LOAD_WORD_LE:
+  !env em ea va (ms:m0_state).
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit32)
-       (Imm32 (m0_mem_word_LE ms.MEM va))``,
-SIMP_TAC std_ss [m0_mem_word_LE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm32 (m0_mem_word_LE ms.MEM va))
+Proof
+SIMP_TAC std_ss [m0_mem_word_LE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
-val m0_LIFT_LOAD_WORD_BE = store_thm ("m0_LIFT_LOAD_WORD_BE",
-``!env em ea va (ms:m0_state).
+Theorem m0_LIFT_LOAD_WORD_BE:
+  !env em ea va (ms:m0_state).
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_BigEndian Bit32)
-       (Imm32 (m0_mem_word_BE ms.MEM va))``,
-SIMP_TAC std_ss [m0_mem_word_BE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm32 (m0_mem_word_BE ms.MEM va))
+Proof
+SIMP_TAC std_ss [m0_mem_word_BE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
 
-val m0_LIFT_LOAD_HALF_LE = store_thm ("m0_LIFT_LOAD_HALF_LE",
-``!env em ea va (ms:m0_state).
+Theorem m0_LIFT_LOAD_HALF_LE:
+  !env em ea va (ms:m0_state).
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit16)
-       (Imm16 (m0_mem_half_LE ms.MEM va))``,
-SIMP_TAC std_ss [m0_mem_half_LE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm16 (m0_mem_half_LE ms.MEM va))
+Proof
+SIMP_TAC std_ss [m0_mem_half_LE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
 
-val m0_LIFT_LOAD_HALF_BE = store_thm ("m0_LIFT_LOAD_HALF_BE",
-``!env em ea va (ms:m0_state).
+Theorem m0_LIFT_LOAD_HALF_BE:
+  !env em ea va (ms:m0_state).
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_BigEndian Bit16)
-       (Imm16 (m0_mem_half_BE ms.MEM va))``,
-SIMP_TAC std_ss [m0_mem_half_BE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+       (Imm16 (m0_mem_half_BE ms.MEM va))
+Proof
+SIMP_TAC std_ss [m0_mem_half_BE_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+QED
 
 
-val m0_LIFT_LOAD_BYTE_BE = store_thm ("m0_LIFT_LOAD_BYTE_BE",
-``!env em ea va (ms:m0_state).
+Theorem m0_LIFT_LOAD_BYTE_BE:
+  !env em ea va (ms:m0_state).
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_BigEndian Bit8)
-       (Imm8 (ms.MEM va))``,
+       (Imm8 (ms.MEM va))
+Proof
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]);
+ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]
+QED
 
 
-val m0_LIFT_LOAD_BYTE_LE = store_thm ("m0_LIFT_LOAD_BYTE_LE",
-``!env em ea va (ms:m0_state).
+Theorem m0_LIFT_LOAD_BYTE_LE:
+  !env em ea va (ms:m0_state).
      bir_is_lifted_mem_exp env em ms.MEM ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit8)
-       (Imm8 (ms.MEM va))``,
+       (Imm8 (ms.MEM va))
+Proof
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]);
+ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]
+QED
 
 
-val aligned_1_m0_mem_word = store_thm ("aligned_1_m0_mem_word",
-``(!addr ms. aligned 1 (m0_mem_word_LE ms.MEM addr) = aligned 1 (ms.MEM addr)) /\
+Theorem aligned_1_m0_mem_word:
+  (!addr ms. aligned 1 (m0_mem_word_LE ms.MEM addr) = aligned 1 (ms.MEM addr)) /\
   (!addr ms. aligned 1 (m0_mem_half_LE ms.MEM addr) = aligned 1 (ms.MEM addr)) /\
   (!addr ms. aligned 1 (m0_mem_word_BE ms.MEM addr) = aligned 1 (ms.MEM (addr + 3w))) /\
-  (!addr ms. aligned 1 (m0_mem_half_BE ms.MEM addr) = aligned 1 (ms.MEM (addr + 1w)))``,
-
+  (!addr ms. aligned 1 (m0_mem_half_BE ms.MEM addr) = aligned 1 (ms.MEM (addr + 1w)))
+Proof
 `!n:num. (n < 1) <=> (n = 0)` by DECIDE_TAC >>
 ASM_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [alignmentTheory.aligned_bit_count_upto,
     bit_count_upto_is_zero, word_bit_def, m0_mem_half_BE_def, m0_mem_word_BE_def,
-    m0_mem_half_LE_def, m0_mem_word_LE_def, word_concat_def, word_join_index, w2w]);
+    m0_mem_half_LE_def, m0_mem_word_LE_def, word_concat_def, word_join_index, w2w]
+QED
 
 
-val aligned_2_m0_mem_word = store_thm ("aligned_2_m0_mem_word",
-``(!addr ms. aligned 2 (m0_mem_word_LE ms.MEM addr) = aligned 2 (ms.MEM addr)) /\
+Theorem aligned_2_m0_mem_word:
+  (!addr ms. aligned 2 (m0_mem_word_LE ms.MEM addr) = aligned 2 (ms.MEM addr)) /\
   (!addr ms. aligned 2 (m0_mem_half_LE ms.MEM addr) = aligned 2 (ms.MEM addr)) /\
   (!addr ms. aligned 2 (m0_mem_word_BE ms.MEM addr) = aligned 2 (ms.MEM (addr + 3w))) /\
-  (!addr ms. aligned 2 (m0_mem_half_BE ms.MEM addr) = aligned 2 (ms.MEM (addr + 1w)))``,
-
+  (!addr ms. aligned 2 (m0_mem_half_BE ms.MEM addr) = aligned 2 (ms.MEM (addr + 1w)))
+Proof
 `!n:num. (n < 2) <=> ((n = 0) \/ (n = 1))` by DECIDE_TAC >>
 ASM_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [alignmentTheory.aligned_bit_count_upto,
     bit_count_upto_is_zero, word_bit_def, m0_mem_half_BE_def, m0_mem_word_BE_def,
     m0_mem_half_LE_def, m0_mem_word_LE_def, word_concat_def, word_join_index, w2w,
-    LEFT_AND_OVER_OR, DISJ_IMP_THM, FORALL_AND_THM]);
+    LEFT_AND_OVER_OR, DISJ_IMP_THM, FORALL_AND_THM]
+QED
 
 
 (******************)
 (* Store for arm8 *)
 (******************)
 
-val m0_mem_store_word_LE_def = Define `m0_mem_store_word_LE (a:word32) (w:word32) (mmap : (word32 -> word8)) =
+Definition m0_mem_store_word_LE_def:
+  m0_mem_store_word_LE (a:word32) (w:word32) (mmap : (word32 -> word8)) =
    (a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a      =+ (7  >< 0)  w) mmap)))`;
+  ((a      =+ (7  >< 0)  w) mmap)))
+End
 
-val m0_mem_store_word_BE_def = Define `m0_mem_store_word_BE (a:word32) (w:word32) (mmap : (word32 -> word8)) =
+Definition m0_mem_store_word_BE_def:
+  m0_mem_store_word_BE (a:word32) (w:word32) (mmap : (word32 -> word8)) =
    (a + 3w =+ ( 7 ><  0) w)
   ((a + 2w =+ (15 ><  8) w)
   ((a + 1w =+ (23 >< 16)  w)
-  ((a      =+ (31 >< 24)  w) mmap)))`;
+  ((a      =+ (31 >< 24)  w) mmap)))
+End
 
-val m0_mem_store_half_LE_def = Define `m0_mem_store_half_LE (a:word32) (w:word16) (mmap : (word32 -> word8)) =
+Definition m0_mem_store_half_LE_def:
+  m0_mem_store_half_LE (a:word32) (w:word16) (mmap : (word32 -> word8)) =
    (a + 1w =+ (15 >< 8)  w)
-  ((a      =+ (7  >< 0)  w) mmap)`;
+  ((a      =+ (7  >< 0)  w) mmap)
+End
 
-val m0_mem_store_half_BE_def = Define `m0_mem_store_half_BE (a:word32) (w:word16) (mmap : (word32 -> word8)) =
+Definition m0_mem_store_half_BE_def:
+  m0_mem_store_half_BE (a:word32) (w:word16) (mmap : (word32 -> word8)) =
    (a + 1w =+ ( 7 >< 0)  w)
-  ((a      =+ (15 >< 8)  w) mmap)`;
+  ((a      =+ (15 >< 8)  w) mmap)
+End
 
-val m0_mem_store_byte_def = Define `m0_mem_store_byte (a:word32) (w:word8) (mmap : (word32 -> word8)) =
-  ((a      =+ w) mmap)`;
+Definition m0_mem_store_byte_def:
+  m0_mem_store_byte (a:word32) (w:word8) (mmap : (word32 -> word8)) =
+  ((a      =+ w) mmap)
+End
 
 
-val m0_mem_store_half_BE_32 = store_thm ("m0_mem_store_half_BE_32",
-`` !(a :word32) (w :word32) (mmap :word32 -> word8).
+Theorem m0_mem_store_half_BE_32:
+  !(a :word32) (w :word32) (mmap :word32 -> word8).
      (a + (1w :word32) =+ (((7 :num) >< (0 :num)) w :word8))
        ((a =+ (((15 :num) >< (8 :num)) w :word8)) mmap) =
-     m0_mem_store_half_BE a (w2w w) mmap``,
-
+     m0_mem_store_half_BE a (w2w w) mmap
+Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [m0_mem_store_half_BE_def,
   wordsTheory.word_bits_w2w, bir_auxiliaryTheory.word_extract_bits_w2w,
-  w2w_REMOVE_FOLDS]);
+  w2w_REMOVE_FOLDS]
+QED
 
 
-val m0_mem_store_half_LE_32 = store_thm ("m0_mem_store_half_LE_32",
-`` !(a :word32) (w :word32) (mmap :word32 -> word8).
+Theorem m0_mem_store_half_LE_32:
+  !(a :word32) (w :word32) (mmap :word32 -> word8).
      (a + (1w :word32) =+ (((15 :num) >< (8 :num)) w :word8))
        ((a =+ (((7 :num) >< (0 :num)) w :word8)) mmap) =
-     m0_mem_store_half_LE a (w2w w) mmap``,
-
+     m0_mem_store_half_LE a (w2w w) mmap
+Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [m0_mem_store_half_LE_def,
   wordsTheory.word_bits_w2w, bir_auxiliaryTheory.word_extract_bits_w2w,
-  w2w_REMOVE_FOLDS]);
+  w2w_REMOVE_FOLDS]
+QED
 
 
 
@@ -246,100 +279,118 @@ in LIST_CONJ [def_THMS, zero_THM0, zero_THM1] end);
 
 
 
-val m0_LIFT_STORE_WORD_LE = store_thm ("m0_LIFT_STORE_WORD_LE",
-``!env em ea va ev vv ms mem_f.
+Theorem m0_LIFT_STORE_WORD_LE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env ev (Imm32 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (m0_mem_store_word_LE va vv mem_f)``,
+       (m0_mem_store_word_LE va vv mem_f)
+Proof
+SIMP_TAC std_ss [m0_mem_store_word_LE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [m0_mem_store_word_LE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val m0_LIFT_STORE_WORD_BE = store_thm ("m0_LIFT_STORE_WORD_BE",
-``!env em ea va ev vv ms mem_f.
+Theorem m0_LIFT_STORE_WORD_BE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env ev (Imm32 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_BigEndian ev)
-       (m0_mem_store_word_BE va vv mem_f)``,
+       (m0_mem_store_word_BE va vv mem_f)
+Proof
+SIMP_TAC std_ss [m0_mem_store_word_BE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [m0_mem_store_word_BE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val m0_LIFT_STORE_HALF_LE = store_thm ("m0_LIFT_STORE_HALF_LE",
-``!env em ea va ev vv ms mem_f.
+Theorem m0_LIFT_STORE_HALF_LE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env ev (Imm16 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (m0_mem_store_half_LE va vv mem_f)``,
+       (m0_mem_store_half_LE va vv mem_f)
+Proof
+SIMP_TAC std_ss [m0_mem_store_half_LE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [m0_mem_store_half_LE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val m0_LIFT_STORE_HALF_BE = store_thm ("m0_LIFT_STORE_HALF_BE",
-``!env em ea va ev vv ms mem_f.
+Theorem m0_LIFT_STORE_HALF_BE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env ev (Imm16 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_BigEndian ev)
-       (m0_mem_store_half_BE va vv mem_f)``,
+       (m0_mem_store_half_BE va vv mem_f)
+Proof
+SIMP_TAC std_ss [m0_mem_store_half_BE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]
+QED
 
-SIMP_TAC std_ss [m0_mem_store_half_BE_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
-
-val m0_LIFT_STORE_BYTE_LE = store_thm ("m0_LIFT_STORE_BYTE_LE",
-``!env em ea va ev vv ms mem_f.
+Theorem m0_LIFT_STORE_BYTE_LE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env ev (Imm8 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (m0_mem_store_byte va vv mem_f)``,
+       (m0_mem_store_byte va vv mem_f)
+Proof
+SIMP_TAC std_ss [m0_mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]
+QED
 
-SIMP_TAC std_ss [m0_mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]);
 
-
-val m0_LIFT_STORE_BYTE_BE = store_thm ("m0_LIFT_STORE_BYTE_BE",
-``!env em ea va ev vv ms mem_f.
+Theorem m0_LIFT_STORE_BYTE_BE:
+  !env em ea va ev vv ms mem_f.
      bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm32 va) ==>
      bir_is_lifted_imm_exp env ev (Imm8 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_BigEndian ev)
-       (m0_mem_store_byte va vv mem_f)``,
-
-SIMP_TAC std_ss [m0_mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]);
-
-
-val m0_LIFT_STORE_WORD_LE_CHANGE_INTERVAL = store_thm ("m0_LIFT_STORE_WORD_LE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (m0_mem_store_word_LE va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_word_LE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+       (m0_mem_store_byte va vv mem_f)
+Proof
+SIMP_TAC std_ss [m0_mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]
+QED
 
 
-val m0_LIFT_STORE_WORD_BE_CHANGE_INTERVAL = store_thm ("m0_LIFT_STORE_WORD_BE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (m0_mem_store_word_BE va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_word_BE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem m0_LIFT_STORE_WORD_LE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (m0_mem_store_word_LE va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_word_LE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
 
-val m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL = store_thm ("m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (m0_mem_store_half_LE va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_half_LE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem m0_LIFT_STORE_WORD_BE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (m0_mem_store_word_BE va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_word_BE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
 
-val m0_LIFT_STORE_HALF_BE_CHANGE_INTERVAL = store_thm ("m0_LIFT_STORE_HALF_BE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (m0_mem_store_half_BE va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_half_BE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (m0_mem_store_half_LE va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_half_LE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
 
-val m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL = store_thm ("m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (m0_mem_store_half_LE va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_half_LE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem m0_LIFT_STORE_HALF_BE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (m0_mem_store_half_BE va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_half_BE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
 
-val m0_LIFT_STORE_BYTE_CHANGE_INTERVAL = store_thm ("m0_LIFT_STORE_BYTE_CHANGE_INTERVAL",
-``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 1 (m0_mem_store_byte va vv mem_f) mem_f``,
-SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+Theorem m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (m0_mem_store_half_LE va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_half_LE_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
+
+
+Theorem m0_LIFT_STORE_BYTE_CHANGE_INTERVAL:
+  !va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 1 (m0_mem_store_byte va vv mem_f) mem_f
+Proof
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
+QED
 
 
 
@@ -347,62 +398,70 @@ SIMP_TAC (list_ss++wordsLib.WORD_ss) [m0_mem_store_byte_def, WI_MEM_WI_size, WI_
 (* Misc *)
 (********)
 
-val Mode_Handler_INTRO = store_thm ("Mode_Handler_INTRO",
-``!m. (m = Mode_Thread) <=> (m <> Mode_Handler)``,
-Cases_on `m` >> SIMP_TAC std_ss [m0Theory.Mode_distinct]);
+Theorem Mode_Handler_INTRO:
+  !m. (m = Mode_Thread) <=> (m <> Mode_Handler)
+Proof
+Cases_on `m` >> SIMP_TAC std_ss [m0Theory.Mode_distinct]
+QED
 
-val m0_ror_w2w_remove = store_thm ("m0_ror_w2w_remove",
-``!w1:word32 w2:word32. 
-    (w1 #>> w2n ((w2w w2):word8)) = (w1 #>> w2n w2)``,
-
+Theorem m0_ror_w2w_remove:
+  !w1:word32 w2:word32. 
+    (w1 #>> w2n ((w2w w2):word8)) = (w1 #>> w2n w2)
+Proof
 ONCE_REWRITE_TAC [GSYM ROR_MOD] >>
 MP_TAC (Q.SPECL [`8`, `32`] arithmeticTheory.MOD_MULT_MOD) >>
-SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2w_def, w2n_n2w]);
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2w_def, w2n_n2w]
+QED
 
 
-val m0_word_bit_0_ms_aligned = store_thm ("m0_word_bit_0_ms_aligned",
-``!ms:m0_state addr. word_bit 0 (ms.MEM addr) =
-                     ~(aligned 1 (ms.MEM addr))``,
-
+Theorem m0_word_bit_0_ms_aligned:
+  !ms:m0_state addr. word_bit 0 (ms.MEM addr) =
+                     ~(aligned 1 (ms.MEM addr))
+Proof
 REPEAT STRIP_TAC >>
 `!n:num. (n < 1) <=> (n = 0)` by DECIDE_TAC >>
 ASM_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [alignmentTheory.aligned_bit_count_upto,
-  bit_count_upto_is_zero, word_bit_def]);
+  bit_count_upto_is_zero, word_bit_def]
+QED
 
 
-val m0_extract_byte = store_thm ("m0_extract_byte",
-``!a w mmap.
+Theorem m0_extract_byte:
+  !a w mmap.
   ((7 >< 0) (w:word32)):word8 =
-  (w2w w)``,
-
+  (w2w w)
+Proof
 MP_TAC (INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:8``, ``:'c`` |-> ``:8``]
    (GSYM wordsTheory.w2w_w2w)) >>
-ASM_SIMP_TAC (std_ss++wordsLib.WORD_ss) [wordsTheory.word_extract_def, w2w_id]);
+ASM_SIMP_TAC (std_ss++wordsLib.WORD_ss) [wordsTheory.word_extract_def, w2w_id]
+QED
 
-val m0_extract_half = store_thm ("m0_extract_half",
-``!a w mmap.
+Theorem m0_extract_half:
+  !a w mmap.
   ((15 >< 0) (w:word32)):word16 =
-  (w2w w)``,
-
+  (w2w w)
+Proof
 MP_TAC (INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``, ``:'c`` |-> ``:16``]
    (GSYM wordsTheory.w2w_w2w)) >>
-ASM_SIMP_TAC (std_ss++wordsLib.WORD_ss) [wordsTheory.word_extract_def, w2w_id]);
+ASM_SIMP_TAC (std_ss++wordsLib.WORD_ss) [wordsTheory.word_extract_def, w2w_id]
+QED
 
 
-val m0_Shift_C = store_thm ("m0_Shift_C",
-``!n w:word32. (0 < n) /\ (n <= 32) ==>
-    (((((w2w w):33 word) << n) ' 32) = word_bit (32 - n) w)``,
-
+Theorem m0_Shift_C:
+  !n w:word32. (0 < n) /\ (n <= 32) ==>
+    (((((w2w w):33 word) << n) ' 32) = word_bit (32 - n) w)
+Proof
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_lsl_def,
-  fcpTheory.FCP_BETA, w2w, word_bit_def]);
+  fcpTheory.FCP_BETA, w2w, word_bit_def]
+QED
 
 
-val m0_Shift_N_aux = prove (
-``!m n w:'a word.  (m <= dimindex (:'a) - 1) /\ (n <= m) ==>
-    (word_bit m (w << n) = word_bit (m - n) w)``,
-
+Theorem m0_Shift_N_aux[local]:
+  !m n w:'a word.  (m <= dimindex (:'a) - 1) /\ (n <= m) ==>
+    (word_bit m (w << n) = word_bit (m - n) w)
+Proof
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss) [word_lsl_def,
-  fcpTheory.FCP_BETA, w2w, word_bit_def]);
+  fcpTheory.FCP_BETA, w2w, word_bit_def]
+QED
 
 val m0_Shift_N = save_thm ("m0_Shift_N", let
   val thm0 = SPEC ``31:num`` (INST_TYPE [``:'a`` |-> ``:32``] m0_Shift_N_aux)
@@ -412,10 +471,10 @@ in
 end);
 
 
-val m0_mask_last_bit_REWR_aux = prove (
-``!w. (((31 >< 1) w): (31 word) @@ (0w:word1)):word32 =
-      w && ~(1w)``,
-
+Theorem m0_mask_last_bit_REWR_aux[local]:
+  !w. (((31 >< 1) w): (31 word) @@ (0w:word1)):word32 =
+      w && ~(1w)
+Proof
 Cases >>
 REPEAT STRIP_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
@@ -429,17 +488,18 @@ REPEAT STRIP_TAC >>
   Q.SUBGOAL_THEN `(1:num) = (2:num) ** 0` SUBST1_TAC >- SIMP_TAC arith_ss [] >>
   REWRITE_TAC [bitTheory.BIT_TWO_POW]
 ) >>
-Cases_on `i` >> FULL_SIMP_TAC arith_ss []);
+Cases_on `i` >> FULL_SIMP_TAC arith_ss []
+QED
 
 
-val m0_mask_last_bit_REWR = save_thm ("m0_mask_last_bit_REWR",
-SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] m0_mask_last_bit_REWR_aux);
+Theorem m0_mask_last_bit_REWR = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] m0_mask_last_bit_REWR_aux
 
 
 
-val LowestSetBit_ALT_DEF = store_thm ("LowestSetBit_ALT_DEF",
-``!w. m0$LowestSetBit (w:'a word) = if (w = 0w) then dimindex (:'a) else LEAST i. w ' i``,
 
+Theorem LowestSetBit_ALT_DEF:
+  !w. m0$LowestSetBit (w:'a word) = if (w = 0w) then dimindex (:'a) else LEAST i. w ' i
+Proof
 SIMP_TAC std_ss [LowestSetBit_def, CountLeadingZeroBits_def,
   HighestSetBit_def, word_len_def, word_reverse_thm] >>
 GEN_TAC >>
@@ -505,14 +565,15 @@ Q.SUBGOAL_THEN `(&dimindex (:'a) - (1:int) - &(dimindex (:'a) - (1:num) - m)) = 
   ASM_SIMP_TAC intLib.int_ss [int_arithTheory.INT_NUM_SUB, GSYM integerTheory.INT_ADD]
 ) >>
 
-ASM_SIMP_TAC intLib.int_ss []);
+ASM_SIMP_TAC intLib.int_ss []
+QED
 
 
 
-val LowestSetBit_n2w = store_thm ("LowestSetBit_n2w",
-``!n. m0$LowestSetBit ((n2w n):'a word) =
-      (if (n MOD dimword (:'a) = 0) then dimindex (:'a) else LOWEST_SET_BIT n)``,
-
+Theorem LowestSetBit_n2w:
+  !n. m0$LowestSetBit ((n2w n):'a word) =
+      (if (n MOD dimword (:'a) = 0) then dimindex (:'a) else LOWEST_SET_BIT n)
+Proof
 GEN_TAC >>
 Q.SUBGOAL_THEN `(n MOD dimword (:'a) = 0) = (n2w n = (0w:'a word))` SUBST1_TAC >- (
   SIMP_TAC arith_ss [LowestSetBit_ALT_DEF, n2w_11, ZERO_LT_dimword]
@@ -538,13 +599,14 @@ rename1 `BIT ii n` >>
 `~(ii < m)` suffices_by DECIDE_TAC >>
 STRIP_TAC >>
 `ii < dimindex (:'a)` by DECIDE_TAC >>
-METIS_TAC[word_index]);
+METIS_TAC[word_index]
+QED
 
 
 
 
-val m0_rev_folds = store_thm ("m0_rev_folds",
-`` (!(w :word32).
+Theorem m0_rev_folds:
+  (!(w :word32).
       (((((23 :num) >< (16 :num)) w :word8) @@
         (((((31 :num) >< (24 :num)) w :word8) @@
          (((((7 :num) >< (0 :num)) w :word8) @@
@@ -552,27 +614,29 @@ val m0_rev_folds = store_thm ("m0_rev_folds",
             :word16))
            :word24))
          :word32) =
-      word_reverse_16_32 (word_reverse_8_32 w))``,
-
+      word_reverse_16_32 (word_reverse_8_32 w))
+Proof
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
   w2w, word_bits_def, fcpTheory.FCP_BETA] >>
-SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []
+QED
 
 
-val m0_revs_folds = store_thm ("m0_revs_folds",
-``!w:word32.
+Theorem m0_revs_folds:
+  !w:word32.
     (((sw2sw (w2w (w :word32) :word8) :word24) @@
        (((15 :num) >< (8 :num)) (w :word32) :
            word8))
-        :word32) = sw2sw (word_reverse_8_16 (w2w w))``,
-
+        :word32) = sw2sw (word_reverse_8_16 (w2w w))
+Proof
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
   w2w, sw2sw, word_bits_def, fcpTheory.FCP_BETA, word_msb_def] >>
-SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []
+QED
 
 
 
@@ -580,54 +644,54 @@ SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
 (* Combinations *)
 (****************)
 
-val m0_extra_LIFTS_LE = save_thm ("m0_extra_LIFTS_LE",
-  LIST_CONJ [
+Theorem m0_extra_LIFTS_LE = LIST_CONJ [
     m0_LIFT_LOAD_BYTE_LE,
     m0_LIFT_LOAD_HALF_LE,
     m0_LIFT_LOAD_WORD_LE,
     m0_LIFT_STORE_BYTE_LE,
     m0_LIFT_STORE_HALF_LE,
     m0_LIFT_STORE_WORD_LE
-]);
+]
 
 
-val m0_extra_LIFTS_BE = save_thm ("m0_extra_LIFTS_BE",
-  LIST_CONJ [
+
+Theorem m0_extra_LIFTS_BE = LIST_CONJ [
     m0_LIFT_LOAD_BYTE_BE,
     m0_LIFT_LOAD_HALF_BE,
     m0_LIFT_LOAD_WORD_BE,
     m0_LIFT_STORE_BYTE_BE,
     m0_LIFT_STORE_HALF_BE,
     m0_LIFT_STORE_WORD_BE
-]);
+]
 
 
-val m0_CHANGE_INTERVAL_THMS = save_thm ("m0_CHANGE_INTERVAL_THMS",
-  LIST_CONJ [
+
+Theorem m0_CHANGE_INTERVAL_THMS = LIST_CONJ [
     m0_LIFT_STORE_WORD_LE_CHANGE_INTERVAL,
     m0_LIFT_STORE_WORD_BE_CHANGE_INTERVAL,
     m0_LIFT_STORE_HALF_LE_CHANGE_INTERVAL,
     m0_LIFT_STORE_HALF_BE_CHANGE_INTERVAL,
-    m0_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
+    m0_LIFT_STORE_BYTE_CHANGE_INTERVAL]
+
 
 
 val extract_byte_RULE = SIMP_RULE std_ss [m0_extract_byte, m0_extract_half];
 
 
-val m0_extra_FOLDS_GEN = save_thm ("m0_extra_FOLDS_GEN",
-  LIST_CONJ [GSYM m0_mem_word_LE_def, GSYM m0_mem_half_LE_def,
+Theorem m0_extra_FOLDS_GEN = LIST_CONJ [GSYM m0_mem_word_LE_def, GSYM m0_mem_half_LE_def,
              GSYM m0_mem_word_BE_def, GSYM m0_mem_half_BE_def,
              m0_extract_byte, m0_extract_half, m0_mask_last_bit_REWR, m0_Shift_C, m0_Shift_N,
              GSYM word_reverse_REWRS, align_AND_INTROS, m0_word_bit_0_ms_aligned,
-             m0_rev_folds, m0_revs_folds, m0_ror_w2w_remove])
+             m0_rev_folds, m0_revs_folds, m0_ror_w2w_remove]
 
-val m0_extra_FOLDS_LE = save_thm ("m0_extra_FOLDS_LE",
-  extract_byte_RULE (
-  LIST_CONJ [m0_mem_store_LE_FOLDS]))
 
-val m0_extra_FOLDS_BE = save_thm ("m0_extra_FOLDS_BE",
-  extract_byte_RULE (
-  (LIST_CONJ [m0_mem_store_BE_FOLDS])))
+Theorem m0_extra_FOLDS_LE = extract_byte_RULE (
+  LIST_CONJ [m0_mem_store_LE_FOLDS])
+
+
+Theorem m0_extra_FOLDS_BE = extract_byte_RULE (
+  (LIST_CONJ [m0_mem_store_BE_FOLDS]))
+
 
 
 val _ = export_theory();

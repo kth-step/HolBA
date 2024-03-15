@@ -25,66 +25,82 @@ val _ = new_theory "bir_program_vars";
 (* For sets of BIR variables, we need a special complement function. The lookup
    only considers the name, not the type. So, our special complement should ignore the
    type as well. *)
-val bir_varset_COMPL_def = Define `bir_varset_COMPL vs =
-  {v | !v'. v' IN vs ==> (bir_var_name v <> bir_var_name v')}`
+Definition bir_varset_COMPL_def:
+  bir_varset_COMPL vs =
+  {v | !v'. v' IN vs ==> (bir_var_name v <> bir_var_name v')}
+End
 
-val IN_bir_varset_COMPL = store_thm ("IN_bir_varset_COMPL",
-``!v vs. v IN bir_varset_COMPL vs <=> (!v'. v' IN vs ==> (bir_var_name v <> bir_var_name v'))``,
-SIMP_TAC std_ss [bir_varset_COMPL_def, GSPECIFICATION]);
+Theorem IN_bir_varset_COMPL:
+  !v vs. v IN bir_varset_COMPL vs <=> (!v'. v' IN vs ==> (bir_var_name v <> bir_var_name v'))
+Proof
+SIMP_TAC std_ss [bir_varset_COMPL_def, GSPECIFICATION]
+QED
 
-val bir_varset_COMPL_EMPTY = store_thm ("bir_varset_COMPL_EMPTY",
-``bir_varset_COMPL EMPTY = UNIV``,
-SIMP_TAC std_ss [EXTENSION, IN_bir_varset_COMPL, NOT_IN_EMPTY, IN_UNIV]);
+Theorem bir_varset_COMPL_EMPTY:
+  bir_varset_COMPL EMPTY = UNIV
+Proof
+SIMP_TAC std_ss [EXTENSION, IN_bir_varset_COMPL, NOT_IN_EMPTY, IN_UNIV]
+QED
 
-val bir_varset_COMPL_UNIV = store_thm ("bir_varset_COMPL_UNIV",
-``bir_varset_COMPL UNIV = EMPTY``,
+Theorem bir_varset_COMPL_UNIV:
+  bir_varset_COMPL UNIV = EMPTY
+Proof
 SIMP_TAC std_ss [EXTENSION, IN_bir_varset_COMPL, NOT_IN_EMPTY, IN_UNIV] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
-val bir_varset_COMPL_SUBSET_COMPL = store_thm ("bir_varset_COMPL_SUBSET_COMPL",
-``!vs. bir_varset_COMPL vs SUBSET COMPL vs``,
+Theorem bir_varset_COMPL_SUBSET_COMPL:
+  !vs. bir_varset_COMPL vs SUBSET COMPL vs
+Proof
 SIMP_TAC std_ss [SUBSET_DEF, IN_bir_varset_COMPL, IN_COMPL] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
-val bir_varset_COMPL_UNION = store_thm ("bir_varset_COMPL_UNION",
- ``!vs1 vs2. bir_varset_COMPL (vs1 UNION vs2) =
-             bir_varset_COMPL vs1 INTER bir_varset_COMPL vs2``,
-
+Theorem bir_varset_COMPL_UNION:
+  !vs1 vs2. bir_varset_COMPL (vs1 UNION vs2) =
+             bir_varset_COMPL vs1 INTER bir_varset_COMPL vs2
+Proof
 SIMP_TAC std_ss [EXTENSION, IN_INTER, IN_UNION, IN_bir_varset_COMPL] >>
-METIS_TAC[])
+METIS_TAC[]
+QED
 
 
-val bir_varset_COMPL_SING = store_thm ("bir_varset_COMPL_SING",
-  ``!v. bir_varset_COMPL {v} = {v' | bir_var_name v' <> bir_var_name v}``,
-SIMP_TAC std_ss [bir_varset_COMPL_def, IN_INSERT, NOT_IN_EMPTY]);
+Theorem bir_varset_COMPL_SING:
+  !v. bir_varset_COMPL {v} = {v' | bir_var_name v' <> bir_var_name v}
+Proof
+SIMP_TAC std_ss [bir_varset_COMPL_def, IN_INSERT, NOT_IN_EMPTY]
+QED
 
-val bir_varset_COMPL_INSERT = store_thm ("bir_varset_COMPL_INSERT",
- ``!v vs. bir_varset_COMPL (v INSERT vs) =
-          (bir_varset_COMPL vs INTER {v' | bir_var_name v' <> bir_var_name v})``,
-
+Theorem bir_varset_COMPL_INSERT:
+  !v vs. bir_varset_COMPL (v INSERT vs) =
+          (bir_varset_COMPL vs INTER {v' | bir_var_name v' <> bir_var_name v})
+Proof
 SIMP_TAC std_ss [EXTENSION, IN_INTER, IN_bir_varset_COMPL, IN_INSERT,
   GSPECIFICATION] >>
-METIS_TAC[])
+METIS_TAC[]
+QED
 
-val bir_varset_COMPL_SUBSET = store_thm ("bir_varset_COMPL_SUBSET",
-``!vs1 vs2. vs2 SUBSET vs1 ==> (bir_varset_COMPL vs1 SUBSET bir_varset_COMPL vs2)``,
-SIMP_TAC std_ss [SUBSET_DEF, IN_bir_varset_COMPL]);
+Theorem bir_varset_COMPL_SUBSET:
+  !vs1 vs2. vs2 SUBSET vs1 ==> (bir_varset_COMPL vs1 SUBSET bir_varset_COMPL vs2)
+Proof
+SIMP_TAC std_ss [SUBSET_DEF, IN_bir_varset_COMPL]
+QED
 
 
-val bir_varset_COMPL_IN_EVAL = store_thm ("bir_varset_COMPL_IN_EVAL",
-
-``(!v. v IN bir_varset_COMPL EMPTY) /\
+Theorem bir_varset_COMPL_IN_EVAL:
+  (!v. v IN bir_varset_COMPL EMPTY) /\
   (!v. ~(v IN bir_varset_COMPL UNIV)) /\
   (!v vs1 vs2. (v IN bir_varset_COMPL (vs1 UNION vs2)) <=>
        (v IN bir_varset_COMPL vs1 /\
         v IN bir_varset_COMPL vs2)) /\
   (!v vs v'. (v IN bir_varset_COMPL (v' INSERT vs)) <=>
        (bir_var_name v <> bir_var_name v') /\
-       (v IN bir_varset_COMPL vs))``,
-
+       (v IN bir_varset_COMPL vs))
+Proof
 SIMP_TAC std_ss [IN_bir_varset_COMPL, IN_INSERT, IN_UNIV,
   NOT_IN_EMPTY, IN_UNION, DISJ_IMP_THM, FORALL_AND_THM] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 
@@ -93,11 +109,11 @@ METIS_TAC[]);
 (****************)
 
 (* At most the vars in the changed var set are modified *)
-val bir_changed_vars_of_stmtB_THM = store_thm ("bir_changed_vars_of_stmtB_THM",
-``!st stmt.
+Theorem bir_changed_vars_of_stmtB_THM:
+  !st stmt.
    (bir_env_EQ_FOR_VARS (bir_varset_COMPL (bir_changed_vars_of_stmtB stmt))
-        (bir_exec_stmtB_state stmt st).bst_environ (st.bst_environ))``,
-
+        (bir_exec_stmtB_state stmt st).bst_environ (st.bst_environ))
+Proof
 Cases_on `stmt` >> (
   (* Interesting case is only assign. In all other cases
      the env is not changed. *)
@@ -120,14 +136,14 @@ Cases_on `stmt` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
       bir_env_lookup_UPDATE]
   )
-);
+QED
 
 
-val bir_changed_vars_of_stmt_THM = store_thm ("bir_changed_vars_of_stmt_THM",
-``!st p stmt.
+Theorem bir_changed_vars_of_stmt_THM:
+  !st p stmt.
    (bir_env_EQ_FOR_VARS (bir_varset_COMPL (bir_changed_vars_of_stmt stmt))
-        (bir_exec_stmt_state p stmt st).bst_environ (st.bst_environ))``,
-
+        (bir_exec_stmt_state p stmt st).bst_environ (st.bst_environ))
+Proof
 REPEAT GEN_TAC >>
 Cases_on `stmt` >- (
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [bir_exec_stmt_state_REWRS, LET_THM,
@@ -135,14 +151,15 @@ Cases_on `stmt` >- (
   METIS_TAC[bir_changed_vars_of_stmtB_THM]
 ) >>
 SIMP_TAC std_ss [bir_exec_stmt_state_REWRS, bir_exec_stmtE_env_unchanged,
-  bir_env_EQ_FOR_VARS_EQUIV]);
+  bir_env_EQ_FOR_VARS_EQUIV]
+QED
 
 
-val bir_changed_vars_exec_step_THM = store_thm ("bir_changed_vars_exec_step_THM",
-``!(p:'a bir_program_t) st.
+Theorem bir_changed_vars_exec_step_THM:
+  !(p:'a bir_program_t) st.
    (bir_env_EQ_FOR_VARS (bir_varset_COMPL (bir_changed_vars_of_program p))
-        ((bir_exec_step_state p st).bst_environ) (st.bst_environ))``,
-
+        ((bir_exec_step_state p st).bst_environ) (st.bst_environ))
+Proof
 REPEAT STRIP_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def,
   bir_env_EQ_FOR_VARS_EQUIV] >>
@@ -159,14 +176,14 @@ DISJ2_TAC >>
 ) >>
 METIS_TAC[bir_changed_vars_of_stmt_THM, bir_env_EQ_FOR_VARS_SUBSET,
     bir_varset_COMPL_SUBSET, bir_env_EQ_FOR_VARS_EQUIV]
-);
+QED
 
 
-val bir_changed_vars_exec_step_n_THM = store_thm ("bir_changed_vars_exec_step_n_THM",
-``!(p:'a bir_program_t) n st.
+Theorem bir_changed_vars_exec_step_n_THM:
+  !(p:'a bir_program_t) n st.
    (bir_env_EQ_FOR_VARS (bir_varset_COMPL (bir_changed_vars_of_program p))
-        ((let (ol, n', st') = bir_exec_step_n p st n in st').bst_environ) (st.bst_environ))``,
-
+        ((let (ol, n', st') = bir_exec_step_n p st n in st').bst_environ) (st.bst_environ))
+Proof
 GEN_TAC >> Induct >- (
   SIMP_TAC std_ss [bir_exec_step_n_REWRS, LET_THM, bir_env_EQ_FOR_VARS_EQUIV]
 ) >>
@@ -178,7 +195,8 @@ Cases_on `bir_exec_step p st` >> rename1 `_ = (fe, st')` >>
 MP_TAC (Q.SPECL [`p`, `st`] bir_changed_vars_exec_step_THM) >>
 Q.PAT_X_ASSUM `!st. _` (MP_TAC o Q.SPEC `st'`) >>
 ASM_SIMP_TAC std_ss [bir_exec_step_state_def, LET_THM] >>
-METIS_TAC[bir_env_EQ_FOR_VARS_EQUIV]);
+METIS_TAC[bir_env_EQ_FOR_VARS_EQUIV]
+QED
 
 
 
@@ -187,31 +205,33 @@ METIS_TAC[bir_env_EQ_FOR_VARS_EQUIV]);
 (* All vars *)
 (************)
 
-val bir_state_EQ_FOR_VARS_def = Define `
+Definition bir_state_EQ_FOR_VARS_def:
   bir_state_EQ_FOR_VARS vs st1 st2 <=> (
     ?env.
       (st2 = st1 with bst_environ := env) /\
-      bir_env_EQ_FOR_VARS vs env (st1.bst_environ))`;
+      bir_env_EQ_FOR_VARS vs env (st1.bst_environ))
+End
 
-val bir_state_EQ_FOR_VARS_ALT_DEF = store_thm ("bir_state_EQ_FOR_VARS_ALT_DEF",
-``!vs st1 st2.
+Theorem bir_state_EQ_FOR_VARS_ALT_DEF:
+  !vs st1 st2.
   bir_state_EQ_FOR_VARS vs st1 st2 <=>
   (st1.bst_pc = st2.bst_pc) /\ (st1.bst_status = st2.bst_status) /\
-  bir_env_EQ_FOR_VARS vs st1.bst_environ st2.bst_environ``,
-
+  bir_env_EQ_FOR_VARS vs st1.bst_environ st2.bst_environ
+Proof
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_state_t_component_equality,
-  bir_state_EQ_FOR_VARS_def, bir_env_EQ_FOR_VARS_EQUIV]);
+  bir_state_EQ_FOR_VARS_def, bir_env_EQ_FOR_VARS_EQUIV]
+QED
 
 
 (* At most the vars in the changed var set are modified *)
-val bir_vars_of_stmtB_THM = store_thm ("bir_vars_of_stmtB_THM",
-``!st1 st2 vs stmt.
+Theorem bir_vars_of_stmtB_THM:
+  !st1 st2 vs stmt.
     (bir_vars_of_stmtB stmt SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (let (oo1, st1') = bir_exec_stmtB stmt st1 in
      let (oo2, st2') = bir_exec_stmtB stmt st2 in
-     ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
-
+     ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF] >>
 `bir_env_EQ_FOR_VARS (bir_vars_of_stmtB stmt) st1.bst_environ st2.bst_environ` by
@@ -291,33 +311,33 @@ Cases_on `stmt` >> (
     FULL_SIMP_TAC std_ss []
   )
 ]
-);
+QED
 
 
-val bir_vars_of_stmtB_state_THM = store_thm ("bir_vars_of_stmtB_state_THM",
-``!st1 st2 vs stmt.
+Theorem bir_vars_of_stmtB_state_THM:
+  !st1 st2 vs stmt.
     (bir_vars_of_stmtB stmt SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
 
     (bir_state_EQ_FOR_VARS vs
       (bir_exec_stmtB_state stmt st1)
-      (bir_exec_stmtB_state stmt st2))``,
-
-
+      (bir_exec_stmtB_state stmt st2))
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`st1`, `st2`, `vs`, `stmt`] bir_vars_of_stmtB_THM) >>
 ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_DEF,
-  bir_exec_stmtB_state_def]);
+  bir_exec_stmtB_state_def]
+QED
 
 
-val bir_vars_of_stmtE_THM = store_thm ("bir_vars_of_stmtE_THM",
-``!st1 st2 vs p stmt.
+Theorem bir_vars_of_stmtE_THM:
+  !st1 st2 vs p stmt.
     (bir_vars_of_stmtE stmt SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (bir_state_EQ_FOR_VARS vs
       (bir_exec_stmtE p stmt st1)
-      (bir_exec_stmtE p stmt st2))``,
-
+      (bir_exec_stmtE p stmt st2))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF] >>
 `bir_env_EQ_FOR_VARS (bir_vars_of_stmtE stmt) st1.bst_environ st2.bst_environ` by
@@ -366,17 +386,18 @@ Cases_on `stmt` >> (
   Cases_on `bir_eval_exp e st2.bst_environ` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def, bir_state_set_typeerror_def]
   )
-]);
+]
+QED
 
 
-val bir_vars_of_stmt_THM = store_thm ("bir_vars_of_stmt_THM",
-``!st1 st2 vs p stmt.
+Theorem bir_vars_of_stmt_THM:
+  !st1 st2 vs p stmt.
     (bir_vars_of_stmt stmt SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (let (oo1, st1') = bir_exec_stmt p stmt st1 in
      let (oo2, st2') = bir_exec_stmt p stmt st2 in
-     ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
-
+     ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `stmt` >> (
   FULL_SIMP_TAC (std_ss++pairSimps.gen_beta_ss++boolSimps.LIFT_COND_ss++
@@ -392,30 +413,32 @@ Cases_on `stmt` >> (
   FULL_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [bir_state_EQ_FOR_VARS_ALT_DEF, LET_DEF],
 
   METIS_TAC[bir_state_EQ_FOR_VARS_ALT_DEF, bir_vars_of_stmtE_THM]
-]);
+]
+QED
 
 
-val bir_vars_of_stmt_state_THM = store_thm ("bir_vars_of_stmt_state_THM",
-``!st1 st2 vs p stmt.
+Theorem bir_vars_of_stmt_state_THM:
+  !st1 st2 vs p stmt.
     (bir_vars_of_stmt stmt SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (bir_state_EQ_FOR_VARS vs
       (bir_exec_stmt_state p stmt st1)
-      (bir_exec_stmt_state p stmt st2))``,
-
+      (bir_exec_stmt_state p stmt st2))
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`st1`, `st2`, `vs`, `p`, `stmt`] bir_vars_of_stmt_THM) >>
-ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_DEF, bir_exec_stmt_state_def]);
+ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_DEF, bir_exec_stmt_state_def]
+QED
 
 
-val bir_vars_exec_step_THM = store_thm ("bir_vars_exec_step_THM",
-``!p st1 st2 vs.
+Theorem bir_vars_exec_step_THM:
+  !p st1 st2 vs.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (let (oo1, st1') = bir_exec_step p st1 in
      let (oo2, st2') = bir_exec_step p st2 in
-     ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
-
+     ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))
+Proof
 REPEAT STRIP_TAC >>
 `(bir_state_is_terminated st2 = bir_state_is_terminated st1) /\
  (st1.bst_pc = st2.bst_pc)` by
@@ -436,43 +459,45 @@ DISJ2_TAC >>
 ) >>
 
 MP_TAC (Q.SPECL [`st1`, `st2`, `vs`, `p`, `stmt`] bir_vars_of_stmt_THM) >>
-ASM_SIMP_TAC std_ss [LET_THM]);
+ASM_SIMP_TAC std_ss [LET_THM]
+QED
 
 
-val bir_vars_exec_step_state_THM = store_thm ("bir_vars_exec_step_state_THM",
-``!p st1 st2 vs.
+Theorem bir_vars_exec_step_state_THM:
+  !p st1 st2 vs.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_state_EQ_FOR_VARS vs (bir_exec_step_state p st1) (bir_exec_step_state p st2))``,
-
+    (bir_state_EQ_FOR_VARS vs (bir_exec_step_state p st1) (bir_exec_step_state p st2))
+Proof
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`p`, `st1`, `st2`, `vs`] bir_vars_exec_step_THM) >>
-ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_THM, bir_exec_step_state_def]);
+ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_THM, bir_exec_step_state_def]
+QED
 
 
 
-val bir_vars_exec_infinite_step_fun_THM = store_thm ("bir_vars_exec_infinite_step_fun_THM",
-``!p vs i st1 st2.
+Theorem bir_vars_exec_infinite_step_fun_THM:
+  !p vs i st1 st2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_state_EQ_FOR_VARS vs (bir_exec_infinite_steps_fun p st1 i) (bir_exec_infinite_steps_fun p st2 i))``,
-
+    (bir_state_EQ_FOR_VARS vs (bir_exec_infinite_steps_fun p st1 i) (bir_exec_infinite_steps_fun p st2 i))
+Proof
 NTAC 2 GEN_TAC >>
 Induct >> (
   SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS]
 ) >>
-METIS_TAC[bir_vars_exec_step_state_THM]);
+METIS_TAC[bir_vars_exec_step_state_THM]
+QED
 
 
-val bir_vars_exec_step_n_THM = store_thm ("bir_vars_exec_step_n_THM",
-``!p vs n st1 st2.
+Theorem bir_vars_exec_step_n_THM:
+  !p vs n st1 st2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (let (ol1, n1, st1') = bir_exec_step_n p st1 n in
      let (ol2, n2, st2') = bir_exec_step_n p st2 n in
-     ((ol1 = ol2) /\ (n1 = n2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
-
-
+     ((ol1 = ol2) /\ (n1 = n2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))
+Proof
 NTAC 2 GEN_TAC >> Induct >- (
   SIMP_TAC std_ss [bir_exec_step_n_REWRS, LET_THM, bir_env_EQ_FOR_VARS_EQUIV]
 ) >>
@@ -482,34 +507,36 @@ REPEAT STRIP_TAC >>
 Q.PAT_X_ASSUM `!st1 st2. _` (MP_TAC o Q.SPECL [`st1'`, `st2'`]) >>
 MP_TAC (Q.SPECL [`p`, `st1`, `st2`, `vs`] bir_vars_exec_step_THM) >>
 FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++pairSimps.gen_beta_ss) [LET_THM, bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_is_terminated_def,
-  bir_exec_step_n_SUC]);
+  bir_exec_step_n_SUC]
+QED
 
 
-val bir_vars_exec_steps_THM_aux_SOME = prove (
-``!p vs st1 st2 st1' ol c c'.
+Theorem bir_vars_exec_steps_THM_aux_SOME[local]:
+  !p vs st1 st2 st1' ol c c'.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (bir_exec_steps p st1 = BER_Ended ol c c' st1') ==>
     (?st2'. (bir_exec_steps p st2 = BER_Ended ol c c' st2') /\
-            (bir_state_EQ_FOR_VARS vs st1' st2'))``,
-
+            (bir_state_EQ_FOR_VARS vs st1' st2'))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_TO_bir_exec_step_n] >>
 `?l1 c1 st2'. bir_exec_step_n p st2 c = (l1, c1, st2')` by METIS_TAC[pairTheory.PAIR] >>
 MP_TAC (Q.SPECL [`p`, `vs`, `c`, `st1`, `st2`] bir_vars_exec_step_n_THM) >>
 FULL_SIMP_TAC std_ss [LET_THM, bir_state_is_terminated_def, bir_state_EQ_FOR_VARS_ALT_DEF] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 
-val bir_vars_exec_steps_THM_aux_NONE = prove (
-``!p vs st1 st2 st1' ll1 ll2.
+Theorem bir_vars_exec_steps_THM_aux_NONE[local]:
+  !p vs st1 st2 st1' ll1 ll2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (bir_exec_steps p st1 = BER_Looping ll1) ==>
     (bir_exec_steps p st2 = BER_Looping ll2) ==>
-    (ll1 = ll2)``,
-
+    (ll1 = ll2)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_EQ_Looping,
   bir_exec_steps_observe_llist_def] >>
@@ -520,12 +547,13 @@ REPEAT BasicProvers.VAR_EQ_TAC >>
 GEN_TAC >>
 MP_TAC (Q.SPECL [`p`, `bir_exec_infinite_steps_fun p st1 i`, `bir_exec_infinite_steps_fun p st2 i`, `vs`] bir_vars_exec_step_THM) >>
 MP_TAC (Q.SPECL [`p`, `vs`, `i`, `st1`, `st2`] bir_vars_exec_infinite_step_fun_THM) >>
-ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_THM]);
+ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_THM]
+QED
 
 
 
-val bir_vars_exec_steps_THM = store_thm ("bir_vars_exec_steps_THM",
-``!p vs st1 st2.
+Theorem bir_vars_exec_steps_THM:
+  !p vs st1 st2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
     (case (bir_exec_steps p st1, bir_exec_steps p st2) of
@@ -533,8 +561,8 @@ val bir_vars_exec_steps_THM = store_thm ("bir_vars_exec_steps_THM",
          | (BER_Ended ol1 n1 n1' st1', BER_Ended ol2 n2 n2' st2') =>
               (ol1 = ol2) /\ (n1 = n2) /\ (n2' = n2) /\ (n1' = n2) /\
               (bir_state_EQ_FOR_VARS vs st1' st2')
-         | (_, _) => F)``,
-
+         | (_, _) => F)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `bir_exec_steps p st1` >- (
   MP_TAC (Q.SPECL [`p`, `vs`, `st1`, `st2`] bir_vars_exec_steps_THM_aux_SOME) >>
@@ -548,7 +576,8 @@ Cases_on `bir_exec_steps p st1` >- (
 
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [pairTheory.pair_case_thm] >>
   METIS_TAC[bir_vars_exec_steps_THM_aux_NONE]
-));
+)
+QED
 
 
 val _ = export_theory();

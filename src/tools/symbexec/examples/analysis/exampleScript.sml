@@ -22,9 +22,9 @@ val bprog = List.nth((snd o strip_comb o concl) bin_small_example_thm, 3);
 
 List.nth ((fst o listSyntax.dest_list o snd o dest_comb) bprog, 13)
 *)
-val bprog_def = Define `
-    bprog = ^(bprog)
-`;
+Definition bprog_def:
+  bprog = ^(bprog)
+End
 val bprog_tm = (fst o dest_eq o concl) bprog_def;
 (* ........................... *)
 
@@ -97,6 +97,7 @@ val _ = Portable.pprint Tag.pp_tag (tag result);
 
 
 
-val _ = save_thm ("bin_small_example_analysis_thm", result);
+Theorem bin_small_example_analysis_thm = result
+
 
 val _ = export_theory();

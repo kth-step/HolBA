@@ -17,45 +17,43 @@ val _ = new_theory "birs_rules";
 
 
 
-val birs_pcondinf_def = Define `
-    birs_pcondinf pcond =
+Definition birs_pcondinf_def:
+  birs_pcondinf pcond =
   (!H.
     (birs_interpr_welltyped H) ==>
     (symb_interpr_for_symbs (bir_vars_of_exp pcond) H) ==>
     (birs_interpret_fun H pcond = SOME bir_val_false)
   )
-`;
+End
 
-val birs_pcondinf_thm = store_thm(
-   "birs_pcondinf_thm", ``
-!bprog pcond.
+Theorem birs_pcondinf_thm:
+  !bprog pcond.
   birs_pcondinf pcond ==>
   symb_pcondinf (bir_symb_rec_sbir bprog) pcond
-``,
-  REWRITE_TAC [symb_rulesTheory.symb_pcondinf_def, birs_pcondinf_def] >>
+Proof
+REWRITE_TAC [symb_rulesTheory.symb_pcondinf_def, birs_pcondinf_def] >>
   REWRITE_TAC [birs_interpr_welltyped_EQ_thm] >>
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, symb_interpr_symbpcond_def, bir_bool_expTheory.bir_val_TF_dist]
-);
+QED
 
-val birs_pcondwiden_def = Define `
-    birs_pcondwiden pcond pcond' =
+Definition birs_pcondwiden_def:
+  birs_pcondwiden pcond pcond' =
     (!H.
       (birs_interpr_welltyped H) ==>
       (symb_interpr_for_symbs ((bir_vars_of_exp pcond) UNION (bir_vars_of_exp pcond')) H) ==>
       (birs_interpret_fun H pcond = SOME bir_val_true) ==>
       (birs_interpret_fun H pcond' = SOME bir_val_true))
-`;
+End
 
-val birs_pcondwiden_thm = store_thm(
-   "birs_pcondwiden_thm", ``
-!bprog pcond pcond'.
+Theorem birs_pcondwiden_thm:
+  !bprog pcond pcond'.
   symb_pcondwiden (bir_symb_rec_sbir bprog) pcond pcond' <=>
   birs_pcondwiden pcond pcond'
-``,
-  REWRITE_TAC [symb_rulesTheory.symb_pcondwiden_def, birs_pcondwiden_def] >>
+Proof
+REWRITE_TAC [symb_rulesTheory.symb_pcondwiden_def, birs_pcondwiden_def] >>
   REWRITE_TAC [birs_interpr_welltyped_EQ_thm] >>
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, symb_interpr_symbpcond_def, bir_bool_expTheory.bir_val_TF_dist]
-);
+QED
 
 
 (* ******************************************************* *)
@@ -65,13 +63,12 @@ val birs_pcondwiden_thm = store_thm(
 local
   open bir_bool_expTheory
 in
-val bir_conj_true = store_thm(
-   "bir_conj_true",
-  ``!A B.
+Theorem bir_conj_true:
+  !A B.
       (bir_eval_bin_exp BIExp_And (A) (B) = SOME bir_val_true) ==>
       (A = SOME bir_val_true /\
-       B = SOME bir_val_true)``,
-
+       B = SOME bir_val_true)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def,
                                       bir_val_false_def] >> (
@@ -92,26 +89,24 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def,
   ) >>
   blastLib.FULL_BBLAST_TAC
 )
-);
+QED
 end;
 
-val birs_pcondwiden_AND_thm = store_thm(
-   "birs_pcondwiden_AND_thm", ``
-!pre cond.
+Theorem birs_pcondwiden_AND_thm:
+  !pre cond.
   birs_pcondwiden (BExp_BinExp BIExp_And pre cond) pre
-``,
-  REWRITE_TAC [birs_pcondwiden_def] >>
+Proof
+REWRITE_TAC [birs_pcondwiden_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
 
   METIS_TAC [bir_conj_true]
-);
+QED
 
 
-val assert_spec_thm = store_thm(
-   "assert_spec_thm", ``
-!bprog sys L lbl1 env1 status pre cond lbl2 env2.
+Theorem assert_spec_thm:
+  !bprog sys L lbl1 env1 status pre cond lbl2 env2.
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
     (sys, L, IMAGE birs_symb_to_symbst {
       <|bsst_pc := lbl1;
@@ -133,8 +128,8 @@ val assert_spec_thm = store_thm(
         bsst_environ := env1;
         bsst_status := status;
         bsst_pcond := pre|>}))
-``,
-  REPEAT STRIP_TAC >> (
+Proof
+REPEAT STRIP_TAC >> (
     IMP_RES_TAC symb_rulesTheory.symb_rule_INF_thm >>
     PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl2; bsst_environ := env2;
                   bsst_status := BST_AssertionViolated;
@@ -172,14 +167,14 @@ val assert_spec_thm = store_thm(
     FULL_SIMP_TAC (std_ss) [] >>
     REV_FULL_SIMP_TAC (std_ss) [DIFF_INSERT, SING_DELETE, DIFF_EMPTY, UNION_EMPTY]
   )
-);
+QED
 
 
 (* ******************************************************* *)
 (*      SUBST rule                                         *)
 (* ******************************************************* *)
-val symb_rule_SUBST_SING_thm = prove(``
-!sr.
+Theorem symb_rule_SUBST_SING_thm[local]:
+  !sr.
 !sys L sys2 var symbexp symbexp'.
   (symb_symbols_f_sound sr) ==>
   (symb_ARB_val_sound sr) ==>
@@ -190,19 +185,18 @@ val symb_rule_SUBST_SING_thm = prove(``
   (symb_simplification sr (symb_symbst_pcond sys2) symbexp symbexp') ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, {symb_symbst_store_update var symbexp' sys2}))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   `({sys2} DIFF {sys2}) UNION {symb_symbst_store_update var symbexp' sys2} = {symb_symbst_store_update var symbexp' sys2}` by (
     METIS_TAC [pred_setTheory.DIFF_EQ_EMPTY, pred_setTheory.UNION_EMPTY]
   ) >>
 
   METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
-);
+QED
 
-val birs_rule_SUBST_spec_thm = store_thm(
-   "birs_rule_SUBST_spec_thm", ``
-         !prog sys L sys2 sys2' lbl envl status pcond vn symbexp symbexp'.
+Theorem birs_rule_SUBST_spec_thm:
+  !prog sys L sys2 sys2' lbl envl status pcond vn symbexp symbexp'.
            (sys2 =
              <|bsst_pc := lbl;
                bsst_environ := birs_gen_env ((vn, symbexp)::envl);
@@ -216,8 +210,8 @@ val birs_rule_SUBST_spec_thm = store_thm(
            symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (sys,L,IMAGE birs_symb_to_symbst {sys2}) ==>
            birs_simplification pcond symbexp symbexp' ==>
            symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (sys,L,IMAGE birs_symb_to_symbst {sys2'})
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   ASSUME_TAC (
     (Q.SPECL [`sys`, `L`, `birs_symb_to_symbst sys2`, `vn`, `symbexp`, `symbexp'`] o
      SIMP_RULE std_ss [bir_symb_soundTheory.birs_symb_ARB_val_sound_thm] o
@@ -230,7 +224,7 @@ val birs_rule_SUBST_spec_thm = store_thm(
      bir_symb_simpTheory.birs_simplification_thm,
      symb_symbst_store_update_def, birs_auxTheory.birs_gen_env_thm,
      combinTheory.UPDATE_APPLY]
-);
+QED
 
 
 
@@ -238,9 +232,8 @@ val birs_rule_SUBST_spec_thm = store_thm(
 (* ******************************************************* *)
 (*      STEP rule                                          *)
 (* ******************************************************* *)
-val birs_rule_STEP_gen1_thm = store_thm(
-   "birs_rule_STEP_gen1_thm", ``
-!prog sys.
+Theorem birs_rule_STEP_gen1_thm:
+  !prog sys.
   (bir_prog_has_no_halt prog) ==>
 
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
@@ -248,19 +241,18 @@ val birs_rule_STEP_gen1_thm = store_thm(
      {symb_symbst_pc sys},
      IMAGE birs_symb_to_symbst
        (birs_exec_step prog (birs_symb_from_symbst sys))))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC bir_symb_soundTheory.birs_symb_step_sound_thm >>
 
   IMP_RES_TAC symb_rulesTheory.symb_rule_STEP_thm >>
   POP_ASSUM (ASSUME_TAC o SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss) [] o REWRITE_RULE [Once bir_symbTheory.bir_symb_rec_sbir_def]) >>
 
   METIS_TAC [IN_SING]
-);
+QED
 
-val birs_rule_STEP_gen2_thm = store_thm(
-   "birs_rule_STEP_gen2_thm", ``
-!prog bsys.
+Theorem birs_rule_STEP_gen2_thm:
+  !prog bsys.
   (bir_prog_has_no_halt prog) ==>
 
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
@@ -268,171 +260,160 @@ val birs_rule_STEP_gen2_thm = store_thm(
      {bsys.bsst_pc},
      IMAGE birs_symb_to_symbst
        (birs_exec_step prog bsys)))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC birs_rule_STEP_gen1_thm >>
   POP_ASSUM (ASSUME_TAC o Q.SPEC `birs_symb_to_symbst bsys`) >>
 
   FULL_SIMP_TAC std_ss [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_auxTheory.birs_symb_symbst_pc_thm]
-);
+QED
 
 
 (* ******************************************************* *)
 (*      NO FRESH SYMBS                                     *)
 (* ******************************************************* *)
-val birs_fresh_symbs_def = Define `
-    birs_fresh_symbs bs1 bs2 =
+Definition birs_fresh_symbs_def:
+  birs_fresh_symbs bs1 bs2 =
       ((birs_symb_symbols bs2) DIFF (birs_symb_symbols bs1))
-`;
+End
 
-val birs_NO_fresh_symbs_def = Define `
-    birs_NO_fresh_symbs bs1 bs2 =
+Definition birs_NO_fresh_symbs_def:
+  birs_NO_fresh_symbs bs1 bs2 =
       (birs_fresh_symbs bs1 bs2 = EMPTY)
-`;
+End
 
-val birs_set_fresh_symbs_def = Define `
-    birs_set_fresh_symbs bs sbs =
+Definition birs_set_fresh_symbs_def:
+  birs_set_fresh_symbs bs sbs =
       ((BIGUNION (IMAGE birs_symb_symbols sbs)) DIFF (birs_symb_symbols bs))
-`;
+End
 
-val birs_set_NO_fresh_symbs_def = Define `
-    birs_set_NO_fresh_symbs bs sbs =
+Definition birs_set_NO_fresh_symbs_def:
+  birs_set_NO_fresh_symbs bs sbs =
       (birs_set_fresh_symbs bs sbs = EMPTY)
-`;
+End
 
-val birs_NO_fresh_symbs_SUFFICIENT_thm = store_thm(
-   "birs_NO_fresh_symbs_SUFFICIENT_thm", ``
-!bs1 bs2.
+Theorem birs_NO_fresh_symbs_SUFFICIENT_thm:
+  !bs1 bs2.
   (bs1.bsst_environ = bs2.bsst_environ /\
    bs1.bsst_pcond   = bs2.bsst_pcond) ==>
   (birs_NO_fresh_symbs bs1 bs2)
-``,
-  SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY]
-);
+Proof
+SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY]
+QED
 
-val birs_NO_fresh_symbs_SUFFICIENT2_thm = store_thm(
-   "birs_NO_fresh_symbs_SUFFICIENT2_thm", ``
-!bs1 bs2 bs2'.
+Theorem birs_NO_fresh_symbs_SUFFICIENT2_thm:
+  !bs1 bs2 bs2'.
   (birs_NO_fresh_symbs bs1 bs2 /\
    bs2.bsst_environ = bs2'.bsst_environ /\
    bs2.bsst_pcond   = bs2'.bsst_pcond) ==>
   (birs_NO_fresh_symbs bs1 bs2')
-``,
-  SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY] >>
+Proof
+SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY] >>
   REPEAT STRIP_TAC >>
   METIS_TAC []
-);
+QED
 
 (* TODO: this should go to auxTheory *)
-val SUBSET_of_DIFF_2_thm = store_thm(
-   "SUBSET_of_DIFF_2_thm",
-  ``!s t v.
+Theorem SUBSET_of_DIFF_2_thm:
+  !s t v.
     s SUBSET t ==>
     ((v DIFF t) SUBSET (v DIFF s))
-``,
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DEF] >>
+Proof
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DEF] >>
   METIS_TAC []
-);
+QED
 
-val birs_NO_fresh_symbs_SUFFICIENT3_thm = store_thm(
-   "birs_NO_fresh_symbs_SUFFICIENT3_thm", ``
-!bs1 bs1' bs2.
+Theorem birs_NO_fresh_symbs_SUFFICIENT3_thm:
+  !bs1 bs1' bs2.
   (birs_NO_fresh_symbs bs1 bs2 /\
    (birs_symb_symbols bs1) SUBSET (birs_symb_symbols bs1')) ==>
   (birs_NO_fresh_symbs bs1' bs2)
-``,
-  SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, DIFF_EQ_EMPTY] >>
+Proof
+SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, DIFF_EQ_EMPTY] >>
   REPEAT STRIP_TAC >>
 
   METIS_TAC [SUBSET_of_DIFF_2_thm, SUBSET_EMPTY]
-);
+QED
 
-val BIGUNION_IMAGE_DIFF_EQ_thm = store_thm(
-   "BIGUNION_IMAGE_DIFF_EQ_thm", ``
-!f s1 s2s.
+Theorem BIGUNION_IMAGE_DIFF_EQ_thm:
+  !f s1 s2s.
   ((BIGUNION (IMAGE f s2s)) DIFF s1 = BIGUNION (IMAGE (\s2. (f s2) DIFF s1) s2s))
-``,
-  SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, IN_DIFF] >>
+Proof
+SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, IN_DIFF] >>
   METIS_TAC []
-);
+QED
 
-val birs_set_fresh_symbs_thm = store_thm(
-   "birs_set_fresh_symbs_thm", ``
-!bs sbs.
+Theorem birs_set_fresh_symbs_thm:
+  !bs sbs.
   (birs_set_fresh_symbs bs sbs = BIGUNION (IMAGE (\bs2. birs_fresh_symbs bs bs2) sbs))
-``,
-  SIMP_TAC std_ss [birs_set_fresh_symbs_def, birs_fresh_symbs_def, BIGUNION_IMAGE_DIFF_EQ_thm]
-);
+Proof
+SIMP_TAC std_ss [birs_set_fresh_symbs_def, birs_fresh_symbs_def, BIGUNION_IMAGE_DIFF_EQ_thm]
+QED
 
-val birs_set_NO_fresh_symbs_thm = store_thm(
-   "birs_set_NO_fresh_symbs_thm", ``
-!bs sbs.
+Theorem birs_set_NO_fresh_symbs_thm:
+  !bs sbs.
   (birs_set_NO_fresh_symbs bs sbs =
    !bs2. bs2 IN sbs ==> (birs_NO_fresh_symbs bs bs2))
-``,
-  SIMP_TAC std_ss [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_thm, birs_NO_fresh_symbs_def] >>
+Proof
+SIMP_TAC std_ss [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_thm, birs_NO_fresh_symbs_def] >>
   SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, NOT_IN_EMPTY] >>
   METIS_TAC []
-);
+QED
 
-val birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm = store_thm(
-   "birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm", ``
-!bsys be sv ty pcond'.
+Theorem birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm:
+  !bsys be sv ty pcond'.
   (birs_eval_exp be bsys.bsst_environ = SOME (sv,ty) /\
    bir_vars_of_exp pcond' = bir_vars_of_exp bsys.bsst_pcond UNION bir_vars_of_exp sv) ==>
   (birs_symb_symbols bsys =
    birs_symb_symbols (bsys with bsst_pcond := pcond'))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC bir_symbTheory.bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm >>
 
   ASM_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_def] >>
   IMP_RES_TAC SUBSET_UNION_ABSORPTION >>
 
   METIS_TAC [UNION_COMM, UNION_ASSOC]
-);
+QED
 
-val birs_eval_exp_IMP_symb_symbols_EQ_pcond_status_thm = store_thm(
-   "birs_eval_exp_IMP_symb_symbols_EQ_pcond_status_thm", ``
-!bsys be sv ty pcond' status'.
+Theorem birs_eval_exp_IMP_symb_symbols_EQ_pcond_status_thm:
+  !bsys be sv ty pcond' status'.
   (birs_eval_exp be bsys.bsst_environ = SOME (sv,ty) /\
    bir_vars_of_exp pcond' = bir_vars_of_exp bsys.bsst_pcond UNION bir_vars_of_exp sv) ==>
   (birs_symb_symbols bsys =
    birs_symb_symbols (bsys with <|bsst_status := status'; bsst_pcond := pcond'|>))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm >>
 
   ASM_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_def]
-);
+QED
 
 (* TODO: this definition needs to go somewhere else and must be integrated with the other places where it belongs (into previous definitions and proofs) *)
-val birs_vars_of_env_def = Define `
-    birs_vars_of_env senv =
+Definition birs_vars_of_env_def:
+  birs_vars_of_env senv =
       BIGUNION {bir_vars_of_exp e | (?vn. senv vn = SOME e)}
-`;
+End
 
 (*
 TODO: these two theorems are the same, did I prove them twice? (bir_symbTheory should be "before")
 bir_symbTheory.bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm
 bir_symb_soundTheory.birs_eval_exp_IMP_varset_thm
 *)
-val birs_eval_exp_IMP_symbs_SUBSET_senv_thm = store_thm(
-   "birs_eval_exp_IMP_symbs_SUBSET_senv_thm", ``
-!e senv sv ty.
+Theorem birs_eval_exp_IMP_symbs_SUBSET_senv_thm:
+  !e senv sv ty.
        birs_eval_exp e senv = SOME (sv,ty) ==>
        bir_vars_of_exp sv SUBSET birs_vars_of_env senv
-``,
-  METIS_TAC [bir_symbTheory.bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm, birs_vars_of_env_def]
-);
+Proof
+METIS_TAC [bir_symbTheory.bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm, birs_vars_of_env_def]
+QED
 
-val birs_eval_exp_IMP_vars_of_env_SUBSET_thm = store_thm(
-   "birs_eval_exp_IMP_vars_of_env_SUBSET_thm", ``
-!env be sv ty vn.
+Theorem birs_eval_exp_IMP_vars_of_env_SUBSET_thm:
+  !env be sv ty vn.
   (birs_eval_exp be env = SOME (sv,ty)) ==>
   (birs_vars_of_env (birs_update_env (vn,sv) env) SUBSET (birs_vars_of_env env))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC birs_eval_exp_IMP_symbs_SUBSET_senv_thm >>
 
   FULL_SIMP_TAC (std_ss) [SUBSET_DEF] >>
@@ -447,16 +428,15 @@ val birs_eval_exp_IMP_vars_of_env_SUBSET_thm = store_thm(
     FULL_SIMP_TAC (std_ss) [birs_update_env_def, combinTheory.UPDATE_APPLY] >>
     METIS_TAC []
   )
-);
+QED
 
-val birs_eval_exp_IMP_symb_symbols_SUBSET_environ_thm = store_thm(
-   "birs_eval_exp_IMP_symb_symbols_SUBSET_environ_thm", ``
-!bsys be sv ty vn.
+Theorem birs_eval_exp_IMP_symb_symbols_SUBSET_environ_thm:
+  !bsys be sv ty vn.
   (birs_eval_exp be bsys.bsst_environ = SOME (sv,ty)) ==>
   (birs_symb_symbols (bsys with bsst_environ := birs_update_env (vn,sv) bsys.bsst_environ) SUBSET
    birs_symb_symbols bsys)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC birs_eval_exp_IMP_vars_of_env_SUBSET_thm >>
 
   SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_def] >>
@@ -465,15 +445,14 @@ val birs_eval_exp_IMP_symb_symbols_SUBSET_environ_thm = store_thm(
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
 
   METIS_TAC [SUBSET_DEF, IN_UNION]
-);
+QED
 
 
-val birs_exec_stmt_jmp_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmt_jmp_NO_FRESH_SYMBS", ``
-!prog bsys l.
+Theorem birs_exec_stmt_jmp_NO_FRESH_SYMBS:
+  !prog bsys l.
   birs_set_NO_fresh_symbs bsys (birs_exec_stmt_jmp prog l bsys)
-``,
-    SIMP_TAC std_ss [birs_exec_stmt_jmp_def] >>
+Proof
+SIMP_TAC std_ss [birs_exec_stmt_jmp_def] >>
     REPEAT STRIP_TAC >>
 
     CASE_TAC >> (
@@ -486,14 +465,13 @@ val birs_exec_stmt_jmp_NO_FRESH_SYMBS = store_thm(
         SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
       )
     )
-);
+QED
 
-val birs_exec_stmt_cjmp_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmt_cjmp_NO_FRESH_SYMBS", ``
-!prog bsys e l1 l2.
+Theorem birs_exec_stmt_cjmp_NO_FRESH_SYMBS:
+  !prog bsys e l1 l2.
   birs_set_NO_fresh_symbs bsys (birs_exec_stmt_cjmp prog e l1 l2 bsys)
-``,
-  SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
+Proof
+SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
   REPEAT STRIP_TAC >>
   CASE_TAC >- (
     SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
@@ -529,15 +507,14 @@ val birs_exec_stmt_cjmp_NO_FRESH_SYMBS = store_thm(
     IMP_RES_TAC (REWRITE_RULE [birs_set_NO_fresh_symbs_thm] birs_exec_stmt_jmp_NO_FRESH_SYMBS) >>
     METIS_TAC [birs_NO_fresh_symbs_SUFFICIENT3_thm, SUBSET_REFL]
   )
-);
+QED
   
 
-val birs_exec_stmtE_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmtE_NO_FRESH_SYMBS", ``
-!prog bsys estmt.
+Theorem birs_exec_stmtE_NO_FRESH_SYMBS:
+  !prog bsys estmt.
   birs_set_NO_fresh_symbs bsys (birs_exec_stmtE prog estmt bsys)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `estmt` >- (
     SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_jmp_NO_FRESH_SYMBS]
   ) >- (
@@ -548,14 +525,13 @@ val birs_exec_stmtE_NO_FRESH_SYMBS = store_thm(
     MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
   )
-);
+QED
 
-val birs_exec_stmt_assign_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmt_assign_NO_FRESH_SYMBS", ``
-!bsys var be.
+Theorem birs_exec_stmt_assign_NO_FRESH_SYMBS:
+  !bsys var be.
   birs_set_NO_fresh_symbs bsys (birs_exec_stmt_assign var be bsys)
-``,
-  SIMP_TAC std_ss [birs_exec_stmt_assign_def] >>
+Proof
+SIMP_TAC std_ss [birs_exec_stmt_assign_def] >>
   REPEAT STRIP_TAC >>
 
   CASE_TAC >- (
@@ -578,15 +554,14 @@ val birs_exec_stmt_assign_NO_FRESH_SYMBS = store_thm(
   SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
   TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
   SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
-);
+QED
 
-val birs_exec_stmt_assert_assume_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmt_assert_assume_NO_FRESH_SYMBS", ``
-!bsys be.
+Theorem birs_exec_stmt_assert_assume_NO_FRESH_SYMBS:
+  !bsys be.
   birs_set_NO_fresh_symbs bsys (birs_exec_stmt_assert be bsys) /\
   birs_set_NO_fresh_symbs bsys (birs_exec_stmt_assume be bsys)
-``,
-  SIMP_TAC std_ss [birs_exec_stmt_assert_def, birs_exec_stmt_assume_def] >>
+Proof
+SIMP_TAC std_ss [birs_exec_stmt_assert_def, birs_exec_stmt_assume_def] >>
   REPEAT STRIP_TAC >> (
     CASE_TAC >- (
       SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
@@ -626,14 +601,13 @@ val birs_exec_stmt_assert_assume_NO_FRESH_SYMBS = store_thm(
       METIS_TAC [DIFF_EQ_EMPTY]
     )
   )
-);
+QED
 
-val birs_exec_stmtB_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmtB_NO_FRESH_SYMBS", ``
-!bsys stmt.
+Theorem birs_exec_stmtB_NO_FRESH_SYMBS:
+  !bsys stmt.
   birs_set_NO_fresh_symbs bsys (birs_exec_stmtB stmt bsys)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `stmt` >- (
     SIMP_TAC std_ss [birs_exec_stmtB_def, birs_exec_stmt_assign_NO_FRESH_SYMBS]
   ) >- (
@@ -659,17 +633,17 @@ val birs_exec_stmtB_NO_FRESH_SYMBS = store_thm(
       )
     )
   )
-);
+QED
 
-val birs_exec_step_NO_FRESH_SYMBS = prove(``
-!prog bsys.
+Theorem birs_exec_step_NO_FRESH_SYMBS[local]:
+  !prog bsys.
 (*
   (* this assumption is only needed because of the proof with the soundness of steps *)
   (bir_prog_has_no_halt prog) ==>
 *)
   birs_set_NO_fresh_symbs bsys (birs_exec_step prog bsys)
-``,
-  SIMP_TAC std_ss [birs_exec_step_def] >>
+Proof
+SIMP_TAC std_ss [birs_exec_step_def] >>
   REPEAT STRIP_TAC >>
   Cases_on `birs_state_is_terminated bsys` >- (
     ASM_SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
@@ -701,15 +675,14 @@ val birs_exec_step_NO_FRESH_SYMBS = prove(``
   MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT2_thm >>
   SIMP_TAC (std_ss++birs_state_ss) [] >>
   METIS_TAC []
-);
+QED
 
 
 (* ******************************************************* *)
 (*      STEP SEQ rule                                      *)
 (* ******************************************************* *)
-val birs_rule_STEP_SEQ_gen_thm = store_thm(
-   "birs_rule_STEP_SEQ_gen_thm", ``
-!prog bsys1 L bsys2.
+Theorem birs_rule_STEP_SEQ_gen_thm:
+  !prog bsys1 L bsys2.
   (bir_prog_has_no_halt prog) ==>
 
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
@@ -723,8 +696,8 @@ val birs_rule_STEP_SEQ_gen_thm = store_thm(
      (bsys2.bsst_pc) INSERT L,
      IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)
   ))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   ASSUME_TAC (Q.SPECL [`prog`, `bsys2`] birs_rule_STEP_gen2_thm) >>
   REV_FULL_SIMP_TAC std_ss [] >>
@@ -748,7 +721,7 @@ val birs_rule_STEP_SEQ_gen_thm = store_thm(
   ) >>
 
   METIS_TAC []
-);
+QED
 
 (*
 bir_symbTheory.birs_state_t_bsst_pc
@@ -759,7 +732,11 @@ bir_symbTheory.birs_state_t_accfupds
 val bprog_tm = ``
 BirProgram [] : 'obs_type bir_program_t
 ``;
-val no_halt_thm = prove(``bir_prog_has_no_halt (^bprog_tm)``, cheat);
+Theorem no_halt_thm[local]:
+  bir_prog_has_no_halt (^bprog_tm)
+Proof
+cheat
+QED
 *)
 
 val _ = export_theory();

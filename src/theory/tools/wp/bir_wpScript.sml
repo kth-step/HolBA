@@ -20,30 +20,26 @@ val _ = new_theory "bir_wp";
 
 (* Lemmata to move: *)
 
-val bir_varinit_invar_bstmt =
-  store_thm("bir_varinit_invar_bstmt",
-  ``!s s' obs vars (bstmt:'a bir_stmt_basic_t).
+Theorem bir_varinit_invar_bstmt:
+  !s s' obs vars (bstmt:'a bir_stmt_basic_t).
       bir_env_vars_are_initialised s.bst_environ vars ==>
       (bir_env_vars_are_initialised
         (bir_exec_stmtB_state bstmt s).bst_environ vars)
-  ``,
-
+Proof
 REPEAT STRIP_TAC >>
 ASSUME_TAC (SPECL [``s:bir_state_t``,
                    ``bstmt:'a bir_stmt_basic_t``]
                   bir_exec_stmtB_ENV_ORDER
            ) >>
 IMP_RES_TAC bir_env_vars_are_initialised_ORDER
-);
+QED
 
-val bir_is_bool_exp_env_invar_bstmt =
-  store_thm("bir_is_bool_exp_env_invar_bstmt",
-  ``!s s' obs ex (bstmt:'a bir_stmt_basic_t).
+Theorem bir_is_bool_exp_env_invar_bstmt:
+  !s s' obs ex (bstmt:'a bir_stmt_basic_t).
       bir_is_bool_exp_env s.bst_environ ex ==>
       (bir_exec_stmtB bstmt s = (obs, s')) ==>
       (bir_is_bool_exp_env s'.bst_environ ex)
-  ``,
-
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def] >>
 IMP_RES_TAC bir_varinit_invar_bstmt >>
@@ -52,7 +48,7 @@ PAT_X_ASSUM ``!bstmt. _``
               (SPEC ``bstmt:'a bir_stmt_basic_t`` thm)
             ) >>
 REV_FULL_SIMP_TAC std_ss [bir_exec_stmtB_state_def]
-);
+QED
 
 (*
    -------------------------------------------------------------
@@ -62,16 +58,17 @@ REV_FULL_SIMP_TAC std_ss [bir_exec_stmtB_state_def]
 
 (* In summary: a valid status must be Running or
  * AssumptionViolated. *)
-val bir_is_valid_status_def = Define `
+Definition bir_is_valid_status_def:
   bir_is_valid_status state = 
     ((state.bst_status <> BST_Failed) /\
     (state.bst_status <> BST_TypeError) /\
     (!l. state.bst_status <> BST_JumpOutside l) /\
     (!v. state.bst_status <> BST_Halted v) /\
-    (state.bst_status <> BST_AssertionViolated))`;
+    (state.bst_status <> BST_AssertionViolated))
+End
 
 (* The pre- and postcondition of the Hoare triple. *)
-val bir_pre_post_def = Define `
+Definition bir_pre_post_def:
   bir_pre_post s pre s' post =
     (bir_is_bool_exp_env s.bst_environ pre ==>
     (
@@ -87,10 +84,11 @@ val bir_pre_post_def = Define `
         ) \/
         (s'.bst_status = BST_AssumptionViolated)
       )
-    ))`;
+    ))
+End
 
 (* Hoare triple for the execution of one basic BIR statement. *)
-val bir_exec_stmtB_triple_def = Define `
+Definition bir_exec_stmtB_triple_def:
   bir_exec_stmtB_triple stmt pre post =
     !s s' obs.
       (* Note: Variable initialisation is only used by
@@ -98,18 +96,18 @@ val bir_exec_stmtB_triple_def = Define `
       bir_env_vars_are_initialised s.bst_environ
         (bir_vars_of_stmtB stmt) ==>
       (bir_exec_stmtB stmt s = (obs, s')) ==>
-      bir_pre_post s pre s' post`;
+      bir_pre_post s pre s' post
+End
 
 (* Preservation of valid status for the Assert statement *)
-val bir_assert_valid_status =
-  store_thm("bir_assert_valid_status",
-  ``!s s' ex post obs.
+Theorem bir_assert_valid_status:
+  !s s' ex post obs.
       bir_is_valid_status s ==>
       (bir_eval_exp (BExp_BinExp BIExp_And ex post) s.bst_environ =
         SOME bir_val_true) ==>
       (bir_exec_stmtB (BStmt_Assert ex) s = (obs,s')) ==>
-      bir_is_valid_status s'``,
-
+      bir_is_valid_status s'
+Proof
 REPEAT STRIP_TAC >>
 subgoal `bir_eval_exp ex s.bst_environ = SOME bir_val_true` >- (
   METIS_TAC [bir_and_equiv]
@@ -117,18 +115,17 @@ subgoal `bir_eval_exp ex s.bst_environ = SOME bir_val_true` >- (
 FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,
                       bir_exec_stmt_assert_def,
                       bir_dest_bool_val_TF]
-);
+QED
 
 (* The postcondition of the Assert statement can be proved given
  * the precondition. *)
-val bir_assert_postcond =
-  store_thm("bir_assert_postcond",
-  ``!s s' ex post obs.
+Theorem bir_assert_postcond:
+  !s s' ex post obs.
       (bir_eval_exp (BExp_BinExp BIExp_And ex post) s.bst_environ =
         SOME bir_val_true) ==>
       (bir_exec_stmtB (BStmt_Assert ex) s = (obs,s')) ==>
-      (bir_eval_exp post s'.bst_environ = SOME bir_val_true)``,
-
+      (bir_eval_exp post s'.bst_environ = SOME bir_val_true)
+Proof
 REPEAT STRIP_TAC >>
 subgoal `bir_eval_exp post s.bst_environ = SOME bir_val_true` >- (
   METIS_TAC [bir_and_equiv]
@@ -140,17 +137,16 @@ FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,
                       bir_exec_stmt_assert_def,
                       bir_dest_bool_val_TF] >>
 REV_FULL_SIMP_TAC std_ss []
-);
+QED
 
 (* Theorem stating the soundness of the precondition ex /\ post for the
  * statement Assert ex, with the postcondition post. *)
 (* {ex /\ post} Assert ex {post} *)
-val bir_triple_exec_stmtB_assert_thm =
-  store_thm("bir_triple_exec_stmtB_assert_thm",
-  ``!ex post.
+Theorem bir_triple_exec_stmtB_assert_thm:
+  !ex post.
       bir_exec_stmtB_triple (BStmt_Assert ex)
-                            (BExp_BinExp BIExp_And ex post) post``,
-
+                            (BExp_BinExp BIExp_And ex post) post
+Proof
 REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 subgoal `bir_is_bool_exp_env s'.bst_environ post` >- (
@@ -164,12 +160,11 @@ subgoal `bir_eval_exp post s'.bst_environ = SOME bir_val_true` >- (
   METIS_TAC [bir_assert_postcond]
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
 (* Preservation of valid status for the Assume statement *)
-val bir_assume_valid_status =
-  store_thm("bir_assume_valid_status",
-  ``!s s' ex post obs.
+Theorem bir_assume_valid_status:
+  !s s' ex post obs.
       bir_is_valid_status s ==>
       (* TODO: We need some type of antecedent to guarantee Failed
        * does not occur. This could be either Booleanity+var.init.
@@ -177,8 +172,8 @@ val bir_assume_valid_status =
       bir_is_bool_exp_env s.bst_environ
         (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post) ==>
       (bir_exec_stmtB (BStmt_Assume ex) s = (obs,s')) ==>
-      bir_is_valid_status s'``,
-
+      bir_is_valid_status s'
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS] >>
 PAT_X_ASSUM ``bir_is_bool_exp_env s.bst_environ ex``
@@ -193,14 +188,13 @@ Cases_on `s'` >> (
   FULL_SIMP_TAC std_ss [bir_state_t_fn_updates] >>
   RW_TAC std_ss [bir_is_valid_status_def]
 )
-);
+QED
 
 (* Given the precondition and the Assumed expression holding
  * in the initial state, the postcondition must hold in the
  * final state whenever the Assumed expression holds. *)
-val bir_assume_postcond =
-  store_thm("bir_assume_postcond",
-  ``!s s' ex post obs.
+Theorem bir_assume_postcond:
+  !s s' ex post obs.
       (bir_eval_exp (BExp_BinExp BIExp_Or
                       (BExp_UnaryExp BIExp_Not ex) post
                     ) s.bst_environ =
@@ -208,8 +202,8 @@ val bir_assume_postcond =
       (bir_eval_exp ex s.bst_environ =
         SOME bir_val_true) ==>
       (bir_exec_stmtB (BStmt_Assume ex) s = (obs,s')) ==>
-      (bir_eval_exp post s'.bst_environ = SOME bir_val_true)``,
-
+      (bir_eval_exp post s'.bst_environ = SOME bir_val_true)
+Proof
 REPEAT STRIP_TAC >>
 subgoal
   `bir_eval_exp post s.bst_environ = SOME bir_val_true` >- (
@@ -223,16 +217,15 @@ subgoal
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_def,
                                           bir_exec_stmt_assume_def,
                                           bir_dest_bool_val_TF]
-);
+QED
 
 (* Given the Assumed expression not holding in the initial
  * state, the final state will have status AssumptionViolated. *)
 (* TODO: This theorem could also be stated with the precondition
  * holding instead of Booleanity holding. This antecedent is
  * needed to translate "not equal to True" to "equal to False". *)
-val bir_assume_assumviol =
-  store_thm("bir_assume_assumviol",
-  ``!s s' ex post obs.
+Theorem bir_assume_assumviol:
+  !s s' ex post obs.
       bir_is_bool_exp_env s.bst_environ
            (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex)
                                  post
@@ -240,8 +233,8 @@ val bir_assume_assumviol =
       (bir_eval_exp ex s.bst_environ <>
         SOME bir_val_true) ==>
       (bir_exec_stmtB (BStmt_Assume ex) s = (obs,s')) ==>
-      (s'.bst_status = BST_AssumptionViolated)``,
-
+      (s'.bst_status = BST_AssumptionViolated)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS] >>
 PAT_X_ASSUM ``bir_is_bool_exp_env s.bst_environ ex``
@@ -254,20 +247,19 @@ FULL_SIMP_TAC std_ss [bir_not_val_true, bir_exec_stmtB_def,
                       bir_dest_bool_val_TF, bir_val_TF_dist] >>
 Cases_on `s` >> Cases_on `s'` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_fn_updates]
-);
+QED
 
 (* Theorem stating the soundness of the precondition ~e \/ Q for the
  * statement Assume e, with the postcondition Q. *)
 (* {~e \/ Q} Assume e {Q} *)
-val bir_triple_exec_stmtB_assume_thm =
-  store_thm("bir_triple_exec_stmtB_assume_thm",
-  ``!ex post.
+Theorem bir_triple_exec_stmtB_assume_thm:
+  !ex post.
       bir_is_well_typed_stmtB (BStmt_Assume ex) ==>
       bir_exec_stmtB_triple (BStmt_Assume ex)
                             (BExp_BinExp BIExp_Or
                               (BExp_UnaryExp BIExp_Not ex) post
-                            ) post``,
-
+                            ) post
+Proof
 REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 subgoal `bir_is_bool_exp_env s'.bst_environ post` >- (
@@ -288,7 +280,7 @@ Cases_on `bir_eval_exp ex s.bst_environ = SOME bir_val_true` >| [
   ) >>
   FULL_SIMP_TAC std_ss []
 ]
-);
+QED
 
 (* Theorem that proves (conditional) preservation of Booleanity
  * under substitution *)
@@ -348,15 +340,13 @@ local
 
 in
 
-val bir_exp_subst1_bool =
-  store_thm("bir_exp_subst1_bool",
-  ``!v ex ex'.
+Theorem bir_exp_subst1_bool:
+  !v ex ex'.
       bir_is_bool_exp
         (bir_exp_subst1 v ex ex') ==>
       (type_of_bir_exp ex = SOME (bir_var_type v)) ==>
       bir_is_bool_exp ex'
-  ``,
-
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_is_bool_exp_def,
                       bir_exp_subst1_def] >>
@@ -406,14 +396,13 @@ Induct_on `ex'` >| [
   (* Store *)
   three_op_tac
 ]
-)
+QED
 end;
 
 (* Theorem that proves the result of executing Assign, given regular
  * circumstances. *)
-val bir_assign_exec = 
-  store_thm("bir_assign_exec",
-  ``!s s' vname vtype ex obs f.
+Theorem bir_assign_exec:
+  !s s' vname vtype ex obs f.
     bir_is_well_typed_stmtB (BStmt_Assign (BVar vname vtype) ex) ==>
     bir_env_vars_are_initialised s.bst_environ
       (bir_vars_of_stmtB (BStmt_Assign (BVar vname vtype) ex)) ==>
@@ -424,8 +413,8 @@ val bir_assign_exec =
      (s with bst_environ :=
        BEnv ((vname =+ bir_eval_exp ex (BEnv f)) f) =
       s')
-    )``,
-
+    )
+Proof
 REPEAT STRIP_TAC >>
 (* Start to evaluate the effects of execution, in order to get the
  * new variable environment explicit in the goal. *)
@@ -453,13 +442,12 @@ FULL_SIMP_TAC std_ss [bir_var_name_def,
                       LET_DEF, bir_env_var_is_initialised_def,
                       bir_env_lookup_def] >>
 REV_FULL_SIMP_TAC std_ss []
-);
+QED
 
 (* Preservation of Booleanity and variable initialisation for the
  * Assign statement *)
-val bir_assign_bool_exp_env =
-  store_thm("bir_assign_bool_exp_env",
-  ``!s s' v ex post obs.
+Theorem bir_assign_bool_exp_env:
+  !s s' v ex post obs.
       (* Antecedents from outside the Hoare triple: *)
       bir_is_well_typed_stmtB (BStmt_Assign v ex) ==>
       (* Antecedents from within the Hoare triple: *)
@@ -468,8 +456,8 @@ val bir_assign_bool_exp_env =
       bir_env_vars_are_initialised s.bst_environ
            (bir_vars_of_stmtB (BStmt_Assign v ex)) ==>
       (bir_exec_stmtB (BStmt_Assign v ex) s = (obs,s')) ==>
-      bir_is_bool_exp_env s'.bst_environ post``,
-
+      bir_is_bool_exp_env s'.bst_environ post
+Proof
 REPEAT STRIP_TAC >>
 (* First, Booleanity can be proved immediately: *)
 FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def] >>
@@ -516,7 +504,8 @@ rename1 `BVar vname2 vtype2 IN bir_vars_of_exp post` >>
  * that
 
      bir_env_vars_are_initialised (BEnv f)
-       (bir_vars_of_exp (bir_exp_subst1 (BVar vname vtype) ex post))
+       (bir_vars_of_exp (bir_exp_subst1 (BVar vname vtype) ex post)
+QED
 
  * which together with the assumption
 
@@ -591,9 +580,8 @@ METIS_TAC [bir_var_name_def, bir_var_type_def, combinTheory.UPDATE_APPLY]
 );
 
 (* Preservation of valid status for the Assign statement *)
-val bir_assign_valid_status =
-  store_thm("bir_assign_valid_status",
-  ``!s s' v ex post obs.
+Theorem bir_assign_valid_status:
+  !s s' v ex post obs.
       (* Antecedents from outside the Hoare triple: *)
       bir_is_well_typed_stmtB (BStmt_Assign v ex) ==>
       (* Antecedents from within the Hoare triple: *)
@@ -603,8 +591,8 @@ val bir_assign_valid_status =
            (bir_vars_of_stmtB (BStmt_Assign v ex)) ==>
       (bir_exec_stmtB (BStmt_Assign v ex) s = (obs,s')) ==>
       bir_is_valid_status s ==>
-      bir_is_valid_status s'``,
-
+      bir_is_valid_status s'
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `v` >>
 Cases_on `s.bst_environ` >>
@@ -615,13 +603,12 @@ subgoal `(s with
 ) >>
 RW_TAC std_ss [] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_valid_status_def]
-);
+QED
 
 (* Given the precondition holding in the initial state,
  * the postcondition must hold in the final state. *)
-val bir_assign_postcond =
-  store_thm("bir_assign_postcond",
-  ``!s s' v ex post obs.
+Theorem bir_assign_postcond:
+  !s s' v ex post obs.
       (* Antecedents from outside the Hoare triple: *)
       bir_is_well_typed_stmtB (BStmt_Assign v ex) ==>
       (* Antecedents from within the Hoare triple: *)
@@ -631,8 +618,8 @@ val bir_assign_postcond =
         s.bst_environ =
           SOME bir_val_true) ==>
       (bir_exec_stmtB (BStmt_Assign v ex) s = (obs,s')) ==>
-      (bir_eval_exp post s'.bst_environ = SOME bir_val_true)``,
-
+      (bir_eval_exp post s'.bst_environ = SOME bir_val_true)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `v` >>
 Cases_on `s.bst_environ` >>
@@ -655,18 +642,17 @@ FULL_SIMP_TAC std_ss [bir_is_well_typed_stmtB_def, bir_var_type_def, bir_var_nam
 IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
 IMP_RES_TAC bir_eval_exp_subst1_env >>
 RW_TAC std_ss []
-);
+QED
 
 (* Theorem stating the soundness of the precondition {e/v}Q for
  * the statement Assign v:=e, with the postcondition Q. *)
 (* {{e/v}Q} Assign v:=e {Q} *)
-val bir_triple_exec_stmtB_assign_thm =
-  store_thm("bir_triple_exec_stmtB_assign_thm",
-  ``!v ex post.
+Theorem bir_triple_exec_stmtB_assign_thm:
+  !v ex post.
       bir_is_well_typed_stmtB (BStmt_Assign v ex) ==>
       bir_exec_stmtB_triple (BStmt_Assign v ex) 
-        (bir_exp_subst1 v ex post) post``,
-
+        (bir_exp_subst1 v ex post) post
+Proof
 REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 subgoal `bir_is_bool_exp_env s'.bst_environ post` >- (
@@ -679,36 +665,35 @@ subgoal `bir_eval_exp post s'.bst_environ = SOME bir_val_true` >- (
   METIS_TAC [bir_assign_postcond]
 ) >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
-val bir_env_vars_are_initialised_observe_INSERT = prove(
-  ``!e oid ec el obf.
+Theorem bir_env_vars_are_initialised_observe_INSERT[local]:
+  !e oid ec el obf.
       bir_env_vars_are_initialised e
         (bir_vars_of_stmtB (BStmt_Observe oid ec el obf)) ==>
-      bir_env_vars_are_initialised e (bir_vars_of_exp ec)``,
-
+      bir_env_vars_are_initialised e (bir_vars_of_exp ec)
+Proof
 REPEAT GEN_TAC >>
 FULL_SIMP_TAC std_ss [bir_vars_of_stmtB_def,
                       listTheory.LIST_TO_SET,
                       pred_setTheory.IMAGE_INSERT,
                       pred_setTheory.BIGUNION_INSERT,
                       bir_env_vars_are_initialised_UNION]
-);
+QED
 
 (*
  TODO: this and similar theorems should maybe be moved to bir-support
  *)
-val bir_observe_state_invar =
-  store_thm("bir_observe_state_invar",
-  ``!s s' oid ec el obf obs.
+Theorem bir_observe_state_invar:
+  !s s' oid ec el obf obs.
       (* Antecedents from outside the Hoare triple: *)
       bir_is_well_typed_stmtB (BStmt_Observe oid ec el obf) ==>
       (* Antecedents from within the Hoare triple: *)
       bir_env_vars_are_initialised s.bst_environ
            (bir_vars_of_stmtB (BStmt_Observe oid ec el obf)) ==>
       (bir_exec_stmtB (BStmt_Observe oid ec el obf) s = (obs, s')) ==>
-      (s = s')``,
-
+      (s = s')
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_stmtB_def, bir_exec_stmt_observe_def,
   bir_is_well_typed_stmtB_def, bir_is_bool_exp_GSYM] >>
@@ -740,37 +725,36 @@ FULL_SIMP_TAC std_ss [LET_DEF, combinTheory.o_DEF, bir_vars_of_stmtB_def] >>
 Cases_on `bir_eval_bool_exp ec s.bst_environ` >> (
   FULL_SIMP_TAC std_ss [LET_DEF]
 )
-);
+QED
 
 (* Theorem stating the soundness of the precondition Q for
  * the statement Observe ex, with the postcondition Q. *)
 (* {Q} Observe ex {Q} *)
-val bir_triple_exec_stmtB_observe_thm =
-  store_thm("bir_triple_exec_stmtB_observe_thm",
-  ``!oid ec el obf post.
+Theorem bir_triple_exec_stmtB_observe_thm:
+  !oid ec el obf post.
       bir_is_well_typed_stmtB (BStmt_Observe oid ec el obf) ==>
-      bir_exec_stmtB_triple (BStmt_Observe oid ec el obf) post post``,
-
+      bir_exec_stmtB_triple (BStmt_Observe oid ec el obf) post post
+Proof
 REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 METIS_TAC [bir_observe_state_invar]
-);
+QED
 
-val bir_wp_exec_stmtB_def = Define `
+Definition bir_wp_exec_stmtB_def:
   (bir_wp_exec_stmtB (BStmt_Assert ex) post =
     (BExp_BinExp BIExp_And ex post)) /\
   (bir_wp_exec_stmtB (BStmt_Assume ex) post =
     (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post)) /\
   (bir_wp_exec_stmtB (BStmt_Assign v ex) post =
     (bir_exp_subst1 v ex post)) /\
-  (bir_wp_exec_stmtB (BStmt_Observe oid ec el obf) post = post)`;
+  (bir_wp_exec_stmtB (BStmt_Observe oid ec el obf) post = post)
+End
 
-val bir_wp_exec_stmtB_sound_thm =
-  store_thm("bir_wp_exec_stmtB_sound_thm",
-  ``!stm post.
+Theorem bir_wp_exec_stmtB_sound_thm:
+  !stm post.
       bir_is_well_typed_stmtB stm ==>
-      bir_exec_stmtB_triple stm (bir_wp_exec_stmtB stm post) post``,
-
+      bir_exec_stmtB_triple stm (bir_wp_exec_stmtB stm post) post
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 Cases_on `stm` >>
 FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
@@ -780,15 +764,14 @@ FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
                       bir_triple_exec_stmtB_observe_thm] >> (
   RW_TAC std_ss []
 )
-);
+QED
 
-val bir_wp_exec_stmtB_bool_thm =
-  store_thm("bir_wp_exec_stmtB_bool_thm",
-  ``!stm post.
+Theorem bir_wp_exec_stmtB_bool_thm:
+  !stm post.
       bir_is_well_typed_stmtB stm ==>
       bir_is_bool_exp post ==>
-      bir_is_bool_exp (bir_wp_exec_stmtB stm post)``,
-
+      bir_is_bool_exp (bir_wp_exec_stmtB stm post)
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 Cases_on `stm` >> (
   FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
@@ -805,7 +788,7 @@ Cases_on `stm` >> (
                           bir_exp_subst1_TYPE_EQ]
   )
 )
-);
+QED
 
 (*
    -------------------------------------------------------------
@@ -813,7 +796,7 @@ Cases_on `stm` >> (
    -------------------------------------------------------------
 *)
 (* Hoare triple for several basic statements *)
-val bir_exec_stmtsB_triple_def = Define `
+Definition bir_exec_stmtsB_triple_def:
   bir_exec_stmtsB_triple stmts pre post =
     !s s' obs obs' c c'.
       (EVERY
@@ -823,22 +806,23 @@ val bir_exec_stmtsB_triple_def = Define `
         ) stmts
       ) ==>
       (bir_exec_stmtsB stmts (obs, c, s) = (obs', c', s')) ==>
-      (bir_pre_post s pre s' post)`;
+      (bir_pre_post s pre s' post)
+End
 
 
-val bir_wp_exec_stmtsB_def = Define `
+Definition bir_wp_exec_stmtsB_def:
   (bir_wp_exec_stmtsB [] post = post) /\
   (bir_wp_exec_stmtsB (stmt::stmts) post = 
     bir_wp_exec_stmtB stmt (bir_wp_exec_stmtsB stmts post)
-  )`;
+  )
+End
 
-val bir_wp_exec_stmtsB_bool_thm =
-  store_thm("bir_wp_exec_stmtsB_bool_thm",
-  ``!stmts post.
+Theorem bir_wp_exec_stmtsB_bool_thm:
+  !stmts post.
       EVERY bir_is_well_typed_stmtB stmts ==>
       bir_is_bool_exp post ==>
-      bir_is_bool_exp (bir_wp_exec_stmtsB stmts post)``,
-
+      bir_is_bool_exp (bir_wp_exec_stmtsB stmts post)
+Proof
 REPEAT GEN_TAC >>
 Induct_on `stmts` >- (
   FULL_SIMP_TAC std_ss [bir_wp_exec_stmtsB_def,
@@ -848,10 +832,10 @@ Induct_on `stmts` >- (
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 FULL_SIMP_TAC std_ss [bir_wp_exec_stmtsB_def, listTheory.EVERY_DEF,
                       bir_wp_exec_stmtB_bool_thm]
-);
+QED
 
-val exec_preserves_initialized_vars_thm = prove(
-  ``!r h st stmts.
+Theorem exec_preserves_initialized_vars_thm[local]:
+  !r h st stmts.
       (r = bir_exec_stmtB_state (h:'a bir_stmt_basic_t) st) ==>
       (EVERY (\stmt:'a bir_stmt_basic_t.
                bir_env_vars_are_initialised st.bst_environ
@@ -862,8 +846,8 @@ val exec_preserves_initialized_vars_thm = prove(
                bir_env_vars_are_initialised r.bst_environ
                  (bir_vars_of_stmtB stmt)
              ) stmts
-      )``,
-
+      )
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 ASSUME_TAC (ISPECL [``(\stmt:'a bir_stmt_basic_t.
                         bir_env_vars_are_initialised st.bst_environ
@@ -873,43 +857,39 @@ ASSUME_TAC (ISPECL [``(\stmt:'a bir_stmt_basic_t.
                           (bir_vars_of_stmtB stmt))``]
                    listTheory.EVERY_MONOTONIC) >>
 REV_FULL_SIMP_TAC std_ss [bir_varinit_invar_bstmt]
-);
+QED
 
-val bir_assumviol_exec_stmtsB =
-  store_thm("bir_assumviol_exec_stmtsB",
-  ``!obs c s stmts.
+Theorem bir_assumviol_exec_stmtsB:
+  !obs c s stmts.
       (s.bst_status = BST_AssumptionViolated) ==>
       (bir_exec_stmtsB stmts (obs, c, s) = (REVERSE obs, c, s))
-  ``,
-
+Proof
 REPEAT GEN_TAC >>
 Cases_on `stmts` >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss)
                 [bir_exec_stmtsB_def]
 )
-);
+QED
 
-val bir_running_by_exclusion =
-  store_thm("bir_running_by_exclusion",
-  ``!s.
+Theorem bir_running_by_exclusion:
+  !s.
       bir_is_valid_status s ==>
       (s.bst_status <> BST_AssumptionViolated) ==>
-      (s.bst_status = BST_Running)``,
-
+      (s.bst_status = BST_Running)
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `s.bst_status` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_valid_status_def]
-);
+QED
 
-val bir_wp_exec_stmtsB_sound_thm =
-  store_thm("bir_wp_exec_stmtsB_sound_thm",
-  ``!stmts post.
+Theorem bir_wp_exec_stmtsB_sound_thm:
+  !stmts post.
       EVERY bir_is_well_typed_stmtB stmts ==>
       (bir_exec_stmtsB_triple stmts
          (bir_wp_exec_stmtsB stmts post) post
-      )``,
-
-  REPEAT GEN_TAC >>
+      )
+Proof
+REPEAT GEN_TAC >>
   Induct_on `stmts` >-(
    FULL_SIMP_TAC std_ss [bir_wp_exec_stmtsB_def,
                          bir_exec_stmtsB_triple_def,
@@ -977,7 +957,7 @@ val bir_wp_exec_stmtsB_sound_thm =
     FULL_SIMP_TAC std_ss [bir_assumviol_exec_stmtsB] >>
     REV_FULL_SIMP_TAC std_ss []
   ]
-);
+QED
 
 (*
    -------------------------------------------------------------
@@ -985,7 +965,7 @@ val bir_wp_exec_stmtsB_sound_thm =
    -------------------------------------------------------------
 *)
 (* Hoare triple for a block *)
-val bir_exec_block_jmp_triple_def = Define`
+Definition bir_exec_block_jmp_triple_def:
   bir_exec_block_jmp_triple p bl pre post l =
     !s l1 c1 s'.
       bir_env_vars_are_initialised s.bst_environ
@@ -1003,12 +983,12 @@ val bir_exec_block_jmp_triple_def = Define`
          (s'.bst_status = BST_AssumptionViolated)
         )
       )
-`;
+End
 
-val SUBSET_BIGUNION_IMAGE_thm = prove(
-  ``!x s f.
-      (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))``,
-
+Theorem SUBSET_BIGUNION_IMAGE_thm[local]:
+  !x s f.
+      (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))
+Proof
 SIMP_TAC pure_ss [pred_setTheory.IMAGE_DEF,
                   pred_setTheory.BIGUNION,
                   pred_setTheory.SUBSET_DEF] >>
@@ -1018,10 +998,10 @@ Q.EXISTS_TAC `f x` >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
 Q.EXISTS_TAC `x` >>
 METIS_TAC []
-);
+QED
 
-val bir_vars_are_initialized_block_then_every_stmts_thm = prove(
-  ``!st bl.
+Theorem bir_vars_are_initialized_block_then_every_stmts_thm[local]:
+  !st bl.
       (bir_env_vars_are_initialised st.bst_environ
                                     (bir_vars_of_block bl)) ==>
       (EVERY
@@ -1029,8 +1009,8 @@ val bir_vars_are_initialized_block_then_every_stmts_thm = prove(
           bir_env_vars_are_initialised st.bst_environ
             (bir_vars_of_stmtB stmt)
         ) bl.bb_statements
-      )``,
-
+      )
+Proof
 FULL_SIMP_TAC std_ss [bir_vars_of_block_def,
                       listTheory.EVERY_MEM] >>
 REPEAT STRIP_TAC >>
@@ -1038,17 +1018,16 @@ REPEAT STRIP_TAC >>
 METIS_TAC [bir_env_vars_are_initialised_UNION,
            SUBSET_BIGUNION_IMAGE_thm,
            bir_env_vars_are_initialised_SUBSET]
-);
+QED
 
-val bir_exec_block_jmp_triple_wp_thm =
-  store_thm("bir_exec_block_jmp_triple_wp_thm",
-  ``!p bl post l.
+Theorem bir_exec_block_jmp_triple_wp_thm:
+  !p bl post l.
       bir_is_well_typed_block bl ==>
       (bl.bb_last_statement = (BStmt_Jmp (BLE_Label l))) ==>
       MEM l (bir_labels_of_program p) ==>
       (bir_exec_block_jmp_triple p bl 
-        (bir_wp_exec_stmtsB bl.bb_statements post) post l)``,
-
+        (bir_wp_exec_stmtsB bl.bb_statements post) post l)
+Proof
 (* Expand definitions *)
 SIMP_TAC std_ss [bir_exec_block_jmp_triple_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
@@ -1106,9 +1085,9 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
   ) >>
   RW_TAC (srw_ss()) []
 ]
-);
+QED
 
-val bir_exec_block_cjmp_triple_def = Define `
+Definition bir_exec_block_cjmp_triple_def:
   bir_exec_block_cjmp_triple p bl pre post1 l1 post2 l2 =
     !s obs' c1 s'.
       bir_env_vars_are_initialised s.bst_environ
@@ -1130,11 +1109,11 @@ val bir_exec_block_cjmp_triple_def = Define `
       ) \/ (
         (s'.bst_status = BST_AssumptionViolated)
       )
-     )`;
+     )
+End
 
-val bir_exec_block_cjmp_triple_wp_thm =
-  store_thm("bir_exec_block_cjmp_triple_wp_thm",
-  ``!p bl e post1 l1 post2 l2.
+Theorem bir_exec_block_cjmp_triple_wp_thm:
+  !p bl e post1 l1 post2 l2.
       bir_is_well_typed_block bl ==>
       (bl.bb_last_statement = (BStmt_CJmp e (BLE_Label l1)
                                             (BLE_Label l2)
@@ -1152,8 +1131,8 @@ val bir_exec_block_cjmp_triple_wp_thm =
                 post1
               ) (BExp_BinExp BIExp_Or e post2)
             )
-        ) post1 l1 post2 l2)``,
-
+        ) post1 l1 post2 l2)
+Proof
 (* Expand definitions *)
 SIMP_TAC std_ss [bir_exec_block_cjmp_triple_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
@@ -1271,7 +1250,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
   ) >>
   RW_TAC (srw_ss()) []
 ]
-);
+QED
 
 
 (*
@@ -1280,7 +1259,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
    -------------------------------------------------------------
 *)
   
-val bir_exec_to_labels_or_assumviol_triple_def = Define `
+Definition bir_exec_to_labels_or_assumviol_triple_def:
   bir_exec_to_labels_or_assumviol_triple p l ls pre post =
   !s r.
     bir_env_vars_are_initialised s.bst_environ
@@ -1302,26 +1281,26 @@ val bir_exec_to_labels_or_assumviol_triple_def = Define `
           (s'.bst_status = BST_AssumptionViolated)
         )
       )
-    )`;
+    )
+End
 
-val bir_exec_to_labels_pre_F =
-  store_thm("bir_exec_to_labels_pre_F",
-  ``!p l ls post.
-    bir_exec_to_labels_or_assumviol_triple p l ls bir_exp_false post``,
-
+Theorem bir_exec_to_labels_pre_F:
+  !p l ls post.
+    bir_exec_to_labels_or_assumviol_triple p l ls bir_exp_false post
+Proof
 FULL_SIMP_TAC (std_ss++holBACore_ss)
               [bir_exec_to_labels_or_assumviol_triple_def, bir_exp_false_def,
                bir_val_true_def, bir_eval_exp_def, word1_distinct]
-);
+QED
 
-val bir_env_vars_are_initialised_prog_block_thm = prove(
-  ``!p l bl env.
+Theorem bir_env_vars_are_initialised_prog_block_thm[local]:
+  !p l bl env.
       bir_is_valid_program p ==>
       bir_env_vars_are_initialised env (bir_vars_of_program p) ==>
       MEM l (bir_labels_of_program p) ==>
       (SND (THE (bir_get_program_block_info_by_label p l)) = bl) ==>
-      bir_env_vars_are_initialised env (bir_vars_of_block bl)``,
-
+      bir_env_vars_are_initialised env (bir_vars_of_block bl)
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 Cases_on `p` >>
 FULL_SIMP_TAC std_ss [bir_vars_of_program_def] >>
@@ -1338,14 +1317,14 @@ subgoal `bl IN (set l')` >- (
 METIS_TAC [bir_env_vars_are_initialised_UNION,
            SUBSET_BIGUNION_IMAGE_thm,
            bir_env_vars_are_initialised_SUBSET]
-);
+QED
     
-val bir_get_current_block_SOME_MEM = prove(
-  ``!l pc bl.
+Theorem bir_get_current_block_SOME_MEM[local]:
+  !l pc bl.
       bir_is_valid_program (BirProgram l) ==>
       (bir_get_current_block (BirProgram l) pc = SOME bl) ==>
-      (MEM bl l)``,
-
+      (MEM bl l)
+Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 FULL_SIMP_TAC std_ss [bir_get_current_block_def] >>
 Cases_on `bir_get_program_block_info_by_label (BirProgram l)
@@ -1359,14 +1338,14 @@ Cases_on `x` >>
     listTheory.MEM_EL] >>
 EXISTS_TAC ``q:num`` >>
 FULL_SIMP_TAC std_ss []
-);
+QED
 
-val bir_exec_block_running_at_least_one_step = prove(
-  ``!p bl st l' c' st'.
+Theorem bir_exec_block_running_at_least_one_step[local]:
+  !p bl st l' c' st'.
       (bir_exec_block p bl st = (l',c',st')) ==>
       (st'.bst_status = BST_Running) ==>
-      (0 < c')``,
-
+      (0 < c')
+Proof
 RW_TAC std_ss [bir_exec_block_def] >>
 Q.ABBREV_TAC `s' = bir_exec_stmtsB bl.bb_statements ([],0,st)` >>
 pairLib.PairCases_on `s'` >>
@@ -1378,20 +1357,20 @@ Cases_on `s'2.bst_status <> BST_Running` >- (
 ) >>
 FULL_SIMP_TAC (srw_ss()) []>>
 RW_TAC std_ss []
-);
+QED
 
 (*
 FIRST CHANGE TO a PROOF for POST MAP
 this is only needed if l1 in ls to ensure  (bir_is_bool_exp post')
 bir_is_bool_exp (post l1)
 *)
-val bir_wp_post_map_contains_bool_exp_def = Define `
- bir_wp_post_map_contains_bool_exp post = (!l1. bir_is_bool_exp (post l1))`;
+Definition bir_wp_post_map_contains_bool_exp_def:
+  bir_wp_post_map_contains_bool_exp post = (!l1. bir_is_bool_exp (post l1))
+End
 
 
-val bir_exec_to_labels_or_assumviol_triple_jmp =
-  store_thm("bir_exec_to_labels_or_assumviol_triple_jmp",
-  ``!p l bl l1 ls post post'.
+Theorem bir_exec_to_labels_or_assumviol_triple_jmp:
+  !p l bl l1 ls post post'.
       bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
@@ -1407,8 +1386,8 @@ val bir_exec_to_labels_or_assumviol_triple_jmp =
       ) ==>
       (bir_exec_to_labels_or_assumviol_triple p l ls
         (bir_wp_exec_stmtsB bl.bb_statements post') post
-      )``,
-
+      )
+Proof
 (* Expand definitions *)
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 SIMP_TAC std_ss [bir_exec_to_labels_or_assumviol_triple_def] >>
@@ -1536,11 +1515,10 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
                                 ("c2", `0`, [])] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ]
-);
+QED
 
-val bir_exec_to_labels_or_assumviol_triple_cjmp =
-  store_thm("bir_exec_to_labels_or_assumviol_triple_cjmp",
-  ``!p l bl e l1 l2 ls post post1' post2'.
+Theorem bir_exec_to_labels_or_assumviol_triple_cjmp:
+  !p l bl e l1 l2 ls post post1' post2'.
       bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
@@ -1573,8 +1551,8 @@ val bir_exec_to_labels_or_assumviol_triple_cjmp =
             (BExp_BinExp BIExp_Or e post2')
           )
         )
-      ) post)``,
-
+      ) post)
+Proof
 (* Expand definitions *)
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 SIMP_TAC std_ss [bir_exec_to_labels_or_assumviol_triple_def] >>
@@ -1765,7 +1743,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
                                 ("c2", `0`, [])] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ]
-);
+QED
 
 (*
    -------------------------------------------------------------
@@ -1773,7 +1751,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
    -------------------------------------------------------------
 *)
 
-val bir_wp_exec_of_block_def = Define `
+Definition bir_wp_exec_of_block_def:
   bir_wp_exec_of_block p l ls wps post = 
     case FLOOKUP wps l of
       SOME wp => SOME wps
@@ -1849,9 +1827,10 @@ val bir_wp_exec_of_block_def = Define `
 		    )
               )
           | _ => NONE
-      )`;
+      )
+End
 
-val bir_jmp_direct_labels_only_def = Define `
+Definition bir_jmp_direct_labels_only_def:
   bir_jmp_direct_labels_only (BirProgram l) =
     (!bl. (MEM bl l) ==>
       (?l1. bl.bb_last_statement = BStmt_Jmp (BLE_Label l1)) \/
@@ -1859,23 +1838,24 @@ val bir_jmp_direct_labels_only_def = Define `
          bl.bb_last_statement = BStmt_CJmp e (BLE_Label l1)
                                              (BLE_Label l2)
       )
-    )`;
+    )
+End
 
-val bir_jmp_direct_labels_only_exec_def = Define `
+Definition bir_jmp_direct_labels_only_exec_def:
   (bir_jmp_direct_labels_only_exec (BirProgram []) = T) /\
   (bir_jmp_direct_labels_only_exec (BirProgram (h::l)) =
     ((case h.bb_last_statement of
       BStmt_Jmp (BLE_Label _) => T
     | BStmt_CJmp _ (BLE_Label _) (BLE_Label _) => T
     | _ => F) /\
-  (bir_jmp_direct_labels_only_exec (BirProgram l))))`;
+  (bir_jmp_direct_labels_only_exec (BirProgram l))))
+End
 
-val bir_jmp_direct_labels_only_exec_eq_thm =
-  store_thm("bir_jmp_direct_labels_only_exec_eq_thm",
-  ``!p.
+Theorem bir_jmp_direct_labels_only_exec_eq_thm:
+  !p.
     (bir_jmp_direct_labels_only p =
-      bir_jmp_direct_labels_only_exec p)``,
-
+      bir_jmp_direct_labels_only_exec p)
+Proof
 Cases_on `p` >> Q.RENAME1_TAC `(BirProgram bls)` >>
 Induct_on `bls` >- (
   REWRITE_TAC [bir_jmp_direct_labels_only_def,
@@ -1905,9 +1885,9 @@ REPEAT STRIP_TAC >- (
   )
 ) >>
 METIS_TAC [bir_jmp_direct_labels_only_def]
-);
+QED
 
-val bir_edge_in_prog_def = Define `
+Definition bir_edge_in_prog_def:
   bir_edge_in_prog (BirProgram bls) l1 l2 =
     ?bl1. (MEM bl1 bls) /\
           (bl1.bb_label = l1) /\
@@ -1918,14 +1898,16 @@ val bir_edge_in_prog_def = Define `
             (?e l3. bl1.bb_last_statement =
               BStmt_CJmp e (BLE_Label l3) (BLE_Label l2)
             )
-          )`;
+          )
+End
 
-val bir_edges_blocks_in_prog_def = Define `
+Definition bir_edges_blocks_in_prog_def:
   bir_edges_blocks_in_prog (BirProgram bls) l1 =
     !l2. (bir_edge_in_prog (BirProgram bls) l1 l2) ==>
-         (?bl2. ( (MEM bl2 bls) /\ (bl2.bb_label = l2) ))`;
+         (?bl2. ( (MEM bl2 bls) /\ (bl2.bb_label = l2) ))
+End
 
-val bir_targets_in_prog_exec_def = Define `
+Definition bir_targets_in_prog_exec_def:
   bir_targets_in_prog_exec p l1 =
     case bir_get_program_block_info_by_label p l1 of
       NONE => []
@@ -1934,21 +1916,22 @@ val bir_targets_in_prog_exec_def = Define `
           BStmt_Jmp (BLE_Label l2) => [l2]
         | BStmt_CJmp e (BLE_Label l2) (BLE_Label l3) => [l2;l3]
         | BStmt_Halt e => []
-        | _ => []`;
+        | _ => []
+End
 
-val bir_edges_blocks_in_prog_exec_def = Define `
+Definition bir_edges_blocks_in_prog_exec_def:
   bir_edges_blocks_in_prog_exec (BirProgram bls) l1 =
     EVERY (\l2. EXISTS (\bl2. bl2.bb_label = l2) bls)
-          (bir_targets_in_prog_exec (BirProgram bls) l1)`;
+          (bir_targets_in_prog_exec (BirProgram bls) l1)
+End
 
-val bir_edges_blocks_in_prog_exec_eq_thm =
-  store_thm("bir_edges_blocks_in_prog_exec_eq_thm",
-  ``!p l1.
+Theorem bir_edges_blocks_in_prog_exec_eq_thm:
+  !p l1.
       bir_is_valid_labels p ==>
       (bir_edges_blocks_in_prog p l1 =
         bir_edges_blocks_in_prog_exec p l1
-      )``,
-
+      )
+Proof
 Cases_on `p` >> Q.RENAME1_TAC `(BirProgram bls)` >>
 REPEAT STRIP_TAC >>
 REWRITE_TAC [bir_targets_in_prog_exec_def, bir_edge_in_prog_def,
@@ -1994,32 +1977,31 @@ REPEAT STRIP_TAC >> (
   FULL_SIMP_TAC (srw_ss()) [] >>
   METIS_TAC []
 )
-);
+QED
 
 val bir_stmt_end_ss = rewrites (type_rws ``:bir_stmt_end_t``);
 val bir_label_exp_ss = rewrites (type_rws ``:bir_label_exp_t``);
 
-val FEVERY_FEVERY_DRESTRICT_thm = prove(
-  ``!P M S.
-      FEVERY P M ==> FEVERY P (DRESTRICT M S)``,
-
+Theorem FEVERY_FEVERY_DRESTRICT_thm[local]:
+  !P M S.
+      FEVERY P M ==> FEVERY P (DRESTRICT M S)
+Proof
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
               [finite_mapTheory.FEVERY_DEF,
                finite_mapTheory.FDOM_DRESTRICT,
                finite_mapTheory.DRESTRICT_DEF]
-);
+QED
 
-val bir_wp_exec_of_block_bool_thm =
-  store_thm("bir_wp_exec_of_block_bool_thm",
-  ``!p l ls wps wps' post.
+Theorem bir_wp_exec_of_block_bool_thm:
+  !p l ls wps wps' post.
       bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
       FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps ==>
       ((bir_wp_exec_of_block p l ls wps post) = SOME wps') ==>
-      (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps')``,
-
+      (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps')
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `p` >>
 Q.RENAME1_TAC `BirProgram bls` >>
@@ -2249,12 +2231,11 @@ Cases_on `FLOOKUP wps l` >- (
     ]
 ) >>
 FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DEF]
-);
+QED
 
 
-val bir_wp_exec_of_block_sound_thm =
-  store_thm("bir_wp_exec_of_block_sound_thm",
-  ``!p l ls post wps wps'.
+Theorem bir_wp_exec_of_block_sound_thm:
+  !p l ls post wps wps'.
       bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
@@ -2266,8 +2247,7 @@ val bir_wp_exec_of_block_sound_thm =
       ((bir_wp_exec_of_block p l ls wps post) = SOME wps') ==>
       (FEVERY (\(l1, wp1).
                 (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)) wps')
-  ``,
-
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `p` >>
 Q.RENAME1_TAC `BirProgram bls` >>
@@ -2547,37 +2527,37 @@ Cases_on `bl.bb_last_statement` >> (
 			FEVERY_FEVERY_DRESTRICT_thm]
   ]
 ]
-);
+QED
 
-val bir_bool_wps_map_def = Define `
+Definition bir_bool_wps_map_def:
   bir_bool_wps_map wps =
-    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps)`;
+    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps)
+End
 
-val bir_sound_wps_map_def = Define `
+Definition bir_sound_wps_map_def:
   bir_sound_wps_map p ls post wps =
     (FEVERY (\(l1, wp1).
               (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
             ) wps
-    )`;
+    )
+End
 
-val bir_wp_exec_of_block_bool_exec_thm =
-  store_thm("bir_wp_exec_of_block_bool_exec_thm",
-  ``!p l (ls:bir_label_t->bool) post wps wps'.
+Theorem bir_wp_exec_of_block_bool_exec_thm:
+  !p l (ls:bir_label_t->bool) post wps wps'.
       bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
       bir_bool_wps_map wps ==>
       ((bir_wp_exec_of_block p l ls wps post) = SOME wps') ==>
-      (bir_bool_wps_map wps')``,
-
+      (bir_bool_wps_map wps')
+Proof
 REWRITE_TAC [bir_bool_wps_map_def] >>
 METIS_TAC [bir_wp_exec_of_block_bool_thm]
-);
+QED
 
-val bir_wp_exec_of_block_sound_exec_thm =
-  store_thm("bir_wp_exec_of_block_sound_exec_thm",
-``!p l ls post wps wps'.
+Theorem bir_wp_exec_of_block_sound_exec_thm:
+  !p l ls post wps wps'.
     bir_wp_post_map_contains_bool_exp post ==>
     bir_is_well_typed_program p ==>
     bir_is_valid_program p ==>
@@ -2586,17 +2566,16 @@ val bir_wp_exec_of_block_sound_exec_thm =
     bir_bool_wps_map wps ==>
     bir_sound_wps_map p ls post wps ==>
     ((bir_wp_exec_of_block p l ls wps post) = SOME wps') ==>
-    (bir_sound_wps_map p ls post wps')``,
-
-  REWRITE_TAC [bir_bool_wps_map_def, bir_sound_wps_map_def] >>
+    (bir_sound_wps_map p ls post wps')
+Proof
+REWRITE_TAC [bir_bool_wps_map_def, bir_sound_wps_map_def] >>
   METIS_TAC [bir_is_valid_program_def,
              bir_edges_blocks_in_prog_exec_eq_thm,
              bir_wp_exec_of_block_sound_thm]
-);
+QED
 
-val bir_wp_exec_of_block_reusable_thm =
-  store_thm("bir_wp_exec_of_block_reusable_thm",
-  ``!p l ls post wps wps'.
+Theorem bir_wp_exec_of_block_reusable_thm:
+  !p l ls post wps wps'.
       bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
@@ -2608,18 +2587,17 @@ val bir_wp_exec_of_block_reusable_thm =
       ((bir_wp_exec_of_block p l ls wps post) = SOME wps') ==>
       ((bir_bool_wps_map wps') /\
        (bir_sound_wps_map p ls post wps')
-      )``,
-
+      )
+Proof
 METIS_TAC [bir_wp_exec_of_block_sound_exec_thm,
            bir_wp_exec_of_block_bool_exec_thm]
-);
+QED
 
 (* ============================================================================================= *)
 
 (* TODO: move to bir_exp_equivTheory *)
-val bir_eq_var_const_equiv =
-  store_thm("bir_eq_var_const_equiv", ``
-!env bv k.
+Theorem bir_eq_var_const_equiv:
+  !env bv k.
   (bir_eval_exp
            (BExp_BinPred BIExp_Equal
               (BExp_Den bv)
@@ -2627,8 +2605,8 @@ val bir_eq_var_const_equiv =
            env
     = SOME bir_val_true) ==>
   (bir_eval_exp (BExp_Den bv) env = SOME (BVal_Imm k))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `env` >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_read_def, bir_env_check_type_def,
       bir_env_lookup_type_def, bir_env_lookup_def, bir_val_true_def] >>
@@ -2646,18 +2624,17 @@ val bir_eq_var_const_equiv =
   ) >>
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
-val bir_exec_block_jmp_bv_triple_wp_thm =
-  store_thm("bir_exec_block_jmp_bv_triple_wp_thm",
-  ``!p bl post k bv.
+Theorem bir_exec_block_jmp_bv_triple_wp_thm:
+  !p bl post k bv.
       (bl.bb_last_statement = (BStmt_Jmp (BLE_Exp (BExp_Den bv)))) ==>
       (bl.bb_statements = []) ==>
       (MEM (BL_Address k) (bir_labels_of_program p)) ==>
       (bir_exec_block_jmp_triple p bl
         (BExp_BinExp BIExp_And ((BExp_BinPred BIExp_Equal (BExp_Den bv) (BExp_Const k))) post)
-        post (BL_Address k))``,
-
+        post (BL_Address k))
+Proof
 (* Expand definitions *)
 SIMP_TAC std_ss [bir_exec_block_jmp_triple_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
@@ -2704,11 +2681,10 @@ FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def, listTheory.REVERSE_DEF, bir_state_is_
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_env_def,
        bir_typing_expTheory.bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_is_bool_exp_def]
-);
+QED
 
-val bir_ret_block_triple_wp_thm =
-  store_thm("bir_ret_block_triple_wp_thm",
-  ``!p bl l k ks bv post.
+Theorem bir_ret_block_triple_wp_thm:
+  !p bl l k ks bv post.
       (MEM l (bir_labels_of_program p)) ==>
       (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
       (bl.bb_last_statement = (BStmt_Jmp (BLE_Exp (BExp_Den bv)))) ==>
@@ -2724,8 +2700,8 @@ val bir_ret_block_triple_wp_thm =
            (BExp_BinExp BIExp_And ((BExp_BinPred BIExp_Equal (BExp_Den bv) (BExp_Const k))) post)
            (\l. if l = (BL_Address k) then post else bir_exp_false)
       )
-``,
-  REWRITE_TAC [bir_exec_to_labels_or_assumviol_triple_def] >>
+Proof
+REWRITE_TAC [bir_exec_to_labels_or_assumviol_triple_def] >>
   REPEAT STRIP_TAC >>
 
 subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >- (
@@ -2762,7 +2738,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [bir_block_p
 (* *)
 PAT_X_ASSUM ``BER_Ended A B C D = r`` (fn thm => ASSUME_TAC (GSYM thm)) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_bool_expTheory.bir_is_bool_exp_env_REWRS]
-);
+QED
 
 
 val _ = export_theory();

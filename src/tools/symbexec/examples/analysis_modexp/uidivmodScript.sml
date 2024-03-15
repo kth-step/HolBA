@@ -24,9 +24,9 @@ val bprog = List.nth((snd o strip_comb o concl) bin_balrob_smallprogs_thm, 3);
 
 List.nth ((fst o listSyntax.dest_list o snd o dest_comb) bprog, 13)
 *)
-val bprog_def = Define `
-    bprog = ^(bprog)
-`;
+Definition bprog_def:
+  bprog = ^(bprog)
+End
 val bprog_tm_ = (fst o dest_eq o concl) bprog_def;
 (* ........................... *)
 
@@ -195,12 +195,6 @@ val birs_state_final_ = ``<|
 ``;
 
 
-(*
-val result = prove(,
-  cheat
-);
-*)
-
 val result = mk_oracle_thm "BIRS_EXTERNAL_WCET" ([], ``
   symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
        (birs_symb_to_symbst
@@ -241,6 +235,7 @@ val _ = List.map (fn countw_inc => (print (term_to_string countw_inc); print "; 
 val _ = print "]\n";
 *)
 
-val _ = save_thm ("bin_uidivmod_thm", result);
+Theorem bin_uidivmod_thm = result
+
 
 val _ = export_theory();

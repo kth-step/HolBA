@@ -22,7 +22,7 @@ open HolBACoreSimps;
  * triples not directly related to WP propagation. *)
 val _ = new_theory "bir_ht";
 
-val bir_exec_to_labels_triple_def = Define `
+Definition bir_exec_to_labels_triple_def:
   bir_exec_to_labels_triple p l ls pre post =
   !s r.
     bir_env_vars_are_initialised s.bst_environ
@@ -38,15 +38,15 @@ val bir_exec_to_labels_triple_def = Define `
       bir_is_bool_exp_env s'.bst_environ (post s'.bst_pc.bpc_label) /\
       (bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true) /\
       ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
-    )`;
+    )
+End
 
-val bir_never_assumviol_ht =
-  store_thm("bir_never_assumviol_ht",
-  ``!prog l ls pre post.
+Theorem bir_never_assumviol_ht:
+  !prog l ls pre post.
     bir_prog_has_no_assumes prog ==>
     bir_exec_to_labels_or_assumviol_triple prog l ls pre post ==>
-    bir_exec_to_labels_triple prog l ls pre post``,
-
+    bir_exec_to_labels_triple prog l ls pre post
+Proof
 REWRITE_TAC [bir_exec_to_labels_triple_def,
              bir_exec_to_labels_or_assumviol_triple_def] >>
 REPEAT STRIP_TAC >>
@@ -94,6 +94,6 @@ Cases_on `r` >| [
 
   REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ]
-);
+QED
 
 val _ = export_theory();

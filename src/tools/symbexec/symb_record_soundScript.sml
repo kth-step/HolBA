@@ -15,56 +15,53 @@ ASSUMPTION: sr_symbols_f
 *)
 (* the symbols of a symbolic expression are sound if, for any symbolic expression,
    equal valuation of those in two interpretations implies the same value for the interpretation of the symbolic expression *)
-val symb_symbols_f_sound_def = Define `
-    symb_symbols_f_sound sr =
+Definition symb_symbols_f_sound_def:
+  symb_symbols_f_sound sr =
     (!symbexp H H'.
        (symb_interprs_eq_for H H' (sr.sr_symbols_f symbexp)) ==>
        (sr.sr_interpret_f H  symbexp =
         sr.sr_interpret_f H' symbexp))
-`;
+End
 
-val symb_symbols_f_sound_thm = store_thm(
-   "symb_symbols_f_sound_thm", ``
-!sr.
+Theorem symb_symbols_f_sound_thm:
+  !sr.
     symb_symbols_f_sound sr =
     (!symbexp H H'.
        (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (symb_interpr_get H symb = symb_interpr_get H' symb)) ==>
        (sr.sr_interpret_f H  symbexp =
         sr.sr_interpret_f H' symbexp))
-``,
-  REWRITE_TAC [symb_symbols_f_sound_def, symb_interprs_eq_for_def]
-);
+Proof
+REWRITE_TAC [symb_symbols_f_sound_def, symb_interprs_eq_for_def]
+QED
 
-val symb_interpr_restr_interpret_EQ_thm = store_thm(
-   "symb_interpr_restr_interpret_EQ_thm", ``
-!sr.
+Theorem symb_interpr_restr_interpret_EQ_thm:
+  !sr.
 !H symbs symbexp.
   (symb_symbols_f_sound sr) ==>
 
   ((sr.sr_symbols_f symbexp) SUBSET symbs) ==>
 
   (sr.sr_interpret_f H symbexp = sr.sr_interpret_f (symb_interpr_restr symbs H) symbexp)
-``,
-  FULL_SIMP_TAC std_ss [symb_symbols_f_sound_thm] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_symbols_f_sound_thm] >>
   METIS_TAC [symb_interpr_restr_thm]
-);
+QED
 
 
 (*
 NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 =======================================================
 *)
-val symb_interprs_eq_for_store_IMP_EQ_thm = store_thm(
-   "symb_interprs_eq_for_store_IMP_EQ_thm", ``
-!sr.
+Theorem symb_interprs_eq_for_store_IMP_EQ_thm:
+  !sr.
 !H1 H2 store cstore.
   (symb_symbols_f_sound sr) ==>
 
   (symb_interprs_eq_for H1 H2 (symb_symbols_store sr store)) ==>
   ((symb_interpr_symbstore sr H1 store cstore) =
    (symb_interpr_symbstore sr H2 store cstore))
-``,
-  FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def] >>
   REPEAT STRIP_TAC >>
 
   EQ_TAC >> (
@@ -75,22 +72,21 @@ val symb_interprs_eq_for_store_IMP_EQ_thm = store_thm(
     METIS_TAC [symb_symbols_SUBSET_store_exps_thm,
                symb_symbols_f_sound_def, symb_interprs_eq_for_SUBSET_thm, SUBSET_TRANS]
   )
-);
+QED
 
-val symb_interprs_eq_for_pcond_IMP_EQ_thm = store_thm(
-   "symb_interprs_eq_for_pcond_IMP_EQ_thm", ``
-!sr.
+Theorem symb_interprs_eq_for_pcond_IMP_EQ_thm:
+  !sr.
 !H1 H2 sys.
   (symb_symbols_f_sound sr) ==>
 
   (symb_interprs_eq_for H1 H2 (sr.sr_symbols_f (symb_symbst_pcond sys))) ==>
   ((symb_interpr_symbpcond sr H1 sys) =
    (symb_interpr_symbpcond sr H2 sys))
-``,
-  FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def] >>
   METIS_TAC [symb_symbols_SUBSET_pcond_thm,
              symb_symbols_f_sound_def, symb_interprs_eq_for_SUBSET_thm, SUBSET_TRANS]
-);
+QED
 
 
 
@@ -100,9 +96,8 @@ NOTATION: STATE MATCHING UNDER SOUND SYMBOL SETS
 =======================================================
 *)
 
-val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
-   "symb_interprs_eq_for_matchstate_IMP_matchstate_thm", ``
-!sr.
+Theorem symb_interprs_eq_for_matchstate_IMP_matchstate_thm:
+  !sr.
 !sys H1 H2 s.
   (symb_symbols_f_sound sr) ==>
 
@@ -112,8 +107,8 @@ val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
   (symb_interprs_eq_for H1 H2 (symb_symbols sr sys)) ==>
   ((symb_matchstate sr sys H1 s) =
    (symb_matchstate sr sys H2 s))
-``,
-  FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_SUBSET_dom_thm] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_SUBSET_dom_thm] >>
   REPEAT STRIP_TAC >>
 
   EQ_TAC >> (
@@ -125,25 +120,23 @@ val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
                  @[symb_symbols_SUBSET_pcond_thm, symb_interprs_eq_for_pcond_IMP_EQ_thm])
     )
   )
-);
+QED
 
 (* matching implies matching the restricted interpretation *)
-val symb_matchstate_TO_min_RESTR_thm = store_thm(
-   "symb_matchstate_TO_min_RESTR_thm", ``
-!sr.
+Theorem symb_matchstate_TO_min_RESTR_thm:
+  !sr.
 !H sys s.
   (symb_symbols_f_sound sr) ==>
 
   (symb_matchstate sr sys H  s) ==>
 
   (symb_matchstate sr sys (symb_interpr_restr (symb_symbols sr sys) H) s)
-``,
-  METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm,
+Proof
+METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm,
              symb_interpr_ext_welltyped_IMP_thm, symb_matchstate_def, symb_interpr_restr_ext_thm]
-);
-val symb_matchstate_TO_min_RESTR_UNION_thm = store_thm(
-   "symb_matchstate_TO_min_RESTR_UNION_thm", ``
-!sr.
+QED
+Theorem symb_matchstate_TO_min_RESTR_UNION_thm:
+  !sr.
 !H sys s symbs H'.
   (symb_symbols_f_sound sr) ==>
 
@@ -152,8 +145,8 @@ val symb_matchstate_TO_min_RESTR_UNION_thm = store_thm(
   (symb_interpr_restr (symb_symbols sr sys UNION symbs) H = H') ==>
 
   (symb_matchstate sr sys H' s)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   `symb_interpr_welltyped sr H'` by (
     METIS_TAC [symb_interpr_ext_welltyped_IMP_thm, symb_matchstate_def, symb_interpr_restr_ext_thm]
@@ -161,12 +154,11 @@ val symb_matchstate_TO_min_RESTR_UNION_thm = store_thm(
 
   METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm,
              symb_matchstate_def, symb_interprs_eq_for_UNION_thm]
-);
+QED
 
 (* matching implies matching a minimal interpretation *)
-val symb_matchstate_TO_minimal_thm = store_thm(
-   "symb_matchstate_TO_minimal_thm", ``
-!sr.
+Theorem symb_matchstate_TO_minimal_thm:
+  !sr.
 !sys H s.
   (symb_symbols_f_sound sr) ==>
 
@@ -176,14 +168,13 @@ val symb_matchstate_TO_minimal_thm = store_thm(
         (symb_minimal_interpretation sr sys H') /\
         (symb_matchstate sr sys H' s)
   )
-``,
-  METIS_TAC [symb_minimal_interpretation_def, symb_matchstate_TO_min_RESTR_thm,
+Proof
+METIS_TAC [symb_minimal_interpretation_def, symb_matchstate_TO_min_RESTR_thm,
     symb_interpr_for_symbs_TO_min_thm, symb_matchstate_def, symb_suitable_interpretation_def]
-);
+QED
 
-val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
-   "symb_interpr_ext_matchstate_IMP_matchstate_thm", ``
-!sr.
+Theorem symb_interpr_ext_matchstate_IMP_matchstate_thm:
+  !sr.
 !sys H1 H2 s.
   (symb_symbols_f_sound sr) ==>
 
@@ -192,8 +183,8 @@ val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
 
   (symb_interpr_welltyped sr H2) ==>
   (symb_matchstate sr sys H2 s)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   `symb_interprs_eq_for H1 H2 (symb_symbols sr sys)` by (
     FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_SUBSET_dom_thm] >>
@@ -201,12 +192,11 @@ val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
   ) >>
 
   METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm, symb_matchstate_def]
-);
+QED
 
 
-val symb_interpr_extend_IMP_symb_matchstate_thm = store_thm(
-   "symb_interpr_extend_IMP_symb_matchstate_thm", ``
-!sr.
+Theorem symb_interpr_extend_IMP_symb_matchstate_thm:
+  !sr.
 !sys H_extra H_base s.
   (symb_symbols_f_sound sr) ==>
 
@@ -214,17 +204,16 @@ val symb_interpr_extend_IMP_symb_matchstate_thm = store_thm(
 
   (symb_matchstate sr sys H_base s) ==>
   (symb_matchstate sr sys (symb_interpr_extend H_extra H_base) s)
-``,
-  METIS_TAC [symb_interpr_extend_IMP_ext_thm, symb_interpr_ext_matchstate_IMP_matchstate_thm,
+Proof
+METIS_TAC [symb_interpr_extend_IMP_ext_thm, symb_interpr_ext_matchstate_IMP_matchstate_thm,
              symb_matchstate_def, symb_interpr_extend_welltyped_IMP_thm]
-);
+QED
 
 
 
 
-val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
-   "symb_matchstate_interpr_ext_EXISTS_thm", ``
-!sr.
+Theorem symb_matchstate_interpr_ext_EXISTS_thm:
+  !sr.
 !H1 H12 H2 H23 H3 sys s.
   (symb_symbols_f_sound sr) ==>
 
@@ -242,8 +231,8 @@ val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
 
   (symb_matchstate_ext sr sys H1 s)
 (* ?H4. symb_interpr_ext H4 H1 /\ symb_matchstate sr sys H4 s) *)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   (* the intersection of H1 and H3 is equally mapped in both interpretations *)
   `symb_interprs_eq_for_INTER H1 H3` by (
@@ -252,11 +241,10 @@ val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
 
   METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm,
              symb_matchstate_def, symb_interpr_extend_welltyped_IMP_thm, symb_matchstate_ext_def]
-);
+QED
 
-val symb_matchstate_ext_WITHOUT_thm = store_thm(
-   "symb_matchstate_ext_WITHOUT_thm", ``
-!sr.
+Theorem symb_matchstate_ext_WITHOUT_thm:
+  !sr.
 !sys H s symb.
   (symb_symbols_f_sound sr) ==>
 
@@ -268,8 +256,8 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
   (?H'. (symb_interpr_ext H' H) /\
         (symb_matchstate sr sys H' s) /\
         (~(symb IN symb_interpr_dom H')))
-``,
-  REWRITE_TAC [symb_matchstate_ext_def] >>
+Proof
+REWRITE_TAC [symb_matchstate_ext_def] >>
   REPEAT STRIP_TAC >>
 
   Q.ABBREV_TAC `H1 = symb_interpr_update H' (symb, NONE)` >>
@@ -308,7 +296,7 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
     ( [symb_interpr_ext_def, symb_interprs_eq_for_TRANS_thm]
      @[symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
      @[symb_interpr_dom_UPDATE_NONE_thm, ELT_IN_DELETE])
-);
+QED
 
 
 
@@ -317,26 +305,25 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
 SOUND VALUE TYPES
 =======================================================
 *)
-val symb_ARB_val_sound_def = Define `
-    symb_ARB_val_sound sr =
+Definition symb_ARB_val_sound_def:
+  symb_ARB_val_sound sr =
       (!t. sr.sr_typeof_val (sr.sr_ARB_val t) = t)
-`;
+End
 
-val symb_interpr_extend_symbs_sr_def = Define `
-    symb_interpr_extend_symbs_sr sr =
+Definition symb_interpr_extend_symbs_sr_def:
+  symb_interpr_extend_symbs_sr sr =
       symb_interpr_extend_symbs (\s. sr.sr_ARB_val (sr.sr_typeof_symb s))
-`;
+End
 
-val symb_interpr_extend_symbs_sr_IMP_welltyped_thm = store_thm(
-   "symb_interpr_extend_symbs_sr_IMP_welltyped_thm", ``
-!sr.
+Theorem symb_interpr_extend_symbs_sr_IMP_welltyped_thm:
+  !sr.
 !H symbs.
   (symb_ARB_val_sound sr) ==>
 
   (symb_interpr_welltyped sr H) ==>
   (symb_interpr_welltyped sr (symb_interpr_extend_symbs_sr sr symbs H))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   REWRITE_TAC [symb_interpr_welltyped_def, symb_interpr_get_update_thm] >>
   REPEAT STRIP_TAC >>
 
@@ -347,39 +334,36 @@ val symb_interpr_extend_symbs_sr_IMP_welltyped_thm = store_thm(
   Cases_on `symb IN symb_interpr_dom H` >> (
     FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_ARB_val_sound_def]
   )
-);
+QED
 
-val symb_interpr_extend_symbs_sr_IS_interpr_ext_thm = store_thm(
-   "symb_interpr_extend_symbs_sr_IS_interpr_ext_thm", ``
-!sr.
+Theorem symb_interpr_extend_symbs_sr_IS_interpr_ext_thm:
+  !sr.
 !H symbs.
   (symb_interpr_ext (symb_interpr_extend_symbs_sr sr symbs H) H)
-``,
-  FULL_SIMP_TAC std_ss [symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_ext_thm]
-);
+Proof
+FULL_SIMP_TAC std_ss [symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_ext_thm]
+QED
 
-val symb_interpr_extend_symbs_sr_IS_interpr_for_symbs_thm = store_thm(
-   "symb_interpr_extend_symbs_sr_IS_interpr_for_symbs_thm", ``
-!sr.
+Theorem symb_interpr_extend_symbs_sr_IS_interpr_for_symbs_thm:
+  !sr.
 !H symbs.
   (symb_interpr_for_symbs symbs (symb_interpr_extend_symbs_sr sr symbs H))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_dom_thm, SUBSET_UNION]
-);
+QED
 
-val symb_interpr_extend_symbs_sr_IMP_matchstate_thm = store_thm(
-   "symb_interpr_extend_symbs_sr_IMP_matchstate_thm", ``
-!sr.
+Theorem symb_interpr_extend_symbs_sr_IMP_matchstate_thm:
+  !sr.
 !H symbs sys s.
   (symb_ARB_val_sound sr) ==>
   (symb_symbols_f_sound sr) ==>
 
   (symb_matchstate sr sys H s) ==>
   (symb_matchstate sr sys (symb_interpr_extend_symbs_sr sr symbs H) s)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   `symb_interprs_eq_for H (symb_interpr_extend_symbs_sr sr symbs H) (symb_symbols sr sys)` by (
     METIS_TAC [symb_interpr_extend_symbs_sr_IS_interpr_ext_thm,
@@ -390,15 +374,15 @@ val symb_interpr_extend_symbs_sr_IMP_matchstate_thm = store_thm(
   ) >>
 
   METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm, symb_matchstate_def, symb_interpr_extend_symbs_sr_IMP_welltyped_thm]
-);
+QED
 
 
 (*
 SOUND EXPRESSION TYPES
 =======================================================
 *)
-val symb_typeof_exp_sound_def = Define `
-    symb_typeof_exp_sound sr =
+Definition symb_typeof_exp_sound_def:
+  symb_typeof_exp_sound sr =
       (!e t.
        (!H.
           (sr.sr_typeof_exp e = SOME t) ==>
@@ -409,11 +393,10 @@ val symb_typeof_exp_sound_def = Define `
           (?v. (sr.sr_interpret_f H e = SOME v) /\
                (sr.sr_typeof_val v = t))
        ))
-`;
+End
 
-val symb_interpr_update_interpret_f_IMP_welltyped_thm = store_thm(
-   "symb_interpr_update_interpret_f_IMP_welltyped_thm", ``
-!sr.
+Theorem symb_interpr_update_interpret_f_IMP_welltyped_thm:
+  !sr.
 !H symb e.
   (symb_typeof_exp_sound sr) ==>
 
@@ -422,9 +405,9 @@ val symb_interpr_update_interpret_f_IMP_welltyped_thm = store_thm(
   (sr.sr_typeof_exp e = SOME (sr.sr_typeof_symb symb)) ==>
 
   (symb_interpr_welltyped sr (symb_interpr_update H (symb, sr.sr_interpret_f H e)))
-``,
-  METIS_TAC [symb_interpr_update_SOME_IMP_welltyped_thm, symb_typeof_exp_sound_def]
-);
+Proof
+METIS_TAC [symb_interpr_update_SOME_IMP_welltyped_thm, symb_typeof_exp_sound_def]
+QED
 
 
 
@@ -432,13 +415,13 @@ val symb_interpr_update_interpret_f_IMP_welltyped_thm = store_thm(
 SOUND VALUE EQUALITY RELATION
 =======================================================
 *)
-val symb_val_eq_sound_def = Define `
-    symb_val_eq_sound sr =
+Definition symb_val_eq_sound_def:
+  symb_val_eq_sound sr =
       ((!v. sr.sr_val_eq v v)(* /\
        (!v1 v2. sr.sr_val_eq v1 v2 <=> sr.sr_val_eq v2 v1) /\
        (!v1 v2 v3. sr.sr_val_eq v1 v2 ==> sr.sr_val_eq v2 v3 ==> sr.sr_val_eq v1 v3)*)
       )
-`;
+End
 
 (*
 ASBTRACT EXPRESSION CONSTRUCTION
@@ -448,8 +431,8 @@ ASBTRACT EXPRESSION CONSTRUCTION
      conjuncting an expression with an equality of two other expressions
    e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
      then: (v) = (5) /\ (x > 10) *)
-val symb_mk_exp_eq_f_sound_def = Define `
-    symb_mk_exp_eq_f_sound sr =
+Definition symb_mk_exp_eq_f_sound_def:
+  symb_mk_exp_eq_f_sound sr =
       ((!e1 e2 H.
          (symb_interpr_welltyped sr H) ==>
          (sr.sr_interpret_f H (sr.sr_mk_exp_eq_f e1 e2) = SOME sr.sr_val_true) =
@@ -457,9 +440,9 @@ val symb_mk_exp_eq_f_sound_def = Define `
           (OPTREL sr.sr_val_eq (sr.sr_interpret_f H e1) (sr.sr_interpret_f H e2)))) /\
        (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_eq_f e1 e2) =
          sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
-`;
-val symb_mk_exp_conj_f_sound_def = Define `
-    symb_mk_exp_conj_f_sound sr =
+End
+Definition symb_mk_exp_conj_f_sound_def:
+  symb_mk_exp_conj_f_sound sr =
       ((!e1 e2 H.
          (symb_interpr_welltyped sr H) ==>
          (sr.sr_interpret_f H (sr.sr_mk_exp_conj_f e1 e2) = SOME sr.sr_val_true) =
@@ -467,14 +450,13 @@ val symb_mk_exp_conj_f_sound_def = Define `
           (sr.sr_interpret_f H e2 = SOME sr.sr_val_true))) /\
        (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_conj_f e1 e2) =
          sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
-`;
-val symb_expr_conj_eq_def = Define `
-    symb_expr_conj_eq sr e1 e2 conj1 =
+End
+Definition symb_expr_conj_eq_def:
+  symb_expr_conj_eq sr e1 e2 conj1 =
       sr.sr_mk_exp_conj_f (sr.sr_mk_exp_eq_f e1 e2) conj1
-`;
-val symb_expr_conj_eq_thm = store_thm(
-   "symb_expr_conj_eq_thm", ``
-!sr.
+End
+Theorem symb_expr_conj_eq_thm:
+  !sr.
   (symb_mk_exp_eq_f_sound sr) ==>
   (symb_mk_exp_conj_f_sound sr) ==>
     ((!e1 e2 conj1 H.
@@ -487,31 +469,31 @@ val symb_expr_conj_eq_thm = store_thm(
          sr.sr_symbols_f e1 UNION
          sr.sr_symbols_f e2 UNION
          sr.sr_symbols_f conj1))
-``,
-  METIS_TAC [symb_expr_conj_eq_def, symb_mk_exp_eq_f_sound_def, symb_mk_exp_conj_f_sound_def]
-);
+Proof
+METIS_TAC [symb_expr_conj_eq_def, symb_mk_exp_eq_f_sound_def, symb_mk_exp_conj_f_sound_def]
+QED
 
 (* predicate for functions that make expressions that represent exactly a symbol *)
-val symb_mk_exp_symb_f_sound_def = Define `
-    symb_mk_exp_symb_f_sound sr =
+Definition symb_mk_exp_symb_f_sound_def:
+  symb_mk_exp_symb_f_sound sr =
       ((!H symb v.
          (symb_interpr_get H symb = SOME v) ==>
          (sr.sr_interpret_f H (sr.sr_mk_exp_symb_f symb) = SOME v)) /\
        (!symb. sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb) = {symb}))
-`;
+End
 
-val symb_mk_exp_symb_f_sound_typeof_def = Define `
-    symb_mk_exp_symb_f_sound_typeof sr =
+Definition symb_mk_exp_symb_f_sound_typeof_def:
+  symb_mk_exp_symb_f_sound_typeof sr =
       (!symb.
          sr.sr_typeof_exp (sr.sr_mk_exp_symb_f symb) = SOME (sr.sr_typeof_symb symb))
-`;
+End
 
 
 
-val symb_mk_exp_neg_f_sound_def = Define `
-    symb_mk_exp_neg_f_sound sr =
+Definition symb_mk_exp_neg_f_sound_def:
+  symb_mk_exp_neg_f_sound sr =
        (!symbexp. sr.sr_symbols_f (sr.sr_mk_exp_neg_f symbexp) = sr.sr_symbols_f symbexp)
-`;
+End
 
 
 (*
@@ -519,8 +501,8 @@ ASBTRACT SUBSTITUTION OF SYMBOLS FOR EXPRESSIONS IN EXPRESSIONS
 =======================================================
 [x*3/a] a + 4 = x*3 + 4
 *)
-val symb_subst_f_sound_def = Define `
-    symb_subst_f_sound sr =
+Definition symb_subst_f_sound_def:
+  symb_subst_f_sound sr =
       (!symb symb_inst symbexp symbexp_r.
        (!H H' v.
           (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
@@ -536,12 +518,11 @@ val symb_subst_f_sound_def = Define `
         (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION
            (if symb IN (sr.sr_symbols_f symbexp) then sr.sr_symbols_f symb_inst else EMPTY)))
       )
-`;
+End
 
 (*
-val symb_subst_f_SYMBNOTIN_thm = store_thm(
-   "symb_subst_f_SYMBNOTIN_thm", ``
-!sr.
+Theorem symb_subst_f_SYMBNOTIN_thm:
+  !sr.
 !symb symb_inst symbexp symbexp_r.
   (symb_symbols_f_sound sr) ==>
   (symb_subst_f_sound sr) ==>
@@ -553,33 +534,32 @@ val symb_subst_f_SYMBNOTIN_thm = store_thm(
 
   (sr.sr_interpret_f H symbexp_r =
    sr.sr_interpret_f H symbexp)
-``,
-  (* symb_symbols_f_sound_def *)
+Proof
+(* symb_symbols_f_sound_def *)
   cheat
-);
+QED
 *)
 
 (* this soundness definition is to avoid proving the SYMBNOTIN theorem above and lift it all the way up to states *)
-val symb_subst_f_sound_NOTIN_def = Define `
-    symb_subst_f_sound_NOTIN sr =
+Definition symb_subst_f_sound_NOTIN_def:
+  symb_subst_f_sound_NOTIN sr =
       (!symb symb_inst symbexp.
           (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
           (symb NOTIN sr.sr_symbols_f symbexp) ==>
           (sr.sr_subst_f (symb, symb_inst) symbexp = symbexp)
       )
-`;
+End
 
-val symb_subst_store_sound_NOTIN_thm = store_thm(
-   "symb_subst_store_sound_NOTIN_thm", ``
-!sr.
+Theorem symb_subst_store_sound_NOTIN_thm:
+  !sr.
 !symb symb_inst store.
   (symb_subst_f_sound_NOTIN sr) ==>
 
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
   (symb NOTIN symb_symbols_store sr store) ==>
   (symb_subst_store sr (symb, symb_inst) store = store)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
   REPEAT STRIP_TAC >>
 
@@ -596,19 +576,18 @@ val symb_subst_store_sound_NOTIN_thm = store_thm(
   ) >>
 
   METIS_TAC [symb_subst_f_sound_NOTIN_def, symb_subst_store_thm]
-);
+QED
 
-val symb_subst_sound_NOTIN_thm = store_thm(
-   "symb_subst_sound_NOTIN_thm", ``
-!sr.
+Theorem symb_subst_sound_NOTIN_thm:
+  !sr.
 !symb symb_inst sys.
   (symb_subst_f_sound_NOTIN sr) ==>
 
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
   (symb NOTIN symb_symbols sr sys) ==>
   (symb_subst sr (symb,symb_inst) sys = sys)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   Cases_on `sys` >>
   FULL_SIMP_TAC std_ss [symb_subst_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def, symb_symbst_extra_def, symb_symbst_t_11] >>
@@ -622,12 +601,11 @@ val symb_subst_sound_NOTIN_thm = store_thm(
   ) >>
 
   METIS_TAC [symb_subst_f_sound_NOTIN_def, symb_subst_store_sound_NOTIN_thm]
-);
+QED
 
 (* move on with the actual substitutions *)
-val symb_subst_store_sound_thm = store_thm(
-   "symb_subst_store_sound_thm", ``
-!sr.
+Theorem symb_subst_store_sound_thm:
+  !sr.
 !H H' symb symb_inst store store_r cstore v.
   (symb_subst_f_sound sr) ==>
 
@@ -639,8 +617,8 @@ val symb_subst_store_sound_thm = store_thm(
 
   (symb_interpr_symbstore sr H  store_r cstore =
    symb_interpr_symbstore sr H' store   cstore)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_subst_store_thm, symb_interpr_symbstore_def] >>
 
   EQ_TAC >> (
@@ -660,19 +638,18 @@ val symb_subst_store_sound_thm = store_thm(
 
     METIS_TAC [optionTheory.option_CLAUSES]
   )
-);
+QED
 
-val symb_subst_store_symbols_thm = store_thm(
-   "symb_subst_store_symbols_thm", ``
-!sr.
+Theorem symb_subst_store_symbols_thm:
+  !sr.
 !H symb symb_inst store.
   (symb_subst_f_sound sr) ==>
 
   (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
   (symb_symbols_store sr store SUBSET symb_interpr_dom H) ==>
   (symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) store) SUBSET symb_interpr_dom H)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_subst_store_def, symb_symbols_store_def, BIGUNION_SUBSET] >>
   REPEAT STRIP_TAC >>
 
@@ -687,19 +664,18 @@ val symb_subst_store_symbols_thm = store_thm(
 
   FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
   METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET, EMPTY_SUBSET]
-);
+QED
 
-val symb_subst_store_symbols_thm2 = store_thm(
-   "symb_subst_store_symbols_thm2", ``
-!sr.
+Theorem symb_subst_store_symbols_thm2:
+  !sr.
 !H symb symb_inst store.
   (symb_subst_f_sound sr) ==>
 
   (symb IN symb_interpr_dom H) ==>
   (symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) store) SUBSET symb_interpr_dom H) ==>
   (symb_symbols_store sr store SUBSET symb_interpr_dom H)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_subst_store_def, symb_symbols_store_def, BIGUNION_SUBSET] >>
   REPEAT STRIP_TAC >>
 
@@ -709,18 +685,17 @@ val symb_subst_store_symbols_thm2 = store_thm(
   ) >>
   FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
   METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
-);
+QED
 
-val symb_subst_store_symbols_thm3 = store_thm(
-   "symb_subst_store_symbols_thm3", ``
-!sr.
+Theorem symb_subst_store_symbols_thm3:
+  !sr.
 !H symb symb_inst store.
   (symb_subst_f_sound sr) ==>
 
   (symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) store) =
    (symb_symbols_store sr store DIFF {symb}) UNION (if symb IN symb_symbols_store sr store then sr.sr_symbols_f symb_inst else EMPTY))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss) [symb_subst_store_def, symb_symbols_store_def] >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
   REPEAT STRIP_TAC >>
@@ -783,20 +758,19 @@ val symb_subst_store_symbols_thm3 = store_thm(
     METIS_TAC []
   ) >>
   METIS_TAC [NOT_IN_EMPTY]
-);
+QED
 
 
 
-val symb_subst_symbols_thm = store_thm(
-   "symb_subst_symbols_thm", ``
-!sr.
+Theorem symb_subst_symbols_thm:
+  !sr.
 !H symb symb_inst sys.
   (symb_subst_f_sound sr) ==>
 
   (symb_symbols sr (symb_subst sr (symb, symb_inst) sys) =
    (symb_symbols sr sys DIFF {symb}) UNION (if symb IN symb_symbols sr sys then sr.sr_symbols_f symb_inst else EMPTY))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss) [symb_subst_def, symb_symbols_def] >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION, symb_symbst_store_def, symb_symbst_pcond_def] >>
   REPEAT STRIP_TAC >>
@@ -846,21 +820,20 @@ val symb_subst_symbols_thm = store_thm(
     METIS_TAC [symb_subst_f_sound_def]
   ) >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
-);
+QED
 
 
 
-val symb_subst_suitable_interpretation_thm = store_thm(
-   "symb_subst_suitable_interpretation_thm", ``
-!sr.
+Theorem symb_subst_suitable_interpretation_thm:
+  !sr.
 !sys H symb symb_inst.
   (symb_subst_f_sound sr) ==>
 
   (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
   (symb_suitable_interpretation sr sys H) ==>
   (symb_suitable_interpretation sr (symb_subst sr (symb,symb_inst) sys) H)
-``,
-  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+Proof
+FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
      symb_interpr_for_symbs_def, symb_symbols_def] >>
   REPEAT STRIP_TAC >>
 
@@ -886,19 +859,18 @@ val symb_subst_suitable_interpretation_thm = store_thm(
   ) >>
 
   METIS_TAC [UNION_SUBSET]
-);
+QED
 
-val symb_subst_suitable_interpretation_thm2 = store_thm(
-   "symb_subst_suitable_interpretation_thm2", ``
-!sr.
+Theorem symb_subst_suitable_interpretation_thm2:
+  !sr.
 !sys H symb symb_inst.
   (symb_subst_f_sound sr) ==>
 
   (symb IN symb_interpr_dom H) ==>
   (symb_suitable_interpretation sr (symb_subst sr (symb,symb_inst) sys) H) ==>
   (symb_suitable_interpretation sr sys H)
-``,
-  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+Proof
+FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
      symb_interpr_for_symbs_def, symb_symbols_def] >>
   REPEAT STRIP_TAC >>
 
@@ -914,11 +886,10 @@ val symb_subst_suitable_interpretation_thm2 = store_thm(
   ) >>
   FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
   METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
-);
+QED
 
-val symb_subst_suitable_interpretation_thm3 = store_thm(
-   "symb_subst_suitable_interpretation_thm3", ``
-!sr.
+Theorem symb_subst_suitable_interpretation_thm3:
+  !sr.
 !sys H symb symb_inst vo.
   (symb_subst_f_sound sr) ==>
 
@@ -926,8 +897,8 @@ val symb_subst_suitable_interpretation_thm3 = store_thm(
 
   (symb_suitable_interpretation sr sys  (symb_interpr_update H (symb, vo))) ==>
   (symb_suitable_interpretation sr (symb_subst sr (symb, symb_inst) sys) H)
-``,
-  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_subst_symbols_thm] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_subst_symbols_thm] >>
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def] >>
   REPEAT STRIP_TAC >>
 
@@ -946,18 +917,17 @@ val symb_subst_suitable_interpretation_thm3 = store_thm(
   Cases_on `symb IN symb_symbols sr sys` >> (
     FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
   )
-);
+QED
 
-val symb_subst_suitable_interpretation_thm4 = store_thm(
-   "symb_subst_suitable_interpretation_thm4", ``
-!sr.
+Theorem symb_subst_suitable_interpretation_thm4:
+  !sr.
 !sys H symb symb_inst vo.
   (symb_subst_f_sound sr) ==>
 
   (symb_suitable_interpretation sr (symb_subst sr (symb, symb_inst) sys) H) ==>
   (symb_suitable_interpretation sr sys  (symb_interpr_update H (symb, SOME v)))
-``,
-  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_subst_symbols_thm] >>
+Proof
+FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_subst_symbols_thm] >>
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def] >>
   REPEAT STRIP_TAC >>
 
@@ -971,11 +941,10 @@ val symb_subst_suitable_interpretation_thm4 = store_thm(
 
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DELETE, GSYM DELETE_DEF] >>
   METIS_TAC [DELETE_NON_ELEMENT]
-);
+QED
 
-val symb_subst_sound_thm1 = store_thm(
-   "symb_subst_sound_thm1", ``
-!sr.
+Theorem symb_subst_sound_thm1:
+  !sr.
 !H H' symb symb_inst sys sys_r s v.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
@@ -993,8 +962,8 @@ val symb_subst_sound_thm1 = store_thm(
 
   (symb_matchstate sr sys_r H  s) ==>
   (symb_matchstate sr sys   H' s)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
 
   Cases_on `sys_r` >>
   FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_def, symb_matchstate_def] >>
@@ -1015,11 +984,10 @@ val symb_subst_sound_thm1 = store_thm(
     ]
   ) >>
   METIS_TAC [symb_subst_suitable_interpretation_thm4, symb_subst_def]
-);
+QED
 
-val symb_subst_sound_thm2 = store_thm(
-   "symb_subst_sound_thm2", ``
-!sr.
+Theorem symb_subst_sound_thm2:
+  !sr.
 !H H' symb symb_inst sys sys_r s v.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
@@ -1037,8 +1005,8 @@ val symb_subst_sound_thm2 = store_thm(
 
   (symb_matchstate sr sys   H' s) ==>
   (symb_matchstate sr sys_r H  s)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `sys_r` >>
   FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_def, symb_matchstate_def] >>
 
@@ -1060,7 +1028,7 @@ val symb_subst_sound_thm2 = store_thm(
     ]
   ) >>
   METIS_TAC [symb_subst_suitable_interpretation_thm3, symb_subst_def]
-);
+QED
 
 
 
@@ -1070,7 +1038,7 @@ GOAL: SINGLE STEP SOUNDNESS
 *)
 (* this definition assumes that the concrete transition function is total,
    if it wasn't we needed more here and also needed to take special care *)
-val symb_step_sound_def = Define `
+Definition symb_step_sound_def:
   symb_step_sound sr =
     (!sys Pi.
      (sr.sr_step_symb sys = Pi) ==>
@@ -1080,6 +1048,6 @@ val symb_step_sound_def = Define `
        (?sys'. sys' IN Pi /\ symb_matchstate sr sys' H s')
      )
     )
-`;
+End
 
 val _ = export_theory();

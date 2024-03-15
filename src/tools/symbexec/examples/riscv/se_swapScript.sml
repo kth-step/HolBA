@@ -22,9 +22,9 @@ val bprog = List.nth((snd o strip_comb o concl) bin_rv_swap_thm, 3);
 
 List.nth ((fst o listSyntax.dest_list o snd o dest_comb) bprog, 13)
 *)
-val bprog_def = Define `
-    bprog = ^(bprog)
-`;
+Definition bprog_def:
+  bprog = ^(bprog)
+End
 val bprog_tm = (fst o dest_eq o concl) bprog_def;
 (* ........................... *)
 
@@ -39,13 +39,13 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
-val riscv_vars_def = Define `
-    riscv_vars = APPEND (bmr_vars riscv_bmr) (bmr_temp_vars riscv_bmr)
-`;
+Definition riscv_vars_def:
+  riscv_vars = APPEND (bmr_vars riscv_bmr) (bmr_temp_vars riscv_bmr)
+End
 
-val birenvtyl_riscv_def = Define `
-    birenvtyl_riscv = MAP BVarToPair riscv_vars
-`;
+Definition birenvtyl_riscv_def:
+  birenvtyl_riscv = MAP BVarToPair riscv_vars
+End
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 
 
@@ -133,6 +133,7 @@ val _ = Portable.pprint Tag.pp_tag (tag result);
 
 
 
-val _ = save_thm ("bin_rv_swap_analysis_thm", result);
+Theorem bin_rv_swap_analysis_thm = result
+
 
 val _ = export_theory();

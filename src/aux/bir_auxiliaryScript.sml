@@ -11,10 +11,11 @@ val _ = new_theory "bir_auxiliary";
 (* List lemmata                                                               *)
 (* -------------------------------------------------------------------------- *)
 
-val LAST_FILTER_EL = store_thm ("LAST_FILTER_EL",
-  ``!P l. (FILTER P l <> []) ==> (
+Theorem LAST_FILTER_EL:
+  !P l. (FILTER P l <> []) ==> (
           (?i. (i < LENGTH l) /\ (LAST (FILTER P l) = EL i l) /\ P (EL i l) /\
-               (!j. i < j /\ j < LENGTH l ==> ~(P (EL j l)))))``,
+               (!j. i < j /\ j < LENGTH l ==> ~(P (EL j l)))))
+Proof
 GEN_TAC >> Induct >- (
   SIMP_TAC list_ss []
 ) >>
@@ -37,41 +38,47 @@ Cases_on `FILTER P l = []` >| [
   REPEAT STRIP_TAC >>
   Cases_on `j` >> FULL_SIMP_TAC list_ss [] >>
   METIS_TAC[]
-]);
+]
+QED
 
 
-val LENGTH_LASTN_LE = store_thm ("LENGTH_LASTN_LE",
-  ``!n l. LENGTH (LASTN n l) <= LENGTH l``,
-
+Theorem LENGTH_LASTN_LE:
+  !n l. LENGTH (LASTN n l) <= LENGTH l
+Proof
 SIMP_TAC list_ss [rich_listTheory.LASTN_def,
-  listTheory.LENGTH_TAKE_EQ]);
+  listTheory.LENGTH_TAKE_EQ]
+QED
 
 
-val dropWhile_MAP = store_thm ("dropWhile_MAP",
-  ``!P f l. dropWhile P (MAP f l) =
-            MAP f (dropWhile (P o f) l)``,
-
+Theorem dropWhile_MAP:
+  !P f l. dropWhile P (MAP f l) =
+            MAP f (dropWhile (P o f) l)
+Proof
 GEN_TAC >> GEN_TAC >>
 Induct >> ASM_SIMP_TAC list_ss [] >>
 GEN_TAC >> COND_CASES_TAC >> (
   SIMP_TAC list_ss []
-))
+)
+QED
 
-val DROP_GENLIST = store_thm ("DROP_GENLIST",
-  ``!n (f:num->'a) m.
+Theorem DROP_GENLIST:
+  !n (f:num->'a) m.
       DROP n (GENLIST f m) =
-      GENLIST (\n'. (f (n' + n))) (m - n)``,
+      GENLIST (\n'. (f (n' + n))) (m - n)
+Proof
 Induct >- (
   SIMP_TAC (list_ss++boolSimps.ETA_ss) []
 ) >>
 GEN_TAC >> Cases >- (
   SIMP_TAC list_ss []
 ) >>
-ASM_SIMP_TAC list_ss [listTheory.GENLIST_CONS, arithmeticTheory.ADD_CLAUSES])
+ASM_SIMP_TAC list_ss [listTheory.GENLIST_CONS, arithmeticTheory.ADD_CLAUSES]
+QED
 
 
-val ALL_DISTINCT_MAP_FILTER = store_thm ("ALL_DISTINCT_MAP_FILTER",
-``!f P l. ALL_DISTINCT (MAP f l) ==> ALL_DISTINCT (MAP f (FILTER P l))``,
+Theorem ALL_DISTINCT_MAP_FILTER:
+  !f P l. ALL_DISTINCT (MAP f l) ==> ALL_DISTINCT (MAP f (FILTER P l))
+Proof
 GEN_TAC >> GEN_TAC >>
 Induct >> ASM_SIMP_TAC list_ss [] >>
 
@@ -81,22 +88,25 @@ Cases_on `P x` >- (
   FULL_SIMP_TAC list_ss [listTheory.MEM_MAP, listTheory.MEM_FILTER] >>
   METIS_TAC[]
 ) >>
-ASM_SIMP_TAC list_ss []);
+ASM_SIMP_TAC list_ss []
+QED
 
 
 
-val INDEX_FIND_EQ_NONE = store_thm ("INDEX_FIND_EQ_NONE",
-  ``!l i P. (INDEX_FIND i P l = NONE) <=> (~(EXISTS P l))``,
+Theorem INDEX_FIND_EQ_NONE:
+  !l i P. (INDEX_FIND i P l = NONE) <=> (~(EXISTS P l))
+Proof
 Induct >> SIMP_TAC list_ss [listTheory.INDEX_FIND_def] >>
-REPEAT GEN_TAC >> COND_CASES_TAC >> ASM_SIMP_TAC list_ss []);
+REPEAT GEN_TAC >> COND_CASES_TAC >> ASM_SIMP_TAC list_ss []
+QED
 
 
-val INDEX_FIND_EQ_SOME = store_thm ("INDEX_FIND_EQ_SOME",
-  ``!l i P j e. (INDEX_FIND i P l = SOME (j, e)) <=> (
+Theorem INDEX_FIND_EQ_SOME:
+  !l i P j e. (INDEX_FIND i P l = SOME (j, e)) <=> (
        (i <= j) /\ (j - i < LENGTH l) /\
        (EL (j - i) l = e) /\ P e /\
-       (!j'. (i <= j' /\ j' < j) ==> ~(P (EL (j' - i) l))))``,
-
+       (!j'. (i <= j' /\ j' < j) ==> ~(P (EL (j' - i) l))))
+Proof
 Induct >> SIMP_TAC list_ss [listTheory.INDEX_FIND_def] >>
 REPEAT GEN_TAC >> COND_CASES_TAC >| [
   SIMP_TAC list_ss [] >>
@@ -138,22 +148,24 @@ REPEAT GEN_TAC >> COND_CASES_TAC >| [
      `j' - i = SUC (j' - SUC i)` by DECIDE_TAC >>
      FULL_SIMP_TAC list_ss []
   ]
-]);
+]
+QED
 
 
-val INDEX_FIND_EQ_SOME_0 = store_thm ("INDEX_FIND_EQ_SOME_0",
-  ``!l P j e. (INDEX_FIND 0 P l = SOME (j, e)) <=> (
+Theorem INDEX_FIND_EQ_SOME_0:
+  !l P j e. (INDEX_FIND 0 P l = SOME (j, e)) <=> (
        (j < LENGTH l) /\
        (EL j l = e) /\ P e /\
-       (!j'. j' < j ==> ~(P (EL j' l))))``,
-
+       (!j'. j' < j ==> ~(P (EL j' l))))
+Proof
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [INDEX_FIND_EQ_SOME] >>
-Cases_on `LENGTH l` >> SIMP_TAC std_ss []);
+Cases_on `LENGTH l` >> SIMP_TAC std_ss []
+QED
 
 
-val INDEX_FIND_INDEX_CHANGE = store_thm ("INDEX_FIND_INDEX_CHANGE",
-  ``!i P l. INDEX_FIND i P l = OPTION_MAP (\ (j, v). (j+i, v)) (INDEX_FIND 0 P l)``,
-
+Theorem INDEX_FIND_INDEX_CHANGE:
+  !i P l. INDEX_FIND i P l = OPTION_MAP (\ (j, v). (j+i, v)) (INDEX_FIND 0 P l)
+Proof
 REPEAT GEN_TAC >>
 Q.ID_SPEC_TAC `i` >>
 Induct_on `l` >> SIMP_TAC std_ss [listTheory.INDEX_FIND_def] >>
@@ -166,15 +178,16 @@ Cases_on `P x` >> (
 ) >>
 Cases_on `INDEX_FIND 0 P l` >> (
   ASM_SIMP_TAC (arith_ss++pairSimps.gen_beta_ss) []
-));
+)
+QED
 
 
-val INDEX_FIND_PRE = store_thm("INDEX_FIND_PRE",
-  ``!i j P l x.
+Theorem INDEX_FIND_PRE:
+  !i j P l x.
     (0 < i) ==>
     (INDEX_FIND i       P l = SOME (j, x)) ==>
-    (INDEX_FIND (PRE i) P l = SOME (PRE j, x))``,
-
+    (INDEX_FIND (PRE i) P l = SOME (PRE j, x))
+Proof
 Induct_on `l` >- (
   FULL_SIMP_TAC std_ss [listTheory.INDEX_FIND_def]
 ) >>
@@ -188,16 +201,17 @@ PAT_X_ASSUM ``!i j P x. _``
 REV_FULL_SIMP_TAC std_ss [] >>
 PAT_X_ASSUM ``!j' P' x'. _`` (fn thm => IMP_RES_TAC thm) >>
 REV_FULL_SIMP_TAC std_ss [arithmeticTheory.SUC_PRE]
-);
+QED
 
 
-val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
-``!l n m. (n + m < LENGTH l) ==>
-          (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)``,
-
+Theorem SEG_SUC_LENGTH:
+  !l n m. (n + m < LENGTH l) ==>
+          (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)
+Proof
 SIMP_TAC arith_ss [rich_listTheory.SEG_TAKE_DROP] >>
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
+ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]
+QED
 
 Theorem INDEX_FIND_SUFFIX:
 !P n i x_list x.
@@ -237,9 +251,9 @@ QED
 (* pred_set lemmata                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-val INFINITE_SUBSET_WITH_CARD_EXISTS = store_thm ("INFINITE_SUBSET_WITH_CARD_EXISTS",
-``!s. INFINITE s ==> (!c. ?t. FINITE t /\ (CARD t = c) /\ t SUBSET s)``,
-
+Theorem INFINITE_SUBSET_WITH_CARD_EXISTS:
+  !s. INFINITE s ==> (!c. ?t. FINITE t /\ (CARD t = c) /\ t SUBSET s)
+Proof
 REPEAT STRIP_TAC >>
 Induct_on `c` >- (
   Q.EXISTS_TAC `{}` >>
@@ -249,77 +263,78 @@ FULL_SIMP_TAC std_ss [] >>
 `?e. e IN (s DIFF t)` by METIS_TAC[MEMBER_NOT_EMPTY, INFINITE_DIFF_FINITE] >>
 Q.EXISTS_TAC `e INSERT t` >>
 FULL_SIMP_TAC std_ss [IN_DIFF, FINITE_INSERT, INSERT_SUBSET,
-  CARD_INSERT]);
+  CARD_INSERT]
+QED
 
 
-val IN_UNION_ABSORB_thm = store_thm ("IN_UNION_ABSORB_thm",
-  ``! l ls. (l IN ls) ==> (({l} UNION ls) = ls)``,
-
+Theorem IN_UNION_ABSORB_thm:
+  ! l ls. (l IN ls) ==> (({l} UNION ls) = ls)
+Proof
 METIS_TAC [ABSORPTION,
            GSYM INSERT_SING_UNION]
-);
+QED
 
 
-val SINGLETONS_UNION_thm = store_thm ("SINGLETONS_UNION_thm",
-  ``! l e. ({l} UNION {e}) = {l;e}``,
-
+Theorem SINGLETONS_UNION_thm:
+  ! l e. ({l} UNION {e}) = {l;e}
+Proof
 METIS_TAC [INSERT_SING_UNION]
-);
+QED
 
 
-val INTER_SUBSET_EMPTY_thm = store_thm("INTER_SUBSET_EMPTY_thm",
-  ``!s t v.
+Theorem INTER_SUBSET_EMPTY_thm:
+  !s t v.
     s SUBSET t ==>
     (v INTER t = EMPTY) ==>
-    (v INTER s = EMPTY)``,
-
+    (v INTER s = EMPTY)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [pred_setTheory.INTER_DEF, pred_setTheory.EMPTY_DEF, FUN_EQ_THM]  >>
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
 FULL_SIMP_TAC std_ss [pred_setTheory.SUBSET_DEF] >>
 METIS_TAC []
-);
+QED
 
-val SUBSET_EQ_UNION_thm = store_thm("SUBSET_EQ_UNION_thm",
-  ``!s t.
+Theorem SUBSET_EQ_UNION_thm:
+  !s t.
     s SUBSET t ==>
-    (? v. t = s UNION v)``,
-
+    (? v. t = s UNION v)
+Proof
 REPEAT STRIP_TAC >>
 Q.EXISTS_TAC `t` >>
 METIS_TAC [pred_setTheory.SUBSET_UNION_ABSORPTION]
-);
+QED
 
-val IN_NOT_IN_NEQ_thm = store_thm("IN_NOT_IN_NEQ_thm",
-  ``!x y z.
+Theorem IN_NOT_IN_NEQ_thm:
+  !x y z.
     x IN z ==>
     ~(y IN z) ==>
-    (x <> y)``,
+    (x <> y)
+Proof
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
+QED
 
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
-);
-
-val SING_DISJOINT_SING_NOT_IN_thm = store_thm("SING_DISJOINT_SING_NOT_IN_thm",
-  ``!x y.
+Theorem SING_DISJOINT_SING_NOT_IN_thm:
+  !x y.
     (x INTER {y} = EMPTY) ==>
-    ~(y IN x)``,
-
+    ~(y IN x)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss)
   [pred_setTheory.INTER_DEF] >>
 FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
 FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
 QSPECL_X_ASSUM ``!x.P`` [`y`] >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
-);
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
+QED
 
-val INTER_EMPTY_IN_NOT_IN_thm = store_thm("INTER_EMPTY_IN_NOT_IN_thm",
-  ``!x y z.
+Theorem INTER_EMPTY_IN_NOT_IN_thm:
+  !x y z.
     (x INTER y = EMPTY) ==>
     z IN x ==>
-    ~(z IN y)``,
-
+    ~(z IN y)
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss)
   [pred_setTheory.INTER_DEF] >>
@@ -328,63 +343,62 @@ FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
 QSPECL_X_ASSUM ``!x.P`` [`z`] >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
 METIS_TAC []
-);
+QED
 
-val INTER_EMPTY_INTER_INTER_EMPTY_thm = store_thm("INTER_EMPTY_INTER_INTER_EMPTY_thm",
-  ``!x y z.
+Theorem INTER_EMPTY_INTER_INTER_EMPTY_thm:
+  !x y z.
     (x INTER y = EMPTY) ==>
-    (x INTER (y INTER z) = EMPTY)``,
-
+    (x INTER (y INTER z) = EMPTY)
+Proof
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [Once pred_setTheory.INTER_ASSOC] >>
 FULL_SIMP_TAC std_ss [] >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
-);
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
+QED
 
-val UNION_INSERT = store_thm("UNION_INSERT",
-  ``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``,
-
+Theorem UNION_INSERT:
+  !x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s
+Proof
 METIS_TAC [
   pred_setTheory.INSERT_UNION,
   pred_setTheory.UNION_COMM,
   pred_setTheory.INSERT_UNION_EQ
 ]
-);
+QED
 
 
 (* -------------------------------------------------------------------------- *)
 (* Arithmetic                                                                   *)
 (* -------------------------------------------------------------------------- *)
 
-val MOD_ADD_EQ_SUB = store_thm ("MOD_ADD_EQ_SUB",
-``!x1 x2 y. x1 < y /\ x2 < y /\ (y <= x1 + x2) ==>
-            ((x1 + x2) MOD y = (x1 + x2) - y)``,
-
+Theorem MOD_ADD_EQ_SUB:
+  !x1 x2 y. x1 < y /\ x2 < y /\ (y <= x1 + x2) ==>
+            ((x1 + x2) MOD y = (x1 + x2) - y)
+Proof
 REPEAT STRIP_TAC >>
 `?i. x1 + x2 = y + i` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
-ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]);
+ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]
+QED
 
-val NUM_LSONE_EQZ =
-  store_thm("NUM_LSONE_EQZ",
-  ``!(n:num). (n < 1) <=> (n = 0)``,
-
+Theorem NUM_LSONE_EQZ:
+  !(n:num). (n < 1) <=> (n = 0)
+Proof
 FULL_SIMP_TAC arith_ss []
-);
+QED
 
-val NUM_PRE_LT =
-  store_thm("NUM_PRE_LT",
-  ``!(a:num). (a > 0) ==> PRE a < a``,
-
+Theorem NUM_PRE_LT:
+  !(a:num). (a > 0) ==> PRE a < a
+Proof
 FULL_SIMP_TAC arith_ss []
-);
+QED
 
 (* -------------------------------------------------------------------------- *)
 (* While lemmata                                                              *)
 (* -------------------------------------------------------------------------- *)
 
-val LEAST_SUC = store_thm ("LEAST_SUC",
-``!P. ~(P 0) /\ (?i. P i) ==> ((LEAST i. P i) = SUC (LEAST i. P (SUC i)))``,
-
+Theorem LEAST_SUC:
+  !P. ~(P 0) /\ (?i. P i) ==> ((LEAST i. P i) = SUC (LEAST i. P (SUC i)))
+Proof
 REPEAT STRIP_TAC >>
 `?i'. i = SUC i'` by (
   Cases_on `i` >> FULL_SIMP_TAC arith_ss []
@@ -402,7 +416,8 @@ BasicProvers.VAR_EQ_TAC >>
 
 `~(SUC n2 < SUC n1)` by METIS_TAC[] >>
 `~(n1 < n2)` by METIS_TAC[] >>
-DECIDE_TAC);
+DECIDE_TAC
+QED
 
 Theorem MEM_OLEAST:
  !l x.
@@ -457,83 +472,96 @@ QED
 (* Optional Minimum                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-val OPT_NUM_MIN_def = Define `
-   (OPT_NUM_MIN NONE no2 = no2) /\
+Definition OPT_NUM_MIN_def:
+  (OPT_NUM_MIN NONE no2 = no2) /\
    (OPT_NUM_MIN no1 NONE = no1) /\
-   (OPT_NUM_MIN (SOME n1) (SOME n2) = SOME (MIN n1 n2))`;
+   (OPT_NUM_MIN (SOME n1) (SOME n2) = SOME (MIN n1 n2))
+End
 
 
-val OPT_NUM_MIN_REWRS = store_thm ("OPT_NUM_MIN_REWRS",
-`` (!no. (OPT_NUM_MIN NONE no = no)) /\
+Theorem OPT_NUM_MIN_REWRS:
+  (!no. (OPT_NUM_MIN NONE no = no)) /\
    (!no. (OPT_NUM_MIN no NONE = no)) /\
-   (!n1 n2. (OPT_NUM_MIN (SOME n1) (SOME n2) = SOME (MIN n1 n2)))``,
-
+   (!n1 n2. (OPT_NUM_MIN (SOME n1) (SOME n2) = SOME (MIN n1 n2)))
+Proof
 REPEAT CONJ_TAC >> REPEAT Cases >>
-SIMP_TAC std_ss [OPT_NUM_MIN_def]);
+SIMP_TAC std_ss [OPT_NUM_MIN_def]
+QED
 
 
-val OPT_NUM_MIN_COMM = store_thm ("OPT_NUM_MIN_COMM",
-``!no1 no2. (OPT_NUM_MIN no1 no2 = OPT_NUM_MIN no2 no1)``,
-
+Theorem OPT_NUM_MIN_COMM:
+  !no1 no2. (OPT_NUM_MIN no1 no2 = OPT_NUM_MIN no2 no1)
+Proof
 Cases >> Cases >> SIMP_TAC std_ss [OPT_NUM_MIN_REWRS] >>
-METIS_TAC[arithmeticTheory.MIN_COMM]);
+METIS_TAC[arithmeticTheory.MIN_COMM]
+QED
 
 
-val OPT_NUM_MIN_ASSOC = store_thm ("OPT_NUM_MIN_ASSOC",
-``!no1 no2 no3. (OPT_NUM_MIN no1 (OPT_NUM_MIN no2 no3)) = OPT_NUM_MIN (OPT_NUM_MIN no1 no2) no3``,
-
+Theorem OPT_NUM_MIN_ASSOC:
+  !no1 no2 no3. (OPT_NUM_MIN no1 (OPT_NUM_MIN no2 no3)) = OPT_NUM_MIN (OPT_NUM_MIN no1 no2) no3
+Proof
 Cases >> Cases >> Cases >> SIMP_TAC std_ss [OPT_NUM_MIN_REWRS] >>
-METIS_TAC[arithmeticTheory.MIN_ASSOC]);
+METIS_TAC[arithmeticTheory.MIN_ASSOC]
+QED
 
 
-val OPT_NUM_MIN_SOME0 = store_thm ("OPT_NUM_MIN_SOME0",
-``(!no. (OPT_NUM_MIN no (SOME 0)) = SOME 0) /\
-  (!no. (OPT_NUM_MIN (SOME 0) no) = SOME 0)``,
-
+Theorem OPT_NUM_MIN_SOME0:
+  (!no. (OPT_NUM_MIN no (SOME 0)) = SOME 0) /\
+  (!no. (OPT_NUM_MIN (SOME 0) no) = SOME 0)
+Proof
 REPEAT CONJ_TAC >> (
   Cases >> SIMP_TAC std_ss [OPT_NUM_MIN_REWRS]
-));
+)
+QED
 
 
-val OPT_NUM_MIN_CASES = store_thm ("OPT_NUM_MIN_CASES",
-``!no1 no2. (OPT_NUM_MIN no1 no2 = no1) \/
-            (OPT_NUM_MIN no1 no2 = no2)``,
-
+Theorem OPT_NUM_MIN_CASES:
+  !no1 no2. (OPT_NUM_MIN no1 no2 = no1) \/
+            (OPT_NUM_MIN no1 no2 = no2)
+Proof
 REPEAT Cases >>
 SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, arithmeticTheory.MIN_DEF] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 
-val OPT_NUM_PRE_def = Define `OPT_NUM_PRE = OPTION_MAP PRE`;
-val OPT_NUM_SUC_def = Define `OPT_NUM_SUC = OPTION_MAP SUC`;
+Definition OPT_NUM_PRE_def:
+  OPT_NUM_PRE = OPTION_MAP PRE
+End
+Definition OPT_NUM_SUC_def:
+  OPT_NUM_SUC = OPTION_MAP SUC
+End
 
-val OPT_NUM_PRE_SUC = store_thm ("OPT_NUM_PRE_SUC",
-  ``!no. OPT_NUM_PRE (OPT_NUM_SUC no) = no``,
-Cases >> SIMP_TAC std_ss [OPT_NUM_PRE_def, OPT_NUM_SUC_def]);
+Theorem OPT_NUM_PRE_SUC:
+  !no. OPT_NUM_PRE (OPT_NUM_SUC no) = no
+Proof
+Cases >> SIMP_TAC std_ss [OPT_NUM_PRE_def, OPT_NUM_SUC_def]
+QED
 
 
-val OPT_NUM_MIN_SOME_SUC_aux = prove (
-``(!no n. (OPT_NUM_MIN no (SOME (SUC n))) = if (no = SOME 0) then SOME 0 else
-     SOME (SUC (THE (OPT_NUM_MIN (OPT_NUM_PRE no) (SOME n)))))``,
-
+Theorem OPT_NUM_MIN_SOME_SUC_aux[local]:
+  (!no n. (OPT_NUM_MIN no (SOME (SUC n))) = if (no = SOME 0) then SOME 0 else
+     SOME (SUC (THE (OPT_NUM_MIN (OPT_NUM_PRE no) (SOME n)))))
+Proof
 Cases >> (
   SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, arithmeticTheory.MIN_DEF, OPT_NUM_PRE_def]
 ) >>
 GEN_TAC >>
 rename1 `x < SUC n` >>
-Cases_on `x` >> SIMP_TAC arith_ss []);
+Cases_on `x` >> SIMP_TAC arith_ss []
+QED
 
 
-val OPT_NUM_MIN_SOME_SUC = save_thm ("OPT_NUM_MIN_SOME_SUC",
-  CONJ OPT_NUM_MIN_SOME_SUC_aux
-       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_SOME_SUC_aux));
+Theorem OPT_NUM_MIN_SOME_SUC = CONJ OPT_NUM_MIN_SOME_SUC_aux
+       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_SOME_SUC_aux)
 
 
-val OPT_NUM_MIN_OPT_NUM_SUC_aux = prove (
-``(!no1 no2. (OPT_NUM_MIN no1 (OPT_NUM_SUC no2)) = if (no1 = SOME 0) then SOME 0 else
-     OPT_NUM_SUC (OPT_NUM_MIN (OPT_NUM_PRE no1) no2))``,
 
+Theorem OPT_NUM_MIN_OPT_NUM_SUC_aux[local]:
+  (!no1 no2. (OPT_NUM_MIN no1 (OPT_NUM_SUC no2)) = if (no1 = SOME 0) then SOME 0 else
+     OPT_NUM_SUC (OPT_NUM_MIN (OPT_NUM_PRE no1) no2))
+Proof
 Cases_on `no2` >- (
   Cases_on `no1` >> (
     SIMP_TAC std_ss [OPT_NUM_SUC_def, OPT_NUM_PRE_def, OPT_NUM_MIN_REWRS]
@@ -543,29 +571,38 @@ Cases_on `no2` >- (
 SIMP_TAC std_ss [OPT_NUM_SUC_def, OPT_NUM_MIN_SOME_SUC] >>
 Cases_on `no1` >> (
    SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, OPT_NUM_PRE_def, OPT_NUM_SUC_def]
-));
+)
+QED
 
-val OPT_NUM_MIN_OPT_NUM_SUC = save_thm ("OPT_NUM_MIN_OPT_NUM_SUC",
-  CONJ OPT_NUM_MIN_OPT_NUM_SUC_aux
-       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_OPT_NUM_SUC_aux));
-
-val OPT_CONS_def = Define `OPT_CONS eo l = option_CASE eo l (\e. CONS e l)`
-
-val OPT_CONS_REWRS = store_thm ("OPT_CONS_REWRS",
-  ``(!l. OPT_CONS NONE l = l) /\
-    (!e l. OPT_CONS (SOME e) l = e::l)``,
-SIMP_TAC std_ss [OPT_CONS_def]);
+Theorem OPT_NUM_MIN_OPT_NUM_SUC = CONJ OPT_NUM_MIN_OPT_NUM_SUC_aux
+       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_OPT_NUM_SUC_aux)
 
 
-val OPT_CONS_APPEND = store_thm ("OPT_CONS_APPEND",
-  ``!eo l1 l2. (OPT_CONS eo l1) ++ l2 =
-      OPT_CONS eo (l1 ++ l2)``,
-Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
+Definition OPT_CONS_def:
+  OPT_CONS eo l = option_CASE eo l (\e. CONS e l)
+End
+
+Theorem OPT_CONS_REWRS:
+  (!l. OPT_CONS NONE l = l) /\
+    (!e l. OPT_CONS (SOME e) l = e::l)
+Proof
+SIMP_TAC std_ss [OPT_CONS_def]
+QED
 
 
-val OPT_CONS_REVERSE = store_thm ("OPT_CONS_REVERSE",
-  ``!eo l. REVERSE (OPT_CONS eo l) = REVERSE l ++ OPT_CONS eo []``,
-Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
+Theorem OPT_CONS_APPEND:
+  !eo l1 l2. (OPT_CONS eo l1) ++ l2 =
+      OPT_CONS eo (l1 ++ l2)
+Proof
+Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]
+QED
+
+
+Theorem OPT_CONS_REVERSE:
+  !eo l. REVERSE (OPT_CONS eo l) = REVERSE l ++ OPT_CONS eo []
+Proof
+Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]
+QED
 
 
 (*******************)
@@ -573,41 +610,43 @@ Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
 (*******************)
 (* TODO: How about renaming this to oFUNPOW? Similar to oEL, OLEAST, ... *)
 
-val FUNPOW_OPT_def = Define `
+Definition FUNPOW_OPT_def:
   FUNPOW_OPT (r : 'a -> 'a option) n x =
-  FUNPOW (\x. option_CASE x NONE r) n (SOME x)`
+  FUNPOW (\x. option_CASE x NONE r) n (SOME x)
+End
 
-val FUNPOW_OPT_REWRS = store_thm ("FUNPOW_OPT_REWRS",
-``(!r x. (FUNPOW_OPT r 0 x = SOME x)) /\
+Theorem FUNPOW_OPT_REWRS:
+  (!r x. (FUNPOW_OPT r 0 x = SOME x)) /\
   (!r x n. (FUNPOW_OPT r (SUC n) x =
             case r x of NONE => NONE
-                      | SOME x' => FUNPOW_OPT r n x'))``,
-
+                      | SOME x' => FUNPOW_OPT r n x'))
+Proof
 SIMP_TAC std_ss [FUNPOW_OPT_def, arithmeticTheory.FUNPOW] >>
 REPEAT STRIP_TAC >>
 Cases_on `r x` >> SIMP_TAC std_ss [] >>
 Induct_on `n` >> (
   ASM_SIMP_TAC std_ss [arithmeticTheory.FUNPOW]
-));
+)
+QED
 
-val FUNPOW_OPT_compute = save_thm ("FUNPOW_OPT_compute",
-  CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS);
+Theorem FUNPOW_OPT_compute = CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS
 
-val FUNPOW_OPT_ADD_thm = store_thm ("FUNPOW_OPT_ADD_thm",
-  ``!f n n' ms ms' ms''.
+
+Theorem FUNPOW_OPT_ADD_thm:
+  !f n n' ms ms' ms''.
     (FUNPOW_OPT f n ms = SOME ms') ==>
     (FUNPOW_OPT f n' ms' = SOME ms'') ==> 
-    (FUNPOW_OPT f (n'+n) ms = SOME ms'')``,
-
+    (FUNPOW_OPT f (n'+n) ms = SOME ms'')
+Proof
 METIS_TAC [FUNPOW_OPT_def,
            arithmeticTheory.FUNPOW_ADD]
-);
+QED
 
-val FUNPOW_OPT_next_1_NONE = store_thm("FUNPOW_OPT_next_1_NONE",
-  ``!step_fun n s.
+Theorem FUNPOW_OPT_next_1_NONE:
+  !step_fun n s.
     (FUNPOW_OPT step_fun n s = NONE) ==>
-    (FUNPOW_OPT step_fun (SUC n) s = NONE)``,
-
+    (FUNPOW_OPT step_fun (SUC n) s = NONE)
+Proof
 Induct_on `n` >| [
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS],
@@ -620,13 +659,13 @@ Induct_on `n` >| [
     FULL_SIMP_TAC std_ss []
   ]
 ]
-);
+QED
 
-val FUNPOW_OPT_next_n_NONE = store_thm("FUNPOW_OPT_next_n_NONE",
- ``!step_fun n n' s.
+Theorem FUNPOW_OPT_next_n_NONE:
+  !step_fun n n' s.
    (FUNPOW_OPT step_fun n s = NONE) ==>
-   (FUNPOW_OPT step_fun (n + n') s = NONE)``,
-
+   (FUNPOW_OPT step_fun (n + n') s = NONE)
+Proof
 Induct_on `n'` >| [
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS],
@@ -636,16 +675,16 @@ Induct_on `n'` >| [
   IMP_RES_TAC FUNPOW_OPT_next_1_NONE >>
   FULL_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
 ]
-);
+QED
 
-val FUNPOW_OPT_prev_EXISTS = store_thm("FUNPOW_OPT_prev_EXISTS",
- ``!step_fun n n' s s'.
+Theorem FUNPOW_OPT_prev_EXISTS:
+  !step_fun n n' s s'.
    n > 0 ==>
    (FUNPOW_OPT step_fun n s = SOME s') ==>
    n' < n ==>
    ?s''.
-   (FUNPOW_OPT step_fun n' s = SOME s'')``,
-
+   (FUNPOW_OPT step_fun n' s = SOME s'')
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `FUNPOW_OPT step_fun n' s` >| [
   subgoal `?n''. n = n' + n''` >- (
@@ -659,7 +698,7 @@ Cases_on `FUNPOW_OPT step_fun n' s` >| [
 
   METIS_TAC []
 ]
-);
+QED
 
 Theorem FUNPOW_ASSOC:
  !f m n x.
@@ -776,16 +815,17 @@ QED
 (* lazy lists                                                                 *)
 (* -------------------------------------------------------------------------- *)
 
-val LGENLIST_UNFOLD_NONE = store_thm ("LGENLIST_UNFOLD_NONE",
-  ``!f. LGENLIST f NONE = (f 0) ::: (LGENLIST (f o SUC) NONE)``,
-
+Theorem LGENLIST_UNFOLD_NONE:
+  !f. LGENLIST f NONE = (f 0) ::: (LGENLIST (f o SUC) NONE)
+Proof
 SIMP_TAC arith_ss [llistTheory.LGENLIST_EQ_CONS,
-  combinTheory.o_DEF, GSYM arithmeticTheory.ADD1]);
+  combinTheory.o_DEF, GSYM arithmeticTheory.ADD1]
+QED
 
 
-val LGENLIST_UNFOLD_NEQ_SOME0 = store_thm ("LGENLIST_UNFOLD_NEQ_SOME0",
-  ``!no f. (no <> SOME 0) ==> (LGENLIST f no = (f 0) ::: (LGENLIST (f o SUC) (OPT_NUM_PRE no)))``,
-
+Theorem LGENLIST_UNFOLD_NEQ_SOME0:
+  !no f. (no <> SOME 0) ==> (LGENLIST f no = (f 0) ::: (LGENLIST (f o SUC) (OPT_NUM_PRE no)))
+Proof
 Cases >- (
   SIMP_TAC std_ss [OPT_NUM_PRE_def] >>
   METIS_TAC[LGENLIST_UNFOLD_NONE]
@@ -795,67 +835,84 @@ Cases_on `n` >- (
   SIMP_TAC std_ss []
 ) >>
 rename1 `SOME (SUC n') <> SOME 0` >>
-SIMP_TAC std_ss [llistTheory.LGENLIST_SOME, OPT_NUM_PRE_def]);
+SIMP_TAC std_ss [llistTheory.LGENLIST_SOME, OPT_NUM_PRE_def]
+QED
 
 
-val OPT_LCONS_def = Define `OPT_LCONS eo l = option_CASE eo l (\e. LCONS e l)`
+Definition OPT_LCONS_def:
+  OPT_LCONS eo l = option_CASE eo l (\e. LCONS e l)
+End
 
-val OPT_LCONS_REWRS = store_thm ("OPT_LCONS_REWRS",
-  ``(!ll. OPT_LCONS NONE ll = ll) /\
-    (!e ll. OPT_LCONS (SOME e) ll = e:::ll)``,
-SIMP_TAC std_ss [OPT_LCONS_def]);
-
-
-val OPT_CONS_fromList = store_thm ("OPT_CONS_fromList",
-  ``!eo l. fromList (OPT_CONS eo l) = OPT_LCONS eo (fromList l)``,
-
-Cases >> SIMP_TAC std_ss [OPT_CONS_REWRS, OPT_LCONS_REWRS, llistTheory.fromList_def]);
+Theorem OPT_LCONS_REWRS:
+  (!ll. OPT_LCONS NONE ll = ll) /\
+    (!e ll. OPT_LCONS (SOME e) ll = e:::ll)
+Proof
+SIMP_TAC std_ss [OPT_LCONS_def]
+QED
 
 
-val LMAP_EQ_LNIL = store_thm ("LMAP_EQ_LNIL",
-``!f ll. (LMAP f ll = LNIL) <=> (ll = LNIL)``,
+Theorem OPT_CONS_fromList:
+  !eo l. fromList (OPT_CONS eo l) = OPT_LCONS eo (fromList l)
+Proof
+Cases >> SIMP_TAC std_ss [OPT_CONS_REWRS, OPT_LCONS_REWRS, llistTheory.fromList_def]
+QED
 
+
+Theorem LMAP_EQ_LNIL:
+  !f ll. (LMAP f ll = LNIL) <=> (ll = LNIL)
+Proof
 Cases_on `ll` >> (
   SIMP_TAC std_ss [llistTheory.LMAP, llistTheory.LCONS_NOT_NIL]
-));
+)
+QED
 
 
 (* -------------------------------------------------------------------------- *)
 (* Word lemmata                                                               *)
 (* -------------------------------------------------------------------------- *)
 
-val w2w_n2w = store_thm ("w2w_n2w",
-``!n. (w2w ((n2w n):'a word)):'b word = (n2w (n MOD dimword (:'a)))``,
-SIMP_TAC std_ss [w2w_def, w2n_n2w]);
+Theorem w2w_n2w:
+  !n. (w2w ((n2w n):'a word)):'b word = (n2w (n MOD dimword (:'a)))
+Proof
+SIMP_TAC std_ss [w2w_def, w2n_n2w]
+QED
 
-val align_n2w = store_thm ("align_n2w",
-``!n m. align n ((n2w m):'a word) =
-        n2w ((m MOD dimword (:'a)) DIV 2 ** n * 2 ** n)``,
-SIMP_TAC std_ss [alignmentTheory.align_w2n, w2n_n2w]);
+Theorem align_n2w:
+  !n m. align n ((n2w m):'a word) =
+        n2w ((m MOD dimword (:'a)) DIV 2 ** n * 2 ** n)
+Proof
+SIMP_TAC std_ss [alignmentTheory.align_w2n, w2n_n2w]
+QED
 
-val w2n_MOD_2EXP_ID = store_thm ("w2n_MOD_2EXP_ID",
-  ``!(w:'a word). (MOD_2EXP (dimindex (:'a)) (w2n w)) = w2n w``,
-SIMP_TAC std_ss [GSYM wordsTheory.MOD_2EXP_DIMINDEX, wordsTheory.w2n_lt]);
+Theorem w2n_MOD_2EXP_ID:
+  !(w:'a word). (MOD_2EXP (dimindex (:'a)) (w2n w)) = w2n w
+Proof
+SIMP_TAC std_ss [GSYM wordsTheory.MOD_2EXP_DIMINDEX, wordsTheory.w2n_lt]
+QED
 
-val word_extract_bits_w2w = store_thm ("word_extract_bits_w2w",
-  ``!h l a. ((h >< l) (a:'a word)) = w2w ((h -- l) a)``,
-SIMP_TAC std_ss [wordsTheory.word_extract_w2w_mask, wordsTheory.word_bits_mask])
+Theorem word_extract_bits_w2w:
+  !h l a. ((h >< l) (a:'a word)) = w2w ((h -- l) a)
+Proof
+SIMP_TAC std_ss [wordsTheory.word_extract_w2w_mask, wordsTheory.word_bits_mask]
+QED
 
-val sw2sw_w2w_downcast = store_thm ("sw2sw_w2w_downcast", ``!w.
-  (dimindex (:'b) <= dimindex (:'a)) ==> ((sw2sw (w : 'a word) : 'b word) = w2w w)``,
-
+Theorem sw2sw_w2w_downcast:
+  !w.
+  (dimindex (:'b) <= dimindex (:'a)) ==> ((sw2sw (w : 'a word) : 'b word) = w2w w)
+Proof
 REPEAT STRIP_TAC >>
 `(2**dimindex (:'b) <= 2**dimindex (:'a))` by METIS_TAC[bitTheory.TWOEXP_MONO2] >>
 `(2**dimindex (:'b) - 2**dimindex (:'a)) = 0` by DECIDE_TAC >>
 ASM_SIMP_TAC (arith_ss++wordsLib.WORD_ss) [sw2sw_def,
   bitTheory.SIGN_EXTEND_def, LET_DEF, w2w_def,
   wordsTheory.w2n_lt, GSYM wordsTheory.dimword_def
-]);
+]
+QED
 
 
-val fixwidth_fixwidth_le = store_thm ("fixwidth_fixwidth_le",
-  ``!v n m. n <= m ==> (fixwidth n (fixwidth m v) = fixwidth n v)``,
-
+Theorem fixwidth_fixwidth_le:
+  !v n m. n <= m ==> (fixwidth n (fixwidth m v) = fixwidth n v)
+Proof
 REPEAT STRIP_TAC >>
 `LENGTH (fixwidth m v) = m` by SIMP_TAC std_ss [length_fixwidth] >>
 FULL_SIMP_TAC list_ss [LET_DEF, fixwidth_def] >>
@@ -869,24 +926,26 @@ REPEAT COND_CASES_TAC >| [
   FULL_SIMP_TAC arith_ss [],
 
   ASM_SIMP_TAC arith_ss [rich_listTheory.DROP_DROP_T]
-]);
+]
+QED
 
 
-val w2v_word_join = store_thm ("w2v_word_join",
-``FINITE univ(:'a) /\ FINITE univ(:'b) ==>
-  !w1:'a word w2:'b word. w2v (word_join w1 w2) = (w2v w1 ++ w2v w2)``,
-
+Theorem w2v_word_join:
+  FINITE univ(:'a) /\ FINITE univ(:'b) ==>
+  !w1:'a word w2:'b word. w2v (word_join w1 w2) = (w2v w1 ++ w2v w2)
+Proof
 REPEAT STRIP_TAC >>
 bitstringLib.Cases_on_v2w `w1` >>
 bitstringLib.Cases_on_v2w `w2` >>
 ASM_SIMP_TAC (list_ss++wordsLib.SIZES_ss) [w2v_v2w, fixwidth_id_imp,
-  word_join_v2w, fcpTheory.index_sum]);
+  word_join_v2w, fcpTheory.index_sum]
+QED
 
 
-val w2v_word_concat = store_thm ("w2v_word_concat",
-``FINITE univ(:'a) /\ FINITE univ(:'b) /\ (dimindex (:'c) = dimindex (:'a) + dimindex (:'b)) ==>
-  !w1:'a word w2:'b word. w2v ((w1 @@ w2):'c word) = (w2v w1 ++ w2v w2)``,
-
+Theorem w2v_word_concat:
+  FINITE univ(:'a) /\ FINITE univ(:'b) /\ (dimindex (:'c) = dimindex (:'a) + dimindex (:'b)) ==>
+  !w1:'a word w2:'b word. w2v ((w1 @@ w2):'c word) = (w2v w1 ++ w2v w2)
+Proof
 REPEAT STRIP_TAC >>
 bitstringLib.Cases_on_v2w `w1` >>
 bitstringLib.Cases_on_v2w `w2` >>
@@ -895,7 +954,8 @@ ASM_SIMP_TAC (list_ss++wordsLib.SIZES_ss) [w2v_v2w, fixwidth_id_imp, word_concat
 `v2n (v ++ v') < 2 ** (LENGTH v + LENGTH v')` by (
   METIS_TAC[bitstringTheory.v2n_lt, listTheory.LENGTH_APPEND]
 ) >>
-ASM_SIMP_TAC list_ss [n2w_v2n, w2v_v2w, fixwidth_id_imp]);
+ASM_SIMP_TAC list_ss [n2w_v2n, w2v_v2w, fixwidth_id_imp]
+QED
 
 
 val w2v_word_concat_SYM_REWRS = save_thm ("w2v_word_concat_SYM_REWRS",
@@ -929,28 +989,32 @@ in
 end)
 
 
-val word1_dichotomy = store_thm ("word1_dichotomy",
-  ``!v:word1. (v = 1w) \/ (v = 0w)``,
+Theorem word1_dichotomy:
+  !v:word1. (v = 1w) \/ (v = 0w)
+Proof
 Cases >>
 FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [wordsTheory.n2w_11] >>
-DECIDE_TAC);
+DECIDE_TAC
+QED
 
-val word1_distinct = store_thm ("word1_distinct",
-  ``(1w:word1) <> 0w``,
-SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+Theorem word1_distinct:
+  (1w:word1) <> 0w
+Proof
+SIMP_TAC (std_ss++wordsLib.WORD_ss) []
+QED
 
-val word1_neg = store_thm("word1_neg",
-  ``(~(0w:word1) = 1w) /\ (~(1w:word1) = 0w)``,
-
+Theorem word1_neg:
+  (~(0w:word1) = 1w) /\ (~(1w:word1) = 0w)
+Proof
 SIMP_TAC (std_ss++wordsLib.WORD_ss++wordsLib.WORD_BIT_EQ_ss) []
-);
+QED
 
 
-val BIT_ADD_WORD_CARRY = store_thm ("BIT_ADD_WORD_CARRY", ``
-!w0:'a word (w1:'a word).
+Theorem BIT_ADD_WORD_CARRY:
+  !w0:'a word (w1:'a word).
   BIT (dimindex (:'a)) (w2n w0 + w2n (w1)) <=>
-  ~(w2n w0 + w2n w1 < dimword (:'a))``,
-
+  ~(w2n w0 + w2n w1 < dimword (:'a))
+Proof
 REPEAT GEN_TAC >>
 EQ_TAC >> REPEAT STRIP_TAC >- (
   `dimword (:'a) <= w2n w0 + w2n w1` by METIS_TAC[bitTheory.BIT_IMP_GE_TWOEXP, dimword_def] >>
@@ -966,52 +1030,58 @@ EQ_TAC >> REPEAT STRIP_TAC >- (
 
 MP_TAC (SPECL [``dimindex (:'a)``, ``SUC (dimindex (:'a))``, ``m + dimword (:'a)``] bitTheory.EXISTS_BIT_IN_RANGE) >>
 ASM_SIMP_TAC arith_ss [dimword_def, arithmeticTheory.EXP, GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
-METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]);
+METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]
+QED
 
 
 
-val word_sub_n2w = store_thm ("word_sub_n2w",
-``!n m. (n2w n - n2w m):'a word = n2w (if m <= n then (n - m) else
-            dimword (:'a) - (m - n) MOD dimword (:'a))``,
-
+Theorem word_sub_n2w:
+  !n m. (n2w n - n2w m):'a word = n2w (if m <= n then (n - m) else
+            dimword (:'a) - (m - n) MOD dimword (:'a))
+Proof
 REPEAT GEN_TAC >>
 Cases_on `m <= n` >- (
   ASM_SIMP_TAC std_ss [n2w_sub]
 ) >>
-ASM_SIMP_TAC arith_ss [GSYM word_2comp_n2w, n2w_sub, WORD_NEG_SUB]);
+ASM_SIMP_TAC arith_ss [GSYM word_2comp_n2w, n2w_sub, WORD_NEG_SUB]
+QED
 
 
-val WORD_SUB_RZERO_IFF = store_thm ("WORD_SUB_RZERO_IFF",
-  ``!(a : 'a word) b. ((a - b = a)) <=> (b = 0w)``,
-
+Theorem WORD_SUB_RZERO_IFF:
+  !(a : 'a word) b. ((a - b = a)) <=> (b = 0w)
+Proof
 REPEAT GEN_TAC >>
 Tactical.REVERSE EQ_TAC >- (
   SIMP_TAC arith_ss [WORD_SUB_RZERO]
 ) >>
 STRIP_TAC >>
 `(-a) + (a - b) = (-a) + a` by METIS_TAC[wordsTheory.WORD_EQ_ADD_LCANCEL] >>
-FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []
+QED
 
 
-val WORD_LS_NOT = store_thm ("WORD_LS_NOT",
-``!w1 (w2:'a word). (~w1 <=+ ~w2) <=> (w2 <=+ w1)``,
+Theorem WORD_LS_NOT:
+  !w1 (w2:'a word). (~w1 <=+ ~w2) <=> (w2 <=+ w1)
+Proof
 REPEAT Cases >>
-ASM_SIMP_TAC arith_ss [word_1comp_n2w, word_ls_n2w]);
+ASM_SIMP_TAC arith_ss [word_1comp_n2w, word_ls_n2w]
+QED
 
 
-val aligned_neg = store_thm ("aligned_neg",
-``!p (a:'a word). aligned p (-a) <=> aligned p a``,
-
+Theorem aligned_neg:
+  !p (a:'a word). aligned p (-a) <=> aligned p a
+Proof
 `!p (a:'a word). aligned p a ==> aligned p (-a)` suffices_by METIS_TAC[WORD_NEG_NEG] >>
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `(-a) = 0w - a` SUBST1_TAC >- SIMP_TAC (std_ss++wordsLib.WORD_ss) [] >>
-ASM_SIMP_TAC std_ss [alignmentTheory.aligned_add_sub, alignmentTheory.aligned_0]);
+ASM_SIMP_TAC std_ss [alignmentTheory.aligned_add_sub, alignmentTheory.aligned_0]
+QED
 
 
-val align_aligned_add = store_thm ("align_aligned_add",
-``!p (a:'a word) b. aligned p b ==>
-                    ((align p (a + b) = ((align p a) + b)))``,
-
+Theorem align_aligned_add:
+  !p (a:'a word) b. aligned p b ==>
+                    ((align p (a + b) = ((align p a) + b)))
+Proof
 REPEAT STRIP_TAC >>
 Cases_on `dimindex (:'a) <= p` >- (
   `b = 0w` by METIS_TAC [alignmentTheory.aligned_ge_dim]>>
@@ -1023,55 +1093,67 @@ Cases_on `p = 0` >> FULL_SIMP_TAC std_ss [] >>
 ASM_SIMP_TAC arith_ss [Once (GSYM wordsTheory.WORD_EXTRACT_OVER_ADD2)] >>
 FULL_SIMP_TAC arith_ss [WORD_SUB_RZERO_IFF, WORD_ADD_0, WORD_EXTRACT_COMP_THM,
   arithmeticTheory.MIN_DEF] >>
-SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+SIMP_TAC (std_ss++wordsLib.WORD_ss) []
+QED
 
 
-val align_aligned_sub = store_thm ("align_aligned_sub",
-``!p (a:'a word) b. aligned p b ==>
-                    ((align p (a - b) = ((align p a) - b)))``,
-METIS_TAC[aligned_neg, word_sub_def, align_aligned_add]);
+Theorem align_aligned_sub:
+  !p (a:'a word) b. aligned p b ==>
+                    ((align p (a - b) = ((align p a) - b)))
+Proof
+METIS_TAC[aligned_neg, word_sub_def, align_aligned_add]
+QED
 
 
-val testbit_el_iff = store_thm ("testbit_el_iff",
-``!v i. testbit i v = ((i < LENGTH v) /\ EL (LENGTH v - 1 - i) v)``,
-
+Theorem testbit_el_iff:
+  !v i. testbit i v = ((i < LENGTH v) /\ EL (LENGTH v - 1 - i) v)
+Proof
 REPEAT GEN_TAC >>
 Cases_on `i < LENGTH v` >> (
   ASM_SIMP_TAC arith_ss [testbit_el, testbit_geq_len]
-));
+)
+QED
 
 
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)
 (* -------------------------------------------------------------------------- *)
 
-val FRESH_INDEXED_STRING_MK_def = Define `FRESH_INDEXED_STRING_MK pre n =
-  (pre ++ (num_to_dec_string n))`;
+Definition FRESH_INDEXED_STRING_MK_def:
+  FRESH_INDEXED_STRING_MK pre n =
+  (pre ++ (num_to_dec_string n))
+End
 
-val FRESH_INDEXED_STRING_MK_11 = store_thm ("FRESH_INDEXED_STRING_MK_11",
-``!pre n1 n2. (FRESH_INDEXED_STRING_MK pre n1 = FRESH_INDEXED_STRING_MK pre n2) <=> (n1 = n2)``,
-SIMP_TAC list_ss [FRESH_INDEXED_STRING_MK_def, toString_11]);
+Theorem FRESH_INDEXED_STRING_MK_11:
+  !pre n1 n2. (FRESH_INDEXED_STRING_MK pre n1 = FRESH_INDEXED_STRING_MK pre n2) <=> (n1 = n2)
+Proof
+SIMP_TAC list_ss [FRESH_INDEXED_STRING_MK_def, toString_11]
+QED
 
-val FRESH_INDEXED_STRING_AUX_def = Define `
-  FRESH_INDEXED_STRING_AUX pre n s = (LEAST x. (n <= x) /\ ~((FRESH_INDEXED_STRING_MK pre x) IN s))`;
+Definition FRESH_INDEXED_STRING_AUX_def:
+  FRESH_INDEXED_STRING_AUX pre n s = (LEAST x. (n <= x) /\ ~((FRESH_INDEXED_STRING_MK pre x) IN s))
+End
 
-val FRESH_INDEXED_STRING_def = Define `
-  FRESH_INDEXED_STRING pre n s = (FRESH_INDEXED_STRING_MK pre (FRESH_INDEXED_STRING_AUX pre n s))`;
+Definition FRESH_INDEXED_STRING_def:
+  FRESH_INDEXED_STRING pre n s = (FRESH_INDEXED_STRING_MK pre (FRESH_INDEXED_STRING_AUX pre n s))
+End
 
-val FRESH_INDEXED_STRINGS_def = Define `
+Definition FRESH_INDEXED_STRINGS_def:
   (FRESH_INDEXED_STRINGS pre n s 0 = []) /\
   (FRESH_INDEXED_STRINGS pre n s (SUC m) =
    let ns = (FRESH_INDEXED_STRING_AUX pre n s) in
    let ss = FRESH_INDEXED_STRING_MK pre ns in
-   (ss::FRESH_INDEXED_STRINGS pre (SUC ns) s m))`;
+   (ss::FRESH_INDEXED_STRINGS pre (SUC ns) s m))
+End
 
 
-val FRESH_INDEXED_STRING_AUX_PROPS = prove (``!s pre n i.
+Theorem FRESH_INDEXED_STRING_AUX_PROPS[local]:
+  !s pre n i.
   FINITE s ==>
   let i = FRESH_INDEXED_STRING_AUX pre n s in
   (n <= i) /\ ~(FRESH_INDEXED_STRING_MK pre i IN s) /\
-  (!i'. (n <= i' /\ i' < i) ==> ((FRESH_INDEXED_STRING_MK pre i') IN s))``,
-
+  (!i'. (n <= i' /\ i' < i) ==> ((FRESH_INDEXED_STRING_MK pre i') IN s))
+Proof
 SIMP_TAC std_ss [LET_THM, FRESH_INDEXED_STRING_AUX_def] >>
 REPEAT GEN_TAC >> STRIP_TAC >>
 numLib.LEAST_ELIM_TAC >>
@@ -1092,24 +1174,27 @@ Q.ABBREV_TAC `S2 = (IMAGE (FRESH_INDEXED_STRING_MK pre) S1)` >>
 `?ns. ns IN S2 /\ ~(ns IN s)` by METIS_TAC[pred_setTheory.IN_INFINITE_NOT_FINITE] >>
 UNABBREV_ALL_TAC >>
 FULL_SIMP_TAC arith_ss [IN_IMAGE, IN_DIFF, IN_COUNT, IN_UNIV, arithmeticTheory.NOT_LESS] >>
-METIS_TAC[]);
+METIS_TAC[]
+QED
 
 
 
-val FRESH_INDEXED_STRING_NOT_IN = store_thm ("FRESH_INDEXED_STRING_NOT_IN",
-  ``!s pre n. FINITE s ==> ~(FRESH_INDEXED_STRING pre n s IN s)``,
+Theorem FRESH_INDEXED_STRING_NOT_IN:
+  !s pre n. FINITE s ==> ~(FRESH_INDEXED_STRING pre n s IN s)
+Proof
 SIMP_TAC std_ss [FRESH_INDEXED_STRING_def] >>
-METIS_TAC[FRESH_INDEXED_STRING_AUX_PROPS]);
+METIS_TAC[FRESH_INDEXED_STRING_AUX_PROPS]
+QED
 
 
-val FRESH_INDEXED_STRINGS_PROPS_INDICES = store_thm ("FRESH_INDEXED_STRINGS_PROPS_INDICES",
-  ``!s pre l n. FINITE s ==> (
+Theorem FRESH_INDEXED_STRINGS_PROPS_INDICES:
+  !s pre l n. FINITE s ==> (
        ?nl. (FRESH_INDEXED_STRINGS pre n s l = MAP (FRESH_INDEXED_STRING_MK pre) nl) /\
             (LENGTH nl = l) /\
             (ALL_DISTINCT nl) /\
             (EVERY ($<= n) nl) /\
-            (EVERY (\n. ~((FRESH_INDEXED_STRING_MK pre n) IN s)) nl))``,
-
+            (EVERY (\n. ~((FRESH_INDEXED_STRING_MK pre n) IN s)) nl))
+Proof
 GEN_TAC >> GEN_TAC >>
 Induct >> (
   SIMP_TAC list_ss [FRESH_INDEXED_STRINGS_def, LET_THM]
@@ -1128,38 +1213,39 @@ REPEAT STRIP_TAC >| [
 
   `SUC n' <= e` by PROVE_TAC[] >>
   DECIDE_TAC
-]);
+]
+QED
 
 
-val FRESH_INDEXED_STRINGS_PROPS = store_thm ("FRESH_INDEXED_STRINGS_PROPS",
-  ``!s pre l n. FINITE s ==> (
+Theorem FRESH_INDEXED_STRINGS_PROPS:
+  !s pre l n. FINITE s ==> (
       (LENGTH (FRESH_INDEXED_STRINGS pre n s l) = l) /\
       ALL_DISTINCT (FRESH_INDEXED_STRINGS pre n s l) /\
-      (EVERY (\n. ~(n IN s)) (FRESH_INDEXED_STRINGS pre n s l)))``,
-
-
+      (EVERY (\n. ~(n IN s)) (FRESH_INDEXED_STRINGS pre n s l)))
+Proof
 REPEAT GEN_TAC >>
 ASSUME_TAC (Q.SPECL [`s`, `pre`, `l`, `n`] FRESH_INDEXED_STRINGS_PROPS_INDICES) >>
 STRIP_TAC >>
 FULL_SIMP_TAC list_ss [listTheory.EVERY_MAP] >>
 MATCH_MP_TAC listTheory.ALL_DISTINCT_MAP_INJ >>
-ASM_SIMP_TAC std_ss [FRESH_INDEXED_STRING_MK_11]);
+ASM_SIMP_TAC std_ss [FRESH_INDEXED_STRING_MK_11]
+QED
 
 
 (* -------------------------------------------------------------------------- *)
 (* Miscellaneous                                                              *)
 (* -------------------------------------------------------------------------- *)
 
-val noteq_trans_impl = store_thm("noteq_trans_impl",
-  ``!A B x.
+Theorem noteq_trans_impl:
+  !A B x.
     (A <> B) ==>
-    (((x = A) /\ (x = B)) <=> F)``,
-
+    (((x = A) /\ (x = B)) <=> F)
+Proof
 REPEAT STRIP_TAC >>
 RW_TAC std_ss [] >>
 CCONTR_TAC >>
 FULL_SIMP_TAC std_ss [] >>
 RW_TAC std_ss []
-);
+QED
 
 val _ = export_theory();

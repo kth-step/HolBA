@@ -24,7 +24,8 @@ val _ = print_with_style_ [Bold, Underline] ("Lifting "^dafilename^" (riscv)\n")
 
 val (region_map, sections) = read_disassembly_file_regions dafilename;
 val (thm, errors) = bmil_riscv.bir_lift_prog_gen prog_range sections;
-val _ = save_thm ("bin_rv_swap_thm", thm);
+Theorem bin_rv_swap_thm = thm
+
 
 val _ = print "\n\n";
 

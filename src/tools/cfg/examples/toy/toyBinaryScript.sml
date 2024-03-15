@@ -25,5 +25,6 @@ val (thm_m0, errors) = bmil_m0_LittleEnd_Process.bir_lift_prog_gen ((Arbnum.from
 val _ = print "\n\n";
 
 val _ = new_theory "toyBinary";
-val _ = save_thm ("toy_m0_program_THM", thm_m0);
+Theorem toy_m0_program_THM = thm_m0
+
 val _ = export_theory();

@@ -117,7 +117,8 @@ val _ = print "\n";
 (* run the execution *)
 (*
 val thm = bir_exec_prog_print name prog_const n_max validprog_o welltypedprog_o state_o;
-val _ = save_thm ("bin_rv_swap_conreteexec_thm", thm);
+Theorem bin_rv_swap_conreteexec_thm = thm
+
 *)
 
 

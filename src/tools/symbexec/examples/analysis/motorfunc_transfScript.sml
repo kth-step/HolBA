@@ -57,8 +57,8 @@ val birenvtyl_EVAL_thm = bir_program_transfTheory.birenvtyl_EVAL_thm;
 (*
     ``bprecond = BExp_Const (Imm1 1w)``
 *)
-val bprecond_def = Define `
-    bprecond = BExp_BinExp BIExp_And
+Definition bprecond_def:
+  bprecond = BExp_BinExp BIExp_And
                      (BExp_BinExp BIExp_And
                        (BExp_BinPred BIExp_LessOrEqual
                          (BExp_Const (Imm32 0xFFFFFFw))
@@ -67,27 +67,21 @@ val bprecond_def = Define `
                      (BExp_BinPred BIExp_LessOrEqual
                        (BExp_Den (BVar "countw" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
-`;
+End
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
 (* need to translate the precondition to a symbolic pathcondition, it means taking from the environment the corresponding mappings and substitute (that's symbolic evaluation) (then we know that states with matching environments also satisfy the original precondition because it is constructed by symbolic evaluation) *)
-val bsysprecond_def = Define `
-    bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
-`;
-val bprecond_birs_eval_exp_thm = save_thm(
-   "bprecond_birs_eval_exp_thm",
-  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
+Definition bsysprecond_def:
+  bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
+End
+Theorem bprecond_birs_eval_exp_thm = (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
    birs_stepLib.birs_eval_exp_CONV)
      ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
-);
-val bsysprecond_thm = save_thm(
-   "bsysprecond_thm",
-  (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond``
-);
-val bprecond_birs_eval_exp_thm2 = save_thm(
-   "bprecond_birs_eval_exp_thm2",
-  REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
-);
+
+Theorem bsysprecond_thm = (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond``
+
+Theorem bprecond_birs_eval_exp_thm2 = REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
+
 val bsysprecond = (fst o dest_eq o concl) bsysprecond_def;
 
 
@@ -115,9 +109,9 @@ val motor_analysis_thm =
 val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
 
 
-val motor_analysis_L_def = Define `
-    motor_analysis_L = ^(L_s)
-`;
+Definition motor_analysis_L_def:
+  motor_analysis_L = ^(L_s)
+End
 
 
 
@@ -138,30 +132,29 @@ val birs_prop_transfer_thm =
 
 
 (* basic definitions for the property we want to prove (countw) *)
-val bprog_P_def = Define `
-    bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
+Definition bprog_P_def:
+  bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
        pc.bpc_index = 0 /\
        bir_envty_list birenvtyl st /\
        bir_eval_exp ^bprecond (BEnv st) = SOME bir_val_true)
-`;
+End
 (* translate the property to BIR state property *)
-val bprog_P_thm = store_thm(
-   "bprog_P_thm", ``
-!bs.
+Theorem bprog_P_thm:
+  !bs.
   bprog_P (birs_symb_to_concst bs) =
       (bs.bst_status = BST_Running /\
        bs.bst_pc.bpc_index = 0 /\
        bir_envty_list_b birenvtyl bs.bst_environ /\
        bir_eval_exp ^bprecond bs.bst_environ = SOME bir_val_true)
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_P_def, bir_envty_list_b_thm, bir_BEnv_lookup_EQ_thm]
-);
+QED
 
 (* this is the relevant property about the cycle counter *)
-val bprog_Q_def = Define `
-    bprog_Q
+Definition bprog_Q_def:
+  bprog_Q
      ((SymbConcSt pc1 st1 status1):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
      ((SymbConcSt pc2 st2 status2):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
     =
@@ -175,10 +168,9 @@ val bprog_Q_def = Define `
                 (v1 + 44w <=+ v2) /\
                 (v2 <=+ v1 + 47w))
      )
-`;
-val bprog_Q_thm = store_thm(
-   "bprog_Q_thm", ``
-!bs1 bs2.
+End
+Theorem bprog_Q_thm:
+  !bs1 bs2.
   bprog_Q (birs_symb_to_concst bs1) (birs_symb_to_concst bs2) =
     (
       (bs2.bst_pc = ^birs_state_end_lbl)
@@ -190,18 +182,17 @@ val bprog_Q_thm = store_thm(
                (v1 + 44w <=+ v2) /\
                (v2 <=+ v1 + 47w))
     )
-``,
-  FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
-);
+Proof
+FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
+QED
 (* ........................... *)
 
 (* P is generic enough *)
 
-val bprog_P_entails_thm = store_thm(
-   "bprog_P_entails_thm", ``
-P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre)
-``,
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
+Theorem bprog_P_entails_thm:
+  P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre)
+Proof
+FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
   REPEAT STRIP_TAC >>
 
   ASSUME_TAC ((GSYM o Q.SPEC `s`) birs_symb_to_concst_EXISTS_thm) >>
@@ -220,14 +211,13 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^
   `(ALL_DISTINCT (MAP FST birenvtyl))` by EVAL_TAC >>
 
   METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm, bprecond_birs_eval_exp_thm2]
-);
+QED
 
 (* ........................... *)
 
 
-val bir_Pi_overapprox_Q_thm = store_thm(
-   "bir_Pi_overapprox_Q_thm", ``
-!p P sys Pi Q.
+Theorem bir_Pi_overapprox_Q_thm:
+  !p P sys Pi Q.
   (Pi_overapprox_Q (bir_symb_rec_sbir p) P (birs_symb_to_symbst sys) (IMAGE birs_symb_to_symbst Pi) Q)
   <=>
   (!sys2 bs bs' H.
@@ -236,8 +226,8 @@ val bir_Pi_overapprox_Q_thm = store_thm(
      (\bs. P (birs_symb_to_concst bs)) bs ==>
      (?H'. symb_interpr_ext H' H /\ birs_symb_matchstate sys2 H' bs') ==>
      (\bs bs'. Q (birs_symb_to_concst bs) (birs_symb_to_concst bs')) bs bs')
-``,
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
+Proof
+FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
@@ -276,28 +266,26 @@ val bir_Pi_overapprox_Q_thm = store_thm(
   FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
   REV_FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
   METIS_TAC []
-);
+QED
 
 
-val bir_env_read_countw_lookup_thm = store_thm(
-   "bir_env_read_countw_lookup_thm", ``
-!env v.
+Theorem bir_env_read_countw_lookup_thm:
+  !env v.
   (bir_env_lookup "countw" env = SOME (BVal_Imm (Imm64 v))) ==>
   (bir_env_read (BVar "countw" (BType_Imm Bit64)) env = SOME (BVal_Imm (Imm64 v)))
-``,
-  Cases_on `env` >>
+Proof
+Cases_on `env` >>
 
   FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
 
 (* Q is implied by sys and Pi *)
-val bprog_Pi_overapprox_Q_thm = store_thm(
-   "bprog_Pi_overapprox_Q_thm", ``
-Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) bprog_Q
-``,
-  REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
+Theorem bprog_Pi_overapprox_Q_thm:
+  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) bprog_Q
+Proof
+REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
   REPEAT GEN_TAC >>
 
   REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
@@ -458,7 +446,7 @@ Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_st
 
     HolSmtLib.Z3_ORACLE_TAC
   )
-);
+QED
 (* ........................... *)
 
 (* apply the theorem for property transfer *)
@@ -485,9 +473,8 @@ val bprog_concst_prop_thm =
 val st_init_lbl = (snd o dest_eq o hd o fst o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm;
 (* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
 val bprog_lbls  = List.nth ((snd o strip_comb o fst o dest_conj o snd o strip_exists o snd o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm, 3);
-val bprog_to_concst_prop_thm = store_thm(
-   "bprog_to_concst_prop_thm", ``
-!st.
+Theorem bprog_to_concst_prop_thm:
+  !st.
   (symb_concst_pc (birs_symb_to_concst st) = (^st_init_lbl)) ==>
   (bprog_P (birs_symb_to_concst st)) ==>
   (?n st'.
@@ -500,8 +487,8 @@ val bprog_to_concst_prop_thm = store_thm(
        st')
      /\
      (bprog_Q (birs_symb_to_concst st) (birs_symb_to_concst st')))
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   IMP_RES_TAC (HO_MATCH_MP birs_symb_to_concst_PROP_FORALL_thm bprog_concst_prop_thm) >>
 
   FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [conc_step_n_in_L_def, bir_symb_rec_sbir_def] >>
@@ -525,17 +512,15 @@ val bprog_to_concst_prop_thm = store_thm(
   )] >>
 
   METIS_TAC []
-);
+QED
 
 (* finish translation to pure BIR property *)
-val bprog_bir_prop_thm = save_thm(
-   "bprog_bir_prop_thm",
-  REWRITE_RULE
+Theorem bprog_bir_prop_thm = REWRITE_RULE
     [bprog_P_thm, bprecond_def, bprog_Q_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM motor_analysis_L_def]
     (REWRITE_RULE
       []
       bprog_to_concst_prop_thm)
-);
+
 (* ........................... *)
 
 val bir_frag_l_tm = ``<|bpc_label := BL_Address (Imm32 2824w); bpc_index := 0|>``;
@@ -544,8 +529,8 @@ val bir_frag_l_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o conc
 val bir_frag_l_exit_ml_tm = ``2886w:word32``;
 val bir_frag_l_exit_tm = ``<|bpc_label := BL_Address (Imm32 ^bir_frag_l_exit_ml_tm); bpc_index := 0|>``;
 
-val bprecond_def = Define `
-    bprecond =
+Definition bprecond_def:
+  bprecond =
          BExp_BinExp BIExp_And
             (BExp_BinExp BIExp_And
                (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm32 0xFFFFFFw))
@@ -555,15 +540,15 @@ val bprecond_def = Define `
             (BExp_BinPred BIExp_LessOrEqual
                (BExp_Den (BVar "countw" (BType_Imm Bit64)))
                (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
-`;
+End
 
-val pre_bir_def = Define `
-    pre_bir bs =
+Definition pre_bir_def:
+  pre_bir bs =
        (bir_eval_exp bprecond bs.bst_environ = SOME bir_val_true)
-`;
+End
 
-val post_bir_def = Define `
-    post_bir bs1 bs2 =
+Definition post_bir_def:
+  post_bir bs1 bs2 =
       (?v1 v2. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v1)) /\
                bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 v2)) /\
                (v1 <=+ 0xFFFFFFFFFFFFFF00w) /\
@@ -574,10 +559,10 @@ val post_bir_def = Define `
            v1 + 44w <=+ v2 /\
            v2 <=+ v1 + 47w
 *)
-`;
+End
 
-val pre_bir_nL_def = Define `
-    pre_bir_nL st =
+Definition pre_bir_nL_def:
+  pre_bir_nL st =
       (
        st.bst_status = BST_Running /\
        st.bst_pc.bpc_index = 0 /\
@@ -585,26 +570,26 @@ val pre_bir_nL_def = Define `
 
        pre_bir st
       )
-`;
-val post_bir_nL_def = Define `
-    post_bir_nL (st:bir_state_t) st' =
+End
+Definition post_bir_nL_def:
+  post_bir_nL (st:bir_state_t) st' =
       (
          (st'.bst_pc = ^bir_frag_l_exit_tm) /\
          st'.bst_status = BST_Running /\
 
          post_bir st st'
       )
-`;
+End
 
-val bir_step_n_in_L_jgmt_thm = prove(``
-bir_step_n_in_L_jgmt
+Theorem bir_step_n_in_L_jgmt_thm[local]:
+  bir_step_n_in_L_jgmt
   ^bprog_tm
   ^bir_frag_l_tm
   motor_analysis_L
   pre_bir_nL
   post_bir_nL
-``,
-  REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
+Proof
+REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
   REWRITE_TAC [pre_bir_nL_def, pre_bir_def, bprecond_def] >>
   REPEAT STRIP_TAC >>
 
@@ -620,15 +605,15 @@ bir_step_n_in_L_jgmt
 
   REWRITE_TAC [post_bir_nL_def, post_bir_def] >>
   ASM_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
 
-val motor_analysis_L_INTER_thm = prove(``
-motor_analysis_L INTER
+Theorem motor_analysis_L_INTER_thm[local]:
+  motor_analysis_L INTER
         {<|bpc_label := BL_Address (Imm32 2886w); bpc_index := 0|>} =
         EMPTY
-``,
-  `!A B. A INTER {B} = (EMPTY:bir_programcounter_t -> bool) <=> B NOTIN A` by (
+Proof
+`!A B. A INTER {B} = (EMPTY:bir_programcounter_t -> bool) <=> B NOTIN A` by (
     REPEAT STRIP_TAC >>
     EQ_TAC >> (
       FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
@@ -641,17 +626,17 @@ motor_analysis_L INTER
   POP_ASSUM (fn thm => ASM_REWRITE_TAC [thm]) >>
 
   EVAL_TAC
-);
+QED
 
-val bir_abstract_jgmt_rel_motor_thm = prove(``
-abstract_jgmt_rel
+Theorem bir_abstract_jgmt_rel_motor_thm[local]:
+  abstract_jgmt_rel
   (bir_ts ^bprog_tm)
   (BL_Address (Imm32 ^bir_frag_l_ml_tm))
   {BL_Address (Imm32 ^bir_frag_l_exit_ml_tm)}
   pre_bir_nL
   post_bir_nL
-``,
-  ASSUME_TAC
+Proof
+ASSUME_TAC
     (Q.SPEC `{BL_Address (Imm32 ^bir_frag_l_exit_ml_tm)}`
       (MATCH_MP
         (REWRITE_RULE
@@ -666,61 +651,61 @@ abstract_jgmt_rel
 
   FULL_SIMP_TAC std_ss [post_bir_nL_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
-);
+QED
 
 val bmemms_t = List.nth((snd o strip_comb o concl) bin_motor_funcTheory.bin_motor_func_thm, 2);
-val bmemms_def = Define `
-    bmemms = ^(bmemms_t)
-`;
+Definition bmemms_def:
+  bmemms = ^(bmemms_t)
+End
 val bin_motor_func_thm = REWRITE_RULE [GSYM bmemms_def, GSYM bprog_def] bin_motor_funcTheory.bin_motor_func_thm;
 
 
 (* TODO: COPIED STUFF *)
 (* =================================================================================== *)
-val bmr_rel_m0_mod_bmr_IMP_index_thm = prove(``
-!ms bs.
+Theorem bmr_rel_m0_mod_bmr_IMP_index_thm[local]:
+  !ms bs.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
   (bs.bst_status = BST_Running) ==>
   (bs.bst_pc.bpc_index = 0)
-``,
-  EVAL_TAC >>
+Proof
+EVAL_TAC >>
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   )
-);
+QED
 
-val bmr_rel_m0_mod_bmr_IMP_countw_lookup_thm = prove(``
-!bs ms.
+Theorem bmr_rel_m0_mod_bmr_IMP_countw_lookup_thm[local]:
+  !bs ms.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
   (bir_env_lookup "countw" bs.bst_environ = SOME (BVal_Imm (Imm64 ms.countw)))
-``,
-  EVAL_TAC >>
+Proof
+EVAL_TAC >>
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >> (
     METIS_TAC []
   )
-);
+QED
 
-val bmr_rel_m0_mod_bmr_IMP_SP_process_lookup_thm = prove(``
-!bs ms.
+Theorem bmr_rel_m0_mod_bmr_IMP_SP_process_lookup_thm[local]:
+  !bs ms.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
   (bir_env_lookup "SP_process" bs.bst_environ = SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_process))))
-``,
-  EVAL_TAC >>
+Proof
+EVAL_TAC >>
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >> (
     METIS_TAC []
   )
-);
+QED
 (* =================================================================================== *)
 
 (*
   transfer of relational postcondition to machine model
 *)
-val pre_m0_mod_def = Define `
-    pre_m0_mod ms =
+Definition pre_m0_mod_def:
+  pre_m0_mod ms =
       (
         (EVERY (bmr_ms_mem_contains (m0_mod_bmr (F,T)) ms) bmemms) /\
         ((m0_mod_bmr (F,T)).bmr_extra ms) /\
@@ -729,20 +714,20 @@ val pre_m0_mod_def = Define `
          ms.base.REG RName_SP_process && 0x3w = 0w /\
          ms.countw <=+ 0xFFFFFFFFFFFFFF00w)
       )
-`;
-val post_m0_mod_def = Define `
-    post_m0_mod ms ms' =
+End
+Definition post_m0_mod_def:
+  post_m0_mod ms ms' =
       (
         (ms.countw <=+ 0xFFFFFFFFFFFFFF00w) /\
         (ms.countw + 44w <=+ ms'.countw) /\
         (ms'.countw <=+ ms.countw + 47w)
       )
-`;
+End
 
-val backlift_bir_m0_mod_pre_abstr_ex_thm = prove(``
+Theorem backlift_bir_m0_mod_pre_abstr_ex_thm[local]:
   backlift_bir_m0_mod_pre_abstr pre_m0_mod pre_bir_nL
-``,
-  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_pre_abstr_def, pre_m0_mod_def, pre_bir_nL_def, pre_bir_def] >>
+Proof
+FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_pre_abstr_def, pre_m0_mod_def, pre_bir_nL_def, pre_bir_def] >>
   REPEAT GEN_TAC >>
   REPEAT DISCH_TAC >>
 
@@ -758,12 +743,12 @@ val backlift_bir_m0_mod_pre_abstr_ex_thm = prove(``
   EVAL_TAC >>
   ASM_REWRITE_TAC [] >>
   EVAL_TAC
-);
+QED
 
-val backlift_bir_m0_mod_post_concr_ex_thm = prove(``
+Theorem backlift_bir_m0_mod_post_concr_ex_thm[local]:
   backlift_bir_m0_mod_post_concr post_bir_nL post_m0_mod
-``,
-  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_post_concr_def, post_bir_nL_def, post_m0_mod_def, post_bir_def] >>
+Proof
+FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_post_concr_def, post_bir_nL_def, post_m0_mod_def, post_bir_def] >>
   REPEAT GEN_TAC >>
   REPEAT DISCH_TAC >>
   FULL_SIMP_TAC std_ss [] >>
@@ -779,18 +764,17 @@ val backlift_bir_m0_mod_post_concr_ex_thm = prove(``
   ) >>
 
   FULL_SIMP_TAC (std_ss) []
-);
+QED
 
-val m0_mod_thm = prove(``
-abstract_jgmt_rel
+Theorem m0_mod_thm[local]:
+  abstract_jgmt_rel
   m0_mod_weak_model
   (^bir_frag_l_ml_tm)
   {^bir_frag_l_exit_ml_tm}
   pre_m0_mod
   post_m0_mod
-``,
-
-  ASSUME_TAC
+Proof
+ASSUME_TAC
     (Q.SPECL
       [`pre_m0_mod`, `pre_bir_nL`, `post_bir_nL`, `post_m0_mod`, `(^bir_frag_l_ml_tm)`, `{^bir_frag_l_exit_ml_tm}`]
       (MATCH_MP
@@ -826,18 +810,18 @@ abstract_jgmt_rel
   FULL_SIMP_TAC std_ss [IMAGE_SING, IN_SING] >>
   FULL_SIMP_TAC std_ss [bir_abstract_jgmt_rel_motor_thm] >>
   METIS_TAC []
-);
+QED
 
 
 (* TODO: MORE COPIED STUFF *)
 (* =================================================================================== *)
-val m0_mod_R_IMP_bmr_ms_mem_contains_thm = prove(``
-!mms ms.
+Theorem m0_mod_R_IMP_bmr_ms_mem_contains_thm[local]:
+  !mms ms.
   (m0_mod_R ms mms) ==>
   (bmr_ms_mem_contains (m0_mod_bmr (F,T)) mms =
    bmr_ms_mem_contains (m0_bmr (F,T)) ms)
-``,
-  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+Proof
+REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
   REPEAT STRIP_TAC >>
 
   MATCH_MP_TAC boolTheory.EQ_EXT >>
@@ -869,40 +853,40 @@ val m0_mod_R_IMP_bmr_ms_mem_contains_thm = prove(``
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_lifting_machinesTheory.bir_machine_lifted_mem_t_11] >>
   POP_ASSUM (ASSUME_TAC o GSYM) >>
   ASM_SIMP_TAC (std_ss++holBACore_ss) []
-);
-val m0_mod_R_IMP_REG_EQ_thm = prove(``
-!mms ms.
+QED
+Theorem m0_mod_R_IMP_REG_EQ_thm[local]:
+  !mms ms.
   (m0_mod_R ms mms) ==>
   (mms.base.REG = ms.REG)
-``,
-  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+Proof
+REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
   REPEAT STRIP_TAC >>
 
   ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
-);
-val m0_mod_R_IMP_bmr_extra_thm = prove(``
-!mms ms.
+QED
+Theorem m0_mod_R_IMP_bmr_extra_thm[local]:
+  !mms ms.
   (m0_mod_R ms mms) ==>
   ((m0_mod_bmr (F,T)).bmr_extra mms = (m0_bmr (F,T)).bmr_extra ms)
-``,
-  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+Proof
+REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
   REPEAT STRIP_TAC >>
 
   SIMP_TAC (std_ss++(rewrites (type_rws ``:('a,'b,'c) bir_lifting_machine_rec_t``))) [bir_lifting_machinesTheory.m0_mod_bmr_def, bir_lifting_machinesTheory.m0_bmr_def] >>
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_lifting_machinesTheory.m0_mod_state_is_OK_def, bir_lifting_machinesTheory.m0_state_is_OK_def] >>
 
   ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
-);
-val m0_mod_R_IMP_count_EQ_countw_thm = prove(``
-!mms ms.
+QED
+Theorem m0_mod_R_IMP_count_EQ_countw_thm[local]:
+  !mms ms.
   (m0_mod_R ms mms) ==>
   (ms.count = w2n mms.countw)
-``,
-  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+Proof
+REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
   REPEAT STRIP_TAC >>
 
   ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
-);
+QED
 
 (* =================================================================================== *)
 
@@ -910,8 +894,8 @@ val m0_mod_R_IMP_count_EQ_countw_thm = prove(``
 transfer to (unmodified) m0 model
 *)
 
-val pre_m0_def = Define `
-    pre_m0 ms =
+Definition pre_m0_def:
+  pre_m0 ms =
       (
         (EVERY (bmr_ms_mem_contains (m0_bmr (F,T)) ms) bmemms) /\
         ((m0_bmr (F,T)).bmr_extra ms) /\
@@ -920,21 +904,21 @@ val pre_m0_def = Define `
          ms.REG RName_SP_process && 0x3w = 0w /\
          ms.count <= 0xFFFFFFFFFFFFFF00:num)
       )
-`;
-val post_m0_def = Define `
-    post_m0 ms ms' =
+End
+Definition post_m0_def:
+  post_m0 ms ms' =
       (
         (ms.count + 44 <= ms'.count) /\
         (ms'.count <= ms.count + 47)
       )
-`;
+End
 
 
 
-val backlift_m0_mod_m0_pre_abstr_ex_thm = prove(``
+Theorem backlift_m0_mod_m0_pre_abstr_ex_thm[local]:
   backlift_m0_mod_m0_pre_abstr (pre_m0) (pre_m0_mod)
-``,
-  FULL_SIMP_TAC std_ss [pre_m0_def, pre_m0_mod_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
+Proof
+FULL_SIMP_TAC std_ss [pre_m0_def, pre_m0_mod_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
 
   REPEAT GEN_TAC >>
   REPEAT DISCH_TAC >>
@@ -962,12 +946,12 @@ val backlift_m0_mod_m0_pre_abstr_ex_thm = prove(``
   POP_ASSUM (fn thm => REWRITE_TAC [GSYM thm]) >>
   EVAL_TAC >>
   ASM_REWRITE_TAC []
-);
+QED
 
-val backlift_m0_mod_m0_post_concr_ex_thm = prove(``
+Theorem backlift_m0_mod_m0_post_concr_ex_thm[local]:
   backlift_m0_mod_m0_post_concr post_m0_mod post_m0
-``,
-  FULL_SIMP_TAC std_ss [post_m0_mod_def, post_m0_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
+Proof
+FULL_SIMP_TAC std_ss [post_m0_mod_def, post_m0_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
   REPEAT GEN_TAC >>
   REPEAT DISCH_TAC >>
   FULL_SIMP_TAC std_ss [] >>
@@ -1049,19 +1033,17 @@ val backlift_m0_mod_m0_post_concr_ex_thm = prove(``
   POP_ASSUM (K ALL_TAC) >>
 
   FULL_SIMP_TAC std_ss [wordsTheory.WORD_LS]
-);
+QED
 
-val m0_thm = store_thm(
-   "m0_thm", ``
-abstract_jgmt_rel
+Theorem m0_thm:
+  abstract_jgmt_rel
   m0_weak_model
   (^bir_frag_l_ml_tm)
   {^bir_frag_l_exit_ml_tm}
   (pre_m0)
   (post_m0)
-``,
-
-  ASSUME_TAC
+Proof
+ASSUME_TAC
     (Q.SPECL
       [`pre_m0`, `pre_m0_mod`, `post_m0_mod`, `post_m0`, `(^bir_frag_l_ml_tm)`, `{^bir_frag_l_exit_ml_tm}`]
       bir_program_transfTheory.backlift_m0_mod_m0_contract_thm) >>
@@ -1083,16 +1065,14 @@ abstract_jgmt_rel
   ASSUME_TAC backlift_m0_mod_m0_post_concr_ex_thm >>
 
   FULL_SIMP_TAC std_ss [m0_mod_thm]
-);
+QED
 
-val m0_EVAL_thm = save_thm(
-   "m0_EVAL_thm",
-  REWRITE_RULE
+Theorem m0_EVAL_thm = REWRITE_RULE
    [pre_m0_def, post_m0_def,
     prove(``pre_m0 = (\ms. pre_m0 ms)``, MATCH_MP_TAC boolTheory.EQ_EXT >> FULL_SIMP_TAC std_ss []),
     prove(``post_m0 = (\ms ms'. post_m0 ms ms')``, MATCH_MP_TAC boolTheory.EQ_EXT >> FULL_SIMP_TAC std_ss [] >> GEN_TAC >> MATCH_MP_TAC boolTheory.EQ_EXT >> FULL_SIMP_TAC std_ss [])]
    m0_thm
-);
+
 
 val _ = export_theory();
 

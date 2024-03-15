@@ -22,9 +22,9 @@ val bprog = List.nth((snd o strip_comb o concl) bin_balrob_smallprogs_thm, 3);
 
 List.nth ((fst o listSyntax.dest_list o snd o dest_comb) bprog, 13)
 *)
-val bprog_def = Define `
-    bprog = ^(bprog)
-`;
+Definition bprog_def:
+  bprog = ^(bprog)
+End
 val bprog_tm = (fst o dest_eq o concl) bprog_def;
 (* ........................... *)
 
@@ -120,6 +120,7 @@ val _ = print "countw increments = [";
 val _ = List.map (fn countw_inc => (print (term_to_string countw_inc); print "; ")) countw_incs;
 val _ = print "]\n";
 
-val _ = save_thm ("bin_smallprog_thm", result);
+Theorem bin_smallprog_thm = result
+
 
 val _ = export_theory();
