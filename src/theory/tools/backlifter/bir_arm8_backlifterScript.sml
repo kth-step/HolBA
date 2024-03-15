@@ -150,11 +150,6 @@ EVAL_TAC
 QED
 
 
-Theorem imm_eq_to_val_eq[local]:
-  !a b . ((BVal_Imm(Imm1 a)) = (BVal_Imm(Imm1 b))) = (a = b)
-Proof
-REPEAT STRIP_TAC >> EVAL_TAC
-QED
 
 Definition arm8_vars_def:
   arm8_vars= {
