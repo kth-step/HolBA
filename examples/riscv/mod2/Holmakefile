@@ -8,12 +8,7 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/tools/lifter \
-           $(HOLBADIR)/src/tools/exec \
-           $(HOLBADIR)/src/theory/tools/backlifter \
-           $(HOLBADIR)/src/tools/comp \
-           $(HOLBADIR)/src/tools/wp \
-           $(HOLBADIR)/src/tools/backlifter \
-           $(HOLBADIR)/examples/tutorial/support
+           $(HOLBADIR)/src/tools/backlifter
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

@@ -483,7 +483,7 @@ val bprog_bir_prop_thm = save_thm(
 
 (* TODO: translate to pure Cortex-M0 property *)
 (*
-bir_backlifterTheory.bir_post_bir_to_arm8_def
+bir_arm8_backlifterTheory.bir_post_bir_to_arm8_def
 lift_contract_thm
 src/tools/backlifter/bir_backlifterLib.sml
 

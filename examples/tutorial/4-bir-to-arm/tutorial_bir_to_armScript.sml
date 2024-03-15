@@ -25,7 +25,7 @@ open bir_inst_liftingHelpersLib;
 
 (* Code specific for the example *)
 open HolBASimps;
-open bir_backlifterTheory;
+open bir_arm8_backlifterTheory;
 open bslSyntax;
 
 val _ = new_theory "tutorial_bir_to_arm";
