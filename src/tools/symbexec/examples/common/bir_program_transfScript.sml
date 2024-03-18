@@ -1277,15 +1277,14 @@ Theorem backlift_bir_m0_mod_EXISTS_thm:
   (bir_envty_list_b birenvtyl bs.bst_environ)
 )
 Proof
-REPEAT STRIP_TAC >>
+  REPEAT STRIP_TAC >>
   Cases_on `bmropt` >>
   SIMP_TAC std_ss [] >>
   ASM_REWRITE_TAC [bir_lifting_machinesTheory.bmr_rel_def] >>
 
   Q.ABBREV_TAC `bs = 
       <|
-        bst_pc       := bir_block_pc (BL_Address (Imm32 (ms.base.REG RName_PC))
-QED
+        bst_pc       := bir_block_pc (BL_Address (Imm32 (ms.base.REG RName_PC)));
         bst_environ  := BEnv (
 
  ("PSR_C" =+ SOME (BVal_Imm (bool2b ms.base.PSR.C)))
@@ -1396,7 +1395,7 @@ QED
 
   EVAL_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
-);
+QED
 
 
 Theorem backlift_bir_m0_mod_pc_rel_thm:

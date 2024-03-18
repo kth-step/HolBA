@@ -891,7 +891,7 @@ Proof
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    HolSmtLib.Z3_ORACLE_TAC
+    blastLib.FULL_BBLAST_TAC
   )
 QED
 
@@ -1091,7 +1091,7 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
     bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES
     *)
     FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    HolSmtLib.Z3_ORACLE_TAC
+    blastLib.FULL_BBLAST_TAC
 
 (*
     POP_ASSUM (ASSUME_TAC o GSYM) >>
@@ -1308,7 +1308,7 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
 
-    (*HolSmtLib.Z3_ORACLE_TAC*)
+    (*blastLib.FULL_BBLAST_TAC*)
 
     FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, wordsTheory.w2n_11] >>
 
@@ -1516,7 +1516,7 @@ Proof
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    HolSmtLib.Z3_ORACLE_TAC
+    blastLib.FULL_BBLAST_TAC
   )
 QED
 
