@@ -17,7 +17,11 @@ open bir_wp_interfaceLib;
 
 open tutorial_smtSupportLib;
 
+open bir_program_transfTheory;
+
 open swapTheory;
+
+open swap_symb_execTheory;
 
 val _ = new_theory "swap_prop";
 

@@ -7,8 +7,6 @@ open birs_auxTheory;
 
 open swapTheory;
 
-open bir_program_transfTheory;
-
 val _ = new_theory "swap_symb_exec";
 
 val bprog_tm = (snd o dest_eq o concl) bir_swap_prog_def;
