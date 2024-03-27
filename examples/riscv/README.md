@@ -21,14 +21,6 @@ Configure and build Linux cross-compiler:
 make linux
 ```
 
-## Installing and building HolBA
+## Building HolBA
 
-To bootstrap Poly/ML, HOL4, and HolBA (may take tens of minutes):
-
-```shell
-git clone https://github.com/kth-step/HolBA.git
-cd HolBA
-./scripts/setup/install_all.sh
-./configure.sh
-make main
-```
+See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md) for information on how to build HolBA.
