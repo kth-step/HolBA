@@ -13,12 +13,9 @@ val bprog_tm = (snd o dest_eq o concl) bir_incr_prog_def;
 
 (* ........................... *)
 
-(* motor_prep_input *)
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x00w))``;
-(*
-val birs_stop_lbls = [``<|bpc_label := BL_Address (Imm64 0x08w); bpc_index := 7|>``];
-*)
-val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x14w))``];
+
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x8w))``];
 
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 Definition riscv_vars_def:
@@ -31,13 +28,11 @@ End
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 
 
-(*
-
 val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list birenvtyl_riscv;
   bsst_status   := BST_Running;
-  bsst_pcond    := BExp_BinExp bir_exp_true
+  bsst_pcond    := bir_exp_true (* FIXME? *)
 |>``;
 
 (* ........................... *)
@@ -78,6 +73,5 @@ val _ = show_tags := true;
 val _ = Portable.pprint Tag.pp_tag (tag result);
 
 Theorem incr_symb_analysis_thm = result
-*)
 
 val _ = export_theory ();
