@@ -1,6 +1,7 @@
 INCLUDES = $(HOLBADIR)/examples/riscv/swap \
            $(HOLBADIR)/examples/riscv/isqrt \
-           $(HOLBADIR)/examples/riscv/mod2
+           $(HOLBADIR)/examples/riscv/mod2 \
+           $(HOLBADIR)/examples/riscv/incr
 
 all: $(DEFAULT_TARGETS) test-riscv.exe
 .PHONY: all
