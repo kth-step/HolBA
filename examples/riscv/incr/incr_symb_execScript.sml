@@ -15,7 +15,7 @@ val bprog_tm = (snd o dest_eq o concl) bir_incr_prog_def;
 
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x00w))``;
 
-val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x8w))``];
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x4w))``];
 
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 Definition riscv_vars_def:
