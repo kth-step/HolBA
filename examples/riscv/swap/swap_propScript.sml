@@ -17,6 +17,7 @@ open bir_wp_interfaceLib;
 
 open tutorial_smtSupportLib;
 
+open bir_symbTheory;
 open bir_program_transfTheory;
 
 open total_program_logicTheory;
