@@ -90,12 +90,12 @@ End
 
 Theorem bprecond_birs_eval_exp_thm = (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
    birs_stepLib.birs_eval_exp_CONV)
-     ``birs_eval_exp (bprecond x) (bir_senv_GEN_list birenvtyl_riscv)``
+     ``birs_eval_exp (bprecond pre_x10) (bir_senv_GEN_list birenvtyl_riscv)``
 
 Theorem bsysprecond_thm =
- (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond x``
+ (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond pre_x10``
 
-Theorem bprecond_birs_eval_exp_thm2 = REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp (bprecond x) (bir_senv_GEN_list birenvtyl_riscv)``
+Theorem bprecond_birs_eval_exp_thm2 = REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp (bprecond pre_x10) (bir_senv_GEN_list birenvtyl_riscv)``
 
 val bsysprecond = (fst o dest_eq o concl o Q.SPEC `pre_x10`) bsysprecond_def;
 
@@ -114,7 +114,7 @@ val birs_state_init_pre_EQ_thm =
   ``^((snd o dest_comb) sys_i) = ^birs_state_init_pre``);
 
 val incr_analysis_thm =
-  REWRITE_RULE [birs_state_init_pre_EQ_thm] incr_symb_analysis_thm;
+  REWRITE_RULE [birs_state_init_pre_EQ_thm, GSYM bir_incr_prog_def] incr_symb_analysis_thm;
 
 Theorem birenvtyl_riscv_EVAL_thm =
  (REWRITE_CONV [birenvtyl_riscv_def, riscv_vars_def,
@@ -446,17 +446,237 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
 QED
 (* ........................... *)
 
+(* apply the theorem for property transfer *)
+val bprog_prop_holds_thm =
+  MATCH_MP
+    (MATCH_MP
+      (MATCH_MP
+         birs_prop_transfer_thm
+         bprog_P_entails_thm)
+      bprog_Pi_overapprox_Q_thm)
+    incr_analysis_thm;
+
+(* lift to concrete state property *)
+val bprog_concst_prop_thm =
+  SIMP_RULE (std_ss++birs_state_ss)
+    [birs_symb_symbst_pc_thm]
+    (REWRITE_RULE
+      [symb_prop_transferTheory.prop_holds_def]
+      bprog_prop_holds_thm);
+(* ........................... *)
 
 
+(* lift to concrete bir property *)
+val st_init_lbl = (snd o dest_eq o hd o fst o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm;
+(* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
+val bprog_lbls  = List.nth ((snd o strip_comb o fst o dest_conj o snd o strip_exists o snd o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm, 3);
+Theorem bprog_to_concst_prop_thm:
+  !st.
+  (symb_concst_pc (birs_symb_to_concst st) = (^st_init_lbl)) ==>
+  (bprog_P pre_x10 (birs_symb_to_concst st)) ==>
+  (?n st'.
+     (step_n_in_L
+       (symb_concst_pc o birs_symb_to_concst)
+       (SND o bir_exec_step (^bprog_tm))
+       st
+       n
+       (^bprog_lbls)
+       st')
+     /\
+     (bprog_Q pre_x10 (birs_symb_to_concst st) (birs_symb_to_concst st')))
+Proof
+REPEAT STRIP_TAC >>
+  IMP_RES_TAC (HO_MATCH_MP birs_symb_to_concst_PROP_FORALL_thm bprog_concst_prop_thm) >>
 
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [conc_step_n_in_L_def, bir_symb_rec_sbir_def] >>
+
+  ASSUME_TAC ((GSYM o Q.SPEC `s'`) birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `birs_symb_to_concst o SND o bir_exec_step ^bprog_tm o
+             birs_symb_from_concst =
+   birs_symb_to_concst o (SND o bir_exec_step ^bprog_tm) o
+             birs_symb_from_concst` by (
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+  FULL_SIMP_TAC (pure_ss) [] >>
+
+  FULL_SIMP_TAC (pure_ss) [
+    SIMP_RULE std_ss [birs_symb_to_from_concst_thm, birs_symb_to_concst_EXISTS_thm, birs_symb_to_concst_EQ_thm] (
+      SPECL [``birs_symb_to_concst``, ``birs_symb_from_concst``] (
+        INST_TYPE [Type`:'b` |-> Type`:(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t`, Type`:'a` |-> Type`:bir_state_t`] step_n_in_L_ABS_thm)
+  )] >>
+
+  METIS_TAC []
+QED
+
+(* finish translation to pure BIR property *)
+Theorem bprog_bir_prop_thm = REWRITE_RULE
+    [bprog_P_thm, bprecond_def, bprog_Q_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM incr_analysis_L_def]
+    (REWRITE_RULE
+      []
+      bprog_to_concst_prop_thm)
+
+(* ........................... *)
+
+val bir_frag_l_tm = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
+val bir_frag_l_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl o EVAL) ``(^bir_frag_l_tm).bpc_label``;
+
+val bir_frag_l_exit_ml_tm = ``4w:word64``;
+val bir_frag_l_exit_tm = ``<|bpc_label := BL_Address (Imm64 ^bir_frag_l_exit_ml_tm); bpc_index := 0|>``;
+
+Definition pre_bir_def:
+  pre_bir x bs =
+       (bir_eval_exp (bprecond x) bs.bst_environ = SOME bir_val_true)
+End
+
+Definition post_bir_def:
+  post_bir x bs1 bs2 =
+      (bir_env_lookup "x10" bs2.bst_environ = SOME (BVal_Imm (Imm64 (x + 1w))))
+End
+
+Definition pre_bir_nL_def:
+  pre_bir_nL x st =
+      (
+       st.bst_status = BST_Running /\
+       st.bst_pc.bpc_index = 0 /\
+       bir_envty_list_b birenvtyl_riscv st.bst_environ /\
+
+       pre_bir x st
+      )
+End
+Definition post_bir_nL_def:
+  post_bir_nL x (st:bir_state_t) st' =
+      (
+         (st'.bst_pc = ^bir_frag_l_exit_tm) /\
+         st'.bst_status = BST_Running /\
+
+         post_bir x st st'
+      )
+End
+
+Theorem bir_step_n_in_L_jgmt_thm[local]:
+  bir_step_n_in_L_jgmt
+  ^bprog_tm
+  ^bir_frag_l_tm
+  incr_analysis_L
+  (pre_bir_nL pre_x10)
+  (post_bir_nL pre_x10)
+Proof
+REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
+  REWRITE_TAC [pre_bir_nL_def, pre_bir_def, bprecond_def] >>
+  REPEAT STRIP_TAC >>
+
+  ASSUME_TAC (Q.SPEC `st` bprog_bir_prop_thm) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [
+     prove(``(\x. bir_exec_step_state ^(bprog_tm) x) = bir_exec_step_state ^(bprog_tm)``, MATCH_MP_TAC boolTheory.EQ_EXT >> SIMP_TAC std_ss [])
+    ] >>
+  Q.EXISTS_TAC `n` >>
+  Q.EXISTS_TAC `st'` >>
+  ASM_SIMP_TAC std_ss [] >>
+
+  REWRITE_TAC [post_bir_nL_def, post_bir_def] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss) []
+QED
+
+
+Theorem incr_analysis_L_INTER_thm[local]:
+  incr_analysis_L INTER
+        {<|bpc_label := BL_Address (Imm64 4w); bpc_index := 0|>} =
+        EMPTY
+Proof
+`!A B. A INTER {B} = (EMPTY:bir_programcounter_t -> bool) <=> B NOTIN A` by (
+    REPEAT STRIP_TAC >>
+    EQ_TAC >> (
+      FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
+    ) >>
+    REPEAT STRIP_TAC >>
+
+    REWRITE_TAC [Once (GSYM INTER_COMM)] >>
+    FULL_SIMP_TAC std_ss [INTER_EMPTY, INSERT_INTER]
+  ) >>
+  POP_ASSUM (fn thm => ASM_REWRITE_TAC [thm]) >>
+
+  EVAL_TAC
+QED
+
+Theorem bir_abstract_jgmt_rel_incr_thm[local]:
+  abstract_jgmt_rel
+  (bir_ts ^bprog_tm)
+  (BL_Address (Imm64 ^bir_frag_l_ml_tm))
+  {BL_Address (Imm64 ^bir_frag_l_exit_ml_tm)}
+  (pre_bir_nL pre_x10)
+  (post_bir_nL pre_x10)
+Proof
+ASSUME_TAC
+    (Q.SPEC `{BL_Address (Imm64 ^bir_frag_l_exit_ml_tm)}`
+      (MATCH_MP
+        (REWRITE_RULE
+           [bir_programTheory.bir_block_pc_def]
+           bir_program_transfTheory.bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm)
+        bir_step_n_in_L_jgmt_thm)) >>
+
+  FULL_SIMP_TAC std_ss [pre_bir_nL_def] >>
+
+  FULL_SIMP_TAC std_ss [IMAGE_SING, IN_SING, bir_programTheory.bir_block_pc_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [incr_analysis_L_INTER_thm] >>
+
+  FULL_SIMP_TAC std_ss [post_bir_nL_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
+QED
+
+(*
+(* TODO: this is actually an implication!!! *)
+Theorem pre_bir_nL_thm[local]:
+  !x. pre_bir_nL x = (\st. bir_exec_to_labels_triple_precond st (bir_incr_pre x) bir_incr_prog)
+Proof
+  REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC std_ss [pre_bir_nL_def, pre_bir_def, bir_exec_to_labels_triple_precond_def] >>
+  REWRITE_TAC [bprecond_def] >>
+
+  `bir_envty_list_b birenvtyl_riscv x'.bst_environ = bir_env_vars_are_initialised x'.bst_environ (bir_vars_of_program bir_incr_prog)` by (
+     cheat (* this is actually an implication! *)
+  ) >>
+
+  `bir_envty_list_b birenvtyl_riscv x'.bst_environ = bir_is_bool_exp_env x'.bst_environ (bir_incr_pre x)` by (
+     cheat (* this is actually an implication! *)
+  ) >>
+
+  METIS_TAC []
+QED
+
+(* TODO: this is actually an implication!!! *)
+Theorem post_bir_nL_thm[local]:
+  !x. post_bir_nL x = (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post x) else bir_exp_false) bir_incr_prog)
+Proof
+  REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC std_ss [post_bir_nL_def, post_bir_def, bir_incr_post_def, bir_exec_to_labels_triple_postcond_def] >>
+
+(*
+        missing:
+bir_env_vars_are_initialised x''.bst_environ
+                             (bir_vars_of_program bir_incr_prog)
+                                                  *)
+
+QED
+*)
 
 Theorem abstract_jgmt_rel_incr[local]:
  abstract_jgmt_rel (bir_ts bir_incr_prog) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
   (\st. bir_exec_to_labels_triple_precond st (bir_incr_pre pre_x10) bir_incr_prog)
   (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false) bir_incr_prog)
 Proof
- (* reasoning via symb_prop_transfer_thm goes here *)
- cheat
+  (* reasoning via symb_prop_transfer_thm goes here *)
+(* abstract_jgmt_rel_def *)(*
+  METIS_TAC [pre_bir_nL_thm, post_bir_nL_thm]*)
+  cheat
 QED
 
 Theorem bir_cont_incr[local]:

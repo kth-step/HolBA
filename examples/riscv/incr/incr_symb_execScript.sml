@@ -27,12 +27,15 @@ Definition birenvtyl_riscv_def:
 End
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 
-
 val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list birenvtyl_riscv;
   bsst_status   := BST_Running;
-  bsst_pcond    := bir_exp_true (* FIXME? *)
+  bsst_pcond    :=
+    BExp_BinPred
+      BIExp_Equal
+      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+      (BExp_Const (Imm64 pre_x10))
 |>``;
 
 (* ........................... *)
