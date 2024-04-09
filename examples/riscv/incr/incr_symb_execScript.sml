@@ -22,8 +22,18 @@ Definition riscv_vars_def:
   riscv_vars = APPEND (bmr_vars riscv_bmr) (bmr_temp_vars riscv_bmr)
 End
 
+Definition incr_prog_vars_def:
+  incr_prog_vars = [BVar "x10" (BType_Imm Bit64); BVar "x1" (BType_Imm Bit64)]
+End
+
+Theorem incr_prog_vars_thm:
+  set incr_prog_vars = bir_vars_of_program (bir_incr_prog)
+Proof
+  SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [bir_incr_prog_def, incr_prog_vars_def]
+QED
+
 Definition birenvtyl_riscv_def:
-  birenvtyl_riscv = MAP BVarToPair riscv_vars
+  birenvtyl_riscv = MAP BVarToPair (incr_prog_vars)
 End
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 

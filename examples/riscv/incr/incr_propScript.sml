@@ -166,6 +166,7 @@ Definition bprog_Q_def:
        /\
        (status2 = BST_Running)
        /\
+       bir_envty_list birenvtyl_riscv st2 /\
        (st2 "x10" = SOME (BVal_Imm (Imm64 (x + 1w))))
      )
 End
@@ -178,10 +179,11 @@ Theorem bprog_Q_thm:
       /\
       (bs2.bst_status = BST_Running)
       /\
+       bir_envty_list_b birenvtyl_riscv bs2.bst_environ /\
       (bir_env_lookup "x10" bs2.bst_environ = SOME (BVal_Imm (Imm64 (x + 1w))))
     )
 Proof
-FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
+FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def, bir_envty_list_b_thm]
 QED
 (* ........................... *)
 
@@ -299,6 +301,12 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
     CONJ_TAC >- (
       Q.UNABBREV_TAC `sys2` >>
       FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+    ) >>
+
+    (* bir_envty_list_b *)
+    CONJ_TAC >- (
+      Q.UNABBREV_TAC `sys2` >>
+      cheat
     ) >>
 
     (* the property (here: pre_x10 + 1) *)
@@ -551,6 +559,7 @@ Definition post_bir_nL_def:
       (
          (st'.bst_pc = ^bir_frag_l_exit_tm) /\
          st'.bst_status = BST_Running /\
+         bir_envty_list_b birenvtyl_riscv st'.bst_environ /\
 
          post_bir x st st'
       )
@@ -628,69 +637,73 @@ ASSUME_TAC
   FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
 QED
 
+Theorem bir_envty_list_b_incr_thm[local]:
+  !env. bir_envty_list_b birenvtyl_riscv env ==>
+        bir_env_vars_are_initialised env (bir_vars_of_program ^bprog_tm)
+Proof
+  REWRITE_TAC [birenvtyl_riscv_def, GSYM incr_prog_vars_thm] >>
 (*
-(* TODO: this is actually an implication!!! *)
-Theorem pre_bir_nL_thm[local]:
-  !x. pre_bir_nL x = (\st. bir_exec_to_labels_triple_precond st (bir_incr_pre x) bir_incr_prog)
-Proof
-  REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
-  REPEAT STRIP_TAC >>
-
-  SIMP_TAC std_ss [pre_bir_nL_def, pre_bir_def, bir_exec_to_labels_triple_precond_def] >>
-  REWRITE_TAC [bprecond_def] >>
-
-  `bir_envty_list_b birenvtyl_riscv x'.bst_environ = bir_env_vars_are_initialised x'.bst_environ (bir_vars_of_program bir_incr_prog)` by (
-     cheat (* this is actually an implication! *)
-  ) >>
-
-  `bir_envty_list_b birenvtyl_riscv x'.bst_environ = bir_is_bool_exp_env x'.bst_environ (bir_incr_pre x)` by (
-     cheat (* this is actually an implication! *)
-  ) >>
-
-  METIS_TAC []
-QED
-
-(* TODO: this is actually an implication!!! *)
-Theorem post_bir_nL_thm[local]:
-  !x. post_bir_nL x = (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post x) else bir_exp_false) bir_incr_prog)
-Proof
-  REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
-  REPEAT STRIP_TAC >>
-
-  SIMP_TAC std_ss [post_bir_nL_def, post_bir_def, bir_incr_post_def, bir_exec_to_labels_triple_postcond_def] >>
-
-(*
-        missing:
-bir_env_vars_are_initialised x''.bst_environ
-                             (bir_vars_of_program bir_incr_prog)
-                                                  *)
-
-QED
-*)
-
-Theorem abstract_jgmt_rel_incr[local]:
- abstract_jgmt_rel (bir_ts bir_incr_prog) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
-  (\st. bir_exec_to_labels_triple_precond st (bir_incr_pre pre_x10) bir_incr_prog)
-  (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false) bir_incr_prog)
-Proof
-  (* reasoning via symb_prop_transfer_thm goes here *)
-(* abstract_jgmt_rel_def *)(*
-  METIS_TAC [pre_bir_nL_thm, post_bir_nL_thm]*)
+  bir_envty_list_b_thm
+  bir_envty_list_MEM_IMP_thm
+  bir_envty_list_NOT_MEM_IMP_thm
+  *)
   cheat
 QED
 
+Theorem abstract_jgmt_rel_incr[local]:
+ abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
+  (\st. bir_exec_to_labels_triple_precond st (bir_incr_pre pre_x10) ^bprog_tm)
+  (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false) ^bprog_tm)
+Proof
+  (* reasoning via symb_prop_transfer_thm goes here *)
+  ASSUME_TAC bir_abstract_jgmt_rel_incr_thm >>
+
+  FULL_SIMP_TAC std_ss [abstract_jgmt_rel_def, bir_exec_to_labels_triple_precond_def] >>
+  FULL_SIMP_TAC std_ss [pre_bir_nL_def, pre_bir_def, bprecond_def, post_bir_nL_def, post_bir_def] >>
+
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPECL [`st`]) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  `bir_envty_list_b birenvtyl_riscv st.bst_environ` by (
+    cheat (* FIXME: this cannot be proved *)
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  Q.EXISTS_TAC `ms'` >>
+  ASM_REWRITE_TAC [] >>
+
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exec_to_labels_triple_postcond_def] >>
+  ASM_SIMP_TAC std_ss [bir_envty_list_b_incr_thm] >>
+
+  REWRITE_TAC [bir_incr_post_def] >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, EVAL ``bool2b T``, bir_val_true_def] >>
+
+  IMP_RES_TAC bir_envty_list_b_incr_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  (*FULL_SIMP_TAC std_ss [GSYM bir_envty_list_b_incr_thm] >>*)
+  REWRITE_TAC [bir_bool_expTheory.bir_is_bool_exp_env_REWRS, bir_typing_expTheory.bir_vars_of_exp_def] >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+
+  FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+
+  FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]
+QED
+
 Theorem bir_cont_incr[local]:
- bir_cont bir_incr_prog bir_exp_true (BL_Address (Imm64 0w))
+ bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0w))
   {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false)
 Proof
  `{BL_Address (Imm64 4w)} <> {}` by fs [] >>
- MP_TAC (Q.SPECL [`bir_incr_prog`,
+ MP_TAC ((Q.SPECL [
   `BL_Address (Imm64 0w)`,
   `{BL_Address (Imm64 4w)}`,
   `bir_incr_pre pre_x10`,
   `\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false`
- ] abstract_jgmt_rel_bir_cont) >>
+ ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
  rw [] >>
  METIS_TAC [abstract_jgmt_rel_incr]
 QED
