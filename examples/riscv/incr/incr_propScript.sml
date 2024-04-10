@@ -318,95 +318,36 @@ FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
   METIS_TAC []
 QED
 
-
-(* Q is implied by sys and Pi *)
-Theorem bprog_Pi_overapprox_Q_thm:
-  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) (bprog_Q pre_x10)
+Theorem bir_env_read_x10_lookup_thm:
+  !env x.
+  (bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 x))) ==>
+  (bir_env_read (BVar "x10" (BType_Imm Bit64)) env = SOME (BVal_Imm (Imm64 x)))
 Proof
-REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
-  REPEAT GEN_TAC >>
+Cases_on `env` >>
 
-  REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
-  STRIP_TAC >> (
-    POP_ASSUM (fn thm => (ASSUME_TAC thm >> Q.ABBREV_TAC `sys3 = ^((snd o dest_eq o concl) thm)`)) >>
-    ASM_SIMP_TAC std_ss [] >>
-    rename1 `sys4 = sys3` >>
-    rename1 `sys4 = sys2` >>
-    PAT_X_ASSUM ``A = B`` (K ALL_TAC) >>
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+QED
 
-    DISCH_TAC >>
-    POP_ASSUM (fn thm => (ASSUME_TAC thm >> Q.ABBREV_TAC `sys1 = ^((snd o dest_comb o fst o dest_comb o fst o dest_comb o concl) thm)`)) >>
-    POP_ASSUM (fn thm0 => POP_ASSUM (fn thm1 => (ASSUME_TAC thm0 >> ASSUME_TAC thm1))) >>
-    REPEAT STRIP_TAC >>
+Theorem birs_matchenv_gen_env_envty_list_b_incr_thm:
+!H e1 e2 env.
+        birs_matchenv H
+          (birs_gen_env
+             [("x10", e1);
+              ("x1",  e2)])
+          env ==>
+          bir_envty_list_b birenvtyl_riscv env
+Proof
+  cheat
+QED
 
-    (* now the proof state is somewhat clean *)
-
-    FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
-    (* pc *)
-    CONJ_TAC >- (
-      Q.UNABBREV_TAC `sys2` >>
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-    ) >>
-    (* status Running *)
-    CONJ_TAC >- (
-      Q.UNABBREV_TAC `sys2` >>
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-    ) >>
-
-    (* bir_envty_list_b *)
-    CONJ_TAC >- (
-      Q.UNABBREV_TAC `sys2` >>
-      cheat
-    ) >>
-
-    (* the property (here: pre_x10 + 1) *)
-    `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H` by (
-      `symb_interpr_for_symbs (birs_symb_symbols sys1) H` by (
-        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-      ) >>
-
-      Q.UNABBREV_TAC `sys1` >>
-      POP_ASSUM (ASSUME_TAC o CONV_RULE (
-          REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
-          computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-          aux_setLib.birs_symb_symbols_MATCH_CONV)
-        ) >>
-
-      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
-    ) >>
-    `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H'` by (
-      `symb_interpr_for_symbs (birs_symb_symbols sys2) H'` by (
-        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-      ) >>
-
-      Q.UNABBREV_TAC `sys2` >>
-      POP_ASSUM (ASSUME_TAC o CONV_RULE (
-          REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
-          computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-          aux_setLib.birs_symb_symbols_MATCH_CONV)
-        ) >>
-
-      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
-    ) >>
-
-    `symb_interpr_get H' (BVar "sy_x10" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64))` by (
-      FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
-    ) >>
-
-    `bir_eval_exp (bprecond pre_x10) bs.bst_environ = SOME bir_val_true` by (
-      Q.UNABBREV_TAC `sys1` >>
-      FULL_SIMP_TAC (std_ss) [bprog_P_thm]
-    ) >>
-
-    (* use bprog_P *)
-    `symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64)) = SOME (BVal_Imm (Imm64 pre_x10))` by (
-      FULL_SIMP_TAC (std_ss) [bprog_P_thm] >>
-      `bir_env_lookup "x10" bs.bst_environ = SOME (BVal_Imm (Imm64 pre_x10))` by (
-        cheat
-      ) >>
-
-      cheat
-(*
+Theorem bir_eval_precond_lookup_pre_x10_incr_thm:
+!x env.
+  bir_eval_exp (bprecond x) env = SOME bir_val_true ==>
+  bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 x))
+Proof
+  cheat
+        (*
       Q.UNABBREV_TAC `sys1` >>
       Q.UNABBREV_TAC `sys2` >>
 
@@ -433,10 +374,6 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
 
       FULL_SIMP_TAC (std_ss++holBACore_ss) []
 *)
-    ) >>
-
-    (* *)
-    cheat
 (*
     `(?v.
        bir_env_lookup "countw" bs.bst_environ = SOME v /\
@@ -447,7 +384,6 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
       Q.UNABBREV_TAC `sys1` >>
       Q.UNABBREV_TAC `sys2` >>
 
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
 
       FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
       REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
@@ -500,6 +436,116 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
 
     HolSmtLib.Z3_ORACLE_TAC
 *)
+
+QED
+
+(* Q is implied by sys and Pi *)
+Theorem bprog_Pi_overapprox_Q_thm:
+  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) (bprog_Q pre_x10)
+Proof
+REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
+  REPEAT GEN_TAC >>
+
+  REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
+  STRIP_TAC >> (
+    POP_ASSUM (fn thm => (ASSUME_TAC thm >> Q.ABBREV_TAC `sys3 = ^((snd o dest_eq o concl) thm)`)) >>
+    ASM_SIMP_TAC std_ss [] >>
+    rename1 `sys4 = sys3` >>
+    rename1 `sys4 = sys2` >>
+    PAT_X_ASSUM ``A = B`` (K ALL_TAC) >>
+
+    DISCH_TAC >>
+    POP_ASSUM (fn thm => (ASSUME_TAC thm >> Q.ABBREV_TAC `sys1 = ^((snd o dest_comb o fst o dest_comb o fst o dest_comb o concl) thm)`)) >>
+    POP_ASSUM (fn thm0 => POP_ASSUM (fn thm1 => (ASSUME_TAC thm0 >> ASSUME_TAC thm1))) >>
+    REPEAT STRIP_TAC >>
+
+    (* now the proof state is somewhat clean *)
+
+    FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
+    (* pc *)
+    CONJ_TAC >- (
+      Q.UNABBREV_TAC `sys2` >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+    ) >>
+    (* status Running *)
+    CONJ_TAC >- (
+      Q.UNABBREV_TAC `sys2` >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+    ) >>
+
+    (* bir_envty_list_b *)
+    CONJ_TAC >- (
+      Q.UNABBREV_TAC `sys2` >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+      METIS_TAC [birs_matchenv_gen_env_envty_list_b_incr_thm]
+    ) >>
+
+    (* the property (here: pre_x10 + 1) *)
+    `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H` by (
+      `symb_interpr_for_symbs (birs_symb_symbols sys1) H` by (
+        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+      ) >>
+
+      Q.UNABBREV_TAC `sys1` >>
+      POP_ASSUM (ASSUME_TAC o CONV_RULE (
+          REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
+          computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
+          aux_setLib.birs_symb_symbols_MATCH_CONV)
+        ) >>
+
+      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
+    ) >>
+    `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H'` by (
+      `symb_interpr_for_symbs (birs_symb_symbols sys2) H'` by (
+        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+      ) >>
+
+      Q.UNABBREV_TAC `sys2` >>
+      POP_ASSUM (ASSUME_TAC o CONV_RULE (
+          REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
+          computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
+          aux_setLib.birs_symb_symbols_MATCH_CONV)
+        ) >>
+
+      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
+    ) >>
+
+    `symb_interpr_get H' (BVar "sy_x10" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64))` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
+    ) >>
+
+    `bir_eval_exp (bprecond pre_x10) bs.bst_environ = SOME bir_val_true` by (
+      Q.UNABBREV_TAC `sys1` >>
+      FULL_SIMP_TAC (std_ss) [bprog_P_thm]
+    ) >>
+
+    (* use bprog_P, but can also use the path condition in the end, or not? *)
+    `symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64)) = SOME (BVal_Imm (Imm64 pre_x10))` by (
+      FULL_SIMP_TAC (std_ss) [bprog_P_thm] >>
+      `bir_env_lookup "x10" bs.bst_environ = SOME (BVal_Imm (Imm64 pre_x10))` by (
+        METIS_TAC [bir_eval_precond_lookup_pre_x10_incr_thm]
+      ) >>
+
+      Q.UNABBREV_TAC `sys1` >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def, birs_interpret_fun_thm] >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
+      FULL_SIMP_TAC (std_ss) [] >>
+      REV_FULL_SIMP_TAC (std_ss) [birs_interpret_fun_ALT_def, birs_interpret_get_var_def]
+    ) >>
+
+    (* now go through H' and sys2 with matchstate to show that the increment holds in bs' *)
+    Q.UNABBREV_TAC `sys2` >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def, birs_interpret_fun_thm] >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
+    FULL_SIMP_TAC (std_ss) [] >>
+    REV_FULL_SIMP_TAC (std_ss) [birs_interpret_fun_ALT_def, birs_interpret_get_var_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
   )
 QED
 (* ........................... *)
@@ -686,6 +732,24 @@ ASSUME_TAC
   FULL_SIMP_TAC std_ss [post_bir_nL_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
 QED
+
+(*
+abstract_jgmt_rel_def
+bir_ts_def
+(\ls st st'.
+	       (bir_weak_trs ls prog st = SOME st')
+)
+bir_weak_trs_def
+-----
+bir_exec_to_labels ls prog st1
+bir_exec_to_labels ls prog st2
+if in both st1 and st2, for the variables in the program, in the respective environments, they have the same state  (i.e., variable not be defined, or variable be defined and have the same value)
+THEN
+the execution ends in the same observations and basic state (running/error/terminated/etc), and the environments agree in all variables that are defined in the program
+!!!! we have to add that all the other variables stay unchanged !!!!
+----
+this allows to prove that we can reduce the initial state that might has more variables than the program variables to the state that has exactly the program variables. the execution will then be the same for what matters. we can establish the final state of the original execution by adding to the environment the missing variable mappings
+*)
 
 Theorem bir_envty_list_b_incr_thm[local]:
   !env. bir_envty_list_b birenvtyl_riscv env ==>
