@@ -687,6 +687,24 @@ ASSUME_TAC
   FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
 QED
 
+(*
+abstract_jgmt_rel_def
+bir_ts_def
+(\ls st st'.
+	       (bir_weak_trs ls prog st = SOME st')
+)
+bir_weak_trs_def
+-----
+bir_exec_to_labels ls prog st1
+bir_exec_to_labels ls prog st2
+if in both st1 and st2, for the variables in the program, in the respective environments, they have the same state  (i.e., variable not be defined, or variable be defined and have the same value)
+THEN
+the execution ends in the same observations and basic state (running/error/terminated/etc), and the environments agree in all variables that are defined in the program
+!!!! we have to add that all the other variables stay unchanged !!!!
+----
+this allows to prove that we can reduce the initial state that might has more variables than the program variables to the state that has exactly the program variables. the execution will then be the same for what matters. we can establish the final state of the original execution by adding to the environment the missing variable mappings
+*)
+
 Theorem bir_envty_list_b_incr_thm[local]:
   !env. bir_envty_list_b birenvtyl_riscv env ==>
         bir_env_vars_are_initialised env (bir_vars_of_program ^bprog_tm)
