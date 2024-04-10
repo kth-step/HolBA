@@ -50,7 +50,7 @@ Disassembly of section .text:
 ### 1. RISC-V contract
 
 - manually written in HOL4
-- expressed using l3 model of RISC-V on pre and post states
+- expressed using the [L3](https://acjf3.github.io/l3/index.html) model of RISC-V on pre and post states
 - specifications must use variables to connect pre and post states
 
 Example:
@@ -68,8 +68,8 @@ End
 ### 2. Lifting RISC-V program to BIR
 
 - requires manual specification of data area addresses, affecting symbolic execution
-- automatic once specified inside HOL4
-- lifting stores constants for BIR program, binary program and lifting stores
+- automatic once arguments are given inside HOL4
+- lifting stores constants for BIR program, original binary program, and lifting theorem
 
 Example:
 
@@ -120,7 +120,7 @@ QED
 
 ### 5. BIR symbolic execution analysis
 
-- built on general theory of symbolic execution instantiated for BIR
+- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848) instantiated for BIR
 - requires manual specification of BIR conditions on memory accesses
 - requires knowing BIR program address bounds
 - requires manual setup in HOL4
@@ -155,8 +155,9 @@ QED
 
 ### 7. Backlifting proven BIR contract to RISC-V binary
 
+- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs 
 - requires collecting auxiliary results from above steps
-- semi-automatic inside HOL4 if all results have the right shape
+- automatic inside HOL4 if all auxiliary results have the right shape
 
 Example:
 
