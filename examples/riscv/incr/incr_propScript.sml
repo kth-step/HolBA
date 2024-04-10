@@ -692,12 +692,12 @@ Theorem bir_envty_list_b_incr_thm[local]:
         bir_env_vars_are_initialised env (bir_vars_of_program ^bprog_tm)
 Proof
   REWRITE_TAC [birenvtyl_riscv_def, GSYM incr_prog_vars_thm] >>
-(*
-  bir_envty_list_b_thm
-  bir_envty_list_MEM_IMP_thm
-  bir_envty_list_NOT_MEM_IMP_thm
-  *)
-  cheat
+  rw [bir_envty_list_b_def,incr_prog_vars_def] >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_oldTheory.bir_env_vars_are_initialised_def,bir_envty_list_b_def,bir_envty_list_def] >>
+  fs [bir_envty_list_inclusive_def,BVarToPair_def] >>
+  rw [bir_env_oldTheory.bir_env_var_is_initialised_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def]
 QED
 
 Theorem abstract_jgmt_rel_incr[local]:
