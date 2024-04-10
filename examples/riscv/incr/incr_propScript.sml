@@ -341,102 +341,31 @@ Proof
   cheat
 QED
 
+(* FIXME: this is implicitly proven already in bir_envTheory.bir_env_read_def *)
 Theorem bir_eval_precond_lookup_pre_x10_incr_thm:
 !x env.
   bir_eval_exp (bprecond x) env = SOME bir_val_true ==>
   bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 x))
 Proof
-  cheat
-        (*
-      Q.UNABBREV_TAC `sys1` >>
-      Q.UNABBREV_TAC `sys2` >>
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_interpr_welltyped_def] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `BVar "sy_x10" (BType_Imm Bit64)`)) >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-      REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-      Cases_on `symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64))` >- (
-        METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
-      ) >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES] >>
-
-      `bir_val_is_Imm_s Bit64 x` by (
-        METIS_TAC [bir_valuesTheory.bir_val_checker_TO_type_of]
-      ) >>
-      FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
-
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-*)
-(*
-    `(?v.
-       bir_env_lookup "countw" bs.bst_environ = SOME v /\
-       birs_interpret_fun H (THE (sys1.bsst_environ "countw")) = SOME v) /\
-     (?v'.
-       bir_env_lookup "countw" bs'.bst_environ = SOME v' /\
-       birs_interpret_fun H' (THE (sys2.bsst_environ "countw")) = SOME v')` by (
-      Q.UNABBREV_TAC `sys1` >>
-      Q.UNABBREV_TAC `sys2` >>
-
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_interpr_welltyped_def] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `BVar "sy_countw" (BType_Imm Bit64)`)) >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-      REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-      Cases_on `symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` >- (
-        METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
-      ) >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES] >>
-
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_auxTheory.birs_gen_env_GET_thm, birs_auxTheory.birs_gen_env_GET_NULL_thm] >>
-      ASM_REWRITE_TAC [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_typing_expTheory.bir_vars_of_exp_def, bir_envTheory.bir_env_empty_def, bir_envTheory.bir_env_map_empty_def] >>
-
-      computeLib.RESTR_EVAL_TAC [``bir_exp_subst``] >>
-      ASM_REWRITE_TAC []
-    ) >>
-
-    REPEAT (PAT_X_ASSUM ``birs_symb_matchstate A B C`` (K ALL_TAC)) >>
-    Q.UNABBREV_TAC `sys1` >>
-    Q.UNABBREV_TAC `sys2` >>
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_auxTheory.birs_gen_env_GET_thm, birs_auxTheory.birs_gen_env_GET_NULL_thm] >>
-    (* now the proof state is pretty much cleaned up *)
-
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_thm] >>
-    REPEAT (PAT_X_ASSUM ``birs_interpret_fun_ALT A B = SOME C`` (ASSUME_TAC o computeLib.RESTR_EVAL_RULE [])) >>
-    FULL_SIMP_TAC std_ss [] >>
-    REV_FULL_SIMP_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-    PAT_X_ASSUM ``BVal_Imm (Imm64 A) = B`` (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-    (* still have to unpack the precondition for the space fact about countw *)
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bprecond_def] >>
-    REPEAT (PAT_X_ASSUM ``bir_eval_bin_exp BIExp_And A B = SOME bir_val_true`` (ASSUME_TAC o MATCH_MP birs_rulesTheory.bir_conj_true) >> FULL_SIMP_TAC std_ss []) >>
-    IMP_RES_TAC bir_env_read_countw_lookup_thm >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_bool_expTheory.bir_val_TF_bool2b_DEF] >>
-    PAT_X_ASSUM ``v1 <=+ A`` (MP_TAC) >>
-    REPEAT (POP_ASSUM (K ALL_TAC)) >>
-
-(*
-    now we are only left with the word relation
-*)
-
-    HolSmtLib.Z3_ORACLE_TAC
-*)
-
+ rw [bprecond_def,bir_incr_pre_def] >>
+ Cases_on `env` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_exp_def,bir_eval_bin_pred_def
+ ] >>
+ Q.ABBREV_TAC `g = ?z. f "x10" = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z` >>
+ Cases_on `g` >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+   fs [Abbrev_def] >>
+   Cases_on `z` >> fs [type_of_bir_val_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
+   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b (Imm64 x)` >>
+   Cases_on `bb` >> fs [] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
 (* Q is implied by sys and Pi *)
