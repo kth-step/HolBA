@@ -1,5 +1,7 @@
 open HolKernel boolLib Parse bossLib;
 
+open markerTheory;
+
 (* FIXME: needed to avoid quse errors *)
 open m0_stepLib;
 
@@ -41,15 +43,23 @@ open incr_symb_execTheory;
 
 val _ = new_theory "incr_prop";
 
-(* ------ *)
+(* --------------- *)
+(* RISC-V contract *)
+(* --------------- *)
 
 Definition riscv_incr_pre_def:
- riscv_incr_pre (m : riscv_state) = T (* FIXME *)
+ riscv_incr_pre x (m : riscv_state) =
+  (m.c_gpr m.procID 10w = x)
 End
 
 Definition riscv_incr_post_def:
- riscv_incr_post (m : riscv_state) = T (* FIXME *)
+ riscv_incr_post x (m : riscv_state) =
+  (m.c_gpr m.procID 10w = x + 1w)
 End
+
+(* ------------ *)
+(* BIR contract *)
+(* ------------ *)
 
 Definition bir_incr_pre_def:
   bir_incr_pre x : bir_exp_t =
@@ -67,7 +77,46 @@ Definition bir_incr_post_def:
     (BExp_Const (Imm64 (x + 1w)))
 End
 
-(* ------ *)
+(* ----------------------------------- *)
+(* Connecting RISC-V and BIR contracts *)
+(* ----------------------------------- *)
+
+Theorem incr_riscv_pre_imp_bir_pre_thm:
+ bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bir_incr_pre pre_x10)
+Proof
+ rw [bir_pre_riscv_to_bir_def,riscv_incr_pre_def,bir_incr_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
+QED
+
+Theorem incr_riscv_post_imp_bir_post_thm:
+ !ls. bir_post_bir_to_riscv (riscv_incr_post pre_x10) (\l. bir_incr_post pre_x10) ls
+Proof
+ rw [bir_post_bir_to_riscv_def,riscv_incr_post_def,bir_incr_post_def] >>
+ Cases_on `bs` >>
+ Cases_on `b0` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
+ Q.ABBREV_TAC `g = ?z. f "x10" = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z` >>
+ Cases_on `g` >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+   fs [Abbrev_def] >>
+   `bir_eval_bin_pred BIExp_Equal (SOME z)
+     (SOME (BVal_Imm (Imm64 (pre_x10 + 1w)))) = SOME bir_val_true`
+    by METIS_TAC [] >>   
+   Cases_on `z` >> fs [type_of_bir_val_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
+   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b' (Imm64 (pre_x10 + 1w))` >>
+   Cases_on `bb` >> fs [] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >> 
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) []
+QED
+
+(* ------------------------------- *)
+(* BIR symbolic execution analysis *)
+(* ------------------------------- *)
 
 val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) incr_symb_analysis_thm;
 
@@ -144,6 +193,7 @@ Definition bprog_P_def:
 End
 
 (* translate the property to BIR state property *)
+
 Theorem bprog_P_thm:
   !x bs.
   bprog_P x (birs_symb_to_concst bs) =
