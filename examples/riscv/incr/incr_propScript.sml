@@ -742,7 +742,7 @@ Proof
   FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]
 QED
 
-Theorem bir_cont_incr[local]:
+Theorem bir_cont_incr_tm[local]:
  bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0w))
   {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false)
@@ -758,6 +758,29 @@ Proof
  METIS_TAC [abstract_jgmt_rel_incr]
 QED
 
-(* TODO: RISC-V backlifting *)
+Theorem bir_cont_incr:
+ bir_cont bir_incr_prog bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10)
+        else bir_exp_false)
+Proof
+ rw [bir_incr_prog_def,bir_cont_incr_tm]
+QED
+
+val riscv_cont_incr_thm =
+ get_riscv_contract_sing
+  bir_cont_incr
+  ``bir_incr_progbin``
+  ``riscv_incr_pre pre_x10`` ``riscv_incr_post pre_x10`` bir_incr_prog_def
+  [bir_incr_pre_def]
+  bir_incr_pre_def incr_riscv_pre_imp_bir_pre_thm
+  [bir_incr_post_def] incr_riscv_post_imp_bir_post_thm
+  bir_incr_riscv_lift_THM;
+
+Theorem riscv_cont_incr:
+ riscv_cont bir_incr_progbin 0w {4w} (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)
+Proof
+ ACCEPT_TAC riscv_cont_incr_thm
+QED
 
 val _ = export_theory ();
