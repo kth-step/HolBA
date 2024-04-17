@@ -748,7 +748,7 @@ bir_exec_to_labels ls prog st1 = BER_Looping ll
 bir_exec_to_labels ls prog st2 = BER_Looping ll
 
 
-(* envenqforvars should be more generally enough, no need for the SUBSETs *)
+(* envenqforvars should be more generally enough, no need for the SUBSETs, actually it is a problem to specify this in terms of domains *)
 
 
 !prog st1 st2 ls ol i j st1' st2'.
@@ -781,6 +781,24 @@ bir_exec_to_labels_triple_postcond
 
 bir_env_vars_are_initialised
 ---> typebirenv
+
+
+envdom (removevars vs st).env = (envdom st.env) DIFF vs
+
+enveqforvars vs st (removevars (COMPL vs) st)
+(* use this to show that the rest of the precondition is still valid *)
+
+
+envdom (patchvars vs env st).env = (envdom st.env DIFF vs) UNION (envdom env INTER vs)
+
+enveqforvars vs st (patchvars (COMPL vs) env st)
+
+
+
+enveqforvars vs st (patchvars (COMPL vs) env (removevars (COMPL vs) st))
+
+enveqforvars vs st2 (patchvars vs st2.env (removevars vs st))
+
 
 *)
 
