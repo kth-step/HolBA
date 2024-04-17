@@ -733,6 +733,40 @@ bir_ts_def
 )
 bir_weak_trs_def
 -----
+
+!prog st1 st2 ls ll.
+(*
+varsof prog SUBSET envdom st1
+==>
+varsof prog SUBSET envdom st2
+==>
+*)
+enveqforvars (varsof prog) st1 st2
+==>
+bir_exec_to_labels ls prog st1 = BER_Looping ll
+==>
+bir_exec_to_labels ls prog st2 = BER_Looping ll
+
+
+(* envenqforvars should be more generally enough, no need for the SUBSETs *)
+
+
+!prog st1 st2 ls ol i j st1' st2'.
+(*
+varsof prog SUBSET envdom st1
+==>
+varsof prog SUBSET envdom st2
+==>
+*)
+enveqforvars (varsof prog) st1 st2
+==>
+bir_exec_to_labels ls prog st1 = BER_Ended ol i j st1'
+==>
+st2' = patchvars (COMPL (varsof prog)) st2.env (removevars (COMPL (varsof prog)) st1')
+==>
+bir_exec_to_labels ls prog st2 = BER_Ended ol i j st2'
+
+
 bir_exec_to_labels ls prog st1
 bir_exec_to_labels ls prog st2
 if in both st1 and st2, for the variables in the program, in the respective environments, they have the same state  (i.e., variable not be defined, or variable be defined and have the same value)
@@ -741,6 +775,13 @@ the execution ends in the same observations and basic state (running/error/termi
 !!!! we have to add that all the other variables stay unchanged !!!!
 ----
 this allows to prove that we can reduce the initial state that might has more variables than the program variables to the state that has exactly the program variables. the execution will then be the same for what matters. we can establish the final state of the original execution by adding to the environment the missing variable mappings
+
+bir_exec_to_labels_triple_precond
+bir_exec_to_labels_triple_postcond
+
+bir_env_vars_are_initialised
+---> typebirenv
+
 *)
 
 Theorem bir_envty_list_b_incr_thm[local]:
