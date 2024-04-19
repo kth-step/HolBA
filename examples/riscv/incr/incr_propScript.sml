@@ -839,37 +839,6 @@ Proof
   cheat
 QED
 
-Theorem bir_vars_exec_to_labels_THM:
-  !ls p vs st1 st2.
-    (bir_vars_of_program p SUBSET vs) ==>
-    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (case (bir_exec_to_labels ls p st1, bir_exec_to_labels ls p st2) of
-         | (BER_Looping ll1, BER_Looping ll2) => ll1 = ll2
-         | (BER_Ended ol1 n1 n1' st1', BER_Ended ol2 n2 n2' st2') =>
-              (ol1 = ol2) /\ (n1 = n2) /\ (n1' = n2') /\
-              (bir_state_EQ_FOR_VARS vs st1' st2')
-         | (_, _) => F)
-Proof
-  cheat
-QED
-
-Theorem bir_vars_exec_to_labels_spec_THM:
-  !ls p vs st1 st2 ol n n' st1'.
-    (bir_vars_of_program p SUBSET vs) ==>
-    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_exec_to_labels ls p st1 = BER_Ended ol n n' st1') ==>
-    ?st2'. bir_exec_to_labels ls p st2 = BER_Ended ol n n' st2' /\
-           bir_state_EQ_FOR_VARS vs st1' st2'
-Proof
-  REPEAT STRIP_TAC >>
-  IMP_RES_TAC bir_vars_exec_to_labels_THM >>
-  POP_ASSUM (ASSUME_TAC o Q.SPEC `ls`) >>
-
-  Cases_on `bir_exec_to_labels ls p st2` >> (
-    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_execution_result_t_11, pairTheory.pair_CASE_def]
-  )
-QED
-
 Theorem bir_vars_exec_to_labels_spec2_THM:
   !ls p vs st1 st2 ol n n' st1'.
     (vs = bir_vars_of_program p) ==>
@@ -878,7 +847,7 @@ Theorem bir_vars_exec_to_labels_spec2_THM:
     ?st2'. bir_exec_to_labels ls p st2 = BER_Ended ol n n' st2' /\
            bir_state_EQ_FOR_VARS vs st1' st2'
 Proof
-  METIS_TAC [pred_setTheory.SUBSET_REFL, bir_vars_exec_to_labels_spec_THM]
+  METIS_TAC [pred_setTheory.SUBSET_REFL, execlabelsvarsTheory.bir_vars_exec_to_labels_spec_THM]
 QED
 
 Theorem bir_vars_bir_ts_thm:
