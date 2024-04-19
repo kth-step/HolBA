@@ -916,7 +916,17 @@ Theorem bir_incr_pre_EQ_FOR_VARS_thm:
     (bir_eval_exp (bir_incr_pre x) st1.bst_environ = SOME bir_val_true) ==>
     (bir_eval_exp (bir_incr_pre x) st2.bst_environ = SOME bir_val_true)
 Proof
-  cheat
+  REPEAT STRIP_TAC >>
+
+  (* resolve the concrete set of variables *)
+  FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_incr_pre_def] >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, EVAL ``bool2b T``, bir_val_true_def] >>
+  METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
 QED
 
 Theorem bir_incr_post_EQ_FOR_VARS_thm:
@@ -926,8 +936,22 @@ Theorem bir_incr_post_EQ_FOR_VARS_thm:
     (post_bir x st1 st1') ==>
     (bir_eval_exp (bir_incr_post x) st2'.bst_environ = SOME bir_val_true)
 Proof
-  (*post_bir_def, bir_incr_post_def*)
-  cheat
+  REPEAT STRIP_TAC >>
+
+  (* resolve the concrete set of variables *)
+  FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
+  (* duplication in the lines before, with respect to the proof right before *)
+
+  `post_bir x st2 st2'` by (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [post_bir_def] >>
+    METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [post_bir_def, bir_incr_post_def] >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, EVAL ``bool2b T``, bir_val_true_def]
 QED
 
 Theorem pre_bir_nL_vars_EQ_precond_IMP_thm:
@@ -963,14 +987,24 @@ Theorem bir_envty_list_b_incr_thm[local]:
     bir_envty_list_b birenvtyl_riscv st1.bst_environ ==>
     bir_env_vars_are_initialised st2.bst_environ vs
 Proof
-  cheat >>
-  REWRITE_TAC [birenvtyl_riscv_def, GSYM incr_prog_vars_thm] >>
-  rw [bir_envty_list_b_def,incr_prog_vars_def] >>
-  Cases_on `env` >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [birenvtyl_riscv_EVAL_thm, bir_envty_list_b_def, GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+
+  (* resolve the concrete set of variables *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [listTheory.LIST_TO_SET,BVarToPair_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
+
+  Cases_on `st1.bst_environ` >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_oldTheory.bir_env_vars_are_initialised_def,bir_envty_list_b_def,bir_envty_list_def] >>
-  fs [bir_envty_list_inclusive_def,BVarToPair_def] >>
-  rw [bir_env_oldTheory.bir_env_var_is_initialised_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def]
+  fs [bir_envty_list_inclusive_def] >>
+
+  rw [bir_env_oldTheory.bir_env_var_is_initialised_def] >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
+    METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
+  )
 QED
 
 Theorem post_bir_nL_vars_EQ_postcond_IMP_thm:
