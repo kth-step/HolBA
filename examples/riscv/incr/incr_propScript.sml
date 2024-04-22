@@ -99,7 +99,7 @@ Proof
  Cases_on `bs` >>
  Cases_on `b0` >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z` >>
+ Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
  Cases_on `g` >-
   (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
    fs [Abbrev_def] >>
@@ -420,7 +420,7 @@ Proof
   bir_envTheory.bir_env_check_type_def,
   bir_envTheory.bir_env_lookup_def,bir_eval_exp_def,bir_eval_bin_pred_def
  ] >>
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z` >>
+ Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
  Cases_on `g` >-
   (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
    fs [Abbrev_def] >>
@@ -814,20 +814,72 @@ enveqforvars vs st (patchvars (COMPL vs) env (removevars (COMPL vs) st))
 
 enveqforvars vs st2 (patchvars vs st2.env (removevars vs st))
 
-
+``BEnv f``
+``\x. f x``
 *)
 
+Definition bir_env_restrict_vars_def:
+ bir_env_restrict_vars vs (BEnv f) =
+  (BEnv (\x. if x IN (IMAGE bir_var_name vs) then f x else NONE))
+End
+
+Theorem bir_env_restrict_vars_IN_THM:
+  !vs env v.
+    v IN vs ==>
+    bir_env_lookup (bir_var_name v) (bir_env_restrict_vars vs env) = bir_env_lookup (bir_var_name v) env
+Proof
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def, bir_env_restrict_vars_def] >>
+  `bir_var_name v IN (IMAGE bir_var_name vs)` by (
+    Cases_on `v` >>
+    ASM_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] >>
+    METIS_TAC [bir_envTheory.bir_var_name_def]
+  ) >>
+  ASM_REWRITE_TAC []
+QED
+
+(*
+Theorem bir_env_restrict_vars_NOTIN_THM:
+  !vs env v.
+    v NOTIN vs ==>
+    bir_env_lookup (bir_var_name v) (bir_env_restrict_vars vs env) = NONE
+Proof
+bir_envTheory.bir_env_lookup_def
+  cheat
+QED
+*)
+
+Theorem bir_env_restrict_vars_NOTIN_IMAGE_THM:
+  !vs env bvn.
+    bvn NOTIN (IMAGE bir_var_name vs) ==>
+    bir_env_lookup bvn (bir_env_restrict_vars vs env) = NONE
+Proof
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def, bir_env_restrict_vars_def]
+QED
 
 Definition bir_state_restrict_vars_def:
  bir_state_restrict_vars vs st =
-  ARB:bir_state_t
+  st with bst_environ updated_by (bir_env_restrict_vars vs)
 End
+
+Theorem bir_state_restrict_vars_ALT_THM:
+  !vs st.
+    (bir_state_restrict_vars vs st).bst_environ = bir_env_restrict_vars vs st.bst_environ /\
+    (bir_state_restrict_vars vs st).bst_pc = st.bst_pc /\
+    (bir_state_restrict_vars vs st).bst_status = st.bst_status
+Proof
+  SIMP_TAC (std_ss++holBACore_ss) [bir_state_restrict_vars_def]
+QED
 
 Theorem bir_vars_EQ_state_restrict_vars_THM:
   !vs st.
     bir_state_EQ_FOR_VARS vs st (bir_state_restrict_vars vs st)
 Proof
-  cheat
+  FULL_SIMP_TAC std_ss [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
+  METIS_TAC [bir_state_restrict_vars_ALT_THM, bir_env_restrict_vars_IN_THM]
 QED
 
 Theorem bir_state_restrict_vars_envty_list_b_thm:
@@ -836,8 +888,86 @@ Theorem bir_state_restrict_vars_envty_list_b_thm:
     (st' = bir_state_restrict_vars vs st) ==>
     (bir_envty_list_b birenvtyl_riscv st'.bst_environ)
 Proof
-  cheat
+  REPEAT GEN_TAC >>
+  DISCH_TAC >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC std_ss [bir_state_restrict_vars_ALT_THM] >>
+  DISCH_TAC >>
+  POP_ASSUM (K ALL_TAC) >>
+
+  (* concretize set of variables *)
+  FULL_SIMP_TAC std_ss [GSYM incr_prog_vars_thm, incr_prog_vars_def, listTheory.LIST_TO_SET] >>
+  (* concretize variable type list *)
+  FULL_SIMP_TAC std_ss [birenvtyl_riscv_EVAL_thm, bir_envty_list_b_thm] >>
+
+  (* variable list has dinstinct variable names *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [bir_envty_list_def] >>
+  STRIP_TAC >- (
+    (* inclusive part *)
+    SIMP_TAC std_ss [bir_envty_list_inclusive_def] >>
+    (* bir_env_restrict_vars_IN_THM *)
+    cheat (* cannot be proved because we don't know anything about st, need to have an assumption that all the variables are defined in that state *)
+  ) >>
+
+  (* exclusive part, due to restriction *)
+  SIMP_TAC std_ss [bir_envty_list_exclusive_def] >>
+
+  FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
+  REPEAT STRIP_TAC >>
+
+  `bvn NOTIN (IMAGE bir_var_name vs)` by (
+    PAT_X_ASSUM ``A = vs`` (ASSUME_TAC o GSYM) >>
+    ASM_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] >>
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    )
+  ) >>
+
+  METIS_TAC [bir_env_restrict_vars_NOTIN_IMAGE_THM]
 QED
+
+(*
+
+  `?v. (bvn = bir_var_name v) /\ v NOTIN vs` by (
+    PAT_X_ASSUM ``A = vs`` (ASSUME_TAC o GSYM) >>
+    ASM_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) []
+  ) >>
+
+
+bir_env_restrict_vars_NOTIN_THM
+     
+           FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
+           
+birenvtyl_riscv_EVAL_thm, bir_envty_list_b_def, 
+  bir_envty_list_b_thm
+  
+
+  bir_envty_list_exclusive_def
+  fs [bir_envty_list_inclusive_def] >>
+
+
+  cheat
+  *)
+(*
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [birenvtyl_riscv_EVAL_thm, bir_envty_list_b_def, GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+
+  (* resolve the concrete set of variables *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [listTheory.LIST_TO_SET,BVarToPair_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
+
+  Cases_on `st1.bst_environ` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_oldTheory.bir_env_vars_are_initialised_def,bir_envty_list_b_def,bir_envty_list_def] >>
+  fs [bir_envty_list_inclusive_def] >>
+
+  rw [bir_env_oldTheory.bir_env_var_is_initialised_def] >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
+    METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
+  )
+*)
 
 Theorem bir_vars_exec_to_labels_spec2_THM:
   !ls p vs st1 st2 ol n n' st1'.
