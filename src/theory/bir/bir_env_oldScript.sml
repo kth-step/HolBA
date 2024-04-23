@@ -91,6 +91,61 @@ REWRITE_TAC [bir_env_vars_are_initialised_def, bir_envty_includes_vs_def, bir_en
 QED
 
 
+Definition bir_env_restrict_vars_def:
+ bir_env_restrict_vars vs (BEnv f) =
+  (BEnv (\x. if x IN (IMAGE bir_var_name vs) then f x else NONE))
+End
+
+Theorem bir_env_restrict_vars_IN_THM:
+  !vs env v.
+    v IN vs ==>
+    bir_env_lookup (bir_var_name v) (bir_env_restrict_vars vs env) = bir_env_lookup (bir_var_name v) env
+Proof
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC std_ss [bir_env_lookup_def, bir_env_restrict_vars_def] >>
+  `bir_var_name v IN (IMAGE bir_var_name vs)` by (
+    Cases_on `v` >>
+    ASM_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+    METIS_TAC [bir_var_name_def]
+  ) >>
+  ASM_REWRITE_TAC []
+QED
+
+
+Theorem bir_env_restrict_vars_NOTIN_IMAGE_THM:
+  !vs env bvn.
+    bvn NOTIN (IMAGE bir_var_name vs) ==>
+    bir_env_lookup bvn (bir_env_restrict_vars vs env) = NONE
+Proof
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC std_ss [bir_env_lookup_def, bir_env_restrict_vars_def]
+QED
+
+Theorem bir_env_restrict_vars_IMP_var_is_initialised_THM:
+  !v vs env.
+    (v IN vs) ==>
+    (bir_env_var_is_initialised env v) ==>
+    (bir_env_var_is_initialised (bir_env_restrict_vars vs env) v)
+Proof
+  SIMP_TAC std_ss [bir_env_var_is_initialised_def] >>
+  REPEAT STRIP_TAC >>
+  METIS_TAC [bir_env_restrict_vars_IN_THM]
+QED
+
+Theorem bir_env_restrict_vars_IMP_vars_are_initialised_THM:
+  !vs env.
+    (bir_env_vars_are_initialised env vs) ==>
+    (bir_env_vars_are_initialised (bir_env_restrict_vars vs env) vs)
+Proof
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_env_vars_are_initialised_def] >>
+  REPEAT STRIP_TAC >>
+  METIS_TAC [bir_env_restrict_vars_IMP_var_is_initialised_THM]
+QED
+
+
 (* ===================== *)
 
 

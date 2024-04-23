@@ -14,8 +14,9 @@ open bir_backlifterLib;
 open bir_compositionLib;
 
 open bir_wpLib bir_wp_expLib;
-open bir_wpTheory bir_htTheory;
+open bir_wpTheory;
 open bir_wp_interfaceLib;
+open bir_htTheory;
 
 open tutorial_smtSupportLib;
 
@@ -42,6 +43,8 @@ open program_logicSimps;
 open incrTheory;
 
 open incr_symb_execTheory;
+open bir_env_oldTheory;
+open bir_program_varsTheory;
 
 val _ = new_theory "incr_prop";
 
@@ -268,57 +271,7 @@ QED
 (* ........................... *)
 
 
-Theorem bir_Pi_overapprox_Q_thm:
-  !p P sys Pi Q.
-  (Pi_overapprox_Q (bir_symb_rec_sbir p) P (birs_symb_to_symbst sys) (IMAGE birs_symb_to_symbst Pi) Q)
-  <=>
-  (!sys2 bs bs' H.
-     sys2 IN Pi ==>
-     birs_symb_matchstate sys H bs ==>
-     (\bs. P (birs_symb_to_concst bs)) bs ==>
-     (?H'. symb_interpr_ext H' H /\ birs_symb_matchstate sys2 H' bs') ==>
-     (\bs bs'. Q (birs_symb_to_concst bs) (birs_symb_to_concst bs')) bs bs')
-Proof
-FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
-  REPEAT STRIP_TAC >>
 
-  FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
-
-  EQ_TAC >- (
-    REPEAT STRIP_TAC >>
-    PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst sys2`, `birs_symb_to_concst bs`, `birs_symb_to_concst bs'`, `H`]) >>
-
-    REV_FULL_SIMP_TAC (std_ss) [IMAGE_IN, symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
-    METIS_TAC []
-  ) >>
-
-  REPEAT STRIP_TAC >>
-
-  `?bsys. sys' = birs_symb_to_symbst bsys` by (
-    METIS_TAC [birs_symb_to_symbst_EXISTS_thm]
-  ) >>
-  `?bs.  s  = birs_symb_to_concst bs /\
-   ?bs'. s' = birs_symb_to_concst bs'` by (
-    METIS_TAC [birs_symb_to_concst_EXISTS_thm]
-  ) >>
-
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPECL [`bsys`, `bs`, `bs'`, `H`]) >>
-
-  `bsys IN Pi` by (
-    FULL_SIMP_TAC std_ss [] >>
-
-    `birs_symb_from_symbst o birs_symb_to_symbst = I` by (
-      SIMP_TAC std_ss [combinTheory.o_DEF, bir_symbTheory.birs_symb_to_from_symbst_thm] >>
-      MATCH_MP_TAC boolTheory.EQ_EXT >>
-      SIMP_TAC std_ss [combinTheory.I_THM]
-    ) >>
-    METIS_TAC [IMAGE_IN, IMAGE_IMAGE, bir_symbTheory.birs_symb_to_from_symbst_thm, IMAGE_I]
-  ) >>
-
-  FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
-  REV_FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
-  METIS_TAC []
-QED
 
 Theorem bir_env_read_x10_lookup_thm:
   !env x.
@@ -437,7 +390,7 @@ QED
 Theorem bprog_Pi_overapprox_Q_thm:
   Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) (bprog_Q pre_x10)
 Proof
-REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
+  REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm] >>
   REPEAT GEN_TAC >>
 
   REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
@@ -727,137 +680,9 @@ ASSUME_TAC
   FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
 QED
 
-Definition bir_env_restrict_vars_def:
- bir_env_restrict_vars vs (BEnv f) =
-  (BEnv (\x. if x IN (IMAGE bir_var_name vs) then f x else NONE))
-End
-
-Theorem bir_env_restrict_vars_IN_THM:
-  !vs env v.
-    v IN vs ==>
-    bir_env_lookup (bir_var_name v) (bir_env_restrict_vars vs env) = bir_env_lookup (bir_var_name v) env
-Proof
-  REPEAT STRIP_TAC >>
-  Cases_on `env` >>
-  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def, bir_env_restrict_vars_def] >>
-  `bir_var_name v IN (IMAGE bir_var_name vs)` by (
-    Cases_on `v` >>
-    ASM_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] >>
-    METIS_TAC [bir_envTheory.bir_var_name_def]
-  ) >>
-  ASM_REWRITE_TAC []
-QED
 
 
-Theorem bir_env_restrict_vars_NOTIN_IMAGE_THM:
-  !vs env bvn.
-    bvn NOTIN (IMAGE bir_var_name vs) ==>
-    bir_env_lookup bvn (bir_env_restrict_vars vs env) = NONE
-Proof
-  REPEAT STRIP_TAC >>
-  Cases_on `env` >>
-  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def, bir_env_restrict_vars_def]
-QED
 
-Theorem bir_env_restrict_vars_IMP_var_is_initialised_THM:
-  !v vs env.
-    (v IN vs) ==>
-    (bir_env_var_is_initialised env v) ==>
-    (bir_env_var_is_initialised (bir_env_restrict_vars vs env) v)
-Proof
-  SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_initialised_def] >>
-  REPEAT STRIP_TAC >>
-  METIS_TAC [bir_env_restrict_vars_IN_THM]
-QED
-
-Theorem bir_env_restrict_vars_IMP_vars_are_initialised_THM:
-  !vs env.
-    (bir_env_vars_are_initialised env vs) ==>
-    (bir_env_vars_are_initialised (bir_env_restrict_vars vs env) vs)
-Proof
-  REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_def] >>
-  REPEAT STRIP_TAC >>
-  METIS_TAC [bir_env_restrict_vars_IMP_var_is_initialised_THM]
-QED
-
-
-Definition bir_state_restrict_vars_def:
- bir_state_restrict_vars vs st =
-  st with bst_environ updated_by (bir_env_restrict_vars vs)
-End
-
-Theorem bir_state_restrict_vars_ALT_THM:
-  !vs st.
-    (bir_state_restrict_vars vs st).bst_environ = bir_env_restrict_vars vs st.bst_environ /\
-    (bir_state_restrict_vars vs st).bst_pc = st.bst_pc /\
-    (bir_state_restrict_vars vs st).bst_status = st.bst_status
-Proof
-  SIMP_TAC (std_ss++holBACore_ss) [bir_state_restrict_vars_def]
-QED
-
-Theorem bir_vars_EQ_state_restrict_vars_THM:
-  !vs st.
-    bir_state_EQ_FOR_VARS vs st (bir_state_restrict_vars vs st)
-Proof
-  FULL_SIMP_TAC std_ss [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
-  METIS_TAC [bir_state_restrict_vars_ALT_THM, bir_env_restrict_vars_IN_THM]
-QED
-
-Theorem bir_envty_list_inclusive_thm:
-  !l env.
-    bir_envty_list_inclusive l env = EVERY (bir_env_var_is_initialised (BEnv env) o PairToBVar) l
-Proof
-  SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_initialised_def, bir_envty_list_inclusive_def, combinTheory.o_DEF, bir_envTheory.bir_env_lookup_def] >>
-
-  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM] >>
-    REPEAT STRIP_TAC >>
-    PAT_X_ASSUM ``!x.A`` IMP_RES_TAC >>
-    TRY (Cases_on `x`) >> TRY (Cases_on `e`) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_var_name_def, PairToBVar_def]
-  )
-QED
-
-Theorem bir_envty_list_inclusive_thm2:
-  !l env.
-    bir_envty_list_inclusive l env = EVERY (bir_env_var_is_initialised (BEnv env)) (MAP PairToBVar l)
-Proof
-  SIMP_TAC std_ss [bir_envty_list_inclusive_thm, combinTheory.o_DEF] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [listTheory.EVERY_MEM, listTheory.MEM_MAP] >>
-
-  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
-  REPEAT STRIP_TAC >- (
-    FULL_SIMP_TAC std_ss [] >>
-    REPEAT STRIP_TAC
-  ) >>
-
-  METIS_TAC []
-QED
-
-Theorem bir_env_vars_are_initialised_IMP_envty_list_inclusive_thm:
-  !l f.
-    (bir_env_vars_are_initialised (BEnv f) (set l)) ==>
-    (bir_envty_list_inclusive (MAP BVarToPair l) f)
-Proof
-  SIMP_TAC std_ss [bir_envty_list_inclusive_thm2] >>
-  FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM] >>
-  REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC std_ss [listTheory.MAP_MAP_o] >>
-  `MAP (PairToBVar ∘ BVarToPair) l = l` by (
-    `PairToBVar ∘ BVarToPair = I` by (
-      SIMP_TAC std_ss [boolTheory.FUN_EQ_THM] >>
-      REPEAT STRIP_TAC >>
-      Cases_on `x` >>
-      SIMP_TAC std_ss [PairToBVar_def, BVarToPair_def]
-    ) >>
-    METIS_TAC [listTheory.MAP_ID]
-  ) >>
-  FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_def]
-QED
 
 Theorem bir_state_restrict_vars_envty_list_b_thm:
   !vs st st'.
@@ -908,45 +733,6 @@ Proof
   ) >>
 
   METIS_TAC [bir_env_restrict_vars_NOTIN_IMAGE_THM]
-QED
-
-Theorem bir_vars_exec_to_labels_spec2_THM:
-  !ls p vs st1 st2 ol n n' st1'.
-    (vs = bir_vars_of_program p) ==>
-    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_exec_to_labels ls p st1 = BER_Ended ol n n' st1') ==>
-    ?st2'. bir_exec_to_labels ls p st2 = BER_Ended ol n n' st2' /\
-           bir_state_EQ_FOR_VARS vs st1' st2'
-Proof
-  METIS_TAC [pred_setTheory.SUBSET_REFL, execlabelsvarsTheory.bir_vars_exec_to_labels_spec_THM]
-QED
-
-Theorem bir_vars_bir_ts_thm:
-  !ls p vs st1 st2 st1'.
-    (vs = bir_vars_of_program p) ==>
-    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    ((bir_ts p).weak ls st1 st1') ==>
-    ?st2'. (bir_ts p).weak ls st2 st2' /\
-           bir_state_EQ_FOR_VARS vs st1' st2'
-Proof
-  REPEAT STRIP_TAC >>
-  IMP_RES_TAC bir_vars_exec_to_labels_spec2_THM >>
-  FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def, bir_weak_trs_def] >>
-  Cases_on `bir_exec_to_labels ls p st1` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_execution_result_t_11, pairTheory.pair_CASE_def]
-  ) >>
-
-  PAT_X_ASSUM ``!x. A`` (IMP_RES_TAC) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_execution_result_t_11, pairTheory.pair_CASE_def] >>
-  METIS_TAC [bir_state_is_terminated_def, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
-QED
-
-Theorem bir_state_EQ_FOR_VARS_SYM_thm:
-  !vs st1 st2.
-  bir_state_EQ_FOR_VARS vs st1 st2 <=>
-  bir_state_EQ_FOR_VARS vs st2 st1
-Proof
-  METIS_TAC [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_EQUIV_EQ]
 QED
 
 Theorem bir_incr_pre_EQ_FOR_VARS_thm:
@@ -1120,7 +906,7 @@ Proof
 
   (* because st_r equals st in the program variables, we know that the weak transition from st and st_r leads to a state that is equal in the program variables *)
   `?st'. (bir_ts (bir_incr_prog:'observation_type bir_program_t)).weak {BL_Address (Imm64 4w)} st st' /\ bir_state_EQ_FOR_VARS vs ms' st'` by (
-    METIS_TAC [bir_vars_bir_ts_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+    METIS_TAC [bir_prop_transferTheory.bir_vars_bir_ts_thm, bir_state_EQ_FOR_VARS_SYM_thm]
   ) >>
   Q.EXISTS_TAC `st'` >>
   REV_FULL_SIMP_TAC (std_ss) [] >>

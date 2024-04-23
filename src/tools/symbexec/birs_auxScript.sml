@@ -112,6 +112,16 @@ End
 Definition PairToBVar_def:
   PairToBVar (bvn, bty) = (BVar bvn bty)
 End
+
+Theorem PairToBVar_BVarToPair_I_thm:
+  PairToBVar ∘ BVarToPair = I
+Proof
+  SIMP_TAC std_ss [boolTheory.FUN_EQ_THM] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `x` >>
+  SIMP_TAC std_ss [PairToBVar_def, BVarToPair_def]
+QED
+
 Definition bir_senv_GEN_bvar_def:
   bir_senv_GEN_bvar (vn,ty) = BVar (CONCAT["sy_";vn]) ty
 End
@@ -391,6 +401,55 @@ QED
 Definition bir_envty_list_inclusive_def:
   bir_envty_list_inclusive l env = EVERY (\(vn,ty). ?v. env vn = SOME v /\ type_of_bir_val v = ty) l
 End
+Theorem bir_envty_list_inclusive_thm:
+  !l env.
+    bir_envty_list_inclusive l env = EVERY (bir_env_var_is_initialised (BEnv env) o PairToBVar) l
+Proof
+  SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_initialised_def, bir_envty_list_inclusive_def, combinTheory.o_DEF, bir_envTheory.bir_env_lookup_def] >>
+
+  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM] >>
+    REPEAT STRIP_TAC >>
+    PAT_X_ASSUM ``!x.A`` IMP_RES_TAC >>
+    TRY (Cases_on `x`) >> TRY (Cases_on `e`) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_var_name_def, PairToBVar_def]
+  )
+QED
+
+Theorem bir_envty_list_inclusive_thm2:
+  !l env.
+    bir_envty_list_inclusive l env = EVERY (bir_env_var_is_initialised (BEnv env)) (MAP PairToBVar l)
+Proof
+  SIMP_TAC std_ss [bir_envty_list_inclusive_thm, combinTheory.o_DEF] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [listTheory.EVERY_MEM, listTheory.MEM_MAP] >>
+
+  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
+  REPEAT STRIP_TAC >- (
+    FULL_SIMP_TAC std_ss [] >>
+    REPEAT STRIP_TAC
+  ) >>
+
+  METIS_TAC []
+QED
+
+Theorem bir_env_vars_are_initialised_IMP_envty_list_inclusive_thm:
+  !l f.
+    (bir_env_vars_are_initialised (BEnv f) (set l)) ==>
+    (bir_envty_list_inclusive (MAP BVarToPair l) f)
+Proof
+  SIMP_TAC std_ss [bir_envty_list_inclusive_thm2] >>
+  FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM] >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [listTheory.MAP_MAP_o] >>
+  `MAP (PairToBVar ∘ BVarToPair) l = l` by (
+    METIS_TAC [listTheory.MAP_ID, PairToBVar_BVarToPair_I_thm]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_def]
+QED
+
 Definition bir_envty_list_exclusive_def:
   bir_envty_list_exclusive l env = (!vn. (~(EXISTS (\(vni,ty). vni = vn) l)) ==> (env vn = NONE))
 End

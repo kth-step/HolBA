@@ -2,6 +2,7 @@ INCLUDES = $(HOLBADIR)/src/aux \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/program_logic \
+           $(HOLBADIR)/src/theory/tools/comp \
            $(HOLBADIR)/src/shared
 
 all: $(DEFAULT_TARGETS)

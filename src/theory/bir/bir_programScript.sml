@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
-open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
+open bir_exp_immTheory bir_exp_memTheory bir_envTheory bir_env_oldTheory;
 open bir_expTheory;
 open llistTheory wordsLib;
 open finite_mapTheory;
@@ -95,6 +95,20 @@ val bir_status_ss = rewrites (type_rws ``:bir_status_t``);
 
 val bir_stmt_ss = rewrites ((type_rws ``:'a bir_stmt_t``) @ (type_rws ``:bir_stmt_end_t``) @
                             (type_rws ``:'a bir_stmt_basic_t``));
+
+Definition bir_state_restrict_vars_def:
+ bir_state_restrict_vars vs st =
+  st with bst_environ updated_by (bir_env_restrict_vars vs)
+End
+
+Theorem bir_state_restrict_vars_ALT_THM:
+  !vs st.
+    (bir_state_restrict_vars vs st).bst_environ = bir_env_restrict_vars vs st.bst_environ /\
+    (bir_state_restrict_vars vs st).bst_pc = st.bst_pc /\
+    (bir_state_restrict_vars vs st).bst_status = st.bst_status
+Proof
+  SIMP_TAC (std_ss++bir_state_ss) [bir_state_restrict_vars_def]
+QED
 
 (* ------------------------------------------------------------------------- *)
 (* Programs                                                                  *)
