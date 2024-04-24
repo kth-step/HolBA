@@ -13,9 +13,8 @@ open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
 open bir_compositionLib;
 
-open bir_wpLib bir_wp_expLib;
-open bir_wpTheory;
-open bir_wp_interfaceLib;
+open bir_lifting_machinesTheory;
+open bir_typing_expTheory;
 open bir_htTheory;
 
 open tutorial_smtSupportLib;
