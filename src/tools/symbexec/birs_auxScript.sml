@@ -401,6 +401,7 @@ QED
 Definition bir_envty_list_inclusive_def:
   bir_envty_list_inclusive l env = EVERY (\(vn,ty). ?v. env vn = SOME v /\ type_of_bir_val v = ty) l
 End
+
 Theorem bir_envty_list_inclusive_thm:
   !l env.
     bir_envty_list_inclusive l env = EVERY (bir_env_var_is_initialised (BEnv env) o PairToBVar) l
@@ -450,6 +451,17 @@ Proof
   FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_def]
 QED
 
+Theorem bir_env_vars_are_initialised_IMP_envty_list_inclusive_thm2:
+  !l f.
+    (bir_env_vars_are_initialised (BEnv f) (set (MAP PairToBVar l))) ==>
+    (bir_envty_list_inclusive l f)
+Proof
+  SIMP_TAC std_ss [bir_envty_list_inclusive_thm2] >>
+  FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM] >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_def]
+QED
+
 Definition bir_envty_list_exclusive_def:
   bir_envty_list_exclusive l env = (!vn. (~(EXISTS (\(vni,ty). vni = vn) l)) ==> (env vn = NONE))
 End
@@ -490,6 +502,62 @@ REPEAT STRIP_TAC >>
   Cases_on `env` >>
   FULL_SIMP_TAC (std_ss) [bir_envty_list_b_def, bir_envTheory.bir_env_lookup_def] >>
   METIS_TAC []
+QED
+
+Theorem bir_state_restrict_vars_envty_list_b_thm:
+  !l vs st st'.
+    (ALL_DISTINCT (MAP FST l)) ==>
+    (set (MAP PairToBVar l) = vs) ==>
+    (st' = bir_state_restrict_vars vs st) ==>
+    (bir_env_vars_are_initialised st.bst_environ vs) ==>
+    (bir_envty_list_b l st'.bst_environ)
+Proof
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_envty_list_b_thm, bir_programTheory.bir_state_restrict_vars_ALT_THM] >>
+
+  `bir_envty_list_inclusive l (\bvn. bir_env_lookup bvn (bir_env_restrict_vars vs st.bst_environ))` by (
+    `bir_env_vars_are_initialised (BEnv (\bvn. bir_env_lookup bvn (bir_env_restrict_vars vs st.bst_environ))) vs` by (
+      IMP_RES_TAC bir_env_oldTheory.bir_env_restrict_vars_IMP_vars_are_initialised_THM >>
+      Cases_on `bir_env_restrict_vars vs st.bst_environ` >>
+      Cases_on `st.bst_environ` >>
+      SIMP_TAC std_ss [bir_env_oldTheory.bir_env_restrict_vars_def, bir_envTheory.bir_env_lookup_def] >>
+      METIS_TAC []
+    ) >>
+    METIS_TAC [bir_env_vars_are_initialised_IMP_envty_list_inclusive_thm2]
+  ) >>
+
+  (* variable list has dinstinct variable names *)
+  FULL_SIMP_TAC (std_ss) [bir_envty_list_def] >>
+
+  (* exclusive part, due to restriction *)
+  SIMP_TAC std_ss [bir_envty_list_exclusive_def] >>
+
+  `!bvn l. EXISTS (\(vni:string,ty:bir_type_t). vni = bvn) l = MEM bvn (MAP FST l)` by (
+    REPEAT (POP_ASSUM (K ALL_TAC)) >>
+    SIMP_TAC std_ss [listTheory.MEM_MAP, listTheory.EXISTS_MEM] >>
+
+    `!e bvn. (FST e = bvn)  = (\(vni:string,ty:bir_type_t). vni = bvn) e` by (
+      Cases_on `e` >>
+      SIMP_TAC std_ss [pairTheory.FST]
+    ) >>
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REPEAT STRIP_TAC >>
+
+  `bvn NOTIN (IMAGE bir_var_name vs)` by (
+    PAT_X_ASSUM ``set A = B`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC std_ss [listTheory.LIST_TO_SET_MAP, pred_setTheory.IMAGE_IMAGE] >>
+    `bir_var_name ∘ PairToBVar = FST` by (
+      REPEAT (POP_ASSUM (K ALL_TAC)) >>
+      FULL_SIMP_TAC std_ss [boolTheory.FUN_EQ_THM] >>
+      Cases_on `x` >>
+      FULL_SIMP_TAC (std_ss) [PairToBVar_def, bir_envTheory.bir_var_name_def]
+    ) >>
+    FULL_SIMP_TAC std_ss [GSYM listTheory.LIST_TO_SET_MAP]
+  ) >>
+
+  METIS_TAC [bir_env_oldTheory.bir_env_restrict_vars_NOTIN_IMAGE_THM]
 QED
 (* ........................... *)
 
@@ -703,6 +771,37 @@ End
 Definition birs_gen_env_def:
   birs_gen_env l = FOLDR birs_gen_env_fun (K NONE) l
 End
+
+Definition birs_env_var_is_initialised_def:
+  birs_env_var_is_initialised senv symbs var <=>
+  (?se. (senv (bir_var_name var) = SOME se) /\
+       (type_of_bir_exp se = SOME (bir_var_type var)) /\
+       (bir_vars_of_exp se SUBSET symbs))
+End
+Definition birs_env_vars_are_initialised_def:
+  birs_env_vars_are_initialised senv symbs vs <=>
+  (!v. v IN vs ==> birs_env_var_is_initialised senv symbs v)
+End
+
+Theorem birs_env_vars_are_initialised_EMPTY_thm:
+  !senv symbs.
+    (birs_env_vars_are_initialised senv symbs EMPTY)
+Proof
+  METIS_TAC [birs_env_vars_are_initialised_def, pred_setTheory.NOT_IN_EMPTY]
+QED
+
+Theorem birs_env_vars_are_initialised_INSERT_thm:
+  !v vs senv symbs.
+   birs_env_vars_are_initialised senv symbs (v INSERT vs) <=>
+     birs_env_var_is_initialised senv symbs v /\
+     birs_env_vars_are_initialised senv symbs vs
+Proof
+  REWRITE_TAC [birs_env_vars_are_initialised_def] >>
+  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
+  REPEAT STRIP_TAC >> (
+    METIS_TAC [pred_setTheory.IN_INSERT, pred_setTheory.COMPONENT]
+  )
+QED
 
 Theorem birs_gen_env_NULL_thm:
   !n sv l.

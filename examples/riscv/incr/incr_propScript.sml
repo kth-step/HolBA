@@ -221,7 +221,7 @@ Definition bprog_Q_def:
        /\
        (status2 = BST_Running)
        /\
-       bir_envty_list birenvtyl_riscv st2 /\
+       (bir_env_vars_are_initialised (BEnv st2) (set incr_prog_vars)) /\
        (st2 "x10" = SOME (BVal_Imm (Imm64 (x + 1w))))
      )
 End
@@ -234,11 +234,12 @@ Theorem bprog_Q_thm:
       /\
       (bs2.bst_status = BST_Running)
       /\
-       bir_envty_list_b birenvtyl_riscv bs2.bst_environ /\
+      (bir_env_vars_are_initialised bs2.bst_environ (bir_vars_of_program ^bprog_tm))
+      /\
       (bir_env_lookup "x10" bs2.bst_environ = SOME (BVal_Imm (Imm64 (x + 1w))))
     )
 Proof
-FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def, bir_envty_list_b_thm]
+FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def, bir_envty_list_b_thm, incr_prog_vars_thm, birs_auxTheory.bir_BEnv_lookup_EQ_thm]
 QED
 (* ........................... *)
 
@@ -270,24 +271,31 @@ QED
 
 (* ........................... *)
 
-
-
-
-Theorem bir_env_read_x10_lookup_thm:
-  !env x.
-  (bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 x))) ==>
-  (bir_env_read (BVar "x10" (BType_Imm Bit64)) env = SOME (BVal_Imm (Imm64 x)))
+(* TODO: MOVE AWAY !!!!! GENERIC THEOREM *)
+Theorem birs_env_vars_are_initialised_IMP_thm:
+  !H symbs senv env vs.
+    birs_interpr_welltyped H ==>
+    symb_interpr_for_symbs symbs H ==>
+    birs_matchenv H senv env ==>
+    birs_env_vars_are_initialised senv symbs vs ==>
+    bir_env_vars_are_initialised env vs
 Proof
-Cases_on `env` >>
+  REWRITE_TAC [birs_env_vars_are_initialised_def, bir_env_vars_are_initialised_def] >>
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPEC `v`) >>
+  REV_FULL_SIMP_TAC std_ss [birs_env_var_is_initialised_def, bir_env_var_is_initialised_def] >>
 
-  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  FULL_SIMP_TAC std_ss [birs_matchenv_def] >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPEC `bir_var_name v`) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  IMP_RES_TAC bir_symb_sound_coreTheory.birs_interpret_fun_PRESERVES_type_thm >>
+  FULL_SIMP_TAC std_ss []
 QED
 
-Theorem birs_matchenv_gen_env_envty_list_b_incr_thm:
-  !H env x.
-    birs_interpr_welltyped H
- ==>
+Theorem birs_matchenv_gen_env_env_vars_are_initialised_incr_thm:
+  !H env x vs.
+     birs_interpr_welltyped H
+  ==>
         birs_matchenv H
           (birs_gen_env
              [("x10",
@@ -296,7 +304,7 @@ Theorem birs_matchenv_gen_env_envty_list_b_incr_thm:
                  (BExp_Const (Imm64 1w)));
               ("x1",BExp_Den (BVar "sy_x1" (BType_Imm Bit64)))])
           env
- ==>
+  ==>
      symb_interpr_for_symbs
           (birs_symb_symbols
              <|bsst_pc :=
@@ -313,51 +321,46 @@ Theorem birs_matchenv_gen_env_envty_list_b_incr_thm:
                  BExp_BinPred BIExp_Equal
                    (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
                    (BExp_Const (Imm64 x))|>) H
-==>
-          bir_envty_list_b birenvtyl_riscv env
+ ==>
+    (vs = bir_vars_of_program ^bprog_tm) ==>
+          bir_env_vars_are_initialised env vs
 Proof
   REPEAT STRIP_TAC >>
-         
+
+  IMP_RES_TAC birs_env_vars_are_initialised_IMP_thm >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPEC `vs`) >>
+  POP_ASSUM (MATCH_MP_TAC) >>
+
+  (* cleanup proof state *)
+  ASM_REWRITE_TAC [] >>
+  REPEAT (POP_ASSUM (K ALL_TAC)) >>
+
+  (* concretize and normalize *)
   FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_auxTheory.birs_exps_of_senv_COMP_thm] >>
+  CONV_TAC (RATOR_CONV (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_exp``] THENC SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL))) >>
+  CONV_TAC (RAND_CONV (SIMP_CONV (std_ss++listSimps.LIST_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] THENC EVAL)) >>
 
-  POP_ASSUM (ASSUME_TAC o EVAL_RULE o SIMP_RULE (std_ss++holBACore_ss) [] o computeLib.RESTR_EVAL_RULE [``bir_vars_of_exp``]) >>
-
-  FULL_SIMP_TAC std_ss [birs_matchenv_def] >>
-
-  Cases_on `env` >>
-  FULL_SIMP_TAC std_ss [bir_envty_list_b_def, birenvtyl_riscv_def, incr_prog_vars_def] >>
-  FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [BVarToPair_def, bir_envty_list_def] >>
-
-  fs [bir_envty_list_inclusive_def,bir_envty_list_exclusive_def] >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
-  ASSUME_TAC (EVAL ``"x10" = "x1"``) >>
-
-  REPEAT STRIP_TAC >- (
-    PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `"x10"`) >>
-    Cases_on `f "x10"` >- (
-      fs [combinTheory.UPDATE_APPLY, combinTheory.K_THM]
-    ) >>
-    fs [combinTheory.UPDATE_APPLY, combinTheory.K_THM] >>
-    fs [] >>
-    IMP_RES_TAC bir_symb_sound_coreTheory.birs_interpret_fun_PRESERVES_type_thm >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >- (
-    PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `"x1"`) >>
-    Cases_on `f "x1"` >- (
-      fs [combinTheory.UPDATE_APPLY, combinTheory.K_THM]
-    ) >>
-    fs [combinTheory.UPDATE_APPLY, combinTheory.K_THM] >>
-    fs [] >>
-    IMP_RES_TAC bir_symb_sound_coreTheory.birs_interpret_fun_PRESERVES_type_thm >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `vn`) >>
-  REV_FULL_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY, combinTheory.K_THM]
+  (* finish the proof *)
+  REWRITE_TAC [birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
+  EVAL_TAC >>
+  SIMP_TAC (std_ss++holBACore_ss) [] >>
+  EVAL_TAC
 QED
+
+(*
+Theorem bir_env_read_x10_lookup_thm:
+  !env x.
+  (bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 x))) ==>
+  (bir_env_read (BVar "x10" (BType_Imm Bit64)) env = SOME (BVal_Imm (Imm64 x)))
+Proof
+Cases_on `env` >>
+
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+QED
+*)
 
 (* FIXME: this is implicitly proven already in bir_envTheory.bir_env_read_def *)
 Theorem bir_eval_precond_lookup_pre_x10_incr_thm:
@@ -420,11 +423,11 @@ Proof
       FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
     ) >>
 
-    (* bir_envty_list_b *)
+    (* bir_env_vars_are_initialised *)
     CONJ_TAC >- (
       Q.UNABBREV_TAC `sys2` >>
       FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-      METIS_TAC [birs_matchenv_gen_env_envty_list_b_incr_thm]
+      METIS_TAC [birs_matchenv_gen_env_env_vars_are_initialised_incr_thm]
     ) >>
 
     (* the property (here: pre_x10 + 1) *)
@@ -602,7 +605,7 @@ Definition post_bir_nL_def:
       (
          (st'.bst_pc = ^bir_frag_l_exit_tm) /\
          st'.bst_status = BST_Running /\
-         bir_envty_list_b birenvtyl_riscv st'.bst_environ /\
+         bir_env_vars_are_initialised st'.bst_environ (set incr_prog_vars) /\
 
          post_bir x st st'
       )
@@ -631,7 +634,7 @@ REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
   ASM_SIMP_TAC std_ss [] >>
 
   REWRITE_TAC [post_bir_nL_def, post_bir_def] >>
-  ASM_SIMP_TAC (std_ss++holBACore_ss) []
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [incr_prog_vars_thm]
 QED
 
 
@@ -681,58 +684,21 @@ ASSUME_TAC
 QED
 
 
-
-
-
-Theorem bir_state_restrict_vars_envty_list_b_thm:
+Theorem bir_state_restrict_vars_envty_list_b_spec_thm:
   !vs st st'.
     (vs = bir_vars_of_program ^bprog_tm) ==>
     (st' = bir_state_restrict_vars vs st) ==>
     (bir_env_vars_are_initialised st.bst_environ vs) ==>
     (bir_envty_list_b birenvtyl_riscv st'.bst_environ)
 Proof
-  REPEAT GEN_TAC >>
-  DISCH_TAC >>
-  POP_ASSUM (ASSUME_TAC o GSYM) >>
-  FULL_SIMP_TAC std_ss [bir_state_restrict_vars_ALT_THM] >>
-  DISCH_TAC >>
-  POP_ASSUM (K ALL_TAC) >>
-  DISCH_TAC >>
-
-  `bir_envty_list_inclusive birenvtyl_riscv (\bvn. bir_env_lookup bvn (bir_env_restrict_vars vs st.bst_environ))` by (
-    `bir_env_vars_are_initialised (BEnv (\bvn. bir_env_lookup bvn (bir_env_restrict_vars vs st.bst_environ))) vs` by (
-      IMP_RES_TAC bir_env_restrict_vars_IMP_vars_are_initialised_THM >>
-      Cases_on `bir_env_restrict_vars vs st.bst_environ` >>
-      Cases_on `st.bst_environ` >>
-      SIMP_TAC std_ss [bir_env_restrict_vars_def, bir_envTheory.bir_env_lookup_def] >>
-      METIS_TAC []
-    ) >>
-    METIS_TAC [birenvtyl_riscv_def, incr_prog_vars_thm, bir_env_vars_are_initialised_IMP_envty_list_inclusive_thm]
- ) >>
-
-  (* concretize set of variables *)
-  FULL_SIMP_TAC std_ss [GSYM incr_prog_vars_thm, incr_prog_vars_def, listTheory.LIST_TO_SET] >>
-  (* concretize variable type list *)
-  FULL_SIMP_TAC std_ss [birenvtyl_riscv_EVAL_thm, bir_envty_list_b_thm] >>
-
-  (* variable list has dinstinct variable names *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [bir_envty_list_def] >>
-
-  (* exclusive part, due to restriction *)
-  SIMP_TAC std_ss [bir_envty_list_exclusive_def] >>
-
-  FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
-  REPEAT STRIP_TAC >>
-
-  `bvn NOTIN (IMAGE bir_var_name vs)` by (
-    PAT_X_ASSUM ``A = vs`` (ASSUME_TAC o GSYM) >>
-    ASM_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] >>
-    REPEAT STRIP_TAC >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    )
+  `ALL_DISTINCT (MAP FST birenvtyl_riscv)` by (
+    SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_riscv_EVAL_thm]
   ) >>
-
-  METIS_TAC [bir_env_restrict_vars_NOTIN_IMAGE_THM]
+  REPEAT STRIP_TAC >>
+  `set (MAP PairToBVar birenvtyl_riscv) = vs` by (
+    FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [GSYM incr_prog_vars_thm, birenvtyl_riscv_def, listTheory.MAP_MAP_o, birs_auxTheory.PairToBVar_BVarToPair_I_thm]
+  ) >>
+  METIS_TAC [bir_state_restrict_vars_envty_list_b_thm]
 QED
 
 Theorem bir_incr_pre_EQ_FOR_VARS_thm:
@@ -743,16 +709,12 @@ Theorem bir_incr_pre_EQ_FOR_VARS_thm:
     (bir_eval_exp (bir_incr_pre x) st2.bst_environ = SOME bir_val_true)
 Proof
   REPEAT STRIP_TAC >>
-
-  (* resolve the concrete set of variables *)
-  FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_incr_pre_def] >>
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, EVAL ``bool2b T``, bir_val_true_def] >>
-  METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
+  `bir_vars_of_exp (bir_incr_pre x) SUBSET vs` by (
+    ASM_REWRITE_TAC [] >>
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def, bir_incr_pre_def] >>
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
+  ) >>
+  METIS_TAC [bir_envTheory.bir_env_EQ_FOR_VARS_SUBSET, bir_vars_of_exp_THM_EQ_FOR_VARS, bir_state_EQ_FOR_VARS_ALT_DEF]
 QED
 
 Theorem bir_incr_post_EQ_FOR_VARS_thm:
@@ -795,7 +757,7 @@ Proof
   STRIP_TAC >>
 
   `bir_envty_list_b birenvtyl_riscv st2.bst_environ` by (
-    METIS_TAC [bir_state_restrict_vars_envty_list_b_thm, bir_exec_to_labels_triple_precond_def] (* for the reduced state st2, we can prove this *)
+    METIS_TAC [bir_state_restrict_vars_envty_list_b_spec_thm, bir_exec_to_labels_triple_precond_def] (* for the reduced state st2, we can prove this *)
   ) >>
   (* we get this from the restriction, the rest must be due to the equality for the variables *)
   `bir_state_EQ_FOR_VARS vs st1 st2` by (
@@ -806,31 +768,18 @@ Proof
   METIS_TAC [bir_incr_pre_EQ_FOR_VARS_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
 QED
 
-Theorem bir_envty_list_b_incr_thm[local]:
+(* TODO: MOVE THIS AWAY *)
+Theorem bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm[local]:
   !st1 st2 vs.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
     bir_state_EQ_FOR_VARS vs st1 st2 ==>
-    bir_envty_list_b birenvtyl_riscv st1.bst_environ ==>
+    bir_env_vars_are_initialised st1.bst_environ vs ==>
     bir_env_vars_are_initialised st2.bst_environ vs
 Proof
+  FULL_SIMP_TAC std_ss [bir_env_vars_are_initialised_def, bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
   REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [birenvtyl_riscv_EVAL_thm, bir_envty_list_b_def, GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
-
-  (* resolve the concrete set of variables *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [listTheory.LIST_TO_SET,BVarToPair_def] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
-
-  Cases_on `st1.bst_environ` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_oldTheory.bir_env_vars_are_initialised_def,bir_envty_list_b_def,bir_envty_list_def] >>
-  fs [bir_envty_list_inclusive_def] >>
-
-  rw [bir_env_oldTheory.bir_env_var_is_initialised_def] >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
-    METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
-  )
+  REPEAT (PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `v`)) >>
+  REV_FULL_SIMP_TAC std_ss [bir_env_var_is_initialised_def] >>
+  METIS_TAC []
 QED
 
 Theorem post_bir_nL_vars_EQ_postcond_IMP_thm:
@@ -848,7 +797,7 @@ Proof
   FULL_SIMP_TAC std_ss [post_bir_nL_def, bir_exec_to_labels_triple_postcond_def] >>
 
   `bir_env_vars_are_initialised st1'.bst_environ vs` by (
-    METIS_TAC [bir_envty_list_b_incr_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+    METIS_TAC [bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm, bir_state_EQ_FOR_VARS_SYM_thm, incr_prog_vars_thm]
   ) >>
   `st1'.bst_pc.bpc_label = BL_Address (Imm64 4w) /\ st1'.bst_pc.bpc_index = 0` by (
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
