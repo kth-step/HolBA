@@ -42,6 +42,8 @@ open program_logicSimps;
 
 open mod2Theory;
 
+open mod2_symb_execTheory;
+
 val _ = new_theory "mod2_prop";
 
 (* --------------- *)
@@ -83,7 +85,7 @@ End
 (* ----------------------------------- *)
 
 Theorem mod2_riscv_pre_imp_bir_pre_thm[local]:
- bir_pre_riscv_to_bir (riscv_mod2_pre input) (bir_mod2_pre input)
+ bir_pre_riscv_to_bir (riscv_mod2_pre pre_x10) (bir_mod2_pre pre_x10)
 Proof
  cheat
 QED
@@ -93,5 +95,9 @@ Theorem mod2_riscv_post_imp_bir_post_thm[local]:
 Proof
  cheat
 QED
+
+(* ------------------------------- *)
+(* BIR symbolic execution analysis *)
+(* ------------------------------- *)
 
 val _ = export_theory ();
