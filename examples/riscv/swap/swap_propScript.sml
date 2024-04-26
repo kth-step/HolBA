@@ -5,7 +5,7 @@ open m0_stepLib;
 
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
-open bir_tsTheory bir_bool_expTheory;
+open bir_tsTheory bir_bool_expTheory bir_programTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
@@ -17,9 +17,31 @@ open bir_wp_interfaceLib;
 
 open tutorial_smtSupportLib;
 
+open bir_symbTheory;
+open bir_program_transfTheory;
+
+open total_program_logicTheory;
+open total_ext_program_logicTheory;
+open symb_prop_transferTheory;
+
+open jgmt_rel_bir_contTheory;
+
+open birs_stepLib;
+
 open swapTheory;
 
+open swap_symb_execTheory;
+
 val _ = new_theory "swap_prop";
+
+val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) swap_symb_analysis_thm;
+
+Definition swap_analysis_L_def:
+ swap_analysis_L = ^(L_s)
+End
+
+val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
+val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 20w))``;
 
 Definition swap_mem_spec_def:
  swap_mem_spec ms =

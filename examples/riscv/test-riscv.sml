@@ -7,9 +7,10 @@ open wordsTheory;
 
 open bir_programSyntax bir_program_labelsTheory bir_immTheory;
 
-open swapTheory swap_propTheory;
+open swapTheory swap_symb_execTheory swap_propTheory;
 open isqrtTheory isqrt_propTheory;
 open mod2Theory mod2_propTheory;
+open incrTheory incr_propTheory;
 
 fun print_and_check_thm name thm t_concl =
   let
@@ -27,9 +28,19 @@ val _ = print_and_check_thm
   "swap RISC-V lift theorem"
   bir_swap_riscv_lift_THM
   ``
-  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (0x1000000w : word64))
+  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (32w : word64))
    bir_swap_progbin
    (bir_swap_prog : 'observation_type bir_program_t)
+  ``;
+
+val _ = print_and_check_thm
+  "swap BIR contract theorem"
+  bir_cont_swap
+  ``bir_cont (bir_swap_prog : 'observation_type bir_program_t)
+    bir_exp_true (BL_Address (Imm64 0w))
+    {BL_Address (Imm64 20w)} {} bir_swap_pre
+    (\l. if l = BL_Address (Imm64 20w) then bir_swap_post
+        else bir_exp_false)
   ``;
 
 val _ = print_and_check_thm
@@ -39,3 +50,30 @@ val _ = print_and_check_thm
      bir_swap_progbin
      0w {20w}
      riscv_swap_pre riscv_swap_post``;
+  
+val _ = print_and_check_thm
+  "incr RISC-V lift theorem"
+  bir_incr_riscv_lift_THM
+  ``
+  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (8w : word64))
+   bir_incr_progbin
+   (bir_incr_prog : 'observation_type bir_program_t)
+  ``;
+
+val _ = print_and_check_thm
+  "incr BIR contract theorem"
+  bir_cont_incr
+ ``bir_cont (bir_incr_prog : 'a bir_program_t)
+  bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10)
+        else bir_exp_false)
+  ``;
+
+val _ = print_and_check_thm
+  "incr RISC-V backlifted theorem"
+  riscv_cont_incr
+  ``riscv_cont
+     bir_incr_progbin
+     0w {4w}
+     (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)``;
