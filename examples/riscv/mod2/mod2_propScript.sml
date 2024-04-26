@@ -100,4 +100,33 @@ QED
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
 
+Theorem bir_cont_mod2[local]:
+ bir_cont bir_mod2_prog bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10)
+        else bir_exp_false)
+Proof
+ cheat
+QED
+
+(* ---------------------------------- *)
+(* Backlifting BIR contract to RISC-V *)
+(* ---------------------------------- *)
+
+val riscv_cont_mod2_thm =
+ get_riscv_contract_sing
+  bir_cont_mod2
+  ``bir_mod2_progbin``
+  ``riscv_mod2_pre pre_x10`` ``riscv_mod2_post pre_x10`` bir_mod2_prog_def
+  [bir_mod2_pre_def]
+  bir_mod2_pre_def mod2_riscv_pre_imp_bir_pre_thm
+  [bir_mod2_post_def] mod2_riscv_post_imp_bir_post_thm
+  bir_mod2_riscv_lift_THM;
+
+Theorem riscv_cont_mod2[local]:
+ riscv_cont bir_mod2_progbin 0w {4w} (riscv_mod2_pre pre_x10) (riscv_mod2_post pre_x10)
+Proof
+ ACCEPT_TAC riscv_cont_mod2_thm
+QED
+
 val _ = export_theory ();

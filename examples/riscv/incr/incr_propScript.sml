@@ -890,6 +890,10 @@ Proof
  rw [bir_incr_prog_def,bir_cont_incr_tm]
 QED
 
+(* ---------------------------------- *)
+(* Backlifting BIR contract to RISC-V *)
+(* ---------------------------------- *)
+
 val riscv_cont_incr_thm =
  get_riscv_contract_sing
   bir_cont_incr
