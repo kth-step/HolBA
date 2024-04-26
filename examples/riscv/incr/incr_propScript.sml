@@ -521,8 +521,10 @@ val bprog_concst_prop_thm =
 
 (* lift to concrete bir property *)
 val st_init_lbl = (snd o dest_eq o hd o fst o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm;
+
 (* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
 val bprog_lbls  = List.nth ((snd o strip_comb o fst o dest_conj o snd o strip_exists o snd o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm, 3);
+
 Theorem bprog_to_concst_prop_thm:
   !st.
   (symb_concst_pc (birs_symb_to_concst st) = (^st_init_lbl)) ==>

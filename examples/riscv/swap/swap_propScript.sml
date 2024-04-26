@@ -43,33 +43,6 @@ End
 val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
 val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 20w))``;
 
-(*
-val birs_state_init_pre = ``<|
-  bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := bir_senv_GEN_list birenvtyl;
-  bsst_status   := BST_Running;
-  bsst_pcond    := ^bsysprecond
-|>``;
-*)
-
-(*
-val birs_state_init_pre_EQ_thm =
-REWRITE_RULE [] ((REWRITE_CONV [bsysprecond_thm] THENC
-  SIMP_CONV (std_ss++birs_state_ss++holBACore_ss) [] THENC
-  EVAL)
-  ``^((snd o dest_comb) sys_i) = ^birs_state_init_pre``);
-
-val swap_analysis_thm =
-  REWRITE_RULE [birs_state_init_pre_EQ_thm] swap_symb_analysis_thm;
-
-val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
-*)
-
-(*
-symb_prop_transfer_thm
-symb_prop_transfer_binHoare_thm
-*)
-
 Definition swap_mem_spec_def:
  swap_mem_spec ms =
  let ms'_mem8 = (riscv_mem_store_dword (ms.c_gpr ms.procID 0w)

@@ -69,11 +69,6 @@ val birs_rule_STEP_SEQ_thm = MATCH_MP birs_rulesTheory.birs_rule_STEP_SEQ_gen_th
 val birs_rule_STEP_SEQ_fun_spec = birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm);
 (* ........................... *)
 
-(*
-val tree = build_tree (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
-val _ = print "done building the tree\n";
-*)
-
 val _ = print "now reducing it to one sound structure\n";
 
 val timer = bir_miscLib.timer_start 0;

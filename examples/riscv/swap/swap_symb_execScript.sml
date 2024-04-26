@@ -13,11 +13,7 @@ val bprog_tm = (snd o dest_eq o concl) bir_swap_prog_def;
 
 (* ........................... *)
 
-(* motor_prep_input *)
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x00w))``;
-(*
-val birs_stop_lbls = [``<|bpc_label := BL_Address (Imm64 0x08w); bpc_index := 7|>``];
-*)
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x14w))``];
 
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)

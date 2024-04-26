@@ -59,3 +59,21 @@ val _ = print_and_check_thm
    bir_incr_progbin
    (bir_incr_prog : 'observation_type bir_program_t)
   ``;
+
+val _ = print_and_check_thm
+  "incr BIR contract theorem"
+  bir_cont_incr
+ ``bir_cont (bir_incr_prog : 'a bir_program_t)
+  bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10)
+        else bir_exp_false)
+  ``;
+
+val _ = print_and_check_thm
+  "incr RISC-V backlifted theorem"
+  riscv_cont_incr
+  ``riscv_cont
+     bir_incr_progbin
+     0w {4w}
+     (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)``;
