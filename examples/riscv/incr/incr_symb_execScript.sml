@@ -15,6 +15,11 @@ val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Addr
 
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x4w))``];
 
+val birs_pcond = ``BExp_BinPred
+      BIExp_Equal
+      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+      (BExp_Const (Imm64 pre_x10))``;
+
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 
 Definition incr_prog_vars_def:
@@ -37,11 +42,7 @@ val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list incr_birenvtyl;
   bsst_status   := BST_Running;
-  bsst_pcond    :=
-    BExp_BinPred
-      BIExp_Equal
-      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-      (BExp_Const (Imm64 pre_x10))
+  bsst_pcond    := ^birs_pcond
 |>``;
 
 (* ........................... *)
