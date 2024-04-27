@@ -677,9 +677,6 @@ Cases_on `n = 0` >- (
   metis_tac [weak_ctrl_in, pred_setTheory.SUBSET_THM],
 
   rpt strip_tac >>
-  subgoal `n_l' = 0` >- (
-   fs [] 
-  ) >>
   fs [weak_exec_n_def, FUNPOW_OPT_compute]
  ]
 ) >>
@@ -752,9 +749,6 @@ Cases_on `n'' = n'` >- (
  ) >>
  fs [whileTheory.OLEAST_EQ_SOME] >>
  rpt strip_tac >>
- subgoal `n_l = 0` >- (
-  fs []
- ) >>
  fs [weak_exec_n_def, FUNPOW_OPT_compute]
 ) >>
 subgoal `n'' < n'` >- (

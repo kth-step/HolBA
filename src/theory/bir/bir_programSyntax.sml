@@ -246,13 +246,14 @@ in
   TypeBase.mk_record (bir_state_t_ty, l)
 end handle e => raise wrap_exn "mk_bir_state" e;
 
-
+(* TODO: What's the counterpart of these in Trindemossen? *)
+(*
 val (bst_status_tm,  mk_bst_status, dest_bst_status, is_bst_status)  = syntax_fns1 "bir_state_t_bst_status";
 
 val (bst_environ_tm,  mk_bst_environ, dest_bst_environ, is_bst_environ)  = syntax_fns1 "bir_state_t_bst_environ";
 
 val (bst_pc_tm,  mk_bst_pc, dest_bst_pc, is_bst_pc)  = syntax_fns1 "bir_state_t_bst_pc";
-
+*)
 
 val (bir_state_init_tm,  mk_bir_state_init, dest_bir_state_init, is_bir_state_init)  = syntax_fns1 "bir_state_init";
 

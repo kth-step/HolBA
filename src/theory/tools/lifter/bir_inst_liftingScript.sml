@@ -289,16 +289,16 @@ End
 (* Auxiliary definitions *)
 (*-----------------------*)
 
-val bir_is_lifted_inst_block_COMPUTE_ms'_COND_def = Define
-  `bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' <=>
+Definition bir_is_lifted_inst_block_COMPUTE_ms'_COND_def:
+   bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' <=>
      (* We can compute the next machine state using extra assumptions in al_step *)
      ((EVERY (\a. bir_assert_desc_value a) al_step) ==>
       (r.bmr_step_fun ms = SOME ms')) /\
 
      (* This machine step satisfies the machine state invariants *)
      ((EVERY (\a. bir_assert_desc_value a) al_step) ==>
-      r.bmr_extra ms')`
-
+      r.bmr_extra ms')
+End
 
 Definition bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_def:
   bir_is_lifted_inst_block_COMPUTE_imm_ups_COND r ms ms' imm_ups updates <=>
@@ -542,10 +542,11 @@ QED
 (* Auxiliary definitions *)
 (*-----------------------*)
 
-val bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_def = Define
-  `bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK r bs ms al_step ms' <=>
+Definition bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_def:
+  bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK r bs ms al_step ms' <=>
    (bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' /\
-    EVERY (bir_assert_desc_OK bs.bst_environ) al_step)`;
+    EVERY (bir_assert_desc_OK bs.bst_environ) al_step)
+End
 
 Definition bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_def:
   bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK r mu bs ms ms' al_mem <=>
@@ -1456,9 +1457,6 @@ SIMP_TAC list_ss [bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL_def,
   LET_THM, bir_updateB_desc_exp_def, bir_updateB_desc_value_def,
   bir_updateB_desc_var_def, IN_IMAGE] >>
 REPEAT STRIP_TAC >- (
-  `i = 0` by DECIDE_TAC >>
-  FULL_SIMP_TAC std_ss []
-) >- (
   METIS_TAC[]
 )
 QED

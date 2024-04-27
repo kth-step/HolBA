@@ -82,19 +82,6 @@ QED
 
 
 Theorem bir_exp_is_taut_WEAK_CONG_IFF:
-  !e1 e2. bir_exp_CONG_WEAK e1 e2 ==> bir_var_set_is_well_typed (bir_vars_of_exp e1) ==>
-        (bir_exp_is_taut e1 <=> bir_exp_is_taut e2)
-Proof
-REPEAT STRIP_TAC >> EQ_TAC >- (
-  METIS_TAC[bir_exp_is_taut_WEAK_CONG_IMPL]
-) >>
-FULL_SIMP_TAC std_ss [bir_exp_is_taut_def, bir_exp_CONG_WEAK_def, bir_is_bool_exp_def] >>
-REPEAT STRIP_TAC >>
-METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]
-QED
-
-
-Theorem bir_exp_is_taut_WEAK_CONG_IFF:
   !e1 e2. bir_exp_CONG e1 e2 ==>
         (bir_exp_is_taut e1 <=> bir_exp_is_taut e2)
 Proof

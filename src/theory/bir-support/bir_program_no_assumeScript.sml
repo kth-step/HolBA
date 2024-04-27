@@ -35,32 +35,32 @@ REPEAT STRIP_TAC >>
     Cases_on `(bir_eval_exp b0'' b0)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd]
+             recordtype_bir_state_t_seldef_bst_status_fupd_def]
     ) >>
     Cases_on `bir_env_write b'' x b0` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd],
+             recordtype_bir_state_t_seldef_bst_status_fupd_def],
 
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-                    [bir_state_t_bst_environ_fupd]
+                    [recordtype_bir_state_t_seldef_bst_environ_fupd_def]
     ],
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assert_def] >>
     Cases_on `(bir_eval_exp b'' b0)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd]
+             recordtype_bir_state_t_seldef_bst_status_fupd_def]
     ) >>
     Cases_on `bir_dest_bool_val x` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd],
+             recordtype_bir_state_t_seldef_bst_status_fupd_def],
 
       Cases_on `x'` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss)
               [bir_state_set_typeerror_def,
-               bir_state_t_bst_status_fupd]
+               recordtype_bir_state_t_seldef_bst_status_fupd_def]
       )
     ],
 
@@ -69,21 +69,21 @@ REPEAT STRIP_TAC >>
     Cases_on `(bir_eval_exp b'' b0)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd]
+             recordtype_bir_state_t_seldef_bst_status_fupd_def]
     ) >>
     Cases_on `(bir_dest_bool_val x)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd]
+             recordtype_bir_state_t_seldef_bst_status_fupd_def]
     ) >>
     Cases_on `(x')` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
-             bir_state_t_bst_status_fupd] >>
+             recordtype_bir_state_t_seldef_bst_status_fupd_def] >>
       Cases_on `(EXISTS IS_NONE (MAP (λe. bir_eval_exp e b0) l))` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss)
               [bir_state_set_typeerror_def,
-               bir_state_t_bst_status_fupd]
+               recordtype_bir_state_t_seldef_bst_status_fupd_def]
       )
     )
   ]
@@ -253,12 +253,12 @@ FULL_SIMP_TAC std_ss [bir_block_has_no_assumes_def,
     Cases_on `st` >>
     Cases_on `st'` >>
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_state_t_fn_updates, bir_state_t_bst_status,
-                   bir_state_t_bst_pc],
+                  [bir_state_t_fn_updates, recordtype_bir_state_t_seldef_bst_status_def,
+                   recordtype_bir_state_t_seldef_bst_pc_def],
 
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_state_t_fn_updates, bir_state_t_bst_status,
-                   bir_state_t_bst_pc] >>
+                  [bir_state_t_fn_updates, recordtype_bir_state_t_seldef_bst_status_def,
+                   recordtype_bir_state_t_seldef_bst_pc_def] >>
     Cases_on `bir_state_is_terminated
                 (bir_exec_stmtE prog bl.bb_last_statement
                    st'_test)` >> (

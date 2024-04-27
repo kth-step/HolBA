@@ -1,12 +1,11 @@
 open HolKernel Parse boolLib bossLib;
+open bir_auxiliaryLib;
 open bir_auxiliaryTheory;
 open bir_envTheory bir_valuesTheory;
 open bir_immTheory bir_typing_expTheory;
 open bir_exp_memTheory bir_expTheory;
 open bir_exp_immTheory;
 open HolBACoreSimps
-
-open bir_auxiliaryLib;
 
 val _ = new_theory "bir_bool_exp";
 
@@ -65,12 +64,6 @@ Theorem bir_val_TF_bool2b_DEF:
     (bir_val_false = BVal_Imm (bool2b F))
 Proof
 SIMP_TAC std_ss [BVal_Imm_bool2b_TF_DEF]
-QED
-
-Theorem BVal_Imm_bool2b_TF_DEF:
-  !b. (BVal_Imm (bool2b b) = if b then bir_val_true else bir_val_false)
-Proof
-Cases >> SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def, bir_val_false_def]
 QED
 
 Theorem BVal_Imm_bool2b_EQ_TF_REWRS:
