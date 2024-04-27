@@ -39,11 +39,11 @@ open pred_setTheory;
 
 open program_logicSimps;
 
-open incrTheory;
-
-open incr_symb_execTheory;
 open bir_env_oldTheory;
 open bir_program_varsTheory;
+
+open incrTheory;
+open incr_symb_execTheory;
 
 val _ = new_theory "incr_prop";
 
@@ -138,23 +138,23 @@ End
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
 Definition bsysprecond_def:
-  bsysprecond x = FST (THE (birs_eval_exp (^bprecond x) (bir_senv_GEN_list birenvtyl_riscv)))
+  bsysprecond x = FST (THE (birs_eval_exp (^bprecond x) (bir_senv_GEN_list incr_birenvtyl)))
 End
 
 Theorem bprecond_birs_eval_exp_thm = (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
    birs_stepLib.birs_eval_exp_CONV)
-     ``birs_eval_exp (bprecond pre_x10) (bir_senv_GEN_list birenvtyl_riscv)``
+     ``birs_eval_exp (bprecond pre_x10) (bir_senv_GEN_list incr_birenvtyl)``
 
 Theorem bsysprecond_thm =
  (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond pre_x10``
 
-Theorem bprecond_birs_eval_exp_thm2 = REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp (bprecond pre_x10) (bir_senv_GEN_list birenvtyl_riscv)``
+Theorem bprecond_birs_eval_exp_thm2 = REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp (bprecond pre_x10) (bir_senv_GEN_list incr_birenvtyl)``
 
 val bsysprecond = (fst o dest_eq o concl o Q.SPEC `pre_x10`) bsysprecond_def;
 
 val birs_state_init_pre = ``<|
   bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := bir_senv_GEN_list birenvtyl_riscv;
+  bsst_environ  := bir_senv_GEN_list incr_birenvtyl;
   bsst_status   := BST_Running;
   bsst_pcond    := ^bsysprecond
 |>``;
@@ -169,12 +169,13 @@ val birs_state_init_pre_EQ_thm =
 val incr_analysis_thm =
   REWRITE_RULE [birs_state_init_pre_EQ_thm, GSYM bir_incr_prog_def] incr_symb_analysis_thm;
 
-Theorem birenvtyl_riscv_EVAL_thm =
- (REWRITE_CONV [birenvtyl_riscv_def, riscv_vars_def,
+Theorem incr_birenvtyl_EVAL_thm =
+ (REWRITE_CONV [incr_birenvtyl_def,
    bir_lifting_machinesTheory.riscv_bmr_vars_EVAL,
-   bir_lifting_machinesTheory.riscv_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl_riscv``
+   bir_lifting_machinesTheory.riscv_bmr_temp_vars_EVAL] THENC EVAL)
+ ``incr_birenvtyl``
 
-val birs_state_thm = REWRITE_CONV [birenvtyl_riscv_EVAL_thm] birs_state_init_pre;
+val birs_state_thm = REWRITE_CONV [incr_birenvtyl_EVAL_thm] birs_state_init_pre;
 
 (* ------ *)
 
@@ -192,7 +193,7 @@ Definition bprog_P_def:
   bprog_P x ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
        pc.bpc_index = 0 /\
-       bir_envty_list birenvtyl_riscv st /\
+       bir_envty_list incr_birenvtyl st /\
        bir_eval_exp (^bprecond x) (BEnv st) = SOME bir_val_true)
 End
 
@@ -203,7 +204,7 @@ Theorem bprog_P_thm:
   bprog_P x (birs_symb_to_concst bs) =
       (bs.bst_status = BST_Running /\
        bs.bst_pc.bpc_index = 0 /\
-       bir_envty_list_b birenvtyl_riscv bs.bst_environ /\
+       bir_envty_list_b incr_birenvtyl bs.bst_environ /\
        bir_eval_exp (^bprecond x) bs.bst_environ = SOME bir_val_true)
 Proof
  REPEAT STRIP_TAC >>
@@ -263,7 +264,7 @@ FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
   PAT_X_ASSUM ``A = (\B. C)`` (ASSUME_TAC o GSYM) >>
   FULL_SIMP_TAC (std_ss) [boolTheory.ETA_THM] >>
 
-  `(ALL_DISTINCT (MAP FST birenvtyl_riscv))` by EVAL_TAC >>
+  `(ALL_DISTINCT (MAP FST incr_birenvtyl))` by EVAL_TAC >>
 
   METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm, bprecond_birs_eval_exp_thm2]
 QED
@@ -596,7 +597,7 @@ Definition pre_bir_nL_def:
       (
        st.bst_status = BST_Running /\
        st.bst_pc.bpc_index = 0 /\
-       bir_envty_list_b birenvtyl_riscv st.bst_environ /\
+       bir_envty_list_b incr_birenvtyl st.bst_environ /\
 
        pre_bir x st
       )
@@ -690,14 +691,14 @@ Theorem bir_state_restrict_vars_envty_list_b_spec_thm:
     (vs = bir_vars_of_program ^bprog_tm) ==>
     (st' = bir_state_restrict_vars vs st) ==>
     (bir_env_vars_are_initialised st.bst_environ vs) ==>
-    (bir_envty_list_b birenvtyl_riscv st'.bst_environ)
+    (bir_envty_list_b incr_birenvtyl st'.bst_environ)
 Proof
-  `ALL_DISTINCT (MAP FST birenvtyl_riscv)` by (
-    SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_riscv_EVAL_thm]
+  `ALL_DISTINCT (MAP FST incr_birenvtyl)` by (
+    SIMP_TAC (std_ss++listSimps.LIST_ss) [incr_birenvtyl_EVAL_thm]
   ) >>
   REPEAT STRIP_TAC >>
-  `set (MAP PairToBVar birenvtyl_riscv) = vs` by (
-    FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [GSYM incr_prog_vars_thm, birenvtyl_riscv_def, listTheory.MAP_MAP_o, birs_auxTheory.PairToBVar_BVarToPair_I_thm]
+  `set (MAP PairToBVar incr_birenvtyl) = vs` by (
+    FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [GSYM incr_prog_vars_thm, incr_birenvtyl_def, listTheory.MAP_MAP_o, birs_auxTheory.PairToBVar_BVarToPair_I_thm]
   ) >>
   METIS_TAC [bir_state_restrict_vars_envty_list_b_thm]
 QED
@@ -757,7 +758,7 @@ Proof
   POP_ASSUM (ASSUME_TAC o GSYM) >>
   STRIP_TAC >>
 
-  `bir_envty_list_b birenvtyl_riscv st2.bst_environ` by (
+  `bir_envty_list_b incr_birenvtyl st2.bst_environ` by (
     METIS_TAC [bir_state_restrict_vars_envty_list_b_spec_thm, bir_exec_to_labels_triple_precond_def] (* for the reduced state st2, we can prove this *)
   ) >>
   (* we get this from the restriction, the rest must be due to the equality for the variables *)

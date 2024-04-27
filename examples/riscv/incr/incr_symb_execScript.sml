@@ -9,8 +9,6 @@ open incrTheory;
 
 val _ = new_theory "incr_symb_exec";
 
-val bprog_tm = (snd o dest_eq o concl) bir_incr_prog_def;
-
 (* ........................... *)
 
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x00w))``;
@@ -18,9 +16,6 @@ val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Addr
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x4w))``];
 
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
-Definition riscv_vars_def:
-  riscv_vars = APPEND (bmr_vars riscv_bmr) (bmr_temp_vars riscv_bmr)
-End
 
 Definition incr_prog_vars_def:
   incr_prog_vars = [BVar "x10" (BType_Imm Bit64); BVar "x1" (BType_Imm Bit64)]
@@ -32,14 +27,15 @@ Proof
   SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [bir_incr_prog_def, incr_prog_vars_def]
 QED
 
-Definition birenvtyl_riscv_def:
-  birenvtyl_riscv = MAP BVarToPair (incr_prog_vars)
+Definition incr_birenvtyl_def:
+  incr_birenvtyl = MAP BVarToPair incr_prog_vars
 End
+
 (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 
 val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := bir_senv_GEN_list birenvtyl_riscv;
+  bsst_environ  := bir_senv_GEN_list incr_birenvtyl;
   bsst_status   := BST_Running;
   bsst_pcond    :=
     BExp_BinPred
@@ -50,9 +46,12 @@ val birs_state_init = ``<|
 
 (* ........................... *)
 
+val bprog_tm = (snd o dest_eq o concl) bir_incr_prog_def;
+
 val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
 val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
 val birs_rule_STEP_fun_spec = (birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm o birs_rule_tryjustassert_fun true o birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
+
 (* now the composition *)
 val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
 val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
