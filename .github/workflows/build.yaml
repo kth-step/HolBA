@@ -21,7 +21,7 @@ jobs:
       matrix:
         polyml: ['v5.7.1', 'v5.9.1']
         z3: ['4.8.4']
-        hol4: ['master']
+        hol4: ['trindemossen-1']
 
     env:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml }}
