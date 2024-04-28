@@ -213,7 +213,7 @@ sig
    val dest_bir_state_is_terminated : term -> term
    val is_bir_state_is_terminated   : term -> bool
    val mk_bir_state_is_terminated   : term -> term
-(*
+
    val bst_status_tm   : term
    val dest_bst_status : term -> term
    val is_bst_status   : term -> bool
@@ -228,7 +228,6 @@ sig
    val dest_bst_pc : term -> term
    val is_bst_pc   : term -> bool
    val mk_bst_pc   : term -> term
-*)
 
    (***************************)
    (* various functions       *)

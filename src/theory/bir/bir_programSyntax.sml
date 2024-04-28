@@ -20,7 +20,7 @@ val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 val syntax_fns4 = syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop;
 
-
+fun mkselnm ty f = TypeBasePure.mk_recordtype_fieldsel{tyname=ty,fieldname=f}
 
 (* bir_label_t *)
 
@@ -246,14 +246,14 @@ in
   TypeBase.mk_record (bir_state_t_ty, l)
 end handle e => raise wrap_exn "mk_bir_state" e;
 
-(* TODO: What's the counterpart of these in Trindemossen? *)
-(*
-val (bst_status_tm,  mk_bst_status, dest_bst_status, is_bst_status)  = syntax_fns1 "bir_state_t_bst_status";
+val (bst_status_tm,  mk_bst_status, dest_bst_status, is_bst_status) =
+ syntax_fns1 (mkselnm "bir_state_t" "bst_status");
 
-val (bst_environ_tm,  mk_bst_environ, dest_bst_environ, is_bst_environ)  = syntax_fns1 "bir_state_t_bst_environ";
+val (bst_environ_tm,  mk_bst_environ, dest_bst_environ, is_bst_environ) =
+ syntax_fns1 (mkselnm "bir_state_t" "bst_environ");
 
-val (bst_pc_tm,  mk_bst_pc, dest_bst_pc, is_bst_pc)  = syntax_fns1 "bir_state_t_bst_pc";
-*)
+val (bst_pc_tm,  mk_bst_pc, dest_bst_pc, is_bst_pc) =
+ syntax_fns1 (mkselnm "bir_state_t" "bst_pc");
 
 val (bir_state_init_tm,  mk_bir_state_init, dest_bir_state_init, is_bir_state_init)  = syntax_fns1 "bir_state_init";
 
