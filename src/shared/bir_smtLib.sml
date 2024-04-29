@@ -16,24 +16,29 @@ in
     | BirSmtUnknown;
 
   fun querysmt_raw q =
-    let
-      val tempfile = get_tempfile "smtquery" "nil";
-      val _ = write_to_file tempfile q;
+    case OS.Process.getEnv "HOL4_Z3_EXECUTABLE" of
+      SOME file =>
+      let
+       val tempfile = get_tempfile "smtquery" "nil";
+        val _ = write_to_file tempfile q;
 
-      val out = get_exec_output ("z3 " ^ tempfile);
-    in
-      if out = "sat\n" then
-	BirSmtSat
-      else if out = "unsat\n" then
-	BirSmtUnsat
-      else if out = "unknown\n" then
-	BirSmtUnknown
-      else
-	(print "\n============================\n";
-	 print out;
-	 print "\n============================\n";
-	 raise ERR "querysmt_raw" "unknown output from z3")
-    end;
+        val out = get_exec_output (file ^ " " ^ tempfile);
+      in
+        if out = "sat\n" then
+	  BirSmtSat
+        else if out = "unsat\n" then
+	  BirSmtUnsat
+        else if out = "unknown\n" then
+	  BirSmtUnknown
+        else
+	  (print "\n============================\n";
+	   print out;
+	   print "\n============================\n";
+	   raise ERR "querysmt_raw" "unknown output from z3")
+      end
+    | NONE =>
+      raise ERR "querysmt_raw"
+        "Z3 not configured: set the HOL4_Z3_EXECUTABLE environment variable to point to the Z3 executable file.";
 
   (* https://rise4fun.com/z3/tutorial *)
   (*
