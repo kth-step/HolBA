@@ -102,6 +102,8 @@ declare -a hol4_extrabuild=(
   "examples/l3-machine-code/arm8/prog"
   "examples/l3-machine-code/m0/model"
   "examples/l3-machine-code/m0/step"
+  "examples/l3-machine-code/riscv/model"
+  "examples/l3-machine-code/riscv/step"
 )
 
 for dir in "${hol4_extrabuild[@]}"
