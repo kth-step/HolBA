@@ -119,9 +119,7 @@ Definition WI_ELEM_LIST_def:
   (WI_ELEM_LIST b (SUC n) = b::(WI_ELEM_LIST (b+1w) n))
 End
 
-(* TODO: Why does Holmake not work to with this just commented out?
- * Interactively, this is defined by the above definition *)
-Theorem WI_ELEM_LIST_compute[allow_rebind] = CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) WI_ELEM_LIST_def
+val WI_ELEM_LIST_compute = DB.fetch "-" "WI_ELEM_LIST_compute";
 
 
 Theorem WI_MEM_WI_size:
