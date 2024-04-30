@@ -1,11 +1,12 @@
 open HolKernel Parse boolLib bossLib;
-open bir_auxiliaryLib;
 open bir_auxiliaryTheory;
 open bir_envTheory bir_valuesTheory;
 open bir_immTheory bir_typing_expTheory;
 open bir_exp_memTheory bir_expTheory;
 open bir_exp_immTheory;
 open HolBACoreSimps
+
+open bir_auxiliaryLib;
 
 val _ = new_theory "bir_bool_exp";
 
