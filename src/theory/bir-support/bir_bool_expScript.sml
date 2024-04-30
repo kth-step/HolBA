@@ -67,12 +67,6 @@ Proof
 SIMP_TAC std_ss [BVal_Imm_bool2b_TF_DEF]
 QED
 
-Theorem BVal_Imm_bool2b_TF_DEF:
-  !b. (BVal_Imm (bool2b b) = if b then bir_val_true else bir_val_false)
-Proof
-Cases >> SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def, bir_val_false_def]
-QED
-
 Theorem BVal_Imm_bool2b_EQ_TF_REWRS:
   (!b. (BVal_Imm (bool2b b) = bir_val_true) <=> b) /\
     (!b. (BVal_Imm (bool2b b) = bir_val_false) <=> ~b)

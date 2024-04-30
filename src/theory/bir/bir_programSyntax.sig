@@ -229,7 +229,6 @@ sig
    val is_bst_pc   : term -> bool
    val mk_bst_pc   : term -> term
 
-
    (***************************)
    (* various functions       *)
    (***************************)

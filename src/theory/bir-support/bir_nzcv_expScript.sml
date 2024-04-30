@@ -353,16 +353,6 @@ METIS_TAC[awc_BIR_NZCV_SYM, awc_BIR_NZVC_ELIMS]
 QED
 
 
-val nzcv_BIR_SUB_SYM = store_thm ("nzcv_BIR_ADD_SYM", ``
-  (!w1 (w2:'a word). nzcv_BIR_SUB_N (~w1) (~w2) <=> nzcv_BIR_SUB_N w2 w1) /\
-  (!w1 (w2:'a word). nzcv_BIR_SUB_Z (~w1) (~w2) <=> nzcv_BIR_SUB_Z w2 w1) /\
-  (!w1 (w2:'a word). nzcv_BIR_SUB_C (~w1) (~w2) <=> nzcv_BIR_SUB_C w2 w1) /\
-  (!w1 (w2:'a word). nzcv_BIR_SUB_V (~w1) (~w2) <=> nzcv_BIR_SUB_V w2 w1)``,
-
-SIMP_TAC std_ss [awc_BIR_NZVC_INTROS, WORD_NOT_NOT] >>
-SIMP_TAC std_ss [awc_BIR_NZVC_ELIMS_SYM, awc_BIR_NZVC_ELIMS]);
-
-
 
 (*******************)
 (* Simplifications *)

@@ -119,7 +119,7 @@ Definition WI_ELEM_LIST_def:
   (WI_ELEM_LIST b (SUC n) = b::(WI_ELEM_LIST (b+1w) n))
 End
 
-Theorem WI_ELEM_LIST_compute = CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) WI_ELEM_LIST_def
+val WI_ELEM_LIST_compute = DB.fetch "-" "WI_ELEM_LIST_compute";
 
 
 Theorem WI_MEM_WI_size:

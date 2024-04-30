@@ -505,7 +505,6 @@ rename1 `BVar vname2 vtype2 IN bir_vars_of_exp post` >>
 
      bir_env_vars_are_initialised (BEnv f)
        (bir_vars_of_exp (bir_exp_subst1 (BVar vname vtype) ex post)
-QED
 
  * which together with the assumption
 
@@ -577,7 +576,7 @@ subgoal `(BVar vname2 vtype2) IN
     [bir_exp_subst1_USED_VARS]
 ) >>
 METIS_TAC [bir_var_name_def, bir_var_type_def, combinTheory.UPDATE_APPLY]
-);
+QED
 
 (* Preservation of valid status for the Assign statement *)
 Theorem bir_assign_valid_status:

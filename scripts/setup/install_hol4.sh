@@ -16,7 +16,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 ##################################################################
 
 # use a default polyml version if it is not specified in the environment
-POLY_VERSION="v5.9"
+POLY_VERSION="v5.9.1"
 if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
   POLY_VERSION=${HOLBA_POLYML_VERSION}
 fi
@@ -27,7 +27,7 @@ export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
 # use a default hol4 version if it is not specified in the environment
-HOL4_VERSION="kananaskis-14"
+HOL4_VERSION="trindemossen-1"
 if [[ ! -z "${HOLBA_HOL4_VERSION}" ]]; then
   HOL4_VERSION=${HOLBA_HOL4_VERSION}
 fi
@@ -36,7 +36,7 @@ fi
 GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
 GIT_IS_TAG=1
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_k14
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_t1
 
 
 ##################################################################
@@ -102,6 +102,8 @@ declare -a hol4_extrabuild=(
   "examples/l3-machine-code/arm8/prog"
   "examples/l3-machine-code/m0/model"
   "examples/l3-machine-code/m0/step"
+  "examples/l3-machine-code/riscv/model"
+  "examples/l3-machine-code/riscv/step"
 )
 
 for dir in "${hol4_extrabuild[@]}"

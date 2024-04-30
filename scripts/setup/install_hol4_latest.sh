@@ -16,7 +16,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 ##################################################################
 
 # use a default polyml version if it is not specified in the environment
-POLY_VERSION="v5.9"
+POLY_VERSION="v5.9.1"
 if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
   POLY_VERSION=${HOLBA_POLYML_VERSION}
 fi

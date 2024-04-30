@@ -155,7 +155,7 @@ subgoal `!l1'. (l1' IN ls1') ==> (t_jgmt TS l1' ls2 (\st. (TS.ctrl st IN ls1' ==
 ) >>
 imp_res_tac total_seq_rule_thm >>
 gs [t_jgmt_def] >>
-subgoal `s' = st'` >- (
+subgoal `s' = st''` >- (
  (* Both reached by TS.weak s ls2 *)
   metis_tac [weak_unique]
 ) >>

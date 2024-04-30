@@ -290,43 +290,36 @@ Theorem bir_vs_consistent_IMP_includes_envty_of_vs:
              (bir_envty_includes_vs (bir_envty_of_vs vs) vs)
 Proof
 SIMP_TAC std_ss [bir_vs_consistent_def, bir_envty_of_vs_def, bir_envty_includes_vs_def, bir_envty_includes_v_def] >>
-  REPEAT STRIP_TAC >>
-  RW_TAC std_ss [] >>
-
-  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  `vs DIFF {BVar vn' vt' | (vn',vt') | bir_var_name v <> vn'} = {v}` by (
-    SIMP_TAC std_ss [GSPEC_IMAGE, o_DEF, EXTENSION, IMAGE_applied, IN_DIFF, IN_APP, SING_applied] >>
-    GEN_TAC >> Cases_on `x = v` >- (
-      ASM_SIMP_TAC (std_ss) [] >>
-      POP_ASSUM (K ALL_TAC) >>
-      `vs v` by METIS_TAC [IN_APP] >>
-      ASM_SIMP_TAC (std_ss) [] >>
-      POP_ASSUM (K ALL_TAC) >>
-
-      GEN_TAC >>
-      Cases_on `x'` >> Cases_on `v` >>
-      ASM_SIMP_TAC (std_ss) [bir_var_eq_EXPAND, bir_var_name_def, bir_var_type_def] >>
-      METIS_TAC []
-    ) >>
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+`vs DIFF {BVar vn' vt' | (vn',vt') | bir_var_name v <> vn'} = {v}` by (
+  SIMP_TAC std_ss [GSPEC_IMAGE, o_DEF, EXTENSION, IMAGE_applied, IN_DIFF, IN_APP, SING_applied] >>
+  GEN_TAC >> Cases_on `x = v` >- (
     ASM_SIMP_TAC (std_ss) [] >>
-    Cases_on `x IN vs` >- (
-      `vs x` by METIS_TAC [IN_APP] >>
-      ASM_SIMP_TAC (std_ss) [] >>
+    POP_ASSUM (K ALL_TAC) >>
+    `vs v` by METIS_TAC [IN_APP] >>
+    ASM_SIMP_TAC (std_ss) [] >>
+    POP_ASSUM (K ALL_TAC) >>
 
-      Cases_on `x` >> Cases_on `v` >>
-      Q.EXISTS_TAC `(s,b)` >>
-      ASM_SIMP_TAC (std_ss) [] >>
-      METIS_TAC [bir_var_name_def, bir_var_type_def]
-    ) >>
-    `~(vs x)` by METIS_TAC [IN_APP] >>
-    ASM_SIMP_TAC (std_ss) []
-  ) >|
-  [
-    Q.EXISTS_TAC `v` >>
-    fs[]
-  ,
-    ASM_SIMP_TAC std_ss [CHOICE_SING]
-  ]
+    GEN_TAC >>
+    Cases_on `x'` >> Cases_on `v` >>
+    ASM_SIMP_TAC (std_ss) [bir_var_eq_EXPAND, bir_var_name_def, bir_var_type_def] >>
+    METIS_TAC []
+  ) >>
+  ASM_SIMP_TAC (std_ss) [] >>
+  Cases_on `x IN vs` >- (
+    `vs x` by METIS_TAC [IN_APP] >>
+    ASM_SIMP_TAC (std_ss) [] >>
+
+    Cases_on `x` >> Cases_on `v` >>
+    Q.EXISTS_TAC `(s,b)` >>
+    ASM_SIMP_TAC (std_ss) [] >>
+    METIS_TAC [bir_var_name_def, bir_var_type_def]
+  ) >>
+  `~(vs x)` by METIS_TAC [IN_APP] >>
+  ASM_SIMP_TAC (std_ss) []
+) >>
+ASM_SIMP_TAC std_ss [CHOICE_SING]
 QED
 
 Theorem bir_envty_includes_vs_EMPTY:

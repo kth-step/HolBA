@@ -23,7 +23,7 @@ val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
 val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 
-
+fun mkselnm ty f = TypeBasePure.mk_recordtype_fieldsel{tyname=ty,fieldname=f}
 
 fun mk_bir_lifting_machine_rec_t_ty (ty_ms, ty_m_addr, ty_m_val) =
   mk_type ("bir_lifting_machine_rec_t", [ty_m_addr, ty_m_val, ty_ms]);
@@ -74,16 +74,20 @@ end handle e => raise wrap_exn "dest_bir_lifting_machine_rec" e;
 
 (* Array fields *)
 
-val (bmr_field_extra_tm,  mk_bmr_field_extra, dest_bmr_field_extra, is_bmr_field_extra)  = syntax_fns2 "bir_lifting_machine_rec_t_bmr_extra";
+val (bmr_field_extra_tm,  mk_bmr_field_extra, dest_bmr_field_extra, is_bmr_field_extra) =
+ syntax_fns2 (mkselnm "bir_lifting_machine_rec_t" "bmr_extra");
 
-val (bmr_field_imms_tm,  mk_bmr_field_imms, dest_bmr_field_imms, is_bmr_field_imms)  = syntax_fns1 "bir_lifting_machine_rec_t_bmr_imms";
+val (bmr_field_imms_tm,  mk_bmr_field_imms, dest_bmr_field_imms, is_bmr_field_imms) =
+ syntax_fns1 (mkselnm "bir_lifting_machine_rec_t" "bmr_imms");
 
-val (bmr_field_pc_tm,  mk_bmr_field_pc, dest_bmr_field_pc, is_bmr_field_pc)  = syntax_fns1 "bir_lifting_machine_rec_t_bmr_pc";
+val (bmr_field_pc_tm,  mk_bmr_field_pc, dest_bmr_field_pc, is_bmr_field_pc) =
+ syntax_fns1 (mkselnm "bir_lifting_machine_rec_t" "bmr_pc");
 
-val (bmr_field_mem_tm,  mk_bmr_field_mem, dest_bmr_field_mem, is_bmr_field_mem)  = syntax_fns1 "bir_lifting_machine_rec_t_bmr_mem";
+val (bmr_field_mem_tm,  mk_bmr_field_mem, dest_bmr_field_mem, is_bmr_field_mem) =
+ syntax_fns1 (mkselnm "bir_lifting_machine_rec_t" "bmr_mem");
 
-val (bmr_field_step_fun_tm,  mk_bmr_field_step_fun, dest_bmr_field_step_fun, is_bmr_field_step_fun)  = syntax_fns2 "bir_lifting_machine_rec_t_bmr_step_fun";
-
+val (bmr_field_step_fun_tm,  mk_bmr_field_step_fun, dest_bmr_field_step_fun, is_bmr_field_step_fun) =
+ syntax_fns2 (mkselnm "bir_lifting_machine_rec_t" "bmr_step_fun");
 
 (* the main part of bir_lifting_machinesTheory is the record
    type bir_lifting_machine_rec_t. To work with it and related types,

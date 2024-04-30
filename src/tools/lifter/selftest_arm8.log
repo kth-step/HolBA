@@ -1298,8 +1298,8 @@ D340FC21 (lsl x1, x1, #0) @ 0x10030 - OK
                   (BExp_Cast BIExp_LowCast
                      (BExp_Den (BVar "R0" (BType_Imm Bit64))) Bit32)
                   (BExp_Const (Imm32 0w)))
-               (BLE_Label (BL_Address (Imm64 0x10030w)))
-               (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+               (BLE_Label (BL_Address (Imm64 0x10034w)))
+               (BLE_Label (BL_Address (Imm64 0x10030w)))|>])
 
 B5000000 (l: cbnz x0, l) @ 0x10030 - OK
  []
@@ -1313,8 +1313,8 @@ B5000000 (l: cbnz x0, l) @ 0x10030 - OK
                (BExp_BinPred BIExp_Equal
                   (BExp_Den (BVar "R0" (BType_Imm Bit64)))
                   (BExp_Const (Imm64 0w)))
-               (BLE_Label (BL_Address (Imm64 0x10030w)))
-               (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+               (BLE_Label (BL_Address (Imm64 0x10034w)))
+               (BLE_Label (BL_Address (Imm64 0x10030w)))|>])
 
 37180000 (l: tbnz w0, #3, l) @ 0x10030 - OK
  []
@@ -4086,8 +4086,8 @@ B4000040 @ 0x10030 - OK
                   (BExp_Cast BIExp_LowCast
                      (BExp_Den (BVar "R0" (BType_Imm Bit64))) Bit32)
                   (BExp_Const (Imm32 0w)))
-               (BLE_Label (BL_Address (Imm64 0x10040w)))
-               (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+               (BLE_Label (BL_Address (Imm64 0x10034w)))
+               (BLE_Label (BL_Address (Imm64 0x10040w)))|>])
 
 B8617801 @ 0x10030 - OK
  []

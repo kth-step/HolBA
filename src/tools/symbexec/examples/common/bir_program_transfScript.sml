@@ -635,10 +635,6 @@ Cases_on `n` >- (
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS] >>
 
-    PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `0`) >>
-    FULL_SIMP_TAC arith_ss [] >>
-    FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS] >>
-
     `bs.bst_status = BST_Running /\
      bs'.bst_status = BST_Running` by (
       `bs.bst_pc <> bs'.bst_pc` by (
@@ -790,7 +786,7 @@ REWRITE_TAC
       `x = x'` by (
         Cases_on `x` >> Cases_on `x'` >>
         FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [IN_APP] >>
-        METIS_TAC [bir_programcounter_t_bpc_index]
+        METIS_TAC [recordtype_bir_programcounter_t_seldef_bpc_index_def]
       ) >>
       METIS_TAC [IN_APP]
     ) >>
@@ -1218,7 +1214,7 @@ QED
 
   POP_ASSUM (IMP_RES_TAC) >>
   METIS_TAC []
-);
+QED
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* TODO: the following is copied from transfer-test script (MODIFIED FOR TEMP VARS) *)

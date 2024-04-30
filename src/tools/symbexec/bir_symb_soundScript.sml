@@ -1343,7 +1343,7 @@ Definition bir_prog_has_no_halt_def:
     (bir_prog_has_no_halt (BirProgram t)))
   )
 End
-Theorem bir_prog_has_no_halt_thm:
+Theorem bir_prog_has_no_halt_block_thm:
   !blocks block.
   (bir_prog_has_no_halt (BirProgram blocks)) ==>
   (MEM block blocks) ==>
@@ -1402,7 +1402,7 @@ REPEAT STRIP_TAC >>
     METIS_TAC [INDEX_FIND_IMP_MEM_thm]
   ) >>
 
-  METIS_TAC [bir_prog_has_no_halt_thm, bir_block_has_no_halt_def]
+  METIS_TAC [bir_prog_has_no_halt_block_thm, bir_block_has_no_halt_def]
 QED
 
 Theorem birs_exec_stmtE_sound_thm:

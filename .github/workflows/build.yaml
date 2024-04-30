@@ -19,9 +19,9 @@ jobs:
 
     strategy:
       matrix:
-        polyml: ['v5.7.1', 'v5.9']
+        polyml: ['v5.7.1', 'v5.9.1']
         z3: ['4.8.4']
-        hol4: ['kananaskis-14']
+        hol4: ['trindemossen-1']
 
     env:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml }}

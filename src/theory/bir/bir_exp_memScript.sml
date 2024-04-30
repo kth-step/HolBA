@@ -864,8 +864,15 @@ SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def, bir_load_from_mem_used_addrs_d
 SIMP_TAC (list_ss++bir_endian_ss) [DISJ_IMP_THM, LEFT_AND_OVER_OR, FORALL_AND_THM,
   listTheory.MEM_MAP, rich_listTheory.MEM_COUNT_LIST] >>
 REPEAT STRIP_TAC >> (
-  MATCH_MP_TAC bir_update_mmap_UNCHANGED >>
+  MATCH_MP_TAC bir_update_mmap_UNCHANGED
+) >- (
   METIS_TAC[bitstring_split_LENGTHS_b2v, listTheory.LENGTH_REVERSE]
+) >- (
+  METIS_TAC[bitstring_split_LENGTHS_b2v, listTheory.LENGTH_REVERSE]
+) >- (
+  IMP_RES_TAC bitstring_split_LENGTHS_b2v >>
+  rpt strip_tac >>
+  gs[]
 )
 QED
 

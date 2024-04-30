@@ -448,7 +448,8 @@ fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
     (* TODO: optimize *)
     val single_step_prog_thm =
       REWRITE_RULE
-        [bir_symbTheory.birs_state_t_bsst_pc, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM]
+        [bir_symbTheory.recordtype_birs_state_t_seldef_bsst_pc_def,
+         bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM]
         birs_exec_thm;
 
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
