@@ -147,6 +147,30 @@ local
 
 in
 
+  fun hvar_to_smtlib_ref hv =
+    "holv_" ^ ((fst o dest_var) hv);
+
+  fun hvar_to_smtlib_type hv =
+    if not ((wordsSyntax.is_word_type o type_of) hv) then
+      problem_gen "hvar_to_smtlib_type" hv "don't know how to convert HOL type, must be word type: "
+    else
+    let
+      val hwsize = (Arbnum.toInt o wordsSyntax.size_of) hv;
+    in
+        if hwsize = 1 then
+          SMTTY_Bool
+        else if hwsize = 8 then
+          (SMTTY_BV  8)
+        else if hwsize = 16 then
+          (SMTTY_BV 16)
+        else if hwsize = 32 then
+          (SMTTY_BV 32)
+        else if hwsize = 64 then
+          (SMTTY_BV 64)
+        else
+	  problem_gen "hvar_to_smtlib_type" hv "don't know how to convert HOL type, bad word size: "
+    end;
+
   fun bvar_to_smtlib_ref bv =
     "birv_" ^ ((fst o dest_BVar_string) bv);
 
@@ -315,6 +339,16 @@ in
       fun smtlib_wrap_from_bool str = "(ite " ^ str ^ " #b1 #b0)";
     in
       if is_BExp_Const exp then
+        if (is_var o snd o gen_dest_Imm o dest_BExp_Const) exp then
+          let
+            val hv    = (snd o gen_dest_Imm o dest_BExp_Const) exp;
+            val sname = hvar_to_smtlib_ref  hv;
+            val stype = hvar_to_smtlib_type hv;
+            val var   = (sname, stype);
+          in
+            (conds, Redblackset.add(vars, var), var)
+          end
+	else
         let
           val (sz, wv) = (gen_dest_Imm o dest_BExp_Const) exp;
           val vstr =

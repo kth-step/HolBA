@@ -65,10 +65,49 @@ val mem_addrs_aligned_prog_disj_x11 = ``BExp_BinExp BIExp_And
         (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
         (BExp_Const (Imm64 0x100000000w))))``;
 
+val pre_vals_x10 = ``
+  BExp_BinExp BIExp_And
+    (BExp_BinPred
+      BIExp_Equal
+      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+      (BExp_Const (Imm64 pre_x10)))
+    (BExp_BinPred
+      BIExp_Equal
+      (BExp_Load
+        (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+        BEnd_LittleEndian Bit64)
+      (BExp_Const (Imm64 pre_x10_mem_deref)))``;
+
+val pre_vals_x11 = ``
+  BExp_BinExp BIExp_And
+    (BExp_BinPred
+      BIExp_Equal
+      (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
+      (BExp_Const (Imm64 pre_x11)))
+    (BExp_BinPred
+      BIExp_Equal
+      (BExp_Load
+        (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
+        BEnd_LittleEndian Bit64)
+      (BExp_Const (Imm64 pre_x11_mem_deref)))``;
+
+val birs_pcond = ``
+ BExp_BinExp BIExp_And
+  (BExp_BinExp BIExp_And
+   ^mem_addrs_aligned_prog_disj_x10
+   ^mem_addrs_aligned_prog_disj_x11)
+  (BExp_BinExp BIExp_And
+   ^pre_vals_x10
+   ^pre_vals_x11)``;
+
+(*
 val birs_pcond = ``BExp_BinExp
  BIExp_And
   ^mem_addrs_aligned_prog_disj_x10
   ^mem_addrs_aligned_prog_disj_x11``;
+*)
 
 (* TODO: probably need this later in the path condition: 
   ``BExp_UnaryExp BIExp_Not (BExp_Den (BVar "ModeHandler" BType_Bool))``;
