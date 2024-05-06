@@ -142,29 +142,6 @@ QED
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
-(*
-Definition bsysprecond_def:
-  bsysprecond x = FST (THE (birs_eval_exp (^bir_incr_pre x) (bir_senv_GEN_list incr_birenvtyl)))
-End
-
-Theorem bir_incr_pre_birs_eval_exp_thm = (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
-   birs_stepLib.birs_eval_exp_CONV)
-     ``birs_eval_exp (bir_incr_pre pre_x10) (bir_senv_GEN_list incr_birenvtyl)``
-
-Theorem bsysprecond_thm =
- (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bir_incr_pre_birs_eval_exp_thm] THENC EVAL) ``bsysprecond pre_x10``
-
-Theorem bir_incr_pre_birs_eval_exp_thm2 = REWRITE_CONV [bir_incr_pre_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp (bir_incr_pre pre_x10) (bir_senv_GEN_list incr_birenvtyl)``
-
-val bsysprecond = (fst o dest_eq o concl o Q.SPEC `pre_x10`) bsysprecond_def;
-
-val birs_state_init_pre = ``<|
-  bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := bir_senv_GEN_list incr_birenvtyl;
-  bsst_status   := BST_Running;
-  bsst_pcond    := ^bsysprecond
-|>``;
-*)
 
 
 
@@ -479,13 +456,6 @@ Proof
     SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES]
   ) >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm])
-(*>>
-  POP_ASSUM (ASSUME_TAC o SPEC birs_state_init_lbl) >>
-
-  FULL_SIMP_TAC std_ss [mk_bsysprecond_def, GSYM bsysprecond_def] >>
-
-  FULL_SIMP_TAC std_ss [birs_state_init_pre_GEN_def]
-*)
 QED
 
 
@@ -863,79 +833,11 @@ Theorem bir_abstract_jgmt_rel_incr_thm[local] =
 (* ........................... *)
 (* now manage the pre and postconditions into contract friendly "bir_exec_to_labels_triple_precond/postcond", need to change precondition to "bir_env_vars_are_initialised" for set of program variables *)
 
-Theorem bir_state_restrict_vars_envty_list_b_spec_thm:
-  !vs st st'.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
-    (st' = bir_state_restrict_vars vs st) ==>
-    (bir_env_vars_are_initialised st.bst_environ vs) ==>
-    (bir_envty_list_b incr_birenvtyl st'.bst_environ)
-Proof
-  `ALL_DISTINCT (MAP FST incr_birenvtyl)` by (
-    SIMP_TAC (std_ss++listSimps.LIST_ss) [incr_birenvtyl_EVAL_thm]
-  ) >>
-  REPEAT STRIP_TAC >>
-  `set (MAP PairToBVar incr_birenvtyl) = vs` by (
-    FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [GSYM incr_prog_vars_thm, incr_birenvtyl_def, listTheory.MAP_MAP_o, birs_auxTheory.PairToBVar_BVarToPair_I_thm]
-  ) >>
-  METIS_TAC [bir_state_restrict_vars_envty_list_b_thm]
-QED
 
-Theorem bir_incr_pre_EQ_FOR_VARS_thm:
-  !vs st1 st2 x.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
-    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_eval_exp (bir_incr_pre x) st1.bst_environ = SOME bir_val_true) ==>
-    (bir_eval_exp (bir_incr_pre x) st2.bst_environ = SOME bir_val_true)
-Proof
-  REPEAT STRIP_TAC >>
-  `bir_vars_of_exp (bir_incr_pre x) SUBSET vs` by (
-    ASM_REWRITE_TAC [] >>
-    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def, bir_incr_pre_def] >>
-    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
-  ) >>
-  METIS_TAC [bir_envTheory.bir_env_EQ_FOR_VARS_SUBSET, bir_vars_of_exp_THM_EQ_FOR_VARS, bir_state_EQ_FOR_VARS_ALT_DEF]
-QED
-Theorem bir_incr_post_EQ_FOR_VARS_thm:
-  !vs st1 st2 x.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
-    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_eval_exp (bir_incr_post x) st1.bst_environ = SOME bir_val_true) ==>
-    (bir_eval_exp (bir_incr_post x) st2.bst_environ = SOME bir_val_true)
-Proof
-  REPEAT STRIP_TAC >>
-  `bir_vars_of_exp (bir_incr_post x) SUBSET vs` by (
-    ASM_REWRITE_TAC [] >>
-    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def, bir_incr_post_def] >>
-    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
-  ) >>
-  METIS_TAC [bir_envTheory.bir_env_EQ_FOR_VARS_SUBSET, bir_vars_of_exp_THM_EQ_FOR_VARS, bir_state_EQ_FOR_VARS_ALT_DEF]
-QED
 
-Theorem pre_bir_nL_vars_EQ_precond_IMP_thm:
-  !vs st1 st2.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
-    (st2 = bir_state_restrict_vars vs st1) ==>
-    (bir_exec_to_labels_triple_precond st1 (bir_incr_pre pre_x10) ^bprog_tm) ==>
-    (pre_bir_nL pre_x10 st2)
-Proof
-  REPEAT GEN_TAC >>
-  STRIP_TAC >>
-  POP_ASSUM (ASSUME_TAC o GSYM) >>
-  STRIP_TAC >>
-  POP_ASSUM (ASSUME_TAC o GSYM) >>
-  STRIP_TAC >>
 
-  `bir_envty_list_b incr_birenvtyl st2.bst_environ` by (
-    METIS_TAC [bir_state_restrict_vars_envty_list_b_spec_thm, bir_exec_to_labels_triple_precond_def] (* for the reduced state st2, we can prove this *)
-  ) >>
-  (* we get this from the restriction, the rest must be due to the equality for the variables *)
-  `bir_state_EQ_FOR_VARS vs st1 st2` by (
-    METIS_TAC [bir_vars_EQ_state_restrict_vars_THM]
-  ) >>
 
-  FULL_SIMP_TAC std_ss [pre_bir_nL_def, pre_bircont_nL_def, bir_exec_to_labels_triple_precond_def] >>
-  METIS_TAC [bir_incr_pre_EQ_FOR_VARS_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
-QED
+
 
 (* TODO: MOVE THIS AWAY *)
 Theorem bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm[local]:
@@ -951,86 +853,178 @@ Proof
   METIS_TAC []
 QED
 
-Theorem post_bir_nL_vars_EQ_postcond_IMP_thm:
-  !vs st1' st2' st2.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
+(* TODO: MOVE AWAY !!!!! GENERIC DEFINITIONS AND THEOREMS *)
+Theorem bir_vars_of_exp_SUBSET_THM_EQ_FOR_VARS:
+  !vs st1 st2 e.
+    (bir_vars_of_exp e SUBSET vs) ==>
+    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
+    (bir_eval_exp e st1.bst_environ = bir_eval_exp e st2.bst_environ)
+Proof
+  METIS_TAC [bir_envTheory.bir_env_EQ_FOR_VARS_SUBSET, bir_vars_of_exp_THM_EQ_FOR_VARS, bir_state_EQ_FOR_VARS_ALT_DEF]
+QED
+
+Theorem pre_bircont_nL_vars_EQ_precond_IMP_thm:
+  !vs p bpre envtyl st1 st2.
+    (vs = bir_vars_of_program p) ==>
+    (bir_vars_of_exp bpre SUBSET vs) ==>
+    (ALL_DISTINCT (MAP FST envtyl)) ==>
+    (set (MAP PairToBVar envtyl) = vs) ==>
+    (st2 = bir_state_restrict_vars vs st1) ==>
+    (bir_exec_to_labels_triple_precond st1 bpre p) ==>
+    (pre_bircont_nL envtyl bpre st2)
+Proof
+  REPEAT GEN_TAC >>
+  STRIP_TAC >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  STRIP_TAC >> STRIP_TAC >> STRIP_TAC >> STRIP_TAC >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  STRIP_TAC >>
+
+  `bir_envty_list_b envtyl st2.bst_environ` by (
+    (* for the reduced state st2, we can prove this *)
+    METIS_TAC [bir_state_restrict_vars_envty_list_b_thm, bir_exec_to_labels_triple_precond_def]
+  ) >>
+  (* we get this from the restriction, the rest must be due to the equality for the variables *)
+  `bir_state_EQ_FOR_VARS vs st1 st2` by (
+    METIS_TAC [bir_vars_EQ_state_restrict_vars_THM]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [pre_bircont_nL_def, bir_exec_to_labels_triple_precond_def] >>
+  METIS_TAC [bir_vars_of_exp_SUBSET_THM_EQ_FOR_VARS, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
+QED
+
+Theorem post_bircont_nL_vars_EQ_postcond_IMP_thm:
+  !vs p bpost exit_albl st1' st2' st2.
+    (vs = bir_vars_of_program p) ==>
+    (bir_vars_of_exp bpost SUBSET vs) ==>
+    (bir_is_bool_exp bpost) ==>
     (bir_state_EQ_FOR_VARS vs st1' st2') ==>
-    (post_bir_nL pre_x10 st2 st2') ==>
-    (bir_exec_to_labels_triple_postcond st1' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false) ^bprog_tm)
+    (post_bircont_nL
+       <|bpc_label := BL_Address exit_albl; bpc_index := 0|>
+       vs bpost st2 st2') ==>
+    (bir_exec_to_labels_triple_postcond st1' (\l. if l = BL_Address exit_albl then bpost else bir_exp_false) p)
 Proof
   REPEAT GEN_TAC >>
   STRIP_TAC >>
   POP_ASSUM (ASSUME_TAC o GSYM) >>
   REPEAT STRIP_TAC >>
 
-  FULL_SIMP_TAC std_ss [post_bir_nL_def, post_bircont_nL_def, bir_exec_to_labels_triple_postcond_def] >>
+  FULL_SIMP_TAC std_ss [post_bircont_nL_def, bir_exec_to_labels_triple_postcond_def] >>
 
   `bir_env_vars_are_initialised st1'.bst_environ vs` by (
     METIS_TAC [bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm, bir_state_EQ_FOR_VARS_SYM_thm, incr_prog_vars_thm]
   ) >>
-  `st1'.bst_pc.bpc_label = BL_Address (Imm64 4w) /\ st1'.bst_pc.bpc_index = 0` by (
+  `st1'.bst_pc.bpc_label = BL_Address exit_albl /\ st1'.bst_pc.bpc_index = 0` by (
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
   ) >>
-  `bir_is_bool_exp_env st1'.bst_environ (bir_incr_post pre_x10)` by (
-    `bir_env_var_is_initialised st1'.bst_environ (BVar "x10" (BType_Imm Bit64))` by (
-      PAT_X_ASSUM ``bir_vars_of_program A = B`` (ASSUME_TAC o GSYM) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-
-      FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
-      FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]
-    ) >>
-    REWRITE_TAC [bir_incr_post_def] >>
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
-
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, EVAL ``bool2b T``, bir_val_true_def] >>
-
-    REWRITE_TAC [bir_bool_expTheory.bir_is_bool_exp_env_REWRS, bir_typing_expTheory.bir_vars_of_exp_def] >>
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
-
-    FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
-
-    FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]
+  `bir_is_bool_exp_env st1'.bst_environ bpost` by (
+    ASM_REWRITE_TAC [bir_is_bool_exp_env_def] >>
+    METIS_TAC [bir_env_vars_are_initialised_SUBSET]
   ) >>
   ASM_SIMP_TAC std_ss [] >>
 
-  METIS_TAC [bir_incr_post_EQ_FOR_VARS_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_EQ_FOR_VARS_SYM_thm]
+  METIS_TAC [bir_vars_of_exp_SUBSET_THM_EQ_FOR_VARS, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_EQ_FOR_VARS_SYM_thm]
 QED
+
+Theorem abstract_jgmt_rel_bir_exec_to_labels_triple_thm:
+!p start_albl exit_albl L envtyl vars bpre bpost.
+  (vars = bir_vars_of_program p) ==>
+  (bir_vars_of_exp bpre SUBSET vars) ==>
+  (bir_vars_of_exp bpost SUBSET vars) ==>
+  (bir_is_bool_exp bpost) ==>
+  (ALL_DISTINCT (MAP FST envtyl)) ==>
+  (set (MAP PairToBVar envtyl) = vars) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl}
+    (pre_bircont_nL envtyl bpre)
+    (post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost)) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl}
+    (\st. bir_exec_to_labels_triple_precond st bpre p)
+    (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address exit_albl then bpost else bir_exp_false) p))
+Proof
+  REWRITE_TAC [abstract_jgmt_rel_def] >>
+  REPEAT STRIP_TAC >>
+  Q.ABBREV_TAC `vs = bir_vars_of_program p` >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  (* reduce ms here to a state that only has the program variables and is equal in all program variables, ms_r, then use this new state instead in the next line *)
+  Q.ABBREV_TAC `ms_r = bir_state_restrict_vars vs ms` >>
+  `bir_state_EQ_FOR_VARS vs ms ms_r` by (
+    METIS_TAC [bir_vars_EQ_state_restrict_vars_THM]
+  ) >>
+  (* here we prove that all the precondition stuff also holds in ms_r *)
+  `pre_bircont_nL envtyl bpre ms_r /\ (bir_ts p).ctrl ms_r = BL_Address start_albl` by (
+    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def] >>
+    FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF] >>
+    METIS_TAC [pre_bircont_nL_vars_EQ_precond_IMP_thm]
+  ) >>
+
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPECL [`ms_r`]) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  rename1 `(bir_ts p).weak {BL_Address exit_albl} ms_r ms_r'` >>
+
+  (* because ms_r equals ms in the program variables, we know that the weak transition from ms and ms_r leads to a state that is equal in the program variables *)
+  `?ms'. (bir_ts p).weak {BL_Address exit_albl} ms ms' /\ bir_state_EQ_FOR_VARS vs ms' ms_r'` by (
+    METIS_TAC [bir_prop_transferTheory.bir_vars_bir_ts_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+  ) >>
+  Q.EXISTS_TAC `ms'` >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+
+  (* and because these are equal the postcondition stuff is established as well *)
+  METIS_TAC [post_bircont_nL_vars_EQ_postcond_IMP_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+QED
+
+
+
+
+
 
 Theorem abstract_jgmt_rel_incr[local]:
  abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
   (\st. bir_exec_to_labels_triple_precond st (bir_incr_pre pre_x10) ^bprog_tm)
   (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false) ^bprog_tm)
 Proof
-  ASSUME_TAC bir_abstract_jgmt_rel_incr_thm >>
+  MATCH_MP_TAC (REWRITE_RULE [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
+  SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `incr_birenvtyl` >>
 
-  FULL_SIMP_TAC std_ss [abstract_jgmt_rel_def] >>
-
-  REPEAT STRIP_TAC >>
-
-  (* reduce st here to a state that only has the program variables and is equal in all program variables, st_r, then use this new state instead in the next line *)
-  Q.ABBREV_TAC `vs = bir_vars_of_program (bir_incr_prog:'observation_type bir_program_t)` >>
-  Q.ABBREV_TAC `st_r = bir_state_restrict_vars vs st` >>
-  `bir_state_EQ_FOR_VARS vs st st_r` by (
-    METIS_TAC [bir_vars_EQ_state_restrict_vars_THM]
-  ) >>
-  (* here we prove that all the precondition stuff also holds in st_r *)
-  `pre_bir_nL pre_x10 st_r /\ (bir_ts (bir_incr_prog:'observation_type bir_program_t)).ctrl st_r = BL_Address (Imm64 0w)` by (
-    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def] >>
-    METIS_TAC [pre_bir_nL_vars_EQ_precond_IMP_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
+  CONJ_TAC >- (
+    (* bpre subset *)
+    REWRITE_TAC [bir_incr_pre_def] >>
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
 
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPECL [`st_r`]) >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
-
-  (* because st_r equals st in the program variables, we know that the weak transition from st and st_r leads to a state that is equal in the program variables *)
-  `?st'. (bir_ts (bir_incr_prog:'observation_type bir_program_t)).weak {BL_Address (Imm64 4w)} st st' /\ bir_state_EQ_FOR_VARS vs ms' st'` by (
-    METIS_TAC [bir_prop_transferTheory.bir_vars_bir_ts_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+  CONJ_TAC >- (
+    (* bpost subset *)
+    REWRITE_TAC [bir_incr_post_def] >>
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
-  Q.EXISTS_TAC `st'` >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
 
-  (* TODO: and because these are equal the postcondition stuff is established as well *)
-  METIS_TAC [post_bir_nL_vars_EQ_postcond_IMP_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+  CONJ_TAC >- (
+    (* bpost is bool *)
+    REWRITE_TAC [bir_incr_post_def] >>
+    SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_REWRS, type_of_bir_exp_def]
+  ) >>
+
+  CONJ_TAC >- (
+    (* ALL_DISTINCT envtyl *)
+    SIMP_TAC (std_ss++listSimps.LIST_ss) [incr_birenvtyl_EVAL_thm]
+  ) >>
+
+  CONJ_TAC >- (
+    (* envtyl = vars_of_prog *)
+    REWRITE_TAC [GSYM incr_prog_vars_thm] >>
+    SIMP_TAC std_ss [incr_birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
+  ) >>
+
+  METIS_TAC [bir_abstract_jgmt_rel_incr_thm, pre_bir_nL_def, post_bir_nL_def, incr_prog_vars_thm]
 QED
 
 Theorem bir_cont_incr_tm[local]:
