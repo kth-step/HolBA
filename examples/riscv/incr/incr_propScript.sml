@@ -363,6 +363,37 @@ End
 Definition bprog_Q_def:
   bprog_Q x = Q_bircont (^birs_state_end_lbl) (set incr_prog_vars) (^bir_incr_post x)
 End
+
+Definition pre_bir_def:
+  pre_bir x bs =
+       (bir_eval_exp (^bir_incr_pre x) bs.bst_environ = SOME bir_val_true)
+End
+
+Definition post_bir_def:
+  post_bir x bs1 bs2 =
+       (bir_eval_exp (^bir_incr_post x) bs2.bst_environ = SOME bir_val_true)
+End
+
+Definition pre_bir_nL_def:
+  pre_bir_nL x st =
+      (
+       st.bst_status = BST_Running /\
+       st.bst_pc.bpc_index = 0 /\
+       bir_envty_list_b incr_birenvtyl st.bst_environ /\
+
+       pre_bir x st
+      )
+End
+Definition post_bir_nL_def:
+  post_bir_nL x (st:bir_state_t) st' =
+      (
+         (st'.bst_pc = ^birs_state_end_lbl) /\
+         st'.bst_status = BST_Running /\
+         bir_env_vars_are_initialised st'.bst_environ (set incr_prog_vars) /\
+
+         post_bir x st st'
+      )
+End
 (* ........................... *)
 
 (* P is generic enough *)
@@ -659,14 +690,9 @@ val bprog_concst_prop_thm =
 
 
 (* lift to concrete bir property *)
-val st_init_lbl = (snd o dest_eq o hd o fst o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm;
-
-(* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
-val bprog_lbls  = List.nth ((snd o strip_comb o fst o dest_conj o snd o strip_exists o snd o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm, 3);
-
 Theorem bprog_to_concst_prop_thm:
   !st.
-  (symb_concst_pc (birs_symb_to_concst st) = (^st_init_lbl)) ==>
+  (symb_concst_pc (birs_symb_to_concst st) = (^birs_state_init_lbl)) ==>
   (bprog_P pre_x10 (birs_symb_to_concst st)) ==>
   (?n st'.
      (step_n_in_L
@@ -674,7 +700,7 @@ Theorem bprog_to_concst_prop_thm:
        (SND o bir_exec_step (^bprog_tm))
        st
        n
-       (^bprog_lbls)
+       (^L_s)
        st')
      /\
      (bprog_Q pre_x10 (birs_symb_to_concst st) (birs_symb_to_concst st')))
@@ -707,49 +733,18 @@ QED
 
 (* finish translation to pure BIR property *)
 Theorem bprog_bir_prop_thm = REWRITE_RULE
-    [bprog_P_def, P_bircont_thm, bir_incr_pre_def, bprog_Q_def, Q_bircont_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM incr_analysis_L_def]
+    [bprog_P_def, P_bircont_thm, bprog_Q_def, Q_bircont_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM incr_analysis_L_def]
     (REWRITE_RULE
       []
       bprog_to_concst_prop_thm)
 
 (* ........................... *)
 
-val bir_frag_l_tm = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
+val bir_frag_l_tm = birs_state_init_lbl;
 val bir_frag_l_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl o EVAL) ``(^bir_frag_l_tm).bpc_label``;
 
-val bir_frag_l_exit_ml_tm = ``4w:word64``;
-val bir_frag_l_exit_tm = ``<|bpc_label := BL_Address (Imm64 ^bir_frag_l_exit_ml_tm); bpc_index := 0|>``;
-
-Definition pre_bir_def:
-  pre_bir x bs =
-       (bir_eval_exp (bir_incr_pre x) bs.bst_environ = SOME bir_val_true)
-End
-
-Definition post_bir_def:
-  post_bir x bs1 bs2 =
-       (bir_eval_exp (bir_incr_post x) bs2.bst_environ = SOME bir_val_true)
-End
-
-Definition pre_bir_nL_def:
-  pre_bir_nL x st =
-      (
-       st.bst_status = BST_Running /\
-       st.bst_pc.bpc_index = 0 /\
-       bir_envty_list_b incr_birenvtyl st.bst_environ /\
-
-       pre_bir x st
-      )
-End
-Definition post_bir_nL_def:
-  post_bir_nL x (st:bir_state_t) st' =
-      (
-         (st'.bst_pc = ^bir_frag_l_exit_tm) /\
-         st'.bst_status = BST_Running /\
-         bir_env_vars_are_initialised st'.bst_environ (set incr_prog_vars) /\
-
-         post_bir x st st'
-      )
-End
+val bir_frag_l_exit_tm = birs_state_end_lbl;
+val bir_frag_l_exit_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl o EVAL) ``(^bir_frag_l_exit_tm).bpc_label``;
 
 Theorem bir_step_n_in_L_jgmt_thm[local]:
   bir_step_n_in_L_jgmt
@@ -760,7 +755,7 @@ Theorem bir_step_n_in_L_jgmt_thm[local]:
   (post_bir_nL pre_x10)
 Proof
   REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
-  REWRITE_TAC [pre_bir_nL_def, pre_bir_def, bir_incr_pre_def] >>
+  REWRITE_TAC [pre_bir_nL_def, pre_bir_def] >>
   REPEAT STRIP_TAC >>
 
   ASSUME_TAC (Q.SPEC `st` bprog_bir_prop_thm) >>
@@ -871,33 +866,6 @@ Proof
   ) >>
   METIS_TAC [bir_envTheory.bir_env_EQ_FOR_VARS_SUBSET, bir_vars_of_exp_THM_EQ_FOR_VARS, bir_state_EQ_FOR_VARS_ALT_DEF]
 QED
-
-(*
-Theorem bir_incr_post_EQ_FOR_VARS_thm:
-  !vs st1 st1' st2' x.
-    (vs = bir_vars_of_program ^bprog_tm) ==>
-    (bir_state_EQ_FOR_VARS vs st1' st2') ==>
-    (post_bir x st1 st1') ==>
-    (bir_eval_exp (bir_incr_post x) st2'.bst_environ = SOME bir_val_true)
-Proof
-  REPEAT STRIP_TAC >>
-
-  (* resolve the concrete set of variables *)
-  FULL_SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_envTheory.bir_env_EQ_FOR_VARS_def] >>
-  (* duplication in the lines before, with respect to the proof right before *)
-
-  `post_bir x st2 st2'` by (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [post_bir_def] >>
-    METIS_TAC [bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT]
-  ) >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [post_bir_def, bir_incr_post_def] >>
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, EVAL ``bool2b T``, bir_val_true_def]
-QED
-*)
 
 Theorem pre_bir_nL_vars_EQ_precond_IMP_thm:
   !vs st1 st2.
