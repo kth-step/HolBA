@@ -134,6 +134,12 @@ End
 val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
 val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 4w))``;
 
+Theorem incr_analysis_L_NOTIN_thm[local]:
+  (^birs_state_end_lbl) NOTIN incr_analysis_L
+Proof
+  EVAL_TAC
+QED
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (*
@@ -166,7 +172,7 @@ val birs_state_init_pre = ``<|
 Definition P_bircont_def:
   P_bircont envtyl bpre ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
-       pc.bpc_index = 0 /\ (* TODO: comment here why do we need this? *)
+       pc.bpc_index = 0 /\ (* we need this for bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_thm *)
        bir_envty_list envtyl st /\
        bir_eval_exp bpre (BEnv st) = SOME bir_val_true)
 End
@@ -214,6 +220,43 @@ Theorem Q_bircont_thm:
     )
 Proof
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, Q_bircont_def, bir_BEnv_lookup_EQ_thm]
+QED
+
+Definition pre_bircont_nL_def:
+  pre_bircont_nL envtyl bpre st =
+      (
+       st.bst_status = BST_Running /\
+       st.bst_pc.bpc_index = 0 /\
+       bir_envty_list_b envtyl st.bst_environ /\
+
+       bir_eval_exp bpre st.bst_environ = SOME bir_val_true
+      )
+End
+
+Definition post_bircont_nL_def:
+  post_bircont_nL end_lbl vars bpost (st:bir_state_t) st' =
+      (
+         (st'.bst_pc = end_lbl) /\
+         st'.bst_status = BST_Running /\
+         bir_env_vars_are_initialised st'.bst_environ vars /\
+
+         bir_eval_exp bpost st'.bst_environ = SOME bir_val_true
+      )
+End
+
+Theorem P_bircont_pre_nL_thm:
+  !envtyl bpre bs.
+  P_bircont envtyl bpre (birs_symb_to_concst bs) = pre_bircont_nL envtyl bpre bs
+Proof
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss) [P_bircont_thm, pre_bircont_nL_def]
+QED
+
+Theorem Q_bircont_post_nL_thm:
+  !end_lbl vars bpost bs1 bs2.
+  Q_bircont end_lbl vars bpost (birs_symb_to_concst bs1) (birs_symb_to_concst bs2) = post_bircont_nL end_lbl vars bpost bs1 bs2
+Proof
+  FULL_SIMP_TAC (std_ss) [Q_bircont_thm, post_bircont_nL_def]
 QED
 
 
@@ -357,42 +400,16 @@ Definition bprog_P_def:
   bprog_P x = P_bircont incr_birenvtyl (^bir_incr_pre x)
 End
 
-(*
-(\env. bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 (x + 1w))))
-*)
 Definition bprog_Q_def:
   bprog_Q x = Q_bircont (^birs_state_end_lbl) (set incr_prog_vars) (^bir_incr_post x)
 End
 
-Definition pre_bir_def:
-  pre_bir x bs =
-       (bir_eval_exp (^bir_incr_pre x) bs.bst_environ = SOME bir_val_true)
-End
-
-Definition post_bir_def:
-  post_bir x bs1 bs2 =
-       (bir_eval_exp (^bir_incr_post x) bs2.bst_environ = SOME bir_val_true)
-End
-
 Definition pre_bir_nL_def:
-  pre_bir_nL x st =
-      (
-       st.bst_status = BST_Running /\
-       st.bst_pc.bpc_index = 0 /\
-       bir_envty_list_b incr_birenvtyl st.bst_environ /\
-
-       pre_bir x st
-      )
+  pre_bir_nL x = pre_bircont_nL incr_birenvtyl (^bir_incr_pre x)
 End
-Definition post_bir_nL_def:
-  post_bir_nL x (st:bir_state_t) st' =
-      (
-         (st'.bst_pc = ^birs_state_end_lbl) /\
-         st'.bst_status = BST_Running /\
-         bir_env_vars_are_initialised st'.bst_environ (set incr_prog_vars) /\
 
-         post_bir x st st'
-      )
+Definition post_bir_nL_def:
+  post_bir_nL x = post_bircont_nL (^birs_state_end_lbl) (set incr_prog_vars) (^bir_incr_post x)
 End
 (* ........................... *)
 
@@ -671,153 +688,180 @@ QED
 
 (* apply the theorem for property transfer *)
 val bprog_prop_holds_thm =
+  SIMP_RULE (std_ss++birs_state_ss)
+    [birs_state_init_pre_GEN_def, birs_symb_symbst_pc_thm, GSYM incr_analysis_L_def] (
   MATCH_MP
     (MATCH_MP
       (MATCH_MP
          birs_prop_transfer_thm
          bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
-    incr_analysis_thm;
+    incr_analysis_thm);
+
+
+
+
+
+
+
+
+(* TODO: MOVE AWAY !!!!! GENERIC DEFINITIONS AND THEOREMS *)
 
 (* lift to concrete state property *)
-val bprog_concst_prop_thm =
-  SIMP_RULE (std_ss++birs_state_ss)
-    [birs_state_init_pre_GEN_def, birs_symb_symbst_pc_thm]
-    (REWRITE_RULE
-      [symb_prop_transferTheory.prop_holds_def]
-      bprog_prop_holds_thm);
-(* ........................... *)
-
-
-(* lift to concrete bir property *)
-Theorem bprog_to_concst_prop_thm:
-  !st.
-  (symb_concst_pc (birs_symb_to_concst st) = (^birs_state_init_lbl)) ==>
-  (bprog_P pre_x10 (birs_symb_to_concst st)) ==>
-  (?n st'.
+Theorem prop_holds_TO_step_n_in_L_thm:
+!p start_lbl exit_lbl L P Q.
+  (prop_holds (bir_symb_rec_sbir p)
+       start_lbl L P Q) ==>
+  (!st.
+   (symb_concst_pc (birs_symb_to_concst st) = start_lbl) ==>
+   (P (birs_symb_to_concst st)) ==>
+   (?n st'.
      (step_n_in_L
        (symb_concst_pc o birs_symb_to_concst)
-       (SND o bir_exec_step (^bprog_tm))
+       (SND o bir_exec_step p)
        st
        n
-       (^L_s)
-       st')
-     /\
-     (bprog_Q pre_x10 (birs_symb_to_concst st) (birs_symb_to_concst st')))
+       L
+       st') /\
+      (Q (birs_symb_to_concst st) (birs_symb_to_concst st'))))
 Proof
-REPEAT STRIP_TAC >>
-  IMP_RES_TAC (HO_MATCH_MP birs_symb_to_concst_PROP_FORALL_thm bprog_concst_prop_thm) >>
+  REPEAT STRIP_TAC >>
 
+  FULL_SIMP_TAC std_ss [prop_holds_def] >>
+  PAT_X_ASSUM ``!x. A`` IMP_RES_TAC >>
+  ASSUME_TAC (Q.SPEC `s'` birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `st'` >>
   FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [conc_step_n_in_L_def, bir_symb_rec_sbir_def] >>
-
-  ASSUME_TAC ((GSYM o Q.SPEC `s'`) birs_symb_to_concst_EXISTS_thm) >>
-  FULL_SIMP_TAC std_ss [] >>
-  FULL_SIMP_TAC std_ss [] >>
-
   `birs_symb_to_concst o SND o bir_exec_step ^bprog_tm o
-             birs_symb_from_concst =
+                 birs_symb_from_concst =
    birs_symb_to_concst o (SND o bir_exec_step ^bprog_tm) o
-             birs_symb_from_concst` by (
-    FULL_SIMP_TAC (std_ss) []
+                 birs_symb_from_concst` by (
+     FULL_SIMP_TAC (std_ss) []
   ) >>
   FULL_SIMP_TAC (pure_ss) [] >>
+  REV_FULL_SIMP_TAC (pure_ss) [] >>
 
   FULL_SIMP_TAC (pure_ss) [
-    SIMP_RULE std_ss [birs_symb_to_from_concst_thm, birs_symb_to_concst_EXISTS_thm, birs_symb_to_concst_EQ_thm] (
+    GSYM (SIMP_RULE std_ss [birs_symb_to_from_concst_thm, birs_symb_to_concst_EXISTS_thm, birs_symb_to_concst_EQ_thm] (
       SPECL [``birs_symb_to_concst``, ``birs_symb_from_concst``] (
         INST_TYPE [Type`:'b` |-> Type`:(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t`, Type`:'a` |-> Type`:bir_state_t`] step_n_in_L_ABS_thm)
-  )] >>
+   ))] >>
+  FULL_SIMP_TAC (std_ss) []
+QED
+(* finish translation to pure BIR property *)
+Theorem prop_holds_TO_step_n_in_L_BIR_thm:
+!p start_lbl exit_lbl L envtyl vars bpre bpost.
+  (prop_holds (bir_symb_rec_sbir p)
+       start_lbl L (P_bircont envtyl bpre) (Q_bircont exit_lbl vars bpost)) ==>
+  (!st.
+       st.bst_pc = start_lbl ==>
+       pre_bircont_nL envtyl bpre st ==>
+       ?n st'.
+         step_n_in_L (\x. x.bst_pc) (\x. bir_exec_step_state p x)
+           st n L st' /\ post_bircont_nL exit_lbl vars bpost st st')
+Proof
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC prop_holds_TO_step_n_in_L_thm >>
 
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [birs_symb_concst_pc_thm, P_bircont_pre_nL_thm, Q_bircont_post_nL_thm] >>
+  PAT_X_ASSUM ``!x. A`` IMP_RES_TAC >>
+  FULL_SIMP_TAC std_ss [bprog_P_def, P_bircont_pre_nL_thm, GSYM pre_bir_nL_def, bprog_Q_def, Q_bircont_post_nL_thm, GSYM post_bir_nL_def, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM incr_analysis_L_def] >>
   METIS_TAC []
 QED
 
-(* finish translation to pure BIR property *)
-Theorem bprog_bir_prop_thm = REWRITE_RULE
-    [bprog_P_def, P_bircont_thm, bprog_Q_def, Q_bircont_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def, GSYM incr_analysis_L_def]
-    (REWRITE_RULE
-      []
-      bprog_to_concst_prop_thm)
-
-(* ........................... *)
-
-val bir_frag_l_tm = birs_state_init_lbl;
-val bir_frag_l_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl o EVAL) ``(^bir_frag_l_tm).bpc_label``;
-
-val bir_frag_l_exit_tm = birs_state_end_lbl;
-val bir_frag_l_exit_ml_tm = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl o EVAL) ``(^bir_frag_l_exit_tm).bpc_label``;
-
-Theorem bir_step_n_in_L_jgmt_thm[local]:
-  bir_step_n_in_L_jgmt
-  ^bprog_tm
-  ^bir_frag_l_tm
-  incr_analysis_L
-  (pre_bir_nL pre_x10)
-  (post_bir_nL pre_x10)
+Theorem prop_holds_TO_bir_step_n_in_L_jgmt_thm:
+!p start_lbl exit_lbl L envtyl vars bpre bpost.
+  (prop_holds (bir_symb_rec_sbir p)
+       start_lbl L (P_bircont envtyl bpre) (Q_bircont exit_lbl vars bpost)) ==>
+  (bir_step_n_in_L_jgmt
+    p
+    start_lbl
+    L
+    (pre_bircont_nL envtyl bpre)
+    (post_bircont_nL exit_lbl vars bpost))
 Proof
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC prop_holds_TO_step_n_in_L_BIR_thm >>
+
   REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
-  REWRITE_TAC [pre_bir_nL_def, pre_bir_def] >>
+  METIS_TAC []
+QED
+
+(* use the reasoning on label sets to get to abstract_jgmt_rel *)
+Theorem bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_thm:
+!p start_albl exit_albl L envtyl vars bpre bpost.
+  (<|bpc_label := BL_Address exit_albl; bpc_index := 0|> NOTIN L) ==>
+  (bir_step_n_in_L_jgmt
+    p
+    <|bpc_label := BL_Address start_albl; bpc_index := 0|>
+    L
+    (pre_bircont_nL envtyl bpre)
+    (post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost)) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl}
+    (pre_bircont_nL envtyl bpre)
+    (post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost))
+Proof
   REPEAT STRIP_TAC >>
 
-  ASSUME_TAC (Q.SPEC `st` bprog_bir_prop_thm) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
+  IMP_RES_TAC (
+    (REWRITE_RULE
+       [bir_programTheory.bir_block_pc_def]
+       bir_program_transfTheory.bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm)) >>
 
-  FULL_SIMP_TAC std_ss [
-     prove(``(\x. bir_exec_step_state ^(bprog_tm) x) = bir_exec_step_state ^(bprog_tm)``, MATCH_MP_TAC boolTheory.EQ_EXT >> SIMP_TAC std_ss [])
-    ] >>
-  Q.EXISTS_TAC `n` >>
-  Q.EXISTS_TAC `st'` >>
-  ASM_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss [pre_bircont_nL_def] >>
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `{BL_Address exit_albl}`) >>
 
-  REWRITE_TAC [post_bir_nL_def, post_bir_def] >>
-  ASM_SIMP_TAC (std_ss++holBACore_ss) [incr_prog_vars_thm]
-QED
-
-
-Theorem incr_analysis_L_INTER_thm[local]:
-  incr_analysis_L INTER
-        {<|bpc_label := BL_Address (Imm64 4w); bpc_index := 0|>} =
-        EMPTY
-Proof
-`!A B. A INTER {B} = (EMPTY:bir_programcounter_t -> bool) <=> B NOTIN A` by (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [IMAGE_SING, IN_SING, bir_programTheory.bir_block_pc_def] >>
+  `L INTER {<|bpc_label := BL_Address exit_albl; bpc_index := 0|>} = EMPTY` by (
+    REWRITE_TAC [GSYM DISJOINT_DEF, IN_DISJOINT] >>
     REPEAT STRIP_TAC >>
-    EQ_TAC >> (
-      FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
-    ) >>
-    REPEAT STRIP_TAC >>
-
-    REWRITE_TAC [Once (GSYM INTER_COMM)] >>
-    FULL_SIMP_TAC std_ss [INTER_EMPTY, INSERT_INTER]
+    FULL_SIMP_TAC std_ss [IN_SING]
   ) >>
-  POP_ASSUM (fn thm => ASM_REWRITE_TAC [thm]) >>
+  FULL_SIMP_TAC std_ss [] >>
 
-  EVAL_TAC
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [post_bircont_nL_def, IN_SING]
 QED
 
-Theorem bir_abstract_jgmt_rel_incr_thm[local]:
-  abstract_jgmt_rel
-  (bir_ts ^bprog_tm)
-  (BL_Address (Imm64 ^bir_frag_l_ml_tm))
-  {BL_Address (Imm64 ^bir_frag_l_exit_ml_tm)}
-  (pre_bir_nL pre_x10)
-  (post_bir_nL pre_x10)
+
+(* overall symbolic execution to BIR abstract_jgmt_rel *)
+Theorem prop_holds_TO_abstract_jgmt_rel_thm:
+!p start_albl exit_albl L envtyl vars bpre bpost.
+  (<|bpc_label := BL_Address exit_albl; bpc_index := 0|> NOTIN L) ==>
+  (prop_holds (bir_symb_rec_sbir p)
+       <|bpc_label := BL_Address start_albl; bpc_index := 0|>
+       L
+       (P_bircont envtyl bpre)
+       (Q_bircont <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost)) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl}
+    (pre_bircont_nL envtyl bpre)
+    (post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost))
 Proof
-ASSUME_TAC
-    (Q.SPEC `{BL_Address (Imm64 ^bir_frag_l_exit_ml_tm)}`
-      (MATCH_MP
-        (REWRITE_RULE
-           [bir_programTheory.bir_block_pc_def]
-           bir_program_transfTheory.bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm)
-        bir_step_n_in_L_jgmt_thm)) >>
-
-  FULL_SIMP_TAC std_ss [pre_bir_nL_def] >>
-
-  FULL_SIMP_TAC std_ss [IMAGE_SING, IN_SING, bir_programTheory.bir_block_pc_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [incr_analysis_L_INTER_thm] >>
-
-  FULL_SIMP_TAC std_ss [post_bir_nL_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [abstract_jgmt_rel_def]
+  METIS_TAC [prop_holds_TO_bir_step_n_in_L_jgmt_thm, bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_thm]
 QED
 
+
+
+
+
+(* ........................... *)
+(* ........................... *)
+
+Theorem bir_abstract_jgmt_rel_incr_thm[local] =
+  REWRITE_RULE [GSYM post_bir_nL_def, GSYM pre_bir_nL_def]
+    (MATCH_MP
+      (MATCH_MP prop_holds_TO_abstract_jgmt_rel_thm incr_analysis_L_NOTIN_thm)
+      (REWRITE_RULE [bprog_P_def, bprog_Q_def] bprog_prop_holds_thm));
+
+(* ........................... *)
+(* now manage the pre and postconditions into contract friendly "bir_exec_to_labels_triple_precond/postcond", need to change precondition to "bir_env_vars_are_initialised" for set of program variables *)
 
 Theorem bir_state_restrict_vars_envty_list_b_spec_thm:
   !vs st st'.
@@ -889,7 +933,7 @@ Proof
     METIS_TAC [bir_vars_EQ_state_restrict_vars_THM]
   ) >>
 
-  FULL_SIMP_TAC std_ss [pre_bir_nL_def, pre_bir_def, bir_exec_to_labels_triple_precond_def] >>
+  FULL_SIMP_TAC std_ss [pre_bir_nL_def, pre_bircont_nL_def, bir_exec_to_labels_triple_precond_def] >>
   METIS_TAC [bir_incr_pre_EQ_FOR_VARS_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
 QED
 
@@ -919,7 +963,7 @@ Proof
   POP_ASSUM (ASSUME_TAC o GSYM) >>
   REPEAT STRIP_TAC >>
 
-  FULL_SIMP_TAC std_ss [post_bir_nL_def, bir_exec_to_labels_triple_postcond_def] >>
+  FULL_SIMP_TAC std_ss [post_bir_nL_def, post_bircont_nL_def, bir_exec_to_labels_triple_postcond_def] >>
 
   `bir_env_vars_are_initialised st1'.bst_environ vs` by (
     METIS_TAC [bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm, bir_state_EQ_FOR_VARS_SYM_thm, incr_prog_vars_thm]
@@ -949,7 +993,7 @@ Proof
   ) >>
   ASM_SIMP_TAC std_ss [] >>
 
-  METIS_TAC [bir_incr_post_EQ_FOR_VARS_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_EQ_FOR_VARS_SYM_thm, post_bir_def]
+  METIS_TAC [bir_incr_post_EQ_FOR_VARS_thm, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_EQ_FOR_VARS_SYM_thm]
 QED
 
 Theorem abstract_jgmt_rel_incr[local]:
