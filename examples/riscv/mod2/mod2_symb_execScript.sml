@@ -1,5 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 
+open wordsTheory;
+
 open bir_symbLib;
 
 open mod2Theory;
@@ -40,7 +42,7 @@ val bprog_envtyl = (fst o dest_eq o concl) mod2_birenvtyl_def;
 val birs_pcond = ``BExp_BinPred
       BIExp_Equal
       (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-      (BExp_Const (Imm64 pre_x10))``;
+      (BExp_Const (Imm64 (n2w pre_x10)))``;
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)

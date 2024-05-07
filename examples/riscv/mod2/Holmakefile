@@ -19,7 +19,8 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/examples/tutorial/support \
            $(HOLBADIR)/src/tools/symbexec \
            $(HOLBADIR)/src/tools/symbexec/examples/common \
-           $(HOLBADIR)/examples/riscv/common
+           $(HOLBADIR)/examples/riscv/common \
+           $(HOLBADIR)/examples/riscv/incr
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
