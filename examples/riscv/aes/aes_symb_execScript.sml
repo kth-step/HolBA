@@ -62,8 +62,78 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 val bprog_envtyl = (fst o dest_eq o concl) aes_birenvtyl_def;
 
+val mem_addrs_aligned_prog_disj_x2 = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+    (BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_LessOrEqual
+        (BExp_Const (Imm64 0x1000w))
+        (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+      (BExp_BinPred BIExp_LessThan
+        (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))``;
+
+val mem_addrs_aligned_prog_disj_x6 = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x6" (BType_Imm Bit64))))
+    (BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_LessOrEqual
+        (BExp_Const (Imm64 0x1000w))
+        (BExp_Den (BVar "sy_x6" (BType_Imm Bit64))))
+      (BExp_BinPred BIExp_LessThan
+        (BExp_Den (BVar "sy_x6" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))``;
+
+val mem_addrs_aligned_prog_disj_x10 = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))))
+    (BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_LessOrEqual
+        (BExp_Const (Imm64 0x1000w))
+        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))))
+      (BExp_BinPred BIExp_LessThan
+        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))``;
+
+val mem_addrs_aligned_prog_disj_x11 = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))))
+    (BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_LessOrEqual
+        (BExp_Const (Imm64 0x1000w))
+        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))))
+      (BExp_BinPred BIExp_LessThan
+        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))``;
+
+val mem_addrs_aligned_prog_disj_x12 = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x12" (BType_Imm Bit64))))
+    (BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_LessOrEqual
+        (BExp_Const (Imm64 0x1000w))
+        (BExp_Den (BVar "sy_x12" (BType_Imm Bit64))))
+      (BExp_BinPred BIExp_LessThan
+        (BExp_Den (BVar "sy_x12" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))``;
+
+val mem_addrs_aligned_prog_disj_x17 = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x17" (BType_Imm Bit64))))
+    (BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_LessOrEqual
+        (BExp_Const (Imm64 0x1000w))
+        (BExp_Den (BVar "sy_x17" (BType_Imm Bit64))))
+      (BExp_BinPred BIExp_LessThan
+        (BExp_Den (BVar "sy_x17" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))``;
+
 (* FIXME: need lots of memory address alignment here *)
-val birs_pcond = ``bir_exp_true``;
+val birs_pcond = ``BExp_BinExp BIExp_And
+  (BExp_BinExp BIExp_And
+   ^mem_addrs_aligned_prog_disj_x2
+   ^mem_addrs_aligned_prog_disj_x6)
+  (BExp_BinExp BIExp_And
+   (BExp_BinExp BIExp_And
+    ^mem_addrs_aligned_prog_disj_x10
+    ^mem_addrs_aligned_prog_disj_x11)
+   (BExp_BinExp BIExp_And
+    ^mem_addrs_aligned_prog_disj_x12
+    ^mem_addrs_aligned_prog_disj_x17))``;
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
