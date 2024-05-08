@@ -322,10 +322,10 @@ Proof
  fs [] >> rw [mod2_wand_n2w]
 QED
 
-val Pi_thms =
-  [prove(``
+val Pi_thms = List.map (fn sys2 =>
+  prove(``
     sys1 = ^sys1 ==>
-    sys2 = ^(List.hd sys2s) ==>
+    sys2 = ^sys2 ==>
     birs_symb_matchstate sys1 H bs ==>
     bprog_P pre_x10 (birs_symb_to_concst bs) ==>
     symb_interpr_ext H' H ==>
@@ -408,100 +408,9 @@ val Pi_thms =
       
       METIS_TAC [mod2_wand_1w_bval_imm]) >>
    ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_mod2_post_def, bir_eval_bin_pred_def, bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def] >>
-   EVAL_TAC)];
-
-(*
-val Pi_thms = List.map (fn sys2 =>
-  prove(``
-    sys1 = ^sys1 ==>
-    sys2 = ^sys2 ==>
-    birs_symb_matchstate sys1 H bs ==>
-    bprog_P pre_x10 (birs_symb_to_concst bs) ==>
-    symb_interpr_ext H' H ==>
-    birs_symb_matchstate sys2 H' bs' ==>
-    bprog_Q pre_x10 (birs_symb_to_concst bs) (birs_symb_to_concst bs')
-  ``,
-    REWRITE_TAC [bprog_P_def, bprog_Q_def] >>
-    REPEAT STRIP_TAC >>
-    Q_bircont_SOLVE3CONJS_TAC mod2_prog_vars_thm >>
-
-    (* TODO: this is still hard coded for the example *)
-    `bir_env_lookup "x10" bs'.bst_environ = SOME (BVal_Imm (Imm64 (n2w (pre_x10 MOD 2))))` by cheat (* (
-      `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H` by (
-        `symb_interpr_for_symbs (birs_symb_symbols sys1) H` by (
-          FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-        ) >>
-
-        PAT_X_ASSUM ``A = ^sys1`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        POP_ASSUM (ASSUME_TAC o CONV_RULE (
-            REWRITE_CONV [birs_state_init_pre_GEN_def, mod2_bsysprecond_thm] THENC
-            REWRITE_CONV [birenvtyl_EVAL_thm] THENC
-            computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-            aux_setLib.birs_symb_symbols_MATCH_CONV)
-          ) >>
-
-        FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
-      ) >>
-      `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H'` by (
-        `symb_interpr_for_symbs (birs_symb_symbols sys2) H'` by (
-          FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-        ) >>
-
-        PAT_X_ASSUM ``A = ^sys2`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        POP_ASSUM (ASSUME_TAC o CONV_RULE (
-            REWRITE_CONV [birs_state_init_pre_GEN_def, mod2_bsysprecond_thm] THENC
-            REWRITE_CONV [birenvtyl_EVAL_thm] THENC
-            computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-            aux_setLib.birs_symb_symbols_MATCH_CONV)
-          ) >>
-
-        FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
-      ) >>
-
-      `symb_interpr_get H' (BVar "sy_x10" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64))` by (
-        FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
-      ) >>
-
-      `bir_eval_exp (bir_mod2_pre pre_x10) bs.bst_environ = SOME bir_val_true` by (
-        PAT_X_ASSUM ``A = ^sys1`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        FULL_SIMP_TAC (std_ss) [P_bircont_thm]
-      ) >>
-
-      (* use bprog_P, but can also use the path condition in the end, or not? *)
-      `symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64)) = SOME (BVal_Imm (Imm64 pre_x10))` by (
-        FULL_SIMP_TAC (std_ss) [P_bircont_thm] >>
-        `bir_env_lookup "x10" bs.bst_environ = SOME (BVal_Imm (Imm64 pre_x10))` by (
-          METIS_TAC [bir_eval_precond_lookup_pre_x10_mod2_thm]
-        ) >>
-
-
-        PAT_X_ASSUM ``A = ^sys1`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-
-        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def, birs_interpret_fun_thm] >>
-        REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-        FULL_SIMP_TAC (std_ss) [] >>
-        REV_FULL_SIMP_TAC (std_ss) [birs_interpret_fun_ALT_def, birs_interpret_get_var_def]
-      ) >>
-
-      (* now go through H' and sys2 with matchstate to show that the mod2ement holds in bs' *)
-      PAT_X_ASSUM ``A = ^sys2`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def, birs_interpret_fun_thm] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-      REV_FULL_SIMP_TAC (std_ss) [birs_interpret_fun_ALT_def, birs_interpret_get_var_def] >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) *) >>
-
-    ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_mod2_post_def, bir_eval_bin_pred_def, bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def] >>
-    EVAL_TAC
+   EVAL_TAC
   )
 ) sys2s;
-*)
 
 (* ........................... *)
 
