@@ -56,90 +56,30 @@ QED
 
 val bprog_tm = (snd o dest_eq o concl) bir_aes_prog_def;
 
-val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x000w))``;
+val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x088w))``;
 
-val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x400w))``];
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x208w))``];
 
 val bprog_envtyl = (fst o dest_eq o concl) aes_birenvtyl_def;
 
-val mem_addrs_aligned_prog_disj_x2 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+fun mem_addrs_aligned_prog_disj rn = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 4 (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64))))
     (BExp_BinExp BIExp_And
       (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+        (BExp_Const (Imm64 0x100000w))
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64))))
       (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64)))
         (BExp_Const (Imm64 0x100000000w))))``;
 
-val mem_addrs_aligned_prog_disj_x6 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x6" (BType_Imm Bit64))))
-    (BExp_BinExp BIExp_And
-      (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x6" (BType_Imm Bit64))))
-      (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x6" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
-
-val mem_addrs_aligned_prog_disj_x10 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))))
-    (BExp_BinExp BIExp_And
-      (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))))
-      (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
-
-val mem_addrs_aligned_prog_disj_x11 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))))
-    (BExp_BinExp BIExp_And
-      (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))))
-      (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
-
-val mem_addrs_aligned_prog_disj_x12 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x12" (BType_Imm Bit64))))
-    (BExp_BinExp BIExp_And
-      (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x12" (BType_Imm Bit64))))
-      (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x12" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
-
-val mem_addrs_aligned_prog_disj_x17 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x17" (BType_Imm Bit64))))
-    (BExp_BinExp BIExp_And
-      (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x17" (BType_Imm Bit64))))
-      (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x17" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
 
 (* FIXME: need lots of memory address alignment here *)
-val birs_pcond = ``BExp_BinExp BIExp_And
-  (BExp_BinExp BIExp_And
-   ^mem_addrs_aligned_prog_disj_x2
-   ^mem_addrs_aligned_prog_disj_x6)
-  (BExp_BinExp BIExp_And
-   (BExp_BinExp BIExp_And
-    ^mem_addrs_aligned_prog_disj_x10
-    ^mem_addrs_aligned_prog_disj_x11)
-   (BExp_BinExp BIExp_And
-    ^mem_addrs_aligned_prog_disj_x12
-    ^mem_addrs_aligned_prog_disj_x17))``;
+val birs_pcond = bslSyntax.bandl (List.map (mem_addrs_aligned_prog_disj o stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar) ((fst o listSyntax.dest_list o snd o dest_eq o concl) aes_prog_vars_def));
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-(*
 val result = bir_symb_analysis bprog_tm
  birs_state_init_lbl birs_stop_lbls
  bprog_envtyl birs_pcond;
@@ -148,6 +88,5 @@ val _ = show_tags := true;
 val _ = Portable.pprint Tag.pp_tag (tag result);
 
 Theorem aes_symb_analysis_thm = result
-*)
 
 val _ = export_theory ();
