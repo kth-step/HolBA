@@ -12,9 +12,7 @@ val _ = new_theory "aes_symb_exec";
 (* Program variable definitions *)
 (* ---------------------------- *)
 
-Definition aes_prog_vars_def:
-  aes_prog_vars = [
-    BVar "MEM8" (BType_Mem Bit64 Bit8);
+val registervars_tm = ``[
     BVar "x31" (BType_Imm Bit64);
     BVar "x30" (BType_Imm Bit64);
     BVar "x29" (BType_Imm Bit64);
@@ -36,6 +34,12 @@ Definition aes_prog_vars_def:
     BVar "x2" (BType_Imm Bit64);
     BVar "x1" (BType_Imm Bit64)
   ]
+``;
+
+Definition aes_prog_vars_def:
+  aes_prog_vars = 
+    (BVar "MEM8" (BType_Mem Bit64 Bit8))
+    ::(^registervars_tm)
 End
 
 Definition aes_birenvtyl_def:
@@ -74,7 +78,7 @@ fun mem_addrs_aligned_prog_disj rn = ``BExp_BinExp BIExp_And
 
 
 (* FIXME: need lots of memory address alignment here *)
-val birs_pcond = bslSyntax.bandl (List.map (mem_addrs_aligned_prog_disj o stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar) ((fst o listSyntax.dest_list o snd o dest_eq o concl) aes_prog_vars_def));
+val birs_pcond = bslSyntax.bandl (List.map (mem_addrs_aligned_prog_disj o stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar) ((fst o listSyntax.dest_list) registervars_tm));
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
