@@ -539,4 +539,21 @@ Proof
  ACCEPT_TAC riscv_cont_mod2_thm
 QED
 
+(* unfolded theorem *)
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+val tm = concl riscv_cont_mod2;
+val sset = std_ss++bir_wm_SS++bir_lifting_machinesLib.bmr_ss;
+val thms = [riscv_cont_def, t_jgmt_def, riscv_ts_def, riscv_weak_trs_def, riscv_mod2_pre_def, riscv_mod2_post_def, riscv_bmr_def, riscv_state_is_OK_def];
+(*
+EVAL tm;
+SIMP_CONV sset thms tm
+REWRITE_CONV  tm;
+*)
+val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] tm;
+Theorem riscv_mod2:
+  !pre_x10. ^((snd o dest_eq o concl) readable_thm)
+Proof
+  METIS_TAC [riscv_cont_mod2, readable_thm]
+QED
+
 val _ = export_theory ();
