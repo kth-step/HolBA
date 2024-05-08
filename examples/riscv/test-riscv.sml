@@ -24,6 +24,10 @@ fun print_and_check_thm name thm t_concl =
     ()
   end;
 
+(* ---- *)
+(* swap *)
+(* ---- *)
+
 val _ = print_and_check_thm
   "swap RISC-V lift theorem"
   bir_swap_riscv_lift_THM
@@ -50,6 +54,10 @@ val _ = print_and_check_thm
      bir_swap_progbin
      0w {20w}
      riscv_swap_pre riscv_swap_post``;
+
+(* ---- *)
+(* incr *)
+(* ---- *)
   
 val _ = print_and_check_thm
   "incr RISC-V lift theorem"
@@ -77,3 +85,34 @@ val _ = print_and_check_thm
      bir_incr_progbin
      0w {4w}
      (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)``;
+
+(* ---- *)
+(* mod2 *)
+(* ---- *)
+
+val _ = print_and_check_thm
+  "mod2 RISC-V lift theorem"
+  bir_mod2_riscv_lift_THM
+  ``
+  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (8w : word64))
+   bir_mod2_progbin
+   (bir_mod2_prog : 'observation_type bir_program_t)
+  ``;
+
+val _ = print_and_check_thm
+  "mod2 BIR contract theorem"
+  bir_cont_mod2
+ ``bir_cont (bir_mod2_prog : 'a bir_program_t)
+  bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10)
+        else bir_exp_false)
+  ``;
+
+val _ = print_and_check_thm
+  "mod2 RISC-V backlifted theorem"
+  riscv_cont_mod2
+  ``riscv_cont
+     bir_mod2_progbin
+     0w {4w}
+     (riscv_mod2_pre pre_x10) (riscv_mod2_post pre_x10)``;
