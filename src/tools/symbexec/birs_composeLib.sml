@@ -323,7 +323,7 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_
     *)
 
     val prep_thm =
-      MATCH_MP (MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
+      HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
     val freesymbols_tm = (hd o fst o strip_imp o concl) prep_thm;
 
     val freesymbols_thm = birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o;
