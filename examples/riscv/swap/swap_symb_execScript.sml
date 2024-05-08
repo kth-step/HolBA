@@ -45,90 +45,47 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 val bprog_envtyl = (fst o dest_eq o concl) swap_birenvtyl_def;
 
-val mem_addrs_aligned_prog_disj_x10 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))))
+fun mem_addrs_aligned_prog_disj rn = ``BExp_BinExp BIExp_And
+    (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64))))
     (BExp_BinExp BIExp_And
       (BExp_BinPred BIExp_LessOrEqual
         (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))))
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64))))
       (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64)))
+        (BExp_Const (Imm64 0x100000000w))))
+``;
 
-val mem_addrs_aligned_prog_disj_x11 = ``BExp_BinExp BIExp_And
-    (BExp_Aligned Bit64 3 (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))))
-    (BExp_BinExp BIExp_And
-      (BExp_BinPred BIExp_LessOrEqual
-        (BExp_Const (Imm64 0x1000w))
-        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))))
-      (BExp_BinPred BIExp_LessThan
-        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 0x100000000w))))``;
-
-val pre_vals_x10 = ``
-  BExp_BinExp BIExp_And
+fun pre_vals_reg rn fv = Parse.Term (`
     (BExp_BinPred
       BIExp_Equal
-      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-      (BExp_Const (Imm64 pre_x10)))
+      (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64)))
+      (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
+`);
+
+fun pre_vals_mem_reg rn fv = Parse.Term (`
     (BExp_BinPred
       BIExp_Equal
       (BExp_Load
         (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
-        (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring("sy_" ^ rn)) (BType_Imm Bit64)))
         BEnd_LittleEndian Bit64)
-      (BExp_Const (Imm64 pre_x10_mem_deref)))``;
+      (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
+`);
 
-val pre_vals_x11 = ``
-  BExp_BinExp BIExp_And
-    (BExp_BinPred
-      BIExp_Equal
-      (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
-      (BExp_Const (Imm64 pre_x11)))
-    (BExp_BinPred
-      BIExp_Equal
-      (BExp_Load
-        (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
-        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
-        BEnd_LittleEndian Bit64)
-      (BExp_Const (Imm64 pre_x11_mem_deref)))``;
+fun pre_vals rn fvr fvmd = bslSyntax.band (pre_vals_reg rn fvr, pre_vals_mem_reg rn fvmd);
 
-val birs_pcond = ``
- BExp_BinExp BIExp_And
-  (BExp_BinExp BIExp_And
-   ^mem_addrs_aligned_prog_disj_x10
-   ^mem_addrs_aligned_prog_disj_x11)
-  (BExp_BinExp BIExp_And
-   ^pre_vals_x10
-   ^pre_vals_x11)``;
-
-(*
-val birs_pcond = ``BExp_BinExp
- BIExp_And
-  ^mem_addrs_aligned_prog_disj_x10
-  ^mem_addrs_aligned_prog_disj_x11``;
-*)
-
-(* TODO: probably need this later in the path condition: 
-  ``BExp_UnaryExp BIExp_Not (BExp_Den (BVar "ModeHandler" BType_Bool))``;
-
-                     (BExp_BinExp BIExp_And
-                       (BExp_BinPred BIExp_LessOrEqual
-                         (BExp_Const (Imm32 0xFFFFFFw))
-                         (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
-                       (BExp_Aligned Bit32 2 (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
-
-BExp_Const (Imm1 1w)
-
-*)
+val birs_pcond = bslSyntax.bandl [
+  mem_addrs_aligned_prog_disj "x10",
+  mem_addrs_aligned_prog_disj "x11",
+  pre_vals "x10" "pre_x10" "pre_x10_mem_deref",
+  pre_vals "x11" "pre_x11" "pre_x11_mem_deref"
+];
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-(* FIXME: gets stuck due to problem with free variables *)
-
-(*
 val result = bir_symb_analysis bprog_tm
  birs_state_init_lbl birs_stop_lbls
  bprog_envtyl birs_pcond;
@@ -137,6 +94,5 @@ val _ = show_tags := true;
 val _ = Portable.pprint Tag.pp_tag (tag result);
 
 Theorem swap_symb_analysis_thm = result
-*)
 
 val _ = export_theory ();
