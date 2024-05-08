@@ -95,16 +95,38 @@ val bir_mod2_post = ``bir_mod2_post``;
 (* Connecting RISC-V and BIR contracts *)
 (* ----------------------------------- *)
 
-Theorem mod2_riscv_pre_imp_bir_pre_thm[local]:
+Theorem mod2_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir (riscv_mod2_pre pre_x10) (bir_mod2_pre pre_x10)
 Proof
- cheat
+ rw [bir_pre_riscv_to_bir_def,riscv_mod2_pre_def,bir_mod2_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
 QED
 
-Theorem mod2_riscv_post_imp_bir_post_thm[local]:
+(* FIXME: boilerplate *)
+Theorem mod2_riscv_post_imp_bir_post_thm:
  !ls. bir_post_bir_to_riscv (riscv_mod2_post pre_x10) (\l. bir_mod2_post pre_x10) ls
 Proof
- cheat
+ rw [bir_post_bir_to_riscv_def,riscv_mod2_post_def,bir_mod2_post_def] >>
+ Cases_on `bs` >>
+ Cases_on `b0` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
+ Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
+ Cases_on `g` >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+   fs [Abbrev_def] >>
+   `bir_eval_bin_pred BIExp_Equal (SOME z)
+     (SOME (BVal_Imm (Imm64 (n2w (pre_x10 MOD 2))))) = SOME bir_val_true`
+    by METIS_TAC [] >>
+   Cases_on `z` >> fs [type_of_bir_val_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
+   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b' (Imm64 (n2w (pre_x10 MOD 2)))` >>
+   Cases_on `bb` >> fs [] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
 (* ------------------------------- *)
@@ -579,7 +601,7 @@ Proof
  METIS_TAC [abstract_jgmt_rel_mod2]
 QED
 
-Theorem bir_cont_mod2[local]:
+Theorem bir_cont_mod2:
  bir_cont bir_mod2_prog bir_exp_true (BL_Address (Imm64 0w))
   {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
    (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10)
@@ -602,7 +624,7 @@ val riscv_cont_mod2_thm =
   [bir_mod2_post_def] mod2_riscv_post_imp_bir_post_thm
   bir_mod2_riscv_lift_THM;
 
-Theorem riscv_cont_mod2[local]:
+Theorem riscv_cont_mod2:
  riscv_cont bir_mod2_progbin 0w {4w} (riscv_mod2_pre pre_x10) (riscv_mod2_post pre_x10)
 Proof
  ACCEPT_TAC riscv_cont_mod2_thm
