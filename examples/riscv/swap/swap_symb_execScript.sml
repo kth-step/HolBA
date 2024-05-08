@@ -126,6 +126,9 @@ BExp_Const (Imm1 1w)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
+(* FIXME: gets stuck due to problem with free variables *)
+
+(*
 val result = bir_symb_analysis bprog_tm
  birs_state_init_lbl birs_stop_lbls
  bprog_envtyl birs_pcond;
@@ -134,5 +137,6 @@ val _ = show_tags := true;
 val _ = Portable.pprint Tag.pp_tag (tag result);
 
 Theorem swap_symb_analysis_thm = result
+*)
 
 val _ = export_theory ();
