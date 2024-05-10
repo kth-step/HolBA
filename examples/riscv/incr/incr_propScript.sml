@@ -2,9 +2,6 @@ open HolKernel boolLib Parse bossLib;
 
 open markerTheory;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open distribute_generic_stuffLib;
 
 open bir_programSyntax bir_program_labelsTheory;

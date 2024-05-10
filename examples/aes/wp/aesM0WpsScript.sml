@@ -1,8 +1,5 @@
 open HolKernel Parse;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open bir_wpTheory bir_wpLib;
 
 open listSyntax;
@@ -11,8 +8,6 @@ open aesBinaryTheory;
 open bir_expLib;
 
 open bir_wp_expLib;
-
-
 
 val _ = new_theory "aesM0Wps";
 

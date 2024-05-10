@@ -1,8 +1,5 @@
 open HolKernel Parse boolLib bossLib;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 (* From tools/wp: *)
 open bir_wpLib bir_wp_expLib;
 open bir_wpTheory bir_htTheory;

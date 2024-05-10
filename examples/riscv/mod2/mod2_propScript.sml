@@ -5,9 +5,6 @@ open markerTheory;
 open numTheory arithmeticTheory int_bitwiseTheory;
 open pairTheory combinTheory wordsTheory;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open distribute_generic_stuffLib;
 
 open bir_programSyntax bir_program_labelsTheory;
