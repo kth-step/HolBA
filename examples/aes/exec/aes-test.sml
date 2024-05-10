@@ -1,23 +1,16 @@
 open HolKernel Parse;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open bir_inst_liftingTheory;
 open bir_program_valid_stateTheory;
-
 
 open bir_exec_envLib;
 open bir_execLib;
 
 open aesBinaryTheory;
 
-
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
-
 val _ = log_setfile "aes-test.log";
-
 
 val _ = print "loading...\n";
 
