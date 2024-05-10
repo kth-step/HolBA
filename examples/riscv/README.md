@@ -34,15 +34,24 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 - RISC-V programs must be given in `.da` format for RV64
 - C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
 
-Example:
-
+Compile `foo.c` as a library, producing `foo.o`:
+```shell
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O1 -c -o foo.o foo.c
 ```
-incr.o:     file format elf64-littleriscv
+
+Disassemble `foo.o`:
+```shell
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-objdump -d foo.o > foo.da
+```
+
+Contents of `foo.da`:
+```
+foo.o:     file format elf64-littleriscv
 
 
 Disassembly of section .text:
 
-0000000000000000 <incr>:
+0000000000000000 <foo>:
    0:	00150513          	addi	a0,a0,1
    4:	00008067          	ret
 ```
@@ -74,8 +83,8 @@ End
 Example:
 
 ```sml
-val _ = lift_da_and_store "swap" "swap.da" da_riscv
-  ((Arbnum.fromInt 0), (Arbnum.fromInt 0x20));
+val _ = lift_da_and_store "foo" "foo.da" da_riscv
+  ((Arbnum.fromInt 0), (Arbnum.fromInt 0x30));
 ```
 
 ### 3. BIR contract
@@ -135,10 +144,10 @@ Proof
 QED
 ```
 
-### 6. Proving BIR contracts using symbolic analysis
+### 6. Specifying and proving BIR contracts using symbolic analysis results
 
-- requires manual application of symbolic soundness theorems
-- requires manual proof inside HOL4
+- requires manual specification of beginning and end program labels for contract
+- requires semi-manual application of symbolic soundness theorems
 
 Example:
 
@@ -165,6 +174,6 @@ Example:
 Theorem riscv_incr_contract_thm:
  riscv_cont bir_foo_progbin 0w {30w} (riscv_foo_pre x y z) (riscv_foo_post x y z)
 Proof
- (* application of backlifting automation *)
+(* application of backlifting automation *)
 QED
 ```
