@@ -1,18 +1,11 @@
 open HolKernel Parse;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open aesWpsTheory;
 
 open bir_wp_expLib;
 open bir_wp_simpLib;
 
-
-
 val _ = new_theory "aesSimpWp";
-
-
 
 (* ----------- measurement start ----------- *)
 val runMeasurement = true;

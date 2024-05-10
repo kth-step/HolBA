@@ -1,8 +1,5 @@
 open HolKernel Parse;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open bir_lifter_simple_interfaceLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;

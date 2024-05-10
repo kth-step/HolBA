@@ -1,8 +1,5 @@
 open HolKernel Parse PPBackEnd;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open bir_inst_liftingLib;
 open gcc_supportLib;
 open bir_execLib;

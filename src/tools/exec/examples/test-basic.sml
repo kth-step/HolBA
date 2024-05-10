@@ -1,14 +1,11 @@
 open HolKernel Parse bossLib boolLib;
 open bslSyntax;
 
-(* FIXME: needed to avoid quse errors *)
-open m0_stepLib;
-
 open bir_execLib;
+
 val alpha = ``:'a``;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
-
 
 (* Helper function to check equality between BSL and BIR programs, assuming that
  * a and b are tuples where programs are in the second position (like here) *)
