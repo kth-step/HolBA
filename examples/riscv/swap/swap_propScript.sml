@@ -161,7 +161,7 @@ Proof
   EVAL_TAC
 QED
 
-Theorem bir_cont_swap[local]:
+Theorem bir_cont_swap:
  bir_cont bir_swap_prog bir_exp_true (BL_Address (Imm64 0x00w))
   {BL_Address (Imm64 0x14w)} {}
   (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
@@ -202,7 +202,7 @@ val riscv_cont_swap_thm = save_thm("riscv_swap_contract_thm",
   [bir_swap_post_def] swap_riscv_post_imp_bir_post_thm
   bir_swap_riscv_lift_THM);
 
-Theorem riscv_cont_swap[local]:
+Theorem riscv_cont_swap:
  riscv_cont bir_swap_progbin 0w {0x14w}
   (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
   (riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
