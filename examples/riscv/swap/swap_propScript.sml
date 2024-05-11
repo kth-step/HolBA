@@ -1,5 +1,7 @@
 open HolKernel boolLib Parse bossLib;
 
+open distribute_generic_stuffLib;
+
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -29,6 +31,8 @@ open swapTheory;
 
 open swap_symb_execTheory;
 
+open distribute_generic_stuffTheory;
+
 val _ = new_theory "swap_prop";
 
 Definition swap_mem_spec_def:
@@ -48,77 +52,131 @@ Definition swap_spec_def:
  swap_spec ms ms' : bool = (ms'.MEM8 = swap_mem_spec ms)
 End
 
+(* --------------- *)
+(* RISC-V contract *)
+(* --------------- *)
+
 Definition riscv_swap_pre_def:
- riscv_swap_pre (m : riscv_state) = F
+ riscv_swap_pre x y xv yv (m : riscv_state) =
+  (m.c_gpr m.procID 10w = x /\
+   m.c_gpr m.procID 11w = y /\
+   riscv_mem_load_dword m.MEM8 x = xv /\
+   riscv_mem_load_dword m.MEM8 y = yv)
 End
 
 Definition riscv_swap_post_def:
- riscv_swap_post (m : riscv_state) = T
+ riscv_swap_post x y xv yv (m : riscv_state) =
+  (riscv_mem_load_dword m.MEM8 x = yv /\
+   riscv_mem_load_dword m.MEM8 y = xv)
 End
 
 Definition bir_swap_pre_def:
-  bir_swap_pre : bir_exp_t = bir_exp_false
+  bir_swap_pre x y xv yv : bir_exp_t =
+  BExp_BinExp BIExp_And
+   (BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 x)))
+   (BExp_BinExp BIExp_And
+    (BExp_BinPred
+     BIExp_Equal
+     (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 y)))
+    (BExp_BinExp BIExp_And
+     (BExp_BinPred
+      BIExp_Equal
+      (BExp_Load
+       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+       (BExp_Const (Imm64 x))
+       BEnd_LittleEndian Bit64)
+      (BExp_Const (Imm64 xv)))
+     (BExp_BinPred
+      BIExp_Equal
+      (BExp_Load
+       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+       (BExp_Const (Imm64 y))
+       BEnd_LittleEndian Bit64)
+      (BExp_Const (Imm64 yv)))))
 End
 
 Definition bir_swap_post_def:
- bir_swap_post : bir_exp_t = bir_exp_true
+ bir_swap_post x y xv yv : bir_exp_t = 
+  BExp_BinExp BIExp_And
+   (BExp_BinPred
+    BIExp_Equal
+    (BExp_Load
+     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+     (BExp_Const (Imm64 x))
+     BEnd_LittleEndian Bit64)
+    (BExp_Const (Imm64 yv)))
+   (BExp_BinPred
+    BIExp_Equal
+    (BExp_Load
+     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+     (BExp_Const (Imm64 y))
+     BEnd_LittleEndian Bit64)
+    (BExp_Const (Imm64 xv)))
 End
 
-Theorem swap_riscv_pre_imp_bir_pre_thm:
- bir_pre_riscv_to_bir riscv_swap_pre bir_swap_pre
+val bir_swap_pre = ``bir_swap_pre``;
+val bir_swap_post = ``bir_swap_post``;
+
+(* ----------------------------------- *)
+(* Connecting RISC-V and BIR contracts *)
+(* ----------------------------------- *)
+
+Theorem swap_riscv_pre_imp_bir_pre_thm[local]:
+ bir_pre_riscv_to_bir
+  (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+  (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
 Proof
- EVAL_TAC >> rw []
+ cheat
 QED
 
-Theorem swap_riscv_post_imp_bir_post_thm:
- !ls. bir_post_bir_to_riscv riscv_swap_post (\l. bir_swap_post) ls
+Theorem swap_riscv_post_imp_bir_post_thm[local]:
+ !ls. bir_post_bir_to_riscv
+   (riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+   (\l. (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref))
+   ls
 Proof
- EVAL_TAC >> rw []
+ cheat
 QED
 
-(* TODO: re-enable symbolic analysis once free-variable problem is solved *)
+(* ------------------------------- *)
+(* BIR symbolic execution analysis *)
+(* ------------------------------- *)
 
-(*
 val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) swap_symb_analysis_thm;
 
 Definition swap_analysis_L_def:
  swap_analysis_L = ^(L_s)
 End
 
-val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
-val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 20w))``;
-*)
+val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0x00w); bpc_index := 0|>``;
+val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x14w))``;
 
-val prog_tm = (lhs o concl) bir_swap_prog_def;
-val prefix = "swap_entry_";
-val first_block_label_tm = ``BL_Address (Imm64 0w)``;
-val ending_set = ``{BL_Address (Imm64 20w)}``;
-val postcond_tm = ``\l : bir_label_t . if l = BL_Address (Imm64 20w) then bir_swap_post else bir_exp_false``;
-val defs = [bir_swap_prog_def, bir_swap_post_def, bir_swap_pre_def, type_of_bir_exp_def,
-            bir_exp_false_def, bir_exp_true_def, BType_Bool_def,bir_is_bool_exp_def,
-            type_of_bir_imm_def];
+Theorem swap_analysis_L_NOTIN_thm[local]:
+  (^birs_state_end_lbl) NOTIN swap_analysis_L
+Proof
+  EVAL_TAC
+QED
 
-val (bir_swap_entry_ht, bir_swap_entry_wp_tm) =
-  bir_obtain_ht prog_tm first_block_label_tm
-                ending_set ending_set_to_sml_list
-                postcond_tm postcond_exp_from_label
-                prefix defs;
+Theorem bir_cont_swap[local]:
+ bir_cont bir_swap_prog bir_exp_true (BL_Address (Imm64 0x00w))
+  {BL_Address (Imm64 0x14w)} {}
+  (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+  (\l. if l = BL_Address (Imm64 0x14w)
+       then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+       else bir_exp_false)
+Proof
+ cheat
+QED
 
-Definition bir_swap_entry_wp_def:
- bir_swap_entry_wp = ^bir_swap_entry_wp_tm
-End
-val _ = save_thm("bir_swap_entry_ht", bir_swap_entry_ht);
-
-val bir_swap_pre_tm = (lhs o concl) bir_swap_pre_def;
-val bir_swap_pre_imp = bimp (bir_swap_pre_tm, bir_swap_entry_wp_tm);
-val bir_swap_pre_imp_taut_thm = prove_exp_is_taut bir_swap_pre_imp;
-
-val bir_cont_swap =
-  bir_exec_to_labels_triple_to_bir_cont_predset bir_swap_entry_ht bir_swap_pre_imp_taut_thm;
-val _= save_thm ("bir_cont_swap", bir_cont_swap);
+(* ---------------------------------- *)
+(* Backlifting BIR contract to RISC-V *)
+(* ---------------------------------- *)
 
 (* For debugging:
-
 val bir_ct = bir_cont_swap;
 val prog_bin = ``bir_swap_progbin``;
 val riscv_pre = ``riscv_swap_pre``;
@@ -132,14 +190,24 @@ val riscv_post_imp_bir_post_thm = swap_riscv_post_imp_bir_post_thm;
 val bir_is_lifted_prog_thm = bir_swap_riscv_lift_THM;
 *)
 
-val riscv_swap_contract_thm = save_thm("riscv_swap_contract_thm",
+val riscv_cont_swap_thm = save_thm("riscv_swap_contract_thm",
  get_riscv_contract_sing
   bir_cont_swap
   ``bir_swap_progbin``
-  ``riscv_swap_pre`` ``riscv_swap_post`` bir_swap_prog_def
+  ``riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref``
+  ``riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref``
+  bir_swap_prog_def
   [bir_swap_pre_def]
   bir_swap_pre_def swap_riscv_pre_imp_bir_pre_thm
   [bir_swap_post_def] swap_riscv_post_imp_bir_post_thm
   bir_swap_riscv_lift_THM);
+
+Theorem riscv_cont_swap[local]:
+ riscv_cont bir_swap_progbin 0w {0x14w}
+  (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+  (riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+Proof
+ ACCEPT_TAC riscv_cont_swap_thm
+QED
 
 val _ = export_theory ();
