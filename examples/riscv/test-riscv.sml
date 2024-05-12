@@ -51,7 +51,7 @@ val _ = print_and_check_thm
 
 val _ = print_and_check_thm
   "swap RISC-V backlifted theorem"
-  riscv_swap_contract_thm
+  riscv_cont_swap
   ``riscv_cont
      bir_swap_progbin
      0w {0x14w}
