@@ -482,6 +482,23 @@ SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
   )
 QED
 
+Theorem birs_symb_matchstate_interpr_ext_IMP_matchstate_thm:
+  !sys1 sys2 H1 H2 s1 s2.
+  (birs_symb_matchstate sys1 H1 s1) ==>
+  (birs_symb_matchstate sys2 H2 s2) ==>
+  (symb_interpr_ext H2 H1) ==>
+  (birs_symb_matchstate sys1 H2 s1)
+Proof
+  REPEAT STRIP_TAC >>
+  `birs_interpr_welltyped H2` by (
+    FULL_SIMP_TAC std_ss [birs_symb_matchstate_def]
+  ) >>
+  ASSUME_TAC (Q.SPEC `p` birs_symb_symbols_f_sound_thm) >>
+  IMP_RES_TAC symb_interpr_ext_matchstate_IMP_matchstate_thm >>
+  FULL_SIMP_TAC std_ss [birs_interpr_welltyped_EQ_thm] >>
+  METIS_TAC [(Q.SPEC `p` o GSYM) birs_symb_matchstate_EQ_thm]
+QED
+
 Theorem symb_interpr_for_symbs_IMP_UPDATE_ENV_thm:
   !sys H vn sv.
   (bir_vars_of_exp sv SUBSET birs_symb_symbols sys) ==>
