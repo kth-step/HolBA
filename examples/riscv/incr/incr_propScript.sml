@@ -273,11 +273,14 @@ QED
 (* ........................... *)
 (* proof for each end state individually: *)
 
-val sys1 = birs_state_init_pre;
+val sys1 = (snd o dest_eq o concl o REWRITE_CONV [incr_bsysprecond_thm]) birs_state_init_pre;
 val (Pi_func, Pi_set) = dest_comb Pi_f;
 (* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
+(*
+val sys2 = hd sys2s;
+*)
 val strongpostcond_goals = List.map (fn sys2 => ``
     sys1 = ^sys1 ==>
     sys2 = ^sys2 ==>
@@ -319,6 +322,7 @@ val goal = hd strongpostcond_goals;
 *)
 val strongpostcond_thms = List.map (fn goal =>
   prove(``^goal``,
+    (* birs_strongpostcond_impl_TAC *)
     REPEAT STRIP_TAC >>
     (* symbsof sys1 and sys2 IN symb_interpr_dom H' *)
     `(birs_symb_symbols sys1 UNION birs_symb_symbols sys2) SUBSET symb_interpr_dom H'` by (
@@ -420,7 +424,7 @@ val Pi_thms = List.map (fn sys2 =>
 Theorem bprog_Pi_overapprox_Q_thm[local]:
   Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) (bprog_Q pre_x10)
 Proof
-  REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm] >>
+  REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, incr_bsysprecond_thm] >>
   REPEAT GEN_TAC >>
 
   REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
