@@ -51,6 +51,8 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 val _ = new_theory "incr_prop";
 
 (* --------------- *)
+(* HLSPEC          *)
+(* --------------- *)
 (* RISC-V contract *)
 (* --------------- *)
 
@@ -64,6 +66,8 @@ Definition riscv_incr_post_def:
   (m.c_gpr m.procID 10w = x + 1w)
 End
 
+(* ------------ *)
+(* HLSPEC       *)
 (* ------------ *)
 (* BIR contract *)
 (* ------------ *)
@@ -84,12 +88,35 @@ Definition bir_incr_post_def:
     (BExp_Const (Imm64 (x + 1w)))
 End
 
-val bir_incr_pre = ``bir_incr_pre``;
-val bir_incr_post = ``bir_incr_post``;
+(* ------------ *)
+(* BSPEC        *)
+(* ------------ *)
+(* BIR contract *)
+(* ------------ *)
+
+Definition bspec_incr_pre_def:
+  bspec_incr_pre x : bir_exp_t =
+  BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 x))
+End
+
+Definition bspec_incr_post_def:
+ bspec_incr_post x : bir_exp_t =
+  BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_BinExp
+      BIExp_Plus (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
+End
 
 (* ----------------------------------- *)
 (* Connecting RISC-V and BIR contracts *)
 (* ----------------------------------- *)
+
+val bir_incr_pre = ``bir_incr_pre``;
+val bir_incr_post = ``bir_incr_post``;
 
 Theorem incr_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bir_incr_pre pre_x10)
