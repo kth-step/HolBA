@@ -74,7 +74,7 @@ val default_cfg = { max_iter  = 10
                   , do_training = false
                   , run_description = NONE
                   , exec_conc = false
-		  , angr_symbexec = true
+		  , angr_symbexec = false
 		  , do_patching = false
                   }
 
@@ -483,8 +483,8 @@ val opt_table =
               handle_conv_arg_with (fn x => SOME (SOME x)) set_run_description)
     , Arity0 ("ec", "exec_conc", "Execute generated states to validate obs eq",
               fn cfg => fn b => set_exec_conc cfg b)
-    , Arity0 ("angroff", "angr_symbexec_off", "Use angr symbolic execution",
-              fn cfg => fn b => set_angr_symb_exec cfg (not b))
+    , Arity0 ("angr_on", "angr_symbexec_on", "Use angr symbolic execution",
+              fn cfg => fn b => set_angr_symb_exec cfg  b)
     , Arity0 ("patch", "patching", "Program patching (only fence insertion in LLVM programs)",
               fn cfg => fn b => set_do_patching cfg b)
     , Arity1 ("hsmtltl", "holsmt_library_trace_level", "Set HolSmt library trace level (e.g., 4 to keep z3 temporary exchange files)",
