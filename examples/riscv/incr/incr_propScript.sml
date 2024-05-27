@@ -46,8 +46,6 @@ open incr_symb_execTheory;
 
 open distribute_generic_stuffTheory;
 
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
-
 val _ = new_theory "incr_prop";
 
 (* --------------- *)
@@ -111,12 +109,18 @@ Definition bspec_incr_post_def:
       BIExp_Plus (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
 End
 
-(* ----------------------------------- *)
-(* Connecting RISC-V and BIR contracts *)
-(* ----------------------------------- *)
+(* --------------------- *)
+(* Auxiliary definitions *)
+(* --------------------- *)
+
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val bir_incr_pre = ``bir_incr_pre``;
 val bir_incr_post = ``bir_incr_post``;
+
+(* ----------------------------------- *)
+(* Connecting RISC-V and BIR contracts *)
+(* ----------------------------------- *)
 
 Theorem incr_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bir_incr_pre pre_x10)

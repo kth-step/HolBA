@@ -49,8 +49,8 @@ open distribute_generic_stuffTheory;
 
 val _ = new_theory "mod2_prop";
 
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
-
+(* --------------- *)
+(* HLSPEC          *)
 (* --------------- *)
 (* RISC-V contract *)
 (* --------------- *)
@@ -65,6 +65,8 @@ Definition riscv_mod2_post_def:
   (m.c_gpr m.procID 10w = n2w (x MOD 2))
 End
 
+(* ------------ *)
+(* HLSPEC       *)
 (* ------------ *)
 (* BIR contract *)
 (* ------------ *)
@@ -84,6 +86,35 @@ Definition bir_mod2_post_def:
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_Const (Imm64 (n2w (x MOD 2))))
 End
+
+(* ------------ *)
+(* BSPEC        *)
+(* ------------ *)
+(* BIR contract *)
+(* ------------ *)
+
+Definition bspec_mod2_pre_def:
+  bspec_mod2_pre x : bir_exp_t =
+  BExp_BinPred
+   BIExp_Equal
+   (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+   (BExp_Const (Imm64 x))
+End
+
+Definition bspec_mod2_post_def:
+ bspec_mod2_post x : bir_exp_t =
+  BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_BinExp
+      BIExp_And (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
+End
+
+(* --------------------- *)
+(* Auxiliary definitions *)
+(* --------------------- *)
+
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val bir_mod2_pre = ``bir_mod2_pre``;
 val bir_mod2_post = ``bir_mod2_post``;
