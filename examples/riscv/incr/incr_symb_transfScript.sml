@@ -252,7 +252,8 @@ val goal = hd strongpostcond_goals;
 *)
 val strongpostcond_thms = List.map (fn goal =>
   prove(``^goal``,
-    (* birs_strongpostcond_impl_TAC *)
+    birs_strongpostcond_impl_TAC
+(*
     REPEAT STRIP_TAC >>
     (* symbsof sys1 and sys2 IN symb_interpr_dom H' *)
     `(birs_symb_symbols sys1 UNION birs_symb_symbols sys2) SUBSET symb_interpr_dom H'` by (
@@ -320,6 +321,7 @@ precondition bprog also holds in bs
 
     ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_incr_post_def, bir_eval_bin_pred_def, bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def] >>
     EVAL_TAC
+*)
   )
 ) strongpostcond_goals;
 
