@@ -18,13 +18,13 @@ fun llvm_prefix () =
           NONE => raise ERR "llvm_prefix" "the environment variable HOLBA_LLVM_DIR is not set"
         | SOME p => (p ^ "/bin/");
 
-val llvm_scamv_lib =
+fun llvm_scamv_lib () =
       case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
                              (OS.Process.getEnv("HOLBA_LLVM_DIR")) of
           NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVM_DIR is not set"
         | SOME p => (p ^ "/lib/LLVMScamv.so");
 
-val linker_path =
+fun linker_path () =
       case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
                              (OS.Process.getEnv("HOLBA_LLVMSCAMV_DIR")) of
           NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
@@ -62,7 +62,7 @@ fun compile_and_link_armv8_llvm_bc binfilename bcfile bt =
       val bt_opt = if bt = "rpi3" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a53"
 		   else if bt = "rpi4" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a72"
 		   else raise ERR "compile_and_link_armv8_llvm_bc" "unknown board type"
-      val linker_opt = "-Xlinker -T " ^ linker_path;
+      val linker_opt = "-Xlinker -T " ^ linker_path ();
       val compiler_opt = (!opt) ^ " -Wall -g -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
       val cmd_static_link = (llvm_prefix () ^ "clang " ^
 			     bt_opt ^ " " ^ compiler_opt ^ " " ^ linker_opt ^ " " ^
@@ -127,7 +127,7 @@ fun link_missing_globs filename slicedfunbc beforeslicefilebc glob_names =
 fun get_fun_names prog_bc =
     let
       val cmd_print_funcs = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			     llvm_scamv_lib ^ " -print-functions " ^
+			     llvm_scamv_lib () ^ " -print-functions " ^
 			     prog_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
       val output = get_exec_output_redirect false cmd_print_funcs;
       val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
@@ -138,7 +138,7 @@ fun get_fun_names prog_bc =
 fun get_glob_names prog_bc =
     let
       val cmd_print_funcs = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			     llvm_scamv_lib ^ " -print-globals " ^
+			     llvm_scamv_lib () ^ " -print-globals " ^
 			     prog_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
       val output = get_exec_output_redirect false cmd_print_funcs;
       val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
@@ -161,7 +161,7 @@ fun metarenamer_bbs (fun_name, fun_bc) =
     let
       (* val fun_renamed = get_simple_tempfile (fun_name ^ "-renamed.bc"); *)
       val cmd_metarenamer_bbs = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			     llvm_scamv_lib ^ " -rename-blocks " ^
+			     llvm_scamv_lib () ^ " -rename-blocks " ^
 			     fun_bc ^ " -o " ^ fun_bc);
     in
       (if OS.Process.isSuccess (OS.Process.system cmd_metarenamer_bbs)
@@ -195,7 +195,7 @@ fun extract_multi_funs prog_bc fun_names =
 fun analyze_func (fun_name, fun_bc) threshold_ninst =
     let
       val cmd_analyze_func = (llvm_prefix () ^ "opt " ^ fun_bc ^
-			      " -enable-new-pm=0 -load " ^ llvm_scamv_lib ^
+			      " -enable-new-pm=0 -load " ^ llvm_scamv_lib () ^
 			      " -analyze-function " ^ fun_name ^ " -o " ^ (get_simple_tempfile "delete.bc"));
       val appx_inst_count = Int.fromString (get_exec_output_redirect false cmd_analyze_func);
       val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
@@ -209,7 +209,7 @@ fun analyze_func (fun_name, fun_bc) threshold_ninst =
 fun check_loops (fun_name, fun_bc) =
     let
       val cmd_check_loops = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			     llvm_scamv_lib ^ " -check-loops " ^
+			     llvm_scamv_lib () ^ " -check-loops " ^
 			     fun_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
       val res = (get_exec_output_redirect false cmd_check_loops);
       val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
@@ -223,10 +223,10 @@ fun check_loops (fun_name, fun_bc) =
  fun unroll_and_delete_loops (fun_name, filebc) =
     let
       val cmd_unroll_loops = (llvm_prefix () ^ "opt" ^
-			      " -loops -loop-simplify -loop-unroll -unroll-count=2 " ^
+			      " -loops -loop-simplify -loop-unroll -unroll-count=1 " ^
 			      filebc ^ " -o " ^ filebc);
       val cmd_delete_loops = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			      llvm_scamv_lib ^ " -extend-loop-deletion " ^
+			      llvm_scamv_lib () ^ " -extend-loop-deletion " ^
 			      filebc ^ " -o " ^ filebc);
     in
       if (* check_loops (fun_name, filebc) *)false
@@ -244,7 +244,7 @@ fun check_loops (fun_name, fun_bc) =
 fun get_extract_options (fun_name, fun_bc) threshold =
     let
       val cmd_slicing = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			 llvm_scamv_lib ^
+			 llvm_scamv_lib () ^
 			 " -automatic-block-specifier -func " ^ fun_name ^ " -t " ^ (Int.toString threshold) ^ " " ^
 			 fun_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
       val output = get_exec_output_redirect false cmd_slicing;
@@ -356,7 +356,7 @@ fun llvm_insert_fence fun_name filebc =
       val _ = print "Adding fence...\n";
       (* val fenced_prog_bc = get_simple_tempfile ("fenced_" ^ filebc); *)
       val cmd_insert_fence = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			      llvm_scamv_lib ^ " -fence-insertion -func_to_fence " ^
+			      llvm_scamv_lib () ^ " -fence-insertion -func_to_fence " ^
 			      fun_name ^ " " ^  filebc ^ " -o " ^ filebc);
       val res = Int.fromString (get_exec_output_redirect false cmd_insert_fence);
     in
@@ -393,7 +393,7 @@ fun llvm_aarch64_slh binfilename bcfile bt slh_config =
 fun add_slh_attribute filebc =
     let
       val cmd_slh_attribute = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
-			       llvm_scamv_lib ^ " -add-aarch64-slh-attribute " ^
+			       llvm_scamv_lib () ^ " -add-aarch64-slh-attribute " ^
 			       filebc ^ " -o " ^ filebc);
     in
       (if OS.Process.isSuccess (OS.Process.system cmd_slh_attribute)
