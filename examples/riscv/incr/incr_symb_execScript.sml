@@ -3,27 +3,9 @@ open HolKernel Parse boolLib bossLib;
 open bir_symbLib;
 
 open incrTheory;
+open incr_propTheory;
 
 val _ = new_theory "incr_symb_exec";
-
-(* ---------------------------- *)
-(* Program variable definitions *)
-(* ---------------------------- *)
-
-Definition incr_prog_vars_def:
-  incr_prog_vars = [BVar "x10" (BType_Imm Bit64); BVar "x1" (BType_Imm Bit64)]
-End
-
-Definition incr_birenvtyl_def:
-  incr_birenvtyl = MAP BVarToPair incr_prog_vars
-End
-
-Theorem incr_prog_vars_thm:
-  set incr_prog_vars = bir_vars_of_program (bir_incr_prog : 'observation_type bir_program_t)
-Proof
-  SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
-   [bir_incr_prog_def, incr_prog_vars_def]
-QED
 
 (* ----------------------- *)
 (* Symbolic analysis setup *)
@@ -37,10 +19,7 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 val bprog_envtyl = (fst o dest_eq o concl) incr_birenvtyl_def;
 
-val birs_pcond = ``BExp_BinPred
-      BIExp_Equal
-      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-      (BExp_Const (Imm64 pre_x10))``;
+val birs_pcond = (snd o dest_eq o concl) incr_bsysprecond_thm;
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
