@@ -41,20 +41,18 @@ open program_logicSimps;
 open bir_env_oldTheory;
 open bir_program_varsTheory;
 
-open incrTheory;
-open incr_propTheory;
-open incr_symb_execTheory;
-
 open distribute_generic_stuffTheory;
 
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+open incrTheory;
+open incr_specTheory;
+open incr_symb_execTheory;
 
 val _ = new_theory "incr_symb_transf";
 
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val bir_incr_pre = ``bir_incr_pre``;
 val bir_incr_post = ``bir_incr_post``;
-
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -390,11 +388,9 @@ Theorem bir_abstract_jgmt_rel_incr_thm[local] =
 (* ........................... *)
 (* now manage the pre and postconditions into contract friendly "bir_exec_to_labels_triple_precond/postcond", need to change precondition to "bir_env_vars_are_initialised" for set of program variables *)
 
-
 (* ........................... *)
 (* ........................... *)
 (* ........................... *)
-
 
 Theorem abstract_jgmt_rel_incr:
  abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
@@ -439,5 +435,29 @@ Proof
   METIS_TAC [bir_abstract_jgmt_rel_incr_thm, pre_bir_nL_def, post_bir_nL_def, incr_prog_vars_thm]
 QED
 
+Theorem bir_cont_incr_tm[local]:
+ bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false)
+Proof
+ `{BL_Address (Imm64 4w)} <> {}` by fs [] >>
+ MP_TAC ((Q.SPECL [
+  `BL_Address (Imm64 0w)`,
+  `{BL_Address (Imm64 4w)}`,
+  `bir_incr_pre pre_x10`,
+  `\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10) else bir_exp_false`
+ ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
+ rw [] >>
+ METIS_TAC [abstract_jgmt_rel_incr]
+QED
+
+Theorem bir_cont_incr:
+ bir_cont bir_incr_prog bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10)
+        else bir_exp_false)
+Proof
+ rw [bir_incr_prog_def,bir_cont_incr_tm]
+QED
 
 val _ = export_theory ();

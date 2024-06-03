@@ -3,9 +3,38 @@ open HolKernel Parse boolLib bossLib;
 open bir_symbLib;
 
 open incrTheory;
-open incr_propTheory;
+open incr_specTheory;
 
 val _ = new_theory "incr_symb_exec";
+
+(* ---------------------------- *)
+(* Program variable definitions *)
+(* ---------------------------- *)
+
+Definition incr_prog_vars_def:
+  incr_prog_vars = [BVar "x10" (BType_Imm Bit64); BVar "x1" (BType_Imm Bit64)]
+End
+
+Definition incr_birenvtyl_def:
+  incr_birenvtyl = MAP BVarToPair incr_prog_vars
+End
+
+Theorem incr_prog_vars_thm:
+  set incr_prog_vars = bir_vars_of_program (bir_incr_prog : 'observation_type bir_program_t)
+Proof
+  SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
+   [bir_incr_prog_def, incr_prog_vars_def]
+QED
+
+(* --------------------- *)
+(* Symbolic precondition *)
+(* --------------------- *)
+
+val bir_incr_pre = ``bir_incr_pre``;
+
+Theorem incr_bsysprecond_thm =
+ (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
+ ``mk_bsysprecond (bir_incr_pre pre_x10) incr_birenvtyl``;
 
 (* ----------------------- *)
 (* Symbolic analysis setup *)
