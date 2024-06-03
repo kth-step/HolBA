@@ -38,6 +38,19 @@ val _ = new_theory "incr_prop";
 (* BIR HL contract *)
 (* --------------- *)
 
+val bir_cont_incr_thm = use_post_weak_rule_simp
+ (use_pre_str_rule_simp bspec_cont_incr incr_bir_pre_imp_bspec_pre)
+ ``BL_Address (Imm64 4w)`` incr_bspec_post_imp_bir_post;
+
+Theorem bir_cont_incr:
+ bir_cont bir_incr_prog bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10)
+       else bir_exp_false)
+Proof
+ ACCEPT_TAC bir_cont_incr_thm
+QED
+
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)

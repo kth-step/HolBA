@@ -30,11 +30,11 @@ QED
 (* Symbolic precondition *)
 (* --------------------- *)
 
-val bir_incr_pre = ``bir_incr_pre``;
+val bspec_incr_pre = ``bspec_incr_pre``;
 
 Theorem incr_bsysprecond_thm =
  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
- ``mk_bsysprecond (bir_incr_pre pre_x10) incr_birenvtyl``;
+ ``mk_bsysprecond (bspec_incr_pre pre_x10) incr_birenvtyl``;
 
 (* ----------------------- *)
 (* Symbolic analysis setup *)

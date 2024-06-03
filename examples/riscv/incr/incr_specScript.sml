@@ -149,10 +149,30 @@ QED
 (* Connecting HLSPEC BIR and BSPEC contracts *)
 (* ----------------------------------------- *)
 
-(* use_pre_str_rule_simp *)
+val incr_bir_pre_imp_bspec_pre_thm =
+ prove_exp_is_taut ``BExp_BinExp BIExp_Or
+   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
+   (bspec_incr_pre pre_x10)``;
 
-(* use_post_weak_rule_simp *)
+Theorem incr_bir_pre_imp_bspec_pre:
+ bir_exp_is_taut (BExp_BinExp BIExp_Or
+   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
+   (bspec_incr_pre pre_x10))
+Proof
+ rw [incr_bir_pre_imp_bspec_pre_thm]
+QED
 
-(* https://github.com/kth-step/HolBA/blob/master/src/tools/comp/bir_compositionLib.sml *)
+val incr_bspec_post_imp_bir_post_thm =
+ prove_exp_is_taut ``BExp_BinExp BIExp_Or
+   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
+    (bir_incr_post pre_x10)``;
+
+Theorem incr_bspec_post_imp_bir_post:
+ bir_exp_is_taut (BExp_BinExp BIExp_Or
+   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
+    (bir_incr_post pre_x10))
+Proof
+ rw [incr_bspec_post_imp_bir_post_thm]
+QED
 
 val _ = export_theory ();
