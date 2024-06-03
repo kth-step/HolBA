@@ -10,7 +10,7 @@ open bir_programSyntax bir_program_labelsTheory bir_immTheory;
 open swapTheory swap_symb_execTheory swap_propTheory;
 open isqrtTheory isqrt_propTheory;
 open mod2Theory mod2_propTheory;
-open incrTheory incr_propTheory incr_prop_transfTheory;
+open incrTheory incr_symb_transfTheory incr_propTheory;
 
 fun print_and_check_thm name thm t_concl =
   let
