@@ -4,7 +4,7 @@ open wordsTheory;
 
 open bir_symbLib;
 
-open mod2Theory;
+open mod2Theory mod2_specTheory;
 
 val _ = new_theory "mod2_symb_exec";
 
@@ -27,6 +27,16 @@ Proof
    [bir_mod2_prog_def, mod2_prog_vars_def]
 QED
 
+(* --------------------- *)
+(* Symbolic precondition *)
+(* --------------------- *)
+
+val bir_mod2_pre = ``bir_mod2_pre``;
+
+Theorem mod2_bsysprecond_thm =
+ (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
+ ``mk_bsysprecond (bir_mod2_pre pre_x10) mod2_birenvtyl``;
+
 (* ----------------------- *)
 (* Symbolic analysis setup *)
 (* ----------------------- *)
@@ -39,10 +49,7 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 val bprog_envtyl = (fst o dest_eq o concl) mod2_birenvtyl_def;
 
-val birs_pcond = ``BExp_BinPred
-      BIExp_Equal
-      (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
-      (BExp_Const (Imm64 (n2w pre_x10)))``;
+val birs_pcond = (snd o dest_eq o concl) mod2_bsysprecond_thm;
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
