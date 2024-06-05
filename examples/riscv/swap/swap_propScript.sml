@@ -38,20 +38,6 @@ val _ = new_theory "swap_prop";
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
-(* For debugging:
-val bir_ct = bir_cont_swap;
-val prog_bin = ``bir_swap_progbin``;
-val riscv_pre = ``riscv_swap_pre``;
-val riscv_post = ``riscv_swap_post``;
-val bir_prog_def = bir_swap_prog_def;
-val bir_pre_defs = [bir_swap_pre_def]
-val bir_pre1_def = bir_swap_pre_def;
-val riscv_pre_imp_bir_pre_thm = swap_riscv_pre_imp_bir_pre_thm;
-val bir_post_defs = [bir_swap_post_def];
-val riscv_post_imp_bir_post_thm = swap_riscv_post_imp_bir_post_thm;
-val bir_is_lifted_prog_thm = bir_swap_riscv_lift_THM;
-*)
-
 val riscv_cont_swap_thm =
  get_riscv_contract_sing
   bir_cont_swap
@@ -72,21 +58,16 @@ Proof
  ACCEPT_TAC riscv_cont_swap_thm
 QED
 
-(* unfolded theorem *)
-val tm = concl riscv_cont_swap;
-val sset = std_ss++bir_wm_SS++bir_lifting_machinesLib.bmr_ss;
-val thms = [riscv_cont_def, t_jgmt_def, riscv_ts_def, riscv_weak_trs_def, riscv_swap_pre_def, riscv_swap_post_def, riscv_bmr_def, riscv_state_is_OK_def];
-(*
-EVAL tm;
-SIMP_CONV sset thms tm
-REWRITE_CONV  tm;
-*)
-val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] tm;
+(* ----------------- *)
+(* Unfolded contract *)
+(* ----------------- *)
+
+val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] (concl riscv_cont_swap);
 
 Theorem riscv_cont_swap_full:
   !pre_x10. ^((snd o dest_eq o concl) readable_thm)
 Proof
-  METIS_TAC [riscv_cont_swap, readable_thm]
+ METIS_TAC [riscv_cont_swap, readable_thm]
 QED
 
 val _ = export_theory ();

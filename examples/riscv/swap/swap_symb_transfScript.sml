@@ -198,8 +198,7 @@ QED
 (* proof for each end state individually: *)
 
 val sys1 = (snd o dest_eq o concl o REWRITE_CONV [swap_bsysprecond_thm]) birs_state_init_pre;
-val (Pi_func, Pi_set) = dest_comb Pi_f;
-(* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
+val (Pi_func, Pi_set) = dest_comb Pi_f; (* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
 (*
@@ -216,11 +215,6 @@ val strongpostcond_goals = List.map (fn sys2 => ``
 
 (*
 val goal = hd strongpostcond_goals;
-*)
-(*
-val strongpostcond_thms = List.map (fn goal =>
-  prove(``^goal``, birs_strongpostcond_impl_TAC)
-) strongpostcond_goals;
 *)
 val strongpostcond_thms = List.map (fn goal =>
   prove(``^goal``, birs_strongpostcond_impl_TAC)
@@ -242,7 +236,6 @@ val Pi_thms = List.map (fn sys2 =>
     REWRITE_TAC [bprog_P_def, bprog_Q_def] >>
     REPEAT STRIP_TAC >>
     Q_bircont_SOLVE3CONJS_TAC swap_prog_vars_thm >>
-
     `birs_symb_matchstate sys1 H' bs` by (
       METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm]
     ) >>
@@ -302,11 +295,12 @@ Theorem bir_abstract_jgmt_rel_swap_thm[local] =
 
 Theorem abstract_jgmt_rel_swap:
  abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 0x14w)}
-  (\st. bir_exec_to_labels_triple_precond st (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) ^bprog_tm)
+  (\st. bir_exec_to_labels_triple_precond st
+    (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) ^bprog_tm)
   (\st st'. bir_exec_to_labels_triple_postcond st'
-       (\l. if l = BL_Address (Imm64 0x14w) then
-              (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
-            else bir_exp_false) ^bprog_tm)
+    (\l. if l = BL_Address (Imm64 0x14w)
+         then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+         else bir_exp_false) ^bprog_tm)
 Proof
   MATCH_MP_TAC (REWRITE_RULE [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
   SIMP_TAC std_ss [] >>

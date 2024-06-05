@@ -56,13 +56,6 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 val bprog_envtyl = (fst o dest_eq o concl) swap_birenvtyl_def;
 
-(*val birs_pcond = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_tm "sy_x10",
-  mem_addrs_aligned_prog_disj_tm "sy_x11",
-  pre_vals_tm "sy_MEM8" "sy_x10" "sy_pre_x10" "sy_pre_x10_mem_deref",
-  pre_vals_tm "sy_MEM8" "sy_x11" "sy_pre_x11" "sy_pre_x11_mem_deref"
-];*)
-
 val birs_pcond = (snd o dest_eq o concl) swap_bsysprecond_thm;
 
 (* --------------------------- *)
