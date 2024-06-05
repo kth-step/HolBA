@@ -40,14 +40,14 @@ val _ = new_theory "swap_prop";
 
 val riscv_cont_swap_thm =
  get_riscv_contract_sing
-  bir_cont_swap
+  bspec_cont_swap
   ``bir_swap_progbin``
   ``riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref``
   ``riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref``
   bir_swap_prog_def
-  [bir_swap_pre_def]
-  bir_swap_pre_def swap_riscv_pre_imp_bir_pre_thm
-  [bir_swap_post_def] swap_riscv_post_imp_bir_post_thm
+  [bspec_swap_pre_def]
+  bspec_swap_pre_def swap_riscv_pre_imp_bspec_pre_thm
+  [bspec_swap_post_def] swap_riscv_post_imp_bspec_post_thm
   bir_swap_riscv_lift_THM;
 
 Theorem riscv_cont_swap:
@@ -58,9 +58,9 @@ Proof
  ACCEPT_TAC riscv_cont_swap_thm
 QED
 
-(* ----------------- *)
-(* Unfolded contract *)
-(* ----------------- *)
+(* ------------------------ *)
+(* Unfolded RISC-V contract *)
+(* ------------------------ *)
 
 val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] (concl riscv_cont_swap);
 

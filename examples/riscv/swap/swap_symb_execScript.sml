@@ -42,7 +42,7 @@ QED
 
 Theorem swap_bsysprecond_thm =
  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
- ``mk_bsysprecond (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) swap_birenvtyl``;
+ ``mk_bsysprecond (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) swap_birenvtyl``;
 
 (* ----------------------- *)
 (* Symbolic analysis setup *)

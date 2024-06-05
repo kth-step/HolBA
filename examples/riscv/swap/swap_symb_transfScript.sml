@@ -51,8 +51,8 @@ val _ = new_theory "swap_symb_transf";
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
-val bir_swap_pre = ``bir_swap_pre``;
-val bir_swap_post = ``bir_swap_post``;
+val bspec_swap_pre = ``bspec_swap_pre``;
+val bspec_swap_post = ``bspec_swap_post``;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -78,7 +78,7 @@ QED
 (* ........................... *)
 
 val birs_state_init_pre = ``birs_state_init_pre_GEN ^birs_state_init_lbl swap_birenvtyl
- (mk_bsysprecond (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) swap_birenvtyl)``;
+ (mk_bsysprecond (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) swap_birenvtyl)``;
 
 Theorem birs_state_init_pre_EQ_thm:
   ^((snd o dest_comb) sys_i) = ^birs_state_init_pre
@@ -111,19 +111,19 @@ val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
 
 Definition bprog_P_def:
-  bprog_P x y xv yv = P_bircont swap_birenvtyl (^bir_swap_pre x y xv yv)
+  bprog_P x y xv yv = P_bircont swap_birenvtyl (^bspec_swap_pre x y xv yv)
 End
 
 Definition bprog_Q_def:
-  bprog_Q x y xv yv = Q_bircont (^birs_state_end_lbl) (set swap_prog_vars) (^bir_swap_post x y xv yv)
+  bprog_Q x y xv yv = Q_bircont (^birs_state_end_lbl) (set swap_prog_vars) (^bspec_swap_post x y xv yv)
 End
 
 Definition pre_bir_nL_def:
-  pre_bir_nL x y xv yv = pre_bircont_nL swap_birenvtyl (^bir_swap_pre x y xv yv)
+  pre_bir_nL x y xv yv = pre_bircont_nL swap_birenvtyl (^bspec_swap_pre x y xv yv)
 End
 
 Definition post_bir_nL_def:
-  post_bir_nL x y xv yv = post_bircont_nL (^birs_state_end_lbl) (set swap_prog_vars) (^bir_swap_post x y xv yv)
+  post_bir_nL x y xv yv = post_bircont_nL (^birs_state_end_lbl) (set swap_prog_vars) (^bspec_swap_post x y xv yv)
 End
 (* ........................... *)
 
@@ -177,13 +177,13 @@ Proof
   IMP_RES_TAC (SIMP_RULE std_ss [] P_bircont_entails_thm) >>
 
   SIMP_TAC std_ss [bprog_P_def] >>
-  POP_ASSUM (ASSUME_TAC o Q.SPEC `bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref`) >>
-  `bir_vars_of_exp (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) SUBSET set (MAP PairToBVar swap_birenvtyl)` by EVAL_TAC >>
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref`) >>
+  `bir_vars_of_exp (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) SUBSET set (MAP PairToBVar swap_birenvtyl)` by EVAL_TAC >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
   `ALL_DISTINCT (MAP FST swap_birenvtyl)` by EVAL_TAC >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-  `IS_SOME (type_of_bir_exp (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref))` by (
-    SIMP_TAC std_ss [bir_swap_pre_def, bir_swap_pre_def] >>
+  `IS_SOME (type_of_bir_exp (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref))` by (
+    SIMP_TAC std_ss [bspec_swap_pre_def, bspec_swap_pre_def] >>
     CONV_TAC (RAND_CONV (SIMP_CONV (srw_ss()) type_of_bir_exp_thms)) >>
     SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES]
   ) >>
@@ -208,9 +208,9 @@ val strongpostcond_goals = List.map (fn sys2 => ``
     sys1 = ^sys1 ==>
     sys2 = ^sys2 ==>
     birs_symb_matchstate sys1 H' bs ==>
-    bir_eval_exp (^bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) bs.bst_environ = SOME bir_val_true ==>
+    bir_eval_exp (^bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) bs.bst_environ = SOME bir_val_true ==>
     birs_symb_matchstate sys2 H' bs' ==>
-    bir_eval_exp (^bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) bs'.bst_environ = SOME bir_val_true
+    bir_eval_exp (^bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) bs'.bst_environ = SOME bir_val_true
   ``) sys2s;
 
 (*
@@ -296,10 +296,10 @@ Theorem bir_abstract_jgmt_rel_swap_thm[local] =
 Theorem abstract_jgmt_rel_swap:
  abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 0x14w)}
   (\st. bir_exec_to_labels_triple_precond st
-    (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) ^bprog_tm)
+    (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) ^bprog_tm)
   (\st st'. bir_exec_to_labels_triple_postcond st'
     (\l. if l = BL_Address (Imm64 0x14w)
-         then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+         then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
          else bir_exp_false) ^bprog_tm)
 Proof
   MATCH_MP_TAC (REWRITE_RULE [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
@@ -308,7 +308,7 @@ Proof
   
   CONJ_TAC >- (
     (* bpre subset *)
-    REWRITE_TAC [bir_swap_pre_def] >>
+    REWRITE_TAC [bspec_swap_pre_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM swap_prog_vars_thm, swap_prog_vars_def] >>    
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT] >>
     EVAL_TAC
@@ -316,14 +316,14 @@ Proof
 
   CONJ_TAC >- (
     (* bpost subset *)
-    REWRITE_TAC [bir_swap_post_def] >>
+    REWRITE_TAC [bspec_swap_post_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM swap_prog_vars_thm, swap_prog_vars_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
 
   CONJ_TAC >- (
     (* bpost is bool *)
-    REWRITE_TAC [bir_swap_post_def] >>
+    REWRITE_TAC [bspec_swap_post_def] >>
     SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_REWRS, type_of_bir_exp_def]
   ) >>
 
@@ -342,34 +342,34 @@ Proof
   METIS_TAC [bir_abstract_jgmt_rel_swap_thm, pre_bir_nL_def, post_bir_nL_def, swap_prog_vars_thm]
 QED
 
-Theorem bir_cont_swap_tm[local]:
+Theorem bspec_cont_swap_tm[local]:
  bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0x00w))
   {BL_Address (Imm64 0x14w)} {}
-  (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+  (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
   (\l. if l = BL_Address (Imm64 0x14w)
-       then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+       then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
        else bir_exp_false)
 Proof
  `{BL_Address (Imm64 0x14w)} <> {}` by fs [] >>
  MP_TAC ((Q.SPECL [
   `BL_Address (Imm64 0x00w)`,
   `{BL_Address (Imm64 0x14w)}`,
-  `bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref`,
-  `\l. if l = BL_Address (Imm64 0x14w) then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) else bir_exp_false`
+  `bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref`,
+  `\l. if l = BL_Address (Imm64 0x14w) then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) else bir_exp_false`
  ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
  rw [] >>
  METIS_TAC [abstract_jgmt_rel_swap]
 QED
 
-Theorem bir_cont_swap:
+Theorem bspec_cont_swap:
  bir_cont bir_swap_prog bir_exp_true (BL_Address (Imm64 0w))
   {BL_Address (Imm64 0x14w)} {}
-  (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+  (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
   (\l. if l = BL_Address (Imm64 0x14w)
-       then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+       then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
        else bir_exp_false)
 Proof
- rw [bir_swap_prog_def,bir_cont_swap_tm]
+ rw [bir_swap_prog_def,bspec_cont_swap_tm]
 QED
 
 val _ = export_theory ();
