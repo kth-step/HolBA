@@ -24,6 +24,8 @@ fun mem_addrs_aligned_prog_disj_tm rn = ``BExp_BinExp BIExp_And
   (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
   (^(mem_addrs_prog_disj_tm rn))``;
 
+fun mem_addrs_aligned_prog_disj_riscv_tm v = ``^v && 7w = 0w /\ 0x1000w <=+ ^v /\ ^v <+ 0x100000000w``;
+
 fun pre_vals_reg_tm rn fv = Parse.Term (`
     (BExp_BinPred
       BIExp_Equal

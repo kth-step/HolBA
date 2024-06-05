@@ -73,8 +73,10 @@ End
 
 Definition riscv_swap_pre_def:
  riscv_swap_pre x y xv yv (m : riscv_state) =
-  (m.c_gpr m.procID 10w = x /\
+  (^(mem_addrs_aligned_prog_disj_riscv_tm ``x:word64``) /\
+   m.c_gpr m.procID 10w = x /\
    riscv_mem_load_dword m.MEM8 x = xv /\
+   ^(mem_addrs_aligned_prog_disj_riscv_tm ``y:word64``) /\
    m.c_gpr m.procID 11w = y /\
    riscv_mem_load_dword m.MEM8 y = yv)
 End
@@ -145,7 +147,57 @@ Theorem swap_riscv_pre_imp_bir_pre_thm:
   (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
   (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
 Proof
+  rw [bir_pre_riscv_to_bir_def] >- (
+        rw [bir_swap_pre_def] >>
+        FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_extra_expsTheory.BExp_Aligned_def] >>
+        FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_immTheory.n2bs_def]
+  ) >>
+    (* ++HolBACoreSimps.holBACore_ss *)
+  FULL_SIMP_TAC (std_ss) [riscv_swap_pre_def, bir_swap_pre_def, riscv_mem_load_dword_def] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_vars_of_exp_def, bir_extra_expsTheory.BExp_Aligned_def, pred_setTheory.INSERT_UNION_EQ] >>
+
+  FULL_SIMP_TAC (std_ss) [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  PAT_X_ASSUM ``bmr_rel riscv_bmr A B`` (fn t => REWRITE_TAC [REWRITE_RULE [riscv_bmr_rel_EVAL] t] >> ASSUME_TAC t) >>
+`(∃mem_n.
+        bir_env_read (BVar "MEM8" (BType_Mem Bit64 Bit8)) bs.bst_environ =
+        SOME (BVal_Mem Bit64 Bit8 mem_n) ∧
+        ms.MEM8 = (λa. n2w (bir_load_mmap mem_n (w2n a))) ∧
+        bir_env_var_is_declared bs.bst_environ
+                                (BVar "tmp_MEM8" (BType_Mem Bit64 Bit8)))` by (
+                                METIS_TAC [riscv_bmr_rel_EVAL]
+                                ) >>
+  ASM_SIMP_TAC (std_ss) [] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_immTheory.bool2b_def, bir_immTheory.bool2w_def] >>
+
+  `bir_eval_bin_pred BIExp_Equal
+                      (bir_eval_load (SOME (BVal_Mem Bit64 Bit8 mem_n))
+                         (SOME (BVal_Imm (Imm64 pre_x10))) BEnd_LittleEndian
+                         Bit64) (SOME (BVal_Imm (Imm64 pre_x10_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` by (cheat) >>
+  `bir_eval_bin_pred BIExp_Equal
+                         (bir_eval_load (SOME (BVal_Mem Bit64 Bit8 mem_n))
+                            (SOME (BVal_Imm (Imm64 pre_x11)))
+                            BEnd_LittleEndian Bit64)
+                         (SOME (BVal_Imm (Imm64 pre_x11_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` by (cheat) >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_val_true_def]
+(*
+  IMP_RES_TAC bir_env_oldTheory.bir_env_var_is_initialised_weaken >>
+  FULL_SIMP_TAC (std_ss) [bir_env_oldTheory.bir_env_var_is_declared_def, GSYM bir_envTheory.bir_env_check_type_def] >>
+  ASM_SIMP_TAC (std_ss) [bir_envTheory.bir_env_read_def] >>
+*)
+(*
+
+
+  [,
+  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
+
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
  cheat
+*)
 QED
 
 Theorem swap_riscv_post_imp_bir_post_thm:
