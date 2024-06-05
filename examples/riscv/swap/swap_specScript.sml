@@ -5,8 +5,9 @@ open markerTheory;
 open distribute_generic_stuffLib;
 
 open bir_programSyntax bir_program_labelsTheory;
-open bir_immTheory bir_valuesTheory bir_expTheory;
+open bir_immTheory bir_valuesTheory bir_expTheory bir_exp_immTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
@@ -156,10 +157,50 @@ Proof
  rw [bir_post_bir_to_riscv_def,riscv_swap_post_def,bir_swap_post_def,riscv_mem_load_dword_def] >>
  Cases_on `bs` >>
  Cases_on `b0` >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
   bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
- cheat
+ Q.ABBREV_TAC `g = ?z. f "MEM8" = SOME z /\ BType_Mem Bit64 Bit8 = type_of_bir_val z` >>
+ Cases_on `g` >> fs [Abbrev_def] >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+   Cases_on `z` >> fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
+   Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 f' BEnd_LittleEndian (b2n (Imm64 pre_x10))` >>
+   Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 f' BEnd_LittleEndian (b2n (Imm64 pre_x11))` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_REWRS] >>
+   Cases_on `x` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+   Cases_on `x'` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+   fs [bool2w_def,bir_val_true_def] >>
+   Cases_on `c = pre_x11_mem_deref` >>
+   Cases_on `c' = pre_x10_mem_deref` >>
+   fs [] >>
+   rw [] >>
+   fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
+   fs [bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES] >>
+   `size_of_bir_immtype Bit64 = dimindex(:64)` by rw [size_of_bir_immtype_def] >>
+   fs [bir_exp_memTheory.bir_mem_addr_w2n] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) []) >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+   Cases_on `z` >> fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
+   Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 f' BEnd_LittleEndian (b2n (Imm64 pre_x10))` >>
+   Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 f' BEnd_LittleEndian (b2n (Imm64 pre_x11))` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_REWRS] >>
+   Cases_on `x` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+   Cases_on `x'` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+   fs [bool2w_def,bir_val_true_def] >>
+   Cases_on `c = pre_x11_mem_deref` >>
+   Cases_on `c' = pre_x10_mem_deref` >>
+   fs [] >>
+   rw [] >>
+   fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
+   fs [bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES] >>
+   `size_of_bir_immtype Bit64 = dimindex(:64)` by rw [size_of_bir_immtype_def] >>
+   fs [bir_exp_memTheory.bir_mem_addr_w2n] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
 val _ = export_theory ();
