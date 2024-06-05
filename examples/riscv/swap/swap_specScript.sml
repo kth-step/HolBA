@@ -175,12 +175,48 @@ Proof
   `bir_eval_bin_pred BIExp_Equal
                       (bir_eval_load (SOME (BVal_Mem Bit64 Bit8 mem_n))
                          (SOME (BVal_Imm (Imm64 pre_x10))) BEnd_LittleEndian
-                         Bit64) (SOME (BVal_Imm (Imm64 pre_x10_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` by (cheat) >>
+                         Bit64) (SOME (BVal_Imm (Imm64 pre_x10_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` by (
+fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
+  Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 mem_n BEnd_LittleEndian (b2n (Imm64 pre_x10))` >- (
+    fs [bir_exp_memTheory.bir_load_from_mem_REWRS]
+  ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+
+(**)
+    fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
+   POP_ASSUM (fn t => REWRITE_TAC [GSYM t]) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  (**)
+  REPEAT (PAT_X_ASSUM ``B1 @@ B2 @@ B3 @@ B4 @@ B5 @@ B6 @@ B7 @@ B8 = A`` (ASSUME_TAC o GSYM)) >>
+  ASM_REWRITE_TAC [] >>
+
+SIMP_TAC std_ss [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES]    
+    
+  ) >>
   `bir_eval_bin_pred BIExp_Equal
                          (bir_eval_load (SOME (BVal_Mem Bit64 Bit8 mem_n))
                             (SOME (BVal_Imm (Imm64 pre_x11)))
                             BEnd_LittleEndian Bit64)
-                         (SOME (BVal_Imm (Imm64 pre_x11_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` by (cheat) >>
+                         (SOME (BVal_Imm (Imm64 pre_x11_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` by (
+
+fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
+  Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 mem_n BEnd_LittleEndian (b2n (Imm64 pre_x11))` >- (
+    fs [bir_exp_memTheory.bir_load_from_mem_REWRS]
+  ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
+
+(**)
+    fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
+   POP_ASSUM (fn t => REWRITE_TAC [GSYM t]) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  (**)
+  REPEAT (PAT_X_ASSUM ``B1 @@ B2 @@ B3 @@ B4 @@ B5 @@ B6 @@ B7 @@ B8 = A`` (ASSUME_TAC o GSYM)) >>
+  ASM_REWRITE_TAC [] >>
+
+SIMP_TAC std_ss [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES]    
+
+
+    ) >>
 
   FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_val_true_def]
 (*
