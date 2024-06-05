@@ -3,7 +3,7 @@ struct
 
 open Abbrev;
 
-local 
+local
   open HolKernel Parse boolLib bossLib;
   open bitTheory;
   open birs_stepLib;
@@ -12,9 +12,42 @@ local
   open birs_auxTheory;
 in
 
-fun bir_symb_analysis bprog_tm
- birs_state_init_lbl birs_stop_lbls
- bprog_envtyl birs_pcond =
+fun mem_addrs_prog_disj_tm rn = ``BExp_BinExp BIExp_And
+ (BExp_BinPred BIExp_LessOrEqual
+  (BExp_Const (Imm64 0x1000w))
+  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
+ (BExp_BinPred BIExp_LessThan
+  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
+  (BExp_Const (Imm64 0x100000000w)))``;
+
+fun mem_addrs_aligned_prog_disj_tm rn = ``BExp_BinExp BIExp_And
+  (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
+  (^(mem_addrs_prog_disj_tm rn))``;
+
+fun mem_addrs_aligned_prog_disj_riscv_tm v = ``^v && 7w = 0w /\ 0x1000w <=+ ^v /\ ^v <+ 0x100000000w``;
+
+fun pre_vals_reg_tm rn fv = Parse.Term (`
+    (BExp_BinPred
+      BIExp_Equal
+      (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
+      (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
+`);
+
+fun pre_vals_mem_reg_tm mn rn fv = Parse.Term (`
+    (BExp_BinPred
+      BIExp_Equal
+      (BExp_Load
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring mn) (BType_Mem Bit64 Bit8)))
+        (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
+        BEnd_LittleEndian Bit64)
+      (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
+`);
+
+fun pre_vals_tm mn rn fvr fvmd =
+ bslSyntax.band (pre_vals_reg_tm rn fvr, pre_vals_mem_reg_tm mn rn fvmd);
+
+fun bir_symb_analysis bprog_tm birs_state_init_lbl
+  birs_stop_lbls bprog_envtyl birs_pcond =
  let
    val birs_state_init = ``<|
      bsst_pc       := ^birs_state_init_lbl;
