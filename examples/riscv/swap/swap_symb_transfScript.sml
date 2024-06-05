@@ -301,10 +301,10 @@ Theorem bir_abstract_jgmt_rel_swap_thm[local] =
 (* ........................... *)
 
 Theorem abstract_jgmt_rel_swap:
- abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
+ abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 0x14w)}
   (\st. bir_exec_to_labels_triple_precond st (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) ^bprog_tm)
   (\st st'. bir_exec_to_labels_triple_postcond st'
-       (\l. if l = BL_Address (Imm64 4w) then
+       (\l. if l = BL_Address (Imm64 0x14w) then
               (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
             else bir_exp_false) ^bprog_tm)
 Proof
@@ -345,8 +345,7 @@ Proof
     SIMP_TAC std_ss [swap_birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
   ) >>
 
-  (*METIS_TAC [bir_abstract_jgmt_rel_swap_thm, pre_bir_nL_def, post_bir_nL_def, swap_prog_vars_thm]*)
-  cheat
+  METIS_TAC [bir_abstract_jgmt_rel_swap_thm, pre_bir_nL_def, post_bir_nL_def, swap_prog_vars_thm]
 QED
 
 Theorem bir_cont_swap_tm[local]:
@@ -365,12 +364,11 @@ Proof
   `\l. if l = BL_Address (Imm64 0x14w) then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) else bir_exp_false`
  ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
  rw [] >>
- cheat
- (*METIS_TAC [abstract_jgmt_rel_swap]*)
+ METIS_TAC [abstract_jgmt_rel_swap]
 QED
 
 Theorem bir_cont_swap:
- bir_cont bir_swap_prog bir_exp_true (BL_Address (Imm64 0x00w))
+ bir_cont bir_swap_prog bir_exp_true (BL_Address (Imm64 0w))
   {BL_Address (Imm64 0x14w)} {}
   (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
   (\l. if l = BL_Address (Imm64 0x14w)
