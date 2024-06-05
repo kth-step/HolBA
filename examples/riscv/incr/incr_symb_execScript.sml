@@ -54,9 +54,13 @@ val birs_pcond = (snd o dest_eq o concl) incr_bsysprecond_thm;
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
+val timer = bir_miscLib.timer_start 0;
+
 val result = bir_symb_analysis bprog_tm
  birs_state_init_lbl birs_stop_lbls
  bprog_envtyl birs_pcond;
+
+val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n")) timer;
 
 val _ = show_tags := true;
 val _ = Portable.pprint Tag.pp_tag (tag result);
