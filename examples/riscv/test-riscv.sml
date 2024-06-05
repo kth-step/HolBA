@@ -7,8 +7,8 @@ open wordsTheory;
 
 open bir_programSyntax bir_program_labelsTheory bir_immTheory;
 
-open swapTheory swap_symb_execTheory swap_propTheory;
 open isqrtTheory isqrt_propTheory;
+open swapTheory swap_symb_transfTheory swap_propTheory;
 open mod2Theory mod2_symb_transfTheory mod2_propTheory;
 open incrTheory incr_symb_transfTheory incr_propTheory;
 
