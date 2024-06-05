@@ -2,7 +2,10 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_symbLib;
 
+open distribute_generic_stuffTheory;
+
 open swapTheory;
+open swap_specTheory;
 
 val _ = new_theory "swap_symb_exec";
 
@@ -33,6 +36,14 @@ Proof
   EVAL_TAC
 QED
 
+(* --------------------- *)
+(* Symbolic precondition *)
+(* --------------------- *)
+
+Theorem swap_bsysprecond_thm =
+ (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
+ ``mk_bsysprecond (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) swap_birenvtyl``;
+
 (* ----------------------- *)
 (* Symbolic analysis setup *)
 (* ----------------------- *)
@@ -45,12 +56,14 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 
 val bprog_envtyl = (fst o dest_eq o concl) swap_birenvtyl_def;
 
-val birs_pcond = bslSyntax.bandl [
+(*val birs_pcond = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_tm "sy_x10",
   mem_addrs_aligned_prog_disj_tm "sy_x11",
   pre_vals_tm "sy_MEM8" "sy_x10" "sy_pre_x10" "sy_pre_x10_mem_deref",
   pre_vals_tm "sy_MEM8" "sy_x11" "sy_pre_x11" "sy_pre_x11_mem_deref"
-];
+];*)
+
+val birs_pcond = (snd o dest_eq o concl) swap_bsysprecond_thm;
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
