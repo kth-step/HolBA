@@ -39,13 +39,13 @@ val _ = print_and_check_thm
 
 val _ = print_and_check_thm
   "swap BIR contract theorem"
-  bir_cont_swap
+  bspec_cont_swap
   ``bir_cont (bir_swap_prog : 'a bir_program_t)
     bir_exp_true (BL_Address (Imm64 0x00w))
     {BL_Address (Imm64 0x14w)} {}
-    (bir_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+    (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
     (\l. if l = BL_Address (Imm64 0x14w)
-         then (bir_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+         then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
          else bir_exp_false)
   ``;
 
