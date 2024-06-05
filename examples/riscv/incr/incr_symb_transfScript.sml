@@ -218,33 +218,6 @@ val strongpostcond_goals = List.map (fn sys2 => ``
     bir_eval_exp (^bspec_incr_post pre_x10) bs'.bst_environ = SOME bir_val_true
   ``) sys2s;
 
-(* FIXME: this is implicitly proven already in bir_envTheory.bir_env_read_def *)
-Theorem bir_eval_precond_lookup_pre_x10_incr_thm:
-!x env.
-  bir_eval_exp (bspec_incr_pre x) env = SOME bir_val_true ==>
-  bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 x))
-Proof
- rw [bspec_incr_pre_def] >>
- Cases_on `env` >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_exp_def,bir_eval_bin_pred_def
- ] >>
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
-   fs [Abbrev_def] >>
-   Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
-   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b (Imm64 x)` >>
-   Cases_on `bb` >> fs [] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) []
-QED
-
 (*
 val goal = hd strongpostcond_goals;
 *)

@@ -2,6 +2,8 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_symbLib;
 
+open distribute_generic_stuffTheory;
+
 open incrTheory;
 open incr_specTheory;
 
@@ -29,8 +31,6 @@ QED
 (* --------------------- *)
 (* Symbolic precondition *)
 (* --------------------- *)
-
-val bspec_incr_pre = ``bspec_incr_pre``;
 
 Theorem incr_bsysprecond_thm =
  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
