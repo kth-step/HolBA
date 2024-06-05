@@ -223,7 +223,7 @@ val strongpostcond_thms = List.map (fn goal =>
 ) strongpostcond_goals;
 *)
 val strongpostcond_thms = List.map (fn goal =>
-  prove(``^goal``, cheat)
+  prove(``^goal``, birs_strongpostcond_impl_TAC)
 ) strongpostcond_goals;
 
 (*
