@@ -49,6 +49,23 @@ open mod2_symb_transfTheory;
 
 val _ = new_theory "mod2_prop";
 
+(* --------------- *)
+(* HL BIR contract *)
+(* --------------- *)
+
+val bir_cont_mod2_thm = use_post_weak_rule_simp
+ (use_pre_str_rule_simp bspec_cont_mod2 mod2_bir_pre_imp_bspec_pre)
+ ``BL_Address (Imm64 4w)`` mod2_bspec_post_imp_bir_post;
+
+Theorem bir_cont_mod2:
+ bir_cont bir_mod2_prog bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10)
+       else bir_exp_false)
+Proof
+ rw [bir_cont_mod2_thm]
+QED
+
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)

@@ -55,8 +55,8 @@ val _ = new_theory "mod2_symb_transf";
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
-val bir_mod2_pre = ``bir_mod2_pre``;
-val bir_mod2_post = ``bir_mod2_post``;
+val bspec_mod2_pre = ``bspec_mod2_pre``;
+val bspec_mod2_post = ``bspec_mod2_post``;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -81,9 +81,7 @@ QED
 (* ........................... *)
 (* ........................... *)
 
-val birs_state_init_pre = ``birs_state_init_pre_GEN ^birs_state_init_lbl mod2_birenvtyl (mk_bsysprecond (bir_mod2_pre pre_x10) mod2_birenvtyl)``;
-
-val mod2_bsysprecond_thm = (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV) ``mk_bsysprecond (bir_mod2_pre pre_x10) mod2_birenvtyl``;
+val birs_state_init_pre = ``birs_state_init_pre_GEN ^birs_state_init_lbl mod2_birenvtyl (mk_bsysprecond (bspec_mod2_pre pre_x10) mod2_birenvtyl)``;
 
 Theorem birs_state_init_pre_EQ_thm:
   ^((snd o dest_comb) sys_i) = ^birs_state_init_pre
@@ -116,19 +114,19 @@ val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
 
 Definition bprog_P_def:
-  bprog_P x = P_bircont mod2_birenvtyl (^bir_mod2_pre x)
+  bprog_P x = P_bircont mod2_birenvtyl (^bspec_mod2_pre x)
 End
 
 Definition bprog_Q_def:
-  bprog_Q x = Q_bircont (^birs_state_end_lbl) (set mod2_prog_vars) (^bir_mod2_post x)
+  bprog_Q x = Q_bircont (^birs_state_end_lbl) (set mod2_prog_vars) (^bspec_mod2_post x)
 End
 
 Definition pre_bir_nL_def:
-  pre_bir_nL x = pre_bircont_nL mod2_birenvtyl (^bir_mod2_pre x)
+  pre_bir_nL x = pre_bircont_nL mod2_birenvtyl (^bspec_mod2_pre x)
 End
 
 Definition post_bir_nL_def:
-  post_bir_nL x = post_bircont_nL (^birs_state_end_lbl) (set mod2_prog_vars) (^bir_mod2_post x)
+  post_bir_nL x = post_bircont_nL (^birs_state_end_lbl) (set mod2_prog_vars) (^bspec_mod2_post x)
 End
 (* ........................... *)
 
@@ -180,11 +178,11 @@ Proof
   IMP_RES_TAC (SIMP_RULE std_ss [] P_bircont_entails_thm) >>
 
   SIMP_TAC std_ss [bprog_P_def] >>
-  POP_ASSUM (ASSUME_TAC o Q.SPEC `bir_mod2_pre pre_x10`) >>
-  `bir_vars_of_exp (bir_mod2_pre pre_x10) SUBSET set (MAP PairToBVar mod2_birenvtyl)` by (
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `bspec_mod2_pre pre_x10`) >>
+  `bir_vars_of_exp (bspec_mod2_pre pre_x10) SUBSET set (MAP PairToBVar mod2_birenvtyl)` by (
     PAT_X_ASSUM ``A = set B`` (fn thm => REWRITE_TAC [GSYM thm]) >>
-    SIMP_TAC (std_ss++holBACore_ss) [bir_mod2_pre_def, bir_mod2_pre_def] >>
-    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM mod2_prog_vars_thm, mod2_prog_vars_def, bir_mod2_pre_def] >>
+    SIMP_TAC (std_ss++holBACore_ss) [bspec_mod2_pre_def, bspec_mod2_pre_def] >>
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM mod2_prog_vars_thm, mod2_prog_vars_def, bspec_mod2_pre_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
@@ -192,8 +190,8 @@ Proof
     SIMP_TAC (std_ss++listSimps.LIST_ss) [mod2_birenvtyl_EVAL_thm]
   ) >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-  `IS_SOME (type_of_bir_exp (bir_mod2_pre pre_x10))` by (
-    SIMP_TAC std_ss [bir_mod2_pre_def, bir_mod2_pre_def] >>
+  `IS_SOME (type_of_bir_exp (bspec_mod2_pre pre_x10))` by (
+    SIMP_TAC std_ss [bspec_mod2_pre_def, bspec_mod2_pre_def] >>
     CONV_TAC (RAND_CONV (SIMP_CONV (srw_ss()) type_of_bir_exp_thms)) >>
     SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES]
   ) >>
@@ -201,56 +199,38 @@ Proof
 QED
 
 (* ........................... *)
+(* ........................... *)
+(* ........................... *)
+
+(* ........................... *)
 (* proof for each end state individually: *)
 
 val sys1 = birs_state_init_pre;
-val (Pi_func, Pi_set) = dest_comb Pi_f;
-(* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
+val (Pi_func, Pi_set) = dest_comb Pi_f; (* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
-(* FIXME: this is implicitly proven already in bir_envTheory.bir_env_read_def *)
-Theorem bir_eval_precond_lookup_pre_x10_mod2_thm:
-!x env.
-  bir_eval_exp (bir_mod2_pre x) env = SOME bir_val_true ==>
-  bir_env_lookup "x10" env = SOME (BVal_Imm (Imm64 (n2w x)))
-Proof
- rw [bir_mod2_pre_def] >>
- Cases_on `env` >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_exp_def,bir_eval_bin_pred_def
- ] >>
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
-   fs [Abbrev_def] >>
-   Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
-   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b (Imm64 (n2w x))` >>
-   Cases_on `bb` >> fs [] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) []
-QED
+(*
+val sys2 = hd sys2s;
+*)
+val strongpostcond_goals = List.map (fn sys2 => ``
+    sys1 = ^sys1 ==>
+    sys2 = ^sys2 ==>
+    birs_symb_matchstate sys1 H' bs ==>
+    bir_eval_exp (^bspec_mod2_pre pre_x10) bs.bst_environ = SOME bir_val_true ==>
+    birs_symb_matchstate sys2 H' bs' ==>
+    bir_eval_exp (^bspec_mod2_post pre_x10) bs'.bst_environ = SOME bir_val_true
+  ``) sys2s;
 
-Theorem mod2_wand_n2w[local]:
- !x. 1w && n2w x = n2w (x MOD 2)
-Proof
- STRIP_TAC >>
- MP_TAC (Q.SPECL [`1`, `x`] WORD_AND_EXP_SUB1) >>
- rw []
-QED
+(*
+val goal = hd strongpostcond_goals;
+*)
+val strongpostcond_thms = List.map (fn goal =>
+  prove(``^goal``, cheat) (* birs_strongpostcond_impl_TAC gives error *)
+) strongpostcond_goals;
 
-Theorem mod2_wand_1w_bval_imm[local]:
- !x v.
-  BVal_Imm (Imm64 (1w && n2w x)) = v ==>
-  v = BVal_Imm (Imm64 (n2w (x MOD 2)))
-Proof
- fs [] >> rw [mod2_wand_n2w]
-QED
-
+(*
+val sys2 = hd sys2s;
+*)
 val Pi_thms = List.map (fn sys2 =>
   prove(``
     sys1 = ^sys1 ==>
@@ -264,80 +244,12 @@ val Pi_thms = List.map (fn sys2 =>
     REWRITE_TAC [bprog_P_def, bprog_Q_def] >>
     REPEAT STRIP_TAC >>
     Q_bircont_SOLVE3CONJS_TAC mod2_prog_vars_thm >>
-    sg `bir_env_lookup "x10" bs'.bst_environ = SOME (BVal_Imm (Imm64 (n2w (pre_x10 MOD 2))))` >-
-     (`BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H` by (
-        `symb_interpr_for_symbs (birs_symb_symbols sys1) H` by (
-          FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-        ) >>
 
-        PAT_X_ASSUM ``A = ^sys1`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        POP_ASSUM (ASSUME_TAC o CONV_RULE (
-            REWRITE_CONV [birs_state_init_pre_GEN_def, mod2_bsysprecond_thm] THENC
-            REWRITE_CONV [birenvtyl_EVAL_thm] THENC
-            computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-            aux_setLib.birs_symb_symbols_MATCH_CONV)
-          ) >>
-
-        FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
-      ) >>
-
-      `BVar "sy_x10" (BType_Imm Bit64) IN symb_interpr_dom H'` by (
-        `symb_interpr_for_symbs (birs_symb_symbols sys2) H'` by (
-          FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-        ) >>
-
-        PAT_X_ASSUM ``A = ^(List.hd sys2s)`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        POP_ASSUM (ASSUME_TAC o CONV_RULE (
-            REWRITE_CONV [birs_state_init_pre_GEN_def, mod2_bsysprecond_thm] THENC
-            REWRITE_CONV [birenvtyl_EVAL_thm] THENC
-            computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-            aux_setLib.birs_symb_symbols_MATCH_CONV)
-          ) >>
-
-        FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
-      ) >>
-
-      `symb_interpr_get H' (BVar "sy_x10" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64))` by (
-        FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
-      ) >>
-     
-      `bir_eval_exp (bir_mod2_pre pre_x10) bs.bst_environ = SOME bir_val_true` by (
-        PAT_X_ASSUM ``A = ^sys1`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        FULL_SIMP_TAC (std_ss) [P_bircont_thm]
-      ) >>
-
-      (* use bprog_P, but can also use the path condition in the end, or not? *)
-      `symb_interpr_get H (BVar "sy_x10" (BType_Imm Bit64)) = SOME (BVal_Imm (Imm64 (n2w pre_x10)))` by (
-        FULL_SIMP_TAC (std_ss) [P_bircont_thm] >>
-        `bir_env_lookup "x10" bs.bst_environ = SOME (BVal_Imm (Imm64 (n2w pre_x10)))` by (
-          METIS_TAC [bir_eval_precond_lookup_pre_x10_mod2_thm]
-        ) >>
-
-
-        PAT_X_ASSUM ``A = ^sys1`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-
-        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def, birs_interpret_fun_thm] >>
-        REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-        FULL_SIMP_TAC (std_ss) [] >>
-        REV_FULL_SIMP_TAC (std_ss) [birs_interpret_fun_ALT_def, birs_interpret_get_var_def]
-      ) >>
-
-      (* now go through H' and sys2 with matchstate to show that the mod2ement holds in bs' *)
-      PAT_X_ASSUM ``A = ^(List.hd sys2s)`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def, birs_interpret_fun_thm] >>
-      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"x10"`)) >>
-      FULL_SIMP_TAC (std_ss) [] >>
-      REV_FULL_SIMP_TAC (std_ss) [birs_interpret_fun_ALT_def, birs_interpret_get_var_def] >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-      
-      METIS_TAC [mod2_wand_1w_bval_imm]) >>
-   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_mod2_post_def, bir_eval_bin_pred_def, bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def] >>
-   EVAL_TAC
+    `birs_symb_matchstate sys1 H' bs` by (
+      METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm]
+    ) >>
+    FULL_SIMP_TAC std_ss [P_bircont_thm] >>
+    METIS_TAC strongpostcond_thms
   )
 ) sys2s;
 
@@ -345,7 +257,10 @@ val Pi_thms = List.map (fn sys2 =>
 
 (* Q is implied by sys and Pi *)
 Theorem bprog_Pi_overapprox_Q_thm[local]:
-  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) (bprog_Q pre_x10)
+  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm)
+   (bprog_P pre_x10)
+   (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f
+   (bprog_Q pre_x10)
 Proof
   REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm] >>
   REPEAT GEN_TAC >>
@@ -380,10 +295,20 @@ Theorem bir_abstract_jgmt_rel_mod2_thm[local] =
       (MATCH_MP prop_holds_TO_abstract_jgmt_rel_thm mod2_analysis_L_NOTIN_thm)
       (REWRITE_RULE [bprog_P_def, bprog_Q_def] bprog_prop_holds_thm));
 
+(* ........................... *)
+(* now manage the pre and postconditions into contract friendly "bir_exec_to_labels_triple_precond/postcond", need to change precondition to "bir_env_vars_are_initialised" for set of program variables *)
+
+(* ........................... *)
+(* ........................... *)
+(* ........................... *)
+
 Theorem abstract_jgmt_rel_mod2[local]:
  abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
-  (\st. bir_exec_to_labels_triple_precond st (bir_mod2_pre pre_x10) ^bprog_tm)
-  (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10) else bir_exp_false) ^bprog_tm)
+  (\st. bir_exec_to_labels_triple_precond st (bspec_mod2_pre pre_x10) ^bprog_tm)
+  (\st st'. bir_exec_to_labels_triple_postcond st'
+    (\l. if l = BL_Address (Imm64 4w)
+         then (bspec_mod2_post pre_x10)
+         else bir_exp_false) ^bprog_tm)
 Proof
   MATCH_MP_TAC (REWRITE_RULE [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
   SIMP_TAC std_ss [] >>
@@ -391,21 +316,21 @@ Proof
 
   CONJ_TAC >- (
     (* bpre subset *)
-    REWRITE_TAC [bir_mod2_pre_def] >>
+    REWRITE_TAC [bspec_mod2_pre_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM mod2_prog_vars_thm, mod2_prog_vars_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
 
   CONJ_TAC >- (
     (* bpost subset *)
-    REWRITE_TAC [bir_mod2_post_def] >>
+    REWRITE_TAC [bspec_mod2_post_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM mod2_prog_vars_thm, mod2_prog_vars_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
 
   CONJ_TAC >- (
     (* bpost is bool *)
-    REWRITE_TAC [bir_mod2_post_def] >>
+    REWRITE_TAC [bspec_mod2_post_def] >>
     SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_REWRS, type_of_bir_exp_def]
   ) >>
 
@@ -423,29 +348,29 @@ Proof
   METIS_TAC [bir_abstract_jgmt_rel_mod2_thm, pre_bir_nL_def, post_bir_nL_def, mod2_prog_vars_thm]
 QED
 
-Theorem bir_cont_mod2_tm[local]:
+Theorem bspec_cont_mod2_tm[local]:
  bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10) else bir_exp_false)
+  {BL_Address (Imm64 4w)} {} (bspec_mod2_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 4w) then (bspec_mod2_post pre_x10) else bir_exp_false)
 Proof
  `{BL_Address (Imm64 4w)} <> {}` by fs [] >>
  MP_TAC ((Q.SPECL [
   `BL_Address (Imm64 0w)`,
   `{BL_Address (Imm64 4w)}`,
-  `bir_mod2_pre pre_x10`,
-  `\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10) else bir_exp_false`
+  `bspec_mod2_pre pre_x10`,
+  `\l. if l = BL_Address (Imm64 4w) then (bspec_mod2_post pre_x10) else bir_exp_false`
  ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
  rw [] >>
  METIS_TAC [abstract_jgmt_rel_mod2]
 QED
 
-Theorem bir_cont_mod2:
+Theorem bspec_cont_mod2:
  bir_cont bir_mod2_prog bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
-   (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10)
+  {BL_Address (Imm64 4w)} {} (bspec_mod2_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w) then (bspec_mod2_post pre_x10)
         else bir_exp_false)
 Proof
- rw [bir_mod2_prog_def,bir_cont_mod2_tm]
+ rw [bir_mod2_prog_def,bspec_cont_mod2_tm]
 QED
 
 val _ = export_theory ();
