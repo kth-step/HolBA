@@ -35,7 +35,7 @@ open incr_symb_transfTheory;
 val _ = new_theory "incr_prop";
 
 (* --------------- *)
-(* BIR HL contract *)
+(* HL BIR contract *)
 (* --------------- *)
 
 val bir_cont_incr_thm = use_post_weak_rule_simp

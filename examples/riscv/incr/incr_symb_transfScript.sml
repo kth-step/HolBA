@@ -49,6 +49,10 @@ open incr_symb_execTheory;
 
 val _ = new_theory "incr_symb_transf";
 
+(* --------------------- *)
+(* Auxiliary definitions *)
+(* --------------------- *)
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val bspec_incr_pre = ``bspec_incr_pre``;
@@ -202,8 +206,7 @@ QED
 (* proof for each end state individually: *)
 
 val sys1 = (snd o dest_eq o concl o REWRITE_CONV [incr_bsysprecond_thm]) birs_state_init_pre;
-val (Pi_func, Pi_set) = dest_comb Pi_f;
-(* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
+val (Pi_func, Pi_set) = dest_comb Pi_f; (* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
 (*
