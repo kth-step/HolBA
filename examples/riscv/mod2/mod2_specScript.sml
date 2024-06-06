@@ -168,20 +168,29 @@ Proof
  rw []
 QED
 
-Theorem mod2_wand_1w_bval_imm[local]:
- !x v.
-  BVal_Imm (Imm64 (1w && x)) = v ==>
-  v = BVal_Imm (Imm64 (n2w ((w2n x) MOD 2)))
-Proof
- fs [] >> rw [mod2_wand_n2w_w2n]
-QED
-
+(* FIXME: boilerplate *)
 Theorem mod2_bspec_post_imp_bir_post:
  bir_exp_is_taut (BExp_BinExp BIExp_Or
    (BExp_UnaryExp BIExp_Not (bspec_mod2_post pre_x10))
     (bir_mod2_post pre_x10))
 Proof
- cheat
+ rw [bspec_mod2_post_def,bir_mod2_post_def,bir_exp_is_taut_def,bir_is_bool_exp_REWRS] >-
+  (rw [type_of_bir_exp_def,type_of_bir_imm_def,bir_type_is_Imm_def,bir_envTheory.bir_var_type_def]) >-
+  (rw [type_of_bir_exp_def,type_of_bir_imm_def,bir_type_is_Imm_def,bir_envTheory.bir_var_type_def]) >-
+  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_oldTheory.bir_var_set_is_well_typed_INSERT] >>
+   rw [bir_env_oldTheory.bir_var_set_is_well_typed_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_exp_def,bir_eval_unary_exp_def,bir_eval_bin_pred_def,bir_envTheory.bir_env_read_def,bir_envTheory.bir_env_check_type_def] >>
+ Cases_on `env` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_vars_are_initialised_def,bir_env_var_is_initialised_def] >>
+ fs [bir_envTheory.bir_var_name_def] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
+ Cases_on `v'` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_REWRS] >>
+ Cases_on `b` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+ Cases_on `c` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def] >>
+ rw [mod2_wand_n2w_w2n]
 QED
 
 val _ = export_theory ();
