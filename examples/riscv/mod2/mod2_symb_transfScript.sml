@@ -205,7 +205,7 @@ QED
 (* ........................... *)
 (* proof for each end state individually: *)
 
-val sys1 = birs_state_init_pre;
+val sys1 = (snd o dest_eq o concl o REWRITE_CONV [mod2_bsysprecond_thm]) birs_state_init_pre;
 val (Pi_func, Pi_set) = dest_comb Pi_f; (* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
@@ -225,7 +225,7 @@ val strongpostcond_goals = List.map (fn sys2 => ``
 val goal = hd strongpostcond_goals;
 *)
 val strongpostcond_thms = List.map (fn goal =>
-  prove(``^goal``, cheat) (* birs_strongpostcond_impl_TAC gives error *)
+  prove(``^goal``, birs_strongpostcond_impl_TAC)
 ) strongpostcond_goals;
 
 (*
@@ -262,7 +262,7 @@ Theorem bprog_Pi_overapprox_Q_thm[local]:
    (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f
    (bprog_Q pre_x10)
 Proof
-  REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm] >>
+  REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, mod2_bsysprecond_thm] >>
   REPEAT GEN_TAC >>
 
   REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
