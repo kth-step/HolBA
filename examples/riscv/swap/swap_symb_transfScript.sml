@@ -64,8 +64,13 @@ Definition swap_analysis_L_def:
  swap_analysis_L = ^(L_s)
 End
 
-val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0x00w); bpc_index := 0|>``;
-val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x14w))``;
+val init_addr_tm = (snd o dest_eq o concl) swap_init_addr_def;
+val end_addr_tm = (snd o dest_eq o concl) swap_end_addr_def;
+
+val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
+val birs_state_end_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``;
 
 Theorem swap_analysis_L_NOTIN_thm[local]:
   (^birs_state_end_lbl) NOTIN swap_analysis_L
@@ -294,11 +299,12 @@ Theorem bir_abstract_jgmt_rel_swap_thm[local] =
 (* ........................... *)
 
 Theorem abstract_jgmt_rel_swap:
- abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 0x14w)}
+ abstract_jgmt_rel (bir_ts ^bprog_tm)
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)}
   (\st. bir_exec_to_labels_triple_precond st
     (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) ^bprog_tm)
   (\st st'. bir_exec_to_labels_triple_postcond st'
-    (\l. if l = BL_Address (Imm64 0x14w)
+    (\l. if l = BL_Address (Imm64 ^end_addr_tm)
          then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
          else bir_exp_false) ^bprog_tm)
 Proof
@@ -343,29 +349,31 @@ Proof
 QED
 
 Theorem bspec_cont_swap_tm[local]:
- bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0x00w))
-  {BL_Address (Imm64 0x14w)} {}
+ bir_cont ^bprog_tm bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
   (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
-  (\l. if l = BL_Address (Imm64 0x14w)
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
        then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
        else bir_exp_false)
 Proof
- `{BL_Address (Imm64 0x14w)} <> {}` by fs [] >>
+ `{BL_Address (Imm64 ^end_addr_tm)} <> {}` by fs [] >>
  MP_TAC ((Q.SPECL [
-  `BL_Address (Imm64 0x00w)`,
-  `{BL_Address (Imm64 0x14w)}`,
+  `BL_Address (Imm64 ^init_addr_tm)`,
+  `{BL_Address (Imm64 ^end_addr_tm)}`,
   `bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref`,
-  `\l. if l = BL_Address (Imm64 0x14w) then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref) else bir_exp_false`
+  `\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+       else bir_exp_false`
  ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
  rw [] >>
  METIS_TAC [abstract_jgmt_rel_swap]
 QED
 
 Theorem bspec_cont_swap:
- bir_cont bir_swap_prog bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 0x14w)} {}
-  (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
-  (\l. if l = BL_Address (Imm64 0x14w)
+ bir_cont bir_swap_prog bir_exp_true
+ (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+ (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
        then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
        else bir_exp_false)
 Proof

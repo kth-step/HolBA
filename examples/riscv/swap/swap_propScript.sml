@@ -51,7 +51,7 @@ val riscv_cont_swap_thm =
   bir_swap_riscv_lift_THM;
 
 Theorem riscv_cont_swap:
- riscv_cont bir_swap_progbin 0w {0x14w}
+ riscv_cont bir_swap_progbin 0x00w {0x14w}
   (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
   (riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
 Proof
@@ -65,7 +65,7 @@ QED
 val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] (concl riscv_cont_swap);
 
 Theorem riscv_cont_swap_full:
-  !pre_x10. ^((snd o dest_eq o concl) readable_thm)
+  !pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref. ^((snd o dest_eq o concl) readable_thm)
 Proof
  METIS_TAC [riscv_cont_swap, readable_thm]
 QED
