@@ -35,7 +35,7 @@ fun holsmt_is_taut wtm =
 fun holsmt_bir_check_unsat bexp =
   let
     (* little amounts of output *)
-    val _ = Library.trace := 1;
+    val _ = HolBA_SmtLib.Library.trace := 1;
     val pcond_bexp = (snd o dest_eq o concl o EVAL) bexp;
     val wtm = bir_exp_to_wordsLib.bir2bool pcond_bexp;
   in
