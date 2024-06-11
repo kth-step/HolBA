@@ -49,26 +49,30 @@ open swapTheory;
 
 val _ = new_theory "swap_spec";
 
-(* --------------- *)
-(* RISC-V contract *)
-(* --------------- *)
+(* ------------------ *)
+(* Program boundaries *)
+(* ------------------ *)
 
 Definition swap_init_addr_def:
  swap_init_addr : word64 = 0x00w
 End
 
-Definition riscv_swap_pre_def:
- riscv_swap_pre (x:word64) (y:word64) (xv:word64) (yv:word64) (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm ``x:word64``) /\
-   m.c_gpr m.procID 10w = x /\
-   riscv_mem_load_dword m.MEM8 x = xv /\
-   ^(mem_addrs_aligned_prog_disj_riscv_tm ``y:word64``) /\
-   m.c_gpr m.procID 11w = y /\
-   riscv_mem_load_dword m.MEM8 y = yv)
-End
-
 Definition swap_end_addr_def:
  swap_end_addr : word64 = 0x14w
+End
+
+(* --------------- *)
+(* RISC-V contract *)
+(* --------------- *)
+
+Definition riscv_swap_pre_def:
+ riscv_swap_pre (x:word64) (y:word64) (xv:word64) (yv:word64) (m:riscv_state) : bool =
+  (^(mem_addrs_aligned_prog_disj_riscv_tm "x") /\
+   m.c_gpr m.procID 10w = x /\
+   riscv_mem_load_dword m.MEM8 x = xv /\
+   ^(mem_addrs_aligned_prog_disj_riscv_tm "y") /\
+   m.c_gpr m.procID 11w = y /\
+   riscv_mem_load_dword m.MEM8 y = yv)
 End
 
 Definition riscv_swap_post_def:
@@ -82,8 +86,8 @@ End
 (* -------------- *)
 
 val bspec_swap_pre_tm = bslSyntax.bandl [
- mem_addrs_aligned_prog_disj_tm "x10",
- mem_addrs_aligned_prog_disj_tm "x11",
+ mem_addrs_aligned_prog_disj_bir_tm "x10",
+ mem_addrs_aligned_prog_disj_bir_tm "x11",
  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))

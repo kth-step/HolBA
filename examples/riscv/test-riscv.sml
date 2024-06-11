@@ -38,14 +38,14 @@ val _ = print_and_check_thm
   ``;
 
 val _ = print_and_check_thm
-  "swap BIR contract theorem"
+  "swap BSPEC contract theorem"
   bspec_cont_swap
   ``bir_cont (bir_swap_prog : 'a bir_program_t)
     bir_exp_true (BL_Address (Imm64 0x00w))
     {BL_Address (Imm64 0x14w)} {}
     (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
     (\l. if l = BL_Address (Imm64 0x14w)
-         then (bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+         then bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref
          else bir_exp_false)
   ``;
 
@@ -54,7 +54,7 @@ val _ = print_and_check_thm
   riscv_cont_swap
   ``riscv_cont
      bir_swap_progbin
-     0w {0x14w}
+     swap_init_addr {swap_end_addr}
      (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
      (riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)``;
 
@@ -72,21 +72,31 @@ val _ = print_and_check_thm
   ``;
 
 val _ = print_and_check_thm
+  "incr BSPEC contract theorem"
+  bspec_cont_incr
+ ``bir_cont (bir_incr_prog : 'a bir_program_t)
+  bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bspec_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 4w)
+       then bspec_incr_post pre_x10
+       else bir_exp_false)``;
+
+val _ = print_and_check_thm
   "incr BIR contract theorem"
   bir_cont_incr
  ``bir_cont (bir_incr_prog : 'a bir_program_t)
-  bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bir_incr_pre pre_x10)
-   (\l. if l = BL_Address (Imm64 4w) then (bir_incr_post pre_x10)
-        else bir_exp_false)
-  ``;
+  bir_exp_true (BL_Address (Imm64 incr_init_addr))
+  {BL_Address (Imm64 incr_end_addr)} {} (bir_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 incr_end_addr)
+       then bir_incr_post pre_x10
+       else bir_exp_false)``;
 
 val _ = print_and_check_thm
   "incr RISC-V backlifted theorem"
   riscv_cont_incr
   ``riscv_cont
      bir_incr_progbin
-     0w {4w}
+     incr_init_addr {incr_end_addr}
      (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)``;
 
 (* ---- *)
@@ -103,12 +113,25 @@ val _ = print_and_check_thm
   ``;
 
 val _ = print_and_check_thm
+  "mod2 BSPEC contract theorem"
+  bspec_cont_mod2
+ ``bir_cont (bir_mod2_prog : 'a bir_program_t)
+  bir_exp_true (BL_Address (Imm64 0w))
+  {BL_Address (Imm64 4w)} {} (bspec_mod2_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 4w)
+        then bspec_mod2_post pre_x10
+        else bir_exp_false)
+  ``;
+
+val _ = print_and_check_thm
   "mod2 BIR contract theorem"
   bir_cont_mod2
  ``bir_cont (bir_mod2_prog : 'a bir_program_t)
-  bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bir_mod2_pre pre_x10)
-   (\l. if l = BL_Address (Imm64 4w) then (bir_mod2_post pre_x10)
+  bir_exp_true
+  (BL_Address (Imm64 mod2_init_addr)) {BL_Address (Imm64 mod2_end_addr)} {}
+  (bir_mod2_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 mod2_end_addr)
+        then bir_mod2_post pre_x10
         else bir_exp_false)
   ``;
 
@@ -117,5 +140,5 @@ val _ = print_and_check_thm
   riscv_cont_mod2
   ``riscv_cont
      bir_mod2_progbin
-     0w {4w}
+     mod2_init_addr {mod2_end_addr}
      (riscv_mod2_pre pre_x10) (riscv_mod2_post pre_x10)``;

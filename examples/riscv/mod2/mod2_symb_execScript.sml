@@ -40,10 +40,13 @@ Theorem mod2_bsysprecond_thm =
 (* ----------------------- *)
 
 val bprog_tm = (snd o dest_eq o concl) bir_mod2_prog_def;
+val init_addr_tm = (snd o dest_eq o concl) mod2_init_addr_def;
+val end_addr_tm = (snd o dest_eq o concl) mod2_end_addr_def;
 
-val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x00w))``;
-
-val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x4w))``];
+val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
+val birs_state_end_lbls = [(snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``];
 
 val bprog_envtyl = (fst o dest_eq o concl) mod2_birenvtyl_def;
 
@@ -56,7 +59,7 @@ val birs_pcond = (snd o dest_eq o concl) mod2_bsysprecond_thm;
 val timer = bir_miscLib.timer_start 0;
 
 val result = bir_symb_analysis bprog_tm
- birs_state_init_lbl birs_stop_lbls
+ birs_state_init_lbl birs_state_end_lbls
  bprog_envtyl birs_pcond;
 
 val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n")) timer;

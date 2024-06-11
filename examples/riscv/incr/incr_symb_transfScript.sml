@@ -55,8 +55,22 @@ val _ = new_theory "incr_symb_transf";
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
+val bprog_tm = (fst o dest_eq o concl) bir_incr_prog_def;
+
+val init_addr_tm = (snd o dest_eq o concl) incr_init_addr_def;
+val end_addr_tm = (snd o dest_eq o concl) incr_end_addr_def;
+
 val bspec_incr_pre = ``bspec_incr_pre``;
 val bspec_incr_post = ``bspec_incr_post``;
+
+val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
+val birs_state_end_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``;
+
+val birs_state_init_pre = ``birs_state_init_pre_GEN
+ ^birs_state_init_lbl incr_birenvtyl
+ (mk_bsysprecond (bspec_incr_pre pre_x10) incr_birenvtyl)``;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -68,9 +82,6 @@ Definition incr_analysis_L_def:
  incr_analysis_L = ^(L_s)
 End
 
-val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
-val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 4w))``;
-
 Theorem incr_analysis_L_NOTIN_thm[local]:
   (^birs_state_end_lbl) NOTIN incr_analysis_L
 Proof
@@ -81,9 +92,7 @@ QED
 (* ........................... *)
 (* ........................... *)
 
-val birs_state_init_pre = ``birs_state_init_pre_GEN ^birs_state_init_lbl incr_birenvtyl (mk_bsysprecond (bspec_incr_pre pre_x10) incr_birenvtyl)``;
-
-Theorem birs_state_init_pre_EQ_thm:
+Theorem birs_state_init_pre_EQ_thm[local]:
   ^((snd o dest_comb) sys_i) = ^birs_state_init_pre
 Proof
   REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, incr_bsysprecond_thm] >>
@@ -93,7 +102,7 @@ QED
 val incr_analysis_thm =
   REWRITE_RULE [birs_state_init_pre_EQ_thm, GSYM bir_incr_prog_def] incr_symb_analysis_thm;
 
-Theorem incr_birenvtyl_EVAL_thm =
+Theorem incr_birenvtyl_EVAL_thm[local] =
  (REWRITE_CONV [incr_birenvtyl_def,
    bir_lifting_machinesTheory.riscv_bmr_vars_EVAL,
    bir_lifting_machinesTheory.riscv_bmr_temp_vars_EVAL] THENC EVAL)
@@ -105,13 +114,14 @@ val birs_state_thm = REWRITE_CONV [incr_birenvtyl_EVAL_thm] birs_state_init_pre;
 
 (* now the transfer *)
 
-val bprog_tm = (fst o dest_eq o concl) bir_incr_prog_def;
-
 val birs_symb_symbols_f_sound_prog_thm =
-  (SPEC (inst [Type`:'observation_type` |-> Type.alpha] bprog_tm) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
+  (SPEC (inst [Type`:'observation_type` |-> Type.alpha] bprog_tm)
+        bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
 
 val birs_prop_transfer_thm =
-  (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
+  (MATCH_MP 
+   symb_prop_transferTheory.symb_prop_transfer_thm
+   birs_symb_symbols_f_sound_prog_thm);
 
 Definition bprog_P_def:
   bprog_P x = P_bircont incr_birenvtyl (^bspec_incr_pre x)
@@ -257,7 +267,11 @@ val Pi_thms = List.map (fn sys2 =>
 
 (* Q is implied by sys and Pi *)
 Theorem bprog_Pi_overapprox_Q_thm[local]:
-  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) (bprog_Q pre_x10)
+  Pi_overapprox_Q
+   (bir_symb_rec_sbir ^bprog_tm)
+   (bprog_P pre_x10)
+   (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f
+   (bprog_Q pre_x10)
 Proof
   REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, incr_bsysprecond_thm] >>
   REPEAT GEN_TAC >>
@@ -299,12 +313,18 @@ Theorem bir_abstract_jgmt_rel_incr_thm[local] =
 (* ........................... *)
 (* ........................... *)
 
-Theorem abstract_jgmt_rel_incr:
- abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
-  (\st. bir_exec_to_labels_triple_precond st (bspec_incr_pre pre_x10) ^bprog_tm)
-  (\st st'. bir_exec_to_labels_triple_postcond st' (\l. if l = BL_Address (Imm64 4w) then (bspec_incr_post pre_x10) else bir_exp_false) ^bprog_tm)
+Theorem abstract_jgmt_rel_incr[local]:
+ abstract_jgmt_rel (bir_ts ^bprog_tm)
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)}
+  (\st. bir_exec_to_labels_triple_precond st
+    (bspec_incr_pre pre_x10) ^bprog_tm)
+  (\st st'. bir_exec_to_labels_triple_postcond st'
+    (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+         then (bspec_incr_post pre_x10)
+         else bir_exp_false) ^bprog_tm)
 Proof
-  MATCH_MP_TAC (REWRITE_RULE [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
+  MATCH_MP_TAC (REWRITE_RULE
+   [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
   SIMP_TAC std_ss [] >>
   Q.EXISTS_TAC `incr_birenvtyl` >>
 
@@ -342,29 +362,37 @@ Proof
   METIS_TAC [bir_abstract_jgmt_rel_incr_thm, pre_bir_nL_def, post_bir_nL_def, incr_prog_vars_thm]
 QED
 
-Theorem bspec_cont_incr_tm[local]:
- bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bspec_incr_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 4w) then (bspec_incr_post pre_x10) else bir_exp_false)
+Theorem bspec_cont_incr_thm[local]:
+ bir_cont ^bprog_tm bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+  (bspec_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then (bspec_incr_post pre_x10)
+       else bir_exp_false)
 Proof
- `{BL_Address (Imm64 4w)} <> {}` by fs [] >>
+ `{BL_Address (Imm64 ^end_addr_tm)} <> {}` by fs [] >>
  MP_TAC ((Q.SPECL [
-  `BL_Address (Imm64 0w)`,
-  `{BL_Address (Imm64 4w)}`,
+  `BL_Address (Imm64 ^init_addr_tm)`,
+  `{BL_Address (Imm64 ^end_addr_tm)}`,
   `bspec_incr_pre pre_x10`,
-  `\l. if l = BL_Address (Imm64 4w) then (bspec_incr_post pre_x10) else bir_exp_false`
- ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
+  `\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then (bspec_incr_post pre_x10)
+       else bir_exp_false`
+ ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`])
+  abstract_jgmt_rel_bir_cont) >>
  rw [] >>
  METIS_TAC [abstract_jgmt_rel_incr]
 QED
 
 Theorem bspec_cont_incr:
- bir_cont bir_incr_prog bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bspec_incr_pre pre_x10)
-   (\l. if l = BL_Address (Imm64 4w) then (bspec_incr_post pre_x10)
-        else bir_exp_false)
+ bir_cont bir_incr_prog bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+  (bspec_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then bspec_incr_post pre_x10
+       else bir_exp_false)
 Proof
- rw [bir_incr_prog_def,bspec_cont_incr_tm]
+ rw [bir_incr_prog_def,bspec_cont_incr_thm]
 QED
 
 val _ = export_theory ();

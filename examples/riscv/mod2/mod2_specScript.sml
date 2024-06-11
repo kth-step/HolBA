@@ -50,17 +50,29 @@ open mod2Theory;
 
 val _ = new_theory "mod2_spec";
 
+(* ------------------ *)
+(* Program boundaries *)
+(* ------------------ *)
+
+Definition mod2_init_addr_def:
+ mod2_init_addr : word64 = 0x00w
+End
+
+Definition mod2_end_addr_def:
+ mod2_end_addr : word64 = 0x04w
+End
+
 (* --------------- *)
 (* RISC-V contract *)
 (* --------------- *)
 
 Definition riscv_mod2_pre_def:
- riscv_mod2_pre (x:word64) (m : riscv_state) =
+ riscv_mod2_pre (x:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = x)
 End
 
 Definition riscv_mod2_post_def:
- riscv_mod2_post (x:word64) (m : riscv_state) =
+ riscv_mod2_post (x:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = n2w ((w2n x) MOD 2))
 End
 

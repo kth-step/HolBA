@@ -47,30 +47,38 @@ open distribute_generic_stuffTheory;
 
 val _ = new_theory "incr_spec";
 
-(* --------------- *)
-(* HLSPEC          *)
+(* ------------------ *)
+(* Program boundaries *)
+(* ------------------ *)
+
+Definition incr_init_addr_def:
+ incr_init_addr : word64 = 0x00w
+End
+
+Definition incr_end_addr_def:
+ incr_end_addr : word64 = 0x04w
+End
+
 (* --------------- *)
 (* RISC-V contract *)
 (* --------------- *)
 
 Definition riscv_incr_pre_def:
- riscv_incr_pre x (m : riscv_state) =
+ riscv_incr_pre (x:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = x)
 End
 
 Definition riscv_incr_post_def:
- riscv_incr_post x (m : riscv_state) =
+ riscv_incr_post (x:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = x + 1w)
 End
 
-(* ------------ *)
-(* HLSPEC       *)
-(* ------------ *)
-(* BIR contract *)
-(* ------------ *)
+(* --------------- *)
+(* HL BIR contract *)
+(* --------------- *)
 
 Definition bir_incr_pre_def:
-  bir_incr_pre x : bir_exp_t =
+ bir_incr_pre (x:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
@@ -78,21 +86,19 @@ Definition bir_incr_pre_def:
 End
 
 Definition bir_incr_post_def:
- bir_incr_post x : bir_exp_t =
+ bir_incr_post (x:word64) : bir_exp_t =
   BExp_BinPred
-    BIExp_Equal
+   BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_Const (Imm64 (x + 1w)))
 End
 
-(* ------------ *)
-(* BSPEC        *)
-(* ------------ *)
-(* BIR contract *)
-(* ------------ *)
+(* -------------- *)
+(* BSPEC contract *)
+(* -------------- *)
 
 Definition bspec_incr_pre_def:
-  bspec_incr_pre x : bir_exp_t =
+ bspec_incr_pre (x:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
@@ -100,7 +106,7 @@ Definition bspec_incr_pre_def:
 End
 
 Definition bspec_incr_post_def:
- bspec_incr_post x : bir_exp_t =
+ bspec_incr_post (x:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
@@ -108,9 +114,9 @@ Definition bspec_incr_post_def:
       BIExp_Plus (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
 End
 
-(* ------------------------------------------ *)
-(* Connecting RISC-V and HLSPEC BIR contracts *)
-(* ------------------------------------------ *)
+(* -------------------------------------- *)
+(* Connecting RISC-V and HL BIR contracts *)
+(* -------------------------------------- *)
 
 Theorem incr_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bir_incr_pre pre_x10)
@@ -145,9 +151,9 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-(* ----------------------------------------- *)
-(* Connecting HLSPEC BIR and BSPEC contracts *)
-(* ----------------------------------------- *)
+(* ------------------------------------- *)
+(* Connecting HL BIR and BSPEC contracts *)
+(* ------------------------------------- *)
 
 val incr_bir_pre_imp_bspec_pre_thm =
  prove_exp_is_taut ``BExp_BinExp BIExp_Or

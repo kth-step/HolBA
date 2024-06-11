@@ -12,7 +12,7 @@ local
   open birs_auxTheory;
 in
 
-fun mem_addrs_prog_disj_tm rn = ``BExp_BinExp BIExp_And
+fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
  (BExp_BinPred BIExp_LessOrEqual
   (BExp_Const (Imm64 0x1000w))
   (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
@@ -20,20 +20,25 @@ fun mem_addrs_prog_disj_tm rn = ``BExp_BinExp BIExp_And
   (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
   (BExp_Const (Imm64 0x100000000w)))``;
 
-fun mem_addrs_aligned_prog_disj_tm rn = ``BExp_BinExp BIExp_And
+fun mem_addrs_aligned_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
   (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
-  (^(mem_addrs_prog_disj_tm rn))``;
+  (^(mem_addrs_prog_disj_bir_tm rn))``;
 
-fun mem_addrs_aligned_prog_disj_riscv_tm v = ``^v && 7w = 0w /\ 0x1000w <=+ ^v /\ ^v <+ 0x100000000w``;
+fun mem_addrs_aligned_prog_disj_riscv_tm vn =
+ let
+   val var_tm = mk_var (vn, wordsSyntax.mk_int_word_type 64)
+ in
+  ``^var_tm && 7w = 0w /\ 0x1000w <=+ ^var_tm /\ ^var_tm <+ 0x100000000w``
+ end;
 
-fun pre_vals_reg_tm rn fv = Parse.Term (`
+fun pre_vals_reg_bir_tm rn fv = Parse.Term (`
     (BExp_BinPred
       BIExp_Equal
       (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
       (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
 `);
 
-fun pre_vals_mem_reg_tm mn rn fv = Parse.Term (`
+fun pre_vals_mem_reg_bir_tm mn rn fv = Parse.Term (`
     (BExp_BinPred
       BIExp_Equal
       (BExp_Load
@@ -43,11 +48,11 @@ fun pre_vals_mem_reg_tm mn rn fv = Parse.Term (`
       (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
 `);
 
-fun pre_vals_tm mn rn fvr fvmd =
- bslSyntax.band (pre_vals_reg_tm rn fvr, pre_vals_mem_reg_tm mn rn fvmd);
+fun pre_vals_bir_tm mn rn fvr fvmd =
+ bslSyntax.band (pre_vals_reg_bir_tm rn fvr, pre_vals_mem_reg_bir_tm mn rn fvmd);
 
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
-  birs_stop_lbls bprog_envtyl birs_pcond =
+  birs_end_lbls bprog_envtyl birs_pcond =
  let
    val birs_state_init = ``<|
      bsst_pc       := ^birs_state_init_lbl;
@@ -74,7 +79,7 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
    val timer = bir_miscLib.timer_start 0;
    val result = exec_until
      (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec)
-     single_step_A_thm birs_stop_lbls;
+     single_step_A_thm birs_end_lbls;
    val _ = bir_miscLib.timer_stop
     (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
  in

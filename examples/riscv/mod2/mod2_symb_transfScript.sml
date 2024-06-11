@@ -55,8 +55,22 @@ val _ = new_theory "mod2_symb_transf";
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
+val bprog_tm = (fst o dest_eq o concl) bir_mod2_prog_def;
+
+val init_addr_tm = (snd o dest_eq o concl) mod2_init_addr_def;
+val end_addr_tm = (snd o dest_eq o concl) mod2_end_addr_def;
+
 val bspec_mod2_pre = ``bspec_mod2_pre``;
 val bspec_mod2_post = ``bspec_mod2_post``;
+
+val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
+val birs_state_end_lbl = (snd o dest_eq o concl o EVAL)
+ ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``;
+
+val birs_state_init_pre = ``birs_state_init_pre_GEN
+ ^birs_state_init_lbl mod2_birenvtyl
+ (mk_bsysprecond (bspec_mod2_pre pre_x10) mod2_birenvtyl)``;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -68,9 +82,6 @@ Definition mod2_analysis_L_def:
  mod2_analysis_L = ^(L_s)
 End
 
-val birs_state_init_lbl = ``<|bpc_label := BL_Address (Imm64 0w); bpc_index := 0|>``;
-val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 4w))``;
-
 Theorem mod2_analysis_L_NOTIN_thm[local]:
   (^birs_state_end_lbl) NOTIN mod2_analysis_L
 Proof
@@ -81,9 +92,7 @@ QED
 (* ........................... *)
 (* ........................... *)
 
-val birs_state_init_pre = ``birs_state_init_pre_GEN ^birs_state_init_lbl mod2_birenvtyl (mk_bsysprecond (bspec_mod2_pre pre_x10) mod2_birenvtyl)``;
-
-Theorem birs_state_init_pre_EQ_thm:
+Theorem birs_state_init_pre_EQ_thm[local]:
   ^((snd o dest_comb) sys_i) = ^birs_state_init_pre
 Proof
   REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, mod2_bsysprecond_thm] >>
@@ -303,10 +312,12 @@ Theorem bir_abstract_jgmt_rel_mod2_thm[local] =
 (* ........................... *)
 
 Theorem abstract_jgmt_rel_mod2[local]:
- abstract_jgmt_rel (bir_ts ^bprog_tm) (BL_Address (Imm64 0w)) {BL_Address (Imm64 4w)}
-  (\st. bir_exec_to_labels_triple_precond st (bspec_mod2_pre pre_x10) ^bprog_tm)
+ abstract_jgmt_rel (bir_ts ^bprog_tm)
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)}
+  (\st. bir_exec_to_labels_triple_precond st
+    (bspec_mod2_pre pre_x10) ^bprog_tm)
   (\st st'. bir_exec_to_labels_triple_postcond st'
-    (\l. if l = BL_Address (Imm64 4w)
+    (\l. if l = BL_Address (Imm64 ^end_addr_tm)
          then (bspec_mod2_post pre_x10)
          else bir_exp_false) ^bprog_tm)
 Proof
@@ -348,29 +359,37 @@ Proof
   METIS_TAC [bir_abstract_jgmt_rel_mod2_thm, pre_bir_nL_def, post_bir_nL_def, mod2_prog_vars_thm]
 QED
 
-Theorem bspec_cont_mod2_tm[local]:
- bir_cont ^bprog_tm bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bspec_mod2_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 4w) then (bspec_mod2_post pre_x10) else bir_exp_false)
+Theorem bspec_cont_mod2_thm[local]:
+ bir_cont ^bprog_tm bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm))
+  {BL_Address (Imm64 ^end_addr_tm)} {} (bspec_mod2_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then bspec_mod2_post pre_x10
+       else bir_exp_false)
 Proof
- `{BL_Address (Imm64 4w)} <> {}` by fs [] >>
+ `{BL_Address (Imm64 ^end_addr_tm)} <> {}` by fs [] >>
  MP_TAC ((Q.SPECL [
-  `BL_Address (Imm64 0w)`,
-  `{BL_Address (Imm64 4w)}`,
+  `BL_Address (Imm64 ^init_addr_tm)`,
+  `{BL_Address (Imm64 ^end_addr_tm)}`,
   `bspec_mod2_pre pre_x10`,
-  `\l. if l = BL_Address (Imm64 4w) then (bspec_mod2_post pre_x10) else bir_exp_false`
- ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`]) abstract_jgmt_rel_bir_cont) >>
+  `\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then (bspec_mod2_post pre_x10)
+       else bir_exp_false`
+ ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`])
+  abstract_jgmt_rel_bir_cont) >>
  rw [] >>
  METIS_TAC [abstract_jgmt_rel_mod2]
 QED
 
 Theorem bspec_cont_mod2:
- bir_cont bir_mod2_prog bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bspec_mod2_pre pre_x10)
-   (\l. if l = BL_Address (Imm64 4w) then (bspec_mod2_post pre_x10)
-        else bir_exp_false)
+ bir_cont bir_mod2_prog bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+  (bspec_mod2_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then bspec_mod2_post pre_x10
+       else bir_exp_false)
 Proof
- rw [bir_mod2_prog_def,bspec_cont_mod2_tm]
+ rw [bir_mod2_prog_def,bspec_cont_mod2_thm]
 QED
 
 val _ = export_theory ();
