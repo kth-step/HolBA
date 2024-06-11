@@ -4,6 +4,7 @@ open markerTheory;
 
 open distribute_generic_stuffLib;
 
+open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -155,30 +156,40 @@ QED
 (* Connecting HL BIR and BSPEC contracts *)
 (* ------------------------------------- *)
 
-val incr_bir_pre_imp_bspec_pre_thm =
- prove_exp_is_taut ``BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
-   (bspec_incr_pre pre_x10)``;
-
-Theorem incr_bir_pre_imp_bspec_pre:
- bir_exp_is_taut (BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
-   (bspec_incr_pre pre_x10))
+Theorem incr_bir_pre_imp_bspec_pre_thm[local]:
+ bir_exp_is_taut
+  (bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10))
 Proof
- rw [incr_bir_pre_imp_bspec_pre_thm]
+ rw [prove_exp_is_taut ``bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10)``]
 QED
 
-val incr_bspec_post_imp_bir_post_thm =
- prove_exp_is_taut ``BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
-    (bir_incr_post pre_x10)``;
+val incr_bir_pre_imp_bspec_pre_eq_thm =
+ computeLib.RESTR_EVAL_CONV [``bir_exp_is_taut``,``bir_incr_pre``,``bspec_incr_pre``]
+  (concl incr_bir_pre_imp_bspec_pre_thm);
+
+Theorem incr_bir_pre_imp_bspec_pre:
+ ^((snd o dest_eq o concl) incr_bir_pre_imp_bspec_pre_eq_thm)
+Proof
+ rw [GSYM incr_bir_pre_imp_bspec_pre_eq_thm] >>
+ ACCEPT_TAC incr_bir_pre_imp_bspec_pre_thm
+QED
+
+Theorem incr_bspec_post_imp_bir_post_thm[local]:
+ bir_exp_is_taut
+  (bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10))
+Proof
+ rw [prove_exp_is_taut ``bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10)``]
+QED
+
+val incr_bspec_post_imp_bir_post_eq_thm =
+ computeLib.RESTR_EVAL_CONV [``bir_exp_is_taut``,``bspec_incr_post``,``bir_incr_post``]
+ (concl incr_bspec_post_imp_bir_post_thm);
 
 Theorem incr_bspec_post_imp_bir_post:
- bir_exp_is_taut (BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
-    (bir_incr_post pre_x10))
+ ^((snd o dest_eq o concl) incr_bspec_post_imp_bir_post_eq_thm)
 Proof
- rw [incr_bspec_post_imp_bir_post_thm]
+ rw [GSYM incr_bspec_post_imp_bir_post_eq_thm] >>
+ ACCEPT_TAC incr_bspec_post_imp_bir_post_thm
 QED
 
 val _ = export_theory ();
