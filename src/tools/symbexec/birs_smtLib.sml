@@ -18,7 +18,7 @@ in (* local *)
 val debug_z3_taut_on = false;
 fun holsmt_is_taut wtm =
   let val wtm_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] wtm; in
-    ((HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
+    ((HolBA_HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
     handle HOL_ERR e => (
       if not debug_z3_taut_on then () else
       let

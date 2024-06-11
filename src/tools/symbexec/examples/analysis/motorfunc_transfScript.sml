@@ -444,7 +444,7 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
     now we are only left with the word relation
 *)
 
-    HolSmtLib.Z3_ORACLE_TAC
+    HolBA_HolSmtLib.Z3_ORACLE_TAC
   )
 QED
 (* ........................... *)
