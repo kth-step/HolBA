@@ -51,12 +51,12 @@ local
       val name = ty_prefix ^ Int.toString (Redblackmap.numItems tydict)
       val decl = "(declare-sort " ^ name ^ " 0)\n"
     in
-      if !Library.trace > 0 andalso Type.is_type ty then
+      if !HolBA_Library.trace > 0 andalso Type.is_type ty then
         WARNING "translate_type"
           ("uninterpreted type " ^ Hol_pp.type_to_string ty)
       else
         ();
-      if !Library.trace > 2 then
+      if !HolBA_Library.trace > 2 then
         Feedback.HOL_MESG ("HolSmtLib (SmtLib): inventing name '" ^ name ^
           "' for HOL type '" ^ Hol_pp.type_to_string ty ^ "'")
       else
@@ -214,7 +214,7 @@ local
           val _ = if rngdim = Arbnum.+ (dim1, dim2) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term" "word_concat: wrong result type"
               else
                 ();
@@ -233,7 +233,7 @@ local
           val _ = if Arbnum.<= (j, i) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term"
                   "word_extract: second index larger than first"
               else
@@ -244,7 +244,7 @@ local
           val _ = if Arbnum.< (i, dim) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term" "word_extract: first index too large"
               else
                 ();
@@ -258,7 +258,7 @@ local
           val _ = if rngdim = Arbnum.+ (Arbnum.- (i, j), Arbnum.one) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term" "word_extract: wrong result type"
               else
                 ();
@@ -303,7 +303,7 @@ local
           val _ = if rngdim = Arbnum.* (n, dim) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term" "word_replicate: wrong result type"
               else
                 ();
@@ -324,7 +324,7 @@ local
           val _ = if Arbnum.>= (rngdim, dim) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term" "w2w: result type too short"
               else
                 ();
@@ -345,7 +345,7 @@ local
           val _ = if Arbnum.>= (rngdim, dim) then
               ()
             else (
-              if !Library.trace > 0 then
+              if !HolBA_Library.trace > 0 then
                 WARNING "translate_term" "sw2sw: result type too short"
               else
                 ();
@@ -462,7 +462,7 @@ local
           (Redblackmap.insert (bounds, v, name), name)
         end
     val tm_has_base_type = not (Lib.can Type.dom_rng (Term.type_of tm))
-    val _ = if !Library.trace > 4 then
+    val _ = if !HolBA_Library.trace > 4 then
         print ("has_base_type ``" ^ (Hol_pp.term_to_string tm)
           ^ "``: " ^ (Bool.toString tm_has_base_type) ^ "\n")
       else
@@ -566,12 +566,12 @@ local
               ^ "_" ^ (String.translate
                 (fn c => if Char.isAlphaNum c then String.str c else "_")
                 ((HolKernel.fst o HolKernel.dest_var) rator));
-            val _ = if !Library.trace > 0 andalso Term.is_const rator then
+            val _ = if !HolBA_Library.trace > 0 andalso Term.is_const rator then
               WARNING "translate_term"
                 ("uninterpreted constant " ^ Hol_pp.term_to_string rator)
               else
                 ();
-            val _ = if !Library.trace > 2 then
+            val _ = if !HolBA_Library.trace > 2 then
                 Feedback.HOL_MESG ("HolSmtLib (SmtLib): inventing name '" ^
                   name ^ "' for HOL term '" ^ Hol_pp.term_to_string rator ^
                   "' (applied to " ^ Int.toString rands_count ^ " argument(s))")
@@ -651,11 +651,11 @@ in
     in
       SIMP_TAC pureSimps.pure_ss [smtArrayTheory.const_map_to_const_array_REWR] THEN
       REPEAT Tactic.GEN_TAC THEN
-      (if simp_let then Library.LET_SIMP_TAC else ALL_TAC) THEN
+      (if simp_let then HolBA_Library.LET_SIMP_TAC else ALL_TAC) THEN
       SIMP_TAC pureSimps.pure_ss
         [integerTheory.INT_MIN, integerTheory.INT_MAX, INT_ABS] THEN
-      Library.WORD_SIMP_TAC THEN
-      Library.SET_SIMP_TAC THEN
+      HolBA_Library.WORD_SIMP_TAC THEN
+      HolBA_Library.SET_SIMP_TAC THEN
       Tactic.BETA_TAC THEN
       SIMP_TAC pureSimps.pure_ss
         [smtArrayTheory.apply_to_select_REWR,
