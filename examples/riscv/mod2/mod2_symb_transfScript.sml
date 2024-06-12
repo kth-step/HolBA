@@ -72,6 +72,9 @@ val birs_state_init_pre = ``birs_state_init_pre_GEN
  ^birs_state_init_lbl mod2_birenvtyl
  (mk_bsysprecond (bspec_mod2_pre pre_x10) mod2_birenvtyl)``;
 
+val bprog_P_tm = ``\x. P_bircont mod2_birenvtyl (^bspec_mod2_pre x)``;
+val bprog_Q_tm = ``\x. Q_bircont (^birs_state_end_lbl) (set mod2_prog_vars) (^bspec_mod2_post x)``;
+
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
@@ -118,21 +121,6 @@ val birs_symb_symbols_f_sound_prog_thm =
 val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
 
-Definition bprog_P_def:
-  bprog_P x = P_bircont mod2_birenvtyl (^bspec_mod2_pre x)
-End
-
-Definition bprog_Q_def:
-  bprog_Q x = Q_bircont (^birs_state_end_lbl) (set mod2_prog_vars) (^bspec_mod2_post x)
-End
-
-Definition pre_bir_nL_def:
-  pre_bir_nL x = pre_bircont_nL mod2_birenvtyl (^bspec_mod2_pre x)
-End
-
-Definition post_bir_nL_def:
-  post_bir_nL x = post_bircont_nL (^birs_state_end_lbl) (set mod2_prog_vars) (^bspec_mod2_post x)
-End
 (* ........................... *)
 
 (* P is generic enough *)
@@ -173,7 +161,10 @@ val type_of_bir_exp_thms =
       ] end;
 
 Theorem bprog_P_entails_thm[local]:
-  P_entails_an_interpret (bir_symb_rec_sbir ^bprog_tm) (bprog_P pre_x10) (birs_symb_to_symbst ^birs_state_init_pre)
+  P_entails_an_interpret
+   (bir_symb_rec_sbir ^bprog_tm)
+   (^bprog_P_tm pre_x10)
+   (birs_symb_to_symbst ^birs_state_init_pre)
 Proof
   ASSUME_TAC (GSYM mod2_prog_vars_thm) >>
   `mod2_prog_vars = MAP PairToBVar mod2_birenvtyl` by (
@@ -182,7 +173,7 @@ Proof
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
   IMP_RES_TAC (SIMP_RULE std_ss [] P_bircont_entails_thm) >>
 
-  SIMP_TAC std_ss [bprog_P_def] >>
+  SIMP_TAC std_ss [] >>
   POP_ASSUM (ASSUME_TAC o Q.SPEC `bspec_mod2_pre pre_x10`) >>
   `bir_vars_of_exp (bspec_mod2_pre pre_x10) SUBSET set (MAP PairToBVar mod2_birenvtyl)` by (
     PAT_X_ASSUM ``A = set B`` (fn thm => REWRITE_TAC [GSYM thm]) >>
@@ -241,12 +232,11 @@ val Pi_thms = List.map (fn sys2 =>
     sys1 = ^sys1 ==>
     sys2 = ^sys2 ==>
     birs_symb_matchstate sys1 H bs ==>
-    bprog_P pre_x10 (birs_symb_to_concst bs) ==>
+    ^bprog_P_tm pre_x10 (birs_symb_to_concst bs) ==>
     symb_interpr_ext H' H ==>
     birs_symb_matchstate sys2 H' bs' ==>
-    bprog_Q pre_x10 (birs_symb_to_concst bs) (birs_symb_to_concst bs')
+    ^bprog_Q_tm pre_x10 (birs_symb_to_concst bs) (birs_symb_to_concst bs')
   ``,
-    REWRITE_TAC [bprog_P_def, bprog_Q_def] >>
     REPEAT STRIP_TAC >>
     Q_bircont_SOLVE3CONJS_TAC mod2_prog_vars_thm >>
 
@@ -263,9 +253,9 @@ val Pi_thms = List.map (fn sys2 =>
 (* Q is implied by sys and Pi *)
 Theorem bprog_Pi_overapprox_Q_thm[local]:
   Pi_overapprox_Q (bir_symb_rec_sbir ^bprog_tm)
-   (bprog_P pre_x10)
+   (^bprog_P_tm pre_x10)
    (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f
-   (bprog_Q pre_x10)
+   (^bprog_Q_tm pre_x10)
 Proof
   REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, mod2_bsysprecond_thm] >>
   REPEAT GEN_TAC >>
@@ -295,10 +285,9 @@ val bprog_prop_holds_thm =
 (* ........................... *)
 
 Theorem bir_abstract_jgmt_rel_mod2_thm[local] =
-  REWRITE_RULE [GSYM post_bir_nL_def, GSYM pre_bir_nL_def]
-    (MATCH_MP
-      (MATCH_MP prop_holds_TO_abstract_jgmt_rel_thm mod2_analysis_L_NOTIN_thm)
-      (REWRITE_RULE [bprog_P_def, bprog_Q_def] bprog_prop_holds_thm));
+  (MATCH_MP
+    (MATCH_MP prop_holds_TO_abstract_jgmt_rel_thm mod2_analysis_L_NOTIN_thm)
+    (REWRITE_RULE [] bprog_prop_holds_thm));
 
 (* ........................... *)
 (* now manage the pre and postconditions into contract friendly "bir_exec_to_labels_triple_precond/postcond", need to change precondition to "bir_env_vars_are_initialised" for set of program variables *)
@@ -352,7 +341,7 @@ Proof
     SIMP_TAC std_ss [mod2_birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
   ) >>
 
-  METIS_TAC [bir_abstract_jgmt_rel_mod2_thm, pre_bir_nL_def, post_bir_nL_def, mod2_prog_vars_thm]
+  METIS_TAC [bir_abstract_jgmt_rel_mod2_thm, mod2_prog_vars_thm]
 QED
 
 Theorem bspec_cont_mod2_thm[local]:
