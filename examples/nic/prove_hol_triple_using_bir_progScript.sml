@@ -525,7 +525,7 @@ val (wp_thm, triple_thm) =
         FULL_SIMP_TAC bir_to_words_ss [] >>
 
         (REPEAT o PAT_X_TAC) `_` >>
-        Z3_ORACLE_TAC
+        HolBA_HolSmtLib.Z3_ORACLE_TAC
       ) >>
       METIS_TAC [bir_exec_to_labels_triple_def]
 *)
