@@ -56,9 +56,9 @@ val _ = new_theory "incr_symb_transf";
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val bprog_tm = (fst o dest_eq o concl) bir_incr_prog_def;
-
 val init_addr_tm = (snd o dest_eq o concl) incr_init_addr_def;
 val end_addr_tm = (snd o dest_eq o concl) incr_end_addr_def;
+val birenvtyl_tm = (fst o dest_eq o concl) incr_birenvtyl_def;
 
 val bspec_incr_pre = ``bspec_incr_pre``;
 val bspec_incr_post = ``bspec_incr_post``;
@@ -69,11 +69,11 @@ val birs_state_end_lbl = (snd o dest_eq o concl o EVAL)
  ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``;
 
 val birs_state_init_pre = ``birs_state_init_pre_GEN
- ^birs_state_init_lbl incr_birenvtyl
- (mk_bsysprecond (bspec_incr_pre pre_x10) incr_birenvtyl)``;
+ ^birs_state_init_lbl ^birenvtyl_tm
+ (mk_bsysprecond (bspec_incr_pre pre_x10) ^birenvtyl_tm)``;
 
-val bprog_P_tm = ``\x. P_bircont incr_birenvtyl (^bspec_incr_pre x)``;
-val bprog_Q_tm = ``\x. Q_bircont (^birs_state_end_lbl) (set incr_prog_vars) (^bspec_incr_post x)``;
+val bprog_P_tm = ``\x. P_bircont ^birenvtyl_tm (^bspec_incr_pre x)``;
+val bprog_Q_tm = ``\x. Q_bircont ^birs_state_end_lbl (set incr_prog_vars) (^bspec_incr_post x)``;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -105,7 +105,7 @@ Theorem incr_birenvtyl_EVAL_thm[local] =
  (REWRITE_CONV [incr_birenvtyl_def,
    bir_lifting_machinesTheory.riscv_bmr_vars_EVAL,
    bir_lifting_machinesTheory.riscv_bmr_temp_vars_EVAL] THENC EVAL)
- ``incr_birenvtyl``;
+ birenvtyl_tm;
 
 val birs_state_thm = REWRITE_CONV [incr_birenvtyl_EVAL_thm] birs_state_init_pre;
 
@@ -168,7 +168,7 @@ Theorem bprog_P_entails_thm[local]:
    (birs_symb_to_symbst ^birs_state_init_pre)
 Proof
   ASSUME_TAC (GSYM incr_prog_vars_thm) >>
-  `incr_prog_vars = MAP PairToBVar incr_birenvtyl` by (
+  `incr_prog_vars = MAP PairToBVar ^birenvtyl_tm` by (
     SIMP_TAC std_ss [incr_birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
   ) >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
@@ -176,14 +176,14 @@ Proof
 
   SIMP_TAC std_ss [] >>
   POP_ASSUM (ASSUME_TAC o Q.SPEC `bspec_incr_pre pre_x10`) >>
-  `bir_vars_of_exp (bspec_incr_pre pre_x10) SUBSET set (MAP PairToBVar incr_birenvtyl)` by (
+  `bir_vars_of_exp (bspec_incr_pre pre_x10) SUBSET set (MAP PairToBVar ^birenvtyl_tm)` by (
     PAT_X_ASSUM ``A = set B`` (fn thm => REWRITE_TAC [GSYM thm]) >>
     SIMP_TAC (std_ss++holBACore_ss) [bspec_incr_pre_def, bspec_incr_pre_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM incr_prog_vars_thm, incr_prog_vars_def, bspec_incr_pre_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
   ) >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-  `ALL_DISTINCT (MAP FST incr_birenvtyl)` by (
+  `ALL_DISTINCT (MAP FST ^birenvtyl_tm)` by (
     SIMP_TAC (std_ss++listSimps.LIST_ss) [incr_birenvtyl_EVAL_thm]
   ) >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
@@ -311,7 +311,7 @@ Proof
   MATCH_MP_TAC (REWRITE_RULE
    [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_labels_triple_thm) >>
   SIMP_TAC std_ss [] >>
-  Q.EXISTS_TAC `incr_birenvtyl` >>
+  EXISTS_TAC birenvtyl_tm >>
 
   CONJ_TAC >- (
     (* bpre subset *)
