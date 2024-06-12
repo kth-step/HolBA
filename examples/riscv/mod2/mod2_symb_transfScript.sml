@@ -78,12 +78,8 @@ val birs_state_init_pre = ``birs_state_init_pre_GEN
 
 val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) mod2_symb_analysis_thm;
 
-Definition mod2_analysis_L_def:
- mod2_analysis_L = ^(L_s)
-End
-
 Theorem mod2_analysis_L_NOTIN_thm[local]:
-  (^birs_state_end_lbl) NOTIN mod2_analysis_L
+  ^birs_state_end_lbl NOTIN ^L_s
 Proof
   EVAL_TAC
 QED
@@ -285,7 +281,7 @@ QED
 (* apply the theorem for property transfer *)
 val bprog_prop_holds_thm =
   SIMP_RULE (std_ss++birs_state_ss)
-    [birs_state_init_pre_GEN_def, birs_symb_symbst_pc_thm, GSYM mod2_analysis_L_def] (
+    [birs_state_init_pre_GEN_def, birs_symb_symbst_pc_thm] (
   MATCH_MP
     (MATCH_MP
       (MATCH_MP
