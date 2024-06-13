@@ -55,6 +55,9 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 (* Auxiliary definitions *)
 (* --------------------- *)
 
+val init_addr_tm = (snd o dest_eq o concl) incr_init_addr_def;
+val end_addr_tm = (snd o dest_eq o concl) incr_end_addr_def;
+
 val bir_prog_def = bir_incr_prog_def;
 val birenvtyl_def = incr_birenvtyl_def;
 val bspec_pre_def = bspec_incr_pre_def;
@@ -65,34 +68,31 @@ val symb_analysis_thm = incr_symb_analysis_thm;
 val bsysprecond_thm = incr_bsysprecond_thm;
 val prog_vars_thm = incr_prog_vars_thm;
 
-val init_addr_tm = (snd o dest_eq o concl) incr_init_addr_def;
-val end_addr_tm = (snd o dest_eq o concl) incr_end_addr_def;
-
 val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
 val prog_vars_tm = (fst o dest_eq o concl) prog_vars_def;
 
 val birenvtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 
 val bspec_pre_tm = ``bspec_incr_pre pre_x10``;
-val bspec_post_tm = ``bspec_incr_post pre_x10``
+val bspec_post_tm = ``bspec_incr_post pre_x10``;
 
-val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
+val bir_state_init_lbl_tm = (snd o dest_eq o concl o EVAL)
  ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
-val birs_state_end_lbl = (snd o dest_eq o concl o EVAL)
+val birs_state_end_lbl_tm = (snd o dest_eq o concl o EVAL)
  ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``;
 
-val birs_state_init_pre = ``birs_state_init_pre_GEN
- ^birs_state_init_lbl ^birenvtyl_tm
+val birs_state_init_pre_tm = ``birs_state_init_pre_GEN
+ ^bir_state_init_lbl_tm ^birenvtyl_tm
  (mk_bsysprecond ^bspec_pre_tm ^birenvtyl_tm)``;
+
+val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) symb_analysis_thm;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
 
-val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) symb_analysis_thm;
-
 Theorem analysis_L_NOTIN_thm[local]:
-  ^birs_state_end_lbl NOTIN ^L_s
+  ^birs_state_end_lbl_tm NOTIN ^L_s
 Proof
   EVAL_TAC
 QED
@@ -102,7 +102,7 @@ QED
 (* ........................... *)
 
 Theorem birs_state_init_pre_EQ_thm[local]:
-  ^((snd o dest_comb) sys_i) = ^birs_state_init_pre
+  ^((snd o dest_comb) sys_i) = ^birs_state_init_pre_tm
 Proof
   REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
   CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
@@ -117,7 +117,7 @@ Theorem birenvtyl_EVAL_thm[local] =
    bir_lifting_machinesTheory.riscv_bmr_temp_vars_EVAL] THENC EVAL)
  birenvtyl_tm;
 
-val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
+val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre_tm;
 
 (* ------ *)
 
@@ -175,7 +175,7 @@ Theorem bprog_P_entails_thm[local]:
   P_entails_an_interpret
    (bir_symb_rec_sbir ^bprog_tm)
    (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
-   (birs_symb_to_symbst ^birs_state_init_pre)
+   (birs_symb_to_symbst ^birs_state_init_pre_tm)
 Proof
   ASSUME_TAC (GSYM prog_vars_thm) >>
   `^prog_vars_tm = MAP PairToBVar ^birenvtyl_tm` by (
@@ -186,16 +186,9 @@ Proof
 
   SIMP_TAC std_ss [] >>
   POP_ASSUM (ASSUME_TAC o SPEC bspec_pre_tm) >>
-  `bir_vars_of_exp ^bspec_pre_tm SUBSET set (MAP PairToBVar ^birenvtyl_tm)` by (
-    PAT_X_ASSUM ``A = set B`` (fn thm => REWRITE_TAC [GSYM thm]) >>
-    SIMP_TAC (std_ss++holBACore_ss) [bspec_pre_def] >>
-    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_def, bspec_pre_def] >>
-    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
-  ) >>
+  `bir_vars_of_exp ^bspec_pre_tm SUBSET set (MAP PairToBVar ^birenvtyl_tm)` by EVAL_TAC >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-  `ALL_DISTINCT (MAP FST ^birenvtyl_tm)` by (
-    SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm]
-  ) >>
+  `ALL_DISTINCT (MAP FST ^birenvtyl_tm)` by EVAL_TAC >>
   POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
   `IS_SOME (type_of_bir_exp ^bspec_pre_tm)` by (
     SIMP_TAC std_ss [bspec_pre_def] >>
@@ -212,7 +205,7 @@ QED
 (* ........................... *)
 (* proof for each end state individually: *)
 
-val sys1 = (snd o dest_eq o concl o REWRITE_CONV [bsysprecond_thm]) birs_state_init_pre;
+val sys1 = (snd o dest_eq o concl o REWRITE_CONV [bsysprecond_thm]) birs_state_init_pre_tm;
 val (Pi_func, Pi_set) = dest_comb Pi_f; (* Pi_func should be exactly ``IMAGE birs_symb_to_symbst`` *)
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
@@ -246,7 +239,7 @@ val Pi_thms = List.map (fn sys2 =>
     P_bircont ^birenvtyl_tm ^bspec_pre_tm (birs_symb_to_concst bs) ==>
     symb_interpr_ext H' H ==>
     birs_symb_matchstate sys2 H' bs' ==>
-    Q_bircont ^birs_state_end_lbl (set ^prog_vars_tm) ^bspec_post_tm
+    Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_tm) ^bspec_post_tm
      (birs_symb_to_concst bs) (birs_symb_to_concst bs')
   ``,
     REPEAT STRIP_TAC >>
@@ -267,8 +260,8 @@ Theorem bprog_Pi_overapprox_Q_thm[local]:
   Pi_overapprox_Q
    (bir_symb_rec_sbir ^bprog_tm)
    (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
-   (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f
-   (Q_bircont ^birs_state_end_lbl (set ^prog_vars_tm) ^bspec_post_tm)
+   (birs_symb_to_symbst ^birs_state_init_pre_tm) ^Pi_f
+   (Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_tm) ^bspec_post_tm)
 Proof
   REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, bsysprecond_thm] >>
   REPEAT GEN_TAC >>
@@ -327,7 +320,8 @@ Proof
     (* bpre subset *)
     REWRITE_TAC [bspec_pre_def] >>
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_def] >>
-    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT] >>
+    EVAL_TAC
   ) >>
 
   CONJ_TAC >- (
@@ -345,7 +339,8 @@ Proof
 
   CONJ_TAC >- (
     (* ALL_DISTINCT envtyl *)
-    SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm]
+    SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm] >>
+    EVAL_TAC
   ) >>
 
   CONJ_TAC >- (
