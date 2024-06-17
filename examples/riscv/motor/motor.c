@@ -6,6 +6,8 @@
  *
  *  Modified to act as standalone example for symbolic execution
  */
+ 
+ int main() {}
 
 
 #define MOTOR_MAX_VAL (32768-2)

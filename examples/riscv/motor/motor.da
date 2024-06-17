@@ -4,157 +4,132 @@ motor.o:     file format elf64-littleriscv
 
 Disassembly of section .text:
 
-0000000000000000 <motor_prep_input>:
-   0:	41f5579b          	sraw	a5,a0,0x1f
-   4:	00f54533          	xor	a0,a0,a5
-   8:	40f507bb          	subw	a5,a0,a5
-   c:	0007869b          	sext.w	a3,a5
-  10:	00001737          	lui	a4,0x1
-  14:	aa970713          	add	a4,a4,-1367 # aa9 <motor_set_f+0x8f1>
-  18:	02d75863          	bge	a4,a3,48 <.L2>
-  1c:	00078513          	mv	a0,a5
-  20:	00008737          	lui	a4,0x8
-  24:	ffe70713          	add	a4,a4,-2 # 7ffe <motor_set_f+0x7e46>
-  28:	00d75663          	bge	a4,a3,34 <.L3>
-  2c:	00008537          	lui	a0,0x8
-  30:	ffe5051b          	addw	a0,a0,-2 # 7ffe <motor_set_f+0x7e46>
+0000000000000630 <motor_prep_input>:
+ 630:	41f5579b          	sraw	a5,a0,0x1f
+ 634:	00f54533          	xor	a0,a0,a5
+ 638:	40f507bb          	subw	a5,a0,a5
+ 63c:	0007869b          	sext.w	a3,a5
+ 640:	00001737          	lui	a4,0x1
+ 644:	aa970713          	add	a4,a4,-1367 # aa9 <__FRAME_END__+0x251>
+ 648:	02d75863          	bge	a4,a3,678 <motor_prep_input+0x48>
+ 64c:	00078513          	mv	a0,a5
+ 650:	00008737          	lui	a4,0x8
+ 654:	ffe70713          	add	a4,a4,-2 # 7ffe <__global_pointer$+0x57fe>
+ 658:	00d75663          	bge	a4,a3,664 <motor_prep_input+0x34>
+ 65c:	00008537          	lui	a0,0x8
+ 660:	ffe5051b          	addw	a0,a0,-2 # 7ffe <__global_pointer$+0x57fe>
+ 664:	0005079b          	sext.w	a5,a0
+ 668:	00008537          	lui	a0,0x8
+ 66c:	ffe5051b          	addw	a0,a0,-2 # 7ffe <__global_pointer$+0x57fe>
+ 670:	40f5053b          	subw	a0,a0,a5
+ 674:	00008067          	ret
+ 678:	55400793          	li	a5,1364
+ 67c:	00d7c663          	blt	a5,a3,688 <motor_prep_input+0x58>
+ 680:	00000793          	li	a5,0
+ 684:	fe5ff06f          	j	668 <motor_prep_input+0x38>
+ 688:	000017b7          	lui	a5,0x1
+ 68c:	aaa78793          	add	a5,a5,-1366 # aaa <__FRAME_END__+0x252>
+ 690:	fd9ff06f          	j	668 <motor_prep_input+0x38>
 
-0000000000000034 <.L3>:
-  34:	0005079b          	sext.w	a5,a0
+0000000000000694 <motor_set_l>:
+ 694:	ff010113          	add	sp,sp,-16
+ 698:	00113423          	sd	ra,8(sp)
+ 69c:	00813023          	sd	s0,0(sp)
+ 6a0:	00050413          	mv	s0,a0
+ 6a4:	f8dff0ef          	jal	630 <motor_prep_input>
+ 6a8:	000087b7          	lui	a5,0x8
+ 6ac:	ffe78793          	add	a5,a5,-2 # 7ffe <__global_pointer$+0x57fe>
+ 6b0:	02f50c63          	beq	a0,a5,6e8 <motor_set_l+0x54>
+ 6b4:	04044a63          	bltz	s0,708 <motor_set_l+0x74>
+ 6b8:	fff00793          	li	a5,-1
+ 6bc:	02079793          	sll	a5,a5,0x20
+ 6c0:	00a7a823          	sw	a0,16(a5)
+ 6c4:	0007a503          	lw	a0,0(a5)
+ 6c8:	0015051b          	addw	a0,a0,1
+ 6cc:	fff00793          	li	a5,-1
+ 6d0:	02079793          	sll	a5,a5,0x20
+ 6d4:	02a7a023          	sw	a0,32(a5)
+ 6d8:	00813083          	ld	ra,8(sp)
+ 6dc:	00013403          	ld	s0,0(sp)
+ 6e0:	01010113          	add	sp,sp,16
+ 6e4:	00008067          	ret
+ 6e8:	fff00793          	li	a5,-1
+ 6ec:	02079793          	sll	a5,a5,0x20
+ 6f0:	0007a703          	lw	a4,0(a5)
+ 6f4:	0017071b          	addw	a4,a4,1
+ 6f8:	00e7a823          	sw	a4,16(a5)
+ 6fc:	0007a503          	lw	a0,0(a5)
+ 700:	0015051b          	addw	a0,a0,1
+ 704:	fc9ff06f          	j	6cc <motor_set_l+0x38>
+ 708:	fff00793          	li	a5,-1
+ 70c:	02079793          	sll	a5,a5,0x20
+ 710:	0007a703          	lw	a4,0(a5)
+ 714:	0017071b          	addw	a4,a4,1
+ 718:	00e7a823          	sw	a4,16(a5)
+ 71c:	fb1ff06f          	j	6cc <motor_set_l+0x38>
 
-0000000000000038 <.L4>:
-  38:	00008537          	lui	a0,0x8
-  3c:	ffe5051b          	addw	a0,a0,-2 # 7ffe <motor_set_f+0x7e46>
-  40:	40f5053b          	subw	a0,a0,a5
-  44:	00008067          	ret
+0000000000000720 <motor_set_r>:
+ 720:	ff010113          	add	sp,sp,-16
+ 724:	00113423          	sd	ra,8(sp)
+ 728:	00813023          	sd	s0,0(sp)
+ 72c:	00050413          	mv	s0,a0
+ 730:	f01ff0ef          	jal	630 <motor_prep_input>
+ 734:	000087b7          	lui	a5,0x8
+ 738:	ffe78793          	add	a5,a5,-2 # 7ffe <__global_pointer$+0x57fe>
+ 73c:	02f50c63          	beq	a0,a5,774 <motor_set_r+0x54>
+ 740:	04044a63          	bltz	s0,794 <motor_set_r+0x74>
+ 744:	fff00793          	li	a5,-1
+ 748:	02079793          	sll	a5,a5,0x20
+ 74c:	0307a703          	lw	a4,48(a5)
+ 750:	0017071b          	addw	a4,a4,1
+ 754:	04e7a023          	sw	a4,64(a5)
+ 758:	fff00793          	li	a5,-1
+ 75c:	02079793          	sll	a5,a5,0x20
+ 760:	04a7a823          	sw	a0,80(a5)
+ 764:	00813083          	ld	ra,8(sp)
+ 768:	00013403          	ld	s0,0(sp)
+ 76c:	01010113          	add	sp,sp,16
+ 770:	00008067          	ret
+ 774:	fff00793          	li	a5,-1
+ 778:	02079793          	sll	a5,a5,0x20
+ 77c:	0307a703          	lw	a4,48(a5)
+ 780:	0017071b          	addw	a4,a4,1
+ 784:	04e7a023          	sw	a4,64(a5)
+ 788:	0307a503          	lw	a0,48(a5)
+ 78c:	0015051b          	addw	a0,a0,1
+ 790:	fc9ff06f          	j	758 <motor_set_r+0x38>
+ 794:	fff00793          	li	a5,-1
+ 798:	02079793          	sll	a5,a5,0x20
+ 79c:	04a7a023          	sw	a0,64(a5)
+ 7a0:	0307a503          	lw	a0,48(a5)
+ 7a4:	0015051b          	addw	a0,a0,1
+ 7a8:	fb1ff06f          	j	758 <motor_set_r+0x38>
 
-0000000000000048 <.L2>:
-  48:	55400793          	li	a5,1364
-  4c:	00d7c663          	blt	a5,a3,58 <.L5>
-  50:	00000793          	li	a5,0
-  54:	fe5ff06f          	j	38 <.L4>
+00000000000007ac <motor_set>:
+ 7ac:	ff010113          	add	sp,sp,-16
+ 7b0:	00113423          	sd	ra,8(sp)
+ 7b4:	00813023          	sd	s0,0(sp)
+ 7b8:	00058413          	mv	s0,a1
+ 7bc:	ed9ff0ef          	jal	694 <motor_set_l>
+ 7c0:	00040513          	mv	a0,s0
+ 7c4:	f5dff0ef          	jal	720 <motor_set_r>
+ 7c8:	00813083          	ld	ra,8(sp)
+ 7cc:	00013403          	ld	s0,0(sp)
+ 7d0:	01010113          	add	sp,sp,16
+ 7d4:	00008067          	ret
 
-0000000000000058 <.L5>:
-  58:	000017b7          	lui	a5,0x1
-  5c:	aaa78793          	add	a5,a5,-1366 # aaa <motor_set_f+0x8f2>
-  60:	fd9ff06f          	j	38 <.L4>
-
-0000000000000064 <motor_set_l>:
-  64:	ff010113          	add	sp,sp,-16
-  68:	00113423          	sd	ra,8(sp)
-  6c:	00813023          	sd	s0,0(sp)
-  70:	00050413          	mv	s0,a0
-  74:	00000097          	auipc	ra,0x0
-  78:	000080e7          	jalr	ra # 74 <motor_set_l+0x10>
-  7c:	000087b7          	lui	a5,0x8
-  80:	ffe78793          	add	a5,a5,-2 # 7ffe <motor_set_f+0x7e46>
-  84:	02f50c63          	beq	a0,a5,bc <.L11>
-  88:	04044a63          	bltz	s0,dc <.L12>
-  8c:	fff00793          	li	a5,-1
-  90:	02079793          	sll	a5,a5,0x20
-  94:	00a7a823          	sw	a0,16(a5)
-  98:	0007a503          	lw	a0,0(a5)
-  9c:	0015051b          	addw	a0,a0,1
-
-00000000000000a0 <.L8>:
-  a0:	fff00793          	li	a5,-1
-  a4:	02079793          	sll	a5,a5,0x20
-  a8:	02a7a023          	sw	a0,32(a5)
-  ac:	00813083          	ld	ra,8(sp)
-  b0:	00013403          	ld	s0,0(sp)
-  b4:	01010113          	add	sp,sp,16
-  b8:	00008067          	ret
-
-00000000000000bc <.L11>:
-  bc:	fff00793          	li	a5,-1
-  c0:	02079793          	sll	a5,a5,0x20
-  c4:	0007a703          	lw	a4,0(a5)
-  c8:	0017071b          	addw	a4,a4,1
-  cc:	00e7a823          	sw	a4,16(a5)
-  d0:	0007a503          	lw	a0,0(a5)
-  d4:	0015051b          	addw	a0,a0,1
-  d8:	fc9ff06f          	j	a0 <.L8>
-
-00000000000000dc <.L12>:
-  dc:	fff00793          	li	a5,-1
-  e0:	02079793          	sll	a5,a5,0x20
-  e4:	0007a703          	lw	a4,0(a5)
-  e8:	0017071b          	addw	a4,a4,1
-  ec:	00e7a823          	sw	a4,16(a5)
-  f0:	fb1ff06f          	j	a0 <.L8>
-
-00000000000000f4 <motor_set_r>:
-  f4:	ff010113          	add	sp,sp,-16
-  f8:	00113423          	sd	ra,8(sp)
-  fc:	00813023          	sd	s0,0(sp)
- 100:	00050413          	mv	s0,a0
- 104:	00000097          	auipc	ra,0x0
- 108:	000080e7          	jalr	ra # 104 <motor_set_r+0x10>
- 10c:	000087b7          	lui	a5,0x8
- 110:	ffe78793          	add	a5,a5,-2 # 7ffe <motor_set_f+0x7e46>
- 114:	02f50c63          	beq	a0,a5,14c <.L18>
- 118:	04044a63          	bltz	s0,16c <.L19>
- 11c:	fff00793          	li	a5,-1
- 120:	02079793          	sll	a5,a5,0x20
- 124:	0307a703          	lw	a4,48(a5)
- 128:	0017071b          	addw	a4,a4,1
- 12c:	04e7a023          	sw	a4,64(a5)
-
-0000000000000130 <.L15>:
- 130:	fff00793          	li	a5,-1
- 134:	02079793          	sll	a5,a5,0x20
- 138:	04a7a823          	sw	a0,80(a5)
- 13c:	00813083          	ld	ra,8(sp)
- 140:	00013403          	ld	s0,0(sp)
- 144:	01010113          	add	sp,sp,16
- 148:	00008067          	ret
-
-000000000000014c <.L18>:
- 14c:	fff00793          	li	a5,-1
- 150:	02079793          	sll	a5,a5,0x20
- 154:	0307a703          	lw	a4,48(a5)
- 158:	0017071b          	addw	a4,a4,1
- 15c:	04e7a023          	sw	a4,64(a5)
- 160:	0307a503          	lw	a0,48(a5)
- 164:	0015051b          	addw	a0,a0,1
- 168:	fc9ff06f          	j	130 <.L15>
-
-000000000000016c <.L19>:
- 16c:	fff00793          	li	a5,-1
- 170:	02079793          	sll	a5,a5,0x20
- 174:	04a7a023          	sw	a0,64(a5)
- 178:	0307a503          	lw	a0,48(a5)
- 17c:	0015051b          	addw	a0,a0,1
- 180:	fb1ff06f          	j	130 <.L15>
-
-0000000000000184 <motor_set>:
- 184:	ff010113          	add	sp,sp,-16
- 188:	00113423          	sd	ra,8(sp)
- 18c:	00813023          	sd	s0,0(sp)
- 190:	00058413          	mv	s0,a1
- 194:	00000097          	auipc	ra,0x0
- 198:	000080e7          	jalr	ra # 194 <motor_set+0x10>
- 19c:	00040513          	mv	a0,s0
- 1a0:	00000097          	auipc	ra,0x0
- 1a4:	000080e7          	jalr	ra # 1a0 <motor_set+0x1c>
- 1a8:	00813083          	ld	ra,8(sp)
- 1ac:	00013403          	ld	s0,0(sp)
- 1b0:	01010113          	add	sp,sp,16
- 1b4:	00008067          	ret
-
-00000000000001b8 <motor_set_f>:
- 1b8:	ff010113          	add	sp,sp,-16
- 1bc:	00113423          	sd	ra,8(sp)
- 1c0:	00000797          	auipc	a5,0x0
- 1c4:	0007a787          	flw	fa5,0(a5) # 1c0 <motor_set_f+0x8>
- 1c8:	10f5f5d3          	fmul.s	fa1,fa1,fa5
- 1cc:	c00595d3          	fcvt.w.s	a1,fa1,rtz
- 1d0:	10f57553          	fmul.s	fa0,fa0,fa5
- 1d4:	c0051553          	fcvt.w.s	a0,fa0,rtz
- 1d8:	0005859b          	sext.w	a1,a1
- 1dc:	0005051b          	sext.w	a0,a0
- 1e0:	00000097          	auipc	ra,0x0
- 1e4:	000080e7          	jalr	ra # 1e0 <motor_set_f+0x28>
- 1e8:	00813083          	ld	ra,8(sp)
- 1ec:	01010113          	add	sp,sp,16
- 1f0:	00008067          	ret
+00000000000007d8 <motor_set_f>:
+ 7d8:	ff010113          	add	sp,sp,-16
+ 7dc:	00113423          	sd	ra,8(sp)
+ 7e0:	00000797          	auipc	a5,0x0
+ 7e4:	0347a787          	flw	fa5,52(a5) # 814 <_IO_stdin_used+0x4>
+ 7e8:	10f5f5d3          	fmul.s	fa1,fa1,fa5
+ 7ec:	c00595d3          	fcvt.w.s	a1,fa1,rtz
+ 7f0:	10f57553          	fmul.s	fa0,fa0,fa5
+ 7f4:	c0051553          	fcvt.w.s	a0,fa0,rtz
+ 7f8:	0005859b          	sext.w	a1,a1
+ 7fc:	0005051b          	sext.w	a0,a0
+ 800:	fadff0ef          	jal	7ac <motor_set>
+ 804:	00813083          	ld	ra,8(sp)
+ 808:	01010113          	add	sp,sp,16
+ 80c:	00008067          	ret
