@@ -1,0 +1,31 @@
+
+modexp.o:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000000 <modexp>:
+   0:	00050693          	mv	a3,a0
+   4:	00000713          	li	a4,0
+   8:	00100513          	li	a0,1
+   c:	00100893          	li	a7,1
+  10:	02000813          	li	a6,32
+  14:	0140006f          	j	28 <.L3>
+
+0000000000000018 <.L2>:
+  18:	02b585bb          	mulw	a1,a1,a1
+  1c:	02c5f5bb          	remuw	a1,a1,a2
+  20:	0017071b          	addw	a4,a4,1
+  24:	03070063          	beq	a4,a6,44 <.L5>
+
+0000000000000028 <.L3>:
+  28:	00e897bb          	sllw	a5,a7,a4
+  2c:	00f6f7b3          	and	a5,a3,a5
+  30:	0007879b          	sext.w	a5,a5
+  34:	fe0782e3          	beqz	a5,18 <.L2>
+  38:	02a5853b          	mulw	a0,a1,a0
+  3c:	02c5753b          	remuw	a0,a0,a2
+  40:	fd9ff06f          	j	18 <.L2>
+
+0000000000000044 <.L5>:
+  44:	00008067          	ret
