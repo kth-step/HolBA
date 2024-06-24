@@ -62,6 +62,11 @@ Datatype:
     bir_var_environment_t = BEnv (string -> (bir_val_t option))
 End
 
+(** Lookup relation *)
+Inductive bir_env_lookup:
+    !env id. (env id = (SOME a)) ==> bir_env_lookup (BEnv env) id a
+End
+
 
 
 
