@@ -68,6 +68,61 @@ Inductive bir_env_lookup:
 End
 
 
+(** Gets the operator for a given binary operation *)
+Definition bir_binexp_get_oper_def:
+    (bir_binexp_get_oper BIExp_And = word_and) /\
+    (bir_binexp_get_oper BIExp_Plus = word_add)
+End
+
+
+(** Evaluates a binary expression of two immediates *)
+Inductive bir_eval_binexp_imm:
+    (!binexp w1 w2. 
+        bir_eval_binexp_imm binexp (Imm1 w1) (Imm1 w2) (Imm1 ((bir_binexp_get_oper binexp) w1 w2))) /\
+    (!binexp w1 w2. 
+        bir_eval_binexp_imm binexp (Imm8 w1) (Imm8 w2) (Imm8 ((bir_binexp_get_oper binexp) w1 w2))) /\
+    (!binexp w1 w2. 
+        bir_eval_binexp_imm binexp (Imm16 w1) (Imm16 w2) (Imm16 ((bir_binexp_get_oper binexp) w1 w2))) /\
+    (!binexp w1 w2. 
+        bir_eval_binexp_imm binexp (Imm32 w1) (Imm32 w2) (Imm32 ((bir_binexp_get_oper binexp) w1 w2))) /\
+    (!binexp w1 w2. 
+        bir_eval_binexp_imm binexp (Imm64 w1) (Imm64 w2) (Imm64 ((bir_binexp_get_oper binexp) w1 w2))) /\
+    (!binexp w1 w2. 
+        bir_eval_binexp_imm binexp (Imm128 w1) (Imm128 w2) (Imm128 ((bir_binexp_get_oper binexp) w1 w2)))
+End
+
+(** TODO : Utility of this function seems low.
+*   Might as well use bir_eval_binexp_imm directly.
+*   Keeps things tidier I guess *)
+(** Evaluates a general binary expression with values as parameters *)
+Inductive bir_eval_binexp:
+    (!binexp imm1 imm2 imm. 
+        (bir_eval_binexp_imm binexp imm1 imm2 imm) ==>
+        (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm)))
+End
+
+
+Inductive bir_eval_exp:
+    (** BExp_Const *)
+    ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) ) /\
+
+    (** BExp_Den *)
+    ( !env id. bir_env_lookup env id v ==> bir_eval_exp env (BExp_Den (BVar id)) v) /\
+
+    (** BExp_BinExp *)
+    ( !env binexp e1 e2 v1 v2. 
+        ((bir_eval_exp env e1 v1) /\ (bir_eval_exp env e2 v2) /\
+            (bir_eval_binexp binexp v1 v2 v))
+        ==> 
+        (bir_eval_exp env (BExp_BinExp binexp e1 e2) v))
+End
+
+
+
+
+
+
+
 
 
 
