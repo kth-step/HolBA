@@ -69,8 +69,8 @@ Datatype:
 End
 
 (** Lookup relation *)
-Inductive bir_env_lookup:
-    !env id. (env id = (SOME a)) ==> bir_env_lookup (BEnv env) id a
+Inductive bir_env_lookup_rel:
+    !env id. (env id = (SOME a)) ==> bir_env_lookup_rel (BEnv env) id a
 End
 
 (** Empty environment *)
@@ -86,15 +86,15 @@ End
 
 (** Some theorems about bir_env functions *)
 Theorem bir_env_lookup_empty:
-    !id v. ~(bir_env_lookup bir_empty_env id v)
+    !id v. ~(bir_env_lookup_rel bir_empty_env id v)
 Proof
-    rw [bir_empty_env_def, bir_env_lookup_cases]
+    rw [bir_empty_env_def, bir_env_lookup_rel_cases]
 QED
 
 Theorem bir_env_lookup_update:
-    !env id v. bir_env_lookup (bir_env_update env id v) id v 
+    !env id v. bir_env_lookup_rel (bir_env_update env id v) id v 
 Proof
-    rw [bir_env_update_def, bir_env_lookup_cases]
+    rw [bir_env_update_def, bir_env_lookup_rel_cases]
 QED
 
 (** Gets the operator for a given binary operation *)
@@ -160,7 +160,7 @@ Inductive bir_eval_exp:
     ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) )
 
 [~BExp_Den:]
-    ( !env id. bir_env_lookup env id v ==> bir_eval_exp env (BExp_Den (BVar id)) v)
+    ( !env id. bir_env_lookup_rel env id v ==> bir_eval_exp env (BExp_Den (BVar id)) v)
 
 [~BExp_BinExp:]
     ( !env binexp e1 e2 v1 v2. 
@@ -197,7 +197,7 @@ QED
 Theorem bir_eval_exp_update_env_den:
     !env id vimm. bir_eval_exp (bir_env_update env id vimm) (BExp_Den (BVar id)) vimm
 Proof
-    rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_cases]
+    rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_cases]
 QED
 
 
