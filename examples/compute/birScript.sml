@@ -164,6 +164,15 @@ Proof
 QED
 
 
+Theorem bir_eval_exp_empty_env_add:
+    !imm1 imm2. bir_eval_exp bir_empty_env 
+        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 imm1)) (BExp_Const (Imm64 imm2)))
+        (BVal_Imm (Imm64 (imm1 + imm2)))
+Proof
+    rw [Ntimes bir_eval_exp_cases 3, bir_eval_binexp_cases, 
+        bir_eval_binexp_imm_cases, bir_binexp_get_oper_def] >>
+    rw [Once bir_eval_exp_cases, bir_eval_binexp_cases]
+QED
 
 
 
