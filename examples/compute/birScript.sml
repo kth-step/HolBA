@@ -68,6 +68,10 @@ Datatype:
     bir_var_environment_t = BEnv (string -> (bir_val_t option))
 End
 
+Definition bir_env_lookup_def:
+    bir_env_lookup (BEnv env) id = env id
+End
+
 (** Lookup relation *)
 Inductive bir_env_lookup_rel:
     !env id. (env id = (SOME a)) ==> bir_env_lookup_rel (BEnv env) id a
@@ -95,6 +99,14 @@ Theorem bir_env_lookup_update:
     !env id v. bir_env_lookup_rel (bir_env_update env id v) id v 
 Proof
     rw [bir_env_update_def, bir_env_lookup_rel_cases]
+QED
+
+Theorem bir_env_lookup_eq_rel:
+    !env id v. bir_env_lookup_rel env id v <=> bir_env_lookup env id = SOME v
+Proof
+    rpt STRIP_TAC >>
+    Cases_on `env` >>
+    rw [bir_env_lookup_def, bir_env_lookup_rel_cases]
 QED
 
 (** Gets the operator for a given binary operation *)
