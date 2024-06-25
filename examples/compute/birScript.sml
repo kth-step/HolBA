@@ -67,6 +67,29 @@ Inductive bir_env_lookup:
     !env id. (env id = (SOME a)) ==> bir_env_lookup (BEnv env) id a
 End
 
+(** Empty environment *)
+Definition bir_empty_env_def:
+    bir_empty_env = BEnv (\x. NONE)
+End
+
+(** Update environment *)
+Definition bir_env_update_def:
+    bir_env_update env id v = BEnv ((id =+ SOME v) env)
+End
+
+
+(** Some theorems about bir_env functions *)
+Theorem bir_env_lookup_empty:
+    !id v. ~(bir_env_lookup bir_empty_env id v)
+Proof
+    rw [bir_empty_env_def, bir_env_lookup_cases]
+QED
+
+Theorem bir_env_lookup_update:
+    !env id v. bir_env_lookup (bir_env_update env id v) id v 
+Proof
+    rw [bir_env_update_def, bir_env_lookup_cases]
+QED
 
 (** Gets the operator for a given binary operation *)
 Definition bir_binexp_get_oper_def:
