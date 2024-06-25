@@ -10,6 +10,7 @@ Datatype:
     bir_var_environment_t = BEnv (string -> (bir_val_t option))
 End
 
+(** Lookup function *)
 Definition bir_env_lookup_def:
     bir_env_lookup (BEnv env) id = env id
 End
@@ -24,7 +25,8 @@ Definition bir_empty_env_def:
     bir_empty_env = BEnv (\x. NONE)
 End
 
-(** Update environment *)
+(** Update environment 
+*   Slightly differs from original as we don’t check for existence here *)
 Definition bir_env_update_def:
     bir_env_update env id v = BEnv ((id =+ SOME v) env)
 End
