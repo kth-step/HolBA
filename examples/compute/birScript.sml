@@ -156,20 +156,20 @@ Inductive bir_eval_unaryexp:
 End
 
 Inductive bir_eval_exp:
-    (** BExp_Const *)
-    ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) ) /\
+[~BExp_Const:]
+    ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) )
 
-    (** BExp_Den *)
-    ( !env id. bir_env_lookup env id v ==> bir_eval_exp env (BExp_Den (BVar id)) v) /\
+[~BExp_Den:]
+    ( !env id. bir_env_lookup env id v ==> bir_eval_exp env (BExp_Den (BVar id)) v)
 
-    (** BExp_BinExp *)
+[~BExp_BinExp:]
     ( !env binexp e1 e2 v1 v2. 
         ((bir_eval_exp env e1 v1) /\ (bir_eval_exp env e2 v2) /\
             (bir_eval_binexp binexp v1 v2 v))
         ==> 
-        (bir_eval_exp env (BExp_BinExp binexp e1 e2) v)) /\
+        (bir_eval_exp env (BExp_BinExp binexp e1 e2) v))
 
-    (** BExp_UnaryExp *)
+[~BExp_UnaryExp:]
     ( !env unaryexp e1 v1.  
         ((bir_eval_exp env e1 v1) /\
             (bir_eval_unaryexp unaryexp v1 v))
