@@ -150,5 +150,22 @@ End
 
 
 
+(* ***************** TESTS ****************** *)
+Theorem bir_eval_exp_empty_env_const:
+    !imm. bir_eval_exp bir_empty_env (BExp_Const imm) (BVal_Imm imm)
+Proof
+    rw [Once bir_eval_exp_cases]
+QED
+
+Theorem bir_eval_exp_update_env_den:
+    !env id vimm. bir_eval_exp (bir_env_update env id vimm) (BExp_Den (BVar id)) vimm
+Proof
+    rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_cases]
+QED
+
+
+
+
+
 
 val _ = export_theory ()
