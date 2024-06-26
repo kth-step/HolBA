@@ -9,6 +9,7 @@ The structure of this repository is as follows :
 └─ src : source code 
     ├─ bir_basicScript.sml : Basic Datatypes required of BIR expressions
     ├─ bir_binexpScript.sml : Binary Expressions evaluation
+    ├─ bir_computeScript.sml : Computation function for BIR expressions
     ├─ bir_envScript.sml : Variable Environment
     ├─ bir_evalScript.sml : Evaluation relation for BIR expressions
     └─ bir_unaryexpScript.sml : Unary Expressions evaluation
