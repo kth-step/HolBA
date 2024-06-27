@@ -41,7 +41,7 @@ End
 
 
 (** Computes a binary expression of an immediate *)
-Definition bir_compute_unaryexp_imm:
+Definition bir_compute_unaryexp_imm_def:
     (bir_compute_unaryexp_imm unaryexp (Imm1 w1) = SOME (BVal_Imm (Imm1 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
     (bir_compute_unaryexp_imm unaryexp (Imm8 w1) = SOME (BVal_Imm (Imm8 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
     (bir_compute_unaryexp_imm unaryexp (Imm16 w1) = SOME (BVal_Imm (Imm16 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
@@ -55,6 +55,22 @@ Definition bir_compute_unaryexp_def:
     (bir_compute_unaryexp unaryexp (SOME (BVal_Imm imm1)) = bir_compute_unaryexp_imm unaryexp imm1) /\
     (bir_compute_unaryexp _ NONE = NONE)
 End
+
+
+
+(* **************** THEOREMS ***************** *)
+Theorem bir_eval_unaryexp_eq_compute_unaryexp:
+    !unaryexp v1 v. bir_eval_unaryexp unaryexp v1 v <=> 
+        bir_compute_unaryexp unaryexp (SOME v1) = SOME v
+Proof
+    Cases_on `v1` >> Cases_on `v` >>
+        rw [bir_eval_unaryexp_cases, bir_compute_unaryexp_def] >>
+        rw [bir_eval_unaryexp_imm_cases, bir_compute_unaryexp_imm_def] >>
+        Cases_on `b` >> Cases_on `b'` >>
+            rw [bir_compute_unaryexp_imm_def, bir_imm_t_nchotomy] >>
+            METIS_TAC []
+QED
+
 
 
 val _ = export_theory ()

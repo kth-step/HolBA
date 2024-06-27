@@ -53,12 +53,27 @@ End
 
 
 (** Computes a general binary expression with values as parameters *)
-Definition bir_compute_binexp:
+Definition bir_compute_binexp_def:
     (bir_compute_binexp binexp (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
         bir_compute_binexp_imm binexp imm1 imm2) /\
     (bir_compute_binexp _ NONE _ = NONE) /\
     (bir_compute_binexp _ _ NONE = NONE)
 End
+
+
+
+(* **************** THEOREMS ***************** *)
+Theorem bir_eval_binexp_eq_compute_binexp:
+    !binexp v1 v2 v. bir_eval_binexp binexp v1 v2 v <=> 
+        bir_compute_binexp binexp (SOME v1) (SOME v2) = SOME v
+Proof
+    Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+        rw [bir_eval_binexp_cases, bir_compute_binexp_def] >>
+        rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
+        Cases_on `b` >> Cases_on `b'` >>
+            rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy] >>
+            METIS_TAC []
+QED
 
 
 val _ = export_theory ()
