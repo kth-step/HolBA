@@ -63,12 +63,7 @@ End
 
 Definition bspec_modexp_pre_def:
 bspec_modexp_pre (x:word64) : bir_exp_t =
- BExp_BinExp BIExp_And
-  (BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x2" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x)))
-  (^(mem_addrs_aligned_prog_disj_bir_tm "x2"))
+ (BExp_Const (Imm1 1w))
 End
 
 val _ = export_theory ();

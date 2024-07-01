@@ -216,6 +216,27 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
         birs_states_are_normform_CONV sfun bstates_tm
 	handle e => (print "\n[[[[\n"; print_term bstate_tm; print "\n]]]]\n"; raise e);
 
+(*
+val THE_NONE_tm = ``(THE NONE) : ``;
+    fun is_THE_NONE tm =
+      aconv tm THE_NONE_tm;
+*)
+    fun contains_THE_NONE tm =
+      String.isSubstring "THE NONE" (term_to_string tm);
+(*
+(GEN_match_conv is_THE_NONE REFL tm; true) handle _ => false;
+contains_THE_NONE freesymbols_tm
+(is_birs_exec_step)
+(fn bstate_tm
+*)
+    fun contains_THE_NONE_CONV_with_extra sfun extra_tm tm =
+      if contains_THE_NONE tm then (
+        print "\n[[[[\n"; print_term extra_tm; print "\n]]]]\n";
+        print "\n[[[[\n"; print_term tm; print "\n]]]]\n";
+        raise ERR (sfun^"::contains_THE_NONE_CONV_with_extra") "something is not right, there is THE NONE in the term"
+      ) else
+	REFL tm;
+
   end;
 
 (* extract information from a sound structure *)
@@ -397,6 +418,7 @@ fun birs_exec_step_CONV_fun tm =
     end) THENC
 
   birs_states_are_normform_CONV_with_start "birs_exec_step_CONV_fun" bstate_tm
+  (* THENC contains_THE_NONE_CONV_with_extra "birs_exec_step_CONV_fun" bstate_tm *)
   ) bstate_tm
 )
 tm;
