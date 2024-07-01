@@ -374,7 +374,7 @@ REWRITE_TAC [birs_simplification_def] >>
   )
 QED
 
-(* TODO: can probably generalize this much more and still use it *)
+(* TODO: can probably generalize this much more and still use it, can also make a generic theorem for these two to easily add these kind of simplifications *)
 Theorem birs_simplification_And_Minus_thm:
   !be w1.
   birs_simplification
@@ -397,6 +397,21 @@ Theorem birs_simplification_And_Minus_thm:
       (BExp_Const (Imm32 w1)))
 Proof
 (* the main thing with this is that the path condition implies alignment of be and the constant is also aligned. but we may just require the path condition to imply their combination to be always the same. this is more general *)
+  REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
+QED
+Theorem birs_simplification_LSB0_And64_thm:
+  !be w1.
+  birs_simplification
+    (BExp_BinPred BIExp_Equal
+      (BExp_BinExp BIExp_And
+        (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+        be)
+      (be))
+    (BExp_BinExp BIExp_And
+      (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+      be)
+    (be)
+Proof
   REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
 QED
 
@@ -843,26 +858,48 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-Theorem mem_simp_8_helper_thm[local]:
+Theorem mem_simp_32_8_helper_thm[local]:
   (size_of_bir_immtype Bit8 MOD size_of_bir_immtype Bit8 = 0) /\
   (size_of_bir_immtype Bit8 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
 Proof
 EVAL_TAC
 QED
 
-Theorem mem_simp_32_helper_thm[local]:
+Theorem mem_simp_32_32_helper_thm[local]:
   (size_of_bir_immtype Bit32 MOD size_of_bir_immtype Bit8 = 0) /\
   (size_of_bir_immtype Bit32 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
 Proof
 EVAL_TAC
 QED
 
-Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_8_helper_thm] o
-    Q.SPECL [`Bit32`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1
+Theorem mem_simp_64_8_helper_thm[local]:
+  (size_of_bir_immtype Bit8 MOD size_of_bir_immtype Bit8 = 0) /\
+  (size_of_bir_immtype Bit8 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
+Proof
+EVAL_TAC
+QED
+
+Theorem mem_simp_64_64_helper_thm[local]:
+  (size_of_bir_immtype Bit64 MOD size_of_bir_immtype Bit8 = 0) /\
+  (size_of_bir_immtype Bit64 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
+Proof
+EVAL_TAC
+QED
+
+Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_32_8_helper_thm] o
+    Q.SPECL [`Bit32`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
 
 
-Theorem birs_simplification_Mem_Match_32_8_32_thm = (SIMP_RULE std_ss [mem_simp_32_helper_thm] o
-    Q.SPECL [`Bit32`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1
+Theorem birs_simplification_Mem_Match_32_8_32_thm = (SIMP_RULE std_ss [mem_simp_32_32_helper_thm] o
+    Q.SPECL [`Bit32`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1;
+
+
+Theorem birs_simplification_Mem_Match_64_8_8_thm = (SIMP_RULE std_ss [mem_simp_64_8_helper_thm] o
+    Q.SPECL [`Bit64`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
+
+
+Theorem birs_simplification_Mem_Match_64_8_64_thm = (SIMP_RULE std_ss [mem_simp_64_64_helper_thm] o
+    Q.SPECL [`Bit64`, `Bit8`, `Bit64`]) birs_simplification_Mem_Match_thm1;
 
 
 
