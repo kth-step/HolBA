@@ -7,7 +7,9 @@ uint8_t storestorestore_loadload(uint64_t x, uint64_t* y, uint8_t* z) {
   return *z;
 }
 
+#define GEN_ADDR(x) (0xFFFFFFFF00000000 + (0x10 * x))
+
 int main(void) {
-  return storestorestore_loadload(23, (uint64_t*)0x1000000, (uint8_t*)0x2000000);
+  return storestorestore_loadload(23, (uint64_t*)GEN_ADDR(0), (uint8_t*)GEN_ADDR(1));
 }
 
