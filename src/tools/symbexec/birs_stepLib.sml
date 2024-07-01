@@ -212,6 +212,10 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
              raise ERR (sfun^"::birs_states_are_normform_CONV") "something is not right, the produced theorem is not evaluated enough");
        REFL bstates_tm);
 
+    fun birs_states_are_normform_CONV_with_start sfun bstate_tm bstates_tm =
+        birs_states_are_normform_CONV sfun bstates_tm
+	handle e => (print "\n[[[[\n"; print_term bstate_tm; print "\n]]]]\n"; raise e);
+
   end;
 
 (* extract information from a sound structure *)
@@ -379,20 +383,21 @@ fun is_birs_exec_step tm =
 fun birs_exec_step_CONV_fun tm =
   GEN_match_conv
 (is_birs_exec_step)
-(
+(fn bstate_tm => (
   RAND_CONV (birs_state_is_normform_CONV "birs_exec_step_CONV_fun") THENC
 
-  (fn tm =>
+  (fn tm_i =>
     let
       val timer_exec_step = bir_miscLib.timer_start 0;
       (* TODO: optimize *)
-      val birs_exec_thm = birs_exec_step_CONV tm;
+      val birs_exec_thm = birs_exec_step_CONV tm_i;
       val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
     in
       birs_exec_thm
     end) THENC
 
-  birs_states_are_normform_CONV "birs_exec_step_CONV_fun"
+  birs_states_are_normform_CONV_with_start "birs_exec_step_CONV_fun" bstate_tm
+  ) bstate_tm
 )
 tm;
 
