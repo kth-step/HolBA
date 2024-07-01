@@ -125,10 +125,10 @@ Proof
  cheat
 QED
 
-Theorem incr_mem_riscv_post_imp_bir_post_thm:
+Theorem incr_mem_riscv_post_imp_bspec_post_thm:
  !ls. bir_post_bir_to_riscv
   (riscv_incr_mem_post pre_x10 pre_x10_mem_deref)
-  (\l. bir_incr_post pre_x10 pre_x10_mem_deref) ls
+  (\l. bspec_incr_mem_post pre_x10 pre_x10_mem_deref) ls
 Proof
  cheat
 QED
