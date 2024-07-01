@@ -52,18 +52,6 @@ open isqrtTheory;
 
 val _ = new_theory "isqrt_spec";
 
-(* --------------- *)
-(* Loop boundaries *)
-(* --------------- *)
-
-Definition isqrt_init_addr_def:
- isqrt_init_addr : word64 = 0x08w
-End
-
-Definition isqrt_end_addr_def:
- isqrt_end_addr : word64 = 0x14w
-End
-
 (* ------ *)
 (* Theory *)
 (* ------ *)
@@ -88,9 +76,55 @@ Proof
  fs []
 QED
 
-(* --------------- *)
-(* RISC-V contract *)
-(* --------------- *)
+(* ---------------- *)
+(* Block boundaries *)
+(* ---------------- *)
+
+(* whole program *)
+
+Definition isqrt_init_addr_def:
+ isqrt_init_addr : word64 = 0x00w
+End
+
+Definition isqrt_end_addr_def:
+ isqrt_end_addr : word64 = 0x04w
+End
+
+(* before loop *) 
+
+Definition isqrt_init_addr_1_def:
+ isqrt_init_addr_1 : word64 = 0x00w
+End
+
+Definition isqrt_end_addr_1_def:
+ isqrt_end_addr_1 : word64 = 0x04w
+End
+
+(* loop body *)
+
+Definition isqrt_init_addr_2_def:
+ isqrt_init_addr_2 : word64 = 0x08w
+End
+
+Definition isqrt_end_addr_2_def:
+ isqrt_end_addr_2 : word64 = 0x10w
+End
+
+(* branch *)
+
+Definition isqrt_init_addr_3_def:
+ isqrt_init_addr_3 : word64 = 0x14w
+End
+
+Definition isqrt_end_addr_3_def:
+ isqrt_end_addr_3 : word64 = 0x18w
+End
+
+(* ---------------- *)
+(* RISC-V contracts *)
+(* ---------------- *)
+
+(* general contract *)
 
 Definition riscv_isqrt_pre_def:
  riscv_isqrt_pre (x:word64) (m:riscv_state) : bool =
@@ -99,6 +133,42 @@ End
 
 Definition riscv_isqrt_post_def:
  riscv_isqrt_post (x:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = n2w (nSQRT (w2n x)))
+End
+
+(* before loop contract *)
+
+Definition riscv_isqrt_pre_1_def:
+ riscv_isqrt_pre_1 (x:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = x)
+End
+
+Definition riscv_isqrt_post_1_def:
+ riscv_isqrt_post_1 (x:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 13w = x /\ m.c_gpr m.procID 15w = 0w)
+End
+
+(* loop body contract *)
+
+Definition riscv_isqrt_pre_2_def:
+ riscv_isqrt_pre_2 (x:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = x)
+End
+
+Definition riscv_isqrt_post_2_def:
+ riscv_isqrt_post_2 (x:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 13w = x /\ m.c_gpr m.procID 15w = 0w)
+End
+
+(* branch contract *)
+
+Definition riscv_isqrt_pre_3_def:
+ riscv_isqrt_pre_3 (x:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = x)
+End
+
+Definition riscv_isqrt_post_3_def:
+ riscv_isqrt_post_3 (x:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = n2w (nSQRT (w2n x)))
 End
 
@@ -121,6 +191,10 @@ Definition bir_isqrt_post_def:
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_Const (Imm64 (n2w (nSQRT (w2n x)))))
 End
+
+(* --------------- *)
+(* BSPEC contracts *)
+(* --------------- *)
 
 (* -------------------------------------- *)
 (* Connecting RISC-V and HL BIR contracts *)
