@@ -81,6 +81,25 @@ Definition bool2b_def:
   bool2b b = Imm1 (bool2w b)
 End
 
+Definition birT_def:
+    birT = BVal_Imm (Imm1 1w)
+End
 
+Definition birF_def:
+    birF = BVal_Imm (Imm1 0w)
+End
+
+(** Correction Theorems *)
+Theorem bool2b_T_eq_birT:
+    BVal_Imm (bool2b T) = birT
+Proof
+    rw [bool2b_def, bool2w_def, birT_def]
+QED
+
+Theorem bool2b_F_eq_birF:
+    BVal_Imm (bool2b F) = birF
+Proof
+    rw [bool2b_def, bool2w_def, birF_def]
+QED
 
 val _ = export_theory ()
