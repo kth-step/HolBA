@@ -70,4 +70,16 @@ End
 
 
 
+(** Some common functions *)
+
+Definition bool2w_def:
+  bool2w b = (if b then 1w else 0w):word1
+End
+
+Definition bool2b_def:
+  bool2b b = Imm1 (bool2w b)
+End
+
+
+
 val _ = export_theory ()

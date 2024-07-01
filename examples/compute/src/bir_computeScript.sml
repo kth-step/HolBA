@@ -19,10 +19,10 @@ Definition bir_compute_exp_def:
      bir_compute_unaryexp et (bir_compute_exp e env))) /\
 
   (bir_compute_exp (BExp_BinExp et e1 e2) env = (
-     bir_compute_binexp et (bir_compute_exp e1 env) (bir_compute_exp e2 env))) 
+     bir_compute_binexp et (bir_compute_exp e1 env) (bir_compute_exp e2 env))) /\
 
-  (* (bir_compute (BExp_BinPred pt e1 e2) env = ( *)
-  (*    bir_eval_bin_pred pt (bir_compute e1 env) (bir_compute e2 env))) /\ *)
+  (bir_compute_exp (BExp_BinPred pt e1 e2) env = (
+     bir_compute_binpred pt (bir_compute_exp e1 env) (bir_compute_exp e2 env)))
   (**)
   (* (bir_compute (BExp_MemEq e1 e2) env = ( *)
   (*    bir_eval_memeq (bir_compute e1 env) (bir_compute e2 env))) /\ *)
