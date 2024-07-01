@@ -48,13 +48,24 @@ Datatype:
       | BIExp_ChangeSign
 End
 
+
+(** Binary predicates *)
+Datatype:
+    bir_binpred_t =
+        | BIExp_Equal
+        | BIExp_LessThan
+End
+
 (** BIR Expressions *)
 Datatype:
     bir_exp_t =
         BExp_Const bir_imm_t
       | BExp_Den bir_var_t
+
       | BExp_BinExp bir_binexp_t bir_exp_t bir_exp_t
       | BExp_UnaryExp bir_unaryexp_t bir_exp_t
+
+      | BExp_BinPred bir_binpred_t bir_exp_t bir_exp_t
 End
 
 
