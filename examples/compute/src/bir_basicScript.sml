@@ -66,6 +66,7 @@ Datatype:
       | BExp_UnaryExp bir_unaryexp_t bir_exp_t
 
       | BExp_BinPred bir_binpred_t bir_exp_t bir_exp_t
+      | BExp_IfThenElse bir_exp_t bir_exp_t bir_exp_t
 End
 
 
