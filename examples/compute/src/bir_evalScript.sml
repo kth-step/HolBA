@@ -12,7 +12,7 @@ Inductive bir_eval_exp:
     ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) )
 
 [~BExp_Den:]
-    ( !env id. bir_env_lookup_rel env id v ==> bir_eval_exp env (BExp_Den (BVar id)) v)
+    ( !env var. bir_env_lookup_rel env var v ==> bir_eval_exp env (BExp_Den var) v)
 
 [~BExp_BinExp:]
     ( !env binexp e1 e2 v1 v2. 
@@ -64,8 +64,11 @@ Proof
 QED
 
 Theorem bir_eval_exp_update_env_den:
-    !env id vimm. bir_eval_exp (bir_env_update env id vimm) (BExp_Den (BVar id)) vimm
+    !env var vimm. bir_eval_exp (bir_env_update env var vimm) (BExp_Den var) vimm
 Proof
+    Cases_on `var` >>
+    rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_cases] >>
+    qexists_tac `s` >>
     rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_cases]
 QED
 

@@ -18,7 +18,7 @@ Definition bir_compute_exp_def:
 
   (* (bir_compute (BExp_MemConst aty vty mmap) env = SOME (BVal_Mem aty vty mmap)) /\ *)
 
-  (bir_compute_exp (BExp_Den (BVar id)) env = bir_env_lookup env id) /\
+  (bir_compute_exp (BExp_Den v) env = bir_env_lookup env v) /\
 
   (* (bir_compute (BExp_Cast ct e ty) env = ( *)
   (*    bir_eval_cast ct (bir_compute e env) ty)) /\ *)
