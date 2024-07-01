@@ -33,10 +33,11 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 
 - RISC-V programs must be given in `.da` format for RV64
 - C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
+- (on Debian-based distributions, it is possible to install RISC-V toolchain with `apt install gcc-riscv64-linux-gnu`, then simply use `riscv64-linux-gnu-gcc/objdump`)
 
 Compile `foo.c` as a library, producing `foo.o`:
 ```shell
-/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O1 -c -o foo.o foo.c
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O1 -o foo.o foo.c
 ```
 
 Disassemble `foo.o`:
