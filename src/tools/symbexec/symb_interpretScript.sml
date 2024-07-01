@@ -60,12 +60,9 @@ Theorem symb_interpr_dom_IMP_get_CASES_thm:
   (symb IN symb_interpr_dom H ==> ?v. symb_interpr_get H symb = SOME v) /\
   ((~(symb IN symb_interpr_dom H)) ==> symb_interpr_get H symb = NONE)
 Proof
-Cases_on `H` >>
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_get_def, symb_interpr_dom_def] >>
-  REPEAT STRIP_TAC >>
-  Cases_on `f symb` >> (
-    METIS_TAC []
-  )
+  Cases >>
+  gs[symb_interpr_get_def, symb_interpr_dom_def] >>
+  metis_tac[TypeBase.nchotomy_of “:'a option”]
 QED
 
 Theorem symb_interpr_dom_thm:
