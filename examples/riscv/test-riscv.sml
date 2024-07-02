@@ -42,9 +42,9 @@ val _ = print_and_check_thm
   ``bir_cont (bir_swap_prog : 'a bir_program_t)
     bir_exp_true (BL_Address (Imm64 0x00w))
     {BL_Address (Imm64 0x14w)} {}
-    (bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
+    (bspec_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
     (\l. if l = BL_Address (Imm64 0x14w)
-         then bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref
+         then bspec_swap_post pre_x10 pre_x11 pre_x10_deref pre_x11_deref
          else bir_exp_false)
   ``;
 
@@ -54,8 +54,8 @@ val _ = print_and_check_thm
   ``riscv_cont
      bir_swap_progbin
      swap_init_addr {swap_end_addr}
-     (riscv_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)
-     (riscv_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref)``;
+     (riscv_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
+     (riscv_swap_post pre_x10 pre_x11 pre_x10_deref pre_x11_deref)``;
 
 (* ---- *)
 (* incr *)
