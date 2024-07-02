@@ -67,13 +67,13 @@ End
 (* --------------- *)
 
 Definition riscv_mod2_pre_def:
- riscv_mod2_pre (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x)
+ riscv_mod2_pre (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_mod2_post_def:
- riscv_mod2_post (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = n2w ((w2n x) MOD 2))
+ riscv_mod2_post (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = n2w ((w2n pre_x10) MOD 2))
 End
 
 (* --------------- *)
@@ -81,19 +81,19 @@ End
 (* --------------- *)
 
 Definition bir_mod2_pre_def:
- bir_mod2_pre (x:word64) : bir_exp_t =
+ bir_mod2_pre (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x))
+    (BExp_Const (Imm64 pre_x10))
 End
 
 Definition bir_mod2_post_def:
- bir_mod2_post (x:word64) : bir_exp_t =
+ bir_mod2_post (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 (n2w ((w2n x) MOD 2))))
+    (BExp_Const (Imm64 (n2w ((w2n pre_x10) MOD 2))))
 End
 
 (* -------------- *)
@@ -101,20 +101,20 @@ End
 (* -------------- *)
 
 Definition bspec_mod2_pre_def:
- bspec_mod2_pre (x:word64) : bir_exp_t =
+ bspec_mod2_pre (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
    BIExp_Equal
    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-   (BExp_Const (Imm64 x))
+   (BExp_Const (Imm64 pre_x10))
 End
 
 Definition bspec_mod2_post_def:
- bspec_mod2_post (x:word64) : bir_exp_t =
+ bspec_mod2_post (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_BinExp
-      BIExp_And (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
+      BIExp_And (BExp_Const (Imm64 pre_x10)) (BExp_Const (Imm64 1w)))
 End
 
 (* -------------------------------------- *)
@@ -130,7 +130,6 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
 QED
 
-(* FIXME: boilerplate *)
 Theorem mod2_riscv_post_imp_bir_post_thm:
  !ls. bir_post_bir_to_riscv (riscv_mod2_post pre_x10) (\l. bir_mod2_post pre_x10) ls
 Proof

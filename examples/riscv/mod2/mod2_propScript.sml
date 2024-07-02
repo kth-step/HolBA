@@ -72,6 +72,14 @@ Proof
  ACCEPT_TAC bir_cont_mod2_thm
 QED
 
+(* --------------------- *)
+(* Auxiliary definitions *)
+(* --------------------- *)
+
+val progbin_tm = (fst o dest_eq o concl) bir_mod2_progbin_def;
+val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_mod2_pre_def;
+val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_mod2_post_def;
+
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
@@ -79,8 +87,8 @@ QED
 val riscv_cont_mod2_thm =
  get_riscv_contract_sing
   bir_cont_mod2
-  ``bir_mod2_progbin``
-  ``riscv_mod2_pre pre_x10`` ``riscv_mod2_post pre_x10`` bir_mod2_prog_def
+  progbin_tm riscv_pre_tm riscv_post_tm
+  bir_mod2_prog_def
   [bir_mod2_pre_def]
   bir_mod2_pre_def mod2_riscv_pre_imp_bir_pre_thm
   [bir_mod2_post_def] mod2_riscv_post_imp_bir_post_thm
