@@ -34,6 +34,14 @@ open incr_mem_symb_transfTheory;
 
 val _ = new_theory "incr_mem_prop";
 
+(* --------------------- *)
+(* Auxiliary definitions *)
+(* --------------------- *)
+
+val progbin_tm = (fst o dest_eq o concl) bir_incr_mem_progbin_def;
+val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_incr_mem_pre_def;
+val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_incr_mem_post_def;
+
 (* ------------------------------------ *)
 (* Backlifting BSPEC contract to RISC-V *)
 (* ------------------------------------ *)
@@ -41,9 +49,7 @@ val _ = new_theory "incr_mem_prop";
 val riscv_cont_incr_mem_thm =
  get_riscv_contract_sing
   bspec_cont_incr_mem
-  ``bir_incr_mem_progbin``
-  ``riscv_incr_mem_pre pre_x10 pre_x10_deref``
-  ``riscv_incr_mem_post pre_x10 pre_x10_deref``
+  progbin_tm riscv_pre_tm riscv_post_tm
   bir_incr_mem_prog_def
   [bspec_incr_mem_pre_def]
   bspec_incr_mem_pre_def incr_mem_riscv_pre_imp_bspec_pre_thm

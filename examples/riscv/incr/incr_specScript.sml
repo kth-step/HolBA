@@ -65,13 +65,13 @@ End
 (* --------------- *)
 
 Definition riscv_incr_pre_def:
- riscv_incr_pre (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x)
+ riscv_incr_pre (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_incr_post_def:
- riscv_incr_post (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x + 1w)
+ riscv_incr_post (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10 + 1w)
 End
 
 (* --------------- *)
@@ -79,19 +79,19 @@ End
 (* --------------- *)
 
 Definition bir_incr_pre_def:
- bir_incr_pre (x:word64) : bir_exp_t =
+ bir_incr_pre (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x))
+    (BExp_Const (Imm64 pre_x10))
 End
 
 Definition bir_incr_post_def:
- bir_incr_post (x:word64) : bir_exp_t =
+ bir_incr_post (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
    BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 (x + 1w)))
+    (BExp_Const (Imm64 (pre_x10 + 1w)))
 End
 
 (* -------------- *)
@@ -99,20 +99,20 @@ End
 (* -------------- *)
 
 Definition bspec_incr_pre_def:
- bspec_incr_pre (x:word64) : bir_exp_t =
+ bspec_incr_pre (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x))
+    (BExp_Const (Imm64 pre_x10))
 End
 
 Definition bspec_incr_post_def:
- bspec_incr_post (x:word64) : bir_exp_t =
+ bspec_incr_post (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
+      BIExp_Plus (BExp_Const (Imm64 pre_x10)) (BExp_Const (Imm64 1w)))
 End
 
 (* -------------------------------------- *)
