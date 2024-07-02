@@ -20,10 +20,27 @@ Datatype:
 End
 
 
+(** Typing information *)
+Datatype:
+  bir_immtype_t =
+  | Bit1
+  | Bit8
+  | Bit16
+  | Bit32
+  | Bit64
+  | Bit128
+End
+
+
 (** Values for evaluation relation *)
 Datatype:
     bir_val_t = 
         BVal_Imm bir_imm_t
+End
+
+Datatype:
+    bir_type_t = 
+        BType_imm bir_immtype_t
 End
 
 
