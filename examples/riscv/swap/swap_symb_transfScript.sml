@@ -19,8 +19,8 @@ val _ = new_theory "swap_symb_transf";
 val init_addr_tm = (snd o dest_eq o concl) swap_init_addr_def;
 val end_addr_tm = (snd o dest_eq o concl) swap_end_addr_def;
 
-val bspec_pre_tm = ``bspec_swap_pre pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref``;
-val bspec_post_tm = ``bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_mem_deref``;
+val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_swap_pre_def;
+val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_swap_post_def;
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)
@@ -28,7 +28,8 @@ val bspec_post_tm = ``bspec_swap_post pre_x10 pre_x11 pre_x10_mem_deref pre_x11_
 
 val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
-  bir_swap_prog_def swap_birenvtyl_def bspec_swap_pre_def bspec_swap_post_def swap_prog_vars_def
+  bir_swap_prog_def swap_birenvtyl_def
+  bspec_swap_pre_def bspec_swap_post_def swap_prog_vars_def
   swap_symb_analysis_thm swap_bsysprecond_thm swap_prog_vars_thm;
 
 Theorem bspec_cont_swap:
