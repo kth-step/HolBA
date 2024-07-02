@@ -67,15 +67,15 @@ End
 (* --------------- *)
 
 Definition riscv_incr_mem_pre_def:
- riscv_incr_mem_pre (x:word64) (xv:word64) (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm "x") /\
-   m.c_gpr m.procID 10w = x /\
-   riscv_mem_load_dword m.MEM8 x = xv)
+ riscv_incr_mem_pre (pre_x10:word64) (pre_x10_deref:word64) (m:riscv_state) : bool =
+  (^(mem_addrs_aligned_prog_disj_riscv_tm "pre_x10") /\
+   m.c_gpr m.procID 10w = pre_x10 /\
+   riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref)
 End
 
 Definition riscv_incr_mem_post_def:
- riscv_incr_mem_post (x:word64) (xv:word64) (m:riscv_state) : bool =
-  (riscv_mem_load_dword m.MEM8 x = xv + 1w)
+ riscv_incr_mem_post (pre_x10:word64) (pre_x10_deref:word64) (m:riscv_state) : bool =
+  (riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref + 1w)
 End
 
 (* -------------- *)
@@ -87,31 +87,31 @@ val bspec_incr_mem_pre_tm = bslSyntax.bandl [
  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x))``,
+    (BExp_Const (Imm64 pre_x10))``,
  ``BExp_BinPred
       BIExp_Equal
       (BExp_Load
        (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
        (BExp_Den (BVar "x10" (BType_Imm Bit64)))
        BEnd_LittleEndian Bit64)
-      (BExp_Const (Imm64 xv))``
+      (BExp_Const (Imm64 pre_x10_deref))``
 ];
 
 Definition bspec_incr_mem_pre_def:
-  bspec_incr_mem_pre (x:word64) (xv:word64) : bir_exp_t =
+  bspec_incr_mem_pre (pre_x10:word64) (pre_x10_deref:word64) : bir_exp_t =
    ^bspec_incr_mem_pre_tm
 End
 
 Definition bspec_incr_mem_post_def:
- bspec_incr_mem_post (x:word64) (xv:word64) : bir_exp_t =
+ bspec_incr_mem_post (pre_x10:word64) (pre_x10_deref:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Load
      (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_Const (Imm64 x))
+     (BExp_Const (Imm64 pre_x10))
      BEnd_LittleEndian Bit64)
     (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 xv)) (BExp_Const (Imm64 1w)))
+      BIExp_Plus (BExp_Const (Imm64 pre_x10_deref)) (BExp_Const (Imm64 1w)))
 End
 
 (* ------------------------------------- *)
@@ -120,8 +120,8 @@ End
 
 Theorem incr_mem_riscv_pre_imp_bspec_pre_thm:
  bir_pre_riscv_to_bir
-  (riscv_incr_mem_pre pre_x10 pre_x10_mem_deref)
-  (bspec_incr_mem_pre pre_x10 pre_x10_mem_deref)
+  (riscv_incr_mem_pre pre_x10 pre_x10_deref)
+  (bspec_incr_mem_pre pre_x10 pre_x10_deref)
 Proof
   rw [bir_pre_riscv_to_bir_def] >-
    (rw [bspec_incr_mem_pre_def] >>
@@ -143,7 +143,7 @@ Proof
   sg `bir_eval_bin_pred BIExp_Equal
    (bir_eval_load (SOME (BVal_Mem Bit64 Bit8 mem_n))
                   (SOME (BVal_Imm (Imm64 pre_x10))) BEnd_LittleEndian Bit64)
-   (SOME (BVal_Imm (Imm64 pre_x10_mem_deref))) = SOME (BVal_Imm (Imm1 1w))` >-
+   (SOME (BVal_Imm (Imm64 pre_x10_deref))) = SOME (BVal_Imm (Imm1 1w))` >-
     (fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
     Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 mem_n BEnd_LittleEndian (b2n (Imm64 pre_x10))` >-
      (fs [bir_exp_memTheory.bir_load_from_mem_REWRS]) >>
@@ -161,8 +161,8 @@ QED
 
 Theorem incr_mem_riscv_post_imp_bspec_post_thm:
  !ls. bir_post_bir_to_riscv
-  (riscv_incr_mem_post pre_x10 pre_x10_mem_deref)
-  (\l. bspec_incr_mem_post pre_x10 pre_x10_mem_deref) ls
+  (riscv_incr_mem_post pre_x10 pre_x10_deref)
+  (\l. bspec_incr_mem_post pre_x10 pre_x10_deref) ls
 Proof
  rw [bir_post_bir_to_riscv_def,riscv_incr_mem_post_def,bspec_incr_mem_post_def,riscv_mem_load_dword_def] >>
  Cases_on `bs` >>
@@ -178,7 +178,7 @@ Proof
    Cases_on `x` >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
    fs [bool2w_def,bir_val_true_def] >>
-   Cases_on `c = pre_x10_mem_deref + 1w` >>
+   Cases_on `c = pre_x10_deref + 1w` >>
    fs [] >>
    rw [] >>
    fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
