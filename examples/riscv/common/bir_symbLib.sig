@@ -17,6 +17,8 @@ sig
 
   val bir_symb_analysis : term -> term -> term list -> term -> term -> thm;
 
+  val bir_symb_analysis_thms : thm -> thm -> thm -> thm -> thm -> thm * thm;
+
   val bir_symb_transfer : term -> term -> term -> term ->
     thm -> thm -> thm -> thm -> thm ->
     thm -> thm -> thm -> thm;
