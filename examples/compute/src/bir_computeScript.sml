@@ -1,16 +1,9 @@
 open HolKernel Parse bossLib boolLib
-open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory
+open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory bir_ifthenelseTheory
 open bir_binpredTheory
 
 
 val _ = new_theory "bir_compute"
-
-Definition bir_compute_ifthenelse_def:
-    bir_compute_ifthenelse b v1 v2 = 
-        if b = SOME birT then v1 
-        else if b = SOME birF then v2
-        else NONE
-End
 
 
 Definition bir_compute_exp_def:

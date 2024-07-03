@@ -1,6 +1,6 @@
 open HolKernel Parse bossLib boolLib
 open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory
-open bir_binpredTheory
+open bir_binpredTheory bir_ifthenelseTheory
 
 
 val _ = new_theory "bir_eval"
@@ -35,19 +35,13 @@ Inductive bir_eval_exp:
         ==>
         (bir_eval_exp env (BExp_BinPred binpred e1 e2) b))
 
-[~BExp_IfThenElse1:]
-    (!env epred e1 e2 v1 v2.
-        ((bir_eval_exp env epred birT) /\
-            (bir_eval_exp env e1 v1) /\ (bir_eval_exp env e2 v2))
+[~BExp_IfThenElse:]
+    (!env epred e1 e2 v1 v2 v3.
+        ((bir_eval_exp env epred v) /\
+            (bir_eval_exp env e1 v1) /\ (bir_eval_exp env e2 v2) /\
+            bir_eval_ifthenelse v v1 v2 v3)
         ==>
-        (bir_eval_exp env (BExp_IfThenElse epred e1 e2) v1))
-    
-[~BExp_IfThenElse2:]
-    (!env epred e1 e2 v1 v2.
-        ((bir_eval_exp env epred birF) /\
-            (bir_eval_exp env e1 v1) /\ (bir_eval_exp env e2 v2))
-        ==>
-        (bir_eval_exp env (BExp_IfThenElse epred e1 e2) v2))
+        (bir_eval_exp env (BExp_IfThenElse epred e1 e2) v3))
 
 End
 

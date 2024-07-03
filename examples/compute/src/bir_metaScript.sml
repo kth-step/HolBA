@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib
 open bir_envTheory bir_basicTheory bir_binexpTheory bir_unaryexpTheory
-open bir_binpredTheory
+open bir_binpredTheory bir_ifthenelseTheory
 open bir_evalTheory bir_computeTheory bir_typingTheory
 
 
@@ -18,6 +18,7 @@ Theorem bir_eval_exp_correct_type:
         type_of_bir_val v = ty
 Proof
     Induct_on `e` >| [
+
         (* BExp_Const *)
         rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def],
 
@@ -39,7 +40,7 @@ Proof
 
         (* BExp_IfThenElse *)
         simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-        METIS_TAC []
+        METIS_TAC [bir_eval_ifthenelse_cases, bir_eval_ifthenelse_keep_type, type_of_bir_val_def]
     ]
 QED
 
