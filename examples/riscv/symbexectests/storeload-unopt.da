@@ -5,46 +5,50 @@ storeload-unopt.o:     file format elf64-littleriscv
 Disassembly of section .text:
 
 0000000000000628 <storestorestore_loadload>:
- 628:	fd010113          	add	sp,sp,-48
+ 628:	fd010113          	addi	sp,sp,-48
  62c:	02813423          	sd	s0,40(sp)
- 630:	03010413          	add	s0,sp,48
+ 630:	03010413          	addi	s0,sp,48
  634:	fea43423          	sd	a0,-24(s0)
  638:	feb43023          	sd	a1,-32(s0)
  63c:	fcc43c23          	sd	a2,-40(s0)
  640:	fe843783          	ld	a5,-24(s0)
- 644:	00378713          	add	a4,a5,3
+ 644:	00378713          	addi	a4,a5,3
  648:	fe043783          	ld	a5,-32(s0)
  64c:	00e7b023          	sd	a4,0(a5)
  650:	fe843783          	ld	a5,-24(s0)
  654:	0ff7f793          	zext.b	a5,a5
- 658:	0057879b          	addw	a5,a5,5
+ 658:	0057879b          	addiw	a5,a5,5
  65c:	0ff7f713          	zext.b	a4,a5
  660:	fd843783          	ld	a5,-40(s0)
  664:	00e78023          	sb	a4,0(a5)
  668:	fe043783          	ld	a5,-32(s0)
  66c:	0007b783          	ld	a5,0(a5)
- 670:	00278793          	add	a5,a5,2
+ 670:	00278793          	addi	a5,a5,2
  674:	fef43423          	sd	a5,-24(s0)
  678:	fd843783          	ld	a5,-40(s0)
  67c:	0007c783          	lbu	a5,0(a5)
- 680:	00078513          	mv	a0,a5
- 684:	02813403          	ld	s0,40(sp)
- 688:	03010113          	add	sp,sp,48
- 68c:	00008067          	ret
+ 680:	0ff7f793          	zext.b	a5,a5
+ 684:	00078513          	mv	a0,a5
+ 688:	02813403          	ld	s0,40(sp)
+ 68c:	03010113          	addi	sp,sp,48
+ 690:	00008067          	ret
 
-0000000000000690 <main>:
- 690:	ff010113          	add	sp,sp,-16
- 694:	00113423          	sd	ra,8(sp)
- 698:	00813023          	sd	s0,0(sp)
- 69c:	01010413          	add	s0,sp,16
- 6a0:	02000637          	lui	a2,0x2000
- 6a4:	010005b7          	lui	a1,0x1000
- 6a8:	01700513          	li	a0,23
- 6ac:	f7dff0ef          	jal	628 <storestorestore_loadload>
- 6b0:	00050793          	mv	a5,a0
- 6b4:	0007879b          	sext.w	a5,a5
- 6b8:	00078513          	mv	a0,a5
- 6bc:	00813083          	ld	ra,8(sp)
- 6c0:	00013403          	ld	s0,0(sp)
- 6c4:	01010113          	add	sp,sp,16
- 6c8:	00008067          	ret
+0000000000000694 <main>:
+ 694:	ff010113          	addi	sp,sp,-16
+ 698:	00113423          	sd	ra,8(sp)
+ 69c:	00813023          	sd	s0,0(sp)
+ 6a0:	01010413          	addi	s0,sp,16
+ 6a4:	fff00793          	li	a5,-1
+ 6a8:	02079793          	slli	a5,a5,0x20
+ 6ac:	01078613          	addi	a2,a5,16
+ 6b0:	fff00793          	li	a5,-1
+ 6b4:	02079593          	slli	a1,a5,0x20
+ 6b8:	01700513          	li	a0,23
+ 6bc:	f6dff0ef          	jal	ra,628 <storestorestore_loadload>
+ 6c0:	00050793          	mv	a5,a0
+ 6c4:	0007879b          	sext.w	a5,a5
+ 6c8:	00078513          	mv	a0,a5
+ 6cc:	00813083          	ld	ra,8(sp)
+ 6d0:	00013403          	ld	s0,0(sp)
+ 6d4:	01010113          	addi	sp,sp,16
+ 6d8:	00008067          	ret

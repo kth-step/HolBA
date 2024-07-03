@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 uint32_t nested(uint64_t a, uint32_t b) {
-  return a + b;
+  return a + b + *((volatile uint64_t*)0x100);
 }
 
 /*

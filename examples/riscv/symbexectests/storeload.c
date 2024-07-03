@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-uint8_t storestorestore_loadload(uint64_t x, uint64_t* y, uint8_t* z) {
+uint8_t storestorestore_loadload(uint64_t x, volatile uint64_t* y, volatile uint8_t* z) {
   *y = x + 3;
   *z = (uint8_t)(x + 5);
   x = *y + 2;

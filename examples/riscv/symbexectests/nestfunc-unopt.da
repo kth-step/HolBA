@@ -5,9 +5,9 @@ nestfunc-unopt.o:     file format elf64-littleriscv
 Disassembly of section .text:
 
 0000000000000628 <nested>:
- 628:	fe010113          	add	sp,sp,-32
+ 628:	fe010113          	addi	sp,sp,-32
  62c:	00813c23          	sd	s0,24(sp)
- 630:	02010413          	add	s0,sp,32
+ 630:	02010413          	addi	s0,sp,32
  634:	fea43423          	sd	a0,-24(s0)
  638:	00058793          	mv	a5,a1
  63c:	fef42223          	sw	a5,-28(s0)
@@ -15,30 +15,35 @@ Disassembly of section .text:
  644:	0007879b          	sext.w	a5,a5
  648:	fe442703          	lw	a4,-28(s0)
  64c:	00f707bb          	addw	a5,a4,a5
- 650:	0007879b          	sext.w	a5,a5
- 654:	00078513          	mv	a0,a5
- 658:	01813403          	ld	s0,24(sp)
- 65c:	02010113          	add	sp,sp,32
- 660:	00008067          	ret
+ 650:	0007871b          	sext.w	a4,a5
+ 654:	10000793          	li	a5,256
+ 658:	0007b783          	ld	a5,0(a5)
+ 65c:	0007879b          	sext.w	a5,a5
+ 660:	00f707bb          	addw	a5,a4,a5
+ 664:	0007879b          	sext.w	a5,a5
+ 668:	00078513          	mv	a0,a5
+ 66c:	01813403          	ld	s0,24(sp)
+ 670:	02010113          	addi	sp,sp,32
+ 674:	00008067          	ret
 
-0000000000000664 <main>:
- 664:	fe010113          	add	sp,sp,-32
- 668:	00113c23          	sd	ra,24(sp)
- 66c:	00813823          	sd	s0,16(sp)
- 670:	02010413          	add	s0,sp,32
- 674:	00100793          	li	a5,1
- 678:	fef42623          	sw	a5,-20(s0)
- 67c:	00700593          	li	a1,7
- 680:	00300513          	li	a0,3
- 684:	fa5ff0ef          	jal	628 <nested>
- 688:	00050793          	mv	a5,a0
- 68c:	0007879b          	sext.w	a5,a5
- 690:	fec42703          	lw	a4,-20(s0)
- 694:	00f707bb          	addw	a5,a4,a5
- 698:	fef42623          	sw	a5,-20(s0)
- 69c:	fec42783          	lw	a5,-20(s0)
- 6a0:	00078513          	mv	a0,a5
- 6a4:	01813083          	ld	ra,24(sp)
- 6a8:	01013403          	ld	s0,16(sp)
- 6ac:	02010113          	add	sp,sp,32
- 6b0:	00008067          	ret
+0000000000000678 <main>:
+ 678:	fe010113          	addi	sp,sp,-32
+ 67c:	00113c23          	sd	ra,24(sp)
+ 680:	00813823          	sd	s0,16(sp)
+ 684:	02010413          	addi	s0,sp,32
+ 688:	00100793          	li	a5,1
+ 68c:	fef42623          	sw	a5,-20(s0)
+ 690:	00700593          	li	a1,7
+ 694:	00300513          	li	a0,3
+ 698:	f91ff0ef          	jal	ra,628 <nested>
+ 69c:	00050793          	mv	a5,a0
+ 6a0:	0007879b          	sext.w	a5,a5
+ 6a4:	fec42703          	lw	a4,-20(s0)
+ 6a8:	00f707bb          	addw	a5,a4,a5
+ 6ac:	fef42623          	sw	a5,-20(s0)
+ 6b0:	fec42783          	lw	a5,-20(s0)
+ 6b4:	00078513          	mv	a0,a5
+ 6b8:	01813083          	ld	ra,24(sp)
+ 6bc:	01013403          	ld	s0,16(sp)
+ 6c0:	02010113          	addi	sp,sp,32
+ 6c4:	00008067          	ret
