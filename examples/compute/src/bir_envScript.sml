@@ -16,8 +16,8 @@ Definition bir_env_lookup_def:
 End
 
 (** Lookup relation *)
-Inductive bir_env_lookup_rel:
-    !env id. (env id = (SOME a)) ==> bir_env_lookup_rel (BEnv env) (BVar id) a
+Definition bir_env_lookup_rel_def:
+    bir_env_lookup_rel (BEnv env) (BVar id) a = (env id = (SOME a)) 
 End
 
 (** Empty environment *)
@@ -36,14 +36,15 @@ End
 Theorem bir_env_lookup_empty:
     !var v. ~(bir_env_lookup_rel bir_empty_env var v)
 Proof
-    rw [bir_empty_env_def, bir_env_lookup_rel_cases]
+    Cases_on `var` >>
+    rw [bir_empty_env_def, bir_env_lookup_rel_def]
 QED
 
 Theorem bir_env_lookup_update:
     !env var v. bir_env_lookup_rel (bir_env_update env var v) var v 
 Proof
     Cases_on `var` >>
-    rw [bir_env_update_def, bir_env_lookup_rel_cases]
+    rw [bir_env_update_def, bir_env_lookup_rel_def]
 QED
 
 Theorem bir_env_lookup_eq_rel:
@@ -52,7 +53,7 @@ Proof
     rpt STRIP_TAC >>
     Cases_on `env` >>
     Cases_on `var` >>
-    rw [bir_env_lookup_def, bir_env_lookup_rel_cases]
+    rw [bir_env_lookup_def, bir_env_lookup_rel_def]
 QED
 
 

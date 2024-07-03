@@ -31,10 +31,9 @@ End
 
 
 (** Evaluates a general binary expression with values as parameters *)
-Inductive bir_eval_binexp:
-    (!binexp imm1 imm2 imm. 
-        (bir_eval_binexp_imm binexp imm1 imm2 imm) ==>
-        (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm)))
+Definition bir_eval_binexp_def:
+    bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
+        (bir_eval_binexp_imm binexp imm1 imm2 imm)
 End
 
 
@@ -68,7 +67,7 @@ Theorem bir_eval_binexp_eq_compute_binexp:
         bir_compute_binexp binexp (SOME v1) (SOME v2) = SOME v
 Proof
     Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
-        rw [bir_eval_binexp_cases, bir_compute_binexp_def] >>
+        rw [bir_eval_binexp_def, bir_compute_binexp_def] >>
         rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
         Cases_on `b` >> Cases_on `b'` >>
             rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy] >>

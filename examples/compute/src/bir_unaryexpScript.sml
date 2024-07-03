@@ -31,10 +31,9 @@ End
 
 
 (** Evaluates a general unary expression with values as parameters *)
-Inductive bir_eval_unaryexp:
-    (!unaryexp imm1 imm. 
-        (bir_eval_unaryexp_imm unaryexp imm1 imm) ==>
-        (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm)))
+Definition bir_eval_unaryexp_def:
+    bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
+        (bir_eval_unaryexp_imm unaryexp imm1 imm)
 End
 
 (** ****************** COMPUTE ****************** *)
@@ -64,7 +63,7 @@ Theorem bir_eval_unaryexp_eq_compute_unaryexp:
         bir_compute_unaryexp unaryexp (SOME v1) = SOME v
 Proof
     Cases_on `v1` >> Cases_on `v` >>
-        rw [bir_eval_unaryexp_cases, bir_compute_unaryexp_def] >>
+        rw [bir_eval_unaryexp_def, bir_compute_unaryexp_def] >>
         rw [bir_eval_unaryexp_imm_cases, bir_compute_unaryexp_imm_def] >>
         Cases_on `b` >> Cases_on `b'` >>
             rw [bir_compute_unaryexp_imm_def, bir_imm_t_nchotomy] >>
