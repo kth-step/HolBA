@@ -77,8 +77,8 @@ End
 ### 2. Lifting RISC-V program to BIR
 
 - requires manual specification of data area addresses, affecting symbolic execution
-- automatic once arguments are given inside HOL4
-- lifting stores constants for BIR program, original binary program, and lifting theorem
+- the lifting stores HOL4 constants for the BIR program, original binary program, and a lifting theorem for use in backlifting
+- **automatic** once arguments are given inside HOL4
 
 Example:
 
@@ -89,8 +89,7 @@ val _ = lift_da_and_store "foo" "foo.da" da_riscv
 
 ### 3. High Level BIR contract
 
-- manually written in HOL4
-- BIR expressions with arbitrary HOL4 terms and free variables
+- manually written in HOL4 as BIR expressions with arbitrary HOL4 terms and free variables
 - not suitable for symbolic execution
 
 Example:
@@ -107,8 +106,8 @@ End
 
 ### 4. BSPEC contract
 
-- manually written in HOL4
-- BIR expressions that are closed except for occurrences of free variables
+- currently manually written in HOL4 as BIR expressions that are closed except for occurrences of free variables
+- requires conditions on memory accesses (alignment)
 - used for symbolic execution
 
 Example:
@@ -174,9 +173,8 @@ QED
 ### 5. BIR symbolic execution analysis
 
 - built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848) instantiated for BIR
-- requires manual specification of BIR conditions on memory accesses
 - requires knowing BIR program address bounds
-- requires manual setup in HOL4
+- **automatic** inside HOL4 if parameters have the right shape
 
 Example:
 
@@ -191,7 +189,7 @@ QED
 ### 6. Specifying and proving BSPEC contracts using symbolic analysis results
 
 - requires manual specification of beginning and end program labels for contract
-- requires semi-manual application of symbolic soundness theorems
+- **automatic** inside HOL4 if parameters have the right shape 
 
 Example:
 
@@ -210,7 +208,7 @@ QED
 
 - built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs
 - requires auxiliary results from above steps
-- automatic inside HOL4 if all auxiliary results have the right shape
+- **automatic** inside HOL4 if parameters have the right shape
 
 Example:
 
@@ -233,7 +231,7 @@ QED
 
 - built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs 
 - requires collecting auxiliary results from above steps
-- automatic inside HOL4 if all auxiliary results have the right shape
+- **automatic** inside HOL4 if all parameters have the right shape
 
 Example:
 
