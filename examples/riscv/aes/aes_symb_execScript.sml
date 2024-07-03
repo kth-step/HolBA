@@ -30,46 +30,30 @@ Proof
   EVAL_TAC
 QED
 
-(* --------------------- *)
-(* Symbolic precondition *)
-(* --------------------- *)
-
-Theorem aes_bsysprecond_thm =
- (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
- ``mk_bsysprecond bspec_aes_pre aes_birenvtyl``;
-
-(* ----------------------- *)
-(* Symbolic analysis setup *)
-(* ----------------------- *)
-
-val bprog_tm = (snd o dest_eq o concl) bir_aes_prog_def;
-val init_addr_tm = (snd o dest_eq o concl) aes_init_addr_def;
-val end_addr_tm = (snd o dest_eq o concl) aes_end_addr_def;
-
-val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
- ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
-val birs_state_end_lbls = [(snd o dest_eq o concl o EVAL)
- ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``];
-
-val bprog_envtyl = (fst o dest_eq o concl) aes_birenvtyl_def;
-
-val birs_pcond = (snd o dest_eq o concl) aes_bsysprecond_thm;
-
 (* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
 val timer = bir_miscLib.timer_start 0;
 
-val result = bir_symb_analysis bprog_tm
- birs_state_init_lbl birs_state_end_lbls
- bprog_envtyl birs_pcond;
+val (bsysprecond_thm, symb_analysis_thm) =
+ bir_symb_analysis_thms
+  bir_aes_prog_def
+  aes_init_addr_def aes_end_addr_def
+  bspec_aes_pre_def aes_birenvtyl_def;
 
-val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n")) timer;
+val _ = bir_miscLib.timer_stop
+ (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
+ timer;
 
 val _ = show_tags := true;
-val _ = Portable.pprint Tag.pp_tag (tag result);
 
-Theorem aes_symb_analysis_thm = result
+val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
+
+Theorem aes_bsysprecond_thm = bsysprecond_thm
+
+val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
+
+Theorem aes_symb_analysis_thm = symb_analysis_thm
 
 val _ = export_theory ();
