@@ -57,4 +57,17 @@ Proof
 QED
 
 
+(* Injective *)
+Theorem bir_env_lookup_rel_inj:
+    !env var v1 v2.
+        bir_env_lookup_rel env var v1 ==>
+        bir_env_lookup_rel env var v2 ==>
+        v1 = v2
+Proof
+    Cases_on `env` >> Cases_on `var` >>
+    simp [bir_env_lookup_rel_def]
+QED
+
+
+
 val _ = export_theory ()
