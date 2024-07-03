@@ -33,47 +33,84 @@ Proof
   EVAL_TAC
 QED
 
-(* --------------------- *)
-(* Symbolic precondition *)
-(* --------------------- *)
-
-(* FIXME: change to bspec_isqrt_pre once there is a bspec contract *)
-Theorem isqrt_bsysprecond_thm =
- (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
- ``mk_bsysprecond (bir_isqrt_pre pre_x10) isqrt_birenvtyl``;
-
-(* ----------------------- *)
-(* Symbolic analysis setup *)
-(* ----------------------- *)
-
-val bprog_tm = (snd o dest_eq o concl) bir_isqrt_prog_def;
-val init_addr_tm = (snd o dest_eq o concl) isqrt_init_addr_def;
-val end_addr_tm = (snd o dest_eq o concl) isqrt_end_addr_def;
-
-val birs_state_init_lbl = (snd o dest_eq o concl o EVAL)
- ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
-val birs_state_end_lbls = [(snd o dest_eq o concl o EVAL)
- ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``];
-
-val bprog_envtyl = (fst o dest_eq o concl) isqrt_birenvtyl_def;
-
-val birs_pcond = (snd o dest_eq o concl) isqrt_bsysprecond_thm;
-
 (* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
+val _ = show_tags := true;
+
+(* ----------- *)
+(* before loop *)
+(* ----------- *)
+
 val timer = bir_miscLib.timer_start 0;
 
-val result = bir_symb_analysis bprog_tm
- birs_state_init_lbl birs_state_end_lbls
- bprog_envtyl birs_pcond;
+val (bsysprecond_thm, symb_analysis_thm) =
+ bir_symb_analysis_thms
+  bir_isqrt_prog_def
+  isqrt_init_addr_1_def isqrt_end_addr_1_def
+  bspec_isqrt_pre_1_def isqrt_birenvtyl_def;
 
-val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n")) timer;
+val _ = bir_miscLib.timer_stop
+ (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
+ timer;
 
-val _ = show_tags := true;
-val _ = Portable.pprint Tag.pp_tag (tag result);
+val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
 
-Theorem isqrt_symb_analysis_thm = result
+Theorem isqrt_bsysprecond_1_thm = bsysprecond_thm
+
+val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
+
+Theorem isqrt_symb_analysis_1_thm = symb_analysis_thm
+
+(* --------- *)
+(* loop body *)
+(* --------- *)
+
+val timer = bir_miscLib.timer_start 0;
+
+val (bsysprecond_thm, symb_analysis_thm) =
+ bir_symb_analysis_thms
+  bir_isqrt_prog_def
+  isqrt_init_addr_2_def isqrt_end_addr_2_def
+  bspec_isqrt_pre_2_def isqrt_birenvtyl_def;
+
+val _ = bir_miscLib.timer_stop
+ (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
+ timer;
+
+val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
+
+Theorem isqrt_bsysprecond_2_thm = bsysprecond_thm
+
+val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
+
+Theorem isqrt_symb_analysis_2_thm = symb_analysis_thm
+
+(* --------------- *)
+(* branch contract *)
+(* --------------- *)
+
+(*
+val timer = bir_miscLib.timer_start 0;
+
+val (bsysprecond_thm, symb_analysis_thm) =
+ bir_symb_analysis_thms
+  bir_isqrt_prog_def
+  isqrt_init_addr_3_def isqrt_end_addr_3_def
+  bspec_isqrt_pre_3_def isqrt_birenvtyl_def;
+
+val _ = bir_miscLib.timer_stop
+ (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
+ timer;
+
+val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
+
+Theorem isqrt_bsysprecond_3_thm = bsysprecond_thm
+
+val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
+
+Theorem isqrt_symb_analysis_3_thm = symb_analysis_thm
+*)
 
 val _ = export_theory ();

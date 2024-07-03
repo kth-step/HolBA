@@ -87,7 +87,7 @@ Definition isqrt_init_addr_def:
 End
 
 Definition isqrt_end_addr_def:
- isqrt_end_addr : word64 = 0x04w
+ isqrt_end_addr : word64 = 0x18w
 End
 
 (* before loop *) 
@@ -97,7 +97,7 @@ Definition isqrt_init_addr_1_def:
 End
 
 Definition isqrt_end_addr_1_def:
- isqrt_end_addr_1 : word64 = 0x04w
+ isqrt_end_addr_1 : word64 = 0x08w
 End
 
 (* loop body *)
@@ -107,7 +107,7 @@ Definition isqrt_init_addr_2_def:
 End
 
 Definition isqrt_end_addr_2_def:
- isqrt_end_addr_2 : word64 = 0x10w
+ isqrt_end_addr_2 : word64 = 0x14w
 End
 
 (* branch *)
@@ -291,21 +291,5 @@ Definition bspec_isqrt_pre_3_def:
  bspec_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
   ^bspec_isqrt_pre_3_tm
 End
-
-(* -------------------------------------- *)
-(* Connecting RISC-V and HL BIR contracts *)
-(* -------------------------------------- *)
-
-Theorem isqrt_riscv_pre_imp_bir_pre_thm:
- bir_pre_riscv_to_bir (riscv_isqrt_pre pre_x10) (bir_isqrt_pre pre_x10)
-Proof
- cheat
-QED
-
-Theorem isqrt_riscv_post_imp_bir_post_thm:
- !ls. bir_post_bir_to_riscv (riscv_isqrt_post pre_x10) (\l. bir_isqrt_post pre_x10) ls
-Proof
- cheat
-QED
 
 val _ = export_theory ();
