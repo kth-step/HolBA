@@ -1,5 +1,6 @@
 open HolKernel Parse bossLib boolLib
 open bir_basicTheory
+open bir_typingTheory
 open wordsTheory
 
 
