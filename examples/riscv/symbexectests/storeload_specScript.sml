@@ -54,11 +54,11 @@ val _ = new_theory "storeload_spec";
 (* ------------------ *)
 
 Definition storeload_init_addr_def:
- storeload_init_addr : word64 = 0x690w
+ storeload_init_addr : word64 = 0x694w
 End
 
 Definition storeload_end_addr_def:
- storeload_end_addr : word64 = 0x654w
+ storeload_end_addr : word64 = 0x690w
 End
 
 Definition bspec_storeload_pre_def:

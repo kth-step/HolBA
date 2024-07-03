@@ -578,7 +578,7 @@ static const byte Td4[256] =
 #define GETBYTE(x, y) (word32)((byte)((x) >> (8 * (y))))
 
 
-/*static*/ void wc_AesEncryptSimplified(const word32* rk, word32 rounds, const byte* inBlock, byte* outBlock)
+/*static*/ void wc_AesEncryptSimplified(const word32* rk, word32 rounds, const byte* inBlock, byte* outBlock, word32 Te[4][256])
 {
     word32 s0, s1, s2, s3;
     word32 t0, t1, t2, t3;
@@ -775,7 +775,5 @@ static const byte Td4[256] =
 
 }
 
-/*
-void main(void) {
+int main(void) {
 }
-*/

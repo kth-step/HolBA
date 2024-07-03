@@ -7,6 +7,6 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "aes";
 
-val _ = lift_da_and_store "aes" "aes.da" da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x9f0));
+val _ = lift_da_and_store "aes" "aes.da" da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x19f0));
 
 val _ = export_theory ();

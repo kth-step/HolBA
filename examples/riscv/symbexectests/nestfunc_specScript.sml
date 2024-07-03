@@ -54,11 +54,11 @@ val _ = new_theory "nestfunc_spec";
 (* ------------------ *)
 
 Definition nestfunc_init_addr_def:
- nestfunc_init_addr : word64 = 0x664w
+ nestfunc_init_addr : word64 = 0x678w
 End
 
 Definition nestfunc_end_addr_def:
- nestfunc_end_addr : word64 = 0x660w
+ nestfunc_end_addr : word64 = 0x674w
 End
 
 Definition bspec_nestfunc_pre_def:
