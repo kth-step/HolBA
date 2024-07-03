@@ -79,10 +79,9 @@ QED
 (* Typing Theorem *)
 Theorem bir_eval_binexp_keep_type:
     !binexp v1 v2 v ty.
-        type_of_bir_val v1 = ty ==>
-        type_of_bir_val v2 = ty ==>
         bir_eval_binexp binexp v1 v2 v ==>
-        type_of_bir_val v = ty
+        ((type_of_bir_val v1 = ty /\ type_of_bir_val v2 = ty) <=>
+            type_of_bir_val v = ty)
 Proof
     Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
     Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>

@@ -73,9 +73,8 @@ QED
 
 Theorem bir_eval_unaryexp_keep_type:
     !unaryexp v1 v2 ty.
-        type_of_bir_val v1 = ty ==>
         bir_eval_unaryexp unaryexp v1 v2 ==>
-        type_of_bir_val v2 = ty
+        (type_of_bir_val v1 = type_of_bir_val v2)
 Proof
     Cases_on `v1` >> Cases_on `v2` >>
     Cases_on `b` >> Cases_on `b'` >>
