@@ -160,9 +160,9 @@ End
 Definition riscv_isqrt_post_2_def:
  riscv_isqrt_post_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = pre_x15 /\
-   m.c_gpr m.procID 13w = pre_x13 /\
-   m.c_gpr m.procID 14w = pre_x15 * pre_x15 /\
-   m.c_gpr m.procID 15w = pre_x15 + 1w)
+   m.c_gpr m.procID 15w = pre_x15 + 1w /\
+   m.c_gpr m.procID 14w = (pre_x15 + 1w) * (pre_x15 + 1w) /\
+   m.c_gpr m.procID 13w = pre_x13)
 End
 
 (* branch contract *)
@@ -252,20 +252,22 @@ val bspec_isqrt_post_2_tm = bslSyntax.bandl [
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x15))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-    (BExp_BinExp
-      BIExp_Mult (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 pre_x15)))``,
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x15" (BType_Imm Bit64)))
     (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))``
+      BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))``,
+  ``BExp_BinPred
+     BIExp_Equal
+     (BExp_Den (BVar "x14" (BType_Imm Bit64)))
+     (BExp_BinExp
+       BIExp_Mult
+        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))
+        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w))))``,
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``
 ];
 
 Definition bspec_isqrt_post_2_def:

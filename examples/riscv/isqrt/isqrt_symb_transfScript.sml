@@ -16,7 +16,7 @@ val _ = new_theory "isqrt_symb_transf";
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
 
-(* before loop *)
+(* before loop contract *)
 
 val init_addr_1_tm = (snd o dest_eq o concl) isqrt_init_addr_1_def;
 val end_addr_1_tm = (snd o dest_eq o concl) isqrt_end_addr_1_def;
@@ -39,6 +39,31 @@ Theorem bspec_cont_isqrt_1:
        else bir_exp_false)
 Proof
  rw [bir_isqrt_prog_def,bspec_cont_1_thm]
+QED
+
+(* loop body contract *)
+
+val init_addr_2_tm = (snd o dest_eq o concl) isqrt_init_addr_2_def;
+val end_addr_2_tm = (snd o dest_eq o concl) isqrt_end_addr_2_def;
+
+val bspec_pre_2_tm = (lhs o snd o strip_forall o concl) bspec_isqrt_pre_2_def;
+val bspec_post_2_tm = (lhs o snd o strip_forall o concl) bspec_isqrt_post_2_def;
+
+val bspec_cont_2_thm =
+ bir_symb_transfer init_addr_2_tm end_addr_2_tm bspec_pre_2_tm bspec_post_2_tm
+  bir_isqrt_prog_def isqrt_birenvtyl_def
+  bspec_isqrt_pre_2_def bspec_isqrt_post_2_def isqrt_prog_vars_def
+  isqrt_symb_analysis_2_thm isqrt_bsysprecond_2_thm isqrt_prog_vars_thm;
+
+Theorem bspec_cont_isqrt_2:
+ bir_cont bir_isqrt_prog bir_exp_true
+  (BL_Address (Imm64 ^init_addr_2_tm)) {BL_Address (Imm64 ^end_addr_2_tm)} {}
+  ^bspec_pre_2_tm
+  (\l. if l = BL_Address (Imm64 ^end_addr_2_tm)
+       then ^bspec_post_2_tm
+       else bir_exp_false)
+Proof
+ rw [bir_isqrt_prog_def,bspec_cont_2_thm]
 QED
 
 val _ = export_theory ();
