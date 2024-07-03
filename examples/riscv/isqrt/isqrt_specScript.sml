@@ -127,49 +127,56 @@ End
 (* general contract *)
 
 Definition riscv_isqrt_pre_def:
- riscv_isqrt_pre (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x)
+ riscv_isqrt_pre (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_isqrt_post_def:
- riscv_isqrt_post (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = n2w (nSQRT (w2n x)))
+ riscv_isqrt_post (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = n2w (nSQRT (w2n pre_x10)))
 End
 
 (* before loop contract *)
 
 Definition riscv_isqrt_pre_1_def:
- riscv_isqrt_pre_1 (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x)
+ riscv_isqrt_pre_1 (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_isqrt_post_1_def:
- riscv_isqrt_post_1 (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 13w = x /\ m.c_gpr m.procID 15w = 0w)
+ riscv_isqrt_post_1 (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 13w = pre_x10 /\
+   m.c_gpr m.procID 15w = 0w)
 End
 
 (* loop body contract *)
 
 Definition riscv_isqrt_pre_2_def:
- riscv_isqrt_pre_2 (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x)
+ riscv_isqrt_pre_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 13w = pre_x13 /\
+   m.c_gpr m.procID 15w = pre_x15)
 End
 
 Definition riscv_isqrt_post_2_def:
- riscv_isqrt_post_2 (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 13w = x /\ m.c_gpr m.procID 15w = 0w)
+ riscv_isqrt_post_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x15 /\
+   m.c_gpr m.procID 13w = pre_x13 /\
+   m.c_gpr m.procID 14w = pre_x15 * pre_x15 /\
+   m.c_gpr m.procID 15w = pre_x15 + 1w)
 End
 
 (* branch contract *)
 
 Definition riscv_isqrt_pre_3_def:
- riscv_isqrt_pre_3 (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = x)
+ riscv_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 13w = pre_x13 /\
+   m.c_gpr m.procID 14w = pre_x14)
 End
 
 Definition riscv_isqrt_post_3_def:
- riscv_isqrt_post_3 (x:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = n2w (nSQRT (w2n x)))
+ riscv_isqrt_post_3 (pre_x13:word64) (pre_x14:word64) (m:riscv_state) : bool =
+  (if pre_x13 <= pre_x14 then m.c_PC m.procID = 0x08w
+   else m.c_PC m.procID = 0x18w)
 End
 
 (* --------------- *)
@@ -196,17 +203,106 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
+(* before loop contract *)
+
+Definition bspec_isqrt_pre_1_def:
+ bspec_isqrt_pre_1 (pre_x10:word64) : bir_exp_t =
+  BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))
+End
+
+val bspec_isqrt_post_1_tm = bslSyntax.bandl [
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))``,
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 0w))``
+];
+
+Definition bspec_isqrt_post_1_def:
+ bspec_isqrt_post_1 (pre_x10:word64) : bir_exp_t =
+  ^bspec_isqrt_post_1_tm
+End
+
+(* loop body contract *)
+
+val bspec_isqrt_pre_2_tm = bslSyntax.bandl [
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x15))``
+];
+
+Definition bspec_isqrt_pre_2_def:
+ bspec_isqrt_pre_2 (pre_x13:word64) (pre_x15:word64) : bir_exp_t =
+  ^bspec_isqrt_pre_2_tm
+End
+
+val bspec_isqrt_post_2_tm = bslSyntax.bandl [
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x15))``,
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
+    (BExp_BinExp
+      BIExp_Mult (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 pre_x15)))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
+    (BExp_BinExp
+      BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))``
+];
+
+Definition bspec_isqrt_post_2_def:
+ bspec_isqrt_post_2 (pre_x13:word64) (pre_x15:word64) : bir_exp_t =
+  ^bspec_isqrt_post_2_tm
+End
+
+(* branch contract *)
+
+val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
+
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x14))``
+];
+
+Definition bspec_isqrt_pre_3_def:
+ bspec_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+  ^bspec_isqrt_pre_3_tm
+End
+
 (* -------------------------------------- *)
 (* Connecting RISC-V and HL BIR contracts *)
 (* -------------------------------------- *)
 
-Theorem isqrt_riscv_pre_imp_bir_pre_thm[local]:
+Theorem isqrt_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir (riscv_isqrt_pre pre_x10) (bir_isqrt_pre pre_x10)
 Proof
  cheat
 QED
 
-Theorem isqrt_riscv_post_imp_bir_post_thm[local]:
+Theorem isqrt_riscv_post_imp_bir_post_thm:
  !ls. bir_post_bir_to_riscv (riscv_isqrt_post pre_x10) (\l. bir_isqrt_post pre_x10) ls
 Proof
  cheat
