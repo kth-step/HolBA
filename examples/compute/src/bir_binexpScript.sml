@@ -1,5 +1,6 @@
 open HolKernel Parse bossLib boolLib
 open bir_basicTheory
+open bir_typingTheory
 open wordsTheory
 
 
@@ -73,6 +74,24 @@ Proof
             rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy] >>
             METIS_TAC []
 QED
+
+
+(* Typing Theorem *)
+Theorem bir_eval_binexp_keep_type:
+    !binexp v1 v2 v ty.
+        type_of_bir_val v1 = ty ==>
+        type_of_bir_val v2 = ty ==>
+        bir_eval_binexp binexp v1 v2 v ==>
+        type_of_bir_val v = ty
+Proof
+    Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+    Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
+    rw [type_of_bir_val_def, bir_eval_binexp_def, type_of_bir_imm_def, bir_eval_binexp_imm_cases]
+QED
+
+
+
+
 
 
 val _ = export_theory ()

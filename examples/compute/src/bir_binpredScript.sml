@@ -95,6 +95,18 @@ QED
 
 
 
+Theorem bir_eval_binpred_correct_type:
+    !binpred v1 v2 v ty.
+        type_of_bir_val v1 = ty ==>
+        type_of_bir_val v2 = ty ==>
+        bir_eval_binpred binpred v1 v2 v ==>
+        type_of_bir_val v = Bit1
+Proof
+    Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+    Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
+    rw [type_of_bir_val_def, bir_eval_binpred_cases, type_of_bir_imm_def, bir_eval_binpred_imm_cases, bool2b_def]
+QED
+
 
 
 
