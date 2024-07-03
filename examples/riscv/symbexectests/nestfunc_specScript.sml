@@ -58,7 +58,7 @@ Definition nestfunc_init_addr_def:
 End
 
 Definition nestfunc_end_addr_def:
- nestfunc_end_addr : word64 = 0x6b0w
+ nestfunc_end_addr : word64 = 0x660w
 End
 
 Definition bspec_nestfunc_pre_def:

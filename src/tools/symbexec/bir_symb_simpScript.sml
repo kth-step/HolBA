@@ -18,6 +18,8 @@ open pred_setTheory;
 open HolBACoreSimps;
 open symb_typesLib;
 
+open bir_immSyntax;
+
 (*
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 *)
@@ -272,7 +274,37 @@ REWRITE_TAC [birs_simplification_def] >>
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
 QED
 
-Theorem birs_simplification_Minus_thm:
+Theorem birs_simplification_SignedCast_thm:
+  !pcond symbexp symbexp' sz.
+  (birs_simplification pcond symbexp symbexp') ==>
+  (birs_simplification pcond (BExp_Cast BIExp_SignedCast symbexp sz) (BExp_Cast BIExp_SignedCast symbexp' sz))
+Proof
+REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+QED
+
+Theorem birs_simplification_LowCast_thm:
+  !pcond symbexp symbexp' sz.
+  (birs_simplification pcond symbexp symbexp') ==>
+  (birs_simplification pcond (BExp_Cast BIExp_LowCast symbexp sz) (BExp_Cast BIExp_LowCast symbexp' sz))
+Proof
+REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+QED
+
+Theorem birs_simplification_Minus_left_thm:
   !pcond symbexp1 symbexp1' symbexp2.
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_BinExp BIExp_Minus symbexp1 symbexp2) (BExp_BinExp BIExp_Minus symbexp1' symbexp2))
@@ -288,7 +320,7 @@ REWRITE_TAC [birs_simplification_def] >>
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
 QED
 
-Theorem birs_simplification_Plus_thm:
+Theorem birs_simplification_Plus_left_thm:
   !pcond symbexp1 symbexp1' symbexp2.
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_BinExp BIExp_Plus symbexp1 symbexp2) (BExp_BinExp BIExp_Plus symbexp1' symbexp2))
@@ -304,6 +336,37 @@ REWRITE_TAC [birs_simplification_def] >>
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
 QED
 
+Theorem birs_simplification_Plus_right_thm:
+  !pcond symbexp1 symbexp1' symbexp2.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_BinExp BIExp_Plus symbexp2 symbexp1) (BExp_BinExp BIExp_Plus symbexp2 symbexp1'))
+Proof
+REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+QED
+
+(* TODO: generalize *)
+Theorem birs_simplification_Load_32_addr_thm:
+  !pcond symbexp1 symbexp1' bme.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_Load bme symbexp1 BEnd_LittleEndian Bit32) (BExp_Load bme symbexp1' BEnd_LittleEndian Bit32))
+Proof
+  cheat
+QED
+Theorem birs_simplification_Store_32_addr_thm:
+  !pcond symbexp1 symbexp1' bme bve.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_Store bme symbexp1 BEnd_LittleEndian bve) (BExp_Store bme symbexp1' BEnd_LittleEndian bve))
+Proof
+  cheat
+QED
 
 
 
@@ -414,6 +477,21 @@ Theorem birs_simplification_LSB0_And64_thm:
 Proof
   REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
 QED
+Theorem birs_simplification_SignedLowCast3264_thm:
+  !be w1.
+  birs_simplification
+    (BExp_BinPred BIExp_Equal
+      (BExp_Cast BIExp_SignedCast
+         (BExp_Cast BIExp_LowCast be Bit32)
+         Bit64)
+      (be))
+    (BExp_Cast BIExp_SignedCast
+         (BExp_Cast BIExp_LowCast be Bit32)
+         Bit64)
+    (be)
+Proof
+  REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
+QED
 
 
 
@@ -445,6 +523,17 @@ val birs_simp_const_TAC =
     FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
     blastLib.FULL_BBLAST_TAC
   );
+
+Theorem birs_simplification_Plus_Const64_thm:
+  !pcond w1 w2.
+  (birs_simplification pcond
+    (BExp_BinExp BIExp_Plus
+      (BExp_Const (Imm64 w1))
+      (BExp_Const (Imm64 w2)))
+    (BExp_Const (Imm64 (w1 + w2))))
+Proof
+ cheat
+QED
 
 Theorem birs_simplification_Plus_Plus_Const64_thm:
   !pcond be w1 w2.
@@ -858,6 +947,7 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
+(* TODO: rename for theorem name consistency *)
 Theorem mem_simp_32_8_helper_thm[local]:
   (size_of_bir_immtype Bit8 MOD size_of_bir_immtype Bit8 = 0) /\
   (size_of_bir_immtype Bit8 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
@@ -879,6 +969,13 @@ Proof
 EVAL_TAC
 QED
 
+Theorem mem_simp_64_8_32_helper_thm[local]:
+  (size_of_bir_immtype Bit32 MOD size_of_bir_immtype Bit8 = 0) /\
+  (size_of_bir_immtype Bit32 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
+Proof
+EVAL_TAC
+QED
+
 Theorem mem_simp_64_64_helper_thm[local]:
   (size_of_bir_immtype Bit64 MOD size_of_bir_immtype Bit8 = 0) /\
   (size_of_bir_immtype Bit64 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
@@ -886,6 +983,7 @@ Proof
 EVAL_TAC
 QED
 
+(* the match theorems have consistent naming: MEMADDRSZ_MEMVALSZ_LOADSTOREVALSZ *)
 Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_32_8_helper_thm] o
     Q.SPECL [`Bit32`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
 
@@ -898,10 +996,97 @@ Theorem birs_simplification_Mem_Match_64_8_8_thm = (SIMP_RULE std_ss [mem_simp_6
     Q.SPECL [`Bit64`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
 
 
+Theorem birs_simplification_Mem_Match_64_8_32_thm = (SIMP_RULE std_ss [mem_simp_64_8_32_helper_thm] o
+    Q.SPECL [`Bit64`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1;
+
+
 Theorem birs_simplification_Mem_Match_64_8_64_thm = (SIMP_RULE std_ss [mem_simp_64_64_helper_thm] o
     Q.SPECL [`Bit64`, `Bit8`, `Bit64`]) birs_simplification_Mem_Match_thm1;
 
 
+(* now the memory bypass theorems: *)
+
+(*
+val memadsz = 64;
+val memvalsz = 8;
+val ldsz = 8;
+val stsz = 64;
+*)
+fun gen_simp_mem_bypass_goal memadsz memvalsz ldsz stsz =
+let
+  val endianness_tm = “BEnd_LittleEndian”;
+  val _ = if memvalsz = 8 then () else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "gen_simp_mem_bypass_goal" "cannot handle memory that does not use bytes as values";
+  val memadsz_tm = bir_immtype_t_of_size memadsz;
+  val memadsz_imm_tm = bir_imm_of_size memadsz;
+  val memvalsz_tm = bir_immtype_t_of_size memvalsz;
+  val ldsz_tm = bir_immtype_t_of_size ldsz;
+  val stsz_tm = bir_immtype_t_of_size stsz;
+  val ldbytelen = ldsz div 8;
+  val stbytelen = stsz div 8;
+  val ldbytelen_w_tm = wordsSyntax.mk_wordii (ldbytelen, memadsz);
+  val stbytelen_w_tm = wordsSyntax.mk_wordii (stbytelen, memadsz);
+  val std_pcond =
+    “(BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm ^stbytelen_w_tm))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm ^ldbytelen_w_tm)))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm ^ldbytelen_w_tm)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm ^stbytelen_w_tm)))
+             be_la))
+     )”;
+  val spec_8_8_pcond =
+    “(BExp_BinExp BIExp_And
+        (BExp_BinPred BIExp_LessThan
+          be_sa
+          (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm 1w))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm 1w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm 1w)))
+             be_la))
+     )”;
+  val pcond = if ldsz = 8 andalso stsz = 8 then spec_8_8_pcond else std_pcond;
+in
+ “
+  !be_st be_ld be_m be_sa be_v be_la.
+  (be_st =
+    (BExp_Store
+      be_m
+      be_sa
+      ^endianness_tm
+      be_v)
+    ) ==>
+  (be_ld =
+    (BExp_Load
+      be_st
+      be_la
+      ^endianness_tm
+      ^ldsz_tm)
+    ) ==>
+  (type_of_bir_exp be_st = SOME (BType_Mem ^memadsz_tm ^memvalsz_tm)) ==>
+  (type_of_bir_exp be_v = SOME (BType_Imm ^stsz_tm)) ==>
+  (IS_SOME (type_of_bir_exp be_ld)) ==>
+  (birs_simplification
+    ^pcond
+    be_ld
+    (BExp_Load
+      be_m
+      be_la
+      ^endianness_tm
+      ^ldsz_tm)
+  )
+ ”
+end;
 
 Theorem bool2w_OR_AND_REWRS_thm:
   (!A B. (bool2w A) || (bool2w B) = bool2w (A \/ B)) /\
@@ -931,6 +1116,8 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
     blastLib.FULL_BBLAST_TAC
   )
 QED
+
+(* TODO: the bypass theorems should have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
 
 Theorem birs_simplification_Mem_Bypass_32_8_thm1:
   !be_st be_ld be_m be_sa be_v be_la.
@@ -1103,8 +1290,68 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_32_8_thm1)
+      (gen_simp_mem_bypass_goal 32 8 32 8)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
 Theorem birs_simplification_Mem_Bypass_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_thm1
 
+Theorem birs_simplification_Mem_Bypass_64_64_8_thm1:
+  !be_st be_ld be_m be_sa be_v be_la.
+  (be_st =
+    (BExp_Store
+      be_m
+      be_sa
+      BEnd_LittleEndian
+      be_v)
+    ) ==>
+  (be_ld =
+    (BExp_Load
+      be_st
+      be_la
+      BEnd_LittleEndian
+      Bit64)
+    ) ==>
+  (type_of_bir_exp be_st = SOME (BType_Mem Bit64 Bit8)) ==>
+  (type_of_bir_exp be_v = SOME (BType_Imm Bit8)) ==>
+  (IS_SOME (type_of_bir_exp be_ld)) ==>
+  (birs_simplification
+      (BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 1w))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 8w)))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 8w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 1w)))
+             be_la))
+      )
+    be_ld
+    (BExp_Load
+      be_m
+      be_la
+      BEnd_LittleEndian
+      Bit64)
+  )
+Proof
+  cheat
+QED
+
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_64_64_8_thm1)
+      (gen_simp_mem_bypass_goal 64 8 64 8)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
+Theorem birs_simplification_Mem_Bypass_64_64_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_64_8_thm1
 
 Theorem bir_mem_acc_disjoint_32_32_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1331,8 +1578,68 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_32_32_thm1)
+      (gen_simp_mem_bypass_goal 32 8 32 32)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
 Theorem birs_simplification_Mem_Bypass_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_32_thm1
 
+Theorem birs_simplification_Mem_Bypass_64_64_64_thm1:
+  !be_st be_ld be_m be_sa be_v be_la.
+  (be_st =
+    (BExp_Store
+      be_m
+      be_sa
+      BEnd_LittleEndian
+      be_v)
+    ) ==>
+  (be_ld =
+    (BExp_Load
+      be_st
+      be_la
+      BEnd_LittleEndian
+      Bit64)
+    ) ==>
+  (type_of_bir_exp be_st = SOME (BType_Mem Bit64 Bit8)) ==>
+  (type_of_bir_exp be_v = SOME (BType_Imm Bit64)) ==>
+  (IS_SOME (type_of_bir_exp be_ld)) ==>
+  (birs_simplification
+      (BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 8w))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 8w)))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 8w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 8w)))
+             be_la))
+      )
+    be_ld
+    (BExp_Load
+      be_m
+      be_la
+      BEnd_LittleEndian
+      Bit64)
+  )
+Proof
+  cheat
+QED
+
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_64_64_64_thm1)
+      (gen_simp_mem_bypass_goal 64 8 64 64)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
+Theorem birs_simplification_Mem_Bypass_64_64_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_64_64_thm1
 
 Theorem bir_mem_acc_disjoint_8_8_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1537,7 +1844,64 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_8_8_thm1)
+      (gen_simp_mem_bypass_goal 32 8 8 8)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
 Theorem birs_simplification_Mem_Bypass_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_8_thm1
+
+Theorem birs_simplification_Mem_Bypass_64_8_8_thm1:
+  !be_st be_ld be_m be_sa be_v be_la.
+  (be_st =
+    (BExp_Store
+      be_m
+      be_sa
+      BEnd_LittleEndian
+      be_v)
+    ) ==>
+  (be_ld =
+    (BExp_Load
+      be_st
+      be_la
+      BEnd_LittleEndian
+      Bit8)
+    ) ==>
+  (type_of_bir_exp be_st = SOME (BType_Mem Bit64 Bit8)) ==>
+  (type_of_bir_exp be_v = SOME (BType_Imm Bit8)) ==>
+  (IS_SOME (type_of_bir_exp be_ld)) ==>
+  (birs_simplification
+      (BExp_BinExp BIExp_And
+        (BExp_BinPred BIExp_LessThan
+          be_sa
+          (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 1w))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 1w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 1w)))
+             be_la))
+      )
+    be_ld
+    (BExp_Load
+      be_m
+      be_la
+      BEnd_LittleEndian
+      Bit8)
+  )
+Proof
+  cheat
+QED
+
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_64_8_8_thm1)
+      (gen_simp_mem_bypass_goal 64 8 8 8)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
+Theorem birs_simplification_Mem_Bypass_64_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_thm1
 
 
 Theorem bir_mem_acc_disjoint_8_32_thm:
@@ -1728,8 +2092,112 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_8_32_thm1)
+      (gen_simp_mem_bypass_goal 32 8 8 32)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
 Theorem birs_simplification_Mem_Bypass_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_32_thm1
 
+Theorem birs_simplification_Mem_Bypass_64_8_64_thm1:
+  !be_st be_ld be_m be_sa be_v be_la.
+  (be_st =
+    (BExp_Store
+      be_m
+      be_sa
+      BEnd_LittleEndian
+      be_v)
+    ) ==>
+  (be_ld =
+    (BExp_Load
+      be_st
+      be_la
+      BEnd_LittleEndian
+      Bit8)
+    ) ==>
+  (type_of_bir_exp be_st = SOME (BType_Mem Bit64 Bit8)) ==>
+  (type_of_bir_exp be_v = SOME (BType_Imm Bit64)) ==>
+  (IS_SOME (type_of_bir_exp be_ld)) ==>
+  (birs_simplification
+      (BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 8w))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 1w)))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm64 1w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm64 8w)))
+             be_la))
+      )
+    be_ld
+    (BExp_Load
+      be_m
+      be_la
+      BEnd_LittleEndian
+      Bit8)
+  )
+Proof
+  cheat
+QED
+
+val _ = if
+identical ((concl) birs_simplification_Mem_Bypass_64_8_64_thm1)
+      (gen_simp_mem_bypass_goal 64 8 8 64)
+then () else
+     raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "" "goal term is wrong";
+
+Theorem birs_simplification_Mem_Bypass_64_8_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_thm1
+
+
+
+Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm1:
+  ^(gen_simp_mem_bypass_goal 64 8 8 32)
+Proof
+  cheat
+QED
+
+Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_32_thm1
+
+Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm1:
+  ^(gen_simp_mem_bypass_goal 64 8 32 32)
+Proof
+  cheat
+QED
+
+Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_32_thm1
+
+Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm1:
+  ^(gen_simp_mem_bypass_goal 64 8 32 8)
+Proof
+  cheat
+QED
+
+Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_8_thm1
+
+
+
+Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm1:
+  ^(gen_simp_mem_bypass_goal 64 8 64 32)
+Proof
+  cheat
+QED
+
+Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_32_thm1
+
+Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm1:
+  ^(gen_simp_mem_bypass_goal 64 8 32 64)
+Proof
+  cheat
+QED
+
+Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_64_thm1
 
 
 

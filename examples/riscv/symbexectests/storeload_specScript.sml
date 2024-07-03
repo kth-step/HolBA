@@ -58,7 +58,7 @@ Definition storeload_init_addr_def:
 End
 
 Definition storeload_end_addr_def:
- storeload_end_addr : word64 = 0x6c8w
+ storeload_end_addr : word64 = 0x654w
 End
 
 Definition bspec_storeload_pre_def:

@@ -16,6 +16,19 @@ val prog_addr_max_tm = ``0x20000w:word64``;
 
 val mem_addr_bound_tm = ``0x100000000w:word64``;
 
+fun mem_addrs_stack_disj_reg_bir_tm rnsp rn = ``BExp_BinPred BIExp_LessThan
+     (BExp_Den (BVar ^(stringSyntax.fromMLstring rnsp) (BType_Imm Bit64)))
+     (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))``;
+(*
+fun mem_area_disj_reg_bir_tm rn1 sz1 rn2 sz2 = ``BExp_BinExp BIExp_And
+ (BExp_BinPred BIExp_LessOrEqual
+  (BExp_Const (Imm64 ^prog_addr_max_tm))
+  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
+ (BExp_BinPred BIExp_LessThan
+  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
+  (BExp_Const (Imm64 ^mem_addr_bound_tm)))``;
+*)
+
 fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
  (BExp_BinPred BIExp_LessOrEqual
   (BExp_Const (Imm64 ^prog_addr_max_tm))

@@ -18,12 +18,12 @@ val _ = new_theory "aes_spec";
 (* Program boundaries *)
 (* ------------------ *)
 
-Definition aes_init_addr_def:
- aes_init_addr : word64 = 0x0c8w
+Definition aes_init_addr_def: (* 0x0c8w *)
+ aes_init_addr : word64 = 0x000w
 End
 
-Definition aes_end_addr_def:
- aes_end_addr : word64 = 0x4e4w
+Definition aes_end_addr_def: (* 0x4e4w, 0x218w, 0x188w, 0x040w *)
+ aes_end_addr : word64 = 0x218w
 End
 
 (* -------------- *)
@@ -44,10 +44,13 @@ Definition bir_aes_registervars_def:
  bir_aes_registervars = ^registervars_tm
 End
 
-val bspec_aes_pre_tm = bslSyntax.bandl
- (List.map (mem_addrs_aligned_prog_disj_bir_tm o
+val bspec_aes_pre_tm = bslSyntax.bandl (*
+ ([mem_addrs_stack_disj_reg_bir_tm "x2" "x10",
+   mem_addrs_stack_disj_reg_bir_tm "x2" "x12",
+   mem_area_disj_reg_bir_tm "x12" 8 "x12" 8]
+  @ *)(List.map (mem_addrs_aligned_prog_disj_bir_tm o
    stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar)
-  ((fst o listSyntax.dest_list) registervars_tm));
+      ((fst o listSyntax.dest_list) registervars_tm)));
 
 Definition bspec_aes_pre_def:
   bspec_aes_pre : bir_exp_t =

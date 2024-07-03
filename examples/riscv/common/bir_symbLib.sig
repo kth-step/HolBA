@@ -3,6 +3,8 @@ sig
 
   include Abbrev;
 
+  val mem_addrs_stack_disj_reg_bir_tm string -> string -> term;
+
   val mem_addrs_prog_disj_bir_tm : string -> term;
 
   val mem_addrs_aligned_prog_disj_bir_tm : string -> term;
