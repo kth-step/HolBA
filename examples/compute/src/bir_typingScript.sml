@@ -1,5 +1,7 @@
 open HolKernel Parse boolLib bossLib
 open bir_basicTheory
+open bir_envTheory
+open wordsTheory
 
 
 val _ = new_theory "bir_typing"
@@ -62,6 +64,16 @@ End
 
 
 
+(** ******* THEOREMS ********* *)
 
+Theorem bit1_is_boolean:
+    !v. type_of_bir_val v = Bit1 ==> (v = birT \/ v = birF)
+Proof
+    Cases_on `v` >>
+    Cases_on `b` >>
+        rw [birT_def, birF_def, type_of_bir_val_def, type_of_bir_imm_def] >>
+        Cases_on `c` >>
+            fs [dimword_1]
+QED
 
 val _ = export_theory ()
