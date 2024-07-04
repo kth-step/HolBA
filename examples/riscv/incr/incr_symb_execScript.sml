@@ -25,7 +25,8 @@ Theorem incr_prog_vars_thm:
   set incr_prog_vars = bir_vars_of_program (bir_incr_prog : 'observation_type bir_program_t)
 Proof
   SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
-   [bir_incr_prog_def, incr_prog_vars_def]
+   [bir_incr_prog_def, incr_prog_vars_def] >>
+  EVAL_TAC
 QED
 
 (* --------------------------- *)

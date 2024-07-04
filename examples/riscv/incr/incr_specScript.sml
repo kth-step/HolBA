@@ -53,11 +53,11 @@ val _ = new_theory "incr_spec";
 (* ------------------ *)
 
 Definition incr_init_addr_def:
- incr_init_addr : word64 = 0x00w
+ incr_init_addr : word64 = 0x10488w
 End
 
 Definition incr_end_addr_def:
- incr_end_addr : word64 = 0x04w
+ incr_end_addr : word64 = 0x1048cw
 End
 
 (* --------------- *)
