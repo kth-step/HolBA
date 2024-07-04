@@ -56,8 +56,8 @@ Inductive type_of_bir_exp:
 End
 
 
-Definition is_well_typed_exp:
-    is_well_typed env exp = ?ty. type_of_bir_exp env exp ty
+Definition is_exp_well_typed_def:
+    is_exp_well_typed env exp = ?ty. type_of_bir_exp env exp ty
 End
 
 
