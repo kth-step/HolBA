@@ -4,6 +4,10 @@ mod2.o:     file format elf64-littleriscv
 
 Disassembly of section .text:
 
-0000000000000000 <mod2>:
-   0:	00157513          	andi	a0,a0,1
-   4:	00008067          	ret
+0000000000010488 <mod2>:
+   10488:	00157513          	andi	a0,a0,1
+   1048c:	00008067          	ret
+
+0000000000010490 <main>:
+   10490:	00000513          	li	a0,0
+   10494:	00008067          	ret

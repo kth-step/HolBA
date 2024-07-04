@@ -55,11 +55,11 @@ val _ = new_theory "mod2_spec";
 (* ------------------ *)
 
 Definition mod2_init_addr_def:
- mod2_init_addr : word64 = 0x00w
+ mod2_init_addr : word64 = 0x10488w
 End
 
 Definition mod2_end_addr_def:
- mod2_end_addr : word64 = 0x04w
+ mod2_end_addr : word64 = 0x1048cw
 End
 
 (* --------------- *)
