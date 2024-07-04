@@ -93,27 +93,52 @@ QED
 
 
 Theorem bir_eval_exp_eq_compute_exp:
-    !env e v. bir_eval_exp env e v <=> (bir_compute_exp e env = SOME v)
+    !env e v ty. type_of_bir_exp env e ty ==> 
+        (bir_eval_exp env e v <=> (bir_compute_exp e env = SOME v))
 Proof
     Cases_on `env` >>
     Induct_on `e` >| [
 
+        (* BExp_Const *)
         rw [Once bir_eval_exp_cases, bir_compute_exp_def] >>
         METIS_TAC [],
 
-        rw [Once bir_eval_exp_cases, bir_env_lookup_rel_cases] >>
+        (* BExp_Den *)
+        rw [Once bir_eval_exp_cases] >>
         Cases_on `b` >>
-        rw [bir_var_t_11, bir_var_environment_t_11] >>
-        rw [bir_compute_exp_def, bir_env_lookup_def],
+        rw [bir_compute_exp_def, bir_env_lookup_rel_def, bir_env_lookup_def],
 
-        rw [Once bir_eval_exp_cases, bir_compute_exp_def] >>
+        (* BExp_BinExp *)
+        simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
         Cases_on `bir_compute_exp e (BEnv f)` >>
         Cases_on `bir_compute_exp e' (BEnv f)` >> 
-            rw [bir_compute_binexp_def, bir_eval_binexp_eq_compute_binexp],
+            rw [Once type_of_bir_exp_cases, bir_compute_binexp_def, bir_eval_binexp_eq_compute_binexp] >>
+            METIS_TAC [],
 
-        rw [Once bir_eval_exp_cases, bir_compute_exp_def] >>
+        (* BExp_UnaryExp *)
+        simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
         Cases_on `bir_compute_exp e (BEnv f)` >>
-            rw [bir_compute_unaryexp_def, bir_eval_unaryexp_eq_compute_unaryexp]
+            rw [Once type_of_bir_exp_cases, bir_compute_unaryexp_def, bir_eval_unaryexp_eq_compute_unaryexp] >>
+            METIS_TAC [],
+
+        (* BExp_BinPred *)
+        simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
+        Cases_on `bir_compute_exp e (BEnv f)` >>
+        Cases_on `bir_compute_exp e' (BEnv f)` >>
+            rw [Once type_of_bir_exp_cases, bir_compute_binpred_def, well_typed_bir_eval_binpred_eq_compute_binpred] >>
+            METIS_TAC [well_typed_bir_eval_binpred_eq_compute_binpred, bir_eval_exp_correct_type],
+
+
+
+        (* BExp_IfThenElse *)
+        simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
+        Cases_on `bir_compute_exp e (BEnv f)` >>
+        Cases_on `bir_compute_exp e' (BEnv f)` >>
+        Cases_on `bir_compute_exp e'' (BEnv f)` >>
+            rw [Once type_of_bir_exp_cases, bir_compute_ifthenelse_def] >>
+            METIS_TAC [well_typed_bir_eval_exp_value,
+                bir_eval_ifthenelse_eq_compute_ifthenelse,
+                bir_eval_exp_correct_type, bir_eval_ifthenelse_cases]
     ]
 QED
 
