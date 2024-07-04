@@ -31,7 +31,7 @@ val _ = print_and_check_thm
   "swap RISC-V lift theorem"
   bir_swap_riscv_lift_THM
   ``
-  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (32w : word64))
+  bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x104A6w : word64))
    bir_swap_progbin
    (bir_swap_prog : 'observation_type bir_program_t)
   ``;
@@ -40,10 +40,10 @@ val _ = print_and_check_thm
   "swap BSPEC contract theorem"
   bspec_cont_swap
   ``bir_cont (bir_swap_prog : 'a bir_program_t)
-    bir_exp_true (BL_Address (Imm64 0x00w))
-    {BL_Address (Imm64 0x14w)} {}
+    bir_exp_true (BL_Address (Imm64 0x10488w))
+    {BL_Address (Imm64 0x1049cw)} {}
     (bspec_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
-    (\l. if l = BL_Address (Imm64 0x14w)
+    (\l. if l = BL_Address (Imm64 0x1049cw)
          then bspec_swap_post pre_x10 pre_x11 pre_x10_deref pre_x11_deref
          else bir_exp_false)
   ``;
@@ -65,7 +65,7 @@ val _ = print_and_check_thm
   "incr RISC-V lift theorem"
   bir_incr_riscv_lift_THM
   ``
-  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (8w : word64))
+  bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x10495w : word64))
    bir_incr_progbin
    (bir_incr_prog : 'observation_type bir_program_t)
   ``;
@@ -74,9 +74,9 @@ val _ = print_and_check_thm
   "incr BSPEC contract theorem"
   bspec_cont_incr
  ``bir_cont (bir_incr_prog : 'a bir_program_t)
-  bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bspec_incr_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 4w)
+  bir_exp_true (BL_Address (Imm64 0x10488w))
+  {BL_Address (Imm64 0x1048cw)} {} (bspec_incr_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 0x1048cw)
        then bspec_incr_post pre_x10
        else bir_exp_false)``;
 

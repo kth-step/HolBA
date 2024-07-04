@@ -12,13 +12,17 @@ local
   open birs_auxTheory;
 in
 
+val prog_addr_max_tm = ``0x20000w:word64``;
+
+val mem_addr_bound_tm = ``0x100000000w:word64``;
+
 fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
  (BExp_BinPred BIExp_LessOrEqual
-  (BExp_Const (Imm64 0x1000w))
+  (BExp_Const (Imm64 ^prog_addr_max_tm))
   (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
  (BExp_BinPred BIExp_LessThan
   (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
-  (BExp_Const (Imm64 0x100000000w)))``;
+  (BExp_Const (Imm64 ^mem_addr_bound_tm)))``;
 
 fun mem_addrs_aligned_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
   (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
@@ -28,7 +32,7 @@ fun mem_addrs_aligned_prog_disj_riscv_tm vn =
  let
    val var_tm = mk_var (vn, wordsSyntax.mk_int_word_type 64)
  in
-  ``^var_tm && 7w = 0w /\ 0x1000w <=+ ^var_tm /\ ^var_tm <+ 0x100000000w``
+  ``^var_tm && 7w = 0w /\ ^prog_addr_max_tm <=+ ^var_tm /\ ^var_tm <+ ^mem_addr_bound_tm``
  end;
 
 fun pre_vals_reg_bir_tm rn fv = Parse.Term (`

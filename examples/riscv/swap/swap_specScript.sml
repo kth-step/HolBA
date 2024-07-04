@@ -54,11 +54,11 @@ val _ = new_theory "swap_spec";
 (* ------------------ *)
 
 Definition swap_init_addr_def:
- swap_init_addr : word64 = 0x00w
+ swap_init_addr : word64 = 0x10488w
 End
 
 Definition swap_end_addr_def:
- swap_end_addr : word64 = 0x14w
+ swap_end_addr : word64 = 0x1049cw
 End
 
 (* --------------- *)
