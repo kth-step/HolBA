@@ -28,6 +28,19 @@ End
 
 (* ********* THEOREMS ************ *)
 
+Theorem bir_eval_ifthenelse_eq_compute_ifthenelse:
+    !v (v1:bir_val_t) (v2:bir_val_t) (v3:bir_val_t).
+    (bir_eval_ifthenelse v v1 v2 v3 <=>
+        bir_compute_ifthenelse (SOME v) (SOME v1) (SOME v2) = SOME v3)
+Proof
+    Cases_on `v` >> Cases_on `v1` >> Cases_on `v2` >> Cases_on `v3` >>
+    rw [bir_eval_ifthenelse_cases, bir_compute_ifthenelse_def, birT_def, birF_def] >>
+        METIS_TAC []
+QED
+
+
+
+
 (* Typing Theorem *)
 Theorem bir_eval_ifthenelse_keep_type:
     !v v1 v2 v3 ty.
