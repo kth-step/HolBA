@@ -46,6 +46,52 @@ QED
 
 
 
+Theorem well_typed_bir_eval_exp_value:
+    !env e ty.
+        type_of_bir_exp env e ty ==>
+        ?v. bir_eval_exp env e v
+Proof
+    Induct_on `e` >| [
+
+        (* BExp_Const *)
+        rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def],
+
+        (* BExp_Den *)
+        rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+        METIS_TAC [],
+
+        (* BExp_BinExp *)
+        rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+        `?v1. bir_eval_exp env e v1` by METIS_TAC [] >>
+        `?v2. bir_eval_exp env e' v2` by METIS_TAC [] >>
+        qrefinel [`_`, `v1`, `v2`] >>
+        METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_binexp],
+
+        (* BExp_UnaryExp *)
+        rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+        `?v1. bir_eval_exp env e v1` by METIS_TAC [] >>
+        qrefinel [`_`, `v1`] >>
+        METIS_TAC [bir_eval_exp_correct_type, always_bir_eval_unaryexp],
+
+        (* BExp_BinPred *)
+        rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+        `?v1. bir_eval_exp env e v1` by METIS_TAC [] >>
+        `?v2. bir_eval_exp env e' v2` by METIS_TAC [] >>
+        qrefinel [`_`, `v1`, `v2`] >>
+        METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_binpred],
+
+        (* BExp_IfThenElse *)
+        rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+        `?v. bir_eval_exp env e v` by METIS_TAC [] >>
+        `?v1. bir_eval_exp env e' v1` by METIS_TAC [] >>
+        `?v2. bir_eval_exp env e'' v2` by METIS_TAC [] >>
+        qrefinel [`_`, `v`, `v1`, `v2`] >>
+        METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_ifthenelse]
+    ]
+QED
+
+
+
 Theorem bir_eval_exp_eq_compute_exp:
     !env e v. bir_eval_exp env e v <=> (bir_compute_exp e env = SOME v)
 Proof
