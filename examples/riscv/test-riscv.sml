@@ -106,7 +106,7 @@ val _ = print_and_check_thm
   "mod2 RISC-V lift theorem"
   bir_mod2_riscv_lift_THM
   ``
-  bir_is_lifted_prog riscv_bmr (WI_end (0w : word64) (8w : word64))
+  bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x10495w : word64))
    bir_mod2_progbin
    (bir_mod2_prog : 'observation_type bir_program_t)
   ``;
@@ -115,9 +115,9 @@ val _ = print_and_check_thm
   "mod2 BSPEC contract theorem"
   bspec_cont_mod2
  ``bir_cont (bir_mod2_prog : 'a bir_program_t)
-  bir_exp_true (BL_Address (Imm64 0w))
-  {BL_Address (Imm64 4w)} {} (bspec_mod2_pre pre_x10)
-   (\l. if l = BL_Address (Imm64 4w)
+  bir_exp_true (BL_Address (Imm64 0x10488w))
+  {BL_Address (Imm64 0x1048cw)} {} (bspec_mod2_pre pre_x10)
+   (\l. if l = BL_Address (Imm64 0x1048cw)
         then bspec_mod2_post pre_x10
         else bir_exp_false)
   ``;
