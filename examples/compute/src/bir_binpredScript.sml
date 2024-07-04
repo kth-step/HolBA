@@ -94,6 +94,18 @@ Proof
 QED
 
 
+Theorem type_of_bir_val_imp_bir_eval_binpred:
+    !binpred v1 v2.
+        (type_of_bir_val v1 = type_of_bir_val v2) ==>
+        ?v. bir_eval_binpred binpred v1 v2 v
+Proof
+    Cases_on `v1` >> Cases_on `v2` >>
+    Cases_on `b` >> Cases_on `b'` >>
+        rw [well_typed_bir_eval_binpred_eq_compute_binpred] >>
+        rw [bir_compute_binpred_def, bir_compute_binpred_imm_def] >>
+        fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
 
 Theorem bir_eval_binpred_correct_type:
     !binpred v1 v2 v ty.

@@ -72,6 +72,20 @@ Proof
 QED
 
 
+
+Theorem always_bir_eval_unaryexp:
+    !unaryexp v.
+        ?v'. bir_eval_unaryexp unaryexp v v'
+Proof
+    Cases_on `v` >>
+    Cases_on `b` >>
+        rw [bir_eval_unaryexp_eq_compute_unaryexp] >>
+        rw [bir_compute_unaryexp_def, bir_compute_unaryexp_imm_def] >>
+        fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+
+
 Theorem bir_eval_unaryexp_keep_type:
     !unaryexp v1 v2 ty.
         bir_eval_unaryexp unaryexp v1 v2 ==>
