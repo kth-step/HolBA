@@ -7,6 +7,6 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "mod2_mem";
 
-val _ = lift_da_and_store "mod2_mem" "mod2_mem.da" da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x12));
+val _ = lift_da_and_store "mod2_mem" "mod2_mem.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10499));
 
 val _ = export_theory ();

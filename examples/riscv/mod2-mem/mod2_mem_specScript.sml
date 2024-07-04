@@ -57,11 +57,11 @@ val _ = new_theory "mod2_mem_spec";
 (* ------------------ *)
 
 Definition mod2_mem_init_addr_def:
- mod2_mem_init_addr : word64 = 0x00w
+ mod2_mem_init_addr : word64 = 0x10488w
 End
 
 Definition mod2_mem_end_addr_def:
- mod2_mem_end_addr : word64 = 0x08w
+ mod2_mem_end_addr : word64 = 0x10490w
 End
 
 (* --------------- *)
