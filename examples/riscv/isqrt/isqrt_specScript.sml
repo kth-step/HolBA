@@ -107,7 +107,17 @@ Definition isqrt_init_addr_2_def:
 End
 
 Definition isqrt_end_addr_2_def:
- isqrt_end_addr_2 : word64 = 0x1049cw (*0x104a0w*)
+ isqrt_end_addr_2 : word64 = 0x1049cw
+End
+
+(* loop branch *)
+
+Definition isqrt_init_addr_3_def:
+ isqrt_init_addr_3 : word64 = 0x1049cw
+End
+
+Definition isqrt_end_addr_3_def:
+ isqrt_end_addr_3 : word64 = 0x104a0w
 End
 
 (* ---------------- *)
@@ -152,10 +162,21 @@ Definition riscv_isqrt_post_2_def:
   (m.c_gpr m.procID 10w = pre_x15 /\
    m.c_gpr m.procID 15w = pre_x15 + 1w /\
    m.c_gpr m.procID 14w = (pre_x15 + 1w) * (pre_x15 + 1w) /\
-   m.c_gpr m.procID 13w = pre_x13 (*/\
-   if (pre_x15 + 1w) * (pre_x15 + 1w) <= pre_x13
-   then m.c_PC m.procID = 0x08w
-   else m.c_PC m.procID = 0x18w*))
+   m.c_gpr m.procID 13w = pre_x13)
+End
+
+(* loop branch contract *)
+
+Definition riscv_isqrt_pre_3_def:
+ riscv_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 13w = pre_x13 /\
+   m.c_gpr m.procID 14w = pre_x14)
+End
+
+Definition riscv_isqrt_post_3_def:
+ riscv_isqrt_post_3 (pre_x13:word64) (pre_x14:word64) (m:riscv_state) : bool =
+  (if pre_x13 <= pre_x14 then m.c_PC m.procID = 0x10490w
+   else m.c_PC m.procID = 0x104a0w)
 End
 
 (* --------------- *)
@@ -252,6 +273,24 @@ val bspec_isqrt_post_2_tm = bslSyntax.bandl [
 Definition bspec_isqrt_post_2_def:
  bspec_isqrt_post_2 (pre_x13:word64) (pre_x15:word64) : bir_exp_t =
   ^bspec_isqrt_post_2_tm
+End
+
+(* branch contract *)
+
+val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x14))``
+];
+
+Definition bspec_isqrt_pre_3_def:
+ bspec_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+  ^bspec_isqrt_pre_3_tm
 End
 
 val _ = export_theory ();
