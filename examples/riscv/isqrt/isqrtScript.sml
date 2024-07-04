@@ -7,6 +7,6 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "isqrt";
 
-val _ = lift_da_and_store "isqrt" "isqrt.da" da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x20));
+val _ = lift_da_and_store "isqrt" "isqrt.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x104c1));
 
 val _ = export_theory ();

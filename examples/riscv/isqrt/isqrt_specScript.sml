@@ -83,31 +83,31 @@ QED
 (* whole program *)
 
 Definition isqrt_init_addr_def:
- isqrt_init_addr : word64 = 0x00w
+ isqrt_init_addr : word64 = 0x10488w
 End
 
 Definition isqrt_end_addr_def:
- isqrt_end_addr : word64 = 0x18w
+ isqrt_end_addr : word64 = 0x104a0w
 End
 
 (* before loop *) 
 
 Definition isqrt_init_addr_1_def:
- isqrt_init_addr_1 : word64 = 0x00w
+ isqrt_init_addr_1 : word64 = 0x10488w
 End
 
 Definition isqrt_end_addr_1_def:
- isqrt_end_addr_1 : word64 = 0x08w
+ isqrt_end_addr_1 : word64 = 0x10490w
 End
 
 (* loop body *)
 
 Definition isqrt_init_addr_2_def:
- isqrt_init_addr_2 : word64 = 0x08w
+ isqrt_init_addr_2 : word64 = 0x10490w
 End
 
 Definition isqrt_end_addr_2_def:
- isqrt_end_addr_2 : word64 = 0x14w (*0x18w*)
+ isqrt_end_addr_2 : word64 = 0x1049cw (*0x104a0w*)
 End
 
 (* ---------------- *)

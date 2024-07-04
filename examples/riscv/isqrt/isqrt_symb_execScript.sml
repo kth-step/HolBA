@@ -14,10 +14,12 @@ val _ = new_theory "isqrt_symb_exec";
 
 Definition isqrt_prog_vars_def:
   isqrt_prog_vars = [
+   BVar "MEM8" (BType_Mem Bit64 Bit8);
    BVar "x15" (BType_Imm Bit64);
    BVar "x14" (BType_Imm Bit64);
    BVar "x13" (BType_Imm Bit64);
    BVar "x10" (BType_Imm Bit64);
+   BVar "x2" (BType_Imm Bit64);
    BVar "x1" (BType_Imm Bit64)]
 End
 
