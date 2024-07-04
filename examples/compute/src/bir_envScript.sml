@@ -12,12 +12,12 @@ End
 
 (** Lookup function *)
 Definition bir_env_lookup_def:
-    bir_env_lookup (BEnv env) id = env id
+    bir_env_lookup (BEnv env) (BVar id) = env id
 End
 
 (** Lookup relation *)
-Inductive bir_env_lookup_rel:
-    !env id. (env id = (SOME a)) ==> bir_env_lookup_rel (BEnv env) id a
+Definition bir_env_lookup_rel_def:
+    bir_env_lookup_rel (BEnv env) (BVar id) a = (env id = (SOME a)) 
 End
 
 (** Empty environment *)
@@ -28,30 +28,46 @@ End
 (** Update environment 
 *   Slightly differs from original as we don’t check for existence here *)
 Definition bir_env_update_def:
-    bir_env_update env id v = BEnv ((id =+ SOME v) env)
+    bir_env_update env (BVar id) v = BEnv ((id =+ SOME v) env)
 End
 
 
 (** Some theorems about bir_env functions *)
 Theorem bir_env_lookup_empty:
-    !id v. ~(bir_env_lookup_rel bir_empty_env id v)
+    !var v. ~(bir_env_lookup_rel bir_empty_env var v)
 Proof
-    rw [bir_empty_env_def, bir_env_lookup_rel_cases]
+    Cases_on `var` >>
+    rw [bir_empty_env_def, bir_env_lookup_rel_def]
 QED
 
 Theorem bir_env_lookup_update:
-    !env id v. bir_env_lookup_rel (bir_env_update env id v) id v 
+    !env var v. bir_env_lookup_rel (bir_env_update env var v) var v 
 Proof
-    rw [bir_env_update_def, bir_env_lookup_rel_cases]
+    Cases_on `var` >>
+    rw [bir_env_update_def, bir_env_lookup_rel_def]
 QED
 
 Theorem bir_env_lookup_eq_rel:
-    !env id v. bir_env_lookup_rel env id v <=> bir_env_lookup env id = SOME v
+    !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
 Proof
     rpt STRIP_TAC >>
     Cases_on `env` >>
-    rw [bir_env_lookup_def, bir_env_lookup_rel_cases]
+    Cases_on `var` >>
+    rw [bir_env_lookup_def, bir_env_lookup_rel_def]
 QED
+
+
+(* Injective *)
+Theorem bir_env_lookup_rel_inj:
+    !env var v1 v2.
+        bir_env_lookup_rel env var v1 ==>
+        bir_env_lookup_rel env var v2 ==>
+        v1 = v2
+Proof
+    Cases_on `env` >> Cases_on `var` >>
+    simp [bir_env_lookup_rel_def]
+QED
+
 
 
 val _ = export_theory ()

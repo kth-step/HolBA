@@ -1,5 +1,6 @@
 open HolKernel Parse bossLib boolLib
 open bir_basicTheory
+open bir_typingTheory
 open wordsTheory
 
 
@@ -31,10 +32,9 @@ End
 
 
 (** Evaluates a general unary expression with values as parameters *)
-Inductive bir_eval_unaryexp:
-    (!unaryexp imm1 imm. 
-        (bir_eval_unaryexp_imm unaryexp imm1 imm) ==>
-        (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm)))
+Definition bir_eval_unaryexp_def:
+    bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
+        (bir_eval_unaryexp_imm unaryexp imm1 imm)
 End
 
 (** ****************** COMPUTE ****************** *)
@@ -64,7 +64,7 @@ Theorem bir_eval_unaryexp_eq_compute_unaryexp:
         bir_compute_unaryexp unaryexp (SOME v1) = SOME v
 Proof
     Cases_on `v1` >> Cases_on `v` >>
-        rw [bir_eval_unaryexp_cases, bir_compute_unaryexp_def] >>
+        rw [bir_eval_unaryexp_def, bir_compute_unaryexp_def] >>
         rw [bir_eval_unaryexp_imm_cases, bir_compute_unaryexp_imm_def] >>
         Cases_on `b` >> Cases_on `b'` >>
             rw [bir_compute_unaryexp_imm_def, bir_imm_t_nchotomy] >>
@@ -72,5 +72,28 @@ Proof
 QED
 
 
+
+Theorem always_bir_eval_unaryexp:
+    !unaryexp v.
+        ?v'. bir_eval_unaryexp unaryexp v v'
+Proof
+    Cases_on `v` >>
+    Cases_on `b` >>
+        rw [bir_eval_unaryexp_eq_compute_unaryexp] >>
+        rw [bir_compute_unaryexp_def, bir_compute_unaryexp_imm_def] >>
+        fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+
+
+Theorem bir_eval_unaryexp_keep_type:
+    !unaryexp v1 v2 ty.
+        bir_eval_unaryexp unaryexp v1 v2 ==>
+        (type_of_bir_val v1 = type_of_bir_val v2)
+Proof
+    Cases_on `v1` >> Cases_on `v2` >>
+    Cases_on `b` >> Cases_on `b'` >>
+    rw [type_of_bir_val_def, bir_eval_unaryexp_def, type_of_bir_imm_def, bir_eval_unaryexp_imm_cases]
+QED
 
 val _ = export_theory ()

@@ -1,5 +1,6 @@
 open HolKernel Parse bossLib boolLib
 open bir_basicTheory
+open bir_typingTheory
 open wordsTheory
 
 
@@ -31,10 +32,9 @@ End
 
 
 (** Evaluates a general binary expression with values as parameters *)
-Inductive bir_eval_binexp:
-    (!binexp imm1 imm2 imm. 
-        (bir_eval_binexp_imm binexp imm1 imm2 imm) ==>
-        (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm)))
+Definition bir_eval_binexp_def:
+    bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
+        (bir_eval_binexp_imm binexp imm1 imm2 imm)
 End
 
 
@@ -68,12 +68,42 @@ Theorem bir_eval_binexp_eq_compute_binexp:
         bir_compute_binexp binexp (SOME v1) (SOME v2) = SOME v
 Proof
     Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
-        rw [bir_eval_binexp_cases, bir_compute_binexp_def] >>
+        rw [bir_eval_binexp_def, bir_compute_binexp_def] >>
         rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
         Cases_on `b` >> Cases_on `b'` >>
             rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy] >>
             METIS_TAC []
 QED
+
+
+Theorem type_of_bir_val_imp_bir_eval_binexp:
+    !binexp v1 v2.
+        (type_of_bir_val v1 = type_of_bir_val v2) ==>
+        ?v. bir_eval_binexp binexp v1 v2 v
+Proof
+    Cases_on `v1` >> Cases_on `v2` >>
+    Cases_on `b` >> Cases_on `b'` >>
+        rw [bir_eval_binexp_eq_compute_binexp] >>
+        rw [bir_compute_binexp_def, bir_compute_binexp_imm_def] >>
+        fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+
+(* Typing Theorem *)
+Theorem bir_eval_binexp_keep_type:
+    !binexp v1 v2 v ty.
+        bir_eval_binexp binexp v1 v2 v ==>
+        ((type_of_bir_val v1 = ty /\ type_of_bir_val v2 = ty) <=>
+            type_of_bir_val v = ty)
+Proof
+    Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+    Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
+    rw [type_of_bir_val_def, bir_eval_binexp_def, type_of_bir_imm_def, bir_eval_binexp_imm_cases]
+QED
+
+
+
+
 
 
 val _ = export_theory ()
