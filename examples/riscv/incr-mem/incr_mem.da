@@ -1,11 +1,15 @@
 
-incr.o:     file format elf64-littleriscv
+incr_mem.o:     file format elf64-littleriscv
 
 
 Disassembly of section .text:
 
-0000000000000000 <incr>:
-   0:	00053783          	ld	a5,0(a0)
-   4:	00178793          	addi	a5,a5,1
-   8:	00f53023          	sd	a5,0(a0)
-   c:	00008067          	ret
+0000000000010488 <incr>:
+   10488:	00053783          	ld	a5,0(a0)
+   1048c:	00178793          	addi	a5,a5,1
+   10490:	00f53023          	sd	a5,0(a0)
+   10494:	00008067          	ret
+
+0000000000010498 <main>:
+   10498:	00100513          	li	a0,1
+   1049c:	00008067          	ret
