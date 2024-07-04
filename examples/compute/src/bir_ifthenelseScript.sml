@@ -9,7 +9,7 @@ val _ = new_theory "bir_ifthenelse"
 
 Inductive bir_eval_ifthenelse:
 [~BExp_IfThenElseT:]
-    bir_eval_ifthenelse birT v1 v2 v1 
+    bir_eval_ifthenelse birT (v1:bir_val_t) (v2:bir_val_t) v1 
 
 [~BExp_IfThenElseF:]
     bir_eval_ifthenelse birF v1 v2 v2
