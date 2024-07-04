@@ -119,6 +119,13 @@ QED
 
 
 
+Theorem bir_eval_binpred_eq_refl:
+    !env v. bir_eval_binpred BIExp_Equal v v birT
+Proof
+    Cases_on `v` >> Cases_on `b` >>
+        rw [Once bir_eval_binpred_cases, bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
+        rw [bool2b_T_eq_birT, bool2b_F_eq_birF]
+QED
 
 
 
