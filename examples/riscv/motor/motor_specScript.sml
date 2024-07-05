@@ -60,7 +60,7 @@ End
 (* 0x7d4w : run through all functions *)
 (* 0x674w : indirect jump at first function return *)
 Definition motor_end_addr_def:
- motor_end_addr : word64 = 0x7d4w
+ motor_end_addr : word64 = 0x7c4w
 End
 
 Definition bspec_motor_pre_def:

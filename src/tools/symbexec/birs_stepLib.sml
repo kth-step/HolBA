@@ -94,10 +94,254 @@ birs_exec_step bprog_test
                (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))|>
 ``;
 
-birs_exec_step_CONV test_term
+val bstate_tm = ``
+  <|bsst_pc := <|bpc_label := BL_Address (Imm64 0x10w); bpc_index := 1|>;
+    bsst_environ :=
+      birs_gen_env
+        [("x2",BExp_Den (BVar "sy_x2" (BType_Imm Bit64)));
+         ("x1",BExp_Const (Imm64 0x14w))];
+    bsst_status := BST_Running;
+    bsst_pcond := (BExp_Const (Imm1 1w))|>
+``;
+val bprog_tm = ``
+  BirProgram [
+          <|bb_label := BL_Address (Imm64 0x10w);
+             bb_statements :=
+               [BStmt_Assert
+                  (BExp_UnaryExp BIExp_Not
+                     (BExp_LSB
+                        (BExp_BinExp BIExp_And
+                           (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+                           (BExp_Den (BVar "x1" (BType_Imm Bit64))))))];
+             bb_last_statement :=
+               BStmt_Jmp
+                 (BLE_Exp
+                    (BExp_BinExp BIExp_And
+                       (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+                       (BExp_Den (BVar "x1" (BType_Imm Bit64)))))|>;
+          <|bb_label :=
+               BL_Address (Imm64 0x14w);
+             bb_statements :=
+               [BStmt_Assign (BVar "x2" (BType_Imm Bit64))
+                  (BExp_BinExp BIExp_Minus
+                     (BExp_Den (BVar "x2" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 32w)))];
+             bb_last_statement :=
+               BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x18w)))|>]
+``;
+val test_term = ``birs_exec_step ^bprog_tm ^bstate_tm``;
+birs_exec_step_CONV test_term;
+
+val test_eval_label_term = ``
+birs_eval_label_exp
+          (BLE_Exp
+             (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+                (BExp_Den (BVar "x1" (BType_Imm Bit64)))))
+          (birs_gen_env
+             [("x2",BExp_Den (BVar "sy_x2" (BType_Imm Bit64)));
+              ("x1",BExp_Const (Imm64 20w))]) (BExp_Const (Imm1 1w))
+``;
+val test_eval_label_term = ``
+birs_eval_label_exp
+  (BLE_Exp
+     (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+        (BExp_Den (BVar "x1" (BType_Imm Bit64)))))
+  (birs_gen_env
+     [("x2",
+       BExp_BinExp BIExp_Minus (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+         (BExp_Const (Imm64 32w)));
+      ("x8",
+       BExp_BinExp BIExp_Minus (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+         (BExp_Const (Imm64 0w)));
+      ("x10",
+       BExp_Cast BIExp_SignedCast
+         (BExp_Cast BIExp_LowCast
+            (BExp_BinExp BIExp_Plus
+               (BExp_Cast BIExp_SignedCast
+                  (BExp_Cast BIExp_LowCast
+                     (BExp_Load
+                        (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+                        (BExp_Const (Imm64 256w)) BEnd_LittleEndian Bit64)
+                     Bit32) Bit64) (BExp_Const (Imm64 10w))) Bit32) Bit64);
+      ("x15",
+       BExp_Cast BIExp_SignedCast
+         (BExp_Cast BIExp_LowCast
+            (BExp_BinExp BIExp_Plus
+               (BExp_Cast BIExp_SignedCast
+                  (BExp_Cast BIExp_LowCast
+                     (BExp_Load
+                        (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+                        (BExp_Const (Imm64 256w)) BEnd_LittleEndian Bit64)
+                     Bit32) Bit64) (BExp_Const (Imm64 10w))) Bit32) Bit64);
+      ("x14",BExp_Const (Imm64 10w));
+      ("MEM8",
+       BExp_Store
+         (BExp_Store
+            (BExp_Store
+               (BExp_Store
+                  (BExp_Store
+                     (BExp_Store
+                        (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+                        (BExp_BinExp BIExp_Minus
+                           (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                           (BExp_Const (Imm64 8w))) BEnd_LittleEndian
+                        (BExp_Den (BVar "sy_x1" (BType_Imm Bit64))))
+                     (BExp_BinExp BIExp_Minus
+                        (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                        (BExp_Const (Imm64 16w))) BEnd_LittleEndian
+                     (BExp_Den (BVar "sy_x8" (BType_Imm Bit64))))
+                  (BExp_BinExp BIExp_Minus
+                     (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 20w))) BEnd_LittleEndian
+                  (BExp_Cast BIExp_LowCast (BExp_Const (Imm64 1w)) Bit32))
+               (BExp_BinExp BIExp_Minus
+                  (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                  (BExp_Const (Imm64 40w))) BEnd_LittleEndian
+               (BExp_BinExp BIExp_Minus
+                  (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                  (BExp_Const (Imm64 0w))))
+            (BExp_BinExp BIExp_Minus
+               (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 56w))) BEnd_LittleEndian
+            (BExp_Const (Imm64 3w)))
+         (BExp_BinExp BIExp_Minus (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+            (BExp_Const (Imm64 60w))) BEnd_LittleEndian
+         (BExp_Cast BIExp_LowCast (BExp_Const (Imm64 7w)) Bit32));
+      ("x1",BExp_Const (Imm64 1692w)); ("x11",BExp_Const (Imm64 7w))])
+  (BExp_BinExp BIExp_And
+     (BExp_BinPred BIExp_Equal (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+        (BExp_Const (Imm64 pre_x2)))
+     (BExp_BinExp BIExp_And
+        (BExp_BinPred BIExp_Equal
+           (BExp_BinExp BIExp_And (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+              (BExp_Const (Imm64 7w))) (BExp_Const (Imm64 0w)))
+        (BExp_BinExp BIExp_And
+           (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 8192w))
+              (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+           (BExp_BinPred BIExp_LessThan
+              (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+              (BExp_Const (Imm64 0x100000000w))))))
+``;
+birs_eval_label_exp_CONV test_eval_label_term;
 *)
+
+(*
+is_plain_jumptarget_set ``{BL_Address (Imm64 20w)}``
+is_plain_jumptarget_set ``{BL_Address iv | Imm64 20w = iv}``
+*)
+fun is_plain_jumptarget_set tm =
+  let
+    val l = pred_setSyntax.strip_set tm;
+  in
+    List.all (fn e_tm =>
+      bir_programSyntax.is_BL_Address e_tm andalso
+      bir_immSyntax.gen_is_Imm (bir_programSyntax.dest_BL_Address e_tm)) l
+  end handle _ => false;
+
+val birs_jumptarget_singletonconst_thm = prove(``
+!pcond vaex iv.
+  (!i. birs_interpret_fun i vaex = SOME (BVal_Imm iv)) ==>
+  (?i. birs_interpret_fun i pcond = SOME bir_val_true) ==>
+  (birs_symbval_concretizations pcond vaex = {BL_Address iv})
+``,
+  cheat
+);
+val birs_jumptarget_empty_thm = prove(``
+!pcond vaex iv.
+  (!i. birs_interpret_fun i pcond = SOME bir_val_false) ==>
+  (birs_symbval_concretizations pcond vaex = EMPTY)
+``,
+  cheat
+);
+(*
+val tm = ``birs_symbval_concretizations
+          (BExp_BinExp BIExp_And
+             (BExp_BinPred BIExp_Equal
+                (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 pre_x2)))
+             (BExp_BinExp BIExp_And
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 7w))) (BExp_Const (Imm64 0w)))
+                (BExp_BinExp BIExp_And
+                   (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 8192w))
+                      (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+                   (BExp_BinPred BIExp_LessThan
+                      (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 0x100000000w))))))
+          (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+             (BExp_Const (Imm64 1692w)))``;
+val tm = ``birs_symbval_concretizations
+                (BExp_BinExp BIExp_And
+                   (BExp_BinPred BIExp_LessThan
+		      (BExp_Const (Imm64 0x20w))
+                      (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+                   (BExp_BinPred BIExp_LessThan
+                      (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 0x20w))))
+          (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFw))
+             (BExp_Const (Imm64 1692w)))``;
+birs_symbval_concretizations_oracle_CONV tm;
+*)
+val is_birs_symbval_concretizations = identical ``birs_symbval_concretizations`` o fst o strip_comb;
+val birs_symbval_concretizations_oracle_CONV =
+  (fn tm => if is_birs_symbval_concretizations tm then REFL tm else
+   (print_term tm;
+    raise ERR "birs_symbval_concretizations_oracle_CONV" "something is not right here, expect a birs_symbval_concretizations")) THENC
+  (fn tm => let
+    val vaex_tm = (snd o dest_comb) tm;
+    val pcond_tm = (snd o dest_comb o fst o dest_comb) tm;
+    val pcond_is_sat = birs_smtLib.bir_check_sat false pcond_tm;
+    val pcond_sat_thm =
+     if pcond_is_sat then
+       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
+     else
+       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
+    val res_thm =
+     if not pcond_is_sat then
+       SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_jumptarget_empty_thm)
+     else
+     let
+      val vaex_thm = EVAL ``birs_interpret_fun i ^vaex_tm``;
+      val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_jumptarget_singletonconst_thm);
+     in
+      concr_thm
+     end;
+   in
+    if
+      identical tm ((fst o dest_eq o concl) res_thm)
+      handle _ => raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem"
+    then res_thm else
+    raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
+   end);
+
+val is_birs_eval_label_exp = identical ``birs_eval_label_exp`` o fst o strip_comb;
+val birs_eval_label_exp_CONV = (
+  (*(fn tm => (print_term tm; REFL tm)) THENC*)
+  (fn tm => if is_birs_eval_label_exp tm then REFL tm else
+   raise ERR "birs_eval_label_exp_CONV" "something is not right here, expect a birs_eval_label_exp") THENC
+  RESTR_EVAL_CONV [``birs_eval_exp``, ``birs_gen_env``, ``birs_symbval_concretizations``] THENC
+  GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
+  RESTR_EVAL_CONV [``birs_symbval_concretizations``] THENC
+
+(* here we should have either NONE or SOME and a set that is either trivially singleton of a constant or we have to resolve it into a set of constants *)
+  (fn tm =>
+    if optionSyntax.is_none tm then REFL tm else
+    if optionSyntax.is_some tm then RAND_CONV (
+      (fn tm => if is_birs_symbval_concretizations tm then birs_symbval_concretizations_oracle_CONV tm else REFL tm) THENC
+      (* here we should have a simple set of constants *)
+      (fn tm => if is_plain_jumptarget_set tm then REFL tm else
+        (print_term tm;
+         raise ERR "birs_eval_label_exp_CONV" "could not resolve the jump targets"))
+    ) tm else
+    raise ERR "birs_eval_label_exp_CONV" "something is not right here, should be NONE or SOME")
+);
+
 val birs_exec_step_CONV = (
-  RESTR_EVAL_CONV [``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
+  RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
+
+  GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV THENC
 
   (* TODO: remove this patch later *)
   REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC

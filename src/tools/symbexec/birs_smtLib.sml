@@ -71,10 +71,11 @@ fun bir_check_unsat use_holsmt =
   else
     birsmt_check_unsat;
 
+fun bir_check_sat use_holsmt ex =
+  not (bir_check_unsat use_holsmt ex);
+
 fun bir_check_taut use_holsmt ex =
   bir_check_unsat use_holsmt ``BExp_UnaryExp BIExp_Not ^ex``;
-
-
 
 
 end (* local *)
