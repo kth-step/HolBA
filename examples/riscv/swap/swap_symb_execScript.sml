@@ -43,9 +43,9 @@ QED
 val timer = bir_miscLib.timer_start 0;
 
 val (bsysprecond_thm, symb_analysis_thm) =
- bir_symb_analysis_thms
+ bir_symb_analysis_thm
   bir_swap_prog_def
-  swap_init_addr_def swap_end_addr_def
+  swap_init_addr_def [swap_end_addr_def]
   bspec_swap_pre_def swap_birenvtyl_def;
 
 val _ = bir_miscLib.timer_stop

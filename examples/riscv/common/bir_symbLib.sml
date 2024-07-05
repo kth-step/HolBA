@@ -90,16 +90,19 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
    result
  end (* let *)
 
-fun bir_symb_analysis_thms bir_prog_def
- init_addr_def end_addr_def bspec_pre_def birenvtyl_def =
+fun bir_symb_analysis_thm bir_prog_def
+ init_addr_def end_addr_defs bspec_pre_def birenvtyl_def =
  let
    val bprog_tm = (snd o dest_eq o concl) bir_prog_def;
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
-   val end_addr_tm = (snd o dest_eq o concl) end_addr_def;
    val birs_state_init_lbl_tm =
     (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
-   val birs_state_end_lbls =
-    [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``];
+   val birs_state_end_tm_lbls =
+    List.map 
+     (fn end_addr_def =>
+       let val end_addr_tm = (snd o dest_eq o concl) end_addr_def in
+         (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))`` 
+       end) end_addr_defs;
    val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
    val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 
@@ -109,7 +112,7 @@ fun bir_symb_analysis_thms bir_prog_def
    val birs_pcond_tm = (snd o dest_eq o concl) bsysprecond_thm;
 
    val symb_analysis_thm = bir_symb_analysis
-    bprog_tm birs_state_init_lbl_tm birs_state_end_lbls
+    bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
     bprog_envtyl_tm birs_pcond_tm;
  in
    (bsysprecond_thm, symb_analysis_thm)
