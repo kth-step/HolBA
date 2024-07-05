@@ -7,28 +7,28 @@ val _ = new_theory "bir_env" ;
 
 (* Environment for evaluation *)
 Datatype:
-    bir_var_environment_t = BEnv (string -> (bir_val_t option))
+  bir_var_environment_t = BEnv (string -> (bir_val_t option))
 End
 
 (* Lookup function *)
 Definition bir_env_lookup_def:
-    bir_env_lookup (BEnv env) (BVar id) = env id
+  bir_env_lookup (BEnv env) (BVar id) = env id
 End
 
 (* Lookup relation *)
 Definition bir_env_lookup_rel_def:
-    bir_env_lookup_rel (BEnv env) (BVar id) a = (env id = (SOME a)) 
+  bir_env_lookup_rel (BEnv env) (BVar id) a = (env id = (SOME a)) 
 End
 
 (* Empty environment *)
 Definition bir_empty_env_def:
-    bir_empty_env = BEnv (\x. NONE)
+  bir_empty_env = BEnv (\x. NONE)
 End
 
 (* Update environment *)
 (* Slightly differs from original as we don’t check for existence here *)
 Definition bir_env_update_def:
-    bir_env_update env (BVar id) v = BEnv ((id =+ SOME v) env)
+  bir_env_update env (BVar id) v = BEnv ((id =+ SOME v) env)
 End
 
 (* ****************************************** *)
@@ -38,38 +38,38 @@ End
 
 (* Some theorems about bir_env functions *)
 Theorem bir_env_lookup_empty:
-    !var v. ~(bir_env_lookup_rel bir_empty_env var v)
+  !var v. ~(bir_env_lookup_rel bir_empty_env var v)
 Proof
-    Cases_on `var` >>
-    rw [bir_empty_env_def, bir_env_lookup_rel_def]
+  Cases_on `var` >>
+  rw [bir_empty_env_def, bir_env_lookup_rel_def]
 QED
 
 Theorem bir_env_lookup_update:
-    !env var v. bir_env_lookup_rel (bir_env_update env var v) var v 
+  !env var v. bir_env_lookup_rel (bir_env_update env var v) var v 
 Proof
-    Cases_on `var` >>
-    rw [bir_env_update_def, bir_env_lookup_rel_def]
+  Cases_on `var` >>
+  rw [bir_env_update_def, bir_env_lookup_rel_def]
 QED
 
 (* Lookup and relation are the same *)
 Theorem bir_env_lookup_eq_rel:
-    !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
+  !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
 Proof
-    rpt STRIP_TAC >>
-    Cases_on `env` >>
-    Cases_on `var` >>
+  rpt STRIP_TAC >>
+  Cases_on `env` >>
+  Cases_on `var` >>
     rw [bir_env_lookup_def, bir_env_lookup_rel_def]
 QED
 
 
 (* Injective *)
 Theorem bir_env_lookup_rel_inj:
-    !env var v1 v2.
-        bir_env_lookup_rel env var v1 ==>
-        bir_env_lookup_rel env var v2 ==>
-        v1 = v2
+  !env var v1 v2.
+    bir_env_lookup_rel env var v1 ==>
+    bir_env_lookup_rel env var v2 ==>
+    v1 = v2
 Proof
-    Cases_on `env` >> Cases_on `var` >>
+  Cases_on `env` >> Cases_on `var` >>
     simp [bir_env_lookup_rel_def]
 QED
 
