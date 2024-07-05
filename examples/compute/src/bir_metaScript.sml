@@ -10,7 +10,7 @@ val _ = new_theory "bir_meta" ;
 
 
 
-
+(* A typed expression evaluates to a value of the same type *)
 Theorem bir_eval_exp_correct_type:
     !env e v ty.
         bir_eval_exp env e v ==>
@@ -45,7 +45,7 @@ Proof
 QED
 
 
-
+(* A typed expression always evaluates to some value *)
 Theorem well_typed_bir_eval_exp_value:
     !env e ty.
         type_of_bir_exp env e ty ==>
@@ -92,6 +92,7 @@ QED
 
 
 
+(* Eval and compute are similar *)
 Theorem bir_eval_exp_eq_compute_exp:
     !env e v ty. type_of_bir_exp env e ty ==> 
         (bir_eval_exp env e v <=> (bir_compute_exp e env = SOME v))

@@ -10,29 +10,33 @@ Datatype:
     bir_var_environment_t = BEnv (string -> (bir_val_t option))
 End
 
-(** Lookup function *)
+(* Lookup function *)
 Definition bir_env_lookup_def:
     bir_env_lookup (BEnv env) (BVar id) = env id
 End
 
-(** Lookup relation *)
+(* Lookup relation *)
 Definition bir_env_lookup_rel_def:
     bir_env_lookup_rel (BEnv env) (BVar id) a = (env id = (SOME a)) 
 End
 
-(** Empty environment *)
+(* Empty environment *)
 Definition bir_empty_env_def:
     bir_empty_env = BEnv (\x. NONE)
 End
 
-(** Update environment 
-*   Slightly differs from original as we don’t check for existence here *)
+(* Update environment *)
+(* Slightly differs from original as we don’t check for existence here *)
 Definition bir_env_update_def:
     bir_env_update env (BVar id) v = BEnv ((id =+ SOME v) env)
 End
 
+(* ****************************************** *)
+(* **************** THEOREMS **************** *)
+(* ****************************************** *)
 
-(** Some theorems about bir_env functions *)
+
+(* Some theorems about bir_env functions *)
 Theorem bir_env_lookup_empty:
     !var v. ~(bir_env_lookup_rel bir_empty_env var v)
 Proof
@@ -47,6 +51,7 @@ Proof
     rw [bir_env_update_def, bir_env_lookup_rel_def]
 QED
 
+(* Lookup and relation are the same *)
 Theorem bir_env_lookup_eq_rel:
     !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
 Proof

@@ -6,6 +6,7 @@ open wordsTheory ;
 
 val _ = new_theory "bir_typing" ;
 
+(* Typing function for immediates *)
 Definition type_of_bir_imm_def:
     (type_of_bir_imm (Imm1 w) = Bit1) /\
     (type_of_bir_imm (Imm8 w) = Bit8) /\
@@ -15,10 +16,12 @@ Definition type_of_bir_imm_def:
     (type_of_bir_imm (Imm128 w) = Bit128)
 End
 
+(* Typing function for values *)
 Definition type_of_bir_val_def:
     (type_of_bir_val (BVal_Imm imm) = type_of_bir_imm imm)
 End
 
+(* Typing relation for bir expressions *)
 Inductive type_of_bir_exp:
 [~BExp_Const:]
     (!env imm. 
@@ -64,8 +67,11 @@ End
 
 
 
-(** ******* THEOREMS ********* *)
+(* ****************************************** *)
+(* **************** THEOREMS **************** *)
+(* ****************************************** *)
 
+(* 1 bit values are booleans *)
 Theorem bit1_is_boolean:
     !v. type_of_bir_val v = Bit1 ==> (v = birT \/ v = birF)
 Proof

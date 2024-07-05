@@ -4,11 +4,11 @@ open wordsTheory ;
 val _ = new_theory "bir_basic" ;
 
 
-(** Identifier for variable name *)
+(* Identifier for variable name *)
 Type ident = ``:string`` ;
 
 
-(** Immediates *)
+(* Immediates *)
 Datatype:
     bir_imm_t = 
         Imm1 word1
@@ -20,7 +20,7 @@ Datatype:
 End
 
 
-(** Typing information *)
+(* Immediate Typing size *)
 Datatype:
   bir_immtype_t =
   | Bit1
@@ -32,12 +32,13 @@ Datatype:
 End
 
 
-(** Values for evaluation relation *)
+(* Values for evaluation relation *)
 Datatype:
     bir_val_t = 
         BVal_Imm bir_imm_t
 End
 
+(* General typing *)
 Datatype:
     bir_type_t = 
         BType_imm bir_immtype_t
@@ -45,20 +46,20 @@ End
 
 
 
-(** Variable to lookup in environment *)
+(* Variable to lookup in environment *)
 Datatype:
-    bir_var_t = BVar ident (* bir_type_t *)
+    bir_var_t = BVar ident
 End
 
 
-(** Binary expressions *)
+(* Binary expressions *)
 Datatype:
     bir_binexp_t = 
         BIExp_And
-      (* | BIExp_Or *)
       | BIExp_Plus
 End
 
+(* Unary expressions *)
 Datatype:
     bir_unaryexp_t = 
         BIExp_Not
@@ -66,14 +67,14 @@ Datatype:
 End
 
 
-(** Binary predicates *)
+(* Binary predicates *)
 Datatype:
     bir_binpred_t =
         | BIExp_Equal
         | BIExp_LessThan
 End
 
-(** BIR Expressions *)
+(* BIR Expressions *)
 Datatype:
     bir_exp_t =
         BExp_Const bir_imm_t
@@ -88,7 +89,7 @@ End
 
 
 
-(** Some common functions *)
+(* Booleans *)
 
 Definition bool2w_def:
   bool2w b = (if b then 1w else 0w):word1
@@ -106,7 +107,7 @@ Definition birF_def:
     birF = BVal_Imm (Imm1 0w)
 End
 
-(** Correction Theorems *)
+(* Correction Theorems of boolean functions *)
 Theorem bool2b_T_eq_birT:
     BVal_Imm (bool2b T) = birT
 Proof

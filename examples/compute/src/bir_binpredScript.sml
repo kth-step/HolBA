@@ -6,14 +6,14 @@ open bir_typingTheory ;
 val _ = new_theory "bir_binpred" ;
 
 
-(** Gets the operator for a given binary predicate *)
+(* Gets the operator for a given binary predicate *)
 Definition bir_binpred_get_oper_def:
     (bir_binpred_get_oper BIExp_Equal = $=) /\
     (bir_binpred_get_oper BIExp_LessThan = word_lo)
 End
 
 
-(** Evaluates a binary predicate of two immediates *)
+(* Evaluates a binary predicate of two immediates *)
 Inductive bir_eval_binpred_imm:
     (!binpred w1 w2. 
         bir_eval_binpred_imm binpred (Imm1 w1) (Imm1 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
@@ -30,7 +30,7 @@ Inductive bir_eval_binpred_imm:
 End
 
 
-(** Evaluates a general binary predicate with values as parameters *)
+(* Evaluates a general binary predicate with values as parameters *)
 Inductive bir_eval_binpred:
     (!binpred imm1 imm2 b. 
         (bir_eval_binpred_imm binpred imm1 imm2 b) ==>
@@ -38,9 +38,11 @@ Inductive bir_eval_binpred:
 End
 
 
-(** ***************** COMPUTE **************** *)
+(* ****************************************** *)
+(* ***************** COMPUTE **************** *)
+(* ****************************************** *)
 
-(** Computes a binary predicate of two immediates *)
+(* Computes a binary predicate of two immediates *)
 Definition bir_compute_binpred_imm_def:
     (bir_compute_binpred_imm binpred (Imm1 w1) (Imm1 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
     (bir_compute_binpred_imm binpred (Imm8 w1) (Imm8 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
@@ -52,7 +54,7 @@ Definition bir_compute_binpred_imm_def:
 End
 
 
-(** Computes a general binary predicate with values as parameters *)
+(* Computes a general binary predicate with values as parameters *)
 Definition bir_compute_binpred_def:
     (bir_compute_binpred binpred (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
         SOME (BVal_Imm (bool2b (bir_compute_binpred_imm binpred imm1 imm2)))) /\
@@ -62,7 +64,12 @@ End
 
 
 
-(* **************** THEOREMS ***************** *)
+(* ****************************************** *)
+(* **************** THEOREMS **************** *)
+(* ****************************************** *)
+
+
+
 Theorem bir_eval_binpred_imp_compute_binpred:
     !binpred v1 v2 v. bir_eval_binpred binpred v1 v2 v ==> 
         bir_compute_binpred binpred (SOME v1) (SOME v2) = SOME v
@@ -77,7 +84,7 @@ Proof
 QED
 
 
-(** If the term is well typed, then eval and compute are the same *)
+(* If the term is well typed, then eval and compute are the same *)
 Theorem well_typed_bir_eval_binpred_eq_compute_binpred:
     !binpred v1 v2 v. 
         (type_of_bir_val v1 = type_of_bir_val v2) ==>
@@ -94,6 +101,7 @@ Proof
 QED
 
 
+(* If the operands are typed, then the expression evaluates *)
 Theorem type_of_bir_val_imp_bir_eval_binpred:
     !binpred v1 v2.
         (type_of_bir_val v1 = type_of_bir_val v2) ==>
@@ -107,6 +115,7 @@ Proof
 QED
 
 
+(* Type conservation theorem *)
 Theorem bir_eval_binpred_correct_type:
     !binpred v1 v2 v ty.
         bir_eval_binpred binpred v1 v2 v ==>
@@ -118,7 +127,7 @@ Proof
 QED
 
 
-
+(* Equal predicate is reflexive *)
 Theorem bir_eval_binpred_eq_refl:
     !env v. bir_eval_binpred BIExp_Equal v v birT
 Proof

@@ -7,14 +7,14 @@ open wordsTheory ;
 val _ = new_theory "bir_binexp" ;
 
 
-(** Gets the operator for a given binary operation *)
+(* Gets the operator for a given binary operation *)
 Definition bir_binexp_get_oper_def:
     (bir_binexp_get_oper BIExp_And = word_and) /\
     (bir_binexp_get_oper BIExp_Plus = word_add)
 End
 
 
-(** Evaluates a binary expression of two immediates *)
+(* Evaluates a binary expression of two immediates *)
 Inductive bir_eval_binexp_imm:
     (!binexp w1 w2. 
         bir_eval_binexp_imm binexp (Imm1 w1) (Imm1 w2) (Imm1 ((bir_binexp_get_oper binexp) w1 w2))) /\
@@ -31,16 +31,20 @@ Inductive bir_eval_binexp_imm:
 End
 
 
-(** Evaluates a general binary expression with values as parameters *)
+(* Evaluates a general binary expression with values as parameters *)
 Definition bir_eval_binexp_def:
     bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
         (bir_eval_binexp_imm binexp imm1 imm2 imm)
 End
 
 
-(** ***************** COMPUTE **************** *)
 
-(** Computes a binary expression of two immediates *)
+
+(* ****************************************** *)
+(* ***************** COMPUTE **************** *)
+(* ****************************************** *)
+
+(* Computes a binary expression of two immediates *)
 Definition bir_compute_binexp_imm_def:
     (bir_compute_binexp_imm binexp (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 ((bir_binexp_get_oper binexp) w1 w2)))) /\
     (bir_compute_binexp_imm binexp (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 ((bir_binexp_get_oper binexp) w1 w2)))) /\
@@ -52,7 +56,7 @@ Definition bir_compute_binexp_imm_def:
 End
 
 
-(** Computes a general binary expression with values as parameters *)
+(* Computes a general binary expression with values as parameters *)
 Definition bir_compute_binexp_def:
     (bir_compute_binexp binexp (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
         bir_compute_binexp_imm binexp imm1 imm2) /\
@@ -62,7 +66,11 @@ End
 
 
 
-(* **************** THEOREMS ***************** *)
+(* ****************************************** *)
+(* **************** THEOREMS **************** *)
+(* ****************************************** *)
+
+(* Eval and compute are similar *)
 Theorem bir_eval_binexp_eq_compute_binexp:
     !binexp v1 v2 v. bir_eval_binexp binexp v1 v2 v <=> 
         bir_compute_binexp binexp (SOME v1) (SOME v2) = SOME v
@@ -76,6 +84,7 @@ Proof
 QED
 
 
+(* If the operands are typed, then the expression evaluates *)
 Theorem type_of_bir_val_imp_bir_eval_binexp:
     !binexp v1 v2.
         (type_of_bir_val v1 = type_of_bir_val v2) ==>
@@ -89,7 +98,7 @@ Proof
 QED
 
 
-(* Typing Theorem *)
+(* Type conservation Theorem *)
 Theorem bir_eval_binexp_keep_type:
     !binexp v1 v2 v ty.
         bir_eval_binexp binexp v1 v2 v ==>

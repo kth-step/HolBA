@@ -6,7 +6,7 @@ open bir_binpredTheory bir_ifthenelseTheory ;
 val _ = new_theory "bir_eval" ;
 
 
-
+(* General evaluation relation of bir expressions *)
 Inductive bir_eval_exp:
 [~BExp_Const:]
     ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) )
@@ -50,7 +50,10 @@ End
 
 
 
+(* ****************************************** *)
 (* ***************** TESTS ****************** *)
+(* ****************************************** *)
+
 Theorem bir_eval_exp_empty_env_const:
     !imm. bir_eval_exp bir_empty_env (BExp_Const imm) (BVal_Imm imm)
 Proof

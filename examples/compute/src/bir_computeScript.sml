@@ -6,6 +6,7 @@ open bir_binpredTheory ;
 val _ = new_theory "bir_compute" ;
 
 
+(* General Computation function *)
 Definition bir_compute_exp_def:
   (bir_compute_exp (BExp_Const n) env = SOME (BVal_Imm n)) /\
 
