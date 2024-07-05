@@ -4,6 +4,10 @@ incr.o:     file format elf64-littleriscv
 
 Disassembly of section .text:
 
-0000000000000000 <incr>:
-   0:	00150513          	addi	a0,a0,1
-   4:	00008067          	ret
+0000000000010488 <incr>:
+   10488:	00150513          	addi	a0,a0,1
+   1048c:	00008067          	ret
+
+0000000000010490 <main>:
+   10490:	00100513          	li	a0,1
+   10494:	00008067          	ret

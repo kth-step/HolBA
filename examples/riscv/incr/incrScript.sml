@@ -7,6 +7,6 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "incr";
 
-val _ = lift_da_and_store "incr" "incr.da" da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x8));
+val _ = lift_da_and_store "incr" "incr.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10495));
 
 val _ = export_theory ();

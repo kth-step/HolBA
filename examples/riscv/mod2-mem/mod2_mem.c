@@ -5,3 +5,9 @@ uint64_t mod2(uint64_t * i) {
   j =  * i % 2;
   return j;
 }
+
+int main(void) {
+  uint64_t j;
+  j = 10;
+  return mod2(&j);
+}

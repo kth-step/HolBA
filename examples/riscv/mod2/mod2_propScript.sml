@@ -49,6 +49,37 @@ open mod2_symb_transfTheory;
 
 val _ = new_theory "mod2_prop";
 
+(* --------------- *)
+(* HL BIR contract *)
+(* --------------- *)
+
+val end_addr_tm = (snd o dest_eq o concl) mod2_end_addr_def;
+
+val bir_cont_mod2_thm = use_post_weak_rule_simp
+ (use_pre_str_rule_simp bspec_cont_mod2 mod2_bir_pre_imp_bspec_pre)
+ ``BL_Address (Imm64 ^end_addr_tm)``
+ mod2_bspec_post_imp_bir_post;
+
+Theorem bir_cont_mod2:
+ bir_cont bir_mod2_prog bir_exp_true
+  (BL_Address (Imm64 mod2_init_addr)) {BL_Address (Imm64 mod2_end_addr)} {}
+  (bir_mod2_pre pre_x10)
+  (\l. if l = BL_Address (Imm64 mod2_end_addr)
+       then (bir_mod2_post pre_x10)
+       else bir_exp_false)
+Proof
+ rw [mod2_init_addr_def,mod2_end_addr_def] >>
+ ACCEPT_TAC bir_cont_mod2_thm
+QED
+
+(* --------------------- *)
+(* Auxiliary definitions *)
+(* --------------------- *)
+
+val progbin_tm = (fst o dest_eq o concl) bir_mod2_progbin_def;
+val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_mod2_pre_def;
+val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_mod2_post_def;
+
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
@@ -56,35 +87,30 @@ val _ = new_theory "mod2_prop";
 val riscv_cont_mod2_thm =
  get_riscv_contract_sing
   bir_cont_mod2
-  ``bir_mod2_progbin``
-  ``riscv_mod2_pre pre_x10`` ``riscv_mod2_post pre_x10`` bir_mod2_prog_def
+  progbin_tm riscv_pre_tm riscv_post_tm
+  bir_mod2_prog_def
   [bir_mod2_pre_def]
   bir_mod2_pre_def mod2_riscv_pre_imp_bir_pre_thm
   [bir_mod2_post_def] mod2_riscv_post_imp_bir_post_thm
   bir_mod2_riscv_lift_THM;
 
 Theorem riscv_cont_mod2:
- riscv_cont bir_mod2_progbin 0w {4w} (riscv_mod2_pre pre_x10) (riscv_mod2_post pre_x10)
+ riscv_cont bir_mod2_progbin mod2_init_addr {mod2_end_addr}
+  (riscv_mod2_pre pre_x10) (riscv_mod2_post pre_x10)
 Proof
  ACCEPT_TAC riscv_cont_mod2_thm
 QED
 
-(* unfolded theorem *)
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
-val tm = concl riscv_cont_mod2;
-val sset = std_ss++bir_wm_SS++bir_lifting_machinesLib.bmr_ss;
-val thms = [riscv_cont_def, t_jgmt_def, riscv_ts_def, riscv_weak_trs_def, riscv_mod2_pre_def, riscv_mod2_post_def, riscv_bmr_def, riscv_state_is_OK_def];
-(*
-EVAL tm;
-SIMP_CONV sset thms tm
-REWRITE_CONV  tm;
-*)
-val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] tm;
+(* ------------------------ *)
+(* Unfolded RISC-V contract *)
+(* ------------------------ *)
+
+val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] (concl riscv_cont_mod2);
 
 Theorem riscv_cont_mod2_full:
   !pre_x10. ^((snd o dest_eq o concl) readable_thm)
 Proof
-  METIS_TAC [riscv_cont_mod2, readable_thm]
+ METIS_TAC [riscv_cont_mod2, readable_thm]
 QED
 
 val _ = export_theory ();

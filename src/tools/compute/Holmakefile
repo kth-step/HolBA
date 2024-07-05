@@ -1,0 +1,12 @@
+INCLUDES = 
+
+all: $(DEFAULT_TARGETS) test-word.exe
+.PHONY: all
+
+test-word.exe: test-word.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-word.exe
+	./test-word.exe
+
+EXTRA_CLEANS = test-word.exe

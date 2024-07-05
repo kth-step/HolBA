@@ -7,3 +7,7 @@ uint64_t isqrt(uint64_t x) {
   }
   return y;
 }
+
+int main(void) {
+  return isqrt(10);
+}

@@ -4,6 +4,7 @@ open markerTheory;
 
 open distribute_generic_stuffLib;
 
+open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -47,70 +48,76 @@ open distribute_generic_stuffTheory;
 
 val _ = new_theory "incr_spec";
 
-(* --------------- *)
-(* HLSPEC          *)
+(* ------------------ *)
+(* Program boundaries *)
+(* ------------------ *)
+
+Definition incr_init_addr_def:
+ incr_init_addr : word64 = 0x10488w
+End
+
+Definition incr_end_addr_def:
+ incr_end_addr : word64 = 0x1048cw
+End
+
 (* --------------- *)
 (* RISC-V contract *)
 (* --------------- *)
 
 Definition riscv_incr_pre_def:
- riscv_incr_pre x (m : riscv_state) =
-  (m.c_gpr m.procID 10w = x)
+ riscv_incr_pre (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_incr_post_def:
- riscv_incr_post x (m : riscv_state) =
-  (m.c_gpr m.procID 10w = x + 1w)
+ riscv_incr_post (pre_x10:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10 + 1w)
 End
 
-(* ------------ *)
-(* HLSPEC       *)
-(* ------------ *)
-(* BIR contract *)
-(* ------------ *)
+(* --------------- *)
+(* HL BIR contract *)
+(* --------------- *)
 
 Definition bir_incr_pre_def:
-  bir_incr_pre x : bir_exp_t =
+ bir_incr_pre (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x))
+    (BExp_Const (Imm64 pre_x10))
 End
 
 Definition bir_incr_post_def:
- bir_incr_post x : bir_exp_t =
+ bir_incr_post (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
-    BIExp_Equal
+   BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 (x + 1w)))
+    (BExp_Const (Imm64 (pre_x10 + 1w)))
 End
 
-(* ------------ *)
-(* BSPEC        *)
-(* ------------ *)
-(* BIR contract *)
-(* ------------ *)
+(* -------------- *)
+(* BSPEC contract *)
+(* -------------- *)
 
 Definition bspec_incr_pre_def:
-  bspec_incr_pre x : bir_exp_t =
+ bspec_incr_pre (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 x))
+    (BExp_Const (Imm64 pre_x10))
 End
 
 Definition bspec_incr_post_def:
- bspec_incr_post x : bir_exp_t =
+ bspec_incr_post (pre_x10:word64) : bir_exp_t =
   BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 x)) (BExp_Const (Imm64 1w)))
+      BIExp_Plus (BExp_Const (Imm64 pre_x10)) (BExp_Const (Imm64 1w)))
 End
 
-(* ------------------------------------------ *)
-(* Connecting RISC-V and HLSPEC BIR contracts *)
-(* ------------------------------------------ *)
+(* -------------------------------------- *)
+(* Connecting RISC-V and HL BIR contracts *)
+(* -------------------------------------- *)
 
 Theorem incr_riscv_pre_imp_bir_pre_thm:
  bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bir_incr_pre pre_x10)
@@ -127,52 +134,66 @@ Proof
  rw [bir_post_bir_to_riscv_def,riscv_incr_post_def,bir_incr_post_def] >>
  Cases_on `bs` >>
  Cases_on `b0` >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
  Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
  Cases_on `g` >-
   (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
    fs [Abbrev_def] >>
    `bir_eval_bin_pred BIExp_Equal (SOME z)
      (SOME (BVal_Imm (Imm64 (pre_x10 + 1w)))) = SOME bir_val_true`
-    by METIS_TAC [] >>   
+    by METIS_TAC [] >>
    Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bool2b_def,bir_val_true_def] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
    Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b' (Imm64 (pre_x10 + 1w))` >>
    Cases_on `bb` >> fs [] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >> 
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+    bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+    bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-(* ----------------------------------------- *)
-(* Connecting HLSPEC BIR and BSPEC contracts *)
-(* ----------------------------------------- *)
+(* ------------------------------------- *)
+(* Connecting HL BIR and BSPEC contracts *)
+(* ------------------------------------- *)
 
-val incr_bir_pre_imp_bspec_pre_thm =
- prove_exp_is_taut ``BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
-   (bspec_incr_pre pre_x10)``;
-
-Theorem incr_bir_pre_imp_bspec_pre:
- bir_exp_is_taut (BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
-   (bspec_incr_pre pre_x10))
+Theorem incr_bir_pre_imp_bspec_pre_thm[local]:
+ bir_exp_is_taut
+  (bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10))
 Proof
- rw [incr_bir_pre_imp_bspec_pre_thm]
+ rw [prove_exp_is_taut ``bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10)``]
 QED
 
-val incr_bspec_post_imp_bir_post_thm =
- prove_exp_is_taut ``BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
-    (bir_incr_post pre_x10)``;
+val incr_bir_pre_imp_bspec_pre_eq_thm =
+ computeLib.RESTR_EVAL_CONV [``bir_exp_is_taut``,``bir_incr_pre``,``bspec_incr_pre``]
+  (concl incr_bir_pre_imp_bspec_pre_thm);
+
+Theorem incr_bir_pre_imp_bspec_pre:
+ ^((snd o dest_eq o concl) incr_bir_pre_imp_bspec_pre_eq_thm)
+Proof
+ rw [GSYM incr_bir_pre_imp_bspec_pre_eq_thm] >>
+ ACCEPT_TAC incr_bir_pre_imp_bspec_pre_thm
+QED
+
+Theorem incr_bspec_post_imp_bir_post_thm[local]:
+ bir_exp_is_taut
+  (bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10))
+Proof
+ rw [prove_exp_is_taut ``bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10)``]
+QED
+
+val incr_bspec_post_imp_bir_post_eq_thm =
+ computeLib.RESTR_EVAL_CONV [``bir_exp_is_taut``,``bspec_incr_post``,``bir_incr_post``]
+ (concl incr_bspec_post_imp_bir_post_thm);
 
 Theorem incr_bspec_post_imp_bir_post:
- bir_exp_is_taut (BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
-    (bir_incr_post pre_x10))
+ ^((snd o dest_eq o concl) incr_bspec_post_imp_bir_post_eq_thm)
 Proof
- rw [incr_bspec_post_imp_bir_post_thm]
+ rw [GSYM incr_bspec_post_imp_bir_post_eq_thm] >>
+ ACCEPT_TAC incr_bspec_post_imp_bir_post_thm
 QED
 
 val _ = export_theory ();

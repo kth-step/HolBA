@@ -5,8 +5,8 @@ open bir_lifter_interfaceLib;
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
-val _ = new_theory "swap";
+val _ = new_theory "incr_mem";
 
-val _ = lift_da_and_store "swap" "swap.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x104a6));
+val _ = lift_da_and_store "incr_mem" "incr_mem.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x1049d));
 
 val _ = export_theory ();
