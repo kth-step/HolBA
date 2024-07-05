@@ -95,12 +95,13 @@ Theorem isqrt_symb_analysis_2_thm = symb_analysis_thm
 
 val bprog_tm = (snd o dest_eq o concl) bir_isqrt_prog_def;
 val init_addr_tm = (snd o dest_eq o concl) isqrt_init_addr_3_def;
-val end_addr_tm = (snd o dest_eq o concl) isqrt_end_addr_3_def;
+val end_addr_loop_tm = (snd o dest_eq o concl) isqrt_end_addr_3_loop_def;
+val end_addr_ret_tm = (snd o dest_eq o concl) isqrt_end_addr_3_ret_def;
 val birs_state_init_lbl_tm =
  (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
 val birs_state_end_lbls =
- [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``,
-  (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 0x10490w))``];
+ [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_loop_tm))``,
+  (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_ret_tm))``];
 val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_isqrt_pre_3_def;
 val bprog_envtyl_tm = (fst o dest_eq o concl) isqrt_birenvtyl_def;
 

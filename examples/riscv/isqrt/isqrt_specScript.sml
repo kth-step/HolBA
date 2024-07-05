@@ -116,8 +116,12 @@ Definition isqrt_init_addr_3_def:
  isqrt_init_addr_3 : word64 = 0x1049cw
 End
 
-Definition isqrt_end_addr_3_def:
- isqrt_end_addr_3 : word64 = 0x104a0w
+Definition isqrt_end_addr_3_loop_def:
+ isqrt_end_addr_3_loop : word64 = 0x10490w
+End
+
+Definition isqrt_end_addr_3_ret_def:
+ isqrt_end_addr_3_ret : word64 = 0x104a0w
 End
 
 (* ---------------- *)
@@ -160,23 +164,37 @@ End
 Definition riscv_isqrt_post_2_def:
  riscv_isqrt_post_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
   (m.c_gpr m.procID 10w = pre_x15 /\
-   m.c_gpr m.procID 15w = pre_x15 + 1w /\
+   m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = (pre_x15 + 1w) * (pre_x15 + 1w) /\
-   m.c_gpr m.procID 13w = pre_x13)
+   m.c_gpr m.procID 15w = pre_x15 + 1w)
 End
 
 (* loop branch contract *)
 
 Definition riscv_isqrt_pre_3_def:
- riscv_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 13w = pre_x13 /\
+ riscv_isqrt_pre_3 (pre_x10:word64) (pre_x13:word64)
+  (pre_x14:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10 /\
+   m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14)
 End
 
-Definition riscv_isqrt_post_3_def:
- riscv_isqrt_post_3 (pre_x13:word64) (pre_x14:word64) (m:riscv_state) : bool =
-  (if pre_x13 <= pre_x14 then m.c_PC m.procID = 0x10490w
-   else m.c_PC m.procID = 0x104a0w)
+Definition riscv_isqrt_post_3_loop_def:
+ riscv_isqrt_post_3_loop (pre_x10:word64) (pre_x13:word64)
+  (pre_x14:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10 /\
+   m.c_gpr m.procID 13w = pre_x13 /\
+   m.c_gpr m.procID 14w = pre_x14 /\
+   pre_x13 <= pre_x14)
+End
+
+Definition riscv_isqrt_post_3_ret_def:
+ riscv_isqrt_post_3_ret (pre_x10:word64) (pre_x13:word64)
+  (pre_x14:word64) (m:riscv_state) : bool =
+  (m.c_gpr m.procID 10w = pre_x10 /\
+   m.c_gpr m.procID 13w = pre_x13 /\
+   m.c_gpr m.procID 14w = pre_x14 /\
+   pre_x14 < pre_x13)
 End
 
 (* --------------- *)
@@ -252,11 +270,10 @@ val bspec_isqrt_post_2_tm = bslSyntax.bandl [
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x15))``,
-  ``BExp_BinPred
+ ``BExp_BinPred
     BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))``,
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
   ``BExp_BinPred
      BIExp_Equal
      (BExp_Den (BVar "x14" (BType_Imm Bit64)))
@@ -264,10 +281,11 @@ val bspec_isqrt_post_2_tm = bslSyntax.bandl [
        BIExp_Mult
         (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))
         (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w))))``,
- ``BExp_BinPred
+  ``BExp_BinPred
     BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``
+    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
+    (BExp_BinExp
+      BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))``
 ];
 
 Definition bspec_isqrt_post_2_def:
@@ -280,6 +298,10 @@ End
 val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
  ``BExp_BinPred
     BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))``,
+ ``BExp_BinPred
+    BIExp_Equal
     (BExp_Den (BVar "x13" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x13))``,
  ``BExp_BinPred
@@ -289,8 +311,56 @@ val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
 ];
 
 Definition bspec_isqrt_pre_3_def:
- bspec_isqrt_pre_3 (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+ bspec_isqrt_pre_3 (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
   ^bspec_isqrt_pre_3_tm
+End
+
+val bspec_isqrt_post_3_loop_tm = bslSyntax.bandl [
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x14))``,
+  ``BExp_BinPred
+    BIExp_LessOrEqual
+    (BExp_Const (Imm64 pre_x13))
+    (BExp_Const (Imm64 pre_x14))``
+];
+
+Definition bspec_isqrt_post_3_loop_def:
+ bspec_isqrt_post_3_loop (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+  ^bspec_isqrt_post_3_loop_tm
+End
+
+val bspec_isqrt_post_3_ret_tm = bslSyntax.bandl [
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x13))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x14))``,
+  ``BExp_BinPred
+    BIExp_LessThan
+    (BExp_Const (Imm64 pre_x14))
+    (BExp_Const (Imm64 pre_x13))``
+];
+
+Definition bspec_isqrt_post_3_ret_def:
+ bspec_isqrt_post_3_ret (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+  ^bspec_isqrt_post_3_ret_tm
 End
 
 val _ = export_theory ();

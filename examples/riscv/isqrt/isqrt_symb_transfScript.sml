@@ -43,7 +43,6 @@ QED
 
 (* loop body contract *)
 
-(*
 val init_addr_2_tm = (snd o dest_eq o concl) isqrt_init_addr_2_def;
 val end_addr_2_tm = (snd o dest_eq o concl) isqrt_end_addr_2_def;
 
@@ -66,6 +65,5 @@ Theorem bspec_cont_isqrt_2:
 Proof
  rw [bir_isqrt_prog_def,bspec_cont_2_thm]
 QED
-*)
 
 val _ = export_theory ();
