@@ -1,9 +1,9 @@
-open HolKernel Parse bossLib boolLib
-open bir_basicTheory
-open bir_typingTheory
+open HolKernel Parse bossLib boolLib ;
+open bir_basicTheory ;
+open bir_typingTheory ;
 
 
-val _ = new_theory "bir_ifthenelse"
+val _ = new_theory "bir_ifthenelse" ;
 
 
 
@@ -69,4 +69,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

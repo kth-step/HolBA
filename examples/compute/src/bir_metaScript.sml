@@ -1,11 +1,11 @@
-open HolKernel Parse boolLib bossLib
-open bir_envTheory bir_basicTheory bir_binexpTheory bir_unaryexpTheory
-open bir_binpredTheory bir_ifthenelseTheory
-open bir_evalTheory bir_computeTheory bir_typingTheory
+open HolKernel Parse boolLib bossLib ;
+open bir_envTheory bir_basicTheory bir_binexpTheory bir_unaryexpTheory ;
+open bir_binpredTheory bir_ifthenelseTheory ;
+open bir_evalTheory bir_computeTheory bir_typingTheory ;
 
 
 
-val _ = new_theory "bir_meta"
+val _ = new_theory "bir_meta" ;
 
 
 
@@ -145,4 +145,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

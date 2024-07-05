@@ -1,10 +1,10 @@
-open HolKernel Parse bossLib boolLib
-open bir_basicTheory
-open bir_typingTheory
-open wordsTheory
+open HolKernel Parse bossLib boolLib ;
+open bir_basicTheory ;
+open bir_typingTheory ;
+open wordsTheory ;
 
 
-val _ = new_theory "bir_unaryexp"
+val _ = new_theory "bir_unaryexp" ;
 
 
 (** Gets the operator for a given unary operation *)
@@ -96,4 +96,4 @@ Proof
     rw [type_of_bir_val_def, bir_eval_unaryexp_def, type_of_bir_imm_def, bir_eval_unaryexp_imm_cases]
 QED
 
-val _ = export_theory ()
+val _ = export_theory () ;

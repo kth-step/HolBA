@@ -1,10 +1,10 @@
-open HolKernel Parse boolLib bossLib
-open bir_basicTheory
-open bir_envTheory
-open wordsTheory
+open HolKernel Parse boolLib bossLib ;
+open bir_basicTheory ;
+open bir_envTheory ;
+open wordsTheory ;
 
 
-val _ = new_theory "bir_typing"
+val _ = new_theory "bir_typing" ;
 
 Definition type_of_bir_imm_def:
     (type_of_bir_imm (Imm1 w) = Bit1) /\
@@ -76,4 +76,4 @@ Proof
             fs [dimword_1]
 QED
 
-val _ = export_theory ()
+val _ = export_theory () ;

@@ -1,10 +1,10 @@
-open HolKernel Parse bossLib boolLib
-open bir_basicTheory
-open bir_typingTheory
-open wordsTheory
+open HolKernel Parse bossLib boolLib ;
+open bir_basicTheory ;
+open bir_typingTheory ;
+open wordsTheory ;
 
 
-val _ = new_theory "bir_binexp"
+val _ = new_theory "bir_binexp" ;
 
 
 (** Gets the operator for a given binary operation *)
@@ -106,4 +106,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

@@ -1,8 +1,8 @@
-open HolKernel Parse bossLib boolLib
-open bir_basicTheory
+open HolKernel Parse bossLib boolLib ;
+open bir_basicTheory ;
 
 
-val _ = new_theory "bir_env"
+val _ = new_theory "bir_env" ;
 
 
 (* Environment for evaluation *)
@@ -70,4 +70,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

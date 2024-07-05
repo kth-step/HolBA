@@ -1,9 +1,9 @@
-open HolKernel Parse boolLib bossLib
-open bir_basicTheory
-open bir_typingTheory
+open HolKernel Parse boolLib bossLib ;
+open bir_basicTheory ;
+open bir_typingTheory ;
 
 
-val _ = new_theory "bir_binpred"
+val _ = new_theory "bir_binpred" ;
 
 
 (** Gets the operator for a given binary predicate *)
@@ -132,4 +132,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

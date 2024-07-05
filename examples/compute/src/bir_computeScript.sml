@@ -1,9 +1,9 @@
-open HolKernel Parse bossLib boolLib
-open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory bir_ifthenelseTheory
-open bir_binpredTheory
+open HolKernel Parse bossLib boolLib ;
+open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory bir_ifthenelseTheory ;
+open bir_binpredTheory ;
 
 
-val _ = new_theory "bir_compute"
+val _ = new_theory "bir_compute" ;
 
 
 Definition bir_compute_exp_def:
@@ -41,4 +41,4 @@ Definition bir_compute_exp_def:
 End
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

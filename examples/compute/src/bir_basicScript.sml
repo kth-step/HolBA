@@ -1,11 +1,11 @@
-open HolKernel Parse bossLib boolLib
-open wordsTheory
+open HolKernel Parse bossLib boolLib ;
+open wordsTheory ;
 
-val _ = new_theory "bir_basic"
+val _ = new_theory "bir_basic" ;
 
 
 (** Identifier for variable name *)
-Type ident = ``:string``
+Type ident = ``:string`` ;
 
 
 (** Immediates *)
@@ -119,4 +119,5 @@ Proof
     rw [bool2b_def, bool2w_def, birF_def]
 QED
 
-val _ = export_theory ()
+
+val _ = export_theory () ;
