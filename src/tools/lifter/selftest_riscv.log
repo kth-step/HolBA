@@ -142,6 +142,26 @@ BGEU x19, x10, 8: 00A9F863 @ 0x10030 - OK
                (BLE_Label (BL_Address (Imm64 0x10040w)))
                (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
+ret: 00008067 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[103w; 128w; 0w; 0w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "00008067";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_LSB
+                      (BExp_BinExp BIExp_And
+                         (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+                         (BExp_Den (BVar "x1" (BType_Imm Bit64))))))];
+           bb_last_statement :=
+             BStmt_Jmp
+               (BLE_Exp
+                  (BExp_BinExp BIExp_And
+                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
+                     (BExp_Den (BVar "x1" (BType_Imm Bit64)))))|>])
+
 LB x1,x2,-50: FCE10083 @ 0x10030 - OK
  []
 |- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
@@ -1194,7 +1214,7 @@ REMUW x5, x6, x7: 027372BB @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 10/72
+Instructions FAILED: 10/73
 
    "3400F0F3" (* bmr_step_hex failed *),
    "3400E0F3" (* bmr_step_hex failed *),
