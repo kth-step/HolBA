@@ -150,7 +150,7 @@ local
   open distribute_generic_stuffTheory;
 in
 
-fun bir_symb_transfer init_addr_tm end_addr_tm  bspec_pre_tm bspec_post_tm
+fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
  bir_prog_def birenvtyl_def bspec_pre_def bspec_post_def prog_vars_def
  symb_analysis_thm bsysprecond_thm prog_vars_thm =
  let 
