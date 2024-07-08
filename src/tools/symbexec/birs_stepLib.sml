@@ -238,21 +238,6 @@ fun is_plain_jumptarget_set tm =
       bir_immSyntax.gen_is_Imm (bir_programSyntax.dest_BL_Address e_tm)) l
   end handle _ => false;
 
-val birs_jumptarget_singletonconst_thm = prove(``
-!pcond vaex iv.
-  (!i. birs_interpret_fun i vaex = SOME (BVal_Imm iv)) ==>
-  (?i. birs_interpret_fun i pcond = SOME bir_val_true) ==>
-  (birs_symbval_concretizations pcond vaex = {BL_Address iv})
-``,
-  cheat
-);
-val birs_jumptarget_empty_thm = prove(``
-!pcond vaex iv.
-  (!i. birs_interpret_fun i pcond = SOME bir_val_false) ==>
-  (birs_symbval_concretizations pcond vaex = EMPTY)
-``,
-  cheat
-);
 (*
 val tm = ``birs_symbval_concretizations
           (BExp_BinExp BIExp_And
@@ -300,11 +285,11 @@ val birs_symbval_concretizations_oracle_CONV =
        mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
     val res_thm =
      if not pcond_is_sat then
-       SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_jumptarget_empty_thm)
+       SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_empty_thm)
      else
      let
       val vaex_thm = EVAL ``birs_interpret_fun i ^vaex_tm``;
-      val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_jumptarget_singletonconst_thm);
+      val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_singletonconst_thm);
      in
       concr_thm
      end;

@@ -358,14 +358,30 @@ Theorem birs_simplification_Load_32_addr_thm:
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_Load bme symbexp1 BEnd_LittleEndian Bit32) (BExp_Load bme symbexp1' BEnd_LittleEndian Bit32))
 Proof
-  cheat
+REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
 QED
 Theorem birs_simplification_Store_32_addr_thm:
   !pcond symbexp1 symbexp1' bme bve.
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_Store bme symbexp1 BEnd_LittleEndian bve) (BExp_Store bme symbexp1' BEnd_LittleEndian bve))
 Proof
-  cheat
+REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
 QED
 
 
@@ -532,7 +548,7 @@ Theorem birs_simplification_Plus_Const64_thm:
       (BExp_Const (Imm64 w2)))
     (BExp_Const (Imm64 (w1 + w2))))
 Proof
- cheat
+ birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Plus_Plus_Const64_thm:
