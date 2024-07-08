@@ -252,10 +252,10 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
      birs_simplification_Mem_Match_64_8_8_thm,
      birs_simplification_Mem_Match_64_8_32_thm,
      birs_simplification_Mem_Match_64_8_64_thm,
-     birs_simplification_Mem_Bypass_64_64_8_thm,
-     birs_simplification_Mem_Bypass_64_64_64_thm,
-     birs_simplification_Mem_Bypass_64_8_8_thm,
-     birs_simplification_Mem_Bypass_64_8_64_thm,
+     birs_simplification_Mem_Bypass_64_8_64_8_thm,
+     birs_simplification_Mem_Bypass_64_8_64_64_thm,
+     birs_simplification_Mem_Bypass_64_8_8_8_thm,
+     birs_simplification_Mem_Bypass_64_8_8_64_thm,
      birs_simplification_Mem_Bypass_64_8_8_32_thm,
      birs_simplification_Mem_Bypass_64_8_32_32_thm,
      birs_simplification_Mem_Bypass_64_8_32_8_thm,
@@ -264,10 +264,10 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
      
      birs_simplification_Mem_Match_32_8_8_thm,
      birs_simplification_Mem_Match_32_8_32_thm,
-     birs_simplification_Mem_Bypass_32_8_thm,
-     birs_simplification_Mem_Bypass_32_32_thm,
-     birs_simplification_Mem_Bypass_8_8_thm,
-     birs_simplification_Mem_Bypass_8_32_thm];
+     birs_simplification_Mem_Bypass_32_8_32_8_thm,
+     birs_simplification_Mem_Bypass_32_8_32_32_thm,
+     birs_simplification_Mem_Bypass_32_8_8_8_thm,
+     birs_simplification_Mem_Bypass_32_8_8_32_thm];
 
 
 (*
