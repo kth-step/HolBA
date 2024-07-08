@@ -1116,6 +1116,14 @@ REPEAT STRIP_TAC >> (
       )
 QED
 
+val bir_mem_acc_disjoint_TAC =
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+    blastLib.FULL_BBLAST_TAC
+  );
+
+(* core disjointness theorems first *)
 Theorem bir_mem_acc_disjoint_32_8_thm:
   !(w_sa:word32) (w_la:word32).
   ((w_sa <+ w_sa + 1w /\ w_la <+ w_la + 4w) /\ (w_la + 4w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
@@ -1126,11 +1134,46 @@ Theorem bir_mem_acc_disjoint_32_8_thm:
       bir_mem_addr Bit32 (w2n w_la + 2);
       bir_mem_addr Bit32 (w2n w_la + 3)})
 Proof
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    blastLib.FULL_BBLAST_TAC
-  )
+  bir_mem_acc_disjoint_TAC
+QED
+
+Theorem bir_mem_acc_disjoint_32_32_thm:
+  !(w_sa:word32) (w_la:word32).
+  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 4w) /\ (w_la + 4w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
+  (DISJOINT
+     {bir_mem_addr Bit32 (w2n w_sa);
+      bir_mem_addr Bit32 (w2n w_sa + 1);
+      bir_mem_addr Bit32 (w2n w_sa + 2);
+      bir_mem_addr Bit32 (w2n w_sa + 3)}
+     {bir_mem_addr Bit32 (w2n w_la);
+      bir_mem_addr Bit32 (w2n w_la + 1);
+      bir_mem_addr Bit32 (w2n w_la + 2);
+      bir_mem_addr Bit32 (w2n w_la + 3)})
+Proof
+  bir_mem_acc_disjoint_TAC
+QED
+
+Theorem bir_mem_acc_disjoint_8_8_thm:
+  !(w_sa:word32) (w_la:word32).
+  ((w_sa <+ w_sa + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
+  (DISJOINT
+     {bir_mem_addr Bit32 (w2n w_sa)}
+     {bir_mem_addr Bit32 (w2n w_la)})
+Proof
+  bir_mem_acc_disjoint_TAC
+QED
+
+Theorem bir_mem_acc_disjoint_8_32_thm:
+  !(w_sa:word32) (w_la:word32).
+  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
+  (DISJOINT
+     {bir_mem_addr Bit32 (w2n w_sa);
+      bir_mem_addr Bit32 (w2n w_sa + 1);
+      bir_mem_addr Bit32 (w2n w_sa + 2);
+      bir_mem_addr Bit32 (w2n w_sa + 3)}
+     {bir_mem_addr Bit32 (w2n w_la)})
+Proof
+  bir_mem_acc_disjoint_TAC
 QED
 
 (* the bypass theorems have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
@@ -1261,26 +1304,6 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_8_thm1
 
-Theorem bir_mem_acc_disjoint_32_32_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 4w) /\ (w_la + 4w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa);
-      bir_mem_addr Bit32 (w2n w_sa + 1);
-      bir_mem_addr Bit32 (w2n w_sa + 2);
-      bir_mem_addr Bit32 (w2n w_sa + 3)}
-     {bir_mem_addr Bit32 (w2n w_la);
-      bir_mem_addr Bit32 (w2n w_la + 1);
-      bir_mem_addr Bit32 (w2n w_la + 2);
-      bir_mem_addr Bit32 (w2n w_la + 3)})
-Proof
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    blastLib.FULL_BBLAST_TAC
-  )
-QED
-
 Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm1:
   ^(gen_simp_mem_bypass_goal 32 8 32 32)
 Proof
@@ -1406,42 +1429,6 @@ Proof
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_64_thm1
-
-Theorem bir_mem_acc_disjoint_8_8_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa)}
-     {bir_mem_addr Bit32 (w2n w_la)})
-Proof
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-
-    (*blastLib.FULL_BBLAST_TAC*)
-
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, wordsTheory.w2n_11] >>
-
-    METIS_TAC [
-      prove(``!w. ~(w <+ w + 1w /\ w + (1w:word32) <=+ w)``,
-        REWRITE_TAC
-          [REWRITE_RULE [Once wordsTheory.WORD_ADD_COMM] wordsTheory.WORD_ADD_LEFT_LS2,
-           REWRITE_RULE [Once wordsTheory.WORD_ADD_COMM] wordsTheory.WORD_ADD_RIGHT_LO2] >>
-
-        SIMP_TAC std_ss [] >>
-        REPEAT GEN_TAC >>
-
-        REWRITE_TAC [prove(``(1w:word32) = 0w <=> F``, EVAL_TAC)] >>
-        Cases_on `w = 0w` >> (
-          ASM_SIMP_TAC std_ss []
-        ) >>
-          
-        REPEAT STRIP_TAC >>
-        blastLib.FULL_BBLAST_TAC
-      )
-    ]
-  )
-QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm1:
   ^(gen_simp_mem_bypass_goal 32 8 8 8)
@@ -1569,23 +1556,6 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_8_thm1
 
-
-Theorem bir_mem_acc_disjoint_8_32_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa);
-      bir_mem_addr Bit32 (w2n w_sa + 1);
-      bir_mem_addr Bit32 (w2n w_sa + 2);
-      bir_mem_addr Bit32 (w2n w_sa + 3)}
-     {bir_mem_addr Bit32 (w2n w_la)})
-Proof
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    blastLib.FULL_BBLAST_TAC
-  )
-QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm1:
   ^(gen_simp_mem_bypass_goal 32 8 8 32)
