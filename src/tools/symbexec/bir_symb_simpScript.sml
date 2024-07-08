@@ -1123,6 +1123,44 @@ val bir_mem_acc_disjoint_TAC =
     blastLib.FULL_BBLAST_TAC
   );
 
+(*
+val memadsz = 32;
+val memvalsz = 8;
+val ldsz = 32;
+val stsz = 8;
+*)
+fun gen_bir_mem_acc_disjoint_goal memadsz memvalsz ldsz stsz =
+let
+  val _ = if memvalsz = 8 then () else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "gen_bir_mem_acc_disjoint_goal" "cannot handle memory that does not use bytes as values";
+  val memadsz_tm = bir_immtype_t_of_size memadsz;
+  val memadsz_wty_tm = wordsSyntax.mk_int_word_type memadsz;
+  val w_la_tm = mk_var ("w_la", memadsz_wty_tm);
+  val w_sa_tm = mk_var ("w_sa", memadsz_wty_tm);
+  val ldbytelen = ldsz div 8;
+  val stbytelen = stsz div 8;
+  fun mk_ad_tm i = wordsSyntax.mk_wordii (i, memadsz);
+  val ldbytelen_w_tm = mk_ad_tm ldbytelen;
+  val stbytelen_w_tm = mk_ad_tm stbytelen;
+  fun mk_bir_mem_addr_tm n_tm = “bir_mem_addr ^memadsz_tm ^n_tm”;
+  fun mk_w_ad_off_tm w_tm i = (fn tm => if i = 0 then tm else “^tm + ^(numSyntax.term_of_int i)”) “w2n ^w_tm”;
+  fun mk_ad_set_tm w_tm n = pred_setSyntax.mk_set (List.tabulate (n, (fn i => mk_bir_mem_addr_tm (mk_w_ad_off_tm w_tm i))));
+  val ldad_set_tm = mk_ad_set_tm w_la_tm ldbytelen;
+  val stad_set_tm = mk_ad_set_tm w_sa_tm stbytelen;
+  val std_cond =
+    “(^w_sa_tm <+ ^w_sa_tm + ^stbytelen_w_tm /\ ^w_la_tm <+ ^w_la_tm + ^ldbytelen_w_tm) /\ (^w_la_tm + ^ldbytelen_w_tm <=+ ^w_sa_tm \/ ^w_sa_tm + ^stbytelen_w_tm <=+ ^w_la_tm)”;
+  val spec_8_8_cond =
+    “(^w_sa_tm <+ ^w_sa_tm + 1w) /\ (^w_la_tm + 1w <=+ ^w_sa_tm \/ ^w_sa_tm + 1w <=+ ^w_la_tm)”;
+  val cond = if ldsz = 8 andalso stsz = 8 then spec_8_8_cond else std_cond;
+in
+ “
+  !(^w_sa_tm) (^w_la_tm).
+  (^cond) ==>
+  (DISJOINT
+     ^stad_set_tm
+     ^ldad_set_tm)
+ ”
+end;
+
 (* core disjointness theorems first *)
 Theorem bir_mem_acc_disjoint_32_8_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1136,6 +1174,11 @@ Theorem bir_mem_acc_disjoint_32_8_thm:
 Proof
   bir_mem_acc_disjoint_TAC
 QED
+
+val _ = if identical
+           (concl bir_mem_acc_disjoint_32_8_thm)
+           (gen_bir_mem_acc_disjoint_goal 32 8 32 8) then ()
+        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
 
 Theorem bir_mem_acc_disjoint_32_32_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1153,6 +1196,11 @@ Proof
   bir_mem_acc_disjoint_TAC
 QED
 
+val _ = if identical
+           (concl bir_mem_acc_disjoint_32_32_thm)
+           (gen_bir_mem_acc_disjoint_goal 32 8 32 32) then ()
+        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
+
 Theorem bir_mem_acc_disjoint_8_8_thm:
   !(w_sa:word32) (w_la:word32).
   ((w_sa <+ w_sa + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
@@ -1162,6 +1210,11 @@ Theorem bir_mem_acc_disjoint_8_8_thm:
 Proof
   bir_mem_acc_disjoint_TAC
 QED
+
+val _ = if identical
+           (concl bir_mem_acc_disjoint_8_8_thm)
+           (gen_bir_mem_acc_disjoint_goal 32 8 8 8) then ()
+        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
 
 Theorem bir_mem_acc_disjoint_8_32_thm:
   !(w_sa:word32) (w_la:word32).
@@ -1175,6 +1228,11 @@ Theorem bir_mem_acc_disjoint_8_32_thm:
 Proof
   bir_mem_acc_disjoint_TAC
 QED
+
+val _ = if identical
+           (concl bir_mem_acc_disjoint_8_32_thm)
+           (gen_bir_mem_acc_disjoint_goal 32 8 8 32) then ()
+        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
 
 (* the bypass theorems have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
 
