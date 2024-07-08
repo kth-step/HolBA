@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Definition of ifthenelse expression evaluation and theorems associated   *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse bossLib boolLib ;
 open bir_basicTheory ;
 open bir_typingTheory ;

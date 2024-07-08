@@ -1,3 +1,7 @@
+(* --------------------------------------------------------------------------- *)
+(*  Theorems regarding the meta language properties like typing and evaluation *)
+(* --------------------------------------------------------------------------- *)
+
 open HolKernel Parse boolLib bossLib ;
 open bir_envTheory bir_basicTheory bir_binexpTheory bir_unaryexpTheory ;
 open bir_binpredTheory bir_ifthenelseTheory ;

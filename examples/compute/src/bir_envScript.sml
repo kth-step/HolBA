@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Definition of variable environments                                      *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse bossLib boolLib ;
 open bir_basicTheory ;
 

@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Definition of the general computation function                           *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse bossLib boolLib ;
 open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory bir_ifthenelseTheory ;
 open bir_binpredTheory ;

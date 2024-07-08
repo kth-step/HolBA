@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Definition of the type system and the typing relation                    *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse boolLib bossLib ;
 open bir_basicTheory ;
 open bir_envTheory ;

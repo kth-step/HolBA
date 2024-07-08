@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Basic type definition of BIR expressions                                 *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse bossLib boolLib ;
 open wordsTheory ;
 

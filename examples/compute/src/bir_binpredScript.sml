@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Definition of binary predicate evaluation and theorems associated        *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse boolLib bossLib ;
 open bir_basicTheory ;
 open bir_typingTheory ;

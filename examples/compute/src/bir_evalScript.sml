@@ -1,3 +1,7 @@
+(* ------------------------------------------------------------------------- *)
+(*  Definition of the general evaluation relation                            *)
+(* ------------------------------------------------------------------------- *)
+
 open HolKernel Parse bossLib boolLib ;
 open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory ;
 open bir_binpredTheory bir_ifthenelseTheory ;
