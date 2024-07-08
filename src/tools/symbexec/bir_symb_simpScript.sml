@@ -852,7 +852,7 @@ QED
 (* ******************************************************* *)
 (* TODO: could simplify condition for store bypassing with alignment requirement (if it holds in the target code, which should be the case) *)
 
-Theorem birs_simplification_Mem_Match_thm1:
+Theorem birs_simplification_Mem_Match_thm1[local]:
   !at vt sz be_ld be_m be_sa be_v be_la.
   (type_of_bir_exp be_m = SOME (BType_Mem at vt)) ==>
   (size_of_bir_immtype sz MOD size_of_bir_immtype vt = 0) ==>
@@ -963,52 +963,64 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-(* TODO: rename for theorem name consistency *)
-Theorem mem_simp_32_8_helper_thm[local]:
-  (size_of_bir_immtype Bit8 MOD size_of_bir_immtype Bit8 = 0) /\
-  (size_of_bir_immtype Bit8 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
+(*
+val memadsz = 64;
+val memvalsz = 8;
+val ldstvalsz = 32;
+*)
+fun gen_mem_simp_helper_goal memadsz memvalsz ldstvalsz =
+let
+  val _ = if memvalsz = 8 then () else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "gen_mem_simp_helper_goal" "cannot handle memory that does not use bytes as values";
+  val memadsz_tm = bir_immtype_t_of_size memadsz;
+  val memvalsz_tm = bir_immtype_t_of_size memvalsz;
+  val ldstvalsz_tm = bir_immtype_t_of_size ldstvalsz;
+in
+ “
+  (size_of_bir_immtype ^ldstvalsz_tm MOD size_of_bir_immtype ^memvalsz_tm = 0) /\
+  (size_of_bir_immtype ^ldstvalsz_tm DIV size_of_bir_immtype ^memvalsz_tm <= 2 ** size_of_bir_immtype ^memadsz_tm)
+ ”
+end;
+
+(* the match theorems have consistent naming: MEMADDRSZ_MEMVALSZ_LOADSTOREVALSZ *)
+Theorem mem_simp_32_8_8_helper_thm[local]:
+  ^(gen_mem_simp_helper_goal 32 8 8)
 Proof
 EVAL_TAC
 QED
 
-Theorem mem_simp_32_32_helper_thm[local]:
-  (size_of_bir_immtype Bit32 MOD size_of_bir_immtype Bit8 = 0) /\
-  (size_of_bir_immtype Bit32 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit32)
+Theorem mem_simp_32_8_32_helper_thm[local]:
+  ^(gen_mem_simp_helper_goal 32 8 32)
 Proof
 EVAL_TAC
 QED
 
-Theorem mem_simp_64_8_helper_thm[local]:
-  (size_of_bir_immtype Bit8 MOD size_of_bir_immtype Bit8 = 0) /\
-  (size_of_bir_immtype Bit8 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
+Theorem mem_simp_64_8_8_helper_thm[local]:
+  ^(gen_mem_simp_helper_goal 64 8 8)
 Proof
 EVAL_TAC
 QED
 
 Theorem mem_simp_64_8_32_helper_thm[local]:
-  (size_of_bir_immtype Bit32 MOD size_of_bir_immtype Bit8 = 0) /\
-  (size_of_bir_immtype Bit32 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
+  ^(gen_mem_simp_helper_goal 64 8 32)
 Proof
 EVAL_TAC
 QED
 
-Theorem mem_simp_64_64_helper_thm[local]:
-  (size_of_bir_immtype Bit64 MOD size_of_bir_immtype Bit8 = 0) /\
-  (size_of_bir_immtype Bit64 DIV size_of_bir_immtype Bit8 <= 2 ** size_of_bir_immtype Bit64)
+Theorem mem_simp_64_8_64_helper_thm[local]:
+  ^(gen_mem_simp_helper_goal 64 8 64)
 Proof
 EVAL_TAC
 QED
 
-(* the match theorems have consistent naming: MEMADDRSZ_MEMVALSZ_LOADSTOREVALSZ *)
-Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_32_8_helper_thm] o
+Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_32_8_8_helper_thm] o
     Q.SPECL [`Bit32`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
 
 
-Theorem birs_simplification_Mem_Match_32_8_32_thm = (SIMP_RULE std_ss [mem_simp_32_32_helper_thm] o
+Theorem birs_simplification_Mem_Match_32_8_32_thm = (SIMP_RULE std_ss [mem_simp_32_8_32_helper_thm] o
     Q.SPECL [`Bit32`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1;
 
 
-Theorem birs_simplification_Mem_Match_64_8_8_thm = (SIMP_RULE std_ss [mem_simp_64_8_helper_thm] o
+Theorem birs_simplification_Mem_Match_64_8_8_thm = (SIMP_RULE std_ss [mem_simp_64_8_8_helper_thm] o
     Q.SPECL [`Bit64`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
 
 
@@ -1016,7 +1028,7 @@ Theorem birs_simplification_Mem_Match_64_8_32_thm = (SIMP_RULE std_ss [mem_simp_
     Q.SPECL [`Bit64`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1;
 
 
-Theorem birs_simplification_Mem_Match_64_8_64_thm = (SIMP_RULE std_ss [mem_simp_64_64_helper_thm] o
+Theorem birs_simplification_Mem_Match_64_8_64_thm = (SIMP_RULE std_ss [mem_simp_64_8_64_helper_thm] o
     Q.SPECL [`Bit64`, `Bit8`, `Bit64`]) birs_simplification_Mem_Match_thm1;
 
 
@@ -1104,6 +1116,7 @@ in
  ”
 end;
 
+(* TODO: either mark as local or put into an aux theory *)
 Theorem bool2w_OR_AND_REWRS_thm:
   (!A B. (bool2w A) || (bool2w B) = bool2w (A \/ B)) /\
   (!A B. (bool2w A) && (bool2w B) = bool2w (A /\ B))
@@ -1115,13 +1128,6 @@ REPEAT STRIP_TAC >> (
         )
       )
 QED
-
-val bir_mem_acc_disjoint_TAC =
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    blastLib.FULL_BBLAST_TAC
-  );
 
 (*
 val memadsz = 32;
@@ -1161,26 +1167,33 @@ in
  ”
 end;
 
+val bir_mem_acc_disjoint_TAC =
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+    blastLib.FULL_BBLAST_TAC
+  );
+
 (* core disjointness theorems first *)
-Theorem bir_mem_acc_disjoint_32_8_32_8_thm:
+Theorem bir_mem_acc_disjoint_32_8_32_8_thm[local]:
   ^(gen_bir_mem_acc_disjoint_goal 32 8 32 8)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
 
-Theorem bir_mem_acc_disjoint_32_8_32_32_thm:
+Theorem bir_mem_acc_disjoint_32_8_32_32_thm[local]:
   ^(gen_bir_mem_acc_disjoint_goal 32 8 32 32)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
 
-Theorem bir_mem_acc_disjoint_32_8_8_8_thm:
+Theorem bir_mem_acc_disjoint_32_8_8_8_thm[local]:
   ^(gen_bir_mem_acc_disjoint_goal 32 8 8 8)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
 
-Theorem bir_mem_acc_disjoint_32_8_8_32_thm:
+Theorem bir_mem_acc_disjoint_32_8_8_32_thm[local]:
   ^(gen_bir_mem_acc_disjoint_goal 32 8 8 32)
 Proof
   bir_mem_acc_disjoint_TAC
@@ -1188,10 +1201,10 @@ QED
 
 (* the bypass theorems have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
 
-Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm1:
+Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 32 8)
 Proof
-REWRITE_TAC [birs_simplification_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -1306,7 +1319,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_32_8_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 64 8)
 Proof
   cheat
@@ -1314,10 +1327,10 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_8_thm1
 
-Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm1:
+Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 32 32)
 Proof
-REWRITE_TAC [birs_simplification_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -1432,7 +1445,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_32_32_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 64 64)
 Proof
   cheat
@@ -1440,7 +1453,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_64_thm1
 
-Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm1:
+Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 8 8)
 Proof
 REWRITE_TAC [birs_simplification_def] >>
@@ -1558,7 +1571,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_8_8_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 8 8)
 Proof
   cheat
@@ -1567,10 +1580,10 @@ QED
 Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_8_thm1
 
 
-Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm1:
+Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 8 32)
 Proof
-REWRITE_TAC [birs_simplification_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -1685,7 +1698,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_8_32_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 8 64)
 Proof
   cheat
@@ -1695,7 +1708,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm = SIMP_RULE std_ss [] birs_
 
 
 
-Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 8 32)
 Proof
   cheat
@@ -1703,7 +1716,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_32_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 32 32)
 Proof
   cheat
@@ -1711,7 +1724,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_32_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 32 8)
 Proof
   cheat
@@ -1721,7 +1734,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm = SIMP_RULE std_ss [] birs_
 
 
 
-Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 64 32)
 Proof
   cheat
@@ -1729,7 +1742,7 @@ QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_32_thm1
 
-Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm1:
+Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 32 64)
 Proof
   cheat
