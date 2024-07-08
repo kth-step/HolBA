@@ -1200,10 +1200,27 @@ Proof
 QED
 
 (* the bypass theorems have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
-
-Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 32 8 32 8)
-Proof
+(*
+val memadsz = 32;
+val memvalsz = 8;
+val ldsz = 32;
+val stsz = 8;
+val bir_mem_acc_disjoint_thm = bir_mem_acc_disjoint_32_8_32_8_thm;
+val memadsz = 64;
+val memvalsz = 8;
+val ldsz = 64;
+val stsz = 8;
+val bir_mem_acc_disjoint_thm = prove(gen_bir_mem_acc_disjoint_goal 64 8 64 8, bir_mem_acc_disjoint_TAC);
+*)
+fun birs_simplification_Mem_Bypass_TAC memadsz memvalsz ldsz stsz bir_mem_acc_disjoint_thm =
+let
+  val _ = if memvalsz = 8 then () else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "gen_simp_mem_bypass_goal" "cannot handle memory that does not use bytes as values";
+  val memadsz_tm = bir_immtype_t_of_size memadsz;
+  val memadsz_imm_tm = bir_imm_of_size memadsz;
+  val memvalsz_tm = bir_immtype_t_of_size memvalsz;
+  val ldsz_tm = bir_immtype_t_of_size ldsz;
+  val stsz_tm = bir_immtype_t_of_size stsz;
+in
   REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
@@ -1246,7 +1263,10 @@ Proof
   ) >>
 
   REPEAT (PAT_X_ASSUM T (K ALL_TAC)) >>
-  PAT_X_ASSUM ``Bit8 = rty`` (ASSUME_TAC o GSYM) >>
+  TRY (PAT_X_ASSUM ``Bit8 = rty`` (ASSUME_TAC o GSYM)) >>
+  TRY (PAT_X_ASSUM ``Bit16 = rty`` (ASSUME_TAC o GSYM)) >>
+  TRY (PAT_X_ASSUM ``Bit32 = rty`` (ASSUME_TAC o GSYM)) >>
+  TRY (PAT_X_ASSUM ``Bit64 = rty`` (ASSUME_TAC o GSYM)) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
@@ -1255,9 +1275,8 @@ Proof
 bir_exp_memTheory.bir_store_load_mem_disjoint_THM
 bir_exp_memTheory.bir_store_load_mem_THM
 *)
-
-  `?mmap'. bir_store_in_mem Bit8 Bit32 b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
-    `bir_number_of_mem_splits Bit8 Bit8 Bit32 <> NONE` by (
+  `?mmap'. bir_store_in_mem ^memvalsz_tm ^memadsz_tm b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
+    `bir_number_of_mem_splits ^memvalsz_tm ^stsz_tm ^memadsz_tm <> NONE` by (
       ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
       EVAL_TAC
     ) >>
@@ -1270,21 +1289,22 @@ bir_exp_memTheory.bir_store_load_mem_THM
   ) >>
   rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm bi_la)` >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
-
-  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
+(*
+  `?bv_res. bir_load_from_mem ^memvalsz_tm ^ldsz_tm ^memadsz_tm mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
     MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
-  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
+  `?bv_res. bir_load_from_mem ^memvalsz_tm ^ldsz_tm ^memadsz_tm f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
     MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
+*)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
-  `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
-         (bir_load_from_mem_used_addrs Bit8 Bit32 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
+  `DISJOINT (bir_store_in_mem_used_addrs ^memvalsz_tm b'' ^memadsz_tm BEnd_LittleEndian (b2n b))
+         (bir_load_from_mem_used_addrs ^memvalsz_tm ^ldsz_tm ^memadsz_tm BEnd_LittleEndian (b2n bi_la))` by (
     (*
     bir_exp_memTheory.bir_load_from_mem_used_addrs_def
     bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
@@ -1302,19 +1322,25 @@ bir_exp_memTheory.bir_store_load_mem_THM
       FULL_SIMP_TAC (std_ss++holBACore_ss) []
     ) >>
 
-    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
-    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
+    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (^memadsz_imm_tm w_la))` >>
+    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (^memadsz_imm_tm w_sa))` >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
 
-    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_32_8_thm >>
+    MATCH_MP_TAC bir_mem_acc_disjoint_thm >>
     FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
   ) >>
 
   IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
+end;
+
+Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm1[local]:
+  ^(gen_simp_mem_bypass_goal 32 8 32 8)
+Proof
+  birs_simplification_Mem_Bypass_TAC 32 8 32 8 bir_mem_acc_disjoint_32_8_32_8_thm
 QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_32_8_thm1
@@ -1322,7 +1348,7 @@ Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm = SIMP_RULE std_ss [] birs_
 Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 64 8)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 64 8 (prove(gen_bir_mem_acc_disjoint_goal 64 8 64 8, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_8_thm1
@@ -1330,117 +1356,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm = SIMP_RULE std_ss [] birs_
 Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 32 32)
 Proof
-  REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
-
-  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  Cases_on `type_of_bir_exp be_la` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
-    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  rename1 `type_of_bir_exp be_la = SOME laty` >>
-
-  `symb_interpr_for_symbs (bir_vars_of_exp be_m) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_sa) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_v) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_la) H` by (
-    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
-  ) >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
-  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
-  rename1 `birs_interpret_fun_ALT H be_m = SOME v_m` >>
-  rename1 `birs_interpret_fun_ALT H be_sa = SOME v_sa` >>
-  rename1 `birs_interpret_fun_ALT H be_v = SOME v_v` >>
-  rename1 `birs_interpret_fun_ALT H be_la = SOME v_la` >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  Cases_on `v_sa` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `v_m` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `v_v` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  REPEAT (PAT_X_ASSUM T (K ALL_TAC)) >>
-  PAT_X_ASSUM ``Bit32 = rty`` (ASSUME_TAC o GSYM) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
-
-(*
-bir_exp_memTheory.bir_store_load_mem_disjoint_THM
-bir_exp_memTheory.bir_store_load_mem_THM
-*)
-
-  `?mmap'. bir_store_in_mem Bit8 Bit32 b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
-    `bir_number_of_mem_splits Bit8 Bit32 Bit32 <> NONE` by (
-      ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-      EVAL_TAC
-    ) >>
-    IMP_RES_TAC bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  Cases_on `v_la` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm bi_la)` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
-
-  `?bv_res. bir_load_from_mem Bit8 Bit32 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
-    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-    EVAL_TAC
-  ) >>
-  `?bv_res. bir_load_from_mem Bit8 Bit32 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
-    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-    EVAL_TAC
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
-         (bir_load_from_mem_used_addrs Bit8 Bit32 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
-    (*
-    bir_exp_memTheory.bir_load_from_mem_used_addrs_def
-    bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
-    bir_exp_memTheory.bir_store_in_mem_used_addrs_def
-    bir_exp_memTheory.bir_store_in_mem_used_addrs_REWRS
-    *)
-    Cases_on `b''` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    Cases_on `bi_la` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-    Cases_on `b` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
-    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
-
-    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_32_32_thm >>
-    FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
-  ) >>
-
-  IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  birs_simplification_Mem_Bypass_TAC 32 8 32 32 bir_mem_acc_disjoint_32_8_32_32_thm
 QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_32_32_thm1
@@ -1448,7 +1364,7 @@ Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm = SIMP_RULE std_ss [] birs
 Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 64 64)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 64 64 (prove(gen_bir_mem_acc_disjoint_goal 64 8 64 64, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_64_thm1
@@ -1456,117 +1372,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm = SIMP_RULE std_ss [] birs
 Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 8 8)
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
-
-  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  Cases_on `type_of_bir_exp be_la` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
-    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  rename1 `type_of_bir_exp be_la = SOME laty` >>
-
-  `symb_interpr_for_symbs (bir_vars_of_exp be_m) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_sa) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_v) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_la) H` by (
-    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
-  ) >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
-  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
-  rename1 `birs_interpret_fun_ALT H be_m = SOME v_m` >>
-  rename1 `birs_interpret_fun_ALT H be_sa = SOME v_sa` >>
-  rename1 `birs_interpret_fun_ALT H be_v = SOME v_v` >>
-  rename1 `birs_interpret_fun_ALT H be_la = SOME v_la` >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  Cases_on `v_sa` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `v_m` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `v_v` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  REPEAT (PAT_X_ASSUM T (K ALL_TAC)) >>
-  PAT_X_ASSUM ``Bit8 = rty`` (ASSUME_TAC o GSYM) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
-
-(*
-bir_exp_memTheory.bir_store_load_mem_disjoint_THM
-bir_exp_memTheory.bir_store_load_mem_THM
-*)
-
-  `?mmap'. bir_store_in_mem Bit8 Bit32 b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
-    `bir_number_of_mem_splits Bit8 Bit8 Bit32 <> NONE` by (
-      ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-      EVAL_TAC
-    ) >>
-    IMP_RES_TAC bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  Cases_on `v_la` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm bi_la)` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
-
-  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
-    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-    EVAL_TAC
-  ) >>
-  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
-    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-    EVAL_TAC
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
-         (bir_load_from_mem_used_addrs Bit8 Bit8 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
-    (*
-    bir_exp_memTheory.bir_load_from_mem_used_addrs_def
-    bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
-    bir_exp_memTheory.bir_store_in_mem_used_addrs_def
-    bir_exp_memTheory.bir_store_in_mem_used_addrs_REWRS
-    *)
-    Cases_on `b''` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    Cases_on `bi_la` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-    Cases_on `b` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
-    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
-
-    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_8_8_thm >>
-    FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
-  ) >>
-
-  IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  birs_simplification_Mem_Bypass_TAC 32 8 8 8 bir_mem_acc_disjoint_32_8_8_8_thm
 QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_8_8_thm1
@@ -1574,7 +1380,7 @@ Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm = SIMP_RULE std_ss [] birs_s
 Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 8 8)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 8 8 (prove(gen_bir_mem_acc_disjoint_goal 64 8 8 8, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_8_thm1
@@ -1583,117 +1389,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm = SIMP_RULE std_ss [] birs_s
 Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 32 8 8 32)
 Proof
-  REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
-
-  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  Cases_on `type_of_bir_exp be_la` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
-    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  rename1 `type_of_bir_exp be_la = SOME laty` >>
-
-  `symb_interpr_for_symbs (bir_vars_of_exp be_m) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_sa) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_v) H /\
-   symb_interpr_for_symbs (bir_vars_of_exp be_la) H` by (
-    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
-  ) >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
-  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
-  rename1 `birs_interpret_fun_ALT H be_m = SOME v_m` >>
-  rename1 `birs_interpret_fun_ALT H be_sa = SOME v_sa` >>
-  rename1 `birs_interpret_fun_ALT H be_v = SOME v_v` >>
-  rename1 `birs_interpret_fun_ALT H be_la = SOME v_la` >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  Cases_on `v_sa` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `v_m` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `v_v` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  REPEAT (PAT_X_ASSUM T (K ALL_TAC)) >>
-  PAT_X_ASSUM ``Bit32 = rty`` (ASSUME_TAC o GSYM) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
-
-(*
-bir_exp_memTheory.bir_store_load_mem_disjoint_THM
-bir_exp_memTheory.bir_store_load_mem_THM
-*)
-
-  `?mmap'. bir_store_in_mem Bit8 Bit32 b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
-    `bir_number_of_mem_splits Bit8 Bit32 Bit32 <> NONE` by (
-      ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-      EVAL_TAC
-    ) >>
-    IMP_RES_TAC bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-
-  Cases_on `v_la` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm bi_la)` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
-
-  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
-    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-    EVAL_TAC
-  ) >>
-  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
-    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
-    EVAL_TAC
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
-         (bir_load_from_mem_used_addrs Bit8 Bit8 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
-    (*
-    bir_exp_memTheory.bir_load_from_mem_used_addrs_def
-    bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
-    bir_exp_memTheory.bir_store_in_mem_used_addrs_def
-    bir_exp_memTheory.bir_store_in_mem_used_addrs_REWRS
-    *)
-    Cases_on `b''` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    Cases_on `bi_la` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-    Cases_on `b` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
-    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
-
-    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_8_32_thm >>
-    FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
-  ) >>
-
-  IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  birs_simplification_Mem_Bypass_TAC 32 8 8 32 bir_mem_acc_disjoint_32_8_8_32_thm
 QED
 
 Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_8_32_thm1
@@ -1701,7 +1397,7 @@ Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm = SIMP_RULE std_ss [] birs_
 Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 8 64)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 8 64 (prove(gen_bir_mem_acc_disjoint_goal 64 8 8 64, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_64_thm1
@@ -1711,7 +1407,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm = SIMP_RULE std_ss [] birs_
 Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 8 32)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 8 32 (prove(gen_bir_mem_acc_disjoint_goal 64 8 8 32, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_32_thm1
@@ -1719,7 +1415,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm = SIMP_RULE std_ss [] birs_
 Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 32 32)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 32 32 (prove(gen_bir_mem_acc_disjoint_goal 64 8 32 32, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_32_thm1
@@ -1727,7 +1423,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm = SIMP_RULE std_ss [] birs
 Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 32 8)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 32 8 (prove(gen_bir_mem_acc_disjoint_goal 64 8 32 8, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_8_thm1
@@ -1737,7 +1433,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm = SIMP_RULE std_ss [] birs_
 Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 64 32)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 64 32 (prove(gen_bir_mem_acc_disjoint_goal 64 8 64 32, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_32_thm1
@@ -1745,7 +1441,7 @@ Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm = SIMP_RULE std_ss [] birs
 Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm1[local]:
   ^(gen_simp_mem_bypass_goal 64 8 32 64)
 Proof
-  cheat
+  birs_simplification_Mem_Bypass_TAC 64 8 32 64 (prove(gen_bir_mem_acc_disjoint_goal 64 8 32 64, bir_mem_acc_disjoint_TAC))
 QED
 
 Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_64_thm1
