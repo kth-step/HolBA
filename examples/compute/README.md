@@ -6,14 +6,17 @@ This repository implements a fragment of the BIR language from [HolBA](https://g
 ## Structure of the repository
 The structure of this repository is as follows :
 ```
-└─ src : source code 
-    ├─ bir_basicScript.sml : Basic Datatypes required of BIR expressions
-    ├─ bir_binexpScript.sml : Binary Expressions evaluation
-    ├─ bir_binpredScript.sml : Binary Predicate evaluation
-    ├─ bir_computeScript.sml : Computation function for BIR expressions
-    ├─ bir_envScript.sml : Variable Environment
-    ├─ bir_evalScript.sml : Evaluation relation for BIR expressions
-    └─ bir_unaryexpScript.sml : Unary Expressions evaluation
+├─ examples : Examples on BIR usage
+├─ src : source code of main theory
+│   └─ theory : main BIR theories
+│       ├─ bir_basicScript.sml : Basic Datatypes required of BIR expressions
+│       ├─ bir_binexpScript.sml : Binary Expressions evaluation
+│       ├─ bir_binpredScript.sml : Binary Predicate evaluation
+│       ├─ bir_computeScript.sml : Computation function for BIR expressions
+│       ├─ bir_envScript.sml : Variable Environment
+│       ├─ bir_evalScript.sml : Evaluation relation for BIR expressions
+│       └─ bir_unaryexpScript.sml : Unary Expressions evaluation
+└─ test : Sanity checks theorems and tests
 ```
 
 

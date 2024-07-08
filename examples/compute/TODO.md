@@ -1,13 +1,14 @@
 ## General
 - Tidy code 
-    - [ ] Change indent to 2 spaces (or less for proofs)
-    - [ ] Add semicolons at the end of statements
-    - [ ] Clean double asterisks comment
-    - [ ] Add a top level comment describing each files / theories
+    - [x] Change indent to 2 spaces (or less for proofs)
+    - [x] Add semicolons at the end of statements
+    - [x] Clean double asterisks comment
+    - [x] Add a top level comment describing each files / theories
     - Split into more directories
-        - [ ] Create theories directory
-        - [ ] Create example directories
-    - [ ] Add `.holpath`
+        - [x] Create theories directory
+        - [x] Create example directories
+    - [x] Add `.holpath`
+- [ ] Begin presentation
 
 ## Expression semantics
 - Add Examples
