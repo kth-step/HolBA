@@ -1,0 +1,4 @@
+INCLUDES = $(SMOLBIRDIR)/src/theory
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
