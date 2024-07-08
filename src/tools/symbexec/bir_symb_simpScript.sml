@@ -1162,77 +1162,29 @@ in
 end;
 
 (* core disjointness theorems first *)
-Theorem bir_mem_acc_disjoint_32_8_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 1w /\ w_la <+ w_la + 4w) /\ (w_la + 4w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa)}
-     {bir_mem_addr Bit32 (w2n w_la);
-      bir_mem_addr Bit32 (w2n w_la + 1);
-      bir_mem_addr Bit32 (w2n w_la + 2);
-      bir_mem_addr Bit32 (w2n w_la + 3)})
+Theorem bir_mem_acc_disjoint_32_8_32_8_thm:
+  ^(gen_bir_mem_acc_disjoint_goal 32 8 32 8)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
 
-val _ = if identical
-           (concl bir_mem_acc_disjoint_32_8_thm)
-           (gen_bir_mem_acc_disjoint_goal 32 8 32 8) then ()
-        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
-
-Theorem bir_mem_acc_disjoint_32_32_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 4w) /\ (w_la + 4w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa);
-      bir_mem_addr Bit32 (w2n w_sa + 1);
-      bir_mem_addr Bit32 (w2n w_sa + 2);
-      bir_mem_addr Bit32 (w2n w_sa + 3)}
-     {bir_mem_addr Bit32 (w2n w_la);
-      bir_mem_addr Bit32 (w2n w_la + 1);
-      bir_mem_addr Bit32 (w2n w_la + 2);
-      bir_mem_addr Bit32 (w2n w_la + 3)})
+Theorem bir_mem_acc_disjoint_32_8_32_32_thm:
+  ^(gen_bir_mem_acc_disjoint_goal 32 8 32 32)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
 
-val _ = if identical
-           (concl bir_mem_acc_disjoint_32_32_thm)
-           (gen_bir_mem_acc_disjoint_goal 32 8 32 32) then ()
-        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
-
-Theorem bir_mem_acc_disjoint_8_8_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa)}
-     {bir_mem_addr Bit32 (w2n w_la)})
+Theorem bir_mem_acc_disjoint_32_8_8_8_thm:
+  ^(gen_bir_mem_acc_disjoint_goal 32 8 8 8)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
 
-val _ = if identical
-           (concl bir_mem_acc_disjoint_8_8_thm)
-           (gen_bir_mem_acc_disjoint_goal 32 8 8 8) then ()
-        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
-
-Theorem bir_mem_acc_disjoint_8_32_thm:
-  !(w_sa:word32) (w_la:word32).
-  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
-  (DISJOINT
-     {bir_mem_addr Bit32 (w2n w_sa);
-      bir_mem_addr Bit32 (w2n w_sa + 1);
-      bir_mem_addr Bit32 (w2n w_sa + 2);
-      bir_mem_addr Bit32 (w2n w_sa + 3)}
-     {bir_mem_addr Bit32 (w2n w_la)})
+Theorem bir_mem_acc_disjoint_32_8_8_32_thm:
+  ^(gen_bir_mem_acc_disjoint_goal 32 8 8 32)
 Proof
   bir_mem_acc_disjoint_TAC
 QED
-
-val _ = if identical
-           (concl bir_mem_acc_disjoint_8_32_thm)
-           (gen_bir_mem_acc_disjoint_goal 32 8 8 32) then ()
-        else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "..." "noooooooooooooo!!!!";
 
 (* the bypass theorems have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
 
@@ -1343,7 +1295,7 @@ bir_exp_memTheory.bir_store_load_mem_THM
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
 
-    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_thm >>
+    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_32_8_thm >>
     FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
   ) >>
 
@@ -1469,7 +1421,7 @@ bir_exp_memTheory.bir_store_load_mem_THM
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
 
-    MATCH_MP_TAC bir_mem_acc_disjoint_32_32_thm >>
+    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_32_32_thm >>
     FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
   ) >>
 
@@ -1595,7 +1547,7 @@ bir_exp_memTheory.bir_store_load_mem_THM
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
 
-    MATCH_MP_TAC bir_mem_acc_disjoint_8_8_thm >>
+    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_8_8_thm >>
     FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
   ) >>
 
@@ -1722,7 +1674,7 @@ bir_exp_memTheory.bir_store_load_mem_THM
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
 
-    MATCH_MP_TAC bir_mem_acc_disjoint_8_32_thm >>
+    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_8_32_thm >>
     FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
   ) >>
 
