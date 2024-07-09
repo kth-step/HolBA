@@ -11,7 +11,7 @@ val _ = new_theory "bir_env" ;
 
 (* Environment for evaluation *)
 Datatype:
-  bir_var_environment_t = BEnv (string -> (bir_val_t option))
+  bir_var_environment_t = BEnv (ident -> (bir_val_t option))
 End
 
 (* Lookup function *)
@@ -32,7 +32,7 @@ End
 (* Update environment *)
 (* Slightly differs from original as we don’t check for existence here *)
 Definition bir_env_update_def:
-  bir_env_update env (BVar id) v = BEnv ((id =+ SOME v) env)
+  bir_env_update ((BEnv env):bir_var_environment_t) (BVar id) v = BEnv ((id =+ SOME v) env)
 End
 
 (* ****************************************** *)
@@ -51,7 +51,7 @@ QED
 Theorem bir_env_lookup_update:
   !env var v. bir_env_lookup_rel (bir_env_update env var v) var v 
 Proof
-  Cases_on `var` >>
+  Cases_on `var` >> Cases_on `env` >>
   rw [bir_env_update_def, bir_env_lookup_rel_def]
 QED
 

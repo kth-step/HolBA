@@ -17,9 +17,7 @@ QED
 Theorem bir_eval_exp_update_env_den:
   !env var vimm. bir_eval_exp (bir_env_update env var vimm) (BExp_Den var) vimm
 Proof
-  Cases_on `var` >>
-  rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_def] >>
-  qexists_tac `s` >>
+  Cases_on `var` >> Cases_on `env` >>
   rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_def]
 QED
 
