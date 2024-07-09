@@ -1,7 +1,8 @@
 CLINE_OPTIONS = -r
 
 INCLUDES = $(SMOLBIRDIR)/src/theory \
-					 $(SMOLBIRDIR)/test
+					 $(SMOLBIRDIR)/test \
+					 $(SMOLBIRDIR)/examples
 
 
 all: $(DEFAULT_TARGETS)

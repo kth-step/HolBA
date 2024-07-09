@@ -1,0 +1,6 @@
+CLINE_OPTIONS = -r
+
+INCLUDES = $(SMOLBIRDIR)/examples/increment
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
