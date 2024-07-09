@@ -963,6 +963,8 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
+(* TODO: move to some generic bir memory library *)
+(* the match theorems have consistent naming: MEMADDRSZ_MEMVALSZ_LOADSTOREVALSZ *)
 (*
 val memadsz = 64;
 val memvalsz = 8;
@@ -981,56 +983,31 @@ in
  ”
 end;
 
-(* the match theorems have consistent naming: MEMADDRSZ_MEMVALSZ_LOADSTOREVALSZ *)
-Theorem mem_simp_32_8_8_helper_thm[local]:
-  ^(gen_mem_simp_helper_goal 32 8 8)
-Proof
-EVAL_TAC
-QED
+fun gen_birs_simplification_Mem_Match_prove memadsz memvalsz ldstvalsz =
+let
+  val memadsz_tm = bir_immtype_t_of_size memadsz;
+  val memvalsz_tm = bir_immtype_t_of_size memvalsz;
+  val ldstvalsz_tm = bir_immtype_t_of_size ldstvalsz;
+in
+  (SIMP_RULE std_ss [prove(gen_mem_simp_helper_goal memadsz memvalsz ldstvalsz, EVAL_TAC)] o
+    SPECL [memadsz_tm, memvalsz_tm, ldstvalsz_tm])
+  birs_simplification_Mem_Match_thm1
+end;
 
-Theorem mem_simp_32_8_32_helper_thm[local]:
-  ^(gen_mem_simp_helper_goal 32 8 32)
-Proof
-EVAL_TAC
-QED
+Theorem birs_simplification_Mem_Match_32_8_8_thm =
+  gen_birs_simplification_Mem_Match_prove 32 8 8;
 
-Theorem mem_simp_64_8_8_helper_thm[local]:
-  ^(gen_mem_simp_helper_goal 64 8 8)
-Proof
-EVAL_TAC
-QED
+Theorem birs_simplification_Mem_Match_32_8_32_thm =
+  gen_birs_simplification_Mem_Match_prove 32 8 32;
 
-Theorem mem_simp_64_8_32_helper_thm[local]:
-  ^(gen_mem_simp_helper_goal 64 8 32)
-Proof
-EVAL_TAC
-QED
+Theorem birs_simplification_Mem_Match_64_8_8_thm =
+  gen_birs_simplification_Mem_Match_prove 64 8 8;
 
-Theorem mem_simp_64_8_64_helper_thm[local]:
-  ^(gen_mem_simp_helper_goal 64 8 64)
-Proof
-EVAL_TAC
-QED
+Theorem birs_simplification_Mem_Match_64_8_32_thm =
+  gen_birs_simplification_Mem_Match_prove 64 8 32;
 
-Theorem birs_simplification_Mem_Match_32_8_8_thm = (SIMP_RULE std_ss [mem_simp_32_8_8_helper_thm] o
-    Q.SPECL [`Bit32`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
-
-
-Theorem birs_simplification_Mem_Match_32_8_32_thm = (SIMP_RULE std_ss [mem_simp_32_8_32_helper_thm] o
-    Q.SPECL [`Bit32`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1;
-
-
-Theorem birs_simplification_Mem_Match_64_8_8_thm = (SIMP_RULE std_ss [mem_simp_64_8_8_helper_thm] o
-    Q.SPECL [`Bit64`, `Bit8`, `Bit8`]) birs_simplification_Mem_Match_thm1;
-
-
-Theorem birs_simplification_Mem_Match_64_8_32_thm = (SIMP_RULE std_ss [mem_simp_64_8_32_helper_thm] o
-    Q.SPECL [`Bit64`, `Bit8`, `Bit32`]) birs_simplification_Mem_Match_thm1;
-
-
-Theorem birs_simplification_Mem_Match_64_8_64_thm = (SIMP_RULE std_ss [mem_simp_64_8_64_helper_thm] o
-    Q.SPECL [`Bit64`, `Bit8`, `Bit64`]) birs_simplification_Mem_Match_thm1;
-
+Theorem birs_simplification_Mem_Match_64_8_64_thm =
+  gen_birs_simplification_Mem_Match_prove 64 8 64;
 
 (* now the memory bypass theorems: *)
 
@@ -1129,6 +1106,201 @@ REPEAT STRIP_TAC >> (
       )
 QED
 
+(* !!! note that this is a simplification of the problem that unfortunately excludes wraparound completely !!! *)
+(* TODO: did I use the wrong expression? shouldn't it be unsigned comparison? *)
+Definition word_ranges_lin_distinct_def:
+  word_ranges_lin_distinct (x:'a word, n) (y, m) =
+    ((x <+ x + n /\ y <+ y + m) /\
+     (y + m <=+ x \/ x + n <=+ y))
+End
+
+Definition num_ranges_lin_distinct_def:
+  num_ranges_lin_distinct (x:num, n) (y, m) =
+    (y + m <= x \/
+     x + n <= y)
+End
+
+Theorem word_ranges_lin_distinct_SPEC1w_32_thm[local]:
+!(x:word32) y.
+  (x <+ x + 1w /\ (y + 1w <=+ x \/ x + 1w <=+ y)) ==>
+  DISJOINT {bir_mem_addr Bit32 (w2n x)} {bir_mem_addr Bit32 (w2n y)}
+Proof
+  rpt gen_tac >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+
+  rpt strip_tac >> fs [GSYM wordsTheory.WORD_NOT_LOWER]
+QED
+
+Theorem word_ranges_lin_distinct_SPEC1w_64_thm[local]:
+!(x:word64) y.
+  (x <+ x + 1w /\ (y + 1w <=+ x \/ x + 1w <=+ y)) ==>
+  DISJOINT {bir_mem_addr Bit64 (w2n x)} {bir_mem_addr Bit64 (w2n y)}
+Proof
+  rpt gen_tac >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+
+  rpt strip_tac >> fs [GSYM wordsTheory.WORD_NOT_LOWER]
+QED
+
+(* TODO: simplify proof *)
+Theorem word_offset_lt_thm:
+!(x:'a word) n.
+  (x <+ x + n) ==>
+  (w2n x + w2n n < dimword (:'a))
+Proof
+  rpt strip_tac >>
+  fs [wordsTheory.WORD_ADD_RIGHT_LO2, wordsTheory.w2n_lt] >>
+  full_simp_tac std_ss [GSYM wordsTheory.WORD_NEG_MUL] >>
+  full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.word_2comp_def] >>
+  full_simp_tac std_ss [wordsTheory.w2n_n2w] >>
+  ‘dimword (:'a) − w2n n < dimword (:'a)’ by (
+    ‘0 < w2n n’ by (
+      metis_tac [wordsTheory.word_0_n2w, wordsTheory.WORD_LO, wordsTheory.WORD_LO_word_0]
+    ) >>
+    metis_tac [arithmeticTheory.SUB_LESS, wordsTheory.w2n_lt, arithmeticTheory.LESS_OR_EQ]
+  ) >>
+  full_simp_tac std_ss [arithmeticTheory.LESS_MOD] >>
+  metis_tac [arithmeticTheory.SUB_LEFT_LESS, arithmeticTheory.ADD_COMM]
+QED
+
+Theorem word_offset_lt_thm2:
+!(x:'a word) n.
+  (x <+ x + n) ==>
+  (w2n x + w2n n = w2n(x + n))
+Proof
+  rpt strip_tac >>
+  ‘(w2n n + w2n x) MOD dimword (:'a) = w2n n + w2n x’ by (
+    match_mp_tac arithmeticTheory.LESS_MOD >>
+    metis_tac [word_offset_lt_thm, wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]
+  ) >>
+  full_simp_tac std_ss [wordsTheory.word_add_def, wordsTheory.w2n_n2w] >>
+  metis_tac [wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]
+QED
+
+Theorem word_offset_lt_thm2_0:
+!(x:'a word) n.
+  (x = x + n) ==>
+  (w2n x + w2n n = w2n(x + n))
+Proof
+  rpt strip_tac >>
+  ‘n = 0w’ by (
+    metis_tac [wordsTheory.WORD_ADD_INV_0_EQ, wordsTheory.WORD_ADD_COMM]
+  ) >>
+  fs []
+QED
+
+Theorem word_offset_lt_thm3:
+!(x:'a word) i n.
+  (x <+ x + n) ==>
+  (i <+ n) ==>
+  (x <=+ x + i)
+Proof
+  rpt strip_tac >>
+  imp_res_tac word_offset_lt_thm >>
+(*  ‘(w2n x + w2n n) MOD dimword (:'a) = w2n x + w2n n’ by (
+    match_mp_tac arithmeticTheory.LESS_MOD >>
+    metis_tac [word_offset_lt_thm]
+  ) >>*)
+  full_simp_tac std_ss [wordsTheory.word_add_def, wordsTheory.w2n_n2w] >>
+  full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.WORD_LS, wordsTheory.w2n_n2w] >>
+
+  ‘w2n x + w2n i < dimword (:'a)’ by (
+    metis_tac [arithmeticTheory.SUB_LEFT_LESS, arithmeticTheory.ADD_COMM, arithmeticTheory.LESS_TRANS]
+  ) >>
+  fs [arithmeticTheory.LESS_MOD]
+(*  metis_tac [, ]
+                
+  ‘(w2n x + w2n i) MOD dimword (:'a) = w2n x + w2n i’ by (
+    match_mp_tac arithmeticTheory.LESS_MOD >>
+    metis_tac [word_offset_lt_thm]
+  ) >>
+
+    
+  full_simp_tac std_ss [] >>
+  full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.word_2comp_def] >>
+  wordsTheory.WORD_LOWER_TRANS*)
+QED
+
+Theorem word2num_ranges_lin_distinct_thm:
+!x n y m.
+  (word_ranges_lin_distinct (x, n) (y, m)) ==>
+  (num_ranges_lin_distinct (w2n x, w2n n) (w2n y, w2n m))
+Proof
+  rpt strip_tac >>
+  fs [word_ranges_lin_distinct_def, num_ranges_lin_distinct_def] >> (
+    METIS_TAC [word_offset_lt_thm2, wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM, wordsTheory.WORD_LO, wordsTheory.WORD_LS]
+  )
+QED
+
+Theorem num_ranges_lin_leftorright_thm:
+!x n y m.
+  num_ranges_lin_distinct (x, n) (y, m) ==>
+    ((!i j. i < n ==> j < m ==> x + i < y + j) \/
+     (!i j. i < n ==> j < m ==> y + j < x + i))
+Proof
+  rpt strip_tac >>
+  fs [num_ranges_lin_distinct_def]
+QED
+
+(* TODO: simplify proof *)
+Theorem num_ranges_lin_distinct_thm:
+!x n y m.
+  num_ranges_lin_distinct (x, n) (y, m) ==>
+    (!i j. i < n ==> j < m ==> x + i <> y + j)
+Proof
+  rpt gen_tac >>
+  strip_tac >>
+  imp_res_tac num_ranges_lin_leftorright_thm >> (
+    metis_tac [arithmeticTheory.LT_LE]
+  )
+QED
+
+(* TODO: simplify proof *)
+Theorem word_ranges_lin_distinct_thm:
+!x n y m.
+  (word_ranges_lin_distinct (x, n) (y, m)) ==>
+  (!i j. (i <+ n) ==> (j <+ m) ==> x + i <> y + j)
+Proof
+  (*fs [word_ranges_lin_distinct_def] >>
+  rpt strip_tac >>*)
+  rpt gen_tac >> strip_tac >>
+  imp_res_tac word2num_ranges_lin_distinct_thm >>
+  imp_res_tac num_ranges_lin_distinct_thm >>
+  (*POP_ASSUM (fn thm => rpt (POP_ASSUM (K ALL_TAC)) >> ASSUME_TAC thm) >>*)
+  rpt strip_tac >>
+  PAT_X_ASSUM “!x.A” (ASSUME_TAC o Q.SPECL [‘w2n i’]) >>
+  full_simp_tac std_ss [GSYM wordsTheory.WORD_LO] >>
+  rev_full_simp_tac std_ss [] >>
+  PAT_X_ASSUM “!x.A” (ASSUME_TAC o Q.SPECL [‘w2n j’]) >>
+  full_simp_tac std_ss [GSYM wordsTheory.WORD_LO] >>
+  rev_full_simp_tac std_ss [] >>
+
+  full_simp_tac std_ss [word_ranges_lin_distinct_def] >> (
+    IMP_RES_TAC word_offset_lt_thm3 >>
+    full_simp_tac std_ss [wordsTheory.WORD_LOWER_OR_EQ] >> (
+      metis_tac [word_offset_lt_thm2, word_offset_lt_thm2_0, wordsTheory.w2n_11]
+    )
+  )
+(*  metis_tac [wordsTheory.word_add_def, wordsTheory.w2n_n2w]*)
+QED
+(*
+!aty x y.
+  (bir_mem_addr aty x = bir_mem_addr aty y) <=>
+  (x = y)
+*)
+
+Theorem restore_0w_thm[local]:
+!a b.
+  (a = b) = (a + 0w = b + 0w)
+Proof
+  METIS_TAC [wordsTheory.WORD_ADD_0]
+QED
+
+(* core disjointness theorems first *)
 (*
 val memadsz = 32;
 val memvalsz = 8;
@@ -1168,13 +1340,25 @@ in
 end;
 
 val bir_mem_acc_disjoint_TAC =
+  rewrite_tac [word_ranges_lin_distinct_SPEC1w_32_thm, word_ranges_lin_distinct_SPEC1w_64_thm] >>
+  rewrite_tac [GSYM word_ranges_lin_distinct_def] >>
+  rpt gen_tac >> strip_tac >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
-    blastLib.FULL_BBLAST_TAC
+    POP_ASSUM MP_TAC >>
+    rewrite_tac [] >>
+    SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+
+    (fn x => REWRITE_TAC [Once restore_0w_thm] x) >>
+    REWRITE_TAC [GSYM wordsTheory.WORD_ADD_ASSOC] >>
+    (* restore address disjunct subgoal *)
+
+    POP_ASSUM (ASSUME_TAC o HO_MATCH_MP word_ranges_lin_distinct_thm) >>
+    (*goalStack.print_tac "test" >>*)
+    POP_ASSUM (HO_MATCH_MP_TAC o REWRITE_RULE [boolTheory.AND_IMP_INTRO]) >>
+    EVAL_TAC
   );
 
-(* core disjointness theorems first *)
 Theorem bir_mem_acc_disjoint_32_8_32_8_thm[local]:
   ^(gen_bir_mem_acc_disjoint_goal 32 8 32 8)
 Proof
