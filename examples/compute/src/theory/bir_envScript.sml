@@ -48,13 +48,20 @@ Proof
   rw [bir_empty_env_def, bir_env_lookup_rel_def]
 QED
 
-Theorem bir_env_lookup_update:
+Theorem bir_env_lookup_rel_update:
   !env var v. bir_env_lookup_rel (bir_env_update env var v) var v 
 Proof
   Cases_on `var` >> Cases_on `env` >>
   rw [bir_env_update_def, bir_env_lookup_rel_def]
 QED
 
+Theorem bir_env_lookup_update:
+  !env var v. bir_env_lookup (bir_env_update env var v) var = SOME v 
+Proof
+  rpt GEN_TAC >>
+  Cases_on `var` >> Cases_on `env` >>
+  rw [bir_env_update_def, bir_env_lookup_def]
+QED
 (* Lookup and relation are the same *)
 Theorem bir_env_lookup_eq_rel:
   !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
