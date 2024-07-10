@@ -1,6 +1,7 @@
 CLINE_OPTIONS = -r
 
-INCLUDES = $(SMOLBIRDIR)/examples/increment
+INCLUDES = $(SMOLBIRDIR)/examples/increment \
+					 $(SMOLBIRDIR)/examples/and_not
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
