@@ -848,10 +848,8 @@ QED
 
 
 (* ******************************************************* *)
-(*      memory match and bypass                            *)
+(*      memory match                                       *)
 (* ******************************************************* *)
-(* TODO: could simplify condition for store bypassing with alignment requirement (if it holds in the target code, which should be the case) *)
-
 Theorem birs_simplification_Mem_Match_thm1[local]:
   !at vt sz be_ld be_m be_sa be_v be_la.
   (type_of_bir_exp be_m = SOME (BType_Mem at vt)) ==>
@@ -994,104 +992,21 @@ in
   birs_simplification_Mem_Match_thm1
 end;
 
-Theorem birs_simplification_Mem_Match_32_8_8_thm =
-  gen_birs_simplification_Mem_Match_prove 32 8 8;
+Theorem birs_simplification_Mem_Match_32_8_thm = LIST_CONJ [
+  gen_birs_simplification_Mem_Match_prove 32 8 8,
+  gen_birs_simplification_Mem_Match_prove 32 8 32
+];
 
-Theorem birs_simplification_Mem_Match_32_8_32_thm =
-  gen_birs_simplification_Mem_Match_prove 32 8 32;
+Theorem birs_simplification_Mem_Match_64_8_thm = LIST_CONJ [
+  gen_birs_simplification_Mem_Match_prove 64 8 8,
+  gen_birs_simplification_Mem_Match_prove 64 8 32,
+  gen_birs_simplification_Mem_Match_prove 64 8 64
+];
 
-Theorem birs_simplification_Mem_Match_64_8_8_thm =
-  gen_birs_simplification_Mem_Match_prove 64 8 8;
 
-Theorem birs_simplification_Mem_Match_64_8_32_thm =
-  gen_birs_simplification_Mem_Match_prove 64 8 32;
-
-Theorem birs_simplification_Mem_Match_64_8_64_thm =
-  gen_birs_simplification_Mem_Match_prove 64 8 64;
-
-(* now the memory bypass theorems: *)
-
-(*
-val memadsz = 64;
-val memvalsz = 8;
-val ldsz = 8;
-val stsz = 64;
-*)
-fun gen_simp_mem_bypass_goal memadsz memvalsz ldsz stsz =
-let
-  val endianness_tm = “BEnd_LittleEndian”;
-  val _ = if memvalsz = 8 then () else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "gen_simp_mem_bypass_goal" "cannot handle memory that does not use bytes as values";
-  val memadsz_tm = bir_immtype_t_of_size memadsz;
-  val memadsz_imm_tm = bir_imm_of_size memadsz;
-  val memvalsz_tm = bir_immtype_t_of_size memvalsz;
-  val ldsz_tm = bir_immtype_t_of_size ldsz;
-  val stsz_tm = bir_immtype_t_of_size stsz;
-  val ldbytelen = ldsz div 8;
-  val stbytelen = stsz div 8;
-  val ldbytelen_w_tm = wordsSyntax.mk_wordii (ldbytelen, memadsz);
-  val stbytelen_w_tm = wordsSyntax.mk_wordii (stbytelen, memadsz);
-  val std_pcond =
-    “(BExp_BinExp BIExp_And
-        (BExp_BinExp BIExp_And
-          (BExp_BinPred BIExp_LessThan
-            be_sa
-            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm ^stbytelen_w_tm))))
-          (BExp_BinPred BIExp_LessThan
-            be_la
-            (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm ^ldbytelen_w_tm)))))
-        (BExp_BinExp BIExp_Or
-           (BExp_BinPred BIExp_LessOrEqual
-             (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm ^ldbytelen_w_tm)))
-             be_sa)
-           (BExp_BinPred BIExp_LessOrEqual
-             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm ^stbytelen_w_tm)))
-             be_la))
-     )”;
-  val spec_8_8_pcond =
-    “(BExp_BinExp BIExp_And
-        (BExp_BinPred BIExp_LessThan
-          be_sa
-          (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm 1w))))
-        (BExp_BinExp BIExp_Or
-           (BExp_BinPred BIExp_LessOrEqual
-             (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm 1w)))
-             be_sa)
-           (BExp_BinPred BIExp_LessOrEqual
-             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm 1w)))
-             be_la))
-     )”;
-  val pcond = if ldsz = 8 andalso stsz = 8 then spec_8_8_pcond else std_pcond;
-in
- “
-  !be_st be_ld be_m be_sa be_v be_la.
-  (be_st =
-    (BExp_Store
-      be_m
-      be_sa
-      ^endianness_tm
-      be_v)
-    ) ==>
-  (be_ld =
-    (BExp_Load
-      be_st
-      be_la
-      ^endianness_tm
-      ^ldsz_tm)
-    ) ==>
-  (type_of_bir_exp be_st = SOME (BType_Mem ^memadsz_tm ^memvalsz_tm)) ==>
-  (type_of_bir_exp be_v = SOME (BType_Imm ^stsz_tm)) ==>
-  (IS_SOME (type_of_bir_exp be_ld)) ==>
-  (birs_simplification
-    ^pcond
-    be_ld
-    (BExp_Load
-      be_m
-      be_la
-      ^endianness_tm
-      ^ldsz_tm)
-  )
- ”
-end;
+(* ******************************************************* *)
+(*      aux theory for memory bypass                       *)
+(* ******************************************************* *)
 
 (* TODO: either mark as local or put into an aux theory *)
 Theorem bool2w_OR_AND_REWRS_thm:
@@ -1106,8 +1021,7 @@ REPEAT STRIP_TAC >> (
       )
 QED
 
-(* !!! note that this is a simplification of the problem that unfortunately excludes wraparound completely !!! *)
-(* TODO: did I use the wrong expression? shouldn't it be unsigned comparison? *)
+(* TODO: all of this should probably go into another bir theory and/or library *)
 Definition word_ranges_lin_distinct_def:
   word_ranges_lin_distinct (x:'a word, n) (y, m) =
     ((x <+ x + n /\ y <+ y + m) /\
@@ -1300,7 +1214,7 @@ Proof
   METIS_TAC [wordsTheory.WORD_ADD_0]
 QED
 
-(* core disjointness theorems first *)
+(* core disjointness theorems now *)
 (*
 val memadsz = 32;
 val memvalsz = 8;
@@ -1359,30 +1273,99 @@ val bir_mem_acc_disjoint_TAC =
     EVAL_TAC
   );
 
-Theorem bir_mem_acc_disjoint_32_8_32_8_thm[local]:
-  ^(gen_bir_mem_acc_disjoint_goal 32 8 32 8)
-Proof
-  bir_mem_acc_disjoint_TAC
-QED
+fun gen_bir_mem_acc_disjoint_thm memadsz memvalsz ldsz stsz =
+  prove(“^(gen_bir_mem_acc_disjoint_goal memadsz memvalsz ldsz stsz)”, bir_mem_acc_disjoint_TAC);
 
-Theorem bir_mem_acc_disjoint_32_8_32_32_thm[local]:
-  ^(gen_bir_mem_acc_disjoint_goal 32 8 32 32)
-Proof
-  bir_mem_acc_disjoint_TAC
-QED
+(* ******************************************************* *)
+(*      memory bypass                                      *)
+(* ******************************************************* *)
+(* TODO: could simplify condition for store bypassing with alignment requirement (if it holds in the target code, which should be the case) *)
+(* !!! note that this is a simplification of the problem that unfortunately excludes wraparound completely !!! *)
+(* TODO: did I use the wrong expression? shouldn't it be unsigned comparison? *)
 
-Theorem bir_mem_acc_disjoint_32_8_8_8_thm[local]:
-  ^(gen_bir_mem_acc_disjoint_goal 32 8 8 8)
-Proof
-  bir_mem_acc_disjoint_TAC
-QED
+(*
+val memadsz = 64;
+val memvalsz = 8;
+val ldsz = 8;
+val stsz = 64;
+*)
+fun gen_simp_mem_bypass_goal memadsz memvalsz ldsz stsz =
+let
+  val endianness_tm = “BEnd_LittleEndian”;
+  val _ = if memvalsz = 8 then () else raise Feedback.mk_HOL_ERR "bir_symb_simpScript" "gen_simp_mem_bypass_goal" "cannot handle memory that does not use bytes as values";
+  val memadsz_tm = bir_immtype_t_of_size memadsz;
+  val memadsz_imm_tm = bir_imm_of_size memadsz;
+  val memvalsz_tm = bir_immtype_t_of_size memvalsz;
+  val ldsz_tm = bir_immtype_t_of_size ldsz;
+  val stsz_tm = bir_immtype_t_of_size stsz;
+  val ldbytelen = ldsz div 8;
+  val stbytelen = stsz div 8;
+  val ldbytelen_w_tm = wordsSyntax.mk_wordii (ldbytelen, memadsz);
+  val stbytelen_w_tm = wordsSyntax.mk_wordii (stbytelen, memadsz);
+  val std_pcond =
+    “(BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm ^stbytelen_w_tm))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm ^ldbytelen_w_tm)))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm ^ldbytelen_w_tm)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm ^stbytelen_w_tm)))
+             be_la))
+     )”;
+  val spec_8_8_pcond =
+    “(BExp_BinExp BIExp_And
+        (BExp_BinPred BIExp_LessThan
+          be_sa
+          (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm 1w))))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (^memadsz_imm_tm 1w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (^memadsz_imm_tm 1w)))
+             be_la))
+     )”;
+  val pcond = if ldsz = 8 andalso stsz = 8 then spec_8_8_pcond else std_pcond;
+in
+ “
+  !be_st be_ld be_m be_sa be_v be_la.
+  (be_st =
+    (BExp_Store
+      be_m
+      be_sa
+      ^endianness_tm
+      be_v)
+    ) ==>
+  (be_ld =
+    (BExp_Load
+      be_st
+      be_la
+      ^endianness_tm
+      ^ldsz_tm)
+    ) ==>
+  (type_of_bir_exp be_st = SOME (BType_Mem ^memadsz_tm ^memvalsz_tm)) ==>
+  (type_of_bir_exp be_v = SOME (BType_Imm ^stsz_tm)) ==>
+  (IS_SOME (type_of_bir_exp be_ld)) ==>
+  (birs_simplification
+    ^pcond
+    be_ld
+    (BExp_Load
+      be_m
+      be_la
+      ^endianness_tm
+      ^ldsz_tm)
+  )
+ ”
+end;
 
-Theorem bir_mem_acc_disjoint_32_8_8_32_thm[local]:
-  ^(gen_bir_mem_acc_disjoint_goal 32 8 8 32)
-Proof
-  bir_mem_acc_disjoint_TAC
-QED
-
+(* now the memory bypass theorems: *)
 (* the bypass theorems have consistent naming too: MEMADDRSZ_MEMVALSZ_LOADSZ_STOREVALSZ *)
 (*
 val memadsz = 32;
@@ -1521,115 +1504,36 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 end;
 
-Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 32 8 32 8)
-Proof
-  birs_simplification_Mem_Bypass_TAC 32 8 32 8 bir_mem_acc_disjoint_32_8_32_8_thm
-QED
-
-Theorem birs_simplification_Mem_Bypass_32_8_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_32_8_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 64 8)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 64 8 (prove(gen_bir_mem_acc_disjoint_goal 64 8 64 8, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_64_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_8_thm1
-
-Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 32 8 32 32)
-Proof
-  birs_simplification_Mem_Bypass_TAC 32 8 32 32 bir_mem_acc_disjoint_32_8_32_32_thm
-QED
-
-Theorem birs_simplification_Mem_Bypass_32_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_32_32_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 64 64)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 64 64 (prove(gen_bir_mem_acc_disjoint_goal 64 8 64 64, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_64_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_64_thm1
-
-Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 32 8 8 8)
-Proof
-  birs_simplification_Mem_Bypass_TAC 32 8 8 8 bir_mem_acc_disjoint_32_8_8_8_thm
-QED
-
-Theorem birs_simplification_Mem_Bypass_32_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_8_8_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 8 8)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 8 8 (prove(gen_bir_mem_acc_disjoint_goal 64 8 8 8, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_8_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_8_thm1
+(*
+val memadsz = 64;
+val memvalsz = 8;
+val ldsz = 8;
+val stsz = 64;
+*)
+fun gen_simp_mem_bypass_thm memadsz memvalsz ldsz stsz =
+  SIMP_RULE std_ss [] (
+    prove(“^(gen_simp_mem_bypass_goal memadsz memvalsz ldsz stsz)”,
+      birs_simplification_Mem_Bypass_TAC memadsz memvalsz ldsz stsz
+        (prove(gen_bir_mem_acc_disjoint_goal memadsz memvalsz ldsz stsz, bir_mem_acc_disjoint_TAC))));
 
 
-Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 32 8 8 32)
-Proof
-  birs_simplification_Mem_Bypass_TAC 32 8 8 32 bir_mem_acc_disjoint_32_8_8_32_thm
-QED
+Theorem birs_simplification_Mem_Bypass_32_8_thm = LIST_CONJ [
+  gen_simp_mem_bypass_thm 32 8 32 8,
+  gen_simp_mem_bypass_thm 32 8 32 32,
+  gen_simp_mem_bypass_thm 32 8 8 8,
+  gen_simp_mem_bypass_thm 32 8 8 32
+];
 
-Theorem birs_simplification_Mem_Bypass_32_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_32_8_8_32_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 8 64)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 8 64 (prove(gen_bir_mem_acc_disjoint_goal 64 8 8 64, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_8_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_64_thm1
-
-
-
-Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 8 32)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 8 32 (prove(gen_bir_mem_acc_disjoint_goal 64 8 8 32, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_8_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_8_32_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 32 32)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 32 32 (prove(gen_bir_mem_acc_disjoint_goal 64 8 32 32, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_32_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_32_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 32 8)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 32 8 (prove(gen_bir_mem_acc_disjoint_goal 64 8 32 8, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_32_8_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_8_thm1
-
-
-
-Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 64 32)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 64 32 (prove(gen_bir_mem_acc_disjoint_goal 64 8 64 32, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_64_32_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_64_32_thm1
-
-Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm1[local]:
-  ^(gen_simp_mem_bypass_goal 64 8 32 64)
-Proof
-  birs_simplification_Mem_Bypass_TAC 64 8 32 64 (prove(gen_bir_mem_acc_disjoint_goal 64 8 32 64, bir_mem_acc_disjoint_TAC))
-QED
-
-Theorem birs_simplification_Mem_Bypass_64_8_32_64_thm = SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_64_8_32_64_thm1
-
-
+Theorem birs_simplification_Mem_Bypass_64_8_thm = LIST_CONJ [
+  gen_simp_mem_bypass_thm 64 8 64 8,
+  gen_simp_mem_bypass_thm 64 8 64 64,
+  gen_simp_mem_bypass_thm 64 8 8 8,
+  gen_simp_mem_bypass_thm 64 8 8 64,
+  gen_simp_mem_bypass_thm 64 8 8 32,
+  gen_simp_mem_bypass_thm 64 8 32 32,
+  gen_simp_mem_bypass_thm 64 8 32 8,
+  gen_simp_mem_bypass_thm 64 8 64 32,
+  gen_simp_mem_bypass_thm 64 8 32 64
+];
 
 val _ = export_theory();
