@@ -2,10 +2,7 @@ INCLUDES = $(HOLBADIR)/src/aux \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/program_logic \
-           $(HOLBADIR)/src/theory/tools/comp \
-           $(HOLBADIR)/src/theory/tools/symbexec \
-           $(HOLBADIR)/src/shared \
-           $(HOLBADIR)/src/shared/HolSmt
+           $(HOLBADIR)/src/theory/tools/comp
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
