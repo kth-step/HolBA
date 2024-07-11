@@ -256,22 +256,26 @@ QED
 
 
 (* ******************************************************* *)
-(*      go into the symbolic expression                    *)
+(*      simplification of symbolic subexpressions          *)
 (* ******************************************************* *)
+
+val subexpression_simp_TAC =
+  REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def];
 
 Theorem birs_simplification_UnsignedCast_thm:
   !pcond symbexp symbexp' sz.
   (birs_simplification pcond symbexp symbexp') ==>
   (birs_simplification pcond (BExp_Cast BIExp_UnsignedCast symbexp sz) (BExp_Cast BIExp_UnsignedCast symbexp' sz))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
 Theorem birs_simplification_SignedCast_thm:
@@ -279,14 +283,7 @@ Theorem birs_simplification_SignedCast_thm:
   (birs_simplification pcond symbexp symbexp') ==>
   (birs_simplification pcond (BExp_Cast BIExp_SignedCast symbexp sz) (BExp_Cast BIExp_SignedCast symbexp' sz))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
 Theorem birs_simplification_LowCast_thm:
@@ -294,14 +291,7 @@ Theorem birs_simplification_LowCast_thm:
   (birs_simplification pcond symbexp symbexp') ==>
   (birs_simplification pcond (BExp_Cast BIExp_LowCast symbexp sz) (BExp_Cast BIExp_LowCast symbexp' sz))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
 Theorem birs_simplification_Minus_left_thm:
@@ -309,15 +299,7 @@ Theorem birs_simplification_Minus_left_thm:
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_BinExp BIExp_Minus symbexp1 symbexp2) (BExp_BinExp BIExp_Minus symbexp1' symbexp2))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
 Theorem birs_simplification_Plus_left_thm:
@@ -325,15 +307,7 @@ Theorem birs_simplification_Plus_left_thm:
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_BinExp BIExp_Plus symbexp1 symbexp2) (BExp_BinExp BIExp_Plus symbexp1' symbexp2))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
 Theorem birs_simplification_Plus_right_thm:
@@ -341,47 +315,23 @@ Theorem birs_simplification_Plus_right_thm:
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_BinExp BIExp_Plus symbexp2 symbexp1) (BExp_BinExp BIExp_Plus symbexp2 symbexp1'))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
-(* TODO: generalize *)
-Theorem birs_simplification_Load_32_addr_thm:
-  !pcond symbexp1 symbexp1' bme.
+Theorem birs_simplification_Load_addr_thm:
+  !pcond symbexp1 symbexp1' bme en ldsz.
   (birs_simplification pcond symbexp1 symbexp1') ==>
-  (birs_simplification pcond (BExp_Load bme symbexp1 BEnd_LittleEndian Bit32) (BExp_Load bme symbexp1' BEnd_LittleEndian Bit32))
+  (birs_simplification pcond (BExp_Load bme symbexp1 en ldsz) (BExp_Load bme symbexp1' en ldsz))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
-Theorem birs_simplification_Store_32_addr_thm:
-  !pcond symbexp1 symbexp1' bme bve.
+
+Theorem birs_simplification_Store_addr_thm:
+  !pcond symbexp1 symbexp1' bme en bve.
   (birs_simplification pcond symbexp1 symbexp1') ==>
-  (birs_simplification pcond (BExp_Store bme symbexp1 BEnd_LittleEndian bve) (BExp_Store bme symbexp1' BEnd_LittleEndian bve))
+  (birs_simplification pcond (BExp_Store bme symbexp1 en bve) (BExp_Store bme symbexp1' en bve))
 Proof
-REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+  subexpression_simp_TAC
 QED
 
 
@@ -400,7 +350,7 @@ Theorem birs_simplification_UnsignedCast_LowCast_Twice_thm:
     (BExp_Cast BIExp_UnsignedCast
       (BExp_Cast BIExp_LowCast be Bit8) Bit32)
 Proof
-REWRITE_TAC [birs_simplification_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -419,8 +369,8 @@ REWRITE_TAC [birs_simplification_def] >>
   )
 QED
 
-
-Theorem birs_simplification_Pcond_Imm_Gen_thm:
+(* general simplification that can be decided by an smt query *)
+Theorem birs_simplification_Pcond_Gen_thm:
   !exp1 exp2.
   (birs_simplification
      (BExp_BinPred BIExp_Equal
@@ -429,7 +379,7 @@ Theorem birs_simplification_Pcond_Imm_Gen_thm:
      exp1
      exp2)
 Proof
-REWRITE_TAC [birs_simplification_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -453,66 +403,35 @@ REWRITE_TAC [birs_simplification_def] >>
   )
 QED
 
-(* TODO: can probably generalize this much more and still use it, can also make a generic theorem for these two to easily add these kind of simplifications *)
-Theorem birs_simplification_And_Minus_thm:
-  !be w1.
-  birs_simplification
-    (BExp_BinPred BIExp_Equal
-      (BExp_BinExp BIExp_And
-        (BExp_BinExp BIExp_Minus
-          be
-          (BExp_Const (Imm32 w1)))
-        (BExp_Const (Imm32 0xFFFFFFFCw)))
-      (BExp_BinExp BIExp_Minus
-        be
-        (BExp_Const (Imm32 w1))))
-    (BExp_BinExp BIExp_And
+fun gen_birs_simplification_Pcond_thm be1 be2 =
+  (GEN_ALL o SPECL [be1, be2]) birs_simplification_Pcond_Gen_thm;
+
+(* TODO: can probably generalize this much more and still use it *)
+(* the main thing we need with this is that the path condition implies alignment of be and the constant is also aligned. but we may just require the path condition to imply their combination to be always the same. this is more general *)
+Theorem birs_simplification_And_Minus_CM0_thm =
+  gen_birs_simplification_Pcond_thm
+    “BExp_BinExp BIExp_And
       (BExp_BinExp BIExp_Minus
         be
         (BExp_Const (Imm32 w1)))
-      (BExp_Const (Imm32 0xFFFFFFFCw)))
-    (BExp_BinExp BIExp_Minus
+      (BExp_Const (Imm32 0xFFFFFFFCw))”
+    “BExp_BinExp BIExp_Minus
       be
-      (BExp_Const (Imm32 w1)))
-Proof
-(* the main thing with this is that the path condition implies alignment of be and the constant is also aligned. but we may just require the path condition to imply their combination to be always the same. this is more general *)
-  REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
-QED
-Theorem birs_simplification_LSB0_And64_thm:
-  !be w1.
-  birs_simplification
-    (BExp_BinPred BIExp_Equal
-      (BExp_BinExp BIExp_And
-        (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
-        be)
-      (be))
-    (BExp_BinExp BIExp_And
+      (BExp_Const (Imm32 w1))”;
+
+Theorem birs_simplification_LSB0_And64_RV_thm =
+  gen_birs_simplification_Pcond_thm
+    “BExp_BinExp BIExp_And
       (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
-      be)
-    (be)
-Proof
-  REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
-QED
-Theorem birs_simplification_SignedLowCast3264_thm:
-  !be w1.
-  birs_simplification
-    (BExp_BinPred BIExp_Equal
-      (BExp_Cast BIExp_SignedCast
-         (BExp_Cast BIExp_LowCast be Bit32)
-         Bit64)
-      (be))
-    (BExp_Cast BIExp_SignedCast
-         (BExp_Cast BIExp_LowCast be Bit32)
-         Bit64)
-    (be)
-Proof
-  REWRITE_TAC [birs_simplification_Pcond_Imm_Gen_thm]
-QED
+      be”
+    “be:bir_exp_t”;
 
-
-
-
-
+Theorem birs_simplification_SignedLowCast3264_RV_thm =
+  gen_birs_simplification_Pcond_thm
+    “BExp_Cast BIExp_SignedCast
+      (BExp_Cast BIExp_LowCast be Bit32)
+      Bit64”
+    “be:bir_exp_t”;
 
 
 (* ******************************************************* *)
@@ -548,7 +467,7 @@ Theorem birs_simplification_Plus_Const64_thm:
       (BExp_Const (Imm64 w2)))
     (BExp_Const (Imm64 (w1 + w2))))
 Proof
- birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Plus_Plus_Const64_thm:
@@ -564,7 +483,7 @@ Theorem birs_simplification_Plus_Plus_Const64_thm:
       be
       (BExp_Const (Imm64 (w1 + w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Minus_Plus_Const64_thm:
@@ -580,7 +499,7 @@ Theorem birs_simplification_Minus_Plus_Const64_thm:
       be
       (BExp_Const (Imm64 (w1 - w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Minus_Minus_Const64_thm:
@@ -596,7 +515,7 @@ Theorem birs_simplification_Minus_Minus_Const64_thm:
       be
       (BExp_Const (Imm64 (w1 + w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Plus_Minus_Const64_thm:
@@ -612,7 +531,7 @@ Theorem birs_simplification_Plus_Minus_Const64_thm:
       be
       (BExp_Const (Imm64 (w1 - w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Plus_Plus_Const32_thm:
@@ -628,7 +547,7 @@ Theorem birs_simplification_Plus_Plus_Const32_thm:
       be
       (BExp_Const (Imm32 (w1 + w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 Theorem birs_simplification_Minus_Plus_Const32_thm:
   !pcond be w1 w2.
@@ -643,7 +562,7 @@ Theorem birs_simplification_Minus_Plus_Const32_thm:
       be
       (BExp_Const (Imm32 (w1 - w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Minus_Minus_Const32_thm:
@@ -659,7 +578,7 @@ Theorem birs_simplification_Minus_Minus_Const32_thm:
       be
       (BExp_Const (Imm32 (w1 + w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 Theorem birs_simplification_Plus_Minus_Const32_thm:
@@ -675,7 +594,7 @@ Theorem birs_simplification_Plus_Minus_Const32_thm:
       be
       (BExp_Const (Imm32 (w1 - w2)))))
 Proof
-birs_simp_const_TAC
+  birs_simp_const_TAC
 QED
 
 
@@ -693,7 +612,7 @@ Theorem birs_interpret_fun_welltyped_IMP_thm:
   (?v. birs_interpret_fun H be = SOME v /\
        type_of_bir_val v = ty)
 Proof
-FULL_SIMP_TAC std_ss [birs_interpret_fun_thm] >>
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm] >>
   Induct_on `be` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_ALT_def, bir_valuesTheory.bir_type_is_Imm_def]
   ) >- (
@@ -744,10 +663,6 @@ QED
 (* ******************************************************* *)
 Theorem birs_simplification_IfThenElse_T_thm:
   !pcond ec et ef.
-(*
-  (IS_SOME (type_of_bir_exp et)) ==>
-  (type_of_bir_exp et = type_of_bir_exp ef) ==>
-*)
   (IS_SOME (type_of_bir_exp (BExp_IfThenElse ec et ef))) ==>
   (birs_simplification ec (BExp_IfThenElse ec et ef) et)
 Proof
@@ -758,12 +673,6 @@ REWRITE_TAC [birs_simplification_def] >>
 
   FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-(*
-  Cases_on `birs_interpret_fun_ALT H et` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-*)
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def] >>
   Cases_on `type_of_bir_exp ec` >> Cases_on `type_of_bir_exp et` >> Cases_on `type_of_bir_exp ef` >> (
@@ -786,10 +695,6 @@ QED
 
 Theorem birs_simplification_IfThenElse_F_thm:
   !pcond ec et ef.
-(*
-  (IS_SOME (type_of_bir_exp et)) ==>
-  (type_of_bir_exp et = type_of_bir_exp ef) ==>
-*)
   (IS_SOME (type_of_bir_exp (BExp_IfThenElse ec et ef))) ==>
   (birs_simplification (BExp_UnaryExp BIExp_Not ec) (BExp_IfThenElse ec et ef) ef)
 Proof
@@ -800,12 +705,6 @@ REWRITE_TAC [birs_simplification_def] >>
 
   FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-(*
-  Cases_on `birs_interpret_fun_ALT H et` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-*)
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def] >>
   Cases_on `type_of_bir_exp ec` >> Cases_on `type_of_bir_exp et` >> Cases_on `type_of_bir_exp ef` >> (
@@ -1034,7 +933,7 @@ Definition num_ranges_lin_distinct_def:
      x + n <= y)
 End
 
-Theorem word_ranges_lin_distinct_SPEC1w_32_thm[local]:
+Theorem word_ranges_lin_distinct_SPEC_1w_32_thm[local]:
 !(x:word32) y.
   (x <+ x + 1w /\ (y + 1w <=+ x \/ x + 1w <=+ y)) ==>
   DISJOINT {bir_mem_addr Bit32 (w2n x)} {bir_mem_addr Bit32 (w2n y)}
@@ -1047,7 +946,7 @@ Proof
   rpt strip_tac >> fs [GSYM wordsTheory.WORD_NOT_LOWER]
 QED
 
-Theorem word_ranges_lin_distinct_SPEC1w_64_thm[local]:
+Theorem word_ranges_lin_distinct_SPEC_1w_64_thm[local]:
 !(x:word64) y.
   (x <+ x + 1w /\ (y + 1w <=+ x \/ x + 1w <=+ y)) ==>
   DISJOINT {bir_mem_addr Bit64 (w2n x)} {bir_mem_addr Bit64 (w2n y)}
@@ -1060,8 +959,7 @@ Proof
   rpt strip_tac >> fs [GSYM wordsTheory.WORD_NOT_LOWER]
 QED
 
-(* TODO: simplify proof *)
-Theorem word_offset_lt_thm:
+Theorem word_offset_lt_thm1[local]:
 !(x:'a word) n.
   (x <+ x + n) ==>
   (w2n x + w2n n < dimword (:'a))
@@ -1069,8 +967,7 @@ Proof
   rpt strip_tac >>
   fs [wordsTheory.WORD_ADD_RIGHT_LO2, wordsTheory.w2n_lt] >>
   full_simp_tac std_ss [GSYM wordsTheory.WORD_NEG_MUL] >>
-  full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.word_2comp_def] >>
-  full_simp_tac std_ss [wordsTheory.w2n_n2w] >>
+  full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.word_2comp_def, wordsTheory.w2n_n2w] >>
   ‘dimword (:'a) − w2n n < dimword (:'a)’ by (
     ‘0 < w2n n’ by (
       metis_tac [wordsTheory.word_0_n2w, wordsTheory.WORD_LO, wordsTheory.WORD_LO_word_0]
@@ -1081,21 +978,20 @@ Proof
   metis_tac [arithmeticTheory.SUB_LEFT_LESS, arithmeticTheory.ADD_COMM]
 QED
 
-Theorem word_offset_lt_thm2:
+Theorem word_offset_lt_thm2[local]:
 !(x:'a word) n.
   (x <+ x + n) ==>
   (w2n x + w2n n = w2n(x + n))
 Proof
   rpt strip_tac >>
-  ‘(w2n n + w2n x) MOD dimword (:'a) = w2n n + w2n x’ by (
+  ‘(w2n x + w2n n) MOD dimword (:'a) = w2n x + w2n n’ by (
     match_mp_tac arithmeticTheory.LESS_MOD >>
-    metis_tac [word_offset_lt_thm, wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]
+    metis_tac [word_offset_lt_thm1]
   ) >>
-  full_simp_tac std_ss [wordsTheory.word_add_def, wordsTheory.w2n_n2w] >>
-  metis_tac [wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]
+  full_simp_tac std_ss [wordsTheory.word_add_def, wordsTheory.w2n_n2w]
 QED
 
-Theorem word_offset_lt_thm2_0:
+Theorem word_offset_lt_thm2_0[local]:
 !(x:'a word) n.
   (x = x + n) ==>
   (w2n x + w2n n = w2n(x + n))
@@ -1107,18 +1003,14 @@ Proof
   fs []
 QED
 
-Theorem word_offset_lt_thm3:
+Theorem word_offset_lt_thm3[local]:
 !(x:'a word) i n.
   (x <+ x + n) ==>
   (i <+ n) ==>
   (x <=+ x + i)
 Proof
   rpt strip_tac >>
-  imp_res_tac word_offset_lt_thm >>
-(*  ‘(w2n x + w2n n) MOD dimword (:'a) = w2n x + w2n n’ by (
-    match_mp_tac arithmeticTheory.LESS_MOD >>
-    metis_tac [word_offset_lt_thm]
-  ) >>*)
+  imp_res_tac word_offset_lt_thm1 >>
   full_simp_tac std_ss [wordsTheory.word_add_def, wordsTheory.w2n_n2w] >>
   full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.WORD_LS, wordsTheory.w2n_n2w] >>
 
@@ -1126,20 +1018,9 @@ Proof
     metis_tac [arithmeticTheory.SUB_LEFT_LESS, arithmeticTheory.ADD_COMM, arithmeticTheory.LESS_TRANS]
   ) >>
   fs [arithmeticTheory.LESS_MOD]
-(*  metis_tac [, ]
-                
-  ‘(w2n x + w2n i) MOD dimword (:'a) = w2n x + w2n i’ by (
-    match_mp_tac arithmeticTheory.LESS_MOD >>
-    metis_tac [word_offset_lt_thm]
-  ) >>
-
-    
-  full_simp_tac std_ss [] >>
-  full_simp_tac std_ss [wordsTheory.WORD_LO, wordsTheory.word_2comp_def] >>
-  wordsTheory.WORD_LOWER_TRANS*)
 QED
 
-Theorem word2num_ranges_lin_distinct_thm:
+Theorem word2num_ranges_lin_distinct_thm[local]:
 !x n y m.
   (word_ranges_lin_distinct (x, n) (y, m)) ==>
   (num_ranges_lin_distinct (w2n x, w2n n) (w2n y, w2n m))
@@ -1150,7 +1031,7 @@ Proof
   )
 QED
 
-Theorem num_ranges_lin_leftorright_thm:
+Theorem num_ranges_lin_leftorright_thm[local]:
 !x n y m.
   num_ranges_lin_distinct (x, n) (y, m) ==>
     ((!i j. i < n ==> j < m ==> x + i < y + j) \/
@@ -1160,8 +1041,7 @@ Proof
   fs [num_ranges_lin_distinct_def]
 QED
 
-(* TODO: simplify proof *)
-Theorem num_ranges_lin_distinct_thm:
+Theorem num_ranges_lin_distinct_thm[local]:
 !x n y m.
   num_ranges_lin_distinct (x, n) (y, m) ==>
     (!i j. i < n ==> j < m ==> x + i <> y + j)
@@ -1173,18 +1053,14 @@ Proof
   )
 QED
 
-(* TODO: simplify proof *)
-Theorem word_ranges_lin_distinct_thm:
+Theorem word_ranges_lin_distinct_thm[local]:
 !x n y m.
   (word_ranges_lin_distinct (x, n) (y, m)) ==>
   (!i j. (i <+ n) ==> (j <+ m) ==> x + i <> y + j)
 Proof
-  (*fs [word_ranges_lin_distinct_def] >>
-  rpt strip_tac >>*)
   rpt gen_tac >> strip_tac >>
   imp_res_tac word2num_ranges_lin_distinct_thm >>
   imp_res_tac num_ranges_lin_distinct_thm >>
-  (*POP_ASSUM (fn thm => rpt (POP_ASSUM (K ALL_TAC)) >> ASSUME_TAC thm) >>*)
   rpt strip_tac >>
   PAT_X_ASSUM “!x.A” (ASSUME_TAC o Q.SPECL [‘w2n i’]) >>
   full_simp_tac std_ss [GSYM wordsTheory.WORD_LO] >>
@@ -1192,6 +1068,8 @@ Proof
   PAT_X_ASSUM “!x.A” (ASSUME_TAC o Q.SPECL [‘w2n j’]) >>
   full_simp_tac std_ss [GSYM wordsTheory.WORD_LO] >>
   rev_full_simp_tac std_ss [] >>
+  POP_ASSUM MP_TAC >>
+  rewrite_tac [] >>
 
   full_simp_tac std_ss [word_ranges_lin_distinct_def] >> (
     IMP_RES_TAC word_offset_lt_thm3 >>
@@ -1199,13 +1077,7 @@ Proof
       metis_tac [word_offset_lt_thm2, word_offset_lt_thm2_0, wordsTheory.w2n_11]
     )
   )
-(*  metis_tac [wordsTheory.word_add_def, wordsTheory.w2n_n2w]*)
 QED
-(*
-!aty x y.
-  (bir_mem_addr aty x = bir_mem_addr aty y) <=>
-  (x = y)
-*)
 
 Theorem restore_0w_thm[local]:
 !a b.
@@ -1254,7 +1126,7 @@ in
 end;
 
 val bir_mem_acc_disjoint_TAC =
-  rewrite_tac [word_ranges_lin_distinct_SPEC1w_32_thm, word_ranges_lin_distinct_SPEC1w_64_thm] >>
+  rewrite_tac [word_ranges_lin_distinct_SPEC_1w_32_thm, word_ranges_lin_distinct_SPEC_1w_64_thm] >>
   rewrite_tac [GSYM word_ranges_lin_distinct_def] >>
   rpt gen_tac >> strip_tac >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
@@ -1280,7 +1152,7 @@ fun gen_bir_mem_acc_disjoint_thm memadsz memvalsz ldsz stsz =
 (*      memory bypass                                      *)
 (* ******************************************************* *)
 (* TODO: could simplify condition for store bypassing with alignment requirement (if it holds in the target code, which should be the case) *)
-(* !!! note that this is a simplification of the problem that unfortunately excludes wraparound completely !!! *)
+(* !!! note that what is used here is a simplification of the problem that unfortunately excludes wraparound completely !!! *)
 (* TODO: did I use the wrong expression? shouldn't it be unsigned comparison? *)
 
 (*

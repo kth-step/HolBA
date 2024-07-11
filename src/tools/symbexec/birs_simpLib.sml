@@ -242,9 +242,9 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
 
   val birs_simp_exp_pcond_thms =
-    [birs_simplification_And_Minus_thm,
-     birs_simplification_LSB0_And64_thm,
-     birs_simplification_SignedLowCast3264_thm,
+    [birs_simplification_And_Minus_CM0_thm,
+     birs_simplification_LSB0_And64_RV_thm,
+     birs_simplification_SignedLowCast3264_RV_thm,
 
      birs_simplification_IfThenElse_T_thm,
      birs_simplification_IfThenElse_F_thm]@
@@ -298,8 +298,8 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
      birs_simplification_Minus_left_thm,
      birs_simplification_Plus_left_thm,
      birs_simplification_Plus_right_thm,
-     birs_simplification_Load_32_addr_thm,
-     birs_simplification_Store_32_addr_thm];
+     birs_simplification_Load_addr_thm,
+     birs_simplification_Store_addr_thm];
 
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
