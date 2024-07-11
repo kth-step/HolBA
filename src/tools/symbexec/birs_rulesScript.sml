@@ -739,4 +739,33 @@ cheat
 QED
 *)
 
+
+local
+  open bir_bool_expTheory
+in
+
+Theorem birs_jumptarget_singletonconst_thm:
+!pcond vaex iv.
+  (!i. birs_interpret_fun i vaex = SOME (BVal_Imm iv)) ==>
+  (?i. birs_interpret_fun i pcond = SOME bir_val_true) ==>
+  (birs_symbval_concretizations pcond vaex = {BL_Address iv})
+Proof
+  rpt strip_tac >>
+  rw [birs_symbval_concretizations_def] >>
+  fs [EXTENSION] >>
+  METIS_TAC []
+QED
+
+Theorem birs_jumptarget_empty_thm:
+!pcond vaex iv.
+  (!i. birs_interpret_fun i pcond = SOME bir_val_false) ==>
+  (birs_symbval_concretizations pcond vaex = EMPTY)
+Proof
+  rpt strip_tac >>
+  rw [birs_symbval_concretizations_def] >>
+  simp_tac (std_ss++holBACore_ss++wordsLib.WORD_ss++pred_setSimps.GSPEC_SIMP_ss) [bir_val_true_def, bir_val_false_def]
+QED
+
+end;
+
 val _ = export_theory();

@@ -1,0 +1,16 @@
+
+nestfunc.o:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000628 <nested>:
+ 628:	10003783          	ld	a5,256(zero) # 100 <__abi_tag-0x1b8>
+ 62c:	00b787bb          	addw	a5,a5,a1
+ 630:	00a7853b          	addw	a0,a5,a0
+ 634:	00008067          	ret
+
+0000000000000638 <main>:
+ 638:	10003503          	ld	a0,256(zero) # 100 <__abi_tag-0x1b8>
+ 63c:	00b5051b          	addiw	a0,a0,11
+ 640:	00008067          	ret

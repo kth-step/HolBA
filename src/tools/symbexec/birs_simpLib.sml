@@ -148,6 +148,8 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val birs_simp_exp_plain_thms =
     [birs_simplification_UnsignedCast_LowCast_Twice_thm,
 
+     birs_simplification_Plus_Const64_thm,
+
      birs_simplification_Plus_Plus_Const64_thm,
      birs_simplification_Minus_Plus_Const64_thm,
      birs_simplification_Minus_Minus_Const64_thm,
@@ -240,17 +242,16 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
 
   val birs_simp_exp_pcond_thms =
-    [birs_simplification_And_Minus_thm,
+    [birs_simplification_And_Minus_CM0_thm,
+     birs_simplification_LSB0_And64_RV_thm,
+     birs_simplification_SignedLowCast3264_RV_thm,
 
      birs_simplification_IfThenElse_T_thm,
-     birs_simplification_IfThenElse_F_thm,
-
-     birs_simplification_Mem_Match_32_8_8_thm,
-     birs_simplification_Mem_Match_32_8_32_thm,
-     birs_simplification_Mem_Bypass_32_8_thm,
-     birs_simplification_Mem_Bypass_32_32_thm,
-     birs_simplification_Mem_Bypass_8_8_thm,
-     birs_simplification_Mem_Bypass_8_32_thm];
+     birs_simplification_IfThenElse_F_thm]@
+    (CONJUNCTS birs_simplification_Mem_Match_64_8_thm)@
+    (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)@
+    (CONJUNCTS birs_simplification_Mem_Match_32_8_thm)@
+    (CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm);
 
 
 (*
@@ -292,8 +293,13 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
   val birs_simp_exp_subexp_thms =
     [birs_simplification_UnsignedCast_thm,
-     birs_simplification_Minus_thm,
-     birs_simplification_Plus_thm];
+     birs_simplification_SignedCast_thm,
+     birs_simplification_LowCast_thm,
+     birs_simplification_Minus_left_thm,
+     birs_simplification_Plus_left_thm,
+     birs_simplification_Plus_right_thm,
+     birs_simplification_Load_addr_thm,
+     birs_simplification_Store_addr_thm];
 
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
@@ -323,6 +329,7 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val start_simp_thm = birs_simp_ID_fun simp_inst_tm;
+  birs_simp_repeat simp_inst_tm;
 *)
   fun birs_simp_repeat_ start_simp_thm =
       let
@@ -343,6 +350,230 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
     birs_simp_repeat_ (birs_simp_ID_fun simp_inst_tm);
 
 (*
+
+val pcond = ````;
+val bexp = ````;
+
+val pcond = ``(BExp_Const (Imm1 1w))``;
+val bexp = ``BExp_Cast BIExp_SignedCast
+                        (BExp_Cast BIExp_LowCast
+                           (BExp_Cast BIExp_SignedCast
+                              (BExp_Cast BIExp_LowCast
+                                 (BExp_BinExp BIExp_Plus
+                                    (BExp_Cast BIExp_SignedCast
+                                       (BExp_Cast BIExp_LowCast
+                                          (BExp_Const (Imm64 3w)) Bit32)
+                                       Bit64)
+                                    (BExp_Cast BIExp_SignedCast
+                                       (BExp_Cast BIExp_LowCast
+                                          (BExp_Const (Imm64 7w)) Bit32)
+                                       Bit64)) Bit32) Bit64) Bit32) Bit64``;
+
+val bexp = ``BExp_Cast BIExp_SignedCast
+                        (BExp_Cast BIExp_LowCast
+                           (BExp_Cast BIExp_SignedCast
+                              (BExp_Cast BIExp_LowCast
+                                 (BExp_BinExp BIExp_Plus
+                                    (BExp_Cast BIExp_SignedCast
+                                       (BExp_Cast BIExp_LowCast
+                                          (BExp_Const (Imm64 3w)) Bit32)
+                                       Bit64)
+                                    (BExp_Cast BIExp_SignedCast
+                                       (BExp_Cast
+                                                         BIExp_LowCast
+                                                         (BExp_Const
+                                                            (Imm64 1w))
+                                                         Bit32) Bit64))
+                                 Bit32) Bit64) Bit32) Bit64``;
+
+val pcond = ``BExp_BinExp BIExp_And
+                    (BExp_BinPred BIExp_Equal
+                       (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                       (BExp_Const (Imm64 pre_x2)))
+                    (BExp_BinExp BIExp_And
+                       (BExp_BinPred BIExp_Equal
+                          (BExp_BinExp BIExp_And
+                             (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                             (BExp_Const (Imm64 7w)))
+                          (BExp_Const (Imm64 0w)))
+                       (BExp_BinExp BIExp_And
+                          (BExp_BinPred BIExp_LessOrEqual
+                             (BExp_Const (Imm64 4096w))
+                             (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
+                          (BExp_BinPred BIExp_LessThan
+                             (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                             (BExp_Const (Imm64 0x100000000w)))))``;
+val bexp = ``(BExp_Load
+                           (BExp_Store
+                              (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+                              (BExp_BinExp BIExp_Minus
+                                 (BExp_BinExp BIExp_Minus
+                                    (BExp_Den
+                                       (BVar "sy_x2" (BType_Imm Bit64)))
+                                    (BExp_Const (Imm64 32w)))
+                                 (BExp_Const (Imm64 28w)))
+                              BEnd_LittleEndian
+                              (BExp_Cast BIExp_LowCast
+                                 (BExp_Const (Imm64 7w)) Bit32))
+                           (BExp_BinExp BIExp_Minus
+                              (BExp_BinExp BIExp_Minus
+                                 (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                                 (BExp_Const (Imm64 32w)))
+                              (BExp_Const (Imm64 28w))) BEnd_LittleEndian
+                           Bit32)``;
+val bexp = ``(BExp_Load
+                           (BExp_Store
+                              (BExp_Store
+                                 (BExp_Store
+                                    (BExp_Store
+                                       (BExp_Store
+                                          (BExp_Store
+                                             (BExp_Den
+                                                (BVar "sy_MEM8"
+                                                   (BType_Mem Bit64 Bit8)))
+                                             (BExp_BinExp BIExp_Plus
+                                                (BExp_BinExp BIExp_Minus
+                                                   (BExp_Den
+                                                      (BVar "sy_x2"
+                                                         (BType_Imm Bit64)))
+                                                   (BExp_Const (Imm64 32w)))
+                                                (BExp_Const (Imm64 24w)))
+                                             BEnd_LittleEndian
+                                             (BExp_Den
+                                                (BVar "sy_x1"
+                                                   (BType_Imm Bit64))))
+                                          (BExp_BinExp BIExp_Plus
+                                             (BExp_BinExp BIExp_Minus
+                                                (BExp_Den
+                                                   (BVar "sy_x2"
+                                                      (BType_Imm Bit64)))
+                                                (BExp_Const (Imm64 32w)))
+                                             (BExp_Const (Imm64 16w)))
+                                          BEnd_LittleEndian
+                                          (BExp_Den
+                                             (BVar "sy_x8"
+                                                (BType_Imm Bit64))))
+                                       (BExp_BinExp BIExp_Minus
+                                          (BExp_BinExp BIExp_Minus
+                                             (BExp_Den
+                                                (BVar "sy_x2"
+                                                   (BType_Imm Bit64)))
+                                             (BExp_Const (Imm64 0w)))
+                                          (BExp_Const (Imm64 20w)))
+                                       BEnd_LittleEndian
+                                       (BExp_Cast BIExp_LowCast
+                                          (BExp_Const (Imm64 1w)) Bit32))
+                                    (BExp_BinExp BIExp_Plus
+                                       (BExp_BinExp BIExp_Minus
+                                          (BExp_Den
+                                             (BVar "sy_x2"
+                                                (BType_Imm Bit64)))
+                                          (BExp_Const (Imm64 64w)))
+                                       (BExp_Const (Imm64 24w)))
+                                    BEnd_LittleEndian
+                                    (BExp_BinExp BIExp_Minus
+                                       (BExp_Den
+                                          (BVar "sy_x2" (BType_Imm Bit64)))
+                                       (BExp_Const (Imm64 0w))))
+                                 (BExp_BinExp BIExp_Minus
+                                    (BExp_BinExp BIExp_Minus
+                                       (BExp_Den
+                                          (BVar "sy_x2" (BType_Imm Bit64)))
+                                       (BExp_Const (Imm64 32w)))
+                                    (BExp_Const (Imm64 24w)))
+                                 BEnd_LittleEndian (BExp_Const (Imm64 3w)))
+                              (BExp_BinExp BIExp_Minus
+                                 (BExp_BinExp BIExp_Minus
+                                    (BExp_Den
+                                       (BVar "sy_x2" (BType_Imm Bit64)))
+                                    (BExp_Const (Imm64 32w)))
+                                 (BExp_Const (Imm64 28w)))
+                              BEnd_LittleEndian
+                              (BExp_Cast BIExp_LowCast
+                                 (BExp_Const (Imm64 7w)) Bit32))
+                           (BExp_BinExp BIExp_Minus
+                              (BExp_BinExp BIExp_Minus
+                                 (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                                 (BExp_Const (Imm64 32w)))
+                              (BExp_Const (Imm64 28w))) BEnd_LittleEndian
+                           Bit32)``;
+val bexp = ``BExp_Cast BIExp_SignedCast
+                        (BExp_Load
+                           (BExp_Store
+                              (BExp_Store
+                                 (BExp_Store
+                                    (BExp_Store
+                                       (BExp_Store
+                                          (BExp_Store
+                                             (BExp_Den
+                                                (BVar "sy_MEM8"
+                                                   (BType_Mem Bit64 Bit8)))
+                                             (BExp_BinExp BIExp_Plus
+                                                (BExp_BinExp BIExp_Minus
+                                                   (BExp_Den
+                                                      (BVar "sy_x2"
+                                                         (BType_Imm Bit64)))
+                                                   (BExp_Const (Imm64 32w)))
+                                                (BExp_Const (Imm64 24w)))
+                                             BEnd_LittleEndian
+                                             (BExp_Den
+                                                (BVar "sy_x1"
+                                                   (BType_Imm Bit64))))
+                                          (BExp_BinExp BIExp_Plus
+                                             (BExp_BinExp BIExp_Minus
+                                                (BExp_Den
+                                                   (BVar "sy_x2"
+                                                      (BType_Imm Bit64)))
+                                                (BExp_Const (Imm64 32w)))
+                                             (BExp_Const (Imm64 16w)))
+                                          BEnd_LittleEndian
+                                          (BExp_Den
+                                             (BVar "sy_x8"
+                                                (BType_Imm Bit64))))
+                                       (BExp_BinExp BIExp_Minus
+                                          (BExp_BinExp BIExp_Minus
+                                             (BExp_Den
+                                                (BVar "sy_x2"
+                                                   (BType_Imm Bit64)))
+                                             (BExp_Const (Imm64 0w)))
+                                          (BExp_Const (Imm64 20w)))
+                                       BEnd_LittleEndian
+                                       (BExp_Cast BIExp_LowCast
+                                          (BExp_Const (Imm64 1w)) Bit32))
+                                    (BExp_BinExp BIExp_Plus
+                                       (BExp_BinExp BIExp_Minus
+                                          (BExp_Den
+                                             (BVar "sy_x2"
+                                                (BType_Imm Bit64)))
+                                          (BExp_Const (Imm64 64w)))
+                                       (BExp_Const (Imm64 24w)))
+                                    BEnd_LittleEndian
+                                    (BExp_BinExp BIExp_Minus
+                                       (BExp_Den
+                                          (BVar "sy_x2" (BType_Imm Bit64)))
+                                       (BExp_Const (Imm64 0w))))
+                                 (BExp_BinExp BIExp_Minus
+                                    (BExp_BinExp BIExp_Minus
+                                       (BExp_Den
+                                          (BVar "sy_x2" (BType_Imm Bit64)))
+                                       (BExp_Const (Imm64 32w)))
+                                    (BExp_Const (Imm64 24w)))
+                                 BEnd_LittleEndian (BExp_Const (Imm64 3w)))
+                              (BExp_BinExp BIExp_Minus
+                                 (BExp_BinExp BIExp_Minus
+                                    (BExp_Den
+                                       (BVar "sy_x2" (BType_Imm Bit64)))
+                                    (BExp_Const (Imm64 32w)))
+                                 (BExp_Const (Imm64 28w)))
+                              BEnd_LittleEndian
+                              (BExp_Cast BIExp_LowCast
+                                 (BExp_Const (Imm64 7w)) Bit32))
+                           (BExp_BinExp BIExp_Minus
+                              (BExp_BinExp BIExp_Minus
+                                 (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                                 (BExp_Const (Imm64 32w)))
+                              (BExp_Const (Imm64 28w))) BEnd_LittleEndian
+                           Bit32) Bit64``;
 
 val pcond = ``(BExp_BinPred BIExp_Equal
       (BExp_Cast BIExp_UnsignedCast

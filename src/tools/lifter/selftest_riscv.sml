@@ -125,6 +125,9 @@ val _ = print_msg "\n";
     "BGEU x19, x10, 8"
   ];
 
+(* ret instruction *)
+  val _ = print_term (concl ((valOf o (fn (x,_,_) => x)) (riscv_test_hex_print_asm "ret" "00008067")));
+
 (* I-type variant (opcode LOAD) *)
   val _ = riscv_test_asms [
     (* Load byte *)
