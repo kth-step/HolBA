@@ -30,12 +30,6 @@ open symb_prop_transferTheory;
 
 open jgmt_rel_bir_contTheory;
 
-open bir_symbTheory;
-open birs_stepLib;
-open bir_symb_sound_coreTheory;
-open symb_recordTheory;
-open symb_interpretTheory;
-
 open pred_setTheory;
 
 open program_logicSimps;
