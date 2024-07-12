@@ -10,6 +10,8 @@ local
   open birs_composeLib;
   open birs_driveLib;
   open birs_auxTheory;
+
+  open bslSyntax;
 in
 
 val prog_addr_max_tm = ``0x20000w:word64``;
@@ -21,15 +23,25 @@ fun mem_addrs_stack_disj_reg_bir_tm rnsp rn = ``BExp_BinPred BIExp_LessThan
      (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))``;
 
 (*
-fun mem_area_disj_reg_bir_tm rn1 sz1 rn2 sz2 = ``
-BExp_BinExp BIExp_And
- (BExp_BinPred BIExp_LessOrEqual
-  (BExp_Const (Imm64 ^prog_addr_max_tm))
-  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
- (BExp_BinPred BIExp_LessThan
-  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
-  (BExp_Const (Imm64 ^mem_addr_bound_tm)))``;
+val (rn1, sz1) = ("x14", (4*4*256));
+val (rn2, sz2) = ("x12", (4*4));
 *)
+fun mem_area_disj_reg_bir_tm (rn1, sz1) (rn2, sz2) =
+let
+  val bvrn1 = bden (bvarimm64 rn1);
+  val bvrn2 = bden (bvarimm64 rn2);
+  val bprnsz1 = bplus (bvrn1, bconst64 (sz1 - 1));
+  val bprnsz2 = bplus (bvrn2, bconst64 (sz2 - 1));
+in
+  bandl [ 
+    blt (bvrn1, bprnsz1),
+    blt (bvrn2, bprnsz2),
+    borl [
+      blt (bprnsz1, bvrn2),
+      blt (bprnsz2, bvrn1)
+    ]
+  ]
+end;
 
 fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
  (BExp_BinPred BIExp_LessOrEqual
@@ -68,7 +80,7 @@ fun pre_vals_mem_reg_bir_tm mn rn fv = Parse.Term (`
 `);
 
 fun pre_vals_bir_tm mn rn fvr fvmd =
- bslSyntax.band (pre_vals_reg_bir_tm rn fvr, pre_vals_mem_reg_bir_tm mn rn fvmd);
+ band (pre_vals_reg_bir_tm rn fvr, pre_vals_mem_reg_bir_tm mn rn fvmd);
 
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
   birs_end_lbls bprog_envtyl birs_pcond =
