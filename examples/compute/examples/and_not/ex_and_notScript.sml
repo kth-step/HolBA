@@ -3,14 +3,14 @@
 (*  a variable or its negation                                               *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse boolLib bossLib
-open bir_basicTheory bir_envTheory
-open bir_binexpTheory bir_ifthenelseTheory bir_unaryexpTheory
-open bir_computeTheory
-open wordsLib
+open HolKernel Parse boolLib bossLib ;
+open bir_basicTheory bir_envTheory ;
+open bir_binexpTheory bir_ifthenelseTheory bir_unaryexpTheory ;
+open bir_computeTheory ;
+open wordsLib ;
 
 
-val _ = new_theory "ex_and_not"
+val _ = new_theory "ex_and_not" ;
 
 (* The variables used in the condition. They will be booleans *)
 Definition var_cond1_def:
@@ -79,4 +79,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;

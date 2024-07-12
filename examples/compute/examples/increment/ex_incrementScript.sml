@@ -2,13 +2,13 @@
 (*  Example regarding a function that increments a variable in the env       *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse boolLib bossLib
-open bir_basicTheory bir_envTheory
-open bir_binexpTheory
-open bir_computeTheory
+open HolKernel Parse boolLib bossLib ;
+open bir_basicTheory bir_envTheory ;
+open bir_binexpTheory ;
+open bir_computeTheory ;
 
 
-val _ = new_theory "ex_increment"
+val _ = new_theory "ex_increment";
 
 Definition reg_var_def:
   reg_var = BVar "r1"
@@ -40,4 +40,4 @@ QED
 
 
 
-val _ = export_theory ()
+val _ = export_theory () ;
