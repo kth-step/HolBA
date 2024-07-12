@@ -20,7 +20,7 @@ open bir_typing_expTheory;
 open bir_htTheory;
 
 open tutorial_smtSupportLib;
-open bir_symbLib;
+open bir_predLib;
 open birs_smtLib;
 
 open bir_symbTheory birs_auxTheory;
