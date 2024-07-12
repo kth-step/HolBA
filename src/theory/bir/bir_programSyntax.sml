@@ -148,7 +148,7 @@ val is_bir_program_t_ty = can dest_bir_program_t_ty;
 
 val (BirProgram_tm,  mk_BirProgram, dest_BirProgram, is_BirProgram)  = syntax_fns1 "BirProgram";
 
-val tm = ``BirProgram []``
+val tm = ``(BirProgram []) : 'a bir_program_t``
 
 fun dest_BirProgram_list tm = let
   val l_tm = dest_BirProgram tm;
