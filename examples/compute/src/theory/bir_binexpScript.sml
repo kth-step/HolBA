@@ -49,13 +49,29 @@ End
 (* ****************************************** *)
 
 (* Computes a binary expression of two immediates *)
+(* Definition bir_compute_binexp_imm_def: *)
+(*   (bir_compute_binexp_imm binexp (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
+(*   (bir_compute_binexp_imm binexp (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
+(*   (bir_compute_binexp_imm binexp (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
+(*   (bir_compute_binexp_imm binexp (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
+(*   (bir_compute_binexp_imm binexp (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
+(*   (bir_compute_binexp_imm binexp (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
+(*   (bir_compute_binexp_imm binexp _ _ = NONE) *)
+(* End *)
+
 Definition bir_compute_binexp_imm_def:
-  (bir_compute_binexp_imm binexp (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 ((bir_binexp_get_oper binexp) w1 w2)))) /\
-  (bir_compute_binexp_imm binexp (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 ((bir_binexp_get_oper binexp) w1 w2)))) /\
-  (bir_compute_binexp_imm binexp (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 ((bir_binexp_get_oper binexp) w1 w2)))) /\
-  (bir_compute_binexp_imm binexp (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 ((bir_binexp_get_oper binexp) w1 w2)))) /\
-  (bir_compute_binexp_imm binexp (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 ((bir_binexp_get_oper binexp) w1 w2)))) /\
-  (bir_compute_binexp_imm binexp (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 ((bir_binexp_get_oper binexp) w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 (word_and w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 (word_and w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 (word_and w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 (word_and w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 (word_and w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 (word_and w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 (word_add w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 (word_add w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 (word_add w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 (word_add w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 (word_add w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 (word_add w1 w2)))) /\
   (bir_compute_binexp_imm binexp _ _ = NONE)
 End
 
