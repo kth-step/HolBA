@@ -62,6 +62,21 @@ Proof
   Cases_on `var` >> Cases_on `env` >>
   rw [bir_env_update_def, bir_env_lookup_def]
 QED
+
+Theorem bir_env_lookup_update_neq:
+  !env var1 var2 v. 
+    var1 <> var2 ==>
+      bir_env_lookup (bir_env_update env var1 v) var2 = bir_env_lookup env var2
+Proof
+  Cases_on `var1` >> Cases_on `var2` >>
+  rw [bir_var_t_11] >>
+  Cases_on `env` >>
+  simp [bir_env_update_def] >>
+  rw [bir_env_lookup_def] >>
+  EVAL_TAC >>
+  METIS_TAC []
+QED
+
 (* Lookup and relation are the same *)
 Theorem bir_env_lookup_eq_rel:
   !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
