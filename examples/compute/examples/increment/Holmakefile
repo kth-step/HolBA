@@ -1,4 +1,5 @@
-INCLUDES = $(SMOLBIRDIR)/src/theory
+INCLUDES = $(SMOLBIRDIR)/src/theory \
+					 $(SMOLBIRDIR)/src/shared
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

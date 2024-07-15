@@ -5,7 +5,7 @@
 open HolKernel Parse boolLib bossLib ;
 open bir_basicTheory bir_envTheory ;
 open bir_binexpTheory ;
-open bir_computeTheory ;
+open bir_computeTheory bir_computeLib ;
 
 
 val _ = new_theory "ex_increment";
@@ -37,6 +37,9 @@ Proof
 
   rw [bir_compute_binexp_def, bir_compute_binexp_imm_def, bir_binexp_get_oper_def]
 QED 
+
+
+val test_eval = compute_exp_EVAL ``increment_exp`` ``start_env 3w``
 
 
 
