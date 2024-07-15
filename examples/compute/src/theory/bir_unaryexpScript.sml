@@ -48,12 +48,18 @@ End
 
 (* Computes a binary expression of an immediate *)
 Definition bir_compute_unaryexp_imm_def:
-  (bir_compute_unaryexp_imm unaryexp (Imm1 w1) = SOME (BVal_Imm (Imm1 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
-  (bir_compute_unaryexp_imm unaryexp (Imm8 w1) = SOME (BVal_Imm (Imm8 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
-  (bir_compute_unaryexp_imm unaryexp (Imm16 w1) = SOME (BVal_Imm (Imm16 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
-  (bir_compute_unaryexp_imm unaryexp (Imm32 w1) = SOME (BVal_Imm (Imm32 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
-  (bir_compute_unaryexp_imm unaryexp (Imm64 w1) = SOME (BVal_Imm (Imm64 ((bir_unaryexp_get_oper unaryexp) w1)))) /\
-  (bir_compute_unaryexp_imm unaryexp (Imm128 w1) = SOME (BVal_Imm (Imm128 ((bir_unaryexp_get_oper unaryexp) w1))))
+  (bir_compute_unaryexp_imm BIExp_Not (Imm1 w1) = SOME (BVal_Imm (Imm1 (word_1comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm8 w1) = SOME (BVal_Imm (Imm8 (word_1comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm16 w1) = SOME (BVal_Imm (Imm16 (word_1comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm32 w1) = SOME (BVal_Imm (Imm32 (word_1comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm64 w1) = SOME (BVal_Imm (Imm64 (word_1comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm128 w1) = SOME (BVal_Imm (Imm128 (word_1comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm1 w1) = SOME (BVal_Imm (Imm1 (word_2comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm8 w1) = SOME (BVal_Imm (Imm8 (word_2comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm16 w1) = SOME (BVal_Imm (Imm16 (word_2comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm32 w1) = SOME (BVal_Imm (Imm32 (word_2comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm64 w1) = SOME (BVal_Imm (Imm64 (word_2comp w1)))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm128 w1) = SOME (BVal_Imm (Imm128 (word_2comp w1))))
 End
 
 (* Computes Unary expression *)

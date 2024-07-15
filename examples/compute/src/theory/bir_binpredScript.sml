@@ -48,12 +48,18 @@ End
 
 (* Computes a binary predicate of two immediates *)
 Definition bir_compute_binpred_imm_def:
-  (bir_compute_binpred_imm binpred (Imm1 w1) (Imm1 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
-  (bir_compute_binpred_imm binpred (Imm8 w1) (Imm8 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
-  (bir_compute_binpred_imm binpred (Imm16 w1) (Imm16 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
-  (bir_compute_binpred_imm binpred (Imm32 w1) (Imm32 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
-  (bir_compute_binpred_imm binpred (Imm64 w1) (Imm64 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
-  (bir_compute_binpred_imm binpred (Imm128 w1) (Imm128 w2) = (bir_binpred_get_oper binpred) w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm1 w1) (Imm1 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm8 w1) (Imm8 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm16 w1) (Imm16 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm32 w1) (Imm32 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm64 w1) (Imm64 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm128 w1) (Imm128 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm1 w1) (Imm1 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm8 w1) (Imm8 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm16 w1) (Imm16 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm32 w1) (Imm32 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm64 w1) (Imm64 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm128 w1) (Imm128 w2) = word_lo w1 w2) /\
   (bir_compute_binpred_imm binpred _ _ = F)
 End
 
