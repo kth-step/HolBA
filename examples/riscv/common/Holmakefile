@@ -8,3 +8,19 @@ INCLUDES = $(HOLBADIR)/src/theory/program_logic \
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+ifdef POLY
+all: examples-riscv-common-heap
+
+HEAPINC = $(HOLBADIR)/src/tools/lifter/bir_lifter_interfaceLib.uo \
+          $(HOLBADIR)/src/tools/backlifter/bir_backlifterLib.uo \
+          $(HOLBADIR)/src/shared/HolSmt/HolBA_HolSmtLib.uo \
+          $(HOLBADIR)/src/tools/symbexec/birs_stepLib.uo \
+          $(HOLBADIR)/src/tools/symbexec/birs_simpLib.uo \
+          $(HOLBADIR)/src/tools/symbexec/birs_smtLib.uo \
+          distribute_generic_stuffLib.uo
+
+examples-riscv-common-heap: $(HEAPINC)
+	$(HOLDIR)/bin/buildheap -o $@ $(patsubst %.uo,-f %.uo,$(HEAPINC))
+endif
+
