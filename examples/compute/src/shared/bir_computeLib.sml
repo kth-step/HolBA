@@ -22,12 +22,17 @@ fun compute_exp_EVAL (exp : term) (env: term) : thm =
 val _  = cv_auto_trans bir_cv_compute_exp_def ;
 
 
+
+(* Deep embedding of our expression *)
+fun translate_exp_cv (exp_def:thm) = 
+let 
+  val _ = print "Translating with deep embedding...\n" ;
+  val _ = time (cv_trans_deep_embedding EVAL) exp_def ;
+in () end
+
 (* Takes an expression definition and evaluates it using cv_eval and deep embedding translation *)
 fun compute_exp_cv (exp_def:thm) (env: term) : thm = 
 let 
-  (* Deep embedding of our expression *)
-  val _ = cv_trans_deep_embedding EVAL exp_def ;
-
   (* EVAL env if needed so it has the form of sequential updates *)
   val eval_env_thm = EVAL env ;
   val eval_env = rhs (concl eval_env_thm) ;

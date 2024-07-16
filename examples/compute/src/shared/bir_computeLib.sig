@@ -4,5 +4,6 @@ sig
 
   val compute_exp_EVAL : term -> term -> thm ;
   val compute_exp_cv : thm -> term -> thm ;
+  val translate_exp_cv : thm -> unit ;
 
 end
