@@ -18,13 +18,13 @@ fun compute_exp_EVAL (exp : term) (env: term) : thm =
 
 
 (* CV COMPUTE *)
+(* Translate computation function when loading lib *)
+val _  = cv_auto_trans bir_cv_compute_exp_def ;
 
 
 (* Takes an expression definition and evaluates it using cv_eval and deep embedding translation *)
 fun compute_exp_cv (exp_def:thm) (env: term) : thm = 
 let 
-  (* Translate computation function, might have already been done *)
-  val _ = cv_auto_trans bir_cv_compute_exp_def ;
   (* Deep embedding of our expression *)
   val _ = cv_trans_deep_embedding EVAL exp_def ;
 
