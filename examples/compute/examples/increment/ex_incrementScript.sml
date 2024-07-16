@@ -39,7 +39,8 @@ Proof
 QED 
 
 
-val test_eval = compute_exp_EVAL ``increment_exp`` ``start_env 3w``
+val test_eval = time compute_exp_EVAL ``increment_exp`` ``start_env 3w`` ;
+val test_cv_eval = time compute_exp_cv increment_exp_def ``start_env 3w`` ;
 
 
 
