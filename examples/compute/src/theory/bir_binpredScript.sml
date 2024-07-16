@@ -84,12 +84,13 @@ Theorem bir_eval_binpred_imp_compute_binpred:
   !binpred v1 v2 v. bir_eval_binpred binpred v1 v2 v ==> 
     bir_compute_binpred binpred (SOME v1) (SOME v2) = SOME v
 Proof
+  Cases_on `binpred` >>
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
     rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
     rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
     Cases_on `b` >> Cases_on `b'` >>
       rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, bir_imm_t_nchotomy] >>
-      fs [bir_eval_binpred_imm_cases] >>
+      fs [bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
       METIS_TAC []
 QED
 
@@ -101,12 +102,14 @@ Theorem well_typed_bir_eval_binpred_eq_compute_binpred:
   ( bir_eval_binpred binpred v1 v2 v <=> 
     bir_compute_binpred binpred (SOME v1) (SOME v2) = SOME v)
 Proof
+  Cases_on `binpred` >>
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
   rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
   rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >>
     rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, bir_imm_t_nchotomy] >>
-    fs [bir_eval_binpred_imm_cases, type_of_bir_val_def, type_of_bir_imm_def] >>
+    fs [bir_eval_binpred_imm_cases, type_of_bir_val_def, type_of_bir_imm_def,
+      bir_binpred_get_oper_def] >>
     METIS_TAC []
 QED
 

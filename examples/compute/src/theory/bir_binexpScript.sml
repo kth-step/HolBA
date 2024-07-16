@@ -95,11 +95,12 @@ Theorem bir_eval_binexp_eq_compute_binexp:
   !binexp v1 v2 v. bir_eval_binexp binexp v1 v2 v <=> 
     bir_compute_binexp binexp (SOME v1) (SOME v2) = SOME v
 Proof
+  Cases_on `binexp` >>
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
     rw [bir_eval_binexp_def, bir_compute_binexp_def] >>
     rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
     Cases_on `b` >> Cases_on `b'` >>
-      rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy] >>
+      rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy, bir_binexp_get_oper_def] >>
       METIS_TAC []
 QED
 
@@ -110,6 +111,7 @@ Theorem type_of_bir_val_imp_bir_eval_binexp:
     (type_of_bir_val v1 = type_of_bir_val v2) ==>
     ?v. bir_eval_binexp binexp v1 v2 v
 Proof
+  Cases_on `binexp` >>
   Cases_on `v1` >> Cases_on `v2` >>
   Cases_on `b` >> Cases_on `b'` >>
     rw [bir_eval_binexp_eq_compute_binexp] >>
