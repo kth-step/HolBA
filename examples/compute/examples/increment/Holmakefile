@@ -1,5 +1,14 @@
 INCLUDES = $(SMOLBIRDIR)/src/theory \
 					 $(SMOLBIRDIR)/src/shared
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-increment.exe
 .PHONY: all
+
+
+test-increment.exe: test-increment.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-increment.exe
+	./test-increment.exe
+
+EXTRA_CLEANS = test-increment.exe
