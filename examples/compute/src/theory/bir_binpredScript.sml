@@ -68,8 +68,7 @@ End
 Definition bir_compute_binpred_def:
   (bir_compute_binpred binpred (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
     SOME (BVal_Imm (bool2b (bir_compute_binpred_imm binpred imm1 imm2)))) /\
-  (bir_compute_binpred _ NONE _ = NONE) /\
-  (bir_compute_binpred _ _ NONE = NONE)
+  (bir_compute_binpred _ _ _ = NONE)
 End
 
 

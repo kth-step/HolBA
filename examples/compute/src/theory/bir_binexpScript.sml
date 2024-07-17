@@ -37,8 +37,9 @@ End
 
 (* Evaluates a general binary expression with values as parameters *)
 Definition bir_eval_binexp_def:
-  bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
-    (bir_eval_binexp_imm binexp imm1 imm2 imm)
+  (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
+    (bir_eval_binexp_imm binexp imm1 imm2 imm)) /\
+  (bir_eval_binexp _ _ _ _ = F)
 End
 
 
@@ -80,8 +81,7 @@ End
 Definition bir_compute_binexp_def:
   (bir_compute_binexp binexp (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
     bir_compute_binexp_imm binexp imm1 imm2) /\
-  (bir_compute_binexp _ NONE _ = NONE) /\
-  (bir_compute_binexp _ _ NONE = NONE)
+  (bir_compute_binexp _ _ _ = NONE)
 End
 
 

@@ -37,8 +37,9 @@ End
 
 (* Evaluates a general unary expression with values as parameters *)
 Definition bir_eval_unaryexp_def:
-  bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
-    (bir_eval_unaryexp_imm unaryexp imm1 imm)
+  (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
+    (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
+  (bir_eval_unaryexp _ _ _ = F)
 End
 
 (* ****************************************** *)
@@ -65,7 +66,7 @@ End
 (* Computes Unary expression *)
 Definition bir_compute_unaryexp_def:
   (bir_compute_unaryexp unaryexp (SOME (BVal_Imm imm1)) = bir_compute_unaryexp_imm unaryexp imm1) /\
-  (bir_compute_unaryexp _ NONE = NONE)
+  (bir_compute_unaryexp _ _ = NONE)
 End
 
 
