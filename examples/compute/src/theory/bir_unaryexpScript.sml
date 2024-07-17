@@ -92,14 +92,15 @@ QED
 
 
 (* Unary_exp always evaluates *)
-Theorem always_bir_eval_unaryexp:
-  !unaryexp v.
+Theorem type_of_bir_val_imp_bir_eval_unaryexp:
+  !unaryexp v ty.
+    (type_of_bir_val v = BType_Imm ty) ==>
     ?v'. bir_eval_unaryexp unaryexp v v'
 Proof
   Cases_on `unaryexp` >>
   Cases_on `v` >>
   Cases_on `b` >>
-    rw [bir_eval_unaryexp_eq_compute_unaryexp] >>
+    rw [bir_eval_unaryexp_eq_compute_unaryexp, type_of_bir_val_def] >>
     rw [bir_compute_unaryexp_def, bir_compute_unaryexp_imm_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def]
 QED

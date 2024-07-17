@@ -115,8 +115,8 @@ QED
 
 (* If the operands are typed, then the expression evaluates *)
 Theorem type_of_bir_val_imp_bir_eval_binpred:
-  !binpred v1 v2.
-    (type_of_bir_val v1 = type_of_bir_val v2) ==>
+  !binpred v1 v2 ty.
+    ((type_of_bir_val v1 = BType_Imm ty) /\ (type_of_bir_val v2 = BType_Imm ty)) ==>
     ?v. bir_eval_binpred binpred v1 v2 v
 Proof
   Cases_on `v1` >> Cases_on `v2` >>
