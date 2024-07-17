@@ -22,7 +22,8 @@ End
 
 (* Typing function for values *)
 Definition type_of_bir_val_def:
-  (type_of_bir_val (BVal_Imm imm) = (BType_Imm (type_of_bir_imm imm)))
+  (type_of_bir_val (BVal_Imm imm) = (BType_Imm (type_of_bir_imm imm))) /\
+  (type_of_bir_val (BVal_Mem aty vty mmap) = (BType_Mem aty vty) )
 End
 
 (* Typing relation for bir expressions *)
@@ -30,6 +31,10 @@ Inductive type_of_bir_exp:
 [~BExp_Const:]
   (!env imm. 
     type_of_bir_exp env (BExp_Const imm) (BType_Imm (type_of_bir_imm imm))) 
+
+[~BExp_MemConst:]
+  (!env aty vty mmap.
+    type_of_bir_exp env (BExp_MemConst aty vty mmap) (BType_Mem aty vty) ) 
 
 [~BExp_Den:]
   (!env var v.
@@ -80,10 +85,10 @@ Theorem bit1_is_boolean:
   !v. type_of_bir_val v = (BType_Imm Bit1) ==> (v = birT \/ v = birF)
 Proof
   Cases_on `v` >>
-  Cases_on `b` >>
-    rw [birT_def, birF_def, type_of_bir_val_def, type_of_bir_imm_def] >>
-    Cases_on `c` >>
-      fs [dimword_1]
+    Cases_on `b` >>
+      rw [birT_def, birF_def, type_of_bir_val_def, type_of_bir_imm_def] >>
+      Cases_on `c` >>
+        fs [dimword_1]
 QED
 
 val _ = export_theory () ;
