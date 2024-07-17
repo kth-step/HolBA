@@ -44,20 +44,20 @@ Inductive type_of_bir_exp:
 
 [~BExp_BinExp:]
   (!env binexp e1 e2 ty.
-    (type_of_bir_exp env e1 ty /\ type_of_bir_exp env e2 ty)
+    (type_of_bir_exp env e1 (BType_Imm ty) /\ type_of_bir_exp env e2 (BType_Imm ty))
     ==>
-    (type_of_bir_exp env (BExp_BinExp binexp e1 e2) ty))
+    (type_of_bir_exp env (BExp_BinExp binexp e1 e2) (BType_Imm ty)))
 
 [~BExp_UnaryExp:]
   (!env unaryexp e ty.
-    (type_of_bir_exp env e ty)
+    (type_of_bir_exp env e (BType_Imm ty))
     ==>
-    (type_of_bir_exp env (BExp_UnaryExp unaryexp e) ty))
+    (type_of_bir_exp env (BExp_UnaryExp unaryexp e) (BType_Imm ty)))
 
 
 [~BExp_BinPred:]
   (!env binpred e1 e2 ty.
-    (type_of_bir_exp env e1 ty /\ type_of_bir_exp env e2 ty)
+    (type_of_bir_exp env e1 (BType_Imm ty) /\ type_of_bir_exp env e2 (BType_Imm ty))
     ==>
     (type_of_bir_exp env (BExp_BinPred binpred e1 e2) (BType_Imm Bit1)))
 
