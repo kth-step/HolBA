@@ -4,6 +4,7 @@
 
 open HolKernel Parse bossLib boolLib ;
 open wordsTheory ;
+open finite_mapTheory ;
 
 val _ = new_theory "bir_basic" ;
 
@@ -40,12 +41,14 @@ End
 Datatype:
   bir_val_t = 
     BVal_Imm bir_imm_t
+  | BVal_Mem bir_immtype_t bir_immtype_t (num |-> num) (* Address Type / Value Type *)
 End
 
 (* General typing *)
 Datatype:
   bir_type_t = 
     BType_Imm bir_immtype_t
+  | BType_Mem bir_immtype_t bir_immtype_t (* Address Type / Value Type *)
 End
 
 
@@ -82,6 +85,7 @@ End
 Datatype:
   bir_exp_t =
     BExp_Const bir_imm_t
+  | BExp_MemConst bir_immtype_t bir_immtype_t (num |-> num) (* Address Type / Value Type *)
   | BExp_Den bir_var_t
 
   | BExp_BinExp bir_binexp_t bir_exp_t bir_exp_t
