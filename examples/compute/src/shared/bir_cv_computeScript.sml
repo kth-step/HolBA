@@ -14,7 +14,7 @@ val _ = new_theory "bir_cv_compute" ;
 Definition bir_cv_compute_exp_def:
   (bir_cv_compute_exp (BExp_Const n) env = SOME (BVal_Imm n)) /\
 
-  (* (bir_cv_compute (BExp_MemConst aty vty mmap) env = SOME (BVal_Mem aty vty mmap)) /\ *)
+  (bir_cv_compute_exp (BExp_MemConst aty vty mmap) env = SOME (BVal_Mem aty vty mmap)) /\
 
   (bir_cv_compute_exp (BExp_Den v) env = bir_cv_env_lookup env v) /\
 
