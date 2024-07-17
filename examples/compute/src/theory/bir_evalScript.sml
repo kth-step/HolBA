@@ -15,6 +15,9 @@ Inductive bir_eval_exp:
 [~BExp_Const:]
   ( !env const. bir_eval_exp env (BExp_Const const) (BVal_Imm const) )
 
+[~BExp_MemConst:]
+  ( !env aty vty mmap. bir_eval_exp env (BExp_MemConst aty vty mmap) (BVal_Mem aty vty mmap) )
+
 [~BExp_Den:]
   ( !env var. bir_env_lookup_rel env var v ==> bir_eval_exp env (BExp_Den var) v)
 
