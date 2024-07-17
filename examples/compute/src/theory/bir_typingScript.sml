@@ -22,14 +22,14 @@ End
 
 (* Typing function for values *)
 Definition type_of_bir_val_def:
-  (type_of_bir_val (BVal_Imm imm) = type_of_bir_imm imm)
+  (type_of_bir_val (BVal_Imm imm) = (BType_Imm (type_of_bir_imm imm)))
 End
 
 (* Typing relation for bir expressions *)
 Inductive type_of_bir_exp:
 [~BExp_Const:]
   (!env imm. 
-    type_of_bir_exp env (BExp_Const imm) (type_of_bir_imm imm)) 
+    type_of_bir_exp env (BExp_Const imm) (BType_Imm (type_of_bir_imm imm))) 
 
 [~BExp_Den:]
   (!env var v.
@@ -54,12 +54,12 @@ Inductive type_of_bir_exp:
   (!env binpred e1 e2 ty.
     (type_of_bir_exp env e1 ty /\ type_of_bir_exp env e2 ty)
     ==>
-    (type_of_bir_exp env (BExp_BinPred binpred e1 e2) Bit1))
+    (type_of_bir_exp env (BExp_BinPred binpred e1 e2) (BType_Imm Bit1)))
 
 [~BExp_IfThenElse:]
   (!env epred e1 e2 ty.
     (type_of_bir_exp env e1 ty /\ type_of_bir_exp env e2 ty 
-      /\ type_of_bir_exp env epred Bit1)
+      /\ type_of_bir_exp env epred (BType_Imm Bit1))
     ==>
     (type_of_bir_exp env (BExp_IfThenElse epred e1 e2) ty))
 End
@@ -77,7 +77,7 @@ End
 
 (* 1 bit values are booleans *)
 Theorem bit1_is_boolean:
-  !v. type_of_bir_val v = Bit1 ==> (v = birT \/ v = birF)
+  !v. type_of_bir_val v = (BType_Imm Bit1) ==> (v = birT \/ v = birF)
 Proof
   Cases_on `v` >>
   Cases_on `b` >>

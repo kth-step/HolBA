@@ -132,7 +132,7 @@ QED
 Theorem bir_eval_binpred_correct_type:
   !binpred v1 v2 v ty.
     bir_eval_binpred binpred v1 v2 v ==>
-    ((type_of_bir_val v1 = type_of_bir_val v2) /\ type_of_bir_val v = Bit1)
+    ((type_of_bir_val v1 = type_of_bir_val v2) /\ type_of_bir_val v = (BType_Imm Bit1))
 Proof
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
   Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>

@@ -51,7 +51,7 @@ QED
 (* If the condition is typed, then the expression evaluates *)
 Theorem type_of_bir_val_imp_bir_eval_ifthenelse:
   !v v1 v2.
-    (type_of_bir_val v = Bit1) ==>
+    (type_of_bir_val v = (BType_Imm Bit1)) ==>
     ?v3. bir_eval_ifthenelse v v1 v2 v3
 Proof
   rw [bir_eval_ifthenelse_eq_compute_ifthenelse] >>
@@ -69,7 +69,7 @@ Theorem bir_eval_ifthenelse_keep_type:
   !v v1 v2 v3 ty.
     bir_eval_ifthenelse v v1 v2 v3 ==>
     (type_of_bir_val v1 = ty /\ type_of_bir_val v2 = ty) ==>
-    (type_of_bir_val v = Bit1 <=> type_of_bir_val v3 = ty)
+    (type_of_bir_val v = (BType_Imm Bit1) <=> type_of_bir_val v3 = ty)
 Proof
   Cases_on `v` >> Cases_on `v1` >> Cases_on `v2` >> Cases_on `v3` >>
   Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >> Cases_on `b'''` >>

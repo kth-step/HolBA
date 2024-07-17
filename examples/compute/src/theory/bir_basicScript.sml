@@ -45,7 +45,7 @@ End
 (* General typing *)
 Datatype:
   bir_type_t = 
-    BType_imm bir_immtype_t
+    BType_Imm bir_immtype_t
 End
 
 
