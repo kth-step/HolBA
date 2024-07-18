@@ -37,6 +37,15 @@ Datatype:
 End
 
 
+(* Endian for memomy operations *)
+Datatype:
+  bir_endian_t =
+  | BEnd_BigEndian
+  | BEnd_LittleEndian
+  | BEnd_NoEndian
+End
+
+
 (* Values for evaluation relation *)
 Datatype:
   bir_val_t = 
@@ -93,6 +102,9 @@ Datatype:
 
   | BExp_BinPred bir_binpred_t bir_exp_t bir_exp_t
   | BExp_IfThenElse bir_exp_t bir_exp_t bir_exp_t
+
+  (* Memory value / Address Value (Imm) / Endian / Type of where to load *)
+  | BExp_Load bir_exp_t bir_exp_t bir_endian_t bir_immtype_t
 End
 
 
