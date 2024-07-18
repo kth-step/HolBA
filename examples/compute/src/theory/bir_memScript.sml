@@ -100,6 +100,35 @@ Definition bir_load_splits_from_mmap_def:
 End
 
 
+(* Eval an already unpacked load expression *)
+Inductive bir_eval_load_from_mem:
+[~BEnd_BigEndian:]
+  (!aty vty mmap addr rty n.
+    (bir_number_of_mem_splits vty rty aty = SOME n)
+    ==>
+    bir_eval_load_from_mem vty rty aty mmap BEnd_BigEndian addr 
+      (BVal_Imm (bir_mem_concat (bir_load_splits_from_mmap aty vty mmap addr n) rty)))
+
+[~BEnd_LittleEndian:]
+  (!aty vty mmap addr rty n.
+    (bir_number_of_mem_splits vty rty aty = SOME n)
+    ==>
+    bir_eval_load_from_mem vty rty aty mmap BEnd_LittleEndian addr
+      (BVal_Imm (bir_mem_concat (REVERSE (bir_load_splits_from_mmap aty vty mmap addr n)) rty)))
+
+[~BEnd_NoEndian:]
+  (!aty vty mmap addr rty.
+    (bir_number_of_mem_splits vty rty aty = SOME 1)
+    ==>
+    bir_eval_load_from_mem vty rty aty mmap BEnd_NoEndian addr
+      (BVal_Imm (bir_mem_concat (bir_load_splits_from_mmap aty vty mmap addr 1) rty)))
+End
+
+Definition bir_eval_load_def:
+  (bir_eval_load (BVal_Mem aty vty mmap) (BVal_Imm addr) en rty v = 
+    bir_eval_load_from_mem vty rty aty mmap en (b2n addr) v) /\
+  (bir_eval_load _ _ _ _ _ = F)
+End
 
 
 
