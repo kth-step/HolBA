@@ -130,6 +130,29 @@ Definition bir_eval_load_def:
   (bir_eval_load _ _ _ _ _ = F)
 End
 
+(* Computes an already unpacked load expression *)
+Definition bir_compute_load_from_mem_def:
+  bir_compute_load_from_mem
+  (vty : bir_immtype_t) (rty : bir_immtype_t) (aty : bir_immtype_t) (mmap : num |-> num) (en: bir_endian_t) (addr:num) =
+
+   case (bir_number_of_mem_splits vty rty aty) of
+    | NONE => NONE
+    | SOME (n:num) => (
+        let vs = bir_load_splits_from_mmap aty vty mmap addr n in
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
+        case vs' of NONE => NONE
+                 |  SOME vs'' => SOME (BVal_Imm (bir_mem_concat vs'' rty))
+   )
+End
+
+Definition bir_compute_load_def:
+  (bir_compute_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm addr)) en rty = 
+    bir_compute_load_from_mem vty rty aty mmap en (b2n addr)) /\
+  (bir_compute_load _ _ _ _ = NONE)
+End
+
 
 
 val _ = export_theory () ;
