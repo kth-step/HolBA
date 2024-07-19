@@ -4,6 +4,7 @@
 
 open HolKernel Parse boolLib bossLib ;
 open bir_basicTheory ;
+open bir_typingTheory ;
 open bitstringTheory numeral_bitTheory ;
 
 
@@ -29,15 +30,6 @@ Definition v2bs_def:
   v2bs v s = n2bs (v2n v) s
 End
 
-(* Gives the size of an immediate as a number *)
-Definition size_of_bir_immtype_def:
-  (size_of_bir_immtype Bit1 = 1) /\
-  (size_of_bir_immtype Bit8 = 8) /\
-  (size_of_bir_immtype Bit16 = 16) /\
-  (size_of_bir_immtype Bit32 = 32) /\
-  (size_of_bir_immtype Bit64 = 64) /\
-  (size_of_bir_immtype Bit128 = 128) 
-End
 
 (* Immediate to number *)
 Definition b2n_def:

@@ -10,6 +10,16 @@ open wordsTheory ;
 
 val _ = new_theory "bir_typing" ;
 
+(* Gives the size of an immediate as a number *)
+Definition size_of_bir_immtype_def:
+  (size_of_bir_immtype Bit1 = 1) /\
+  (size_of_bir_immtype Bit8 = 8) /\
+  (size_of_bir_immtype Bit16 = 16) /\
+  (size_of_bir_immtype Bit32 = 32) /\
+  (size_of_bir_immtype Bit64 = 64) /\
+  (size_of_bir_immtype Bit128 = 128) 
+End
+
 (* Typing function for immediates *)
 Definition type_of_bir_imm_def:
   (type_of_bir_imm (Imm1 w) = Bit1) /\
