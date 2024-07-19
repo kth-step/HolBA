@@ -170,6 +170,31 @@ QED
 
 
 
+(* Type of bir_mem_concat *)
+Theorem type_of_bir_imm_bir_mem_concat:
+  !vl rty. type_of_bir_imm (bir_mem_concat vl rty) = rty
+Proof
+  Cases_on `rty` >>
+    rw [bir_mem_concat_def, v2bs_def, n2bs_def] >>
+    rw [type_of_bir_imm_def]
+QED
+  
+
+(* Type conservation theorem *)
+Theorem bir_eval_load_correct_type:
+  !v_mem v_addr en rty v.
+    bir_eval_load v_mem v_addr en rty v ==>
+    (type_of_bir_val v = (BType_Imm rty))
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >>
+  Cases_on `en` >>
+
+  simp [bir_eval_load_def, bir_eval_load_from_mem_cases] >>
+  METIS_TAC [type_of_bir_val_def, type_of_bir_imm_def, type_of_bir_imm_bir_mem_concat]
+QED
+
+
+
 
 
 
