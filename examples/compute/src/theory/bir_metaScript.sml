@@ -5,6 +5,7 @@
 open HolKernel Parse boolLib bossLib ;
 open bir_envTheory bir_basicTheory bir_binexpTheory bir_unaryexpTheory ;
 open bir_binpredTheory bir_ifthenelseTheory ;
+open bir_memTheory ;
 open bir_evalTheory bir_computeTheory bir_typingTheory ;
 
 
@@ -47,7 +48,11 @@ Proof
 
     (* BExp_IfThenElse *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_ifthenelse_cases, bir_eval_ifthenelse_keep_type, type_of_bir_val_def]
+    METIS_TAC [bir_eval_ifthenelse_cases, bir_eval_ifthenelse_keep_type, type_of_bir_val_def],
+
+    (* BExp_Load *)
+    simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+    METIS_TAC [bir_eval_load_def, bir_eval_load_correct_type, type_of_bir_val_def]
   ]
 QED
 
