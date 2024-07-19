@@ -154,5 +154,31 @@ Definition bir_compute_load_def:
 End
 
 
+(* ****************************************** *)
+(* **************** THEOREMS **************** *)
+(* ****************************************** *)
+
+
+(* Eval and compute are similar *)
+Theorem bir_eval_load_eq_compute_load:
+  !v_mem v_addr en rty v.
+    bir_eval_load v_mem v_addr en rty v <=>
+    (bir_compute_load (SOME v_mem) (SOME v_addr) en rty = SOME v)
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `en` >>
+    rw [bir_eval_load_def, bir_eval_load_from_mem_cases] >>
+    rw [bir_compute_load_def, bir_compute_load_from_mem_def] >>
+    Cases_on `bir_number_of_mem_splits b0 rty b` >>
+    Cases_on `x = 1` >>
+    simp [] >>
+    METIS_TAC []
+QED
+
+
+
+
+
+
+
 
 val _ = export_theory () ;
