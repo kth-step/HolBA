@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 
+import argparse
 import subprocess
 import os
 import sys
 import traceback
+import re
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--testing",        help="run in test mode", action="store_true")
+parser.add_argument("-ch", "--clearholheap",  help="clear the holheap in directory common", action="store_true")
+parser.add_argument("-c", "--clear",          help="clear the example directories before running", action="store_true")
+args = parser.parse_args()
 
 def get_example_dirs():
 	excluded_dirs = ["common", "motor-unopt"]
@@ -15,6 +23,11 @@ def holmake_clean_dir(path):
 	print(f"-> running 'Holmake cleanAll' in '{path}'")
 	result = subprocess.run(["${HOLBA_HOL_DIR}/bin/Holmake cleanAll"], shell=True, cwd=path, check=True)
 
+def remove_holheap():
+	path = os.getcwd()
+	holheap_path = os.path.join(path, "common/examples-riscv-common-heap")
+	os.remove(holheap_path)
+
 def holmake_dir(path):
 	print(f"-> running 'Holmake' in '{path}'")
 	result = subprocess.run(["${HOLBA_HOL_DIR}/bin/Holmake"], shell=True, cwd=path, check=True)
@@ -24,22 +37,28 @@ def find_symbexec_logs(path):
 	return logfile_paths
 
 def clean_output(data):
-	idx_start = 0
-	for i in range(len(data)):
-		if data[i].startswith(">>>"):
-			idx_start = i
+	startstr = "======\n > bir_symb_analysis_thm started\n"
+	endstr = "======\n > bir_symb_analysis_thm took "
+	symbexec_runs = []
+	while True:
+		startidx = data.find(startstr)
+		if startidx < 0:
 			break
-	idx_end = len(data) - 1
-	for i in reversed(range(len(data))):
-		if data[i].startswith(" > bir_symb_analysis"):
-			idx_end = i
-			break
-	return data[idx_start:idx_end+1]
+		endidx1 = data[startidx:].find(endstr)
+		if endidx1 < 0:
+			raise Exception("should find this, something in the output is wrong")
+		endidx2 = data[startidx+endidx1+len(endstr):].find("\n")
+		if endidx2 < 0:
+			raise Exception("should find a newline here, something in the output is wrong")
+		endidx = startidx+endidx1+len(endstr)+endidx2
+		symbexec_runs.append(data[startidx:endidx])
+		data = data[endidx:]
+	return symbexec_runs
 
 def parse_output(data):
-	data = data[-5:]
-	exec_parts_time = data[1][19:-1]
-	exec_all_time = data[4][26:-1]
+	data = data.split("\n")[-5:]
+	exec_parts_time = data[1][19:]
+	exec_all_time = data[4][30:]
 	return f"execution of parts: {exec_parts_time}; execution of all: {exec_all_time}"
 
 def collect_outputs(path):
@@ -50,9 +69,12 @@ def collect_outputs(path):
 		print(f"Reading log '{log_path}'")
 		with open(log_path,"r") as file:
 			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("_symb_execTheory"))]
-			data = file.readlines()
-			out = parse_output(clean_output(data))
-			outputs.append((logname, out))
+			data = file.read()
+			i = 0
+			for symbexec_run in clean_output(data):
+				out = parse_output(symbexec_run)
+				outputs.append((logname + "/" + str(i), out))
+				i += 1
 	return outputs
 
 def present_output(output):
@@ -63,50 +85,160 @@ def present_output(output):
 	return result
 
 example_data = """
-Saved definition ____ "mod2_birenvtyl_def"
-Saved theorem _______ "mod2_prog_vars_thm"
+/home/andreas/data/hol/HolBA_symbexec/src/tools/symbexec/birs_composeLib.sml:247: warning: Matches are not exhaustive. Found near fn ([t]) => t
+<<HOL message: Created theory "isqrt_symb_exec">>
 
->>>>>> executed step in 0.012s
+======
+ > bir_symb_analysis_thm started
 
->>>>>> STEP in 0.000s
+>>>>>> executed step in 0.036s
+
+>>>>>> STEP in 0.001s
 
 >>>>>> SUBST in 0.000s
 now reducing it to one sound structure
 
 sequential composition with singleton mid_state set
 
->>>>>> executed step in 0.008s
+>>>>>> executed step in 0.020s
 
 >>>>>> SUBST in 0.000s
 
->>> took and sequentially composed a step in 0.011s
+>>> took and sequentially composed a step in 0.032s
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.034s
+
+>>>>>> SUBST in 0.000s
+
+>>> took and sequentially composed a step in 0.043s
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.020s
+
+>>>>>> SUBST in 0.000s
+
+>>> took and sequentially composed a step in 0.028s
 
 no executable states left, terminating here
 
 ======
- > exec_until took 0.013s
+ > exec_until took 0.110s
 
 ======
- > bir_symb_analysis took 0.083s
+ > bir_symb_analysis_thm took 0.721s
 [oracles: DISK_THM] [axioms: ]
-Saved theorem _______ "mod2_bsysprecond_thm"
-""".splitlines()
-if False:
-	#print(clean_output(example_data))
-	output = ("testdata", parse_output(clean_output(example_data)))
-	#print(output)
+Saved theorem _______ "isqrt_bsysprecond_1_thm"
+[oracles: DISK_THM] [axioms: ]
+Saved theorem _______ "isqrt_symb_analysis_1_thm"
+
+======
+ > bir_symb_analysis_thm started
+
+>>>>>> executed step in 0.033s
+
+>>>>>> STEP in 0.001s
+
+>>>>>> SUBST in 0.000s
+now reducing it to one sound structure
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.018s
+
+>>>>>> SUBST in 0.000s
+
+>>> took and sequentially composed a step in 0.030s
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.035s
+
+>>>>>> SUBST in 0.001s
+
+>>> took and sequentially composed a step in 0.046s
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.021s
+
+>>>>>> SUBST in 0.001s
+
+>>> took and sequentially composed a step in 0.029s
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.040s
+
+>>>>>> SUBST in 0.000s
+
+>>> took and sequentially composed a step in 0.048s
+
+sequential composition with singleton mid_state set
+
+>>>>>> executed step in 0.022s
+
+>>>>>> SUBST in 0.000s
+
+>>> took and sequentially composed a step in 0.031s
+
+no executable states left, terminating here
+
+======
+ > exec_until took 0.198s
+
+======
+ > bir_symb_analysis_thm took 0.460s
+[oracles: DISK_THM] [axioms: ]
+Saved theorem _______ "isqrt_bsysprecond_2_thm"
+[oracles: DISK_THM] [axioms: ]
+Saved theorem _______ "isqrt_symb_analysis_2_thm"
+
+======
+ > bir_symb_analysis_thm started
+
+>>>>>> executed step in 0.093s
+
+>>>>>> STEP in 0.001s
+now reducing it to one sound structure
+
+no executable states left, terminating here
+
+======
+ > exec_until took 0.005s
+
+======
+ > bir_symb_analysis_thm took 0.332s
+[oracles: DISK_THM] [axioms: ]
+Saved theorem _______ "isqrt_bsysprecond_3_thm"
+[oracles: DISK_THM] [axioms: ]
+Saved theorem _______ "isqrt_symb_analysis_3_thm"
+Exporting theory "isqrt_symb_exec" ... done.
+Theory "isqrt_symb_exec" took 1.4s to build
+"""
+if args.testing:
+	#print("\n..................\n".join(clean_output(example_data)))
+	output = ("testdata", parse_output(clean_output(example_data)[0]))
+	print(output)
 	present_output(output)
 	sys.exit()
 
+# --------------------------------------------
+
+if args.clearholheap:
+	remove_holheap()
+
 example_dirs = get_example_dirs()
 #print(example_dirs)
-
 exceptions_happened = False
 collected_outputs = []
 for path in example_dirs:
 	try:
 		print()
-		#holmake_clean_dir(path)
+		if args.clear:
+			holmake_clean_dir(path)
 		holmake_dir(path)
 		outputs = collect_outputs(path)
 		collected_outputs.extend(outputs)
@@ -115,6 +247,8 @@ for path in example_dirs:
 		#collect_errors += f"Exception during execution of '{path}'\n"
 		print(traceback.format_exc())
 
+print()
+print("=====================")
 if exceptions_happened:
 	print("Check the output for errors during execution.")
 else:
