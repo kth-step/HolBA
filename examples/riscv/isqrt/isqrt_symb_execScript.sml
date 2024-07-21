@@ -45,17 +45,11 @@ val _ = show_tags := true;
 (* before loop *)
 (* ----------- *)
 
-val timer = bir_miscLib.timer_start 0;
-
 val (bsysprecond_thm, symb_analysis_thm) =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_1_def [isqrt_end_addr_1_def]
   bspec_isqrt_pre_1_def isqrt_birenvtyl_def;
-
-val _ = bir_miscLib.timer_stop
- (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
- timer;
 
 val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
 
@@ -69,17 +63,11 @@ Theorem isqrt_symb_analysis_1_thm = symb_analysis_thm
 (* loop body *)
 (* --------- *)
 
-val timer = bir_miscLib.timer_start 0;
-
 val (bsysprecond_thm, symb_analysis_thm) =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_2_def [isqrt_end_addr_2_def]
   bspec_isqrt_pre_2_def isqrt_birenvtyl_def;
-
-val _ = bir_miscLib.timer_stop
- (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
- timer;
 
 val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
 
@@ -93,17 +81,11 @@ Theorem isqrt_symb_analysis_2_thm = symb_analysis_thm
 (* loop branch *)
 (* ----------- *)
 
-val timer = bir_miscLib.timer_start 0;
-
 val (bsysprecond_thm, symb_analysis_thm) =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_3_def [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
   bspec_isqrt_pre_3_def isqrt_birenvtyl_def;
-
-val _ = bir_miscLib.timer_stop
- (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
- timer;
 
 val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
 

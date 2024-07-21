@@ -27,21 +27,6 @@ End
 (* -------------- *)
 (* BSPEC contract *)
 (* -------------- *)
-
-val vars_of_prog_thm =
-(SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
-   [bir_aes_prog_def] THENC
-  EVAL)
- ``bir_vars_of_program (bir_aes_prog : 'observation_type bir_program_t)``;
-
-val all_vars = (pred_setSyntax.strip_set o snd o dest_eq o concl) vars_of_prog_thm;
-val registervars = List.filter ((fn s => s <> "MEM8") o (stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar)) all_vars;
-val registervars_tm = listSyntax.mk_list (registervars, (type_of o hd) registervars);
-
-Definition bir_aes_registervars_def:
- bir_aes_registervars = ^registervars_tm
-End
-
 val rounds = 14; (* actually, could be 10, 12 or 14 depending on key size; but simplify for now *)
 val roundsrn = "x11";
 
@@ -66,9 +51,8 @@ val bspec_aes_pre_tm = bslSyntax.bandl
    mem_area_disj_reg_bir_tm (rkrn, rkbufsz) (inblkrn, blksz),
    mem_area_disj_reg_bir_tm (Te_rn, Te_sz)  (inblkrn, blksz),
    mem_area_disj_reg_bir_tm (Te_rn, Te_sz)  (rkrn, rkbufsz)]
-  @(List.map (mem_addrs_aligned_prog_disj_bir_tm o
-   stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar)
-      ((fst o listSyntax.dest_list) registervars_tm)));
+  @(List.map (mem_addrs_aligned_prog_disj_bir_tm)
+      [sprn, rkrn, inblkrn, Te_rn]));
 
 Definition bspec_aes_pre_def:
   bspec_aes_pre : bir_exp_t =

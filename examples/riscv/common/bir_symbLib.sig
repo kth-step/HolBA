@@ -3,7 +3,9 @@ sig
 
   include Abbrev;
 
+(*
   val bir_symb_analysis : term -> term -> term list -> term -> term -> thm;
+*)
 
   val bir_symb_analysis_thm : thm -> thm -> thm list -> thm -> thm -> thm * thm;
 

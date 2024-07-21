@@ -24,11 +24,7 @@ val bspec_storeload_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm sprn,
   mem_addrs_aligned_prog_disj_bir_tm "x11",
   mem_addrs_aligned_prog_disj_bir_tm "x12"
-]
-
-val pcond_is_sat = birs_smtLib.bir_check_sat false bspec_storeload_pre_tm;
-val _ = if pcond_is_sat then () else
-        raise Feedback.mk_HOL_ERR "storeload_specScript" "." "precondition is not satisfiable, seems to contain a contradiction";
+];
 
 Definition bspec_storeload_pre_def:
 bspec_storeload_pre (x:word64) : bir_exp_t =

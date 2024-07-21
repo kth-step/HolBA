@@ -34,17 +34,11 @@ QED
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val timer = bir_miscLib.timer_start 0;
-
 val (bsysprecond_thm, symb_analysis_thm) =
  bir_symb_analysis_thm
   bir_aes_prog_def
   aes_init_addr_def [aes_end_addr_def]
   bspec_aes_pre_def aes_birenvtyl_def;
-
-val _ = bir_miscLib.timer_stop
- (fn delta_s => print ("\n======\n > bir_symb_analysis took " ^ delta_s ^ "\n"))
- timer;
 
 val _ = show_tags := true;
 
