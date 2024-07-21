@@ -27,7 +27,7 @@ val bspec_post_1_tm = (lhs o snd o strip_forall o concl) bspec_isqrt_post_1_def;
 val bspec_cont_1_thm =
  bir_symb_transfer init_addr_1_tm end_addr_1_tm bspec_pre_1_tm bspec_post_1_tm
   bir_isqrt_prog_def isqrt_birenvtyl_def
-  bspec_isqrt_pre_1_def bspec_isqrt_post_1_def isqrt_prog_vars_def
+  bspec_isqrt_pre_1_def bspec_isqrt_post_1_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_1_thm isqrt_bsysprecond_1_thm isqrt_prog_vars_thm;
 
 Theorem bspec_cont_isqrt_1:
@@ -52,7 +52,7 @@ val bspec_post_2_tm = (lhs o snd o strip_forall o concl) bspec_isqrt_post_2_def;
 val bspec_cont_2_thm =
  bir_symb_transfer init_addr_2_tm end_addr_2_tm bspec_pre_2_tm bspec_post_2_tm
   bir_isqrt_prog_def isqrt_birenvtyl_def
-  bspec_isqrt_pre_2_def bspec_isqrt_post_2_def isqrt_prog_vars_def
+  bspec_isqrt_pre_2_def bspec_isqrt_post_2_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_2_thm isqrt_bsysprecond_2_thm isqrt_prog_vars_thm;
 
 Theorem bspec_cont_isqrt_2:
@@ -81,7 +81,7 @@ val birenvtyl_def = isqrt_birenvtyl_def;
 val bspec_pre_def = bspec_isqrt_pre_3_def;
 val bspec_post_1_def = isqrt_end_addr_3_loop_def;
 val bspec_post_2_def = isqrt_end_addr_3_ret_def;
-val prog_vars_def = isqrt_prog_vars_def;
+val prog_vars_list_def = isqrt_prog_vars_list_def;
 val symb_analysis_thm = isqrt_symb_analysis_3_thm;
 val bsysprecond_thm = isqrt_bsysprecond_3_thm;
 val prog_vars_thm = isqrt_prog_vars_thm;
@@ -101,7 +101,7 @@ open distribute_generic_stuffTheory;
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
-val prog_vars_tm = (fst o dest_eq o concl) prog_vars_def;
+val prog_vars_list_tm = (fst o dest_eq o concl) prog_vars_list_def;
 val birenvtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 val bir_state_init_lbl_tm = (snd o dest_eq o concl o EVAL)
  ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
@@ -190,7 +190,7 @@ val bprog_P_entails_thm =
   (birs_symb_to_symbst ^birs_state_init_pre_tm)``,
 
  ASSUME_TAC (GSYM prog_vars_thm) >>
- `^prog_vars_tm = MAP PairToBVar ^birenvtyl_tm` by (
+ `^prog_vars_list_tm = MAP PairToBVar ^birenvtyl_tm` by (
   SIMP_TAC std_ss [birenvtyl_def, listTheory.MAP_MAP_o,
    PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]) >>
  POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>

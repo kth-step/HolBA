@@ -8,33 +8,6 @@ open isqrtTheory isqrt_specTheory;
 
 val _ = new_theory "isqrt_symb_exec";
 
-(* ---------------------------- *)
-(* Program variable definitions *)
-(* ---------------------------- *)
-
-Definition isqrt_prog_vars_def:
-  isqrt_prog_vars = [
-   BVar "MEM8" (BType_Mem Bit64 Bit8);
-   BVar "x15" (BType_Imm Bit64);
-   BVar "x14" (BType_Imm Bit64);
-   BVar "x13" (BType_Imm Bit64);
-   BVar "x10" (BType_Imm Bit64);
-   BVar "x2" (BType_Imm Bit64);
-   BVar "x1" (BType_Imm Bit64)]
-End
-
-Definition isqrt_birenvtyl_def:
-  isqrt_birenvtyl = MAP BVarToPair isqrt_prog_vars
-End
-
-Theorem isqrt_prog_vars_thm:
-  set isqrt_prog_vars = bir_vars_of_program (bir_isqrt_prog : 'observation_type bir_program_t)
-Proof
-  SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
-   [bir_isqrt_prog_def, isqrt_prog_vars_def] >>
-  EVAL_TAC
-QED
-
 (* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)

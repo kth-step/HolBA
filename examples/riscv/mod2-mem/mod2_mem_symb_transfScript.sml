@@ -29,7 +29,7 @@ val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_mod2_mem_post_def;
 val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_mod2_mem_prog_def mod2_mem_birenvtyl_def
-  bspec_mod2_mem_pre_def bspec_mod2_mem_post_def mod2_mem_prog_vars_def
+  bspec_mod2_mem_pre_def bspec_mod2_mem_post_def mod2_mem_prog_vars_list_def
   mod2_mem_symb_analysis_thm mod2_mem_bsysprecond_thm mod2_mem_prog_vars_thm;
 
 Theorem bspec_cont_mod2_mem:

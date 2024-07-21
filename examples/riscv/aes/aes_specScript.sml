@@ -19,7 +19,7 @@ val _ = new_theory "aes_spec";
 (* ------------------ *)
 
 Definition aes_init_addr_def:
- aes_init_addr : word64 = 0x088w
+ aes_init_addr : word64 = 0x000w (* 0x088w *)
 End
 
 Definition aes_end_addr_def:
@@ -29,39 +29,32 @@ End
 (* -------------- *)
 (* BSPEC contract *)
 (* -------------- *)
+val rounds = 14; (* actually, could be 10, 12 or 14 depending on key size; but simplify for now *)
+val roundsrn = "x11";
 
-val registervars_tm = ``[
-    BVar "x31" (BType_Imm Bit64);
-    BVar "x30" (BType_Imm Bit64);
-    BVar "x29" (BType_Imm Bit64);
-    BVar "x28" (BType_Imm Bit64);
-    BVar "x18" (BType_Imm Bit64);
-    BVar "x17" (BType_Imm Bit64);
-    BVar "x16" (BType_Imm Bit64);
-    BVar "x15" (BType_Imm Bit64);
-    BVar "x14" (BType_Imm Bit64);
-    BVar "x13" (BType_Imm Bit64);
-    BVar "x12" (BType_Imm Bit64);
-    BVar "x11" (BType_Imm Bit64);
-    BVar "x10" (BType_Imm Bit64);
-    BVar "x9" (BType_Imm Bit64);
-    BVar "x8" (BType_Imm Bit64);
-    BVar "x7" (BType_Imm Bit64);
-    BVar "x6" (BType_Imm Bit64);
-    BVar "x5" (BType_Imm Bit64);
-    BVar "x2" (BType_Imm Bit64);
-    BVar "x1" (BType_Imm Bit64)
-  ]
-``;
+val blocksize = 128; (* bits *)
+val roundkeysize = blocksize;
+val roundkeys = rounds + 1;
 
-Definition bir_aes_registervars_def:
- bir_aes_registervars = ^registervars_tm
-End
+val rkrn = "x10";
+val rkbufsz = (roundkeysize div 8) * roundkeys;
+val Te_rn = "x14";
+val Te_sz = 4*4*256; (* optimization lookup table (S-box, shift, etc) *)
+val inblkrn = "x12";
+val blksz = blocksize div 8;
+val sprn = "x2";
+
 
 val bspec_aes_pre_tm = bslSyntax.bandl
- (List.map (mem_addrs_aligned_prog_disj_bir_tm o
-   stringSyntax.fromHOLstring o fst o bir_envSyntax.dest_BVar)
-  ((fst o listSyntax.dest_list) registervars_tm));
+ ([bslSyntax.beq (bslSyntax.bden (bslSyntax.bvarimm64 roundsrn), bslSyntax.bconst64 rounds),
+   mem_addrs_stack_disj_reg_bir_tm sprn rkrn,
+   mem_addrs_stack_disj_reg_bir_tm sprn inblkrn,
+   mem_addrs_stack_disj_reg_bir_tm sprn Te_rn,
+   mem_area_disj_reg_bir_tm (rkrn, rkbufsz) (inblkrn, blksz),
+   mem_area_disj_reg_bir_tm (Te_rn, Te_sz)  (inblkrn, blksz),
+   mem_area_disj_reg_bir_tm (Te_rn, Te_sz)  (rkrn, rkbufsz)]
+  @(List.map (mem_addrs_aligned_prog_disj_bir_tm)
+      [sprn, rkrn, inblkrn, Te_rn]));
 
 Definition bspec_aes_pre_def:
   bspec_aes_pre : bir_exp_t =
