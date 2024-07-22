@@ -41,6 +41,30 @@ Definition b2n_def:
   (b2n ( Imm128 w ) = w2n w)
 End
 
+(* Immediate to bitstring *)
+Definition b2v_def:
+  (b2v ( Imm1   w ) = w2v w) /\
+  (b2v ( Imm8   w ) = w2v w) /\
+  (b2v ( Imm16  w ) = w2v w) /\
+  (b2v ( Imm32  w ) = w2v w) /\
+  (b2v ( Imm64  w ) = w2v w) /\
+  (b2v ( Imm128 w ) = w2v w)
+End
+
+Definition bitstring_split_aux_def:
+  (bitstring_split_aux 0 acc bs = ARB) /\
+  (bitstring_split_aux n acc [] = REVERSE acc) /\
+  (bitstring_split_aux n acc bs = 
+    bitstring_split_aux n ((TAKE n bs)::acc) (DROP n bs))
+Termination
+  WF_REL_TAC `measure (\ (_, _, l). LENGTH l)` >>
+  SIMP_TAC list_ss []
+End
+
+(* Splits a bitstring in chunks of n bits *)
+Definition bitstring_split_def:
+  bitstring_split n bs = bitstring_split_aux n [] bs
+End
 
 
 (* ****************************************** *)
@@ -145,6 +169,18 @@ Definition bir_compute_load_def:
   (bir_compute_load _ _ _ _ = NONE)
 End
 
+
+(* ***************************************** *)
+(* ***************** STORE ***************** *)
+(* ***************************************** *)
+
+
+(* Add all the bitstrings in the mmap at address a *)
+Definition bir_update_mmap_def:
+  (bir_update_mmap aty mmap a [] = mmap) /\
+  (bir_update_mmap aty mmap a (v::vs) =
+    bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs)
+End
 
 
 (* ****************************************** *)
