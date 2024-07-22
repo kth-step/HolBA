@@ -8,6 +8,7 @@ open bir_typingTheory ;
 open bitstringTheory numeral_bitTheory ;
 
 
+
 val _ = new_theory "bir_mem" ;
 
 
@@ -374,6 +375,61 @@ Proof
     METIS_TAC []
 QED
 
+(* If the operands are correctly typed, then the expression evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_store_bigendian:
+  !aty vty v_mem v_addr v_result rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+    (type_of_bir_val v_result = BType_Imm rty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+  ==>
+  ?v. bir_eval_store v_mem v_addr BEnd_BigEndian v_result v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+    rw [bir_eval_store_eq_compute_store] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    METIS_TAC []
+QED
+
+Theorem type_of_bir_val_imp_bir_eval_store_littleendian:
+  !aty vty v_mem v_addr v_result rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+    (type_of_bir_val v_result = BType_Imm rty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+  ==>
+  ?v. bir_eval_store v_mem v_addr BEnd_LittleEndian v_result v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+    rw [bir_eval_store_eq_compute_store] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    METIS_TAC []
+QED
+
+Theorem type_of_bir_val_imp_bir_eval_store_noendian:
+  !aty vty v_mem v_addr v_result rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+    (type_of_bir_val v_result = BType_Imm rty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) = 1))
+  ==>
+  ?v. bir_eval_store v_mem v_addr BEnd_NoEndian v_result v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+    rw [bir_eval_store_eq_compute_store] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    METIS_TAC [size_of_bir_immtype_leq_1]
+QED
 
 
 
