@@ -354,6 +354,25 @@ Proof
 QED
 
 
+(* ***************************************** *)
+(* ***************** STORE ***************** *)
+(* ***************************************** *)
+
+
+(* Eval and compute are similar *)
+Theorem bir_eval_store_eq_compute_store:
+  !v_mem v_addr en result v.
+    bir_eval_store v_mem v_addr en result v <=>
+    (bir_compute_store (SOME v_mem) (SOME v_addr) en (SOME result) = SOME v)
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `en` >> Cases_on `result` >>
+    rw [bir_eval_store_def, bir_eval_store_in_mem_cases] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def] >>
+    Cases_on `bir_number_of_mem_splits b0 (type_of_bir_imm b'') b` >>
+    Cases_on `x = 1` >>
+    simp [] >>
+    METIS_TAC []
+QED
 
 
 
