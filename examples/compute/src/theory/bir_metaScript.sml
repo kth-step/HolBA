@@ -203,7 +203,24 @@ Proof
       ALL_TAC
     ] >>
     rw [Once type_of_bir_exp_cases, bir_compute_load_def, bir_eval_load_eq_compute_load] >>
-    METIS_TAC [bir_eval_load_eq_compute_load, bir_eval_exp_correct_type]
+    METIS_TAC [bir_eval_load_eq_compute_load, bir_eval_exp_correct_type],
+
+    (* BExp_Store *)
+    simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
+    Cases_on `bir_compute_exp e (BEnv f)` >>
+    Cases_on `bir_compute_exp e' (BEnv f)` >>
+    Cases_on `bir_compute_exp e'' (BEnv f)` >| [
+      ALL_TAC,
+      ALL_TAC,
+      ALL_TAC,
+      ALL_TAC,
+      Cases_on `x`,
+      Cases_on `x`,
+      Cases_on `x` >> Cases_on `x'`,
+      ALL_TAC
+    ] >>
+    rw [Once type_of_bir_exp_cases, bir_compute_store_def, bir_eval_store_eq_compute_store] >>
+    METIS_TAC [bir_eval_store_eq_compute_store, bir_eval_exp_correct_type]
   ]
 QED
 
