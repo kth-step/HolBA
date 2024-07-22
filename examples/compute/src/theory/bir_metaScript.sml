@@ -115,7 +115,17 @@ Proof
     METIS_TAC [bir_eval_exp_correct_type, 
       type_of_bir_val_imp_bir_eval_load_bigendian,
       type_of_bir_val_imp_bir_eval_load_littleendian,
-      type_of_bir_val_imp_bir_eval_load_noendian]
+      type_of_bir_val_imp_bir_eval_load_noendian],
+
+    (* BExp_Store *)
+    rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+    `?v_mem. bir_eval_exp env e v_mem` by METIS_TAC [] >>
+    `?v_addr. bir_eval_exp env e' v_addr` by METIS_TAC [] >>
+    qrefinel [`_`, `v_mem`, `v_addr`] >>
+    METIS_TAC [bir_eval_exp_correct_type, 
+      type_of_bir_val_imp_bir_eval_store_bigendian,
+      type_of_bir_val_imp_bir_eval_store_littleendian,
+      type_of_bir_val_imp_bir_eval_store_noendian]
   ]
 QED
 
