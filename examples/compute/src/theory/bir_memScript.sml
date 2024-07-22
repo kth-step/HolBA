@@ -377,4 +377,18 @@ QED
 
 
 
+(* Type conservation theorem *)
+Theorem bir_eval_store_correct_type:
+  !v_mem v_addr en v_result v.
+    bir_eval_store v_mem v_addr en v_result v ==>
+    (type_of_bir_val v = type_of_bir_val v_mem)
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+  Cases_on `en` >>
+
+  simp [bir_eval_store_def, bir_eval_store_in_mem_cases] >>
+  rw [type_of_bir_val_def, type_of_bir_imm_def] >>
+  METIS_TAC [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
 val _ = export_theory () ;
