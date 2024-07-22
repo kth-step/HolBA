@@ -215,6 +215,32 @@ End
 
 
 
+(* Compute an already unpacked store expression *)
+Definition bir_compute_store_in_mem_def:
+  bir_compute_store_in_mem
+  (vty : bir_immtype_t) (aty : bir_immtype_t) (result : bir_imm_t) (mmap : num |-> num) (en: bir_endian_t) (addr:num) =
+
+   let rty = type_of_bir_imm result in
+   case (bir_number_of_mem_splits vty rty aty) of
+    | NONE => NONE
+    | SOME (n:num) => (
+        let vs = bitstring_split (size_of_bir_immtype vty) (b2v result) in
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
+
+        case vs' of NONE => NONE
+                 |  SOME vs'' => SOME (BVal_Mem aty vty (bir_update_mmap aty mmap addr vs''))
+   )
+End
+
+
+Definition bir_compute_store_def:
+  (bir_compute_store (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm addr)) en (SOME (BVal_Imm result)) = 
+    bir_compute_store_in_mem vty aty result mmap en (b2n addr)) /\
+  (bir_compute_store _ _ _ _ = NONE)
+End
+
 (* ****************************************** *)
 (* **************** THEOREMS **************** *)
 (* ****************************************** *)

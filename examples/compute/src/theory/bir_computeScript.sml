@@ -40,10 +40,10 @@ Definition bir_compute_exp_def:
   ) /\
 
   (bir_compute_exp (BExp_Load mem_e a_e en ty) env =
-     bir_compute_load (bir_compute_exp mem_e env) (bir_compute_exp a_e env) en ty)
-  (**)
-  (* (bir_compute (BExp_Store mem_e a_e en v_e) env = *)
-  (*    bir_eval_store (bir_compute mem_e env) (bir_compute a_e env) en (bir_compute v_e env)) *)
+     bir_compute_load (bir_compute_exp mem_e env) (bir_compute_exp a_e env) en ty) /\
+
+  (bir_compute_exp (BExp_Store mem_e a_e en v_e) env =
+     bir_compute_store (bir_compute_exp mem_e env) (bir_compute_exp a_e env) en (bir_compute_exp v_e env))
 End
 
 
