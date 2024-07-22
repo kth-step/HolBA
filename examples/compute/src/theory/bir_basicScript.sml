@@ -105,6 +105,8 @@ Datatype:
 
   (* Memory value / Address Value (Imm) / Endian / Type of where to load *)
   | BExp_Load bir_exp_t bir_exp_t bir_endian_t bir_immtype_t
+  (* Memory value / Address Value (Imm) / Endian / Value to store *)
+  | BExp_Store bir_exp_t bir_exp_t bir_endian_t bir_exp_t
 End
 
 
