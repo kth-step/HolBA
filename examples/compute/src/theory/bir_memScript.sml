@@ -183,6 +183,38 @@ Definition bir_update_mmap_def:
 End
 
 
+Inductive bir_eval_store_in_mem:
+[~BEnd_BigEndian:]
+  !vty aty result mmap addr.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _)
+    ==>
+    bir_eval_store_in_mem vty aty result mmap BEnd_BigEndian addr
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (bitstring_split (size_of_bir_immtype vty) (b2v result))))
+
+[~BEnd_LittleEndian:]
+  !vty aty result mmap addr.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _)
+    ==>
+    bir_eval_store_in_mem vty aty result mmap BEnd_LittleEndian addr
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (REVERSE (bitstring_split (size_of_bir_immtype vty) (b2v result)))))
+
+[~BEnd_NoEndian:]
+  !vty aty result mmap addr.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME 1)
+    ==>
+    bir_eval_store_in_mem vty aty result mmap BEnd_NoEndian addr
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (bitstring_split (size_of_bir_immtype vty) (b2v result))))
+
+End
+
+Definition bir_eval_store_def:
+  (bir_eval_store (BVal_Mem aty vty mmap) (BVal_Imm addr) en (BVal_Imm result) v = 
+    bir_eval_store_in_mem vty aty result mmap en (b2n addr) v) /\
+  (bir_eval_store _ _ _ _ _ = F)
+End
+
+
+
 (* ****************************************** *)
 (* **************** THEOREMS **************** *)
 (* ****************************************** *)

@@ -59,6 +59,15 @@ Inductive bir_eval_exp:
     ==>
     (bir_eval_exp env (BExp_Load e_mem e_addr en rty) v))
 
+[~BExp_Store:]
+  (!env en e_mem e_addr e_result v_mem v_addr v_result v.
+    ((bir_eval_exp env e_mem v_mem) /\
+      (bir_eval_exp env e_addr v_addr) /\
+      (bir_eval_exp env e_result v_result) /\
+      (bir_eval_store v_mem v_addr en v_result v))
+    ==>
+    (bir_eval_exp env (BExp_Store e_mem e_addr en e_result) v))
+
 End
 
 
