@@ -254,6 +254,11 @@ Proof
 QED
 
 
+(* ****************************************** *)
+(* ****************** LOAD ****************** *)
+(* ****************************************** *)
+
+
 (* Eval and compute are similar *)
 Theorem bir_eval_load_eq_compute_load:
   !v_mem v_addr en rty v.
