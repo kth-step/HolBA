@@ -63,10 +63,10 @@ Definition riscv_swap_pre_def:
  riscv_swap_pre (pre_x10:word64) (pre_x11:word64)
   (pre_x10_deref:word64) (pre_x11_deref:word64)
   (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm "pre_x10") /\
+  (^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
    m.c_gpr m.procID 10w = pre_x10 /\
    riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref /\
-   ^(mem_addrs_aligned_prog_disj_riscv_tm "pre_x11") /\
+   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x11") /\
    m.c_gpr m.procID 11w = pre_x11 /\
    riscv_mem_load_dword m.MEM8 pre_x11 = pre_x11_deref)
 End
@@ -84,8 +84,8 @@ End
 (* -------------- *)
 
 val bspec_swap_pre_tm = bslSyntax.bandl [
- mem_addrs_aligned_prog_disj_bir_tm "x10",
- mem_addrs_aligned_prog_disj_bir_tm "x11",
+ mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
+ mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))

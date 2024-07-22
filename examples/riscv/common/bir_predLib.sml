@@ -8,9 +8,12 @@ local
   open bslSyntax;
 in
 
-val prog_addr_max_tm = ``0x20000w:word64``;
-
-val mem_addr_bound_tm = ``0x100000000w:word64``;
+local
+ val prog_addr_max_tm = ``0x20000w:word64``;
+ val mem_addr_bound_tm = ``0x100000000w:word64``;
+in
+ val mem_params_standard = (prog_addr_max_tm, mem_addr_bound_tm);
+end
 
 fun mem_addrs_stack_disj_reg_bir_tm rnsp rn = ``BExp_BinPred BIExp_LessThan
      (BExp_Den (BVar ^(stringSyntax.fromMLstring rnsp) (BType_Imm Bit64)))
@@ -37,7 +40,7 @@ in
   )
 end;
 
-fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
+fun mem_addrs_prog_disj_bir_tm (prog_addr_max_tm, mem_addr_bound_tm) rn = ``BExp_BinExp BIExp_And
  (BExp_BinPred BIExp_LessOrEqual
   (BExp_Const (Imm64 ^prog_addr_max_tm))
   (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
@@ -45,11 +48,11 @@ fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
   (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
   (BExp_Const (Imm64 ^mem_addr_bound_tm)))``;
 
-fun mem_addrs_aligned_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
+fun mem_addrs_aligned_prog_disj_bir_tm mem_params rn = ``BExp_BinExp BIExp_And
   (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
-  (^(mem_addrs_prog_disj_bir_tm rn))``;
+  (^(mem_addrs_prog_disj_bir_tm mem_params rn))``;
 
-fun mem_addrs_aligned_prog_disj_riscv_tm vn =
+fun mem_addrs_aligned_prog_disj_riscv_tm (prog_addr_max_tm, mem_addr_bound_tm) vn =
  let
    val var_tm = mk_var (vn, wordsSyntax.mk_int_word_type 64)
  in

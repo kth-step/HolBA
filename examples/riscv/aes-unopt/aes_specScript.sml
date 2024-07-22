@@ -51,7 +51,7 @@ val bspec_aes_pre_tm = bslSyntax.bandl
    mem_area_disj_reg_bir_tm (rkrn, rkbufsz) (inblkrn, blksz),
    mem_area_disj_reg_bir_tm (Te_rn, Te_sz)  (inblkrn, blksz),
    mem_area_disj_reg_bir_tm (Te_rn, Te_sz)  (rkrn, rkbufsz)]
-  @(List.map (mem_addrs_aligned_prog_disj_bir_tm)
+  @(List.map (mem_addrs_aligned_prog_disj_bir_tm mem_params_standard)
       [sprn, rkrn, inblkrn, Te_rn]));
 
 Definition bspec_aes_pre_def:

@@ -21,9 +21,9 @@ val bspec_storeload_pre_tm = bslSyntax.bandl [
   mem_area_disj_reg_bir_tm ("x11", 8) ("x12", 1),
   mem_addrs_stack_disj_reg_bir_tm sprn "x11",
   mem_addrs_stack_disj_reg_bir_tm sprn "x12",
-  mem_addrs_aligned_prog_disj_bir_tm sprn,
-  mem_addrs_aligned_prog_disj_bir_tm "x11",
-  mem_addrs_aligned_prog_disj_bir_tm "x12"
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard sprn,
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12"
 ];
 
 Definition bspec_storeload_pre_def:
