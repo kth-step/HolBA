@@ -112,6 +112,44 @@ Inductive type_of_bir_exp:
     ==>
     (type_of_bir_exp env (BExp_Load e_mem e_addr BEnd_LittleEndian rty) (BType_Imm rty)))
 
+
+[~BExp_Store_NoEndian:]
+  (!env aty vty rty e_mem e_addr e_result.
+    ((type_of_bir_exp env e_mem (BType_Mem aty vty)) /\
+     (type_of_bir_exp env e_addr (BType_Imm aty)) /\
+     (type_of_bir_exp env e_result (BType_Imm rty)) /\
+     (* Same conditions as bir_number_of_mem_splits *)
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)) /\
+      ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) = 1))
+    ==>
+    (type_of_bir_exp env (BExp_Store e_mem e_addr BEnd_NoEndian e_result) (BType_Mem aty vty)))
+
+[~BExp_Store_BigEndian:]
+  (!env aty vty rty e_mem e_addr e_result.
+    ((type_of_bir_exp env e_mem (BType_Mem aty vty)) /\
+     (type_of_bir_exp env e_addr (BType_Imm aty)) /\
+     (type_of_bir_exp env e_result (BType_Imm rty)) /\
+     (* Same conditions as bir_number_of_mem_splits *)
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+    ==>
+    (type_of_bir_exp env (BExp_Store e_mem e_addr BEnd_BigEndian e_result) (BType_Mem aty vty)))
+
+[~BExp_Store_LittleEndian:]
+  (!env aty vty rty e_mem e_addr e_result.
+    ((type_of_bir_exp env e_mem (BType_Mem aty vty)) /\
+     (type_of_bir_exp env e_addr (BType_Imm aty)) /\
+     (type_of_bir_exp env e_result (BType_Imm rty)) /\
+     (* Same conditions as bir_number_of_mem_splits *)
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+    ==>
+    (type_of_bir_exp env (BExp_Store e_mem e_addr BEnd_LittleEndian e_result) (BType_Mem aty vty)))
+
 End
 
 
