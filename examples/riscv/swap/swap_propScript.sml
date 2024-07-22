@@ -65,6 +65,9 @@ Proof
  ACCEPT_TAC riscv_cont_swap_thm
 QED
 
+(* TODO: look at this, the assumptions are false, the composition is wrong *)
+Theorem riscv_cont_swap_fixed = (EVAL o fst o dest_imp o concl o DISCH_ALL) riscv_cont_swap;
+
 (* ------------------------ *)
 (* Unfolded RISC-V contract *)
 (* ------------------------ *)
@@ -74,7 +77,8 @@ val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] (concl riscv_
 Theorem riscv_cont_swap_full:
   !pre_x10 pre_x11 pre_x10_deref pre_x11_deref. ^((snd o dest_eq o concl) readable_thm)
 Proof
- METIS_TAC [riscv_cont_swap, readable_thm]
+ METIS_TAC [GEN_ALL (REWRITE_RULE [readable_thm] riscv_cont_swap)]
 QED
+(* TODO: why does the Theorem/prove primitive allow assumptions like this?!?! it should just fail or run forever instead *)
 
 val _ = export_theory ();
