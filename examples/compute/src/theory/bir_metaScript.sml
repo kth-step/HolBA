@@ -52,7 +52,11 @@ Proof
 
     (* BExp_Load *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_load_def, bir_eval_load_correct_type, type_of_bir_val_def]
+    METIS_TAC [bir_eval_load_def, bir_eval_load_correct_type, type_of_bir_val_def],
+
+    (* BExp_Store *)
+    simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
+    METIS_TAC [bir_eval_store_def, bir_eval_store_correct_type, type_of_bir_val_def]
   ]
 QED
 
