@@ -71,7 +71,7 @@ fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
     (*
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP_SEQ in " ^ delta_s ^ "\n")) timer_exec_step_p3;
     *)
-    val step4_thm = (birs_rule_SUBST_trysimp_const_add_subst_fun SUBST_thm o birs_rule_tryjustassert_fun true) step3_thm;
+    val step4_thm = (birs_rule_SUBST_trysimp_fun SUBST_thm o birs_rule_tryjustassert_fun true) step3_thm;
   in
     step4_thm
   end;

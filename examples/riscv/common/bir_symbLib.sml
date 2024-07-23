@@ -79,7 +79,7 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
    val birs_rule_STEP_fun_spec =
-     (birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm o
+     (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
       birs_rule_tryjustassert_fun true o birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
    (* now the composition *)
    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;

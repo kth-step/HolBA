@@ -868,7 +868,7 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
 (*
 val single_step_prog_thm = result;
 *)
-fun birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm single_step_prog_thm =
+fun birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm single_step_prog_thm =
   let
     val assignment_thm_o =
       SOME (MATCH_MP birs_rule_SUBST_thm single_step_prog_thm)
