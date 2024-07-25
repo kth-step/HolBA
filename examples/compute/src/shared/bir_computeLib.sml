@@ -6,11 +6,12 @@ structure bir_computeLib :> bir_computeLib =
 struct
 
 open HolKernel Parse boolLib bossLib ;
-open bir_basicTheory ;
+open bir_basicTheory bir_cv_basicTheory ;
 open bir_computeTheory ;
 open wordsLib ;
-open cv_transLib ;
+open cv_transLib cv_stdTheory cvTheory ;
 open bir_cv_computeTheory bir_cv_envLib ;
+open bir_cv_memTheory ;
 
 (* Takes a BIR expression and evaluates it using EVAL *)
 fun compute_exp_EVAL (exp : term) (env: term) : thm =
@@ -19,7 +20,8 @@ fun compute_exp_EVAL (exp : term) (env: term) : thm =
 
 (* CV COMPUTE *)
 (* Translate computation function when loading lib *)
-val _  = cv_auto_trans bir_cv_compute_exp_def ;
+val _  = cv_auto_trans_rec bir_cv_compute_exp_def 
+  (WF_REL_TAC `measure (cv_size)` >> Cases_on `cv_n` >> rw [cv_size_def]) ;
 
 
 
@@ -41,16 +43,28 @@ let
   val cv_env = rand (rhs (concl cv_env_thm)) ;
   (* Get the expression term *)
   val exp = lhs (concl exp_def) ;
+  val to_cv_exp_thm = EVAL ``to_cv_exp ^exp`` ;
+  (* TODO : Deep embedding isn’t good here... *)
+  val cv_exp = rhs (concl to_cv_exp_thm)
+  (* from_cv_exp to_cv_exp exp = from_cv_exp exp *)
+  val from_to_exp_thm = AP_TERM ``from_cv_exp`` to_cv_exp_thm;
+  val from_exp_thm = REWRITE_RULE [from_to_cv_exp] from_to_exp_thm
   (* Term to be computed *)
-  val compute_term = ``bir_cv_compute_exp ^exp ^cv_env`` ;
+  val compute_term = ``bir_cv_compute_exp ^cv_exp ^cv_env`` ;
 
   (* Evaluates term *)
   val evaled_term_thm = cv_eval compute_term ;
   
+  (* Apply from to match bir_compute_exp_eq_cv_compute_exp *)
+  val from_opt_evaled_term_thm = AP_TERM ``from_cv_val_option`` evaled_term_thm ;
+  (* Evaluates the from_cv_val_option conversion of the response *)
+  val evaled_from_result = EVAL (rhs (concl from_opt_evaled_term_thm)) ;
+  
   (* Rewrites for correct theorem *)
   val rewritten_term_thm = 
-      REWRITE_RULE [GSYM bir_compute_exp_eq_cv_compute_exp, GSYM cv_env_thm, GSYM eval_env_thm] 
-        evaled_term_thm
+      REWRITE_RULE [GSYM bir_compute_exp_eq_cv_compute_exp, GSYM cv_env_thm,
+      GSYM eval_env_thm, GSYM from_exp_thm, evaled_from_result] 
+        from_opt_evaled_term_thm
 in 
   rewritten_term_thm
 end
