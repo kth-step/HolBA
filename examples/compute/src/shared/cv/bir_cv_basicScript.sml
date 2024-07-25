@@ -132,4 +132,43 @@ Definition to_cv_exp_def:
 End
 
 
+(* **************************************** *)
+(* *************** THEOREMS *************** *)
+(* **************************************** *)
+
+Theorem val_from_cv_val_option_from_imm_option:
+  !imm_opt. 
+    from_cv_val_option (cv_val_from_imm_option imm_opt) =
+      val_from_imm_option imm_opt
+Proof
+  Cases_on `imm_opt` >>
+    rw[val_from_imm_option_def, from_cv_val_option_def, from_cv_val_def,
+      cv_val_from_imm_option_def]
+QED
+
+
+Theorem from_to_cv_val:
+  !v. from_cv_val (to_cv_val v) = v
+Proof
+  Cases_on `v` >>
+    rw [from_cv_val_def, to_cv_val_def]
+QED
+
+Theorem from_to_cv_val_option:
+  !v. from_cv_val_option (to_cv_val_option v) = v
+Proof
+  Cases_on `v` >>
+    rw [from_cv_val_option_def, to_cv_val_option_def] >>
+    rw [from_to_cv_val]
+QED
+
+Theorem from_to_cv_exp:
+  !exp. from_cv_exp (to_cv_exp exp) = exp
+Proof
+  Induct_on `exp` >>
+    rw [from_cv_exp_def, to_cv_exp_def]
+QED
+
+
+
 val _ = export_theory () ;
