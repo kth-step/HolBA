@@ -160,13 +160,13 @@ Definition bir_compute_load_from_mem_def:
                           |  BEnd_BigEndian => SOME vs
                           |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
         case vs' of NONE => NONE
-                 |  SOME vs'' => SOME (BVal_Imm (bir_mem_concat vs'' rty))
+                 |  SOME vs'' => SOME (bir_mem_concat vs'' rty)
    )
 End
 
 Definition bir_compute_load_def:
   (bir_compute_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm addr)) en rty = 
-    bir_compute_load_from_mem vty rty aty mmap en (b2n addr)) /\
+    val_from_imm_option (bir_compute_load_from_mem vty rty aty mmap en (b2n addr))) /\
   (bir_compute_load _ _ _ _ = NONE)
 End
 
@@ -272,6 +272,7 @@ Proof
     Cases_on `bir_number_of_mem_splits b0 rty b` >>
     Cases_on `x = 1` >>
     simp [] >>
+    rw [val_from_imm_option_def] >>
     METIS_TAC []
 QED
 
@@ -292,6 +293,7 @@ Proof
     rw [bir_eval_load_eq_compute_load] >>
     rw [bir_compute_load_def, bir_compute_load_from_mem_def, bir_number_of_mem_splits_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    rw [val_from_imm_option_def] >>
     METIS_TAC []
 QED
 
@@ -309,6 +311,7 @@ Proof
     rw [bir_eval_load_eq_compute_load] >>
     rw [bir_compute_load_def, bir_compute_load_from_mem_def, bir_number_of_mem_splits_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    rw [val_from_imm_option_def] >>
     METIS_TAC []
 QED
 
@@ -327,6 +330,7 @@ Proof
     rw [bir_eval_load_eq_compute_load] >>
     rw [bir_compute_load_def, bir_compute_load_from_mem_def, bir_number_of_mem_splits_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    rw [val_from_imm_option_def] >>
     METIS_TAC [size_of_bir_immtype_leq_1]
 QED
 

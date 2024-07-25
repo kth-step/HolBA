@@ -50,29 +50,19 @@ End
 (* ****************************************** *)
 
 (* Computes a binary expression of two immediates *)
-(* Definition bir_compute_binexp_imm_def: *)
-(*   (bir_compute_binexp_imm binexp (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
-(*   (bir_compute_binexp_imm binexp (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
-(*   (bir_compute_binexp_imm binexp (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
-(*   (bir_compute_binexp_imm binexp (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
-(*   (bir_compute_binexp_imm binexp (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
-(*   (bir_compute_binexp_imm binexp (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 ((bir_binexp_get_oper binexp) w1 w2)))) /\ *)
-(*   (bir_compute_binexp_imm binexp _ _ = NONE) *)
-(* End *)
-
 Definition bir_compute_binexp_imm_def:
-  (bir_compute_binexp_imm BIExp_And (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 (word_and w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_And (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 (word_and w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_And (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 (word_and w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_And (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 (word_and w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_And (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 (word_and w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_And (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 (word_and w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_Plus (Imm1 w1) (Imm1 w2) = SOME (BVal_Imm (Imm1 (word_add w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_Plus (Imm8 w1) (Imm8 w2) = SOME (BVal_Imm (Imm8 (word_add w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_Plus (Imm16 w1) (Imm16 w2) = SOME (BVal_Imm (Imm16 (word_add w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_Plus (Imm32 w1) (Imm32 w2) = SOME (BVal_Imm (Imm32 (word_add w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_Plus (Imm64 w1) (Imm64 w2) = SOME (BVal_Imm (Imm64 (word_add w1 w2)))) /\
-  (bir_compute_binexp_imm BIExp_Plus (Imm128 w1) (Imm128 w2) = SOME (BVal_Imm (Imm128 (word_add w1 w2)))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm1 w1) (Imm1 w2) = SOME (Imm1 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm8 w1) (Imm8 w2) = SOME (Imm8 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm16 w1) (Imm16 w2) = SOME (Imm16 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm32 w1) (Imm32 w2) = SOME (Imm32 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm64 w1) (Imm64 w2) = SOME (Imm64 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm128 w1) (Imm128 w2) = SOME (Imm128 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm1 w1) (Imm1 w2) = SOME (Imm1 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm8 w1) (Imm8 w2) = SOME (Imm8 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm16 w1) (Imm16 w2) = SOME (Imm16 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm32 w1) (Imm32 w2) = SOME (Imm32 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm64 w1) (Imm64 w2) = SOME (Imm64 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm128 w1) (Imm128 w2) = SOME (Imm128 (word_add w1 w2))) /\
   (bir_compute_binexp_imm binexp _ _ = NONE)
 End
 
@@ -80,7 +70,7 @@ End
 (* Computes a general binary expression with values as parameters *)
 Definition bir_compute_binexp_def:
   (bir_compute_binexp binexp (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
-    bir_compute_binexp_imm binexp imm1 imm2) /\
+    val_from_imm_option (bir_compute_binexp_imm binexp imm1 imm2)) /\
   (bir_compute_binexp _ _ _ = NONE)
 End
 
@@ -101,6 +91,7 @@ Proof
     rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
     Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
       rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy, bir_binexp_get_oper_def] >>
+      rw [val_from_imm_option_def] >>
       METIS_TAC []
 QED
 
@@ -116,6 +107,7 @@ Proof
   Cases_on `b` >> Cases_on `b'` >>
     rw [bir_eval_binexp_eq_compute_binexp] >>
     rw [bir_compute_binexp_def, bir_compute_binexp_imm_def] >>
+    rw [val_from_imm_option_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def]
 QED
 

@@ -143,4 +143,11 @@ Proof
 QED
 
 
+(* Utility functions *)
+Definition val_from_imm_option_def:
+  (val_from_imm_option NONE = NONE) /\
+  (val_from_imm_option (SOME imm) = SOME (BVal_Imm imm))
+End
+
+
 val _ = export_theory () ;
