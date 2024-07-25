@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory ;
+open bir_basicTheory bir_cv_basicTheory ;
 open bir_envTheory ;
 open alistTheory ;
 
@@ -11,7 +11,7 @@ val _ = new_theory "bir_cv_env" ;
 
 
 Datatype:
-  bir_cv_env_t = BCVEnv ((ident # bir_val_t) list)
+  bir_cv_env_t = BCVEnv ((ident # bir_cv_val_t) list)
 End
 
 Definition bir_cv_empty_env_def:
@@ -23,32 +23,34 @@ Definition bir_cv_env_lookup_def:
 End
 
 
-Definition to_env_def:
-  to_env (BCVEnv []) = bir_empty_env /\
-  to_env (BCVEnv (t::q)) = bir_env_update (to_env (BCVEnv q)) (BVar (FST t)) (SND t)
+Definition from_cv_env_def:
+  from_cv_env (BCVEnv []) = bir_empty_env /\
+  from_cv_env (BCVEnv (t::q)) = 
+    bir_env_update (from_cv_env (BCVEnv q)) (BVar (FST t)) (from_cv_val (SND t))
 End
 
 
 Definition env_eq_def:
   env_eq env cv_env = 
-    !var. bir_env_lookup env var = bir_cv_env_lookup cv_env var
+    !var. bir_env_lookup env var = from_cv_val_option (bir_cv_env_lookup cv_env var)
 End
 
 
-Theorem env_eq_to_env:
-  !cvenv. env_eq (to_env cvenv) cvenv
+Theorem env_eq_from_cv_env:
+  !cvenv. env_eq (from_cv_env cvenv) cvenv
 Proof
   Cases_on `cvenv` >> 
   Induct_on `l` >| [
-    rw [env_eq_def, to_env_def] >>
+    rw [env_eq_def, from_cv_env_def] >>
     Cases_on `var` >>
-    rw [bir_empty_env_def, bir_env_lookup_def, bir_cv_env_lookup_def],
+    rw [bir_empty_env_def, bir_env_lookup_def, bir_cv_env_lookup_def, from_cv_val_option_def],
 
-    rw [env_eq_def, to_env_def] >>
+    rw [env_eq_def, from_cv_env_def] >>
     Cases_on `var` >>
     Cases_on `h` >>
     rw [bir_cv_env_lookup_def, bir_env_lookup_def, ALOOKUP_def] >| [
-      simp [bir_env_lookup_update],
+      simp [bir_env_lookup_update] >>
+      simp [from_cv_val_def, from_cv_val_option_def],
 
       rw [bir_env_lookup_update_neq] >>
       METIS_TAC [env_eq_def, bir_cv_env_lookup_def]
@@ -56,17 +58,17 @@ Proof
   ]
 QED
 
-Theorem to_env_empty:
-  bir_empty_env = (to_env bir_cv_empty_env)
+Theorem from_cv_env_empty:
+  bir_empty_env = (from_cv_env bir_cv_empty_env)
 Proof
-  simp [bir_empty_env_def, to_env_def, bir_cv_empty_env_def]
+  simp [bir_empty_env_def, from_cv_env_def, bir_cv_empty_env_def]
 QED
 
-Theorem to_env_cons:
-  !id v q env. ((BEnv env) = to_env (BCVEnv q)) ==> 
-    (BEnv ((id =+ SOME v) env)) = to_env (BCVEnv ((id,v)::q))
+Theorem from_cv_env_cons:
+  !id v q env. ((BEnv env) = from_cv_env (BCVEnv q)) ==> 
+    (BEnv ((id =+ SOME (from_cv_val v)) env)) = from_cv_env (BCVEnv ((id,v)::q))
 Proof
-  simp [to_env_def] >>
+  simp [from_cv_env_def] >>
   rw [GSYM bir_env_update_def]
 QED
 
