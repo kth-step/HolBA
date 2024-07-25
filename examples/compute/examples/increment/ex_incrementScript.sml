@@ -35,7 +35,8 @@ Proof
   rw [bir_env_lookup_def, start_env_def] >>
   rw [bir_env_lookup_update] >>
 
-  rw [bir_compute_binexp_def, bir_compute_binexp_imm_def, bir_binexp_get_oper_def]
+  rw [bir_compute_binexp_def, bir_compute_binexp_imm_def, bir_binexp_get_oper_def] >>
+  rw [val_from_imm_option_def]
 QED 
 
 
