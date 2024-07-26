@@ -200,6 +200,7 @@ Proof
     rw [from_cv_val_option_def, from_cv_val_def] >>
 
     Cases_on `bir_number_of_mem_splits b0 (type_of_bir_imm b'') b` >>
+    Cases_on `bitstring_split (size_of_bir_immtype b0) (b2v b'')` >>
       rw [from_cv_val_option_def, from_cv_val_def] >>
       rw [bir_cv_update_mmap_eq_update_mmap]
 QED
