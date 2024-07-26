@@ -53,9 +53,9 @@ Definition b2v_def:
 End
 
 Definition bitstring_split_aux_def:
-  (bitstring_split_aux 0 acc bs = ARB) /\
-  (bitstring_split_aux n acc [] = REVERSE acc) /\
-  (bitstring_split_aux n acc bs = 
+  (bitstring_split_aux 0 acc bs = NONE) /\
+  (bitstring_split_aux n acc [] = SOME $ REVERSE acc) /\
+  (bitstring_split_aux n acc bs =
     bitstring_split_aux n ((TAKE n bs)::acc) (DROP n bs))
 Termination
   WF_REL_TAC `measure (\ (_, _, l). LENGTH l)` >>
@@ -186,25 +186,28 @@ End
 
 Inductive bir_eval_store_in_mem:
 [~BEnd_BigEndian:]
-  !vty aty result mmap addr.
-    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _)
+  !vty aty result mmap addr ll.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _) /\
+    (bitstring_split (size_of_bir_immtype vty) (b2v result) = SOME ll)
     ==>
     bir_eval_store_in_mem vty aty result mmap BEnd_BigEndian addr
-      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (bitstring_split (size_of_bir_immtype vty) (b2v result))))
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr ll))
 
 [~BEnd_LittleEndian:]
-  !vty aty result mmap addr.
-    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _)
+  !vty aty result mmap addr ll.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _) /\
+    (bitstring_split (size_of_bir_immtype vty) (b2v result) = SOME ll)
     ==>
     bir_eval_store_in_mem vty aty result mmap BEnd_LittleEndian addr
-      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (REVERSE (bitstring_split (size_of_bir_immtype vty) (b2v result)))))
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (REVERSE ll)))
 
 [~BEnd_NoEndian:]
-  !vty aty result mmap addr.
-    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME 1)
+  !vty aty result mmap addr ll.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME 1) /\
+    (bitstring_split (size_of_bir_immtype vty) (b2v result) = SOME ll)
     ==>
     bir_eval_store_in_mem vty aty result mmap BEnd_NoEndian addr
-      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (bitstring_split (size_of_bir_immtype vty) (b2v result))))
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr ll))
 
 End
 
@@ -225,7 +228,9 @@ Definition bir_compute_store_in_mem_def:
    case (bir_number_of_mem_splits vty rty aty) of
     | NONE => NONE
     | SOME (n:num) => (
-        let vs = bitstring_split (size_of_bir_immtype vty) (b2v result) in
+      case  (bitstring_split (size_of_bir_immtype vty) (b2v result)) of
+        | NONE => NONE
+        | SOME vs =>
         let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
                           |  BEnd_BigEndian => SOME vs
                           |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
