@@ -95,7 +95,9 @@ Definition bir_cv_compute_store_in_mem_def:
    case (bir_number_of_mem_splits vty rty aty) of
     | NONE => NONE
     | SOME (n:num) => (
-        let vs = bitstring_split (size_of_bir_immtype vty) (b2v result) in
+      case  (bitstring_split (size_of_bir_immtype vty) (b2v result)) of
+        | NONE => NONE
+        | SOME vs =>
         let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
                           |  BEnd_BigEndian => SOME vs
                           |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
