@@ -368,6 +368,27 @@ QED
 (* ***************** STORE ***************** *)
 (* ***************************************** *)
 
+(* bitstring_split will never be NONE *)
+Theorem bitstring_split_aux_size_of_bir_immtype:
+  !ty acc bs. ?ll. bitstring_split_aux (size_of_bir_immtype ty) acc bs = SOME ll
+Proof
+  GEN_TAC >>
+  `?n. size_of_bir_immtype ty = SUC n` by (Cases_on `ty` >> simp [size_of_bir_immtype_def]) >>
+  measureInduct_on `LENGTH bs` >>
+    Cases_on `bs` >>
+    fs [bitstring_split_def, bitstring_split_aux_def] >>
+    `LENGTH (DROP n t) < SUC (LENGTH t)` by rw [listTheory.LENGTH_DROP] >>
+    METIS_TAC [bitstring_split_aux_def, listTheory.LENGTH_DROP]
+QED
+
+Theorem bitstring_split_size_of_bir_immtype:
+  !ty bs. bitstring_split (size_of_bir_immtype ty) bs <> NONE
+Proof
+  simp [bitstring_split_def] >>
+  METIS_TAC [bitstring_split_aux_size_of_bir_immtype, optionTheory.NOT_SOME_NONE]
+QED
+
+
 
 (* Eval and compute are similar *)
 Theorem bir_eval_store_eq_compute_store:
@@ -380,8 +401,9 @@ Proof
     rw [bir_compute_store_def, bir_compute_store_in_mem_def] >>
     Cases_on `bir_number_of_mem_splits b0 (type_of_bir_imm b'') b` >>
     Cases_on `x = 1` >>
-    simp [] >>
-    METIS_TAC []
+    Cases_on `bitstring_split (size_of_bir_immtype b0) (b2v b'')` >>
+      simp [] >>
+      METIS_TAC []
 QED
 
 (* If the operands are correctly typed, then the expression evaluates *)
@@ -400,7 +422,9 @@ Proof
     rw [bir_eval_store_eq_compute_store] >>
     rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def] >>
-    METIS_TAC []
+    Cases_on `bitstring_split (size_of_bir_immtype vty) (b2v b'')` >>
+      fs [bitstring_split_size_of_bir_immtype, bitstring_split_def] >>
+      METIS_TAC [bitstring_split_aux_size_of_bir_immtype]
 QED
 
 Theorem type_of_bir_val_imp_bir_eval_store_littleendian:
@@ -418,7 +442,9 @@ Proof
     rw [bir_eval_store_eq_compute_store] >>
     rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def] >>
-    METIS_TAC []
+    Cases_on `bitstring_split (size_of_bir_immtype vty) (b2v b'')` >>
+      fs [bitstring_split_size_of_bir_immtype] >>
+      METIS_TAC []
 QED
 
 Theorem type_of_bir_val_imp_bir_eval_store_noendian:
@@ -437,7 +463,9 @@ Proof
     rw [bir_eval_store_eq_compute_store] >>
     rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def] >>
-    METIS_TAC [size_of_bir_immtype_leq_1]
+    Cases_on `bitstring_split (size_of_bir_immtype vty) (b2v b'')` >>
+      fs [bitstring_split_size_of_bir_immtype] >>
+      METIS_TAC [size_of_bir_immtype_leq_1]
 QED
 
 
