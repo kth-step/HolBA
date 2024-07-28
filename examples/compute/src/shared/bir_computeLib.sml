@@ -20,10 +20,14 @@ fun compute_exp_EVAL (exp : term) (env: term) : thm =
 
 (* CV COMPUTE *)
 (* Translate computation function when loading lib *)
-val _  = cv_auto_trans_rec bir_cv_compute_exp_def 
+val _  = cv_auto_trans_rec cv_n2l_def 
   (WF_REL_TAC `measure (cv_size)` >> Cases_on `cv_n` >> rw [cv_size_def]) ;
 
 
+val bir_cv_compute_exp_pre_cases  = cv_auto_trans_pre bir_cv_compute_exp_def ;
+val _ = store_thm("bir_cv_compute_exp_pre[cv_pre]", ``!v env. bir_cv_compute_exp_pre v env``,
+  Induct_on `v` >>
+  rw [Once bir_cv_compute_exp_pre_cases]) ;
 
 (* Deep embedding of our expression *)
 fun translate_exp_cv (exp_def:thm) = 
