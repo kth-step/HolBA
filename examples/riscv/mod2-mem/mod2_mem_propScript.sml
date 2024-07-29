@@ -106,12 +106,7 @@ QED
 (* Unfolded RISC-V contract *)
 (* ------------------------ *)
 
-val readable_thm = computeLib.RESTR_EVAL_CONV [``riscv_weak_trs``] (concl riscv_cont_mod2_mem);
-
-Theorem riscv_cont_mod2_mem_full:
-  !pre_x10 pre_x10_deref. ^((snd o dest_eq o concl) readable_thm)
-Proof
- METIS_TAC [riscv_cont_mod2_mem, readable_thm]
-QED
+val readable_thm = computeLib.RESTR_EVAL_RULE [``riscv_weak_trs``] riscv_cont_mod2_mem;
+Theorem riscv_cont_mod2_mem_full = GEN_ALL readable_thm;
 
 val _ = export_theory ();
