@@ -323,7 +323,22 @@ val birs_eval_label_exp_CONV = (
     raise ERR "birs_eval_label_exp_CONV" "something is not right here, should be NONE or SOME")
 );
 
-val birs_exec_step_CONV = (
+val birs_state_t_ty = mk_type ("birs_state_t", []);
+fun dest_birs_state tm = let
+  val (ty, l) = TypeBase.dest_record tm
+  val _ = if ty = birs_state_t_ty then () else fail()
+  val pc = Lib.assoc "bsst_pc" l
+  val env = Lib.assoc "bsst_environ" l
+  val status = Lib.assoc "bsst_status" l
+in
+  (pc, env, status)
+end handle e => raise wrap_exn "dest_bir_state" e;
+
+fun birs_exec_step_CONV t =
+ t |>
+ (fn t => ((print_term o (fn (x,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
+ (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
+ (
   RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
 
   GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV THENC

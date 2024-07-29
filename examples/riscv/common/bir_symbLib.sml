@@ -76,11 +76,22 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
      bsst_status   := BST_Running;
      bsst_pcond    := ^birs_pcond
    |>``;
+   val timer_symbanalysis = bir_miscLib.timer_start 0;
+   val timer_symbanalysis_last = ref (bir_miscLib.timer_start 0);
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
+   val birs_post_step_fun =
+     (fn t => (
+        bir_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
+        bir_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
+        timer_symbanalysis_last := bir_miscLib.timer_start 0;
+	print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);
+	t)) o
+     birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
+     birs_rule_tryjustassert_fun true;
    val birs_rule_STEP_fun_spec =
-     (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
-      birs_rule_tryjustassert_fun true o birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
+     (birs_post_step_fun o
+      birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
    (* now the composition *)
    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
@@ -90,7 +101,8 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
     birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
     (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_STEP_SEQ_fun_spec =
-    birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm);
+    (birs_post_step_fun o
+     birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm));
    val _ = print "now reducing it to one sound structure\n";
    val timer = bir_miscLib.timer_start 0;
    val result = exec_until
