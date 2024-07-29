@@ -31,7 +31,7 @@ val _ = print_and_check_thm
   "swap RISC-V lift theorem"
   bir_swap_riscv_lift_THM
   ``
-  bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x104A6w : word64))
+  bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x104A8w : word64))
    bir_swap_progbin
    (bir_swap_prog : 'observation_type bir_program_t)
   ``;
