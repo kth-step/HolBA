@@ -91,11 +91,12 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
      birs_rule_tryjustassert_fun true;
    val birs_rule_STEP_fun_spec =
      (birs_post_step_fun o
-      birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
+      birs_rule_STEP_fun birs_rule_STEP_thm);
    (* now the composition *)
    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
    val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init;
+   val _ = print_thm single_step_A_thm;
    (* and also the sequential composition *)
    val birs_rule_STEP_SEQ_thm = MATCH_MP
     birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
@@ -119,7 +120,7 @@ fun bir_symb_analysis_thm bir_prog_def
  let
    val _ = print "\n======\n > bir_symb_analysis_thm started\n";
    val timer = bir_miscLib.timer_start 0;
-   val bprog_tm = (snd o dest_eq o concl) bir_prog_def;
+   val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
    val birs_state_init_lbl_tm =
     (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;

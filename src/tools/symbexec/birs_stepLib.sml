@@ -334,7 +334,30 @@ in
   (pc, env, status)
 end handle e => raise wrap_exn "dest_bir_state" e;
 
+fun measure_conv s c t =
+  let
+    val timer = bir_miscLib.timer_start 0;
+    val res = c t;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print (s ^ delta_s ^ "\n")) timer;
+  in
+    res
+  end;
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+ open bir_programTheory;
+in
+ val (bir_get_current_statement_tm,  mk_bir_get_current_statement, dest_bir_get_current_statement, is_bir_get_current_statement)  = syntax_fns2 "bir_get_current_statement";
+end;
+
 fun birs_exec_step_CONV t =
+let
+ val bprog_tm = (snd o dest_comb o fst o dest_comb) t;
+ val _ = print_term bprog_tm;
+ val _ = if is_const bprog_tm then () else
+         raise ERR "birs_exec_step_CONV" "program term is not a constant";
+in
  t |>
  (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>
  (fn t => ((print_term o (fn (x,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
@@ -342,8 +365,12 @@ fun birs_exec_step_CONV t =
  (fn t =>
   let
     val timer_exec_step = bir_miscLib.timer_start 0;
- val res =
- (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
+ val res = (
+  measure_conv "\n>>>>>>>>>> step_CONV_p1 in " (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``, ``bir_get_current_statement``]) THENC
+
+  measure_conv "\n>>>>>>>>>> step_CONV_p2 in " (GEN_match_conv is_bir_get_current_statement EVAL) THENC
+
+  measure_conv "\n>>>>>>>>>> step_CONV_p3 in " (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``]) THENC
 
   GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV THENC
 
@@ -361,7 +388,7 @@ fun birs_exec_step_CONV t =
   RESTR_EVAL_CONV [``birs_gen_env``]) t;
  val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>>>> step_CONV in " ^ delta_s ^ "\n")) timer_exec_step;
  in res end)
-;
+end;
 
 
 (*
@@ -716,10 +743,10 @@ local
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
   open birs_auxTheory;
 in
-fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
+fun birs_rule_STEP_fun birs_rule_STEP_thm bstate_tm =
   let
 
-    val birs_exec_thm = CONV_RULE birs_exec_step_CONV_fun (SPEC bstate_tm birs_rule_STEP_thm);
+    val birs_exec_thm = CONV_RULE (birs_exec_step_CONV_fun) (SPEC bstate_tm birs_rule_STEP_thm);
 
     val timer_exec_step_p3 = bir_miscLib.timer_start 0;
     (* TODO: optimize *)
