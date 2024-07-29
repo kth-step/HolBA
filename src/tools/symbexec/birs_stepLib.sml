@@ -330,9 +330,107 @@ fun dest_birs_state tm = let
   val pc = Lib.assoc "bsst_pc" l
   val env = Lib.assoc "bsst_environ" l
   val status = Lib.assoc "bsst_status" l
+  val pcond = Lib.assoc "bsst_pcond" l
 in
-  (pc, env, status)
-end handle e => raise wrap_exn "dest_bir_state" e;
+  (pc, env, status, pcond)
+end handle e => (print_term tm; raise wrap_exn "dest_bir_state" e);
+
+local
+  open bir_expSyntax;
+in
+ fun is_bir_exp t =
+  type_of t = bir_exp_t_ty;
+
+ fun bir_exp_size t =
+  if is_BExp_Const t then
+     1
+  else if is_BExp_MemConst t then
+     1
+  else if is_BExp_Den t then
+     1
+  else if is_BExp_Cast t then
+   let
+     val (_,x,_) = dest_BExp_Cast t;
+   in
+     1 + bir_exp_size x
+   end
+  else if is_BExp_UnaryExp t then
+   let
+     val (_,x) = dest_BExp_UnaryExp t;
+   in
+     1 + bir_exp_size x
+   end
+  else if is_BExp_BinExp t then
+   let
+     val (_,x1,x2) = dest_BExp_BinExp t;
+   in
+     1 + bir_exp_size x1 + bir_exp_size x2
+   end
+  else if is_BExp_BinPred t then
+   let
+     val (_,x1,x2) = dest_BExp_BinPred t;
+   in
+     1 + bir_exp_size x1 + bir_exp_size x2
+   end
+  else if is_BExp_MemEq t then
+   let
+     val (x1,x2) = dest_BExp_MemEq t;
+   in
+     1 + bir_exp_size x1 + bir_exp_size x2
+   end
+  else if is_BExp_IfThenElse t then
+   let
+     val (c,x1,x2) = dest_BExp_IfThenElse t;
+   in
+     1 + bir_exp_size c + bir_exp_size x1 + bir_exp_size x2
+   end
+  else if is_BExp_Load t then
+   let
+     val (mem_e,a_e,_,_) = dest_BExp_Load t;
+   in
+     1 + bir_exp_size mem_e + bir_exp_size a_e
+   end
+  else if is_BExp_Store t then
+   let
+     val (mem_e,a_e,_,v_e) = dest_BExp_Store t;
+   in
+     1 + bir_exp_size mem_e + bir_exp_size a_e + bir_exp_size v_e
+   end
+(*
+  else if is_... t then
+   let
+     val (_,x1,...) = dest_... t;
+   in
+     1 + bir_exp_size x1 + ...
+   end
+*)
+  else raise ERR "bir_exp_size" ("unknown BIR expression " ^ (term_to_string t));
+end
+
+fun count_term is_tm_fun count_tm_fun tm =
+    if is_tm_fun tm then
+      count_tm_fun tm
+    else if is_comb tm then
+      let
+        val (rator,rand) = dest_comb tm;
+      in
+        (count_term is_tm_fun count_tm_fun rator) +
+        (count_term is_tm_fun count_tm_fun rand)
+      end
+    else if is_abs tm then
+      count_term is_tm_fun count_tm_fun ((snd o dest_abs) tm)
+    else
+      0
+    ;
+
+fun get_birs_state_size t =
+  let
+    val (_, env, _, pcond) = dest_birs_state t;
+    val n_pcond = bir_exp_size pcond;
+    val n_env = count_term is_bir_exp bir_exp_size env;
+  in
+    n_pcond + n_env
+  end;
 
 fun measure_conv s c t =
   let
@@ -360,8 +458,9 @@ let
 in
  t |>
  (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>
- (fn t => ((print_term o (fn (x,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
+ (fn t => ((print_term o (fn (x,_,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
  (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
+ (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t)) |>
  (fn t =>
   let
     val timer_exec_step = bir_miscLib.timer_start 0;
