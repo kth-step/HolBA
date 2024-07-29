@@ -1,7 +1,7 @@
 open HolKernel boolLib Parse bossLib;
 
 open bir_lifter_interfaceLib;
-open bir_symbLib;
+open birs_auxLib;
 
 val progname = "mod2";
 
