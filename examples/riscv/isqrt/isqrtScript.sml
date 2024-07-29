@@ -10,7 +10,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory progname;
 
-val _ = lift_da_and_store progname (progname ^ ".da") da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x104c1));
+val _ = lift_da_and_store progname (progname ^ ".da") da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x104c4));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)

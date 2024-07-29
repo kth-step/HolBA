@@ -7,7 +7,7 @@ val progname = "mod2";
 
 val _ = new_theory progname;
 
-val _ = lift_da_and_store progname (progname ^ ".da") da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10495));
+val _ = lift_da_and_store progname (progname ^ ".da") da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10498));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)
