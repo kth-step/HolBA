@@ -336,10 +336,14 @@ end handle e => raise wrap_exn "dest_bir_state" e;
 
 fun birs_exec_step_CONV t =
  t |>
+ (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>
  (fn t => ((print_term o (fn (x,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
  (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
- (
-  RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
+ (fn t =>
+  let
+    val timer_exec_step = bir_miscLib.timer_start 0;
+ val res =
+ (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
 
   GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV THENC
 
@@ -354,8 +358,10 @@ fun birs_exec_step_CONV t =
 
   (* TODO: here better only convert the subexpression birs_update_env *)
   REWRITE_CONV [birs_update_env_thm] THENC
-  RESTR_EVAL_CONV [``birs_gen_env``]
-);
+  RESTR_EVAL_CONV [``birs_gen_env``]) t;
+ val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>>>> step_CONV in " ^ delta_s ^ "\n")) timer_exec_step;
+ in res end)
+;
 
 
 (*

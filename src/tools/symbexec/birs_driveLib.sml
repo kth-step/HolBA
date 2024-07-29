@@ -125,7 +125,7 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
       else if List.length birs_states_mid = 1 then
         let
 
-          val _ = print ("sequential composition with singleton mid_state set\n");
+          val _ = print ("START sequential composition with singleton mid_state set\n");
 
 (*
           val birs_state_mid = hd birs_states_mid;
@@ -147,7 +147,7 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
           val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm (SOME freesymbols_B_thm);
 *)
           val bprog_composed_thm = STEP_SEQ_fun_spec symbex_A_thm;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> FINISH took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
 
         in
           build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) bprog_composed_thm stop_lbls

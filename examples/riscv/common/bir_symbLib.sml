@@ -85,7 +85,7 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
         bir_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
         bir_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
         timer_symbanalysis_last := bir_miscLib.timer_start 0;
-	print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);
+	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
 	t)) o
      birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
      birs_rule_tryjustassert_fun true;
