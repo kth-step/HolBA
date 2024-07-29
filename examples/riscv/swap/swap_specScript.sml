@@ -2,8 +2,6 @@ open HolKernel boolLib Parse bossLib;
 
 open markerTheory;
 
-open distribute_generic_stuffLib;
-
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory bir_exp_immTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -36,10 +34,6 @@ open program_logicSimps;
 
 open bir_env_oldTheory;
 open bir_program_varsTheory;
-
-open distribute_generic_stuffTheory;
-
-open swapTheory;
 
 val _ = new_theory "swap_spec";
 

@@ -2,8 +2,6 @@ open HolKernel boolLib Parse bossLib;
 
 open markerTheory;
 
-open distribute_generic_stuffLib;
-
 open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
@@ -35,10 +33,6 @@ open program_logicSimps;
 
 open bir_env_oldTheory;
 open bir_program_varsTheory;
-
-open incrTheory;
-
-open distribute_generic_stuffTheory;
 
 val _ = new_theory "incr_spec";
 
