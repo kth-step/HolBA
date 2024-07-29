@@ -30,10 +30,28 @@ val _ = store_thm("bir_cv_compute_exp_pre[cv_pre]", ``!v env. bir_cv_compute_exp
   rw [Once bir_cv_compute_exp_pre_cases]) ;
 
 (* Deep embedding of our expression *)
+(* WARNING : this creates theorems suffixed by _bir_cv_def, _bir_cv_eq. *)
 fun translate_exp_cv (exp_def:thm) = 
 let 
+  (* Fetch expression information *)
+  val exp = lhs (concl exp_def) ;
+  val exp_name = fst (dest_const exp) ;
+  (* Translate to cv_exp *)
+  val _ = print "Translating to cv_exp...\n" ;
+  val to_cv_exp_thm = time EVAL ``to_cv_exp ^exp`` ;
+  val cv_exp = rhs (concl to_cv_exp_thm) ;
+  (* Create the new constant term *)
+  val cv_exp_name = exp_name ^ "_bir_cv" ;
+  val _ = new_constant (cv_exp_name, ``:bir_cv_exp_t``) ;
+  val cv_exp_constant = mk_const (cv_exp_name, ``:bir_cv_exp_t``) ;
+  val cv_exp_def = new_definition (cv_exp_name ^ "_def", ``^cv_exp_constant = ^cv_exp``) ;
+  (* Create and store the equivalence theorem *)
+  val from_to_exp_thm = AP_TERM ``from_cv_exp`` to_cv_exp_thm;
+  val from_exp_thm = REWRITE_RULE [from_to_cv_exp, GSYM cv_exp_def] from_to_exp_thm ;
+  val _ = save_thm (cv_exp_name ^ "_eq", from_exp_thm) ;
+
   val _ = print "Translating with deep embedding...\n" ;
-  val _ = time (cv_trans_deep_embedding EVAL) exp_def ;
+  val _ = time (cv_trans_deep_embedding EVAL) cv_exp_def ;
 in () end
 
 (* Takes an expression definition and evaluates it using cv_eval and deep embedding translation *)
@@ -47,12 +65,12 @@ let
   val cv_env = rand (rhs (concl cv_env_thm)) ;
   (* Get the expression term *)
   val exp = lhs (concl exp_def) ;
-  val to_cv_exp_thm = EVAL ``to_cv_exp ^exp`` ;
-  (* TODO : Deep embedding isn’t good here... *)
-  val cv_exp = rhs (concl to_cv_exp_thm)
-  (* from_cv_exp to_cv_exp exp = from_cv_exp exp *)
-  val from_to_exp_thm = AP_TERM ``from_cv_exp`` to_cv_exp_thm;
-  val from_exp_thm = REWRITE_RULE [from_to_cv_exp] from_to_exp_thm
+  (* Fetches the translation theorems *)
+  val exp_name = fst (dest_const exp) ;
+  val cv_exp_name = exp_name ^ "_bir_cv" ;
+  val from_exp_thm = DB.fetch "-" (cv_exp_name ^ "_eq") ;
+  val cv_exp_def = DB.fetch "-" (cv_exp_name ^ "_def") ;
+  val cv_exp = lhs (concl cv_exp_def) ;
   (* Term to be computed *)
   val compute_term = ``bir_cv_compute_exp ^cv_exp ^cv_env`` ;
 
