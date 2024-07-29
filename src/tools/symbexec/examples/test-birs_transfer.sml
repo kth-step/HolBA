@@ -121,7 +121,7 @@ val birs_state_init = (snd o dest_eq o concl) birs_state_thm;
 
 val bprog_tm = bprog;
 val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
-val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm;
+val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm;
 (* ........................... *)
 
 (* first step *)
