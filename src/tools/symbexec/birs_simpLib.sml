@@ -153,12 +153,12 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
      birs_simplification_Plus_Plus_Const64_thm,
      birs_simplification_Minus_Plus_Const64_thm,
      birs_simplification_Minus_Minus_Const64_thm,
-     birs_simplification_Plus_Minus_Const64_thm,
+     birs_simplification_Plus_Minus_Const64_thm(*,
 
      birs_simplification_Plus_Plus_Const32_thm,
      birs_simplification_Minus_Plus_Const32_thm,
      birs_simplification_Minus_Minus_Const32_thm,
-     birs_simplification_Plus_Minus_Const32_thm];
+     birs_simplification_Plus_Minus_Const32_thm*)];
 
   (* try simplifying with the theorems of the list in order and return NONE or SOME simplification theorem *)
   fun simp_try_fold_fun_gen simp_try_fun (t, thm_o) =
@@ -242,16 +242,16 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
 
   val birs_simp_exp_pcond_thms =
-    [birs_simplification_And_Minus_CM0_thm,
+    [(*birs_simplification_And_Minus_CM0_thm,*)
      birs_simplification_LSB0_And64_RV_thm,
      birs_simplification_SignedLowCast3264_RV_thm,
 
      birs_simplification_IfThenElse_T_thm,
      birs_simplification_IfThenElse_F_thm]@
     (CONJUNCTS birs_simplification_Mem_Match_64_8_thm)@
-    (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)@
+    (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)(*@
     (CONJUNCTS birs_simplification_Mem_Match_32_8_thm)@
-    (CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm);
+    (CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm)*);
 
 
 (*
