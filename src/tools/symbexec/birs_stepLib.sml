@@ -366,10 +366,11 @@ in
   let
     val timer_exec_step = bir_miscLib.timer_start 0;
  val res = (
+(*
   measure_conv "\n>>>>>>>>>> step_CONV_p1 in " (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``, ``bir_get_current_statement``]) THENC
 
   measure_conv "\n>>>>>>>>>> step_CONV_p2 in " (GEN_match_conv is_bir_get_current_statement EVAL) THENC
-
+*)
   measure_conv "\n>>>>>>>>>> step_CONV_p3 in " (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``]) THENC
 
   GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV THENC

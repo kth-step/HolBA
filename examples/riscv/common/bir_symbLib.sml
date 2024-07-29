@@ -96,7 +96,7 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
    val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init;
-   val _ = print_thm single_step_A_thm;
+   (*val _ = print_thm single_step_A_thm;*)
    (* and also the sequential composition *)
    val birs_rule_STEP_SEQ_thm = MATCH_MP
     birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
