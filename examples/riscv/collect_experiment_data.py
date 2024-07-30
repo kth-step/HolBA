@@ -67,9 +67,9 @@ def clean_output(data):
 
 def parse_output(data):
 	data = data.split("\n")[-5:]
-	exec_parts_time = data[1][19:]
+	#exec_parts_time = data[1][19:]
 	exec_all_time = data[4][30:]
-	return f"execution of parts: {exec_parts_time}; execution of all: {exec_all_time}"
+	return f"{exec_all_time}"
 
 def collect_outputs(path):
 	log_paths = find_symbexec_logs(path)
