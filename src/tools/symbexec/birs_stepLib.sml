@@ -548,13 +548,12 @@ val gen_rev_thm = prove(``!A B. ((A = A) ==> B) ==> B``, METIS_TAC []);
 val const_list_1 = [bir_get_current_statement_tm, ``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``];
 val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
 val pcond_abbr_tm = ``temp_pcond_abbr : bir_exp_t``;
-val bir_get_current_statement_obstype_tm = ``bir_get_current_statement : 'observation_type bir_program_t -> bir_programcounter_t -> 'observation_type bir_stmt_t option``;
 fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
  ((fn t =>
    let
      val st_tm = (snd o dest_comb) t;
      val (pc_tm,env_tm,_,pcond_tm) = (dest_birs_state) st_tm;
-     val pc_lookup_t = mk_comb (mk_comb (bir_get_current_statement_obstype_tm, bprog_tm), pc_tm) (*``bir_get_current_statement ^bprog_tm ^pc_tm``*);
+     val pc_lookup_t = mk_bir_get_current_statement (bprog_tm, pc_tm) (*``bir_get_current_statement ^bprog_tm ^pc_tm``*);
      val pc_lookup_thm = EVAL pc_lookup_t;
      (*val _ = print_thm pc_lookup_thm;*)
      (*val _ = computeLib.del_consts [bprog_tm]; (* (fst o strip_comb) pc_lookup_t,  *)*)
