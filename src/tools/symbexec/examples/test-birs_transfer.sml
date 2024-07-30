@@ -107,7 +107,7 @@ val bprecond_birs_eval_exp_thm2 = save_thm(
    "bprecond_birs_eval_exp_thm2",
   REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
 );
-val bsysprecond = (fst o dest_eq o concl) bsysprecond_def;
+val bsysprecond = (snd o dest_eq o concl) bsysprecond_thm (*(fst o dest_eq o concl) bsysprecond_def*);
 
 val birs_state_init_pre = ``<|
   bsst_pc       := ^birs_state_init_lbl;
@@ -196,6 +196,7 @@ val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
 P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
 ``,
+  REWRITE_TAC [GSYM bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
   REPEAT STRIP_TAC >>
 
