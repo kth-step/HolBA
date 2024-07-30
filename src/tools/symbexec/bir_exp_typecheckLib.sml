@@ -95,6 +95,8 @@ type_of_bir_exp_DIRECT_CONV bexp_term
    in thm end
    handle _ => raise ERR "type_of_bir_exp_DIRECT_CONV" ("ill-typed term: " ^ Parse.term_to_string term);
 
+val type_of_bir_exp_DIRECT_CONV = Profile.profile "type_of_bir_exp_DIRECT_CONV" type_of_bir_exp_DIRECT_CONV;
+
 
 end (* local *)
 

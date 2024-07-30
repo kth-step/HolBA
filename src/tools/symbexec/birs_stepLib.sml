@@ -44,6 +44,7 @@ val birs_senv_typecheck_CONV = (
   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
   EVAL
 );
+val birs_senv_typecheck_CONV = Profile.profile "senv_typecheck_CONV" birs_senv_typecheck_CONV;
 
 (*
 CBV_CONV (new_compset [
@@ -76,6 +77,7 @@ val birs_eval_exp_CONV = (
   GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV) THENC
   EVAL
 );
+val birs_eval_exp_CONV = Profile.profile "eval_exp_CONV" birs_eval_exp_CONV;
 
 (*
 val test_term = ``
@@ -460,12 +462,67 @@ in
  (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>
  (fn t => ((print_term o (fn (x,_,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
  (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
- (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t))
+ (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t)) |>
+ (fn t => (bprog_tm)) 
 end;
 val birs_exec_step_CONV_pre = Profile.profile "exec_step_CONV_pre" birs_exec_step_CONV_pre;
 
-val birs_exec_step_CONV_p1 =
-  RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``];
+(*
+val test_term = (snd o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs_exec_step_def;
+((fn (_,x,_) => x) o TypeBase.dest_case o (fn (_,_,x) => x) o dest_cond) test_term
+(snd o dest_comb o fst o dest_comb o fst o dest_comb o snd o dest_comb) test_term
+
+val test_term = (fst o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs_exec_step_def;
+(snd o dest_comb) test_term
+*)
+
+val const_list_1 = [bir_get_current_statement_tm, ``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``];
+val bir_get_current_statement_obstype_tm = ``bir_get_current_statement : 'observation_type bir_program_t -> bir_programcounter_t -> 'observation_type bir_stmt_t option``;
+fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
+ ((fn t =>
+   let
+     val st_tm = (snd o dest_comb) t;
+     val pc_tm = ((fn (x,_,_,_) => x) o dest_birs_state) st_tm;
+     val pc_lookup_t = mk_comb (mk_comb (bir_get_current_statement_obstype_tm, bprog_tm), pc_tm) (*``bir_get_current_statement ^bprog_tm ^pc_tm``*);
+     val pc_lookup_thm = EVAL pc_lookup_t;
+     (*val _ = print_thm pc_lookup_thm;*)
+     (*val _ = computeLib.del_consts [bprog_tm]; (* (fst o strip_comb) pc_lookup_t,  *)*)
+     (*val _ = computeLib.del_funs [bir_programTheory.bir_get_current_statement_def];*)
+     (*val _ = computeLib.add_funs [pc_lookup_thm];*)
+     (*val _ = computeLib.add_thms [pc_lookup_thm] (computeLib.the_compset);*)
+     val res = (RESTR_EVAL_CONV ([bprog_tm]@const_list_1)
+       THENC REWRITE_CONV [pc_lookup_thm]) t;
+     (*val _ = print_thm res;*)
+     (*val _ = raise ERR "" "";*)
+   in
+     res
+   end
+  ) THENC
+  RESTR_EVAL_CONV ([bprog_tm]@const_list_1)
+
+  (*REWRITE_CONV [birs_exec_step_def] THENC*)
+  (*RESTR_EVAL_CONV ([``bir_get_current_statement``, bprog_tm, ``birs_update_env``, ``birs_gen_env``]) THENC *)
+  (*GEN_match_conv is_bir_get_current_statement EVAL THENC*)
+  (*RAND_CONV (RATOR_CONV (RATOR_CONV (RAND_CONV EVAL))) THENC*)
+  (*RESTR_EVAL_CONV ([``birs_exec_stmt``, bprog_tm, ``birs_update_env``, ``birs_gen_env``]) *)
+  
+  (*RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``]*)
+  
+  (*
+  (let
+     val st_tm = (snd o dest_comb) t;
+     val pc_lookup_thm = ``bir_get_current_statement ^bprog_tm (^st_tm).bsst_pc``;
+     (*val _ = computeLib.del_consts [``birs_exec_step : 'observation_type bir_program_t -> birs_state_t -> birs_state_t -> bool``];*)
+     val _ = computeLib.del_consts [``bir_get_current_statement : 'observation_type bir_program_t -> bir_programcounter_t -> 'observation_type bir_stmt_t option``];
+     (*val _ = computeLib.del_consts [bir_get_current_statement_tm];*)
+     (*val _ = computeLib.del_funs [bir_programTheory.bir_get_current_statement_def];*)
+   in
+     EVAL
+     (*computeLib.CBV_CONV computeLib.the_compset*)
+   end) THENC
+   (fn t => (print "CBV_CONV: \n"; print_term t; REFL t))
+   *)
+ ) t;
 val birs_exec_step_CONV_p1 = Profile.profile "exec_step_CONV_p1" birs_exec_step_CONV_p1;
 
 val birs_exec_step_CONV_p2 =
@@ -491,18 +548,60 @@ val birs_exec_step_CONV_p5 =
    RESTR_EVAL_CONV [``birs_gen_env``];
 val birs_exec_step_CONV_p5 = Profile.profile "exec_step_CONV_p5" birs_exec_step_CONV_p5;
 
+fun birs_exec_step_CONV_B (bprog_tm, t) =
+  ((measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC
+(*   (fn t => (print "P2: \n"; print_term t; REFL t)) THENC *)
+   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
+(*   (fn t => (print "P3: \n"; print_term t; REFL t)) THENC *)
+   (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
+(*   (fn t => (print "P4: \n"; print_term t; REFL t)) THENC *)
+   (measure_fun "\n>>>>>>>>>> step_CONV_p5 in " birs_exec_step_CONV_p5)
+(*THENC
+   (fn t => (print "P5: \n"; print_term t; REFL t)) *)
+  ) t;
+val birs_exec_step_CONV_B = Profile.profile "exec_step_CONV_B" birs_exec_step_CONV_B;
+
+fun birs_exec_step_CONV_E (bprog_tm, t) =
+  ((measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC
+(*   (fn t => (print "P2: \n"; print_term t; REFL t)) THENC *)
+   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
+(*   (fn t => (print "P3: \n"; print_term t; REFL t)) THENC *)
+   (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
+(*   (fn t => (print "P4: \n"; print_term t; REFL t)) THENC *)
+   (measure_fun "\n>>>>>>>>>> step_CONV_p5 in " birs_exec_step_CONV_p5)
+(*THENC
+   (fn t => (print "P5: \n"; print_term t; REFL t)) *)
+  ) t;
+val birs_exec_step_CONV_E = Profile.profile "exec_step_CONV_E" birs_exec_step_CONV_E;
+
 val birs_exec_step_CONV =
   measure_fun "\n>>>>>>>> step_CONV in " (fn t =>
-  (measure_fun "\n>>>>>>>>>> step_CONV_pre in " birs_exec_step_CONV_pre t) |>
+  let
+    val bprog_tm = (measure_fun "\n>>>>>>>>>> step_CONV_pre in " birs_exec_step_CONV_pre t);
+  in
   (
-   (measure_fun "\n>>>>>>>>>> step_CONV_p1 in " birs_exec_step_CONV_p1) THENC
-   (measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC
-   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
-   (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
-   (measure_fun "\n>>>>>>>>>> step_CONV_p5 in " birs_exec_step_CONV_p5)
-  )
- );
+   (measure_fun "\n>>>>>>>>>> step_CONV_p1 in " (fn t => birs_exec_step_CONV_p1 (bprog_tm, t))) THENC
+(*   (fn t => (print "P1: GET STATEMENT\n"; print_term t; REFL t)) THENC *)
 
+   (fn exec_stmt_tm =>birs_exec_step_CONV_B (bprog_tm, exec_stmt_tm))
+(*
+   (fn exec_stmt_tm =>
+     let
+       val stmt_tm = (snd o dest_comb o fst o dest_comb) exec_stmt_tm;
+       (*val _ = print_term stmt_tm;
+       val stmt_type_tm = (fst o dest_comb) stmt_tm;
+       val _ = print_term stmt_type_tm;*)
+     in
+       if bir_programSyntax.is_BStmtB stmt_tm then
+         birs_exec_step_CONV_B (bprog_tm, exec_stmt_tm)
+       else if bir_programSyntax.is_BStmtE stmt_tm then
+         birs_exec_step_CONV_E (bprog_tm, exec_stmt_tm)
+       else
+         raise ERR "birs_exec_step_CONV" "something is wrong, should be BStmtB or BStmtE here"
+     end)*)
+  ) t
+  end
+ );
 val birs_exec_step_CONV = Profile.profile "exec_step_CONV" birs_exec_step_CONV;
 
 

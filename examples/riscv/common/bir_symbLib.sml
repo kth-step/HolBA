@@ -54,11 +54,13 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
    val birs_rule_STEP_SEQ_fun_spec =
     (birs_post_step_fun o
      birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm));
+
    val _ = print "now reducing it to one sound structure\n";
    val timer = bir_miscLib.timer_start 0;
    val result = exec_until
      (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec)
-     single_step_A_thm birs_end_lbls;
+     single_step_A_thm birs_end_lbls
+     handle e => (Profile.print_profile_results (Profile.results ()); raise e);
    val _ = bir_miscLib.timer_stop
     (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 
