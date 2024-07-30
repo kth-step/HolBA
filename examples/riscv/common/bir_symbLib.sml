@@ -36,6 +36,8 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
 	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
 	t)) o
      birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
+     birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
+     birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
      birs_rule_tryjustassert_fun true;
    val birs_rule_STEP_fun_spec =
      (birs_post_step_fun o

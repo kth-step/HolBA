@@ -1,28 +1,28 @@
 aes/aes/0:
-  execution of parts: 396.739s; execution of all: 397.549s
+  execution of parts: 142.925s; execution of all: 143.735s
 swap/swap/0:
-  execution of parts: 2.172s; execution of all: 2.767s
+  execution of parts: 2.381s; execution of all: 3.064s
 isqrt/isqrt/0:
-  execution of parts: 0.227s; execution of all: 0.800s
+  execution of parts: 0.179s; execution of all: 0.618s
 isqrt/isqrt/1:
-  execution of parts: 0.345s; execution of all: 0.514s
+  execution of parts: 0.360s; execution of all: 0.510s
 isqrt/isqrt/2:
-  execution of parts: 0.005s; execution of all: 0.235s
+  execution of parts: 0.004s; execution of all: 0.323s
 symbexectests/nestfunc/0:
-  execution of parts: 24.711s; execution of all: 25.495s
+  execution of parts: 23.948s; execution of all: 24.477s
 symbexectests/storeload/0:
-  execution of parts: 24.275s; execution of all: 25.150s
+  execution of parts: 23.412s; execution of all: 24.089s
 mod2/mod2/0:
-  execution of parts: 0.045s; execution of all: 0.571s
+  execution of parts: 0.038s; execution of all: 0.338s
 motor/motor/0:
-  execution of parts: 205.410s; execution of all: 206.130s
+  execution of parts: 115.649s; execution of all: 116.460s
 incr/incr/0:
-  execution of parts: 0.045s; execution of all: 0.384s
+  execution of parts: 0.059s; execution of all: 0.456s
 modexp/modexp/0:
-  execution of parts: 4.316s; execution of all: 4.869s
+  execution of parts: 3.814s; execution of all: 4.296s
 incr-mem/incr_mem/0:
-  execution of parts: 0.768s; execution of all: 1.341s
+  execution of parts: 0.707s; execution of all: 1.240s
 aes-unopt/aes/0:
-  execution of parts: 164.709s; execution of all: 166.577s
+  execution of parts: 135.415s; execution of all: 136.790s
 mod2-mem/mod2_mem/0:
-  execution of parts: 0.329s; execution of all: 0.852s
+  execution of parts: 0.235s; execution of all: 0.634s

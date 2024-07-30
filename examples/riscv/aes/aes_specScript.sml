@@ -16,6 +16,14 @@ Definition aes_init_addr_def:
  aes_init_addr : word64 = 0x000w (* 0x088w *)
 End
 
+Definition aes_end1_addr_def:
+ aes_end1_addr : word64 = 0x04cw
+End
+
+Definition aes_end2_addr_def:
+ aes_end2_addr : word64 = 0x40cw
+End
+
 Definition aes_end_addr_def:
  aes_end_addr : word64 = 0x208w
 End

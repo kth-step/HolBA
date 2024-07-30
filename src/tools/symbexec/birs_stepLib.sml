@@ -967,6 +967,44 @@ fun birs_rule_tryjustassert_fun force_assert_justify single_step_prog_thm =
         end
      | _ => single_step_prog_thm
   end;
+fun birs_rule_tryprune_fun prune_thm single_step_prog_thm =
+  let
+    (* val _ = print "try prune now \n"; *)
+    val continue_thm_o_1 =
+      SOME (MATCH_MP prune_thm single_step_prog_thm)
+      handle _ => NONE;
+    val continue_thm_o_2 =
+      Option.map (fn t => (print "going into pruning\n"; (*print_thm t; *)justify_assumption_EVAL t)) continue_thm_o_1
+      handle _ => NONE;
+  in
+    case continue_thm_o_2 of
+       SOME continue_thm =>
+        let
+    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+          val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
+          val _ = print_term pcond_tm;
+          val pcond_is_contr = bir_check_unsat false pcond_tm;
+	  val _ = if pcond_is_contr then print "can prune" else ();
+          val pcond_thm_o =
+            if pcond_is_contr then
+              SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], mk_comb (birs_pcondinf_tm, pcond_tm)))
+            else
+              NONE;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryprune2 in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+        in
+          case pcond_thm_o of
+             SOME pcond_thm =>
+	     let
+               val res = MP continue_thm pcond_thm;
+               val _ = print "pruning finished\n";
+               (*val _ = print_thm res;*)
+	     in
+	       res
+	     end
+           | _ => single_step_prog_thm
+        end
+     | _ => single_step_prog_thm
+  end;
 end;
 
 
