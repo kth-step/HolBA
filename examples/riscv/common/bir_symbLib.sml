@@ -61,6 +61,16 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
      single_step_A_thm birs_end_lbls;
    val _ = bir_miscLib.timer_stop
     (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+
+(*
+
+Profile.reset_all ()
+
+Profile.print_profile_results (Profile.results ())
+Profile.output_profile_results (iostream) (Profile.results ())
+
+*)
+   val _ = Profile.print_profile_results (Profile.results ());
  in
    result
  end (* let *)

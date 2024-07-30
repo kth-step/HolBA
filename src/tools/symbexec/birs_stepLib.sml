@@ -432,10 +432,10 @@ fun get_birs_state_size t =
     n_pcond + n_env
   end;
 
-fun measure_conv s c t =
+fun measure_fun s f v =
   let
     val timer = bir_miscLib.timer_start 0;
-    val res = c t;
+    val res = f v;
     val _ = bir_miscLib.timer_stop (fn delta_s => print (s ^ delta_s ^ "\n")) timer;
   in
     res
@@ -449,7 +449,7 @@ in
  val (bir_get_current_statement_tm,  mk_bir_get_current_statement, dest_bir_get_current_statement, is_bir_get_current_statement)  = syntax_fns2 "bir_get_current_statement";
 end;
 
-fun birs_exec_step_CONV t =
+fun birs_exec_step_CONV_pre t =
 let
  val bprog_tm = (snd o dest_comb o fst o dest_comb) t;
  val _ = print_term bprog_tm;
@@ -460,35 +460,50 @@ in
  (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>
  (fn t => ((print_term o (fn (x,_,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
  (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
- (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t)) |>
- (fn t =>
-  let
-    val timer_exec_step = bir_miscLib.timer_start 0;
- val res = (
-(*
-  measure_conv "\n>>>>>>>>>> step_CONV_p1 in " (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``, ``bir_get_current_statement``]) THENC
-
-  measure_conv "\n>>>>>>>>>> step_CONV_p2 in " (GEN_match_conv is_bir_get_current_statement EVAL) THENC
-*)
-  measure_conv "\n>>>>>>>>>> step_CONV_p3 in " (RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``]) THENC
-
-  GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV THENC
-
-  (* TODO: remove this patch later *)
-  REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-
-  GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
-  REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC
-  RESTR_EVAL_CONV [``birs_update_env``, ``birs_gen_env``, ``type_of_bir_exp``] THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
-  RESTR_EVAL_CONV [``birs_update_env``, ``birs_gen_env``] THENC
-
-  (* TODO: here better only convert the subexpression birs_update_env *)
-  REWRITE_CONV [birs_update_env_thm] THENC
-  RESTR_EVAL_CONV [``birs_gen_env``]) t;
- val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>>>> step_CONV in " ^ delta_s ^ "\n")) timer_exec_step;
- in res end)
+ (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t))
 end;
+val birs_exec_step_CONV_pre = Profile.profile "exec_step_CONV_pre" birs_exec_step_CONV_pre;
+
+val birs_exec_step_CONV_p1 =
+  RESTR_EVAL_CONV [``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``];
+val birs_exec_step_CONV_p1 = Profile.profile "exec_step_CONV_p1" birs_exec_step_CONV_p1;
+
+val birs_exec_step_CONV_p2 =
+  GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV;
+val birs_exec_step_CONV_p2 = Profile.profile "exec_step_CONV_p2" birs_exec_step_CONV_p2;
+
+val birs_exec_step_CONV_p3 =
+  (* TODO: remove this patch later *)
+   REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm];
+val birs_exec_step_CONV_p3 = Profile.profile "exec_step_CONV_p3" birs_exec_step_CONV_p3;
+
+val birs_exec_step_CONV_p4 =
+  GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
+   REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC
+   RESTR_EVAL_CONV [``birs_update_env``, ``birs_gen_env``, ``type_of_bir_exp``] THENC
+   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+   RESTR_EVAL_CONV [``birs_update_env``, ``birs_gen_env``];
+val birs_exec_step_CONV_p4 = Profile.profile "exec_step_CONV_p4" birs_exec_step_CONV_p4;
+
+val birs_exec_step_CONV_p5 =
+  (* TODO: here better only convert the subexpression birs_update_env *)
+   REWRITE_CONV [birs_update_env_thm] THENC
+   RESTR_EVAL_CONV [``birs_gen_env``];
+val birs_exec_step_CONV_p5 = Profile.profile "exec_step_CONV_p5" birs_exec_step_CONV_p5;
+
+val birs_exec_step_CONV =
+  measure_fun "\n>>>>>>>> step_CONV in " (fn t =>
+  (measure_fun "\n>>>>>>>>>> step_CONV_pre in " birs_exec_step_CONV_pre t) |>
+  (
+   (measure_fun "\n>>>>>>>>>> step_CONV_p1 in " birs_exec_step_CONV_p1) THENC
+   (measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC
+   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
+   (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
+   (measure_fun "\n>>>>>>>>>> step_CONV_p5 in " birs_exec_step_CONV_p5)
+  )
+ );
+
+val birs_exec_step_CONV = Profile.profile "exec_step_CONV" birs_exec_step_CONV;
 
 
 (*
@@ -982,7 +997,7 @@ fun birs_rule_tryprune_fun prune_thm single_step_prog_thm =
         let
     val timer_exec_step_p3 = bir_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
-          val _ = print_term pcond_tm;
+          (* val _ = print_term pcond_tm; *)
           val pcond_is_contr = bir_check_unsat false pcond_tm;
 	  val _ = if pcond_is_contr then print "can prune" else ();
           val pcond_thm_o =
