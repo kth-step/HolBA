@@ -6,6 +6,8 @@ import os
 import sys
 import traceback
 import re
+import shutil
+from datetime import datetime
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--testing",        help="run in test mode", action="store_true")
@@ -20,6 +22,12 @@ def get_example_dirs():
 	path = os.getcwd()
 	example_dirs = [f.path for f in os.scandir(path) if f.is_dir() and f.name not in excluded_dirs and filterfun(f.name)]
 	return example_dirs
+
+def backup_file(path):
+	now = datetime.now()
+	datetimestr = now.strftime("%Y-%d-%m_%H-%M-%S")
+	backuppath = path + "_backup_" + datetimestr
+	shutil.copyfile(path, backuppath)
 
 def holmake_clean_dir(path):
 	print(f"-> running 'Holmake cleanAll' in '{path}'")
@@ -65,6 +73,8 @@ def parse_output(data):
 
 def collect_outputs(path):
 	log_paths = find_symbexec_logs(path)
+	for log_path in log_paths:
+		backup_file(log_path)
 	#print(log_paths)
 	outputs = []
 	for log_path in log_paths:
