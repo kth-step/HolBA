@@ -1,28 +1,28 @@
 aes/aes/0:
-  execution of parts: 142.925s; execution of all: 143.735s
+  120.786s
 swap/swap/0:
-  execution of parts: 2.381s; execution of all: 3.064s
+  2.613s
 isqrt/isqrt/0:
-  execution of parts: 0.179s; execution of all: 0.618s
+  0.556s
 isqrt/isqrt/1:
-  execution of parts: 0.360s; execution of all: 0.510s
+  0.385s
 isqrt/isqrt/2:
-  execution of parts: 0.004s; execution of all: 0.323s
+  0.270s
 symbexectests/nestfunc/0:
-  execution of parts: 23.948s; execution of all: 24.477s
+  18.911s
 symbexectests/storeload/0:
-  execution of parts: 23.412s; execution of all: 24.089s
+  18.970s
 mod2/mod2/0:
-  execution of parts: 0.038s; execution of all: 0.338s
+  0.334s
 motor/motor/0:
-  execution of parts: 115.649s; execution of all: 116.460s
+  100.960s
 incr/incr/0:
-  execution of parts: 0.059s; execution of all: 0.456s
+  0.420s
 modexp/modexp/0:
-  execution of parts: 3.814s; execution of all: 4.296s
+  3.868s
 incr-mem/incr_mem/0:
-  execution of parts: 0.707s; execution of all: 1.240s
+  1.006s
 aes-unopt/aes/0:
-  execution of parts: 135.415s; execution of all: 136.790s
+  123.254s
 mod2-mem/mod2_mem/0:
-  execution of parts: 0.235s; execution of all: 0.634s
+  0.783s

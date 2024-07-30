@@ -459,7 +459,7 @@ let
          raise ERR "birs_exec_step_CONV" "program term is not a constant";
 in
  t |>
- (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>
+(* (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>*)
  (fn t => ((print_term o (fn (x,_,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
  (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
  (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t)) |>
@@ -476,13 +476,84 @@ val test_term = (fst o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs
 (snd o dest_comb) test_term
 *)
 
+(*
+val test_term = ``ABC (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 0w))
+                            (BExp_BinExp BIExp_LeftShift
+                               (BExp_Cast BIExp_SignedCast
+                                  (BExp_BinExp BIExp_RightShift
+                                     (BExp_Cast BIExp_LowCast
+                                        (BExp_BinExp BIExp_Xor
+                                           (BExp_Cast BIExp_SignedCast
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "sy_MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_Den
+                                                       (BVar "sy_x12"
+                                                          (BType_Imm Bit64)))
+                                                    (BExp_Const (Imm64 4w)))
+                                                 BEnd_LittleEndian Bit32)
+                                              Bit64)
+                                           (BExp_Cast BIExp_SignedCast
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "sy_MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_Den
+                                                       (BVar "sy_x10"
+                                                          (BType_Imm Bit64)))
+                                                    (BExp_Const (Imm64 4w)))
+                                                 BEnd_LittleEndian Bit32)
+                                              Bit64)) Bit32)
+                                     (BExp_Const (Imm32 24w))) Bit64)
+                               (BExp_Const (Imm64 2w)))) (DEF:num) = 0w:word64``;
+val test_thm = prove(test_term, cheat);
+
+val subs_tm = (snd o dest_comb o fst o dest_comb o fst o dest_eq o concl) test_thm;
+val abc_tm = ``(abc:bir_exp_t)``;
+val eq_tm = ``^abc_tm = ^subs_tm``
+
+val B_tm = ``(B:bir_exp_t)``;
+val pat_tm = ``ABC ^B_tm (DEF:num) = 0w:word64``;
+
+SUBST [B_tm |-> GSYM (ASSUME eq_tm)] pat_tm test_thm
+
+val changed_thm = REWRITE_RULE [GSYM (ASSUME eq_tm)] test_thm;
+
+(*
+val changed_back_thm = SIMP_RULE std_ss [] (DISCH_ALL changed_thm);
+
+val changed_back_thm = REWRITE_RULE [] (CONV_RULE (RATOR_CONV EVAL) (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)));
+*)
+
+val changed_back_thm = BETA_RULE (CONV_RULE (RATOR_CONV EVAL) (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)));
+
+val changed_back_thm = MP (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)) (REFL subs_tm);
+
+val changed_back_thm = MP (DISCH_ALL (INST [abc_tm |-> subs_tm] (changed_thm))) (REFL subs_tm);
+
+val changed_back_thm = REWRITE_RULE [gen_rev_thm] (DISCH_ALL (INST [abc_tm |-> subs_tm] (changed_thm)));
+
+prove(``
+  ^test_term
+``,
+  METIS_TAC [changed_back_thm]
+);
+
+*)
+
+val gen_rev_thm = prove(``!A B. ((A = A) ==> B) ==> B``, METIS_TAC []);
 val const_list_1 = [bir_get_current_statement_tm, ``birs_eval_label_exp``, ``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``];
+val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
+val pcond_abbr_tm = ``temp_pcond_abbr : bir_exp_t``;
 val bir_get_current_statement_obstype_tm = ``bir_get_current_statement : 'observation_type bir_program_t -> bir_programcounter_t -> 'observation_type bir_stmt_t option``;
 fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
  ((fn t =>
    let
      val st_tm = (snd o dest_comb) t;
-     val pc_tm = ((fn (x,_,_,_) => x) o dest_birs_state) st_tm;
+     val (pc_tm,env_tm,_,pcond_tm) = (dest_birs_state) st_tm;
      val pc_lookup_t = mk_comb (mk_comb (bir_get_current_statement_obstype_tm, bprog_tm), pc_tm) (*``bir_get_current_statement ^bprog_tm ^pc_tm``*);
      val pc_lookup_thm = EVAL pc_lookup_t;
      (*val _ = print_thm pc_lookup_thm;*)
@@ -490,15 +561,42 @@ fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
      (*val _ = computeLib.del_funs [bir_programTheory.bir_get_current_statement_def];*)
      (*val _ = computeLib.add_funs [pc_lookup_thm];*)
      (*val _ = computeLib.add_thms [pc_lookup_thm] (computeLib.the_compset);*)
-     val res = (RESTR_EVAL_CONV ([bprog_tm]@const_list_1)
-       THENC REWRITE_CONV [pc_lookup_thm]) t;
-     (*val _ = print_thm res;*)
-     (*val _ = raise ERR "" "";*)
+
+     val env_eq_tm = mk_eq (env_abbr_tm, env_tm);
+     val pcond_eq_tm = mk_eq (pcond_abbr_tm, pcond_tm);
+     val abbr_thm = REWRITE_CONV [GSYM (ASSUME (env_eq_tm)), GSYM (ASSUME (pcond_eq_tm))] t;
+
+     val res = CONV_RULE (RAND_CONV (
+             REWRITE_CONV [birs_exec_step_def, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM, pc_lookup_thm]
+       THENC RESTR_EVAL_CONV ([bprog_tm]@const_list_1)
+      )) abbr_thm;
+
+(*     val res = (RESTR_EVAL_CONV ([bprog_tm]@const_list_1)
+       THENC REWRITE_CONV [pc_lookup_thm]) t;*)
+
+(*
+     val _ = print_thm ((REFL env_abbr_tm));
+     val _ = print_thm ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] (DISCH env_eq_tm res)));
+
+     val _ = print_thm (MP (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] (DISCH env_eq_tm res)) (REFL env_tm));
+
+val res = MP (DISCH pcond_eq_tm (MP (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] (DISCH env_eq_tm res)) (REFL env_tm))) (REFL pcond_tm);
+*)
+
+val res = REWRITE_RULE [gen_rev_thm] (DISCH_ALL (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] res));
+
+
+(*
+     val res = BETA_RULE (CONV_RULE (RATOR_CONV EVAL) (BETA_RULE (CONV_RULE (RATOR_CONV EVAL) (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] (DISCH_ALL res)))));
+*)
+(*
+     val _ = print_thm res;
+     val _ = raise ERR "" "";*)
    in
      res
    end
-  ) THENC
-  RESTR_EVAL_CONV ([bprog_tm]@const_list_1)
+  ) (*THENC
+  RESTR_EVAL_CONV ([bprog_tm]@const_list_1)*)
 
   (*REWRITE_CONV [birs_exec_step_def] THENC*)
   (*RESTR_EVAL_CONV ([``bir_get_current_statement``, bprog_tm, ``birs_update_env``, ``birs_gen_env``]) THENC *)
