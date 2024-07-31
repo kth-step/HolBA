@@ -25,7 +25,7 @@ def get_example_dirs():
 
 def backup_file(path):
 	now = datetime.now()
-	datetimestr = now.strftime("%Y-%d-%m_%H-%M-%S")
+	datetimestr = now.strftime("%Y-%m-%d_%H-%M-%S")
 	backuppath = path + "_backup_" + datetimestr
 	shutil.copyfile(path, backuppath)
 
