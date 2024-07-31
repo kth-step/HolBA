@@ -652,8 +652,8 @@ val res =
 (CONV_RULE (RAND_CONV (
 (*   (measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC*)
 (*   (fn t => (print "P2: \n"; print_term t; REFL t)) THENC *)
-   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
 (*
+   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
    (fn t => (print "P3: \n"; print_term t; REFL t)) THENC
 *)
    (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
@@ -670,6 +670,7 @@ val birs_exec_step_CONV_B = Profile.profile "exec_step_CONV_B" birs_exec_step_CO
 
 fun MEM_proglabels_fun (t, eq_thms) =
   let
+(*val bir_labels_of_program_tm = ``bir_labels_of_program``;*)
     val c = REWRITE_CONV eq_thms THENC EVAL;
   in
     c t
@@ -677,9 +678,7 @@ fun MEM_proglabels_fun (t, eq_thms) =
 val MEM_proglabels_fun = Profile.profile "MEM_proglabels_fun" MEM_proglabels_fun;
 
 val birs_exec_stmt_jmp_tm = ``birs_exec_stmt_jmp``;
-(*val bir_labels_of_program_tm = ``bir_labels_of_program``;*)
 val MEM_tm = ``MEM : bir_label_t -> bir_label_t list -> bool``;
-val is_MEM = (identical MEM_tm o fst o strip_comb);
 fun birs_exec_step_CONV_E (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
 let
   val res_p1_fix = (CONV_RULE (RAND_CONV (
@@ -709,35 +708,6 @@ let
 *)
 
   val res = (abbr_rev ((CONV_RULE (RAND_CONV EVAL)) res_e_mem_proglabels, env_tm, pcond_tm));
-
-(*
-val res =
-(CONV_RULE (RAND_CONV (
-   (measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC
-(*   (fn t => (print "P2: \n"; print_term t; REFL t)) THENC *)
-   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
-(*   (fn t => (print "P3: \n"; print_term t; REFL t)) THENC *)
-   (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
-(*   (fn t => (print "P4: \n"; print_term t; REFL t)) THENC *)
-  )
-)) (abbr_rev (res_e_eval_exp, env_tm, pcond_tm));
-*)
-  
-(*
-val res =
-(CONV_RULE (RAND_CONV (
-   (measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC
-(*   (fn t => (print "P2: \n"; print_term t; REFL t)) THENC *)
-   (measure_fun "\n>>>>>>>>>> step_CONV_p3 in " birs_exec_step_CONV_p3) THENC
-(*   (fn t => (print "P3: \n"; print_term t; REFL t)) THENC *)
-   (measure_fun "\n>>>>>>>>>> step_CONV_p4 in " birs_exec_step_CONV_p4) THENC
-(*   (fn t => (print "P4: \n"; print_term t; REFL t)) THENC *)
-   (measure_fun "\n>>>>>>>>>> step_CONV_p5 in " birs_exec_step_CONV_p5)
-(*THENC
-   (fn t => (print "P5: \n"; print_term t; REFL t)) *)
-  )
-)) (abbr_rev (res_p1_fix, env_tm, pcond_tm));
-*)
 in
   res
 end;
