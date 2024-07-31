@@ -217,6 +217,8 @@ QED
 
 - built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848) instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
+- a summarizing collection of performance evaluations for the benchmark programs can be found in [experiment_data.log](experiment_data.log)
+- at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g. `aes/.hollogs/aes_symb_execTheory`
 
 Example:
 
