@@ -213,7 +213,7 @@ Proof
 QED
 ```
 
-### 5. BIR symbolic execution analysis
+### 7. BIR symbolic execution analysis
 
 - built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848) instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
@@ -230,7 +230,7 @@ Proof
 QED
 ```
 
-### 6. Specifying and proving BSPEC contracts using symbolic analysis results
+### 8. Specifying and proving BSPEC contracts using symbolic analysis results
 
 - requires manual specification of beginning and end program labels for contract
 - **automatic** inside HOL4 if parameters have the right shape 
@@ -248,7 +248,7 @@ Proof
 QED
 ```
 
-### 6. Proving High Level BIR Contract
+### 9. Proving High Level BIR Contract
 
 - built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs
 - requires auxiliary results from above steps
@@ -267,7 +267,7 @@ Proof
 QED
 ```
 
-### 7. Backlifting High Level BIR contract to RISC-V binary
+### 10. Backlifting High Level BIR contract to RISC-V binary
 
 - built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs 
 - requires collecting auxiliary results from above steps
