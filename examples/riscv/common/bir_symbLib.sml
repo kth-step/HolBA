@@ -13,14 +13,14 @@ local
 in
 
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
-  birs_end_lbls bprog_envtyl birs_pcond =
+  birs_end_lbls birs_env birs_pcond =
  let
    val pcond_is_sat = birs_smtLib.bir_check_sat false birs_pcond;
    val _ = if pcond_is_sat then () else
         raise Feedback.mk_HOL_ERR "bir_symbLib" "bir_symb_analysis" "initial pathcondition is not satisfiable; it seems to contain a contradiction";
    val birs_state_init = ``<|
      bsst_pc       := ^birs_state_init_lbl;
-     bsst_environ  := bir_senv_GEN_list ^bprog_envtyl;
+     bsst_environ  := ^birs_env;
      bsst_status   := BST_Running;
      bsst_pcond    := ^birs_pcond
    |>``;
@@ -100,12 +100,16 @@ fun bir_symb_analysis_thm bir_prog_def
        ``mk_bsysprecond ^bspec_pre_tm ^bprog_envtyl_tm``;
    val birs_pcond_tm = (snd o dest_eq o concl) bsysprecond_thm;
 
+   val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``;
+   val birs_env_tm = (snd o dest_eq o concl) birs_env_thm;
+
    val symb_analysis_thm = bir_symb_analysis
     bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
-    bprog_envtyl_tm birs_pcond_tm;
+    birs_env_tm birs_pcond_tm;
    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
+   val symb_analysis_fix_thm = REWRITE_RULE [GSYM birs_env_thm] symb_analysis_thm;
  in
-   (bsysprecond_thm, symb_analysis_thm)
+   (bsysprecond_thm, symb_analysis_fix_thm)
  end (* let *)
 
 end (* local *)
