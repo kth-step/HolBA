@@ -26,8 +26,8 @@ End
 
 Theorem bir_cv_compute_binpred_eq_compute_binpred:
   !binpred v1 v2. 
-  (bir_cv_compute_binpred binpred v1 v2) = 
-    (to_cv_val_option (bir_compute_binpred binpred (from_cv_val_option v1) (from_cv_val_option v2)))
+  from_cv_val_option (bir_cv_compute_binpred binpred v1 v2) = 
+    (bir_compute_binpred binpred (from_cv_val_option v1) (from_cv_val_option v2))
 Proof
   Cases_on `v1` >> Cases_on `v2` >| [
     ALL_TAC,
@@ -37,7 +37,8 @@ Proof
   ] >>
     rw [from_cv_val_option_def, from_cv_val_def] >>
     rw [bir_cv_compute_binpred_def, bir_compute_binpred_def] >>
-    rw [to_cv_val_option_def, to_cv_val_def]
+    rw [from_cv_val_option_def, from_cv_val_def] >>
+    METIS_TAC [val_from_cv_val_option_from_imm_option]
 QED
 
 
