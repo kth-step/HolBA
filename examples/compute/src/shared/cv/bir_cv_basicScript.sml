@@ -76,6 +76,9 @@ Definition from_cv_val_def:
     (BVal_Mem aty rty (alist_to_fmap mmap_alist)))
 End
 
+(* WARNING : the to_cv_ variants aren’t computable through EVAL.
+ * The existing conv from bir_cv_basicLib should be used instead.
+ * Use only from_cv_ instead *)
 Definition to_cv_val_def:
   (to_cv_val (BVal_Imm imm) = BCVVal_Imm imm) /\
   (to_cv_val (BVal_Mem aty rty mmap) = 
