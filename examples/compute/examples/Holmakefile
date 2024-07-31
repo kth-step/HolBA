@@ -1,7 +1,8 @@
 CLINE_OPTIONS = -r
 
 INCLUDES = $(SMOLBIRDIR)/examples/increment \
-					 $(SMOLBIRDIR)/examples/and_not
+					 $(SMOLBIRDIR)/examples/and_not \
+  				 $(SMOLBIRDIR)/examples/mem_incr
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
