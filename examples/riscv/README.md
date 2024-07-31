@@ -69,15 +69,16 @@ Disassembly of section .text:
 
 ### 1. Lifting the RISC-V program to BIR
 
-- requires manual specification of data area addresses, affecting symbolic execution
+- requires manual specification of code area addresses, for all code included in the binary program
 - the lifting stores HOL4 constants for the BIR program, the original binary program, and a lifting theorem for use in backlifting
 - **automatic** once arguments (program memory boundaries) are given inside HOL4
+- Notice: the code area addresses have to be accurate, i.e., the end boundary is the address of the last instruction plus 4 in case of RISC-V with 32-bit instructions
 
 Example:
 
 ```sml
 val _ = lift_da_and_store "incr" "incr.da" da_riscv
- ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10495));
+ ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10498));
 ```
 
 ### 2. RISC-V program boundaries and contract
