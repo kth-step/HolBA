@@ -3,10 +3,12 @@ struct
 
 open HolKernel Parse boolLib bossLib ;
 open finite_mapSyntax ;
-open bir_basicSyntax ;
+open bir_basicSyntax bir_cv_basicSyntax ;
 open bir_cv_basicTheory ;
 open optionSyntax ;
 
+
+val ERR = mk_HOL_ERR "bir_cv_basicLib" ;
 
 (* TODO : Handle FUPDATE_LIST (|++) as well *)
 (* Given a term representing an fmap made from successive FUPDATE, 
@@ -70,7 +72,86 @@ fun bir_val_option_conv (bir_val_option_tm : term) : thm =
     val rw_thm = REWRITE_CONV [Once from_cv_val_def, Once from_cv_val_option_def, GSYM bir_val_thm] 
       ``from_cv_val_option (SOME ^cv_val_tm)`` ;
     in GSYM rw_thm end
-    
+
+(* Convert any BExp_xxx to a theorem : bir_exp = from_cv_exp *)
+fun bir_exp_conv (bir_exp_tm : term) : thm = 
+  if is_exp_const bir_exp_tm then
+    GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_const (dest_exp_const bir_exp_tm))``
+  else if is_exp_mem_const bir_exp_tm then
+    let 
+      val (t1,t2,fmap_tm) = (dest_exp_mem_const bir_exp_tm) ;
+      val alist_thm = fmap_to_alist_conv fmap_tm ;
+      val alist_tm = rand (rhs (concl alist_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM alist_thm] ``from_cv_exp ^(mk_cv_exp_mem_const (t1,t2,alist_tm))``
+    end
+  else if is_exp_den bir_exp_tm then
+    GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_den (dest_exp_den bir_exp_tm))``
+  else if is_exp_bin_exp bir_exp_tm then
+    let
+      val (t1,t2,t3) = dest_exp_bin_exp bir_exp_tm ;
+      val t2_thm = bir_exp_conv t2 ;
+      val t2_tm = rand (rhs (concl t2_thm)) ;
+      val t3_thm = bir_exp_conv t3 ;
+      val t3_tm = rand (rhs (concl t3_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM t2_thm, GSYM t3_thm] ``from_cv_exp ^(mk_cv_exp_bin_exp (t1,t2_tm,t3_tm))``
+    end
+  else if is_exp_unary_exp bir_exp_tm then
+    let
+      val (t1,t2) = dest_exp_unary_exp bir_exp_tm ;
+      val t2_thm = bir_exp_conv t2 ;
+      val t2_tm = rand (rhs (concl t2_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def, t2_thm] ``from_cv_exp ^(mk_cv_exp_unary_exp (t1,t2_tm))``
+    end
+  else if is_exp_bin_pred bir_exp_tm then
+    let
+      val (t1,t2,t3) = dest_exp_bin_pred bir_exp_tm ;
+      val t2_thm = bir_exp_conv t2 ;
+      val t2_tm = rand (rhs (concl t2_thm)) ;
+      val t3_thm = bir_exp_conv t3 ;
+      val t3_tm = rand (rhs (concl t3_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def, t2_thm, t3_thm] ``from_cv_exp ^(mk_cv_exp_bin_pred (t1,t2_tm,t3_tm))``
+    end
+  else if is_exp_if_then_else bir_exp_tm then
+    let
+      val (t1,t2,t3) = dest_exp_if_then_else bir_exp_tm ;
+      val t1_thm = bir_exp_conv t1 ;
+      val t1_tm = rand (rhs (concl t1_thm)) ;
+      val t2_thm = bir_exp_conv t2 ;
+      val t2_tm = rand (rhs (concl t2_thm)) ;
+      val t3_thm = bir_exp_conv t3 ;
+      val t3_tm = rand (rhs (concl t3_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_if_then_else (t1_tm,t2_tm,t3_tm))``
+    end
+  else if is_exp_load bir_exp_tm then
+    let
+      val (t1,t2,t3,t4) = dest_exp_load bir_exp_tm ;
+      val t1_thm = bir_exp_conv t1 ;
+      val t1_tm = rand (rhs (concl t1_thm)) ;
+      val t2_thm = bir_exp_conv t2 ;
+      val t2_tm = rand (rhs (concl t2_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_load (t1_tm,t2_tm,t3,t4))``
+    end
+  else if is_exp_store bir_exp_tm then
+    let
+      val (t1,t2,t3,t4) = dest_exp_store bir_exp_tm ;
+      val t1_thm = bir_exp_conv t1 ;
+      val t1_tm = rand (rhs (concl t1_thm)) ;
+      val t2_thm = bir_exp_conv t2 ;
+      val t2_tm = rand (rhs (concl t2_thm)) ;
+      val t4_thm = bir_exp_conv t4 ;
+      val t4_tm = rand (rhs (concl t4_thm)) ;
+    in
+      GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_store (t1_tm,t2_tm,t3,t4_tm))``
+    end
+  else raise ERR "bir_exp_conv" "not BExp"
+
+
 
 
 end

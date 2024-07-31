@@ -8,6 +8,8 @@ sig
   val bir_val_option_conv : conv
   (* Output a theorem : fmap = alist_to_fmap l *)
   val fmap_to_alist_conv : conv
+(* Convert any BExp_xxx to a theorem : bir_exp = from_cv_exp *)
+  val bir_exp_conv : conv
 
 
 
