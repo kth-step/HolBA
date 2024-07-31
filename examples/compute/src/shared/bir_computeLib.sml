@@ -12,6 +12,7 @@ open wordsLib ;
 open cv_transLib cv_stdTheory cvTheory ;
 open bir_cv_computeTheory bir_cv_envLib ;
 open bir_cv_memTheory ;
+open bir_cv_basicLib ;
 
 (* Takes a BIR expression and evaluates it using EVAL *)
 fun compute_exp_EVAL (exp : term) (env: term) : thm =
@@ -35,19 +36,18 @@ fun translate_exp_cv (exp_def:thm) =
 let 
   (* Fetch expression information *)
   val exp = lhs (concl exp_def) ;
+  val exp_val = rhs (concl exp_def) ;
   val exp_name = fst (dest_const exp) ;
   (* Translate to cv_exp *)
   val _ = print "Translating to cv_exp...\n" ;
-  val to_cv_exp_thm = time EVAL ``to_cv_exp ^exp`` ;
-  val cv_exp = rhs (concl to_cv_exp_thm) ;
+  val from_exp_val_thm = time bir_exp_conv exp_val ;
+  val from_exp_thm = REWRITE_RULE [GSYM exp_def] from_exp_val_thm ;
+  val cv_exp = rand (rhs (concl from_exp_thm)) ;
   (* Create the new constant term *)
   val cv_exp_name = exp_name ^ "_bir_cv" ;
   val _ = new_constant (cv_exp_name, ``:bir_cv_exp_t``) ;
   val cv_exp_constant = mk_const (cv_exp_name, ``:bir_cv_exp_t``) ;
   val cv_exp_def = new_definition (cv_exp_name ^ "_def", ``^cv_exp_constant = ^cv_exp``) ;
-  (* Create and store the equivalence theorem *)
-  val from_to_exp_thm = AP_TERM ``from_cv_exp`` to_cv_exp_thm;
-  val from_exp_thm = REWRITE_RULE [from_to_cv_exp, GSYM cv_exp_def] from_to_exp_thm ;
   val _ = save_thm (cv_exp_name ^ "_eq", from_exp_thm) ;
 
   val _ = print "Translating with deep embedding...\n" ;
