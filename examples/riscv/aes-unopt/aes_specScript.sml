@@ -13,7 +13,7 @@ Definition aes_init_addr_def: (* *)
 End
 
 Definition aes_end_addr_def: (* 0xaf4w, 0x7b0w, 0x6f0w, 0x6b0w *)
- aes_end_addr : word64 = 0x6f0w (* 0x7b0w (* 122m theory build time *) *)
+ aes_end_addr : word64 = 0xaf4w (* 0x7b0w (* 122m theory build time *) *)
 End
 
 (* -------------- *)
