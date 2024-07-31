@@ -37,8 +37,9 @@ End
 
 (* Evaluates a general unary expression with values as parameters *)
 Definition bir_eval_unaryexp_def:
-  bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
-    (bir_eval_unaryexp_imm unaryexp imm1 imm)
+  (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
+    (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
+  (bir_eval_unaryexp _ _ _ = F)
 End
 
 (* ****************************************** *)
@@ -48,24 +49,25 @@ End
 
 (* Computes a binary expression of an immediate *)
 Definition bir_compute_unaryexp_imm_def:
-  (bir_compute_unaryexp_imm BIExp_Not (Imm1 w1) = SOME (BVal_Imm (Imm1 (word_1comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_Not (Imm8 w1) = SOME (BVal_Imm (Imm8 (word_1comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_Not (Imm16 w1) = SOME (BVal_Imm (Imm16 (word_1comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_Not (Imm32 w1) = SOME (BVal_Imm (Imm32 (word_1comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_Not (Imm64 w1) = SOME (BVal_Imm (Imm64 (word_1comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_Not (Imm128 w1) = SOME (BVal_Imm (Imm128 (word_1comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm1 w1) = SOME (BVal_Imm (Imm1 (word_2comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm8 w1) = SOME (BVal_Imm (Imm8 (word_2comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm16 w1) = SOME (BVal_Imm (Imm16 (word_2comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm32 w1) = SOME (BVal_Imm (Imm32 (word_2comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm64 w1) = SOME (BVal_Imm (Imm64 (word_2comp w1)))) /\
-  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm128 w1) = SOME (BVal_Imm (Imm128 (word_2comp w1))))
+  (bir_compute_unaryexp_imm BIExp_Not (Imm1 w1) = SOME (Imm1 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm8 w1) = SOME (Imm8 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm16 w1) = SOME (Imm16 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm32 w1) = SOME (Imm32 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm64 w1) = SOME (Imm64 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm128 w1) = SOME (Imm128 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm1 w1) = SOME (Imm1 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm8 w1) = SOME (Imm8 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm16 w1) = SOME (Imm16 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm32 w1) = SOME (Imm32 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm64 w1) = SOME (Imm64 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm128 w1) = SOME (Imm128 (word_2comp w1)))
 End
 
 (* Computes Unary expression *)
 Definition bir_compute_unaryexp_def:
-  (bir_compute_unaryexp unaryexp (SOME (BVal_Imm imm1)) = bir_compute_unaryexp_imm unaryexp imm1) /\
-  (bir_compute_unaryexp _ NONE = NONE)
+  (bir_compute_unaryexp unaryexp (SOME (BVal_Imm imm1)) = 
+    val_from_imm_option (bir_compute_unaryexp_imm unaryexp imm1)) /\
+  (bir_compute_unaryexp _ _ = NONE)
 End
 
 
@@ -86,20 +88,23 @@ Proof
     rw [bir_eval_unaryexp_imm_cases, bir_compute_unaryexp_imm_def] >>
     Cases_on `b` >> Cases_on `b'` >>
       rw [bir_compute_unaryexp_imm_def, bir_imm_t_nchotomy, bir_unaryexp_get_oper_def] >>
+      rw [val_from_imm_option_def] >>
       METIS_TAC []
 QED
 
 
 (* Unary_exp always evaluates *)
-Theorem always_bir_eval_unaryexp:
-  !unaryexp v.
+Theorem type_of_bir_val_imp_bir_eval_unaryexp:
+  !unaryexp v ty.
+    (type_of_bir_val v = BType_Imm ty) ==>
     ?v'. bir_eval_unaryexp unaryexp v v'
 Proof
   Cases_on `unaryexp` >>
   Cases_on `v` >>
   Cases_on `b` >>
-    rw [bir_eval_unaryexp_eq_compute_unaryexp] >>
+    rw [bir_eval_unaryexp_eq_compute_unaryexp, type_of_bir_val_def] >>
     rw [bir_compute_unaryexp_def, bir_compute_unaryexp_imm_def] >>
+    rw [val_from_imm_option_def] >>
     fs [type_of_bir_val_def, type_of_bir_imm_def]
 QED
 

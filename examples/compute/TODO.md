@@ -21,9 +21,9 @@
     - [ ] Name variables (like in case split)
 
 - Add Memory expressions
-    - [ ] Syntax
-    - [ ] Semantics
-    - [ ] Update proofs
+    - [x] Syntax
+    - [x] Semantics
+    - [x] Update proofs
 
 
 ## Statements semantics

@@ -68,8 +68,7 @@ End
 Definition bir_compute_binpred_def:
   (bir_compute_binpred binpred (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
     SOME (BVal_Imm (bool2b (bir_compute_binpred_imm binpred imm1 imm2)))) /\
-  (bir_compute_binpred _ NONE _ = NONE) /\
-  (bir_compute_binpred _ _ NONE = NONE)
+  (bir_compute_binpred _ _ _ = NONE)
 End
 
 
@@ -116,8 +115,8 @@ QED
 
 (* If the operands are typed, then the expression evaluates *)
 Theorem type_of_bir_val_imp_bir_eval_binpred:
-  !binpred v1 v2.
-    (type_of_bir_val v1 = type_of_bir_val v2) ==>
+  !binpred v1 v2 ty.
+    ((type_of_bir_val v1 = BType_Imm ty) /\ (type_of_bir_val v2 = BType_Imm ty)) ==>
     ?v. bir_eval_binpred binpred v1 v2 v
 Proof
   Cases_on `v1` >> Cases_on `v2` >>
@@ -132,24 +131,12 @@ QED
 Theorem bir_eval_binpred_correct_type:
   !binpred v1 v2 v ty.
     bir_eval_binpred binpred v1 v2 v ==>
-    ((type_of_bir_val v1 = type_of_bir_val v2) /\ type_of_bir_val v = Bit1)
+    ((type_of_bir_val v1 = type_of_bir_val v2) /\ type_of_bir_val v = (BType_Imm Bit1))
 Proof
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
   Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
     rw [type_of_bir_val_def, bir_eval_binpred_cases, type_of_bir_imm_def, bir_eval_binpred_imm_cases, bool2b_def]
 QED
-
-
-(* Equal predicate is reflexive *)
-Theorem bir_eval_binpred_eq_refl:
-    !env v. bir_eval_binpred BIExp_Equal v v birT
-Proof
-  Cases_on `v` >> Cases_on `b` >>
-    rw [Once bir_eval_binpred_cases, bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
-    rw [bool2b_T_eq_birT, bool2b_F_eq_birF]
-QED
-
-
 
 
 

@@ -1,4 +1,7 @@
-INCLUDES = $(SMOLBIRDIR)/src/theory
+CLINE_OPTIONS = -r
+
+INCLUDES = $(SMOLBIRDIR)/src/theory \
+					 $(SMOLBIRDIR)/src/shared/cv
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
