@@ -616,7 +616,7 @@ val birs_exec_step_CONV_p1 = Profile.profile "exec_step_CONV_p1" birs_exec_step_
 
 val birs_eval_label_exp_tm = ``birs_eval_label_exp``;
 val birs_eval_exp_tm = ``birs_eval_exp``;
-val birs_update_env_tm = ``birs_update_env``;
+val birs_update_env_tm = ``birs_update_env : string # bir_exp_t -> (string -> bir_exp_t option) -> string -> bir_exp_t option``;
 val birs_gen_env_tm = ``birs_gen_env``;
 
 val is_birs_eval_exp = (identical birs_eval_exp_tm o fst o strip_comb);
@@ -644,10 +644,90 @@ val birs_exec_step_CONV_p5 =
    RESTR_EVAL_CONV [birs_gen_env_tm];
 val birs_exec_step_CONV_p5 = Profile.profile "exec_step_CONV_p5" birs_exec_step_CONV_p5;
 
+
+val is_OPTION_BIND = (identical ``OPTION_BIND : bir_exp_t option -> (bir_exp_t -> bir_type_t option) -> bir_type_t option`` o fst o strip_comb);
+val is_birs_update_env = (identical birs_update_env_tm o fst o strip_comb);
+
+fun continue_eq_rule c = CONV_RULE (RAND_CONV c);
+fun restr_conv_eq_rule consts c th =
+  let
+    val fix_th = continue_eq_rule (RESTR_EVAL_CONV consts) th;
+  in
+    continue_eq_rule c fix_th
+  end;
+
+(*
+val test_term =
+``birs_update_env
+        ("MEM8",
+         BExp_Store (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+           (BExp_Den (BVar "sy_x10" (BType_Imm Bit64))) BEnd_LittleEndian
+           (BExp_Load (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+              (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))) BEnd_LittleEndian
+              Bit64))
+        (birs_update_env
+           ("x14",
+            BExp_Load (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+              (BExp_Den (BVar "sy_x11" (BType_Imm Bit64))) BEnd_LittleEndian
+              Bit64)
+           (birs_update_env
+              ("x15",
+               BExp_Load (BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)))
+                 (BExp_Den (BVar "sy_x10" (BType_Imm Bit64)))
+                 BEnd_LittleEndian Bit64)
+              (birs_gen_env
+                 [("x14",BExp_Den (BVar "sy_x14" (BType_Imm Bit64)));
+                  ("MEM8",BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)));
+                  ("x11",BExp_Den (BVar "sy_x11" (BType_Imm Bit64)));
+                  ("x15",BExp_Den (BVar "sy_x15" (BType_Imm Bit64)));
+                  ("x10",BExp_Den (BVar "sy_x10" (BType_Imm Bit64)));
+                  ("x1",BExp_Den (BVar "sy_x1" (BType_Imm Bit64)))])))``;
+is_birs_update_env test_term;
+*)
+
 fun birs_exec_step_CONV_B (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
 let
+  val res_b_eval_exp = restr_conv_eq_rule
+    [birs_eval_exp_tm, birs_update_env_tm]
+    (GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC birs_eval_exp_CONV))
+    res_p1;
+
+  val res_b_option_bind = continue_eq_rule
+    (GEN_match_conv is_OPTION_BIND (
+      RATOR_CONV (RAND_CONV (REWRITE_CONV ([birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm]@eq_thms) THENC EVAL)) THENC
+      RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] (* OPTION_BIND semantics *) THENC
+      GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV)
+    ))
+    res_b_eval_exp;
+
+  val res_b_update_env = restr_conv_eq_rule
+    [birs_update_env_tm]
+    (GEN_match_conv is_birs_update_env (
+      (* (fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t)) THENC *)
+      REWRITE_CONV ([birs_update_env_thm]@eq_thms) THENC
+      RESTR_EVAL_CONV [birs_gen_env_tm]
+    ))
+    res_b_option_bind;
+
+
+  val res = (abbr_rev (res_b_update_env, env_tm, pcond_tm));
+
+(*
+  val _ = print "\neval expression\n";
+  val _ = (print_term o concl) res_b_eval_exp;
+  val _ = print "\neval option_bind\n";
+  val _ = (print_term o concl) res_b_option_bind;
+  val _ = print "\neval update env\n";
+  val _ = (print_term o concl) res_b_update_env;
+  val _ = print "\nresult\n";
+  val _ = (print_term o concl) res;
+  val _ = raise ERR "" "";
+*)
+
+(*
   val res_p1_fix = (CONV_RULE (RAND_CONV (
    RESTR_EVAL_CONV [bprog_tm, birs_eval_label_exp_tm, birs_eval_exp_tm, birs_update_env_tm, birs_gen_env_tm]))) res_p1;
+   
 val res =
 (CONV_RULE (RAND_CONV (
 (*   (measure_fun "\n>>>>>>>>>> step_CONV_p2 in " birs_exec_step_CONV_p2) THENC*)
@@ -663,10 +743,15 @@ val res =
    (fn t => (print "P5: \n"; print_term t; REFL t)) *)
   )
 )) (abbr_rev (res_p1_fix, env_tm, pcond_tm));
+*)
 in
   res
 end;
 val birs_exec_step_CONV_B = Profile.profile "exec_step_CONV_B" birs_exec_step_CONV_B;
+
+
+
+
 
 fun MEM_proglabels_fun (t, eq_thms) =
   let
@@ -681,33 +766,33 @@ val birs_exec_stmt_jmp_tm = ``birs_exec_stmt_jmp``;
 val MEM_tm = ``MEM : bir_label_t -> bir_label_t list -> bool``;
 fun birs_exec_step_CONV_E (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
 let
-  val res_p1_fix = (CONV_RULE (RAND_CONV (
+  val res_p1_fix = continue_eq_rule (
     RESTR_EVAL_CONV [bprog_tm, birs_exec_stmt_jmp_tm, birs_eval_exp_tm]
-   ))) res_p1;
-  val res_e_eval_exp = (CONV_RULE (RAND_CONV (
+   ) res_p1;
+  val res_e_eval_exp = continue_eq_rule (
     GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC birs_eval_exp_CONV)
-   ))) res_p1_fix;
+   ) res_p1_fix;
   
-  val res_e_eval_exp_fix = (CONV_RULE (RAND_CONV (
+  val res_e_eval_exp_fix = continue_eq_rule (
     RESTR_EVAL_CONV [bprog_tm, birs_eval_label_exp_tm]
-   ))) res_e_eval_exp;
-  val res_e_eval_label = (CONV_RULE (RAND_CONV (
+   ) res_e_eval_exp;
+  val res_e_eval_label = continue_eq_rule (
     GEN_match_conv is_birs_eval_label_exp (REWRITE_CONV eq_thms THENC birs_eval_label_exp_CONV)
-   ))) res_e_eval_exp_fix;
+   ) res_e_eval_exp_fix;
   
-  val res_e_eval_label_fix = (CONV_RULE (RAND_CONV (
+  val res_e_eval_label_fix = continue_eq_rule (
     RESTR_EVAL_CONV [bprog_tm, MEM_tm]
-   ))) res_e_eval_label;
-  val res_e_mem_proglabels = (CONV_RULE (RAND_CONV (
+   ) res_e_eval_label;
+  val res_e_mem_proglabels = continue_eq_rule (
     GEN_match_conv listSyntax.is_mem (fn t => MEM_proglabels_fun (t, eq_thms))
-   ))) res_e_eval_label_fix;
+   ) res_e_eval_label_fix;
 
 (*
   val _ = print_thm res_e_eval_label;
   val _ = raise ERR "" "";
 *)
 
-  val res = (abbr_rev ((CONV_RULE (RAND_CONV EVAL)) res_e_mem_proglabels, env_tm, pcond_tm));
+  val res = (abbr_rev (continue_eq_rule EVAL res_e_mem_proglabels, env_tm, pcond_tm));
 in
   res
 end;
