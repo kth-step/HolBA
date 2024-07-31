@@ -8,6 +8,7 @@ struct
 
 open HolKernel Parse boolLib bossLib ;
 open bir_cv_basicTheory ;
+open bir_cv_basicLib ;
 open bir_cv_envTheory bir_envTheory ;
 open combinSyntax ;
 open optionSyntax ;
@@ -25,8 +26,8 @@ fun update_conv (env_comb : term) : thm =
       (* Destroy the update call *)
       val ((id, val_opt), aux_env_comb) = dest_update_comb env_comb ;
       (* Converts val_opt to cv_val_opt *)
-      val to_val_opt_thm = EVAL ``to_cv_val_option ^val_opt`` ;
-      val cv_val_opt = rhs (concl to_val_opt_thm) ;
+      val from_val_opt_thm = bir_val_option_conv val_opt ;
+      val cv_val_opt = rand (rhs (concl from_val_opt_thm)) ;
       (* Recursively conv *)
       val aux_thm = update_conv aux_env_comb ;
       (* SPEC the cons theorem *)
