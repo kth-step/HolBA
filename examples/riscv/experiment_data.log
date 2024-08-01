@@ -1,28 +1,26 @@
 aes/aes/0:
-  100.335s
+  72.321s
 swap/swap/0:
-  2.113s
+  1.962s
 isqrt/isqrt/0:
-  0.447s
+  0.455s
 isqrt/isqrt/1:
-  0.369s
+  0.361s
 isqrt/isqrt/2:
-  0.263s
+  0.273s
 symbexectests/nestfunc/0:
-  17.667s
+  14.314s
 symbexectests/storeload/0:
-  15.651s
+  12.830s
 mod2/mod2/0:
-  0.419s
+  0.296s
 motor/motor/0:
-  91.637s
+  74.513s
 incr/incr/0:
-  0.413s
+  0.406s
 modexp/modexp/0:
-  3.498s
+  3.603s
 incr-mem/incr_mem/0:
-  0.973s
-aes-unopt/aes/0:
-  127.171s
+  0.839s
 mod2-mem/mod2_mem/0:
-  0.517s
+  0.633s

@@ -1248,4 +1248,37 @@ FULL_SIMP_TAC std_ss [] >>
 RW_TAC std_ss []
 QED
 
+
+(* -------------------------------------------------------------------------- *)
+(* Helper to split up lists into its elements (for example for bir programs)  *)
+(* -------------------------------------------------------------------------- *)
+
+Definition SPLIT_ELs_def:
+  (SPLIT_ELs _ []      _ = T) /\
+  (SPLIT_ELs l (h::t)  i = ((EL i l = h) /\ (SPLIT_ELs l t (i + 1))))
+End
+
+Theorem SPLIT_ELs_GEN_thm:
+!i h x t.
+  SPLIT_ELs t x i =
+  SPLIT_ELs (h::t) x (i + 1)
+Proof
+  Induct_on ‘x’ >> (
+    gs [SPLIT_ELs_def]
+  ) >>
+  rpt strip_tac >>
+  POP_ASSUM ((fn t => REWRITE_TAC [Once t]) o Q.SPECL [‘i+1’, ‘h'’, ‘t’]) >>
+  gs [] >>
+  REWRITE_TAC [GSYM arithmeticTheory.ADD1, listTheory.EL, listTheory.TL]
+QED
+
+Theorem SPLIT_ELs_0_thm:
+!l. SPLIT_ELs l l 0
+Proof
+  Induct >> (
+    gs [SPLIT_ELs_def]
+  ) >>
+  ASM_REWRITE_TAC [(GSYM o EVAL_RULE o Q.SPEC ‘0’) SPLIT_ELs_GEN_thm]
+QED
+
 val _ = export_theory();
