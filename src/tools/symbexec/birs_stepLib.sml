@@ -2,6 +2,13 @@ structure birs_stepLib =
 struct
 
 local
+open HolKernel Parse boolLib bossLib;
+in
+val cur_stmt_lookup_fun = ref ((K (NONE)) : term -> thm option);
+val cur_l_mem_lookup_fun = ref ((K (NONE)) : term -> thm option);
+end
+
+local
 
 open HolKernel Parse boolLib bossLib;
 open computeLib;
@@ -566,12 +573,20 @@ val abbr_rev = Profile.profile "abbr_rev" abbr_rev;
 https://github.com/kth-step/HolBA/blob/master/src/tools/exec/bir_exec_blockLib.sml
 https://github.com/kth-step/HolBA/blob/dev_symbnoproof_next/src/tools/symbexec/examples/binaries/binariesLib.sml
 *)
-fun pc_lookup_fun (bprog_tm, pc_tm) =
+fun pc_lookup_fallback_fun pc_lookup_t =
   let
-     val pc_lookup_t = mk_bir_get_current_statement (bprog_tm, pc_tm);
+     val _ = print "falling back to evaluation to get current statement";
      val pc_lookup_thm = EVAL pc_lookup_t;
   in
     pc_lookup_thm
+  end;
+fun pc_lookup_fun (bprog_tm, pc_tm) =
+  let
+     val pc_lookup_t = mk_bir_get_current_statement (bprog_tm, pc_tm);
+  in
+ case (!cur_stmt_lookup_fun) pc_tm of
+     NONE =>  pc_lookup_fallback_fun pc_lookup_t
+   | SOME x => if (identical pc_lookup_t o fst o dest_eq o concl) x then x else pc_lookup_fallback_fun pc_lookup_t
   end;
 val pc_lookup_fun = Profile.profile "pc_lookup_fun" pc_lookup_fun;
 
@@ -739,13 +754,26 @@ val birs_exec_step_CONV_B = Profile.profile "exec_step_CONV_B" birs_exec_step_CO
 
 
 
-
+(*
+val t = ``MEM (BL_Address (Imm64 0w)) (bir_labels_of_program bir_aes_prog)``;
+val x = (snd o hd) label_mem_thms;
+val t = concl x;
+*)
+val spec_conv_thm = (GSYM o GEN_ALL) (List.nth((CONJUNCTS o Q.SPEC `t`) boolTheory.EQ_CLAUSES,1));
 fun MEM_proglabels_fun (t, eq_thms) =
   let
-(*val bir_labels_of_program_tm = ``bir_labels_of_program``;*)
-    val c = REWRITE_CONV eq_thms THENC EVAL;
+    val l_tm = (snd o dest_comb o fst o dest_comb) t;
+    val mem_thm_o = !cur_l_mem_lookup_fun l_tm;
+(*
+    val _ = print_term t;
+    val _ = print_term l_tm;
+ *)
+  fun fallback_fun t =
+    (print "falling back to evaluating membership of prog labels"; EVAL t);
   in
-    c t
+    case mem_thm_o of
+     NONE =>  fallback_fun t
+   | SOME x => if (identical t o concl) x then EQ_MP (SPEC t spec_conv_thm) x else fallback_fun t
   end;
 val MEM_proglabels_fun = Profile.profile "MEM_proglabels_fun" MEM_proglabels_fun;
 
