@@ -220,17 +220,23 @@ fun gen_lookup_functions (stmt_thms, label_mem_thms) =
     (lookup_fun stmt_map, lookup_fun l_mem_map)
   end;
 
+fun prepare_program_lookups bir_lift_thm =
+let
+  val prep_structure = Profile.profile "gen_exec_prep_thms" gen_exec_prep_thms_from_lift_thm bir_lift_thm;
+  val (stmt_lookup_fun, l_mem_lookup_fun) = gen_lookup_functions prep_structure;
+  val _ = birs_stepLib.cur_stmt_lookup_fun := stmt_lookup_fun;
+  val _ = birs_stepLib.cur_l_mem_lookup_fun := l_mem_lookup_fun;
+in
+  ()
+end;
+
 (* ------------------------------------------------------------------------- *)
 
 (* patch for lifter theorem *)
 val bir_lift_thm = (REWRITE_RULE [] o CONV_RULE (RATOR_CONV (RAND_CONV EVAL)) o DISCH_ALL) bir_aes_riscv_lift_THM;
 (*val bprog_tm = (fst o dest_eq o concl) bir_aes_prog_def;*)
 
-val prep_structure = Profile.profile "gen_exec_prep_thms" gen_exec_prep_thms_from_lift_thm bir_lift_thm;
-val (stmt_lookup_fun, l_mem_lookup_fun) = gen_lookup_functions prep_structure;
-val _ = birs_stepLib.cur_stmt_lookup_fun := stmt_lookup_fun;
-val _ = birs_stepLib.cur_l_mem_lookup_fun := l_mem_lookup_fun;
-
+val _ = prepare_program_lookups bir_lift_thm;
 (*
 Profile.profile "mkELtm" 
 val _ = Profile.reset_all ();
