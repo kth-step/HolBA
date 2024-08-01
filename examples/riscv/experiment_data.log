@@ -22,5 +22,7 @@ modexp/modexp/0:
   3.603s
 incr-mem/incr_mem/0:
   0.839s
+aes-unopt/aes/0:
+  2918.623s
 mod2-mem/mod2_mem/0:
   0.633s
