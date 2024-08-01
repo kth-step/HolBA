@@ -67,9 +67,9 @@ val vars_empty = Redblackset.empty smtlib_vars_compare;
 
 fun bir_check_unsat use_holsmt =
   if use_holsmt then
-    holsmt_bir_check_unsat
+    Profile.profile "bir_check_unsat::holsmt" holsmt_bir_check_unsat
   else
-    birsmt_check_unsat;
+    Profile.profile "bir_check_unsat::birsmt" birsmt_check_unsat;
 
 fun bir_check_sat use_holsmt ex =
   not (bir_check_unsat use_holsmt ex);

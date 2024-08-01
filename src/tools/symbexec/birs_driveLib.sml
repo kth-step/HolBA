@@ -57,7 +57,7 @@ val SUBST_thm = birs_rule_SUBST_thm;
 val STEP_SEQ_thm = birs_rule_STEP_SEQ_thm;
 val symbex_A_thm = single_step_A_thm;
 *)
-fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
+fun birs_rule_STEP_SEQ_fun_ (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
   let
     val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
     val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
@@ -75,6 +75,7 @@ fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
   in
     step4_thm
   end;
+fun birs_rule_STEP_SEQ_fun x = Profile.profile "birs_rule_STEP_SEQ_fun" (birs_rule_STEP_SEQ_fun_ x);
 
 
 (*
@@ -173,9 +174,9 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
 
 fun exec_until (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls =
   let
-    val tree = build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls;
+    val tree = Profile.profile "build_tree" (build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm) stop_lbls;
   in
-    reduce_tree SEQ_fun_spec tree
+    Profile.profile "reduce_tree" (reduce_tree SEQ_fun_spec) tree
   end;
 
 

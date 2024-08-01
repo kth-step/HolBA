@@ -1331,7 +1331,7 @@ local
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
   open birs_auxTheory;
 in
-fun birs_rule_STEP_fun birs_rule_STEP_thm bstate_tm =
+fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
   let
 
     val birs_exec_thm = CONV_RULE (birs_exec_step_CONV_fun) (SPEC bstate_tm birs_rule_STEP_thm);
@@ -1353,6 +1353,7 @@ fun birs_rule_STEP_fun birs_rule_STEP_thm bstate_tm =
     single_step_prog_thm
   end;
 end;
+fun birs_rule_STEP_fun x = Profile.profile "birs_rule_STEP_fun" (birs_rule_STEP_fun_ x);
 
 
 
@@ -1416,7 +1417,7 @@ local
 
   val birs_pcondinf_tm = ``birs_pcondinf``;
 in
-fun birs_rule_tryjustassert_fun force_assert_justify single_step_prog_thm =
+fun birs_rule_tryjustassert_fun_ force_assert_justify single_step_prog_thm =
   let
     (*
     val single_step_prog_thm = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm;
@@ -1455,7 +1456,9 @@ fun birs_rule_tryjustassert_fun force_assert_justify single_step_prog_thm =
         end
      | _ => single_step_prog_thm
   end;
-fun birs_rule_tryprune_fun prune_thm single_step_prog_thm =
+fun birs_rule_tryjustassert_fun x = Profile.profile "birs_rule_tryjustassert_fun" (birs_rule_tryjustassert_fun_ x);
+
+fun birs_rule_tryprune_fun_ prune_thm single_step_prog_thm =
   let
     (* val _ = print "try prune now \n"; *)
     val continue_thm_o_1 =
@@ -1494,6 +1497,7 @@ fun birs_rule_tryprune_fun prune_thm single_step_prog_thm =
      | _ => single_step_prog_thm
   end;
 end;
+fun birs_rule_tryprune_fun x = Profile.profile "birs_rule_tryprune_fun" (birs_rule_tryprune_fun_ x);
 
 
 (* stepping a sound structure, try to simplify after assignment *)
@@ -1542,7 +1546,7 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
 (*
 val single_step_prog_thm = result;
 *)
-fun birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm single_step_prog_thm =
+fun birs_rule_SUBST_trysimp_fun_ birs_rule_SUBST_thm single_step_prog_thm =
   let
     val assignment_thm_o =
       SOME (MATCH_MP birs_rule_SUBST_thm single_step_prog_thm)
@@ -1565,6 +1569,7 @@ fun birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm single_step_prog_thm =
        SOME (simp_t, assignment_thm) => MATCH_MP assignment_thm simp_t
      | NONE => single_step_prog_thm
   end;
+fun birs_rule_SUBST_trysimp_fun x = Profile.profile "birs_rule_SUBST_trysimp_fun" (birs_rule_SUBST_trysimp_fun_ x);
 
 
 end (* local *)
