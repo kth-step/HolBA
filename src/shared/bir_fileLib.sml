@@ -18,6 +18,14 @@ in
   in input end;
 
 (* file read/write helpers *)
+  fun read_from_file_bytes filename bytes =
+    let
+      val file = TextIO.openIn filename;
+      val s    = TextIO.inputN (file, bytes);
+    in
+      s
+    end;
+
   fun read_from_file filename =
     let
       val file = TextIO.openIn filename;
@@ -84,7 +92,21 @@ in
       tempfile
     end;
 
-  val tempfile_randgen = Random.newgen ();
+  fun seedgen_linux_random () =
+    let
+      val randpath = "/dev/random";
+      val s = read_from_file_bytes randpath 5;
+      val cs = String.explode s;
+      val li_256 = LargeInt.fromInt 256;
+      (* val c = hd cs;
+         val x = LargeInt.fromInt 2 *)
+      fun add_char (c, x) = LargeInt.+ (LargeInt.* (x, li_256), LargeInt.fromInt (Char.ord c));
+      val largeint = List.foldl add_char (LargeInt.fromInt 0) cs;
+    in
+      Real.fromLargeInt largeint
+    end;
+
+  val tempfile_randgen = Random.newgenseed (seedgen_linux_random ()); (*Random.newgen ();*)
   fun get_tempfile_randstr () =
     Int.toString (Random.range (100000,999999) tempfile_randgen);
 
