@@ -144,6 +144,11 @@ QED
 
 
 (* Utility functions *)
+Definition bir_dest_bool_val_def:
+  (bir_dest_bool_val (BVal_Imm (Imm1 w)) = SOME (w = 1w)) /\
+  (bir_dest_bool_val _ = NONE)
+End
+
 Definition val_from_imm_option_def:
   (val_from_imm_option NONE = NONE) /\
   (val_from_imm_option (SOME imm) = SOME (BVal_Imm imm))
