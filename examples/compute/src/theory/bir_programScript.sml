@@ -262,6 +262,88 @@ End
 (* --------------------- EVAL -------------------- *)
 (* ----------------------------------------------- *)
 
+(* ----------------------------------------------- *)
+(* ------------------- LABELS -------------------- *)
+(* ----------------------------------------------- *)
+
+(* Eval a label expression *)
+Definition bir_eval_label_exp_def:
+  (bir_eval_label_exp (BLE_Label l) env l' = (l = l')) /\
+  (bir_eval_label_exp (BLE_Exp e) env (BL_Address i) = bir_eval_exp env e (BVal_Imm i)) /\
+  (bir_eval_label_exp _ _ _ = F)
+End
+
+
+
+(* ----------------------------------------------- *)
+(* --------------- BASIC STATEMENTS -------------- *)
+(* ----------------------------------------------- *)
+
+
+(* Eval a basic statement *)
+Definition bir_eval_stmtB_def:
+  (bir_eval_stmtB (BStmt_Assign v ex) st st' = 
+    (?va. (bir_eval_exp st.bst_environ ex va) 
+    /\ (st' = (st with bst_environ := (bir_env_update st.bst_environ v va)))))
+End
+
+(* ----------------------------------------------- *)
+(* --------------- END STATEMENTS ---------------- *)
+(* ----------------------------------------------- *)
+
+
+(* Eval a Jmp statement *)
+Definition bir_eval_stmt_jmp_def:
+  bir_eval_stmt_jmp p le (st : bir_state_t) st' =
+    (?l. bir_eval_label_exp le st.bst_environ l 
+    /\ bir_jmp_to_label p l st = st')
+End
+
+(* Eval a CJmp statement *)
+Definition bir_eval_stmt_cjmp_def:
+  bir_eval_stmt_cjmp p ec l1 l2 (st : bir_state_t) st' =
+    (if bir_eval_exp st.bst_environ ec birT then 
+      bir_eval_stmt_jmp p l1 st st'
+    else if bir_eval_exp st.bst_environ ec birF then
+      bir_eval_stmt_jmp p l2 st st'
+    else F)
+End
+
+(* Eval an end statement *)
+Definition bir_eval_stmtE_def:
+  (bir_eval_stmtE p (BStmt_Jmp le) st st' = bir_eval_stmt_jmp p le st st') /\
+  (bir_eval_stmtE p (BStmt_CJmp e l1 l2) st st' = bir_eval_stmt_cjmp p e l1 l2 st st')
+End
+
+
+(* ----------------------------------------------- *)
+(* ----------------- STATEMENTS ------------------ *)
+(* ----------------------------------------------- *)
+
+Inductive bir_eval_step:
+[~BStmtB:]
+!p state bst.
+  ((~bir_state_is_terminated state) /\
+  (bir_get_current_statement p state.bst_pc = SOME (BStmtB bst)) /\
+  (bir_eval_stmtB bst state state'))
+  ==>
+  bir_eval_step p state (bir_state_next state')
+
+[~BStmtE:]
+!p state bst.
+  ((~bir_state_is_terminated state) /\
+  (bir_get_current_statement p state.bst_pc = SOME (BStmtE bst)) /\
+  (bir_eval_stmtE p bst state state'))
+  ==>
+  (bir_eval_step p state state')
+
+[~NoStatemnt:]
+!p state.
+  ((~bir_state_is_terminated state) /\
+  (bir_get_current_statement p state.bst_pc = NONE))
+  ==>
+  (bir_eval_step p state (bir_state_set_failed state))
+End
 
 
 
