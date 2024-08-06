@@ -185,11 +185,10 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val abc = simp_try_fold_gen birs_simp_try_plain_simp simp_inst_tm birs_simp_exp_plain_thms NONE;
 *)
 
-(*
-what term does this actually expect?? should be part of the code
-*)
+
   fun check_imp_tm imp_tm =
     let
+      (* input term: birs_exp_imp *)
       (* ================================================= *)
       (* TODO: function/code to remove imp assumption, with smt solver *)
       val pred1_tm = (snd o dest_comb o fst o dest_comb) imp_tm;
@@ -201,8 +200,9 @@ what term does this actually expect?? should be part of the code
               (* SOME (prove(imp_tm, cheat)) *)
               mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm)
             else (
-	      print_term imp_tm;
-              raise ERR "check_imp_tm" "cannot determine satisfiability of term"
+	      (*print_term imp_tm;*)
+	      print "implication term is not a tautology";
+              raise ERR "check_imp_tm" "implication term is not a tautology"
 	    )
     in
       imp_thm

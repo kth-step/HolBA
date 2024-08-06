@@ -12,8 +12,9 @@ Definition motor_init_addr_def:
  motor_init_addr : word64 = 0x7acw
 End
 
-(* 0x7d4w : run through all functions *)
 (* 0x674w : indirect jump at first function return *)
+(* 0x7c4w : run through half of the functions *)
+(* 0x7d4w : run through all functions *)
 Definition motor_end_addr_def:
  motor_end_addr : word64 = 0x7c4w
 End
