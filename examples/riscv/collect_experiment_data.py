@@ -17,7 +17,7 @@ parser.add_argument("-f", "--fast",           help="exclude long-running example
 args = parser.parse_args()
 
 def get_example_dirs():
-	excluded_dirs = ["common", "motor-unopt", "aes-unopt"] + (["aes", "aes-unopt"] if args.fast else [])
+	excluded_dirs = ["common", "perftest", "motor-unopt"] + (["aes-unopt"] if args.fast else [])
 	filterfun = lambda x: not x.startswith(".")
 	path = os.getcwd()
 	example_dirs = [f.path for f in os.scandir(path) if f.is_dir() and f.name not in excluded_dirs and filterfun(f.name)]
