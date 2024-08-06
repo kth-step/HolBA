@@ -161,6 +161,8 @@ open bir_expTheory;
 open bir_symbTheory;
 open birs_auxTheory;
 
+open birs_auxLib;
+
 open bir_exp_typecheckLib;
 
   (* error handling *)
@@ -168,19 +170,6 @@ open bir_exp_typecheckLib;
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-
-(* TODO: this is stolen from exec tool *)
-  fun GEN_match_conv is_tm_fun conv tm =
-    if is_tm_fun tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_match_conv is_tm_fun conv)) THENC
-         (RATOR_CONV (GEN_match_conv is_tm_fun conv))) tm
-    else if is_abs tm then
-        TRY_CONV (ABS_CONV (GEN_match_conv is_tm_fun conv)) tm
-    else
-      raise UNCHANGED
-    ;
 
 
 (*

@@ -15,6 +15,35 @@ open birs_auxTheory;
 in
 
 
+(* TODO: this is stolen from exec tool *)
+  fun GEN_match_conv is_tm_fun conv tm =
+    if is_tm_fun tm then
+      conv tm
+    else if is_comb tm then
+        ((RAND_CONV  (GEN_match_conv is_tm_fun conv)) THENC
+         (RATOR_CONV (GEN_match_conv is_tm_fun conv))) tm
+    else if is_abs tm then
+        TRY_CONV (ABS_CONV (GEN_match_conv is_tm_fun conv)) tm
+    else
+      raise UNCHANGED
+    ;
+(* TODO: this is stolen from exec tool, and then modified for extraction of the expressions *)
+  fun GEN_match_extract is_tm_fun acc [] = acc
+    | GEN_match_extract is_tm_fun acc (tm::l) =
+    if is_tm_fun tm then
+      GEN_match_extract is_tm_fun (tm::acc) l
+    else if is_comb tm then
+      let
+        val (rator_tm, rand_tm) = dest_comb tm;
+      in
+        GEN_match_extract is_tm_fun acc (rand_tm::rator_tm::l)
+      end
+    else if is_abs tm then
+        GEN_match_extract is_tm_fun acc (((snd o dest_abs) tm)::l)
+    else
+      GEN_match_extract is_tm_fun acc l (* raise ERR "GEN_match_extract" "unknown" *)
+    ;
+
 
 fun gen_prog_vars_set_thm bir_prog_def =
  let
