@@ -7,6 +7,7 @@ open HolKernel Parse bossLib boolLib ;
 open bir_programTheory ;
 open bir_envTheory ;
 open bir_typingTheory ;
+open listTheory ;
 
 val _ = new_theory "bir_typing_program" ;
 
@@ -49,7 +50,39 @@ Definition is_prog_typed_in_env_def:
 End
 
 
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
+Theorem is_prog_typed_bir_stmts_of_program:
+  !p env bst.
+    is_prog_typed_in_env env p ==>
+    MEM bst (bir_stmts_of_program p) ==>
+    is_stmt_typed_in_env env p bst
+Proof
+  Cases_on `p` >>
+  simp [is_prog_typed_in_env_def, is_block_typed_in_env_def] >>
+  simp [bir_stmts_of_program_def, bir_stmts_of_block_def] >>
+  simp [MEM_FLAT, MEM_MAP] >>
+  simp [EVERY_MEM] >>
+  Cases_on `bst` >>
+    rw [is_stmt_typed_in_env_def] >>
+    fs [MEM_MAP] >>
+    METIS_TAC []
+QED
+
+
+Theorem is_prog_typed_get_current_statement:
+  !p st bst.
+    (is_prog_typed_in_env st.bst_environ p) ==>
+    (bir_get_current_statement p st.bst_pc = SOME bst) ==>
+    (is_stmt_typed_in_env (st.bst_environ) p bst)
+Proof
+  rpt STRIP_TAC >>
+  `MEM bst (bir_stmts_of_program p)` 
+    by METIS_TAC [MEM_bir_get_current_statement_stmts_of_program] >>
+  rw [is_prog_typed_bir_stmts_of_program]
+QED
 
 val _ = export_theory () ;
 
