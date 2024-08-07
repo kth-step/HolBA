@@ -6,6 +6,7 @@
 open HolKernel Parse bossLib boolLib ;
 open bir_basicTheory bir_envTheory ;
 open bir_computeTheory bir_evalTheory ;
+open listTheory ;
 
 
 val _ = new_theory "bir_program" ;
@@ -346,5 +347,44 @@ Inductive bir_eval_step:
 End
 
 
+
+(* ----------------------------------------------- *)
+(* ------------------ THEOREMS ------------------- *)
+(* ----------------------------------------------- *)
+
+Theorem MEM_INDEX_FIND_SOME:
+  !n l P i e.
+    INDEX_FIND n P l = SOME (i,e) ==>
+    MEM e l
+Proof
+  Induct_on `l` >> rw [INDEX_FIND_def] >> METIS_TAC []
+QED
+
+Theorem MEM_bir_get_program_block_info_by_label:
+  !blist l i b. 
+    bir_get_program_block_info_by_label (BirProgram blist) l = SOME (i,b) ==>
+    MEM b blist
+Proof
+  METIS_TAC [bir_get_program_block_info_by_label_def, MEM_INDEX_FIND_SOME]
+QED
+
+Theorem MEM_bir_get_current_statement_stmts_of_program:
+  !p pc bst.
+    bir_get_current_statement p pc = SOME bst ==>
+      MEM bst (bir_stmts_of_program p)
+Proof
+  rw [bir_get_current_statement_def] >>
+  Cases_on `bir_get_program_block_info_by_label p pc.bpc_label` >>
+  fs [] >>
+    Cases_on `x` >> Cases_on `p` >> fs [] >>
+    rw [bir_stmts_of_program_def] >>
+    rw [MEM_FLAT, MEM_MAP] >>
+    qexists `bir_stmts_of_block r` >> rw [] >| [
+      qexists `r` >> METIS_TAC [MEM_bir_get_program_block_info_by_label], 
+      Cases_on `pc.bpc_index < LENGTH r.bb_statements` >> 
+      fs [bir_stmts_of_block_def] >>
+        METIS_TAC [MEM_MAP, MEM_EL] 
+    ]
+QED
 
 val _ = export_theory () ;
