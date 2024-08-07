@@ -59,6 +59,11 @@ Proof
   rw [bool2b_def, bool2w_def, bir_cvF_def]
 QED
 
+Definition bir_cv_dest_bool_val_def:
+  (bir_cv_dest_bool_val (BCVVal_Imm (Imm1 w)) = SOME (w = 1w)) /\
+  (bir_cv_dest_bool_val _ = NONE)
+End
+
 
 (* **************************************** *)
 (* ************** CONVERSION ************** *)

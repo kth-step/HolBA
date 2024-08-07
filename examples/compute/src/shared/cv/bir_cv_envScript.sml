@@ -22,6 +22,9 @@ Definition bir_cv_env_lookup_def:
   bir_cv_env_lookup (BCVEnv l) (BVar id) = ALOOKUP l id
 End
 
+Definition bir_cv_env_update_def:
+  bir_cv_env_update (BCVEnv env) (BVar id) v = BCVEnv ((id, v)::env)
+End
 
 Definition from_cv_env_def:
   from_cv_env (BCVEnv []) = bir_empty_env /\
