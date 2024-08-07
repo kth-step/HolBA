@@ -533,7 +533,6 @@ prove(``
 
 *)
 
-val gen_rev_thm = prove(``!A B. ((A = A) ==> B) ==> B``, METIS_TAC []);
 val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
 val pcond_abbr_tm = ``temp_pcond_abbr : bir_exp_t``;
 fun abbr_app (t, env_tm, pcond_tm) =
@@ -547,26 +546,8 @@ fun abbr_app (t, env_tm, pcond_tm) =
     (abbr_thm, [env_eq_thm, pcond_eq_thm])
   end;
 val abbr_app = Profile.profile "abbr_app" abbr_app;
-fun abbr_rev1 (res, env_tm, pcond_tm) =
-  REWRITE_RULE [gen_rev_thm] (DISCH_ALL (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] res));
-val abbr_rev1 = Profile.profile "abbr_rev1" abbr_rev1;
-fun abbr_rev2 (res, env_tm, pcond_tm) =
-  MP (MP (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] (DISCH_ALL res)) (REFL env_tm)) (REFL pcond_tm);
-val abbr_rev2 = Profile.profile "abbr_rev2" abbr_rev2;
-fun abbr_rev3_conv_beta x = BETA_RULE (CONV_RULE (RATOR_CONV EVAL) x);
-fun abbr_rev3 (res, env_tm, pcond_tm) =
-   (abbr_rev3_conv_beta o abbr_rev3_conv_beta) (INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] (DISCH_ALL res));
-val abbr_rev3 = Profile.profile "abbr_rev3" abbr_rev3;
-fun abbr_rev x =
-  let
-    val y1 = abbr_rev1 x;
-    val y2 = abbr_rev2 x;
-    val y3 = abbr_rev3 x;
-    val _ = if (identical (concl y1) (concl y2)) andalso (identical (concl y2) (concl y3)) then () else
-              raise ERR "abbr_rev" "not the same result, not good";
-  in
-    y3
-  end;
+fun abbr_rev (res, env_tm, pcond_tm) =
+  MP (MP ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] o DISCH_ALL) res) (REFL env_tm)) (REFL pcond_tm);
 val abbr_rev = Profile.profile "abbr_rev" abbr_rev;
 
 (*
