@@ -130,6 +130,88 @@ Definition bir_cv_jmp_to_label_def:
     else (st with bst_status := (BST_JumpOutside l))
 End
 
+(* ----------------------------------------------- *)
+(* ------------------- LABELS -------------------- *)
+(* ----------------------------------------------- *)
+
+(* Compute a label expression *)
+Definition bir_cv_compute_label_exp_def:
+  (bir_cv_compute_label_exp (BCVLE_Label l) env = SOME l) /\
+   (bir_cv_compute_label_exp (BCVLE_Exp e) env = case bir_cv_compute_exp e env of
+      | SOME (BCVVal_Imm i) => SOME (BL_Address i)
+      | _ => NONE
+   )
+End
+
+
+(* ----------------------------------------------- *)
+(* --------------- BASIC STATEMENTS -------------- *)
+(* ----------------------------------------------- *)
+
+
+(* Compute an Assign statement *)
+Definition bir_cv_compute_stmt_assign_def:
+  bir_cv_compute_stmt_assign v ex (st : bir_cv_state_t) =
+   case bir_cv_compute_exp ex st.bst_environ of
+     | SOME va => (st with bst_environ := (bir_cv_env_update st.bst_environ v va))
+     | NONE => bir_cv_state_set_typeerror st
+End
+
+(* Compute a basic statement *)
+Definition bir_cv_compute_stmtB_def:
+  (bir_cv_compute_stmtB (BCVStmt_Assign v ex) st = (bir_cv_compute_stmt_assign v ex st))
+End
+
+(* ----------------------------------------------- *)
+(* --------------- END STATEMENTS ---------------- *)
+(* ----------------------------------------------- *)
+
+
+(* Compute a Jmp statement *)
+Definition bir_cv_compute_stmt_jmp_def:
+  bir_cv_compute_stmt_jmp p le (st : bir_cv_state_t) =
+    case bir_cv_compute_label_exp le st.bst_environ of
+      | NONE => bir_cv_state_set_typeerror st
+      | SOME l => bir_cv_jmp_to_label p l st
+End
+
+(* Compute a CJmp statement *)
+Definition bir_cv_compute_stmt_cjmp_def:
+  bir_cv_compute_stmt_cjmp p ec l1 l2 (st : bir_cv_state_t) =
+  let
+    vobc = option_CASE (bir_cv_compute_exp ec st.bst_environ) NONE bir_cv_dest_bool_val
+  in
+  case vobc of
+    | SOME T => bir_cv_compute_stmt_jmp p l1 st
+    | SOME F => bir_cv_compute_stmt_jmp p l2 st
+    | NONE => bir_cv_state_set_typeerror st
+End
+
+(* Compute an end statement *)
+Definition bir_cv_compute_stmtE_def:
+  (bir_cv_compute_stmtE p (BCVStmt_Jmp l) st = bir_cv_compute_stmt_jmp p l st) /\
+  (bir_cv_compute_stmtE p (BCVStmt_CJmp e l1 l2) st = bir_cv_compute_stmt_cjmp p e l1 l2 st)
+End
+
+(* ----------------------------------------------- *)
+(* ----------------- STATEMENTS ------------------ *)
+(* ----------------------------------------------- *)
+
+(* Execute a statement given a program and a state *)
+Definition bir_cv_compute_stmt_def:
+  (bir_cv_compute_stmt (p:bir_cv_program_t) (BCVStmtB (bst:bir_cv_stmt_basic_t)) st =
+     let st' = bir_cv_compute_stmtB bst st in bir_cv_state_next st') /\
+  (bir_cv_compute_stmt p (BCVStmtE bst) st = bir_cv_compute_stmtE p bst st)
+End
+
+(* Evaluate a step of a program *)
+Definition bir_cv_compute_step_def:
+  bir_cv_compute_step p state =
+  if (bir_cv_state_is_terminated state) then state else
+  case (bir_cv_get_current_statement p state.bst_pc) of
+    | NONE => bir_cv_state_set_failed state
+    | SOME stm => (bir_cv_compute_stmt p stm state)
+End
 
 val _ = export_theory ()
 
