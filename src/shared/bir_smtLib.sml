@@ -20,16 +20,34 @@ fun endmeexit p = Unix.fromStatus (Unix.reap p);
 fun get_streams p = Unix.streamsOf p;
 
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
-
-fun sendreceive_query z3bin q =
- let
+val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
+val bir_smtLib_z3_prelude_n = bir_smtLib_z3_prelude ^ "\n";
+fun get_z3proc z3bin =
+  let
    val z3proc_ = !z3proc_o;
    val p = if isSome z3proc_ then valOf z3proc_ else
-                 let val p = openz3 z3bin; in (z3proc_o := SOME p; p) end;
+      let
+        val p = openz3 z3bin;
+        val (_,s_out) = get_streams p;
+	(* prepare prelude and push *)
+        val () = TextIO.output (s_out, bir_smtLib_z3_prelude ^ "\n");
+        val () = TextIO.output (s_out, "(push)\n");
+      in (z3proc_o := SOME p; p) end;
+  in
+    p
+  end;
+  
+fun sendreceive_query z3bin q =
+ let
+   val p = get_z3proc z3bin;
    val (s_in,s_out) = get_streams p;
+   (*val () = TextIO.output (s_out, bir_smtLib_z3_prelude_n);*)
    val () = TextIO.output (s_out, q);
    val out  = TextIO.input s_in;
-   val () = TextIO.output (s_out, "(reset)\n");
+   (* https://microsoft.github.io/z3guide/docs/logic/basiccommands/ *)
+   (*val () = TextIO.output (s_out, "(reset)\n");*)
+   val () = TextIO.output (s_out, "(pop)\n");
+   val () = TextIO.output (s_out, "(push)\n");
    (*
    val _ = endmeexit p;
    val _ = z3proc_o := NONE;
@@ -119,7 +137,8 @@ fun sendreceive_query z3bin q =
 	  "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
 	) ^ "\n") "" vars;
 
-  fun querysmt prelude vars asserts =
+  (* TODO: this should be split into generic z3 interface and bir_z3 interface *)
+  fun querysmt vars asserts =
     if List.exists (fn (_,qt) => qt <> SMTTY_Bool) asserts then
       raise ERR "querysmt" "don't know how to handle expression type in assert"
     else
@@ -130,8 +149,7 @@ fun sendreceive_query z3bin q =
 	    "(assert " ^ q ^ ")\n"
 	  )) "" asserts;
       in
-	querysmt_raw (prelude     ^ "\n" ^
-		      decls       ^ "\n" ^
+	querysmt_raw (decls       ^ "\n" ^
 		      asserts_str ^ "\n" ^
 		      "(check-sat)\n")
       end;
@@ -275,8 +293,6 @@ in
       else if is_BIExp_SignedCast castt then
         "((_ sign_extend " ^ (Int.toString (szi_to - szi_from)) ^ ") " ^ str ^ ")"
       else raise ERR "castt_to_smtlib" "don't know casttype";
-
-  val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
 
   fun bop_to_smtlib sty bop =
     if smt_type_is_bv sty then

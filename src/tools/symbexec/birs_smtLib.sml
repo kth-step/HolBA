@@ -53,7 +53,7 @@ fun birsmt_check_unsat bexp =
 (*
     val _ = (print o fst) query;
 *)
-    val result = querysmt bir_smtLib_z3_prelude vars [query];
+    val result = querysmt vars [query];
 
     val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
             raise ERR "bir_smt_check_unsat" "smt solver couldn't determine satisfiability"
