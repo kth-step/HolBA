@@ -19,19 +19,20 @@ jobs:
 
     strategy:
       matrix:
-        polyml: ['v5.7.1', 'v5.9.1']
+        polyml: [{version: 'v5.7.1'}, {version: 'v5.9.1', heapless: '1'}]
         z3: ['4.8.4']
         hol4: ['trindemossen-1']
 
     env:
-      HOLBA_POLYML_VERSION: ${{ matrix.polyml }}
+      HOLBA_POLYML_VERSION: ${{ matrix.polyml.version }}
+      HOLBA_POLYML_HEAPLESS: ${{ matrix.polyml.heapless }}
       HOLBA_Z3_VERSION: ${{ matrix.z3 }}
       HOLBA_Z3_ASSET_SUFFIX: '.d6df51951f4c-x64-debian-8.11.zip'
       HOLBA_HOL4_VERSION: ${{ matrix.hol4 }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Cache dependencies
         id: cache-deps
