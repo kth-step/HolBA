@@ -110,6 +110,16 @@ Definition bir_cv_labels_of_program_def:
   MAP (\bl. bl.bb_label) p
 End
 
+Definition is_label_in_program_aux_def:
+  (is_label_in_program_aux label ([]:bir_cv_block_t list) = F) /\
+  (is_label_in_program_aux label (h::t) = 
+    if label = h.bb_label then T else is_label_in_program_aux label t)
+End
+
+Definition is_label_in_program_def:
+  is_label_in_program label (BirCVProgram p) = is_label_in_program_aux label p
+End
+
 (* Retuern the program counter at the start of the block *)
 (* Definition bir_block_pc_def: *)
 (*   bir_block_pc l = <| bpc_label := l; bpc_index := 0 |> *)
@@ -123,9 +133,9 @@ End
 
 (* Jump to a label *)
 Definition bir_cv_jmp_to_label_def:
-  bir_cv_jmp_to_label p
+  bir_cv_jmp_to_label prog
    (l : bir_label_t) (st : bir_cv_state_t) =
-    if (MEM l (bir_cv_labels_of_program p)) then
+    if is_label_in_program l prog then
       st with bst_pc := bir_block_pc l
     else (st with bst_status := (BST_JumpOutside l))
 End
@@ -178,13 +188,12 @@ End
 (* Compute a CJmp statement *)
 Definition bir_cv_compute_stmt_cjmp_def:
   bir_cv_compute_stmt_cjmp p ec l1 l2 (st : bir_cv_state_t) =
-  let
-    vobc = option_CASE (bir_cv_compute_exp ec st.bst_environ) NONE bir_cv_dest_bool_val
-  in
-  case vobc of
-    | SOME T => bir_cv_compute_stmt_jmp p l1 st
-    | SOME F => bir_cv_compute_stmt_jmp p l2 st
-    | NONE => bir_cv_state_set_typeerror st
+    case bir_cv_compute_exp ec st.bst_environ of 
+      | NONE => bir_cv_state_set_typeerror st
+      | SOME v => case bir_cv_dest_bool_val v of
+        | SOME T => bir_cv_compute_stmt_jmp p l1 st
+        | SOME F => bir_cv_compute_stmt_jmp p l2 st 
+        | NONE => bir_cv_state_set_typeerror st
 End
 
 (* Compute an end statement *)
