@@ -76,6 +76,16 @@ Proof
 QED
 
 
+(* Correction theorem of update *)
+Theorem from_cv_env_cv_env_update:
+  !env var v. from_cv_env (bir_cv_env_update env var v) =
+    bir_env_update (from_cv_env env) var (from_cv_val v)
+Proof
+  Cases_on `env` >> Cases_on `var` >>
+  Induct_on `l` >>
+  rw [bir_cv_env_update_def, from_cv_env_def, bir_env_update_def]
+QED
+
 
 val _ = export_theory () ;
 

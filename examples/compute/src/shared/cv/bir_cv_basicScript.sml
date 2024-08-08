@@ -177,6 +177,14 @@ Proof
     rw [from_cv_exp_def, to_cv_exp_def]
 QED
 
+Theorem bir_cv_dest_bool_val_eq_dest_bool_val:
+  !cv_val. bir_cv_dest_bool_val cv_val = 
+    bir_dest_bool_val (from_cv_val cv_val)
+Proof
+  Cases_on `cv_val` >> 
+  TRY (Cases_on `b`) >>
+  rw [bir_cv_dest_bool_val_def, bir_dest_bool_val_def, from_cv_val_def]
+QED
 
 
 val _ = export_theory () ;
