@@ -7096,10 +7096,10 @@ val bprog_tm = (fst o dest_eq o concl) bir_aespart_prog_def;
       birs_rule_STEP_fun birs_rule_STEP_thm);
 
 (* ================================================================================= *)
-
+(*
    val timer_symbanalysis_last = ref (bir_miscLib.timer_start 0);
 val _ = birs_rule_STEP_fun_spec state2;
-
+*)
 
 (*
 
@@ -7109,6 +7109,39 @@ Profile.print_profile_results (Profile.results ())
 Profile.output_profile_results (iostream) (Profile.results ())
 
 *)
+
+val smt_check_exp = ``BExp_Den (BVar "abc" (BType_Imm Bit1))``;
+
+val howmanylist = List.tabulate (1000, fn _ => ());
+val _ = List.foldr (fn (_,_) => birs_smtLib.bir_check_sat false smt_check_exp) true howmanylist;
+
+
 val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
 
+(*
+val teststring = bir_fileLib.read_from_file "/home/andreas/data/hol/HolBA_symbexec/examples/riscv/perftest/tempdir/smtquery_2024-08-08_11-38-51_253062_nil";
+
+
+val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";
+fun openz3 z3bin = 
+  (Unix.execute (z3bin, ["-in"])) : (TextIO.instream, TextIO.outstream) Unix.proc;
+
+fun endmeexit p = Unix.fromStatus (Unix.reap p);
+
+fun get_streams p = Unix.streamsOf p;
+
+val p = openz3 z3bin;
+val (s_in,s_out) = get_streams p;
+
+
+val () = TextIO.output (s_out, teststring);
+(* val s  = TextIO.inputLine s_in; *)
+val s  = TextIO.input s_in;
+
+val () = TextIO.output (s_out, "(reset)\n");
+
+
+val _ = endmeexit p;
+s;
+*)

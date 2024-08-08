@@ -10,6 +10,35 @@ local
 
 in
 
+(* =========================================================== *)
+val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";
+fun openz3 z3bin = 
+  (Unix.execute (z3bin, ["-in"])) : (TextIO.instream, TextIO.outstream) Unix.proc;
+
+fun endmeexit p = Unix.fromStatus (Unix.reap p);
+
+fun get_streams p = Unix.streamsOf p;
+
+val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
+
+fun sendreceive_query z3bin q =
+ let
+   val z3proc_ = !z3proc_o;
+   val p = if isSome z3proc_ then valOf z3proc_ else
+                 let val p = openz3 z3bin; in (z3proc_o := SOME p; p) end;
+   val (s_in,s_out) = get_streams p;
+   val () = TextIO.output (s_out, q);
+   val out  = TextIO.input s_in;
+   val () = TextIO.output (s_out, "(reset)\n");
+   (*
+   val _ = endmeexit p;
+   val _ = z3proc_o := NONE;
+   *)
+ in
+   out
+ end;
+(* =========================================================== *)
+
   datatype bir_smt_result =
       BirSmtSat
     | BirSmtUnsat
@@ -17,12 +46,9 @@ in
 
   fun querysmt_raw q =
     case OS.Process.getEnv "HOL4_Z3_EXECUTABLE" of
-      SOME file =>
+      SOME z3bin =>
       let
-       val tempfile = get_tempfile "smtquery" "nil";
-        val _ = write_to_file tempfile q;
-
-        val out = get_exec_output (file ^ " " ^ tempfile);
+        val out = sendreceive_query z3bin q;
       in
         if out = "sat\n" then
 	  BirSmtSat
