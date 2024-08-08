@@ -6,6 +6,8 @@ open HolKernel Parse bossLib boolLib ;
 open bir_cv_basicTheory bir_cv_envTheory ;
 open bir_programTheory ;
 open bir_cv_computeTheory ;
+open listTheory ;
+open optionTheory ;
 
 val _ = new_theory "bir_cv_program" ;
 
@@ -268,6 +270,210 @@ Definition from_cv_state_def:
   bst_environ  := (from_cv_env cv_st.bst_environ) ;
   bst_status   := cv_st.bst_status |>
 End
+
+
+(* ----------------------------------------------- *)
+(* ------------------ THEOREMS ------------------- *)
+(* ----------------------------------------------- *)
+
+(* bir_state_is_terminated *)
+Theorem bir_cv_state_is_terminated_eq_state_is_terminated:
+  !cv_st. (bir_cv_state_is_terminated cv_st) = 
+    bir_state_is_terminated (from_cv_state cv_st)
+Proof
+  rw [bir_cv_state_is_terminated_def, bir_state_is_terminated_def] >>
+  rw [from_cv_state_def]
+QED
+
+(* Definition for theorem purposes *)
+Definition from_num_cv_block_option_def:
+  (from_num_cv_block_option NONE = NONE) /\
+  (from_num_cv_block_option (SOME (n:num,cv_b)) = SOME (n, from_cv_block cv_b))
+End
+
+Theorem INDEX_FIND_from_cv_block:
+  !n P l. INDEX_FIND n P (MAP from_cv_block l) = 
+    from_num_cv_block_option (INDEX_FIND n (\x. P (from_cv_block x)) l)
+Proof
+  Induct_on `l` >>
+  rw [INDEX_FIND_def, from_num_cv_block_option_def]
+QED
+
+(* bir_get_current_statement *)
+Theorem bir_cv_get_current_statement_eq_get_current_statement:
+  !cv_prog pc. from_cv_stmt_option (bir_cv_get_current_statement cv_prog pc) =
+    bir_get_current_statement (from_cv_program cv_prog) pc
+Proof
+  Cases_on `cv_prog` >>
+  rw [bir_get_current_statement_def, bir_cv_get_current_statement_def] >>
+  rw [bir_cv_get_program_block_info_by_label_def] >>
+  rw [bir_get_program_block_info_by_label_def, from_cv_program_def] >>
+  rw [INDEX_FIND_from_cv_block, from_cv_block_def] >>
+  CASE_TAC >> rw [from_num_cv_block_option_def, from_cv_stmt_option_def] >>
+  CASE_TAC >> rw [from_num_cv_block_option_def, from_cv_stmt_option_def] >>
+  fs [from_cv_stmt_def, from_cv_block_def, from_cv_stmt_basic_def, from_cv_stmt_end_def, EL_MAP]
+QED
+
+(* bir_compute_label_exp *)
+Theorem bir_cv_compute_label_exp_eq_compute_label_exp:
+  !cv_le cv_env.
+    bir_cv_compute_label_exp cv_le cv_env = 
+      bir_compute_label_exp (from_cv_label_exp cv_le) (from_cv_env cv_env)
+Proof
+  Cases_on `cv_le` >>
+  rw [bir_cv_compute_label_exp_def, bir_compute_label_exp_def, from_cv_label_exp_def] >>
+  rw [bir_compute_exp_eq_cv_compute_exp] >>
+  CASE_TAC >> rw [from_cv_val_option_def] >>
+  CASE_TAC >> rw [from_cv_val_def]
+QED
+  
+
+Theorem bir_is_label_in_program_eq_MEM:
+  !l cv_prog.
+    is_label_in_program l cv_prog = 
+      MEM l (bir_labels_of_program (from_cv_program cv_prog))
+Proof
+  Cases_on `cv_prog` >>
+  rw [from_cv_program_def, bir_labels_of_program_def] >>
+  rw [MEM_MAP] >>
+  Induct_on `l` >>
+  rw [is_label_in_program_def, is_label_in_program_aux_def] >>
+  EQ_TAC >>
+  rw [] >| [
+    qexists `from_cv_block h` >> rw [from_cv_block_def] >>
+    qexists `h` >> rw [],
+    METIS_TAC [is_label_in_program_def, from_cv_block_def],
+    rw [is_label_in_program_def, from_cv_block_def],
+    METIS_TAC [is_label_in_program_def, from_cv_block_def]
+  ]
+QED
+
+(* bir_jmp_to_label *)
+Theorem bir_cv_jmp_to_label_eq_jmp_to_label:
+  !cv_prog l cv_st. 
+  from_cv_state (bir_cv_jmp_to_label cv_prog l cv_st) =
+    bir_jmp_to_label (from_cv_program cv_prog) l (from_cv_state cv_st)
+Proof
+  rw [bir_cv_jmp_to_label_def, bir_jmp_to_label_def] >>
+  fs [bir_is_label_in_program_eq_MEM] >>
+  rw [from_cv_state_def]
+QED
+
+(* bir_compute_stmt_jmp *)
+Theorem bir_cv_compute_stmt_jmp_eq_compute_stmt_jmp:
+  !cv_prog cv_le cv_st.
+    from_cv_state (bir_cv_compute_stmt_jmp cv_prog cv_le cv_st) =
+      bir_compute_stmt_jmp (from_cv_program cv_prog) (from_cv_label_exp cv_le) (from_cv_state cv_st)
+Proof
+  rw [bir_cv_compute_stmt_jmp_def, bir_compute_stmt_jmp_def] >>
+  rw [bir_cv_compute_label_exp_eq_compute_label_exp] >>
+  rw [SimpRHS, Once from_cv_state_def] >>
+  CASE_TAC >| [
+    rw [from_cv_state_def, bir_state_set_typeerror_def, bir_cv_state_set_typeerror_def],
+
+    rw [bir_cv_jmp_to_label_eq_jmp_to_label]
+  ]
+QED
+
+(* bir_compute_stmt_cjmp *)
+Theorem bir_cv_compute_stmt_cjmp_eq_compute_stmt_cjmp:
+  !cv_prog cv_cexp cv_le1 cv_le2 cv_st.
+    from_cv_state (bir_cv_compute_stmt_cjmp cv_prog cv_cexp cv_le1 cv_le2 cv_st) = 
+    bir_compute_stmt_cjmp (from_cv_program cv_prog) (from_cv_exp cv_cexp)
+        (from_cv_label_exp cv_le1) (from_cv_label_exp cv_le2)(from_cv_state cv_st)
+Proof
+  rw [bir_cv_compute_stmt_cjmp_def, bir_compute_stmt_cjmp_def] >>
+  CASE_TAC >| [
+    rw [bir_compute_exp_eq_cv_compute_exp, from_cv_state_def] >>
+    rw [from_cv_val_option_def] >>
+    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def],
+
+    rw [SimpRHS, bir_compute_exp_eq_cv_compute_exp, from_cv_state_def] >>
+    rw [from_cv_val_option_def] >>
+    rw [bir_cv_dest_bool_val_eq_dest_bool_val] >>
+    CASE_TAC >| [
+      rw [from_cv_state_def, bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def],
+
+      rw [bir_cv_compute_stmt_jmp_eq_compute_stmt_jmp] >>
+      rw [from_cv_state_def]
+    ]
+  ]
+QED
+
+(* bir_compute_stmtE *)
+Theorem bir_cv_compute_stmtE_eq_compute_stmtE:
+  !cv_prog cv_stmt cv_st. from_cv_state (bir_cv_compute_stmtE cv_prog cv_stmt cv_st) =
+    bir_compute_stmtE (from_cv_program cv_prog) (from_cv_stmt_end cv_stmt) (from_cv_state cv_st)
+Proof
+  Cases_on `cv_stmt` >>
+  rw [bir_cv_compute_stmtE_def, bir_compute_stmtE_def, from_cv_stmt_end_def] >| [
+    rw [bir_cv_compute_stmt_jmp_eq_compute_stmt_jmp],
+
+    rw [bir_cv_compute_stmt_cjmp_eq_compute_stmt_cjmp]
+  ]
+QED
+
+(* bir_compute_stmt_assign *)
+Theorem bir_cv_compute_stmt_assign_eq_compute_stmt_assign:
+  !var cv_exp cv_st . from_cv_state (bir_cv_compute_stmt_assign var cv_exp cv_st) = 
+    bir_compute_stmt_assign var (from_cv_exp cv_exp) (from_cv_state cv_st)
+Proof
+  rw [bir_cv_compute_stmt_assign_def, bir_compute_stmt_assign_def] >>
+  rw [from_cv_state_def] >>
+  rw [bir_compute_exp_eq_cv_compute_exp] >>
+  CASE_TAC >> rw [from_cv_val_option_def] >| [
+    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def],
+
+    METIS_TAC [from_cv_env_cv_env_update]
+  ]
+QED
+
+(* bir_compute_stmtB *)
+Theorem bir_cv_compute_stmtB_eq_compute_stmtB:
+  !cv_stmt cv_st. from_cv_state (bir_cv_compute_stmtB cv_stmt cv_st) =
+    bir_compute_stmtB (from_cv_stmt_basic cv_stmt) (from_cv_state cv_st)
+Proof
+  Cases_on `cv_stmt` >>
+  rw [bir_cv_compute_stmtB_def, bir_compute_stmtB_def, from_cv_stmt_basic_def] >| [
+    rw [bir_cv_compute_stmt_assign_eq_compute_stmt_assign]
+  ]
+QED
+
+Theorem bir_cv_state_next_eq_state_next:
+  !cv_st. from_cv_state (bir_cv_state_next cv_st) = bir_state_next (from_cv_state cv_st)
+Proof
+  rw [bir_cv_state_next_def, bir_state_next_def] >>
+  fs [from_cv_state_def, bir_cv_state_is_terminated_def, bir_state_is_terminated_def]
+QED
+
+(* bir_compute_stmt *)
+Theorem bir_cv_compute_stmt_eq_compute_stmt:
+  !cv_prog cv_st cv_stmt. from_cv_state (bir_cv_compute_stmt cv_prog cv_stmt cv_st) = 
+    bir_compute_stmt (from_cv_program cv_prog) (from_cv_stmt cv_stmt) (from_cv_state cv_st)
+Proof
+  Cases_on `cv_stmt` >>
+  rw [bir_cv_compute_stmt_def, bir_compute_stmt_def, from_cv_stmt_def] >| [
+    rw [bir_cv_state_next_eq_state_next, bir_cv_compute_stmtB_eq_compute_stmtB],
+
+    rw [bir_cv_compute_stmtE_eq_compute_stmtE]
+  ]
+QED
+
+Theorem bir_cv_compute_step_eq_compute_exp:
+  !cv_p cv_st. from_cv_state (bir_cv_compute_step cv_p cv_st) =
+   bir_compute_step (from_cv_program cv_p) (from_cv_state cv_st)
+Proof
+  Cases_on `cv_p` >>
+  rw [bir_compute_step_def, bir_cv_compute_step_def] >>
+  fs [bir_cv_state_is_terminated_eq_state_is_terminated] >>
+  rw [GSYM bir_cv_get_current_statement_eq_get_current_statement] >>
+  CASE_TAC >| [
+    rw [from_cv_state_def, from_cv_stmt_option_def, bir_state_set_failed_def, bir_cv_state_set_failed_def],
+
+    rw [SimpRHS, Once from_cv_state_def, from_cv_stmt_option_def] >>
+    rw [bir_cv_compute_stmt_eq_compute_stmt]
+  ]
+QED
 
 
 val _ = export_theory ()
