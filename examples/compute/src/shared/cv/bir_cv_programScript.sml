@@ -222,5 +222,53 @@ Definition bir_cv_compute_step_def:
     | SOME stm => (bir_cv_compute_stmt p stm state)
 End
 
+(* ----------------------------------------------- *)
+(* ------------------ CONVERSION ----------------- *)
+(* ----------------------------------------------- *)
+
+Definition from_cv_stmt_basic_def:
+  (from_cv_stmt_basic (BCVStmt_Assign var cv_exp) = (BStmt_Assign var (from_cv_exp cv_exp)))
+End
+
+Definition from_cv_label_exp_def:
+  (from_cv_label_exp (BCVLE_Label label) = BLE_Label label) /\
+  (from_cv_label_exp (BCVLE_Exp cv_exp) = BLE_Exp (from_cv_exp cv_exp))
+End
+
+Definition from_cv_stmt_end_def:
+    (from_cv_stmt_end (BCVStmt_Jmp cv_le) = BStmt_Jmp (from_cv_label_exp cv_le)) /\
+    (from_cv_stmt_end (BCVStmt_CJmp cv_cexp cv_le1 cv_le2) = 
+      BStmt_CJmp (from_cv_exp cv_cexp) (from_cv_label_exp cv_le1) (from_cv_label_exp cv_le2))
+End
+
+Definition from_cv_stmt_def:
+  (from_cv_stmt (BCVStmtB cv_stmt) = BStmtB (from_cv_stmt_basic cv_stmt)) /\
+  (from_cv_stmt (BCVStmtE cv_stmt) = BStmtE (from_cv_stmt_end cv_stmt))
+End
+
+Definition from_cv_stmt_option_def:
+  (from_cv_stmt_option (SOME v) = SOME (from_cv_stmt v)) /\
+  (from_cv_stmt_option NONE = NONE)
+End
+
+Definition from_cv_block_def:
+  from_cv_block cv_block = <|
+    bb_label          := cv_block.bb_label ;
+    bb_statements     := MAP from_cv_stmt_basic cv_block.bb_statements ;
+    bb_last_statement := (from_cv_stmt_end cv_block.bb_last_statement) |>
+End
+
+Definition from_cv_program_def:
+  from_cv_program (BirCVProgram blist) = BirProgram (MAP from_cv_block blist)
+End
+
+Definition from_cv_state_def:
+  from_cv_state cv_st = <|
+  bst_pc       := cv_st.bst_pc ;
+  bst_environ  := (from_cv_env cv_st.bst_environ) ;
+  bst_status   := cv_st.bst_status |>
+End
+
+
 val _ = export_theory ()
 
