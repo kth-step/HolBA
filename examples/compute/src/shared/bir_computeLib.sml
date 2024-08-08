@@ -13,6 +13,7 @@ open cv_transLib cv_stdTheory cvTheory ;
 open bir_cv_computeTheory bir_cv_envLib ;
 open bir_cv_memTheory ;
 open bir_cv_basicLib ;
+open bir_cv_programTheory ;
 
 (* Takes a BIR expression and evaluates it using EVAL *)
 fun compute_exp_EVAL (exp : term) (env: term) : thm =
@@ -29,6 +30,8 @@ val bir_cv_compute_exp_pre_cases  = cv_auto_trans_pre bir_cv_compute_exp_def ;
 val _ = store_thm("bir_cv_compute_exp_pre[cv_pre]", ``!v env. bir_cv_compute_exp_pre v env``,
   Induct_on `v` >>
   rw [Once bir_cv_compute_exp_pre_cases]) ;
+
+val _ = cv_auto_trans bir_cv_compute_step_def ;
 
 (* Deep embedding of our expression *)
 (* WARNING : this creates theorems suffixed by _bir_cv_def, _bir_cv_eq. *)
