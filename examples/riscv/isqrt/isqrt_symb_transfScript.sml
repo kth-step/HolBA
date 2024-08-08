@@ -98,6 +98,7 @@ open bir_typing_expTheory;
 
 open pred_setTheory;
 open distribute_generic_stuffTheory;
+open distribute_generic_stuffLib;
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
@@ -214,9 +215,25 @@ val (Pi_func, Pi_set) = dest_comb Pi_f;
 
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
-val sys2s_posts = [];
+val sys2ps = [(List.nth (sys2s,0), bspec_post_1_tm), (List.nth (sys2s,1), bspec_post_2_tm)];
 
+val strongpostcond_goals = List.map (fn (sys2,post_tm) => ``
+ sys1 = ^sys1 ==>
+ sys2 = ^sys2 ==>
+ birs_symb_matchstate sys1 H' bs ==>
+ bir_eval_exp ^bspec_pre_tm bs.bst_environ = SOME bir_val_true ==>
+ birs_symb_matchstate sys2 H' bs' ==>
+ bir_eval_exp ^post_tm bs'.bst_environ = SOME bir_val_true``) 
+sys2ps;
+
+(*val bla = prove(``^(List.nth (strongpostcond_goals,1))``, birs_strongpostcond_impl_TAC);*)
+
+val strongpostcond_thms = List.map (fn goal =>
+  prove(``^goal``, birs_strongpostcond_impl_TAC)) strongpostcond_goals;
+
+(*
 val label_0 = (snd o dest_eq o concl o EVAL) `` ^(List.nth (sys2s,0)).bsst_pc``;
 val label_1 = (snd o dest_eq o concl o EVAL) `` ^(List.nth (sys2s,1)).bsst_pc``;
+*)
 
 val _ = export_theory ();
