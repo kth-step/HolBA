@@ -11,17 +11,15 @@ all: $(DEFAULT_TARGETS)
 .PHONY: all
 
 ifdef POLY
-all: examples-riscv-common-heap
+HEAP = holba-riscv-heap
+DEPS = $(HOLBADIR)/src/tools/lifter/bir_lifter_interfaceLib.uo \
+       $(HOLBADIR)/src/tools/backlifter/bir_backlifterLib.uo \
+       $(HOLBADIR)/src/shared/HolSmt/HolBA_HolSmtLib.uo \
+       $(HOLBADIR)/src/tools/symbexec/birs_auxLib.uo
+EXTRA_CLEANS += $(HEAP)
 
-HEAPINC = $(HOLBADIR)/src/tools/lifter/bir_lifter_interfaceLib.uo \
-          $(HOLBADIR)/src/tools/backlifter/bir_backlifterLib.uo \
-          $(HOLBADIR)/src/shared/HolSmt/HolBA_HolSmtLib.uo \
-          $(HOLBADIR)/src/tools/symbexec/birs_auxLib.uo
-# \
-#          distribute_generic_stuffLib.uo #\
-#          bir_symbLib.uo
+all: $(HEAP)
 
-examples-riscv-common-heap: $(HEAPINC) Holmakefile
-	$(HOLDIR)/bin/buildheap -o $@ $(patsubst %.uo,-f %.uo,$(HEAPINC))
+$(HEAP): $(DEPS)
+	$(HOLDIR)/bin/buildheap -o $@ $(patsubst %.uo,-f %.uo,$(DEPS))
 endif
-

@@ -24,6 +24,8 @@ all: $(DEFAULT_TARGETS)
 .PHONY: all
 
 ifdef POLY
-HOLHEAP = $(HOLBADIR)/examples/riscv/common/examples-riscv-common-heap
+ifndef HOLBA_POLYML_HEAPLESS
+HOLHEAP = $(HOLBADIR)/examples/riscv/common/holba-riscv-heap
+endif
 endif
 

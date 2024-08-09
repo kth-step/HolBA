@@ -33,7 +33,7 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 
 ### 0. RISC-V program
 
-- RISC-V programs must be given in `.da` format for RV64
+- RISC-V programs must be given in `.da` format for RV64G
 - C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
 
 Example C function that increments an unsigned 64-bit integer:
@@ -71,8 +71,8 @@ Disassembly of section .text:
 
 - requires manual specification of code area addresses, for all code included in the binary program
 - the lifting stores HOL4 constants for the BIR program, the original binary program, and a lifting theorem for use in backlifting
-- **automatic** once arguments (program memory boundaries) are given inside HOL4
-- Notice: the code area addresses have to be accurate, i.e., the end boundary is the address of the last instruction plus 4 in case of RISC-V with 32-bit instructions
+- **automatic** once arguments (names and code area boundaries) are given inside HOL4
+- the code area addresses have to be accurate, i.e., the end boundary is the address of the last instruction plus 4 in case of 32-bit instructions as in RV64G
 
 Example:
 
@@ -277,7 +277,7 @@ Example:
 
 ```sml
 Theorem riscv_incr_contract_thm:
- riscv_cont bir_foo_progbin incr_init_addr {incr_end_addr}
+ riscv_cont bir_incr_progbin incr_init_addr {incr_end_addr}
   (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)
 Proof
 (* application of backlifting automation *)
