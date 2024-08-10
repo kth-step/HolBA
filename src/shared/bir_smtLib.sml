@@ -11,7 +11,7 @@ local
 in
 
 (* =========================================================== *)
-val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";
+(*val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";*)
 fun openz3 z3bin = 
   (Unix.execute (z3bin, ["-in"])) : (TextIO.instream, TextIO.outstream) Unix.proc;
 
@@ -28,26 +28,28 @@ fun get_z3proc z3bin =
    val p = if isSome z3proc_ then valOf z3proc_ else
       let
         val p = openz3 z3bin;
-        val (_,s_out) = get_streams p;
+        (*val (_,s_out) = get_streams p;
 	(* prepare prelude and push *)
         val () = TextIO.output (s_out, bir_smtLib_z3_prelude ^ "\n");
-        val () = TextIO.output (s_out, "(push)\n");
+        val () = TextIO.output (s_out, "(push)\n");*)
       in (z3proc_o := SOME p; p) end;
   in
     p
   end;
-  
+
 fun sendreceive_query z3bin q =
  let
+   (*val _ = (print q; print "\n");*)
    val p = get_z3proc z3bin;
    val (s_in,s_out) = get_streams p;
-   (*val () = TextIO.output (s_out, bir_smtLib_z3_prelude_n);*)
+   val () = TextIO.output (s_out, bir_smtLib_z3_prelude_n);
    val () = TextIO.output (s_out, q);
    val out  = TextIO.input s_in;
+   (*val _ = (print out; print "\n\n");*)
    (* https://microsoft.github.io/z3guide/docs/logic/basiccommands/ *)
-   (*val () = TextIO.output (s_out, "(reset)\n");*)
-   val () = TextIO.output (s_out, "(pop)\n");
-   val () = TextIO.output (s_out, "(push)\n");
+   val () = TextIO.output (s_out, "(reset)\n");
+   (*val () = TextIO.output (s_out, "(pop)\n");
+   val () = TextIO.output (s_out, "(push)\n");*)
    (*
    val _ = endmeexit p;
    val _ = z3proc_o := NONE;
