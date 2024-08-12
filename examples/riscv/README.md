@@ -33,19 +33,25 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 
 ### 0. RISC-V program
 
-- RISC-V programs must be given in `.da` format for RV64G
+- RISC-V programs must be given in `.da` format for RV64G instruction set
 - C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
+- to enable linking, include a (dummy) `main` function
 
-Example C function that increments an unsigned 64-bit integer:
+Example C program that increments an unsigned 64-bit integer:
 ```c
 #include <stdint.h>
 
 uint64_t incr(uint64_t i) {
   return i + 1;
 }
+
+int main(void) {
+  uint64_t i = incr(0);
+  return i;
+}
 ```
 
-Compile `incr.c` to produce the binary program `incr`:
+Compile and link `incr.c` to produce the binary program `incr`:
 ```shell
 /path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O1 -o incr incr.c
 ```
@@ -137,7 +143,7 @@ End
 
 ### 4. BSPEC contract
 
-- BIR expressions that are closed except for occurrences of free variables
+- BIR expressions that are closed except for occurrences of free HOL4 variables
 - may require conditions on memory accesses (alignment)
 - used for symbolic execution
 - manually written in HOL4
@@ -215,10 +221,10 @@ QED
 
 ### 7. BIR symbolic execution analysis
 
-- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848) instantiated for BIR
+- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848), instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
 - a summarizing collection of performance evaluations for the benchmark programs can be found in [experiment_data.log](experiment_data.log)
-- at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g. `aes/.hollogs/aes_symb_execTheory`
+- at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g., `aes/.hollogs/aes_symb_execTheory`
 
 Example:
 
@@ -250,7 +256,7 @@ QED
 
 ### 9. Proving High Level BIR Contract
 
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs
+- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for BIR
 - requires auxiliary results from above steps
 - **automatic** inside HOL4 if parameters have the right shape
 
@@ -269,7 +275,7 @@ QED
 
 ### 10. Backlifting High Level BIR contract to RISC-V binary
 
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs 
+- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for RISC-V
 - requires collecting auxiliary results from above steps
 - **automatic** inside HOL4 if all parameters have the right shape
 
