@@ -21,3 +21,9 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+ifdef POLY
+ifndef HOLBA_POLYML_HEAPLESS
+HOLHEAP = $(HOLBADIR)/examples/riscv/common/holba-riscv-heap
+endif
+endif

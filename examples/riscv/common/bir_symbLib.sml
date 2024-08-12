@@ -12,94 +12,86 @@ local
   open birs_auxTheory;
 in
 
-val prog_addr_max_tm = ``0x20000w:word64``;
-
-val mem_addr_bound_tm = ``0x100000000w:word64``;
-
-fun mem_addrs_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
- (BExp_BinPred BIExp_LessOrEqual
-  (BExp_Const (Imm64 ^prog_addr_max_tm))
-  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
- (BExp_BinPred BIExp_LessThan
-  (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
-  (BExp_Const (Imm64 ^mem_addr_bound_tm)))``;
-
-fun mem_addrs_aligned_prog_disj_bir_tm rn = ``BExp_BinExp BIExp_And
-  (BExp_Aligned Bit64 3 (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64))))
-  (^(mem_addrs_prog_disj_bir_tm rn))``;
-
-fun mem_addrs_aligned_prog_disj_riscv_tm vn =
- let
-   val var_tm = mk_var (vn, wordsSyntax.mk_int_word_type 64)
- in
-  ``^var_tm && 7w = 0w /\ ^prog_addr_max_tm <=+ ^var_tm /\ ^var_tm <+ ^mem_addr_bound_tm``
- end;
-
-fun pre_vals_reg_bir_tm rn fv = Parse.Term (`
-    (BExp_BinPred
-      BIExp_Equal
-      (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
-      (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
-`);
-
-fun pre_vals_mem_reg_bir_tm mn rn fv = Parse.Term (`
-    (BExp_BinPred
-      BIExp_Equal
-      (BExp_Load
-        (BExp_Den (BVar ^(stringSyntax.fromMLstring mn) (BType_Mem Bit64 Bit8)))
-        (BExp_Den (BVar ^(stringSyntax.fromMLstring rn) (BType_Imm Bit64)))
-        BEnd_LittleEndian Bit64)
-      (BExp_Const (Imm64 `@ [QUOTE fv] @`)))
-`);
-
-fun pre_vals_bir_tm mn rn fvr fvmd =
- bslSyntax.band (pre_vals_reg_bir_tm rn fvr, pre_vals_mem_reg_bir_tm mn rn fvmd);
-
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
-  birs_end_lbls bprog_envtyl birs_pcond =
+  birs_end_lbls birs_env birs_pcond =
  let
+   val pcond_is_sat = birs_smtLib.bir_check_sat false birs_pcond;
+   val _ = if pcond_is_sat then () else
+        raise Feedback.mk_HOL_ERR "bir_symbLib" "bir_symb_analysis" "initial pathcondition is not satisfiable; it seems to contain a contradiction";
    val birs_state_init = ``<|
      bsst_pc       := ^birs_state_init_lbl;
-     bsst_environ  := bir_senv_GEN_list ^bprog_envtyl;
+     bsst_environ  := ^birs_env;
      bsst_status   := BST_Running;
      bsst_pcond    := ^birs_pcond
    |>``;
+   val timer_symbanalysis = bir_miscLib.timer_start 0;
+   val timer_symbanalysis_last = ref (bir_miscLib.timer_start 0);
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
+   val birs_post_step_fun =
+     (fn t => (
+        bir_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
+        bir_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
+        timer_symbanalysis_last := bir_miscLib.timer_start 0;
+	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
+	t)) o
+     birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
+     birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
+     birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
+     birs_rule_tryjustassert_fun true;
    val birs_rule_STEP_fun_spec =
-     (birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm o
-      birs_rule_tryjustassert_fun true o birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
+     (birs_post_step_fun o
+      birs_rule_STEP_fun birs_rule_STEP_thm);
    (* now the composition *)
    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
    val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init;
+   (*val _ = print_thm single_step_A_thm;*)
    (* and also the sequential composition *)
    val birs_rule_STEP_SEQ_thm = MATCH_MP
     birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
     (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_STEP_SEQ_fun_spec =
-    birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm);
+    (birs_post_step_fun o
+     birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm));
+
    val _ = print "now reducing it to one sound structure\n";
    val timer = bir_miscLib.timer_start 0;
    val result = exec_until
      (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec)
-     single_step_A_thm birs_end_lbls;
+     single_step_A_thm birs_end_lbls
+     handle e => (Profile.print_profile_results (Profile.results ()); raise e);
    val _ = bir_miscLib.timer_stop
     (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+
+(*
+
+Profile.reset_all ()
+
+Profile.print_profile_results (Profile.results ())
+Profile.output_profile_results (iostream) (Profile.results ())
+
+*)
+   val _ = Profile.print_profile_results (Profile.results ());
  in
    result
  end (* let *)
 
-fun bir_symb_analysis_thms bir_prog_def
- init_addr_def end_addr_def bspec_pre_def birenvtyl_def =
+fun bir_symb_analysis_thm bir_prog_def
+ init_addr_def end_addr_defs bspec_pre_def birenvtyl_def =
  let
-   val bprog_tm = (snd o dest_eq o concl) bir_prog_def;
+   val _ = print "\n======\n > bir_symb_analysis_thm started\n";
+   val timer = bir_miscLib.timer_start 0;
+   val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
-   val end_addr_tm = (snd o dest_eq o concl) end_addr_def;
    val birs_state_init_lbl_tm =
     (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
-   val birs_state_end_lbls =
-    [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``];
+   val birs_state_end_tm_lbls =
+    List.map 
+     (fn end_addr_def =>
+       let val end_addr_tm = (snd o dest_eq o concl) end_addr_def in
+         (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))`` 
+       end) end_addr_defs;
    val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
    val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 
@@ -108,11 +100,16 @@ fun bir_symb_analysis_thms bir_prog_def
        ``mk_bsysprecond ^bspec_pre_tm ^bprog_envtyl_tm``;
    val birs_pcond_tm = (snd o dest_eq o concl) bsysprecond_thm;
 
+   val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``;
+   val birs_env_tm = (snd o dest_eq o concl) birs_env_thm;
+
    val symb_analysis_thm = bir_symb_analysis
-    bprog_tm birs_state_init_lbl_tm birs_state_end_lbls
-    bprog_envtyl_tm birs_pcond_tm;
+    bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
+    birs_env_tm birs_pcond_tm;
+   val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
+   val symb_analysis_fix_thm = REWRITE_RULE [GSYM birs_env_thm] symb_analysis_thm;
  in
-   (bsysprecond_thm, symb_analysis_thm)
+   (bsysprecond_thm, symb_analysis_fix_thm)
  end (* let *)
 
 end (* local *)
@@ -147,13 +144,13 @@ local
   open distribute_generic_stuffTheory;
 in
 
-fun bir_symb_transfer init_addr_tm end_addr_tm  bspec_pre_tm bspec_post_tm
- bir_prog_def birenvtyl_def bspec_pre_def bspec_post_def prog_vars_def
+fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
+ bir_prog_def birenvtyl_def bspec_pre_def bspec_post_def prog_vars_list_def
  symb_analysis_thm bsysprecond_thm prog_vars_thm =
  let 
    val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
    val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
-   val prog_vars_tm = (fst o dest_eq o concl) prog_vars_def;
+   val prog_vars_list_tm = (fst o dest_eq o concl) prog_vars_list_def;
    val birenvtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
    val bir_state_init_lbl_tm = (snd o dest_eq o concl o EVAL)
     ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
@@ -234,7 +231,7 @@ fun bir_symb_transfer init_addr_tm end_addr_tm  bspec_pre_tm bspec_post_tm
      (birs_symb_to_symbst ^birs_state_init_pre_tm)``,
 
     ASSUME_TAC (GSYM prog_vars_thm) >>
-    `^prog_vars_tm = MAP PairToBVar ^birenvtyl_tm` by (
+    `^prog_vars_list_tm = MAP PairToBVar ^birenvtyl_tm` by (
      SIMP_TAC std_ss [birenvtyl_def, listTheory.MAP_MAP_o,
       PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]) >>
     POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
@@ -276,7 +273,7 @@ fun bir_symb_transfer init_addr_tm end_addr_tm  bspec_pre_tm bspec_post_tm
      P_bircont ^birenvtyl_tm ^bspec_pre_tm (birs_symb_to_concst bs) ==>
      symb_interpr_ext H' H ==>
      birs_symb_matchstate sys2 H' bs' ==>
-     Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_tm) ^bspec_post_tm
+     Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^bspec_post_tm
       (birs_symb_to_concst bs) (birs_symb_to_concst bs')``,
 
     REPEAT STRIP_TAC >>
@@ -292,7 +289,7 @@ fun bir_symb_transfer init_addr_tm end_addr_tm  bspec_pre_tm bspec_post_tm
      (bir_symb_rec_sbir ^bprog_tm)
      (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
      (birs_symb_to_symbst ^birs_state_init_pre_tm) ^Pi_f
-     (Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_tm) ^bspec_post_tm)``,
+     (Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^bspec_post_tm)``,
 
     REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, bsysprecond_thm] >>
     REPEAT GEN_TAC >>
@@ -333,14 +330,14 @@ fun bir_symb_transfer init_addr_tm end_addr_tm  bspec_pre_tm bspec_post_tm
     CONJ_TAC >- (
      (* bpre subset *)
      REWRITE_TAC [bspec_pre_def] >>
-     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_def] >>
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
      SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT] >>
      EVAL_TAC
     ) >>
     CONJ_TAC >- (
      (* bpost subset *)
      REWRITE_TAC [bspec_post_def] >>
-     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_def] >>
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
      SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
     ) >>
     CONJ_TAC >- (

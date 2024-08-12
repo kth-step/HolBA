@@ -156,6 +156,32 @@ Cases_on `bir_get_program_block_info_by_label (BirProgram p) l` >| [
 ]
 QED
 
+Definition bir_get_blocks_def:
+  bir_get_blocks (BirProgram p) = p
+End
+
+Theorem bir_get_blocks_INV_thm:
+!p. BirProgram (bir_get_blocks p) = p
+Proof
+  Cases >> rw [bir_get_blocks_def]
+QED
+
+Theorem bir_get_blocks_labels_length_thm:
+!p. LENGTH (bir_labels_of_program p) = LENGTH (bir_get_blocks p)
+Proof
+  Cases >>
+  gs [bir_labels_of_program_def, bir_get_blocks_def]
+QED
+
+Theorem bir_get_blocks_labels_EL_thm:
+!p i.
+  (i < LENGTH (bir_get_blocks p)) ==>
+  EL i (bir_labels_of_program p) = (EL i (bir_get_blocks p)).bb_label
+Proof
+  Cases >>
+  gs [bir_labels_of_program_def, bir_get_blocks_def, listTheory.EL_MAP]
+QED
+
 
 
 (* ------------------------------------------------------------------------- *)

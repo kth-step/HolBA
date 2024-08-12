@@ -33,19 +33,25 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 
 ### 0. RISC-V program
 
-- RISC-V programs must be given in `.da` format for RV64
+- RISC-V programs must be given in `.da` format for RV64G instruction set
 - C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
+- to enable linking, include a (dummy) `main` function
 
-Example C function that increments an unsigned 64-bit integer:
+Example C program that increments an unsigned 64-bit integer:
 ```c
 #include <stdint.h>
 
 uint64_t incr(uint64_t i) {
   return i + 1;
 }
+
+int main(void) {
+  uint64_t i = incr(0);
+  return i;
+}
 ```
 
-Compile `incr.c` to produce the binary program `incr`:
+Compile and link `incr.c` to produce the binary program `incr`:
 ```shell
 /path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O1 -o incr incr.c
 ```
@@ -69,15 +75,16 @@ Disassembly of section .text:
 
 ### 1. Lifting the RISC-V program to BIR
 
-- requires manual specification of data area addresses, affecting symbolic execution
+- requires manual specification of code area addresses, for all code included in the binary program
 - the lifting stores HOL4 constants for the BIR program, the original binary program, and a lifting theorem for use in backlifting
-- **automatic** once arguments (program memory boundaries) are given inside HOL4
+- **automatic** once arguments (names and code area boundaries) are given inside HOL4
+- the code area addresses have to be accurate, i.e., the end boundary is the address of the last instruction plus 4 in case of 32-bit instructions as in RV64G
 
 Example:
 
 ```sml
 val _ = lift_da_and_store "incr" "incr.da" da_riscv
- ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10495));
+ ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10498));
 ```
 
 ### 2. RISC-V program boundaries and contract
@@ -136,7 +143,7 @@ End
 
 ### 4. BSPEC contract
 
-- BIR expressions that are closed except for occurrences of free variables
+- BIR expressions that are closed except for occurrences of free HOL4 variables
 - may require conditions on memory accesses (alignment)
 - used for symbolic execution
 - manually written in HOL4
@@ -212,10 +219,12 @@ Proof
 QED
 ```
 
-### 5. BIR symbolic execution analysis
+### 7. BIR symbolic execution analysis
 
-- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848) instantiated for BIR
+- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848), instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
+- a summarizing collection of performance evaluations for the benchmark programs can be found in [experiment_data.log](experiment_data.log)
+- at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g., `aes/.hollogs/aes_symb_execTheory`
 
 Example:
 
@@ -227,7 +236,7 @@ Proof
 QED
 ```
 
-### 6. Specifying and proving BSPEC contracts using symbolic analysis results
+### 8. Specifying and proving BSPEC contracts using symbolic analysis results
 
 - requires manual specification of beginning and end program labels for contract
 - **automatic** inside HOL4 if parameters have the right shape 
@@ -245,9 +254,9 @@ Proof
 QED
 ```
 
-### 6. Proving High Level BIR Contract
+### 9. Proving High Level BIR Contract
 
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs
+- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for BIR
 - requires auxiliary results from above steps
 - **automatic** inside HOL4 if parameters have the right shape
 
@@ -264,9 +273,9 @@ Proof
 QED
 ```
 
-### 7. Backlifting High Level BIR contract to RISC-V binary
+### 10. Backlifting High Level BIR contract to RISC-V binary
 
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs 
+- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for RISC-V
 - requires collecting auxiliary results from above steps
 - **automatic** inside HOL4 if all parameters have the right shape
 
@@ -274,7 +283,7 @@ Example:
 
 ```sml
 Theorem riscv_incr_contract_thm:
- riscv_cont bir_foo_progbin incr_init_addr {incr_end_addr}
+ riscv_cont bir_incr_progbin incr_init_addr {incr_end_addr}
   (riscv_incr_pre pre_x10) (riscv_incr_post pre_x10)
 Proof
 (* application of backlifting automation *)

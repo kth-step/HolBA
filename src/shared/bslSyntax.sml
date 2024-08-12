@@ -362,32 +362,10 @@ struct
   val ble = bbinpred BIExp_LessOrEqual_tm
   val bsle = bbinpred BIExp_SignedLessOrEqual_tm
 
-  (* Canonical form of binary predicate lists:
-   *   Left operator is always a leaf *)
-  local
-    fun bbinpredl_ bpred [] = raise ERR "bbinpredl" "need at least 1 term"
-      | bbinpredl_ bpred (fst::tms) =
-        List.foldl (bbinexp bpred) fst tms
-  in
-    fun bbinpredl bpred l = bbinpredl_ bpred (rev l)
-      handle e => raise wrap_exn "bbinpredl" e
-  end
-  val beql = bbinpredl BIExp_Equal_tm
-  val bneql = bbinpredl BIExp_NotEqual_tm
-  val bltl = bbinpredl BIExp_LessThan_tm
-  val bsltl = bbinpredl BIExp_SignedLessThan_tm
-  val blel = bbinpredl BIExp_LessOrEqual_tm
-  val bslel = bbinpredl BIExp_SignedLessOrEqual_tm
-
   fun bgt (a, b) = blt (b, a)
   fun bsgt (a, b) = bslt (b, a)
   fun bge (a, b) = ble (b, a)
   fun bsge (a, b) = bsle (b, a)
-
-  val bgtl = (bltl o rev)
-  val bsgtl = (bsltl o rev)
-  val bgel = (blel o rev)
-  val bsgel = (bslel o rev)
 
   (* Memory equality (BExp_MemEq: bir_exp_t) *)
   val bmemeq = mk_BExp_MemEq

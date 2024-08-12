@@ -29,7 +29,7 @@ sig
     (* Environment                                                            *)
     (**************************************************************************)
 
-    (* Variales (BVar: bir_var_t)
+    (* Variables (BVar: bir_var_t)
      *
      * bvar: string -> bir_type_t -> bir_var_t
      *
@@ -533,10 +533,7 @@ sig
      * | BIExp_LessOrEqual          => ble blel
      * | BIExp_SignedLessOrEqual    => bsle bslel
      *
-     * Note: list versions `bxxxl` will generate conjunctions of `bxxx`.
-     *
      * bbinpred:    bir_bin_pred_t -> (bir_exp_t * bir_exp_t) -> bir_exp_t
-     * bbinpredl:   bir_bin_pred_t -> bir_exp_t list          -> bir_exp_t
      *
      * beq:         (bir_exp_t * bir_exp_t) -> bir_exp_t
      * bneq:        (bir_exp_t * bir_exp_t) -> bir_exp_t
@@ -545,26 +542,12 @@ sig
      * ble:         (bir_exp_t * bir_exp_t) -> bir_exp_t
      * bsle:        (bir_exp_t * bir_exp_t) -> bir_exp_t
      *
-     * beql:        bir_exp_t list -> bir_exp_t
-     * bneql:       bir_exp_t list -> bir_exp_t
-     * bltl:        bir_exp_t list -> bir_exp_t
-     * bsltl:       bir_exp_t list -> bir_exp_t
-     * blel:        bir_exp_t list -> bir_exp_t
-     * bslel:       bir_exp_t list -> bir_exp_t
-     *
-     * # BSL sugar:
      * bgt:         (bir_exp_t * bir_exp_t) -> bir_exp_t
      * bsgt:        (bir_exp_t * bir_exp_t) -> bir_exp_t
      * bge:         (bir_exp_t * bir_exp_t) -> bir_exp_t
      * bsge:        (bir_exp_t * bir_exp_t) -> bir_exp_t
-     *
-     * bgtl:        bir_exp_t list -> bir_exp_t
-     * bsgtl:       bir_exp_t list -> bir_exp_t
-     * bgel:        bir_exp_t list -> bir_exp_t
-     * bsgel:       bir_exp_t list -> bir_exp_t
      *)
     val bbinpred:   term -> (term * term) -> term
-    val bbinpredl:  term -> term list -> term
 
     val beq:        (term * term) -> term
     val bneq:       (term * term) -> term
@@ -573,22 +556,10 @@ sig
     val ble:        (term * term) -> term
     val bsle:       (term * term) -> term
 
-    val beql:       term list -> term
-    val bneql:      term list -> term
-    val bltl:       term list -> term
-    val bsltl:      term list -> term
-    val blel:       term list -> term
-    val bslel:      term list -> term
-
     val bgt:        (term * term) -> term
     val bsgt:       (term * term) -> term
     val bge:        (term * term) -> term
     val bsge:       (term * term) -> term
-
-    val bgtl:       term list -> term
-    val bsgtl:      term list -> term
-    val bgel:       term list -> term
-    val bsgel:      term list -> term
 
     (* Memory equality (BExp_MemEq: bir_exp_t)
      *

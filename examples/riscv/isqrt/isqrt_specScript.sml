@@ -4,8 +4,6 @@ open markerTheory;
 
 open wordsTheory;
 
-open distribute_generic_stuffLib;
-
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -31,12 +29,6 @@ open symb_prop_transferTheory;
 
 open jgmt_rel_bir_contTheory;
 
-open bir_symbTheory;
-open birs_stepLib;
-open bir_symb_sound_coreTheory;
-open symb_recordTheory;
-open symb_interpretTheory;
-
 open pred_setTheory;
 
 open program_logicSimps;
@@ -44,11 +36,7 @@ open program_logicSimps;
 open bir_env_oldTheory;
 open bir_program_varsTheory;
 
-open distribute_generic_stuffTheory;
-
 open logrootTheory arithmeticTheory pairTheory combinTheory;
-
-open isqrtTheory;
 
 val _ = new_theory "isqrt_spec";
 
@@ -185,7 +173,7 @@ Definition riscv_isqrt_post_3_loop_def:
   (m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
-   pre_x13 <= pre_x14)
+   pre_x14 <= pre_x13)
 End
 
 Definition riscv_isqrt_post_3_ret_def:
@@ -194,7 +182,7 @@ Definition riscv_isqrt_post_3_ret_def:
   (m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
-   pre_x14 < pre_x13)
+   pre_x13 < pre_x14)
 End
 
 (* --------------- *)
@@ -329,9 +317,9 @@ val bspec_isqrt_post_3_loop_tm = bslSyntax.bandl [
     (BExp_Den (BVar "x14" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x14))``,
   ``BExp_BinPred
-    BIExp_LessOrEqual
-    (BExp_Const (Imm64 pre_x13))
-    (BExp_Const (Imm64 pre_x14))``
+     BIExp_LessOrEqual
+      (BExp_Const (Imm64 pre_x14))
+      (BExp_Const (Imm64 pre_x13))``
 ];
 
 Definition bspec_isqrt_post_3_loop_def:
@@ -354,8 +342,8 @@ val bspec_isqrt_post_3_ret_tm = bslSyntax.bandl [
     (BExp_Const (Imm64 pre_x14))``,
   ``BExp_BinPred
     BIExp_LessThan
-    (BExp_Const (Imm64 pre_x14))
-    (BExp_Const (Imm64 pre_x13))``
+    (BExp_Const (Imm64 pre_x13))
+    (BExp_Const (Imm64 pre_x14))``
 ];
 
 Definition bspec_isqrt_post_3_ret_def:

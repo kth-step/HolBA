@@ -1188,6 +1188,7 @@ REPEAT STRIP_TAC >>
   ) >> Cases_on `r` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pair_CASE_def]
   ) >>
+  fs [birs_symbval_concretizations_def] >>
 
   PAT_X_ASSUM ``{B C | D C} = A`` (ASSUME_TAC o GSYM) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss++PRED_SET_ss) [option_CLAUSES] >>

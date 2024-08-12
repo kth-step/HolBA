@@ -2,8 +2,6 @@ open HolKernel boolLib Parse bossLib;
 
 open markerTheory;
 
-open distribute_generic_stuffLib;
-
 open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
@@ -19,7 +17,7 @@ open bir_typing_expTheory;
 open bir_htTheory;
 
 open tutorial_smtSupportLib;
-open bir_symbLib;
+open bir_predLib;
 
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;
@@ -31,22 +29,12 @@ open symb_prop_transferTheory;
 
 open jgmt_rel_bir_contTheory;
 
-open bir_symbTheory;
-open birs_stepLib;
-open bir_symb_sound_coreTheory;
-open symb_recordTheory;
-open symb_interpretTheory;
-
 open pred_setTheory;
 
 open program_logicSimps;
 
 open bir_env_oldTheory;
 open bir_program_varsTheory;
-
-open incr_memTheory;
-
-open distribute_generic_stuffTheory;
 
 val _ = new_theory "incr_mem_spec";
 
@@ -68,7 +56,7 @@ End
 
 Definition riscv_incr_mem_pre_def:
  riscv_incr_mem_pre (pre_x10:word64) (pre_x10_deref:word64) (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm "pre_x10") /\
+  (^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
    m.c_gpr m.procID 10w = pre_x10 /\
    riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref)
 End
@@ -83,7 +71,7 @@ End
 (* -------------- *)
 
 val bspec_incr_mem_pre_tm = bslSyntax.bandl [
- mem_addrs_aligned_prog_disj_bir_tm "x10",
+ mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))

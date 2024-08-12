@@ -53,7 +53,7 @@ fun birsmt_check_unsat bexp =
 (*
     val _ = (print o fst) query;
 *)
-    val result = querysmt bir_smtLib_z3_prelude vars [query];
+    val result = querysmt vars [query];
 
     val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
             raise ERR "bir_smt_check_unsat" "smt solver couldn't determine satisfiability"
@@ -67,14 +67,15 @@ val vars_empty = Redblackset.empty smtlib_vars_compare;
 
 fun bir_check_unsat use_holsmt =
   if use_holsmt then
-    holsmt_bir_check_unsat
+    Profile.profile "bir_check_unsat::holsmt" holsmt_bir_check_unsat
   else
-    birsmt_check_unsat;
+    Profile.profile "bir_check_unsat::birsmt" birsmt_check_unsat;
+
+fun bir_check_sat use_holsmt ex =
+  not (bir_check_unsat use_holsmt ex);
 
 fun bir_check_taut use_holsmt ex =
   bir_check_unsat use_holsmt ``BExp_UnaryExp BIExp_Not ^ex``;
-
-
 
 
 end (* local *)

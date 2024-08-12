@@ -170,6 +170,95 @@ REPEAT STRIP_TAC >> (
 QED
 
 
+Theorem branch_prune1_spec_thm:
+  !bprog sys L lbl1 env1 status1 pre cond lbl2 env2 status2.
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
+    (sys, L, IMAGE birs_symb_to_symbst {
+      <|bsst_pc := lbl1;
+        bsst_environ := env1;
+        bsst_status := status1;
+        bsst_pcond := BExp_BinExp BIExp_And pre cond|>;
+      <|bsst_pc := lbl2;
+        bsst_environ := env2;
+        bsst_status := status2;
+        bsst_pcond := BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond)|>})) ==>
+  (lbl1 <> lbl2 \/
+   status1 <> status2) ==>
+  (birs_pcondinf (BExp_BinExp BIExp_And pre cond)) ==>
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
+    (sys, L, IMAGE birs_symb_to_symbst {
+      <|bsst_pc := lbl2;
+        bsst_environ := env2;
+        bsst_status := status2;
+        bsst_pcond := BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond)|>}))
+Proof
+  REPEAT STRIP_TAC >> (
+    IMP_RES_TAC symb_rulesTheory.symb_rule_INF_thm >>
+    PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl1;
+        bsst_environ := env1;
+        bsst_status := status1;
+        bsst_pcond := BExp_BinExp BIExp_And pre cond|>``) >>
+
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [IMAGE_INSERT, IMAGE_EMPTY, birs_symb_to_symbst_def] >>
+
+    `symb_pcondinf (bir_symb_rec_sbir bprog)
+          (BExp_BinExp BIExp_And pre cond)` by (
+      METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbst_pcond_def, DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
+    REV_FULL_SIMP_TAC (std_ss) []
+  )
+QED
+
+
+Theorem branch_prune2_spec_thm:
+  !bprog sys L lbl1 env1 status1 pre cond lbl2 env2 status2.
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
+    (sys, L, IMAGE birs_symb_to_symbst {
+      <|bsst_pc := lbl1;
+        bsst_environ := env1;
+        bsst_status := status1;
+        bsst_pcond := BExp_BinExp BIExp_And pre cond|>;
+      <|bsst_pc := lbl2;
+        bsst_environ := env2;
+        bsst_status := status2;
+        bsst_pcond := BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond)|>})) ==>
+  (lbl1 <> lbl2 \/
+   status1 <> status2) ==>
+  (birs_pcondinf (BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond))) ==>
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
+    (sys, L, IMAGE birs_symb_to_symbst {
+      <|bsst_pc := lbl1;
+        bsst_environ := env1;
+        bsst_status := status1;
+        bsst_pcond := BExp_BinExp BIExp_And pre cond|>}))
+Proof
+  REPEAT STRIP_TAC >> (
+    IMP_RES_TAC symb_rulesTheory.symb_rule_INF_thm >>
+    PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl2;
+        bsst_environ := env2;
+        bsst_status := status2;
+        bsst_pcond := BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond)|>``) >>
+
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [IMAGE_INSERT, IMAGE_EMPTY, birs_symb_to_symbst_def] >>
+
+    `symb_pcondinf (bir_symb_rec_sbir bprog)
+          (BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond))` by (
+      METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbst_pcond_def, DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
+    REV_FULL_SIMP_TAC (std_ss) []
+  )
+QED
+
+
 (* ******************************************************* *)
 (*      SUBST rule                                         *)
 (* ******************************************************* *)
@@ -738,5 +827,34 @@ Proof
 cheat
 QED
 *)
+
+
+local
+  open bir_bool_expTheory
+in
+
+Theorem birs_jumptarget_singletonconst_thm:
+!pcond vaex iv.
+  (!i. birs_interpret_fun i vaex = SOME (BVal_Imm iv)) ==>
+  (?i. birs_interpret_fun i pcond = SOME bir_val_true) ==>
+  (birs_symbval_concretizations pcond vaex = {BL_Address iv})
+Proof
+  rpt strip_tac >>
+  rw [birs_symbval_concretizations_def] >>
+  fs [EXTENSION] >>
+  METIS_TAC []
+QED
+
+Theorem birs_jumptarget_empty_thm:
+!pcond vaex iv.
+  (!i. birs_interpret_fun i pcond = SOME bir_val_false) ==>
+  (birs_symbval_concretizations pcond vaex = EMPTY)
+Proof
+  rpt strip_tac >>
+  rw [birs_symbval_concretizations_def] >>
+  simp_tac (std_ss++holBACore_ss++wordsLib.WORD_ss++pred_setSimps.GSPEC_SIMP_ss) [bir_val_true_def, bir_val_false_def]
+QED
+
+end;
 
 val _ = export_theory();

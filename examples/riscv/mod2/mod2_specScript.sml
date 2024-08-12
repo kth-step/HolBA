@@ -4,8 +4,6 @@ open markerTheory;
 
 open wordsTheory;
 
-open distribute_generic_stuffLib;
-
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -31,22 +29,12 @@ open symb_prop_transferTheory;
 
 open jgmt_rel_bir_contTheory;
 
-open bir_symbTheory;
-open birs_stepLib;
-open bir_symb_sound_coreTheory;
-open symb_recordTheory;
-open symb_interpretTheory;
-
 open pred_setTheory;
 
 open program_logicSimps;
 
 open bir_env_oldTheory;
 open bir_program_varsTheory;
-
-open distribute_generic_stuffTheory;
-
-open mod2Theory;
 
 val _ = new_theory "mod2_spec";
 

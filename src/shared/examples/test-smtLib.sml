@@ -36,7 +36,7 @@ val varlist = Redblackset.listItems vars;
 
 val _ = print "Testing with z3\n";
 
-val result = querysmt bir_smtLib_z3_prelude vars ([str]@conds);
+val result = querysmt vars ([str]@conds);
 
 val _ = if result = BirSmtUnsat then () else
         raise Fail "Unexpected result. Should be unsat.";

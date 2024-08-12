@@ -1,0 +1,26 @@
+
+storeload.o:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000628 <storestorestore_loadload>:
+ 628:	00350793          	addi	a5,a0,3
+ 62c:	00f5b023          	sd	a5,0(a1)
+ 630:	0055051b          	addiw	a0,a0,5
+ 634:	0ff57513          	zext.b	a0,a0
+ 638:	00a60023          	sb	a0,0(a2)
+ 63c:	0005b783          	ld	a5,0(a1)
+ 640:	00064503          	lbu	a0,0(a2)
+ 644:	00008067          	ret
+
+0000000000000648 <main>:
+ 648:	fff00793          	li	a5,-1
+ 64c:	02079793          	slli	a5,a5,0x20
+ 650:	01a00713          	li	a4,26
+ 654:	00e7b023          	sd	a4,0(a5)
+ 658:	01c00713          	li	a4,28
+ 65c:	00e78823          	sb	a4,16(a5)
+ 660:	0007b703          	ld	a4,0(a5)
+ 664:	0107c503          	lbu	a0,16(a5)
+ 668:	00008067          	ret

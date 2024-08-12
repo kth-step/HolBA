@@ -57,7 +57,7 @@ val SUBST_thm = birs_rule_SUBST_thm;
 val STEP_SEQ_thm = birs_rule_STEP_SEQ_thm;
 val symbex_A_thm = single_step_A_thm;
 *)
-fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
+fun birs_rule_STEP_SEQ_fun_ (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
   let
     val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
     val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
@@ -69,12 +69,13 @@ fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
     val step3_thm = CONV_RULE birs_exec_step_CONV_fun step2_thm;
 
     (*
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP_SEQ in " ^ delta_s ^ "\n")) timer_exec_step_p3;
     *)
-    val step4_thm = (birs_rule_SUBST_trysimp_const_add_subst_fun SUBST_thm o birs_rule_tryjustassert_fun true) step3_thm;
+    val step4_thm = (* (birs_rule_SUBST_trysimp_fun SUBST_thm o birs_rule_tryjustassert_fun true) *) step3_thm;
   in
     step4_thm
   end;
+fun birs_rule_STEP_SEQ_fun x = Profile.profile "birs_rule_STEP_SEQ_fun" (birs_rule_STEP_SEQ_fun_ x);
 
 
 (*
@@ -125,7 +126,7 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
       else if List.length birs_states_mid = 1 then
         let
 
-          val _ = print ("sequential composition with singleton mid_state set\n");
+          val _ = print ("START sequential composition with singleton mid_state set\n");
 
 (*
           val birs_state_mid = hd birs_states_mid;
@@ -147,7 +148,7 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
           val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm (SOME freesymbols_B_thm);
 *)
           val bprog_composed_thm = STEP_SEQ_fun_spec symbex_A_thm;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> FINISH took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
 
         in
           build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) bprog_composed_thm stop_lbls
@@ -173,9 +174,9 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
 
 fun exec_until (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls =
   let
-    val tree = build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls;
+    val tree = Profile.profile "build_tree" (build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm) stop_lbls;
   in
-    reduce_tree SEQ_fun_spec tree
+    Profile.profile "reduce_tree" (reduce_tree SEQ_fun_spec) tree
   end;
 
 

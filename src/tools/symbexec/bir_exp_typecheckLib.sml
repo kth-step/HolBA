@@ -12,6 +12,8 @@ open bir_expTheory;
 open bir_symbTheory;
 open birs_auxTheory;
 
+open birs_auxLib;
+
   (* error handling *)
   val libname = "bir_exp_typecheckLib"
   val ERR = Feedback.mk_HOL_ERR libname
@@ -70,30 +72,69 @@ in (* local *)
     end
       handle _ => raise ERR "type_of_bir_exp_CONV" "conversion failed";
 
+ val typecheck_dict = ref ((Redblackmap.mkDict Term.compare) : (term, thm) Redblackmap.dict);
+ fun typecheck_add (k_tm, tc_thm) = typecheck_dict := Redblackmap.insert (!typecheck_dict, k_tm, tc_thm);
+ fun typecheck_lookup k_tm = 
+      SOME (Redblackmap.find (!typecheck_dict, k_tm))
+      handle NotFound => NONE;
+
+fun check_typeof thm =
+  let
+     open optionSyntax;
+     open bir_valuesSyntax;
+     open bir_typing_expSyntax;
+     
+     val (term,result) = (dest_eq o concl) thm;
+     val k_tm = dest_type_of_bir_exp term;
+     val _ = if is_none result orelse
+                (is_some result andalso
+                 ((fn x => is_BType_Imm x orelse is_BType_Mem x) o dest_some) result) then () else
+               raise ERR "check_typeof" "didn't reach the result";
+  in (typecheck_add (k_tm, thm); thm) end
+
+fun gettype_CONV term =
+  let
+     val thm = type_of_bir_exp_CONV term;
+  in
+    thm
+  end
+  handle _ => raise ERR "gettype_CONV" ("ill-typed term: " ^ Parse.term_to_string term);
+
 (*
 val bexp_term = ``type_of_bir_exp (BExp_BinPred BIExp_LessOrEqual
           (BExp_Den (BVar "countw" (BType_Imm Bit64)))
           (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))``;
+val term = bexp_term;
 type_of_bir_exp_DIRECT_CONV bexp_term
 *)
  fun type_of_bir_exp_DIRECT_CONV term =
    let
-     open optionSyntax;
-     open bir_valuesSyntax;
      open bir_typing_expSyntax;
 
      val _ = if is_type_of_bir_exp term then () else
                raise ERR "type_of_bir_exp_DIRECT_CONV" "cannot handle term";
 
-     val thm = type_of_bir_exp_CONV term;
+     val k_tm = dest_type_of_bir_exp term;
+     val tc_thm_o = typecheck_lookup k_tm;
+   in
+    if isSome tc_thm_o then ((*print "successss!!!!\n";*) valOf tc_thm_o) else
+    let
+     val thm_opened = (REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def]) term;
+     val sub_typeof_exps = GEN_match_extract is_type_of_bir_exp [] [(snd o dest_eq o concl) thm_opened];
+     val numberoffoundexps =
+       length (List.filter (isSome o typecheck_lookup o dest_type_of_bir_exp) sub_typeof_exps);
+     (*val _ = print ("found typeofs: " ^ (Int.toString numberoffoundexps) ^ "\n");*)
+     
+     val typeof_thms = List.map type_of_bir_exp_DIRECT_CONV sub_typeof_exps;
 
-     val result = (snd o dest_eq o concl) thm;
-     val _ = if is_none result orelse
-                (is_some result andalso
-                 ((fn x => is_BType_Imm x orelse is_BType_Mem x) o dest_some) result) then () else
-               raise ERR "type_of_bir_exp_DIRECT_CONV" "didn't reach the result";
-   in thm end
-   handle _ => raise ERR "type_of_bir_exp_DIRECT_CONV" ("ill-typed term: " ^ Parse.term_to_string term);
+     val thm = CONV_RULE (RAND_CONV (REWRITE_CONV typeof_thms THENC gettype_CONV)) thm_opened;
+    in
+      check_typeof thm
+    end
+   end
+  handle _ => raise ERR "type_of_bir_exp_DIRECT_CONV" ("ill-typed term: " ^ Parse.term_to_string term);
+
+val type_of_bir_exp_DIRECT_CONV = Profile.profile "type_of_bir_exp_DIRECT_CONV" type_of_bir_exp_DIRECT_CONV;
 
 
 end (* local *)

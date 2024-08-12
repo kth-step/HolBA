@@ -1547,11 +1547,15 @@ Definition birs_exec_stmt_jmp_to_label_def:
     else st with bsst_status := (BST_JumpOutside l)
 End
 
+Definition birs_symbval_concretizations_def:
+  birs_symbval_concretizations pcond vaex = {BL_Address iv | ?i. birs_interpret_fun i pcond = SOME bir_val_true /\ birs_interpret_fun i vaex = SOME (BVal_Imm iv)}
+End
+
 Definition birs_eval_label_exp_def:
   (birs_eval_label_exp (BLE_Label l) senv pcond = SOME {l}) /\
    (birs_eval_label_exp (BLE_Exp e)   senv pcond =
      case birs_eval_exp e senv of
-      | SOME (vaex, BType_Imm _) => SOME {BL_Address iv | ?i. birs_interpret_fun i pcond = SOME bir_val_true /\ birs_interpret_fun i vaex = SOME (BVal_Imm iv)}
+      | SOME (vaex, BType_Imm _) => SOME (birs_symbval_concretizations pcond vaex)
       | _ => NONE
    )
 End
