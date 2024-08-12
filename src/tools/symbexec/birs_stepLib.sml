@@ -26,14 +26,21 @@ open bir_exp_typecheckLib;
 (*
 birs_senv_typecheck_CONV test_term_birs_senv_typecheck
 *)
-val is_birs_senv_typecheck =
-  ((fn x => (identical ``birs_senv_typecheck`` o fst) x andalso ((fn l => l = 2) o length o snd) x) o strip_comb);
-val birs_senv_typecheck_CONV = (
-  RESTR_EVAL_CONV [``type_of_bir_exp``] THENC
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
+end;
+
+fun birs_senv_typecheck_CONV_ eq_thms = (
+  RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
+  REWRITE_CONV eq_thms THENC
   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
   EVAL
 );
-val birs_senv_typecheck_CONV = Profile.profile "senv_typecheck_CONV" birs_senv_typecheck_CONV;
+fun birs_senv_typecheck_CONV x = Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV_ x);
 
 (*
 CBV_CONV (new_compset [
@@ -60,11 +67,124 @@ birs_eval_exp
 
 birs_eval_exp_CONV test_term_birs_eval_exp
 *)
-val birs_eval_exp_CONV = (
-  CBV_CONV (new_compset [birs_eval_exp_def, birs_gen_env_thm, birs_gen_env_NULL_thm]) THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
-  GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV) THENC
-  EVAL
+
+(*
+val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))]``;
+val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+                ("SP_process",
+                 BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+                ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))]``;
+val i = 0;
+val acc = [] : thm list;
+fun consf thm = thm:thm;
+*)
+val bir_exp_t_tm = ``:bir_exp_t``;
+fun gen_abbr_var i = mk_var ("temp_envl_abbr_" ^ (Int.toString i), bir_exp_t_tm);
+fun abbr_birs_gen_env i acc consf t =
+  if not (listSyntax.is_cons t) then (consf (REFL t), acc) else
+  let
+    val (h,tl) = listSyntax.dest_cons t;
+    val (_, e_tm) = pairSyntax.dest_pair h;
+    val e_abbr_tm = gen_abbr_var i;
+    val eq_thm = ASSUME (mk_eq (e_abbr_tm, e_tm));
+    val thm0 = LAND_CONV (REWRITE_CONV [GSYM eq_thm]) t;
+    fun consf_ thm = consf (CONV_RULE (RAND_CONV (RAND_CONV (K thm))) thm0);
+  in
+    abbr_birs_gen_env (i+1) (eq_thm::acc) consf_ tl
+  end;
+(*
+val (thm, eq_thms) = abbr_birs_gen_env 0 [] I t;
+*)
+val gen_rev_thm = prove(``!A B. ((A = A) ==> B) ==> B``, METIS_TAC []);
+val mk_gen_subst = (fn (abbr,x) => (abbr |-> x)) o dest_eq;
+fun gen_subst acc [] = acc
+  | gen_subst acc (x::t) = gen_subst ((mk_gen_subst x)::acc) t;
+fun rev_birs_gen_env (thm, eq_thms) =
+  let
+    val eq_tms = map (concl) eq_thms;
+    (*val s = gen_subst [] eq_tms;*)
+  in
+    (*foldl (fn (x,acc) =>  MATCH_MP gen_rev_thm ((INST [mk_gen_subst x] o DISCH x) acc) ) thm eq_tms*)
+    foldl (fn (x,acc) =>  MP ((INST [mk_gen_subst x] o DISCH x) acc) ((REFL o snd o dest_eq) x)) thm eq_tms
+  end;
+val rev_birs_gen_env = Profile.profile "eval_exp_CONV_rev" rev_birs_gen_env;
+(*
+  fun abbr_app (t, env_tm, pcond_tm) =
+  let
+     val env_eq_tm = mk_eq (env_abbr_tm, env_tm);
+     val pcond_eq_tm = mk_eq (pcond_abbr_tm, pcond_tm);
+     val env_eq_thm = ASSUME (env_eq_tm);
+     val pcond_eq_thm = ASSUME (pcond_eq_tm);
+     val abbr_thm = REWRITE_CONV [GSYM (env_eq_thm), GSYM (pcond_eq_thm)] t;
+  in
+    (abbr_thm, [env_eq_thm, pcond_eq_thm])
+  end;
+val abbr_app = Profile.profile "abbr_app" abbr_app;
+fun abbr_rev (res, env_tm, pcond_tm) =
+  MP (MP ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] o DISCH_ALL) res) (REFL env_tm)) (REFL pcond_tm);
+val abbr_rev = Profile.profile "abbr_rev" abbr_rev;
+*)
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
+  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+  val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+in
+ val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
+end;
+
+(*val is_OPTION_BIND = (identical ``OPTION_BIND : bir_exp_t option -> (bir_exp_t -> bir_type_t option) -> bir_type_t option`` o fst o strip_comb);*)
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
+end;
+
+(* val is_birs_update_env = (identical birs_update_env_tm o fst o strip_comb); *)
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (birs_update_env_tm,  mk_birs_update_env, dest_birs_update_env, is_birs_update_env)  = syntax_fns2_env "birs_update_env";
+end;
+
+fun birs_eval_exp_CONV_p1 t =
+   let
+     val tm = (snd o dest_comb o snd o dest_comb) t;(*dest_birs_eval_exp;*)
+     val (thm, eq_thms) = abbr_birs_gen_env 0 [] I tm;
+   in
+     (RAND_CONV (RAND_CONV (K thm)) t, eq_thms)
+   end;
+val birs_eval_exp_CONV_p1 = Profile.profile "eval_exp_CONV_p1" birs_eval_exp_CONV_p1;
+
+val birs_eval_exp_CONV_p2 =
+  REWRITE_CONV [birs_eval_exp_def] THENC
+  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+val birs_eval_exp_CONV_p2 = Profile.profile "eval_exp_CONV_p2" birs_eval_exp_CONV_p2;
+
+fun birs_eval_exp_CONV_p3_ eq_thms =
+  GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
+fun birs_eval_exp_CONV_p3 x = Profile.profile "eval_exp_CONV_p3" (birs_eval_exp_CONV_p3_ x);
+
+fun birs_eval_exp_CONV_p4_ eq_thms =
+  EVAL THENC
+  REWRITE_CONV eq_thms THENC
+  EVAL;
+fun birs_eval_exp_CONV_p4 x = Profile.profile "eval_exp_CONV_p4" (birs_eval_exp_CONV_p4_ x);
+
+fun birs_eval_exp_CONV t = (
+  let
+    val (thm_p1, eq_thms) = birs_eval_exp_CONV_p1 t;
+    (*val _ = print_thm thm_p1;*)
+    val thm_p2 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p2)) thm_p1;
+    val thm_p3 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p3 eq_thms)) thm_p2;
+    val thm_p4 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p4 eq_thms)) thm_p3;
+    val thm_p4rev = rev_birs_gen_env (thm_p4, eq_thms);
+  in
+    thm_p4rev
+  end
 );
 val birs_eval_exp_CONV = Profile.profile "eval_exp_CONV" birs_eval_exp_CONV;
 
@@ -612,8 +732,10 @@ val birs_exec_step_CONV_p1 = Profile.profile "exec_step_CONV_p1" birs_exec_step_
 
 val birs_eval_label_exp_tm = ``birs_eval_label_exp``;
 val birs_eval_exp_tm = ``birs_eval_exp``;
+(*
 val birs_update_env_tm = ``birs_update_env : string # bir_exp_t -> (string -> bir_exp_t option) -> string -> bir_exp_t option``;
 val birs_gen_env_tm = ``birs_gen_env``;
+*)
 
 val is_birs_eval_exp = (identical birs_eval_exp_tm o fst o strip_comb);
 
@@ -641,9 +763,6 @@ val birs_exec_step_CONV_p5 =
    RESTR_EVAL_CONV [birs_gen_env_tm];
 val birs_exec_step_CONV_p5 = Profile.profile "exec_step_CONV_p5" birs_exec_step_CONV_p5;
 *)
-
-val is_OPTION_BIND = (identical ``OPTION_BIND : bir_exp_t option -> (bir_exp_t -> bir_type_t option) -> bir_type_t option`` o fst o strip_comb);
-val is_birs_update_env = (identical birs_update_env_tm o fst o strip_comb);
 
 fun continue_eq_rule c = CONV_RULE (RAND_CONV c);
 fun restr_conv_eq_rule consts c th =
@@ -682,14 +801,17 @@ val test_term =
 is_birs_update_env test_term;
 *)
 
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+(*  RESTR_EVAL_CONV [birs_eval_exp_tm, birs_update_env_tm] *)
 fun birs_exec_step_CONV_B (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
 let
   (* evaluate to symbolic expression *)
   val res_b_eval_exp = (* restr_conv_eq_rule *)
    continue_eq_rule
-    (GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC (Profile.profile "exec_step_CONV_B_1_eval_exp_EECONV" birs_eval_exp_CONV)))
+    (GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC birs_eval_exp_CONV))
     (continue_eq_rule
-      (Profile.profile "exec_step_CONV_B_1_eval_exp_PREEVAL" (RESTR_EVAL_CONV [birs_eval_exp_tm, birs_update_env_tm]))
+      (Profile.profile "exec_step_CONV_B_1_eval_exp_PREEVAL" (SIMP_CONV (pure_ss++birs_state_ss) [birs_exec_stmt_def, birs_exec_stmtB_def, birs_exec_stmt_assign_def, birs_exec_stmt_assert_def, birs_exec_stmt_assume_def, birs_exec_stmt_observe_def] (* THENC
+       (fn x => (print "AAAAAAAAAAAAAAA"; print_term x;print "BBBBBBBBBBBBBBBBBBBBBBB";  REFL x))*)))
       res_p1)
   ;
 
@@ -708,7 +830,7 @@ let
     (GEN_match_conv is_birs_update_env (
       (* (fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t)) THENC *)
       REWRITE_CONV ([birs_update_env_thm]@eq_thms) THENC
-      RESTR_EVAL_CONV [birs_gen_env_tm]
+      RESTR_EVAL_CONV [birs_gen_env_tm] (* TODO: this can be improved, I think *)
     ))
     ) res_b_option_bind;
 
