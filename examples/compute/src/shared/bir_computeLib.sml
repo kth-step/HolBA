@@ -13,7 +13,8 @@ open cv_transLib cv_stdTheory cvTheory ;
 open bir_cv_computeTheory bir_cv_envLib ;
 open bir_cv_memTheory ;
 open bir_cv_basicLib ;
-open bir_cv_programTheory ;
+open bir_programTheory bir_cv_programTheory ;
+open bir_cv_programLib ;
 
 (* Takes a BIR expression and evaluates it using EVAL *)
 fun compute_exp_EVAL (exp : term) (env: term) : thm =
@@ -93,6 +94,81 @@ let
 in 
   rewritten_term_thm
 end
+
+
+(* ----------------------------------------------- *)
+(* ------------------- PROGRAMS ------------------ *)
+(* ----------------------------------------------- *)
+
+(* Use EVAL to compute a program step *)
+fun compute_step_EVAL (program : term) (state: term) : thm =
+  EVAL ``bir_compute_step ^program ^state``
+
+(* Deep embedding of our programs (same as above with expressions *)
+(* Note : here, we only do a deep embedding of program, not the expressions inside *)
+(* WARNING : this creates theorems suffixed by _bir_cv_def, _bir_cv_eq. *)
+fun translate_program_cv (program_def:thm) = 
+let 
+  (* Fetch expression information *)
+  val program = lhs (concl program_def) ;
+  val program_val = rhs (concl program_def) ;
+  val program_name = fst (dest_const program) ;
+  (* Translate to cv_program *)
+  val _ = print "Translating to cv_program...\n" ;
+  val from_program_val_thm = time bir_program_conv program_val ;
+  val from_program_thm = REWRITE_RULE [GSYM program_def] from_program_val_thm ;
+  val cv_program = rand (rhs (concl from_program_thm)) ;
+  (* Create the new constant term *)
+  val cv_program_name = program_name ^ "_bir_cv" ;
+  val _ = new_constant (cv_program_name, ``:bir_cv_program_t``) ;
+  val cv_program_constant = mk_const (cv_program_name, ``:bir_cv_program_t``) ;
+  val cv_program_def = new_definition (cv_program_name ^ "_def", ``^cv_program_constant = ^cv_program``) ;
+  val _ = save_thm (cv_program_name ^ "_eq", from_program_thm) ;
+
+  val _ = print "Translating with deep embedding...\n" ;
+  (* WARNING : Deep embedding program doesn’t work. We want to deep embed each exp *)
+  (* val _ = time (cv_trans_deep_embedding EVAL) cv_program_def ; *)
+  val _ = time cv_trans cv_program_def ;
+in () end
+
+fun compute_step_cv (program_def : thm) (state_tm : term) : thm =
+let
+  (* Quickly EVAl the state so that the env inside as a correct form *)
+  val eval_state_thm = EVAL state_tm ;
+  val eval_state_tm = rhs (concl eval_state_thm) ;
+  (* Converts state to cv_state *)
+  val cv_state_thm = bir_state_conv eval_state_tm ;
+  val cv_state_tm = rand (rhs (concl cv_state_thm)) ;
+  (* Get the program term *)
+  val program = lhs (concl program_def) ;
+  (* Fetches theorems from prior translation of program *)
+  val program_name = fst (dest_const program) ;
+  val cv_program_name = program_name ^ "_bir_cv" ;
+  val from_program_thm = DB.fetch "-" (cv_program_name ^ "_eq") ;
+  val cv_program_def = DB.fetch "-" (cv_program_name ^ "_def") ;
+  val cv_program = lhs (concl cv_program_def) ;
+  (* Term to be computed *)
+  val compute_term = ``bir_cv_compute_step ^cv_program ^cv_state_tm`` ;
+
+  (* Evaluates step *)
+  val evaled_term_thm = cv_eval compute_term ;
+  
+  (* Apply from_cv_state to match bir_cv_compute_step_eq_compute_exp *)
+  val from_evaled_term_thm = AP_TERM ``from_cv_state`` evaled_term_thm ;
+  (* Evaluates the from_cv_state conversion of the response *)
+  val evaled_from_result = EVAL (rhs (concl from_evaled_term_thm)) ;
+  
+  (* Rewrites for correct theorem *)
+  val rewritten_term_thm = 
+      REWRITE_RULE [evaled_from_result, bir_cv_compute_step_eq_compute_exp, GSYM
+                   cv_state_thm, cv_program_def, GSYM from_program_thm, 
+                   Once $ GSYM eval_state_thm] 
+        from_evaled_term_thm
+
+in rewritten_term_thm end
+
+
+
 
 
 
