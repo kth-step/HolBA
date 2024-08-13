@@ -103,7 +103,7 @@ fun bir_exp_conv (bir_exp_tm : term) : thm =
       val t2_thm = bir_exp_conv t2 ;
       val t2_tm = rand (rhs (concl t2_thm)) ;
     in
-      GSYM $ REWRITE_CONV [from_cv_exp_def, t2_thm] ``from_cv_exp ^(mk_cv_exp_unary_exp (t1,t2_tm))``
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM t2_thm] ``from_cv_exp ^(mk_cv_exp_unary_exp (t1,t2_tm))``
     end
   else if is_exp_bin_pred bir_exp_tm then
     let
@@ -113,7 +113,7 @@ fun bir_exp_conv (bir_exp_tm : term) : thm =
       val t3_thm = bir_exp_conv t3 ;
       val t3_tm = rand (rhs (concl t3_thm)) ;
     in
-      GSYM $ REWRITE_CONV [from_cv_exp_def, t2_thm, t3_thm] ``from_cv_exp ^(mk_cv_exp_bin_pred (t1,t2_tm,t3_tm))``
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM t2_thm, GSYM t3_thm] ``from_cv_exp ^(mk_cv_exp_bin_pred (t1,t2_tm,t3_tm))``
     end
   else if is_exp_if_then_else bir_exp_tm then
     let
@@ -125,7 +125,7 @@ fun bir_exp_conv (bir_exp_tm : term) : thm =
       val t3_thm = bir_exp_conv t3 ;
       val t3_tm = rand (rhs (concl t3_thm)) ;
     in
-      GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_if_then_else (t1_tm,t2_tm,t3_tm))``
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM t1_thm, GSYM t2_thm, GSYM t3_thm] ``from_cv_exp ^(mk_cv_exp_if_then_else (t1_tm,t2_tm,t3_tm))``
     end
   else if is_exp_load bir_exp_tm then
     let
@@ -135,7 +135,7 @@ fun bir_exp_conv (bir_exp_tm : term) : thm =
       val t2_thm = bir_exp_conv t2 ;
       val t2_tm = rand (rhs (concl t2_thm)) ;
     in
-      GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_load (t1_tm,t2_tm,t3,t4))``
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM t1_thm, GSYM t2_thm] ``from_cv_exp ^(mk_cv_exp_load (t1_tm,t2_tm,t3,t4))``
     end
   else if is_exp_store bir_exp_tm then
     let
@@ -147,7 +147,7 @@ fun bir_exp_conv (bir_exp_tm : term) : thm =
       val t4_thm = bir_exp_conv t4 ;
       val t4_tm = rand (rhs (concl t4_thm)) ;
     in
-      GSYM $ REWRITE_CONV [from_cv_exp_def] ``from_cv_exp ^(mk_cv_exp_store (t1_tm,t2_tm,t3,t4_tm))``
+      GSYM $ REWRITE_CONV [from_cv_exp_def, GSYM t1_thm, GSYM t2_thm, GSYM t4_thm] ``from_cv_exp ^(mk_cv_exp_store (t1_tm,t2_tm,t3,t4_tm))``
     end
   else raise ERR "bir_exp_conv" "not BExp"
 
