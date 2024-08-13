@@ -16,6 +16,63 @@ open bir_cv_basicLib ;
 open bir_programTheory bir_cv_programTheory ;
 open bir_cv_programLib ;
 
+
+
+(* ------------------------------------------------ *)
+(* ------------------- UTILITIES ------------------ *)
+(* ------------------------------------------------ *)
+
+
+(* Deep embed a term and returns the definition *)
+(* Creates name_bir_cv_def *)
+fun deep_embed_term (name:string) (tm:term) : thm =
+let
+  val deep_name = name ^ "_bir_cv" ;
+  val _ = new_constant (deep_name, type_of tm) ;
+  val deep_constant = mk_const (deep_name, type_of tm) ;
+  val deep_constant_def = new_definition (deep_name ^ "_def", ``^deep_constant = ^tm``) ;
+  (* Add to compset *)
+  val _ = add_thms [deep_constant_def] the_compset ;
+
+  val _ = print "Translating with deep embedding...\n" ;
+  val _ = time (cv_trans_deep_embedding EVAL) deep_constant_def ;
+in deep_constant_def end
+
+(* Translates a raw term (unamed), outputing a theorem tm = from v *)
+(* Creates name_bir_cv_eq *)
+fun translate_raw_term (bir_conv : conv) (name : string) (tm : term) : thm =
+let
+  (* Translate to cv_exp *)
+  val _ = print "Translating one raw term...\n" ;
+  val from_thm = time bir_conv tm ;
+  val _ = save_thm (name ^ "_bir_cv_eq", from_thm) ;
+in from_thm end
+
+
+(* Translates a name term, outputing a theorem tm = from v *)
+(* Creates name_bir_cv_eq *)
+(* NOTE : The term has to be EVALable *)
+fun translate_named_term (bir_conv : conv) (tm : term) : thm = 
+let 
+  (* Fetch expression information *)
+  val name = fst (dest_const tm) ;
+  (* Get the actual value *)
+  val evaled_thm = EVAL tm ;
+  val evaled_tm = rhs (concl evaled_thm) ;
+  (* Translate using conversion *)
+  val _ = print "Translating one named term...\n" ;
+  val from_val_thm = time bir_conv evaled_tm ;
+  val from_named_thm = REWRITE_RULE [GSYM evaled_thm] from_val_thm ;
+  val _ = save_thm (name ^ "_bir_cv_eq", from_named_thm) ;
+in from_named_thm end
+
+
+
+(* ----------------------------------------------- *)
+(* ----------------- EXPRESSIONS ----------------- *)
+(* ----------------------------------------------- *)
+
+
 (* Takes a BIR expression and evaluates it using EVAL *)
 fun compute_exp_EVAL (exp : term) (env: term) : thm =
   EVAL ``bir_compute_exp ^exp ^env``
@@ -40,22 +97,11 @@ fun translate_exp_cv (exp_def:thm) =
 let 
   (* Fetch expression information *)
   val exp = lhs (concl exp_def) ;
-  val exp_val = rhs (concl exp_def) ;
-  val exp_name = fst (dest_const exp) ;
-  (* Translate to cv_exp *)
-  val _ = print "Translating to cv_exp...\n" ;
-  val from_exp_val_thm = time bir_exp_conv exp_val ;
-  val from_exp_thm = REWRITE_RULE [GSYM exp_def] from_exp_val_thm ;
+  val exp_name = fst $ dest_const exp ;
+  val from_exp_thm = translate_named_term bir_exp_conv exp ;
   val cv_exp = rand (rhs (concl from_exp_thm)) ;
   (* Create the new constant term *)
-  val cv_exp_name = exp_name ^ "_bir_cv" ;
-  val _ = new_constant (cv_exp_name, ``:bir_cv_exp_t``) ;
-  val cv_exp_constant = mk_const (cv_exp_name, ``:bir_cv_exp_t``) ;
-  val cv_exp_def = new_definition (cv_exp_name ^ "_def", ``^cv_exp_constant = ^cv_exp``) ;
-  val _ = save_thm (cv_exp_name ^ "_eq", from_exp_thm) ;
-
-  val _ = print "Translating with deep embedding...\n" ;
-  val _ = time (cv_trans_deep_embedding EVAL) cv_exp_def ;
+  val cv_exp_def = deep_embed_term exp_name cv_exp ;
 in () end
 
 (* Takes an expression definition and evaluates it using cv_eval and deep embedding translation *)
@@ -111,22 +157,16 @@ fun translate_program_cv (program_def:thm) =
 let 
   (* Fetch expression information *)
   val program = lhs (concl program_def) ;
-  val program_val = rhs (concl program_def) ;
   val program_name = fst (dest_const program) ;
   (* Translate to cv_program *)
   val _ = print "Translating to cv_program...\n" ;
-  val from_program_val_thm = time bir_program_conv program_val ;
-  val from_program_thm = REWRITE_RULE [GSYM program_def] from_program_val_thm ;
+  val from_program_thm = translate_named_term bir_program_conv program
   val cv_program = rand (rhs (concl from_program_thm)) ;
   (* Create the new constant term *)
-  val cv_program_name = program_name ^ "_bir_cv" ;
-  val _ = new_constant (cv_program_name, ``:bir_cv_program_t``) ;
-  val cv_program_constant = mk_const (cv_program_name, ``:bir_cv_program_t``) ;
-  val cv_program_def = new_definition (cv_program_name ^ "_def", ``^cv_program_constant = ^cv_program``) ;
-  val _ = save_thm (cv_program_name ^ "_eq", from_program_thm) ;
 
   val _ = print "Translating with deep embedding...\n" ;
   (* WARNING : Deep embedding program doesn’t work. We want to deep embed each exp *)
+  val cv_program_def = deep_embed_term program_name cv_program ;
   (* val _ = time (cv_trans_deep_embedding EVAL) cv_program_def ; *)
   val _ = time cv_trans cv_program_def ;
 in () end
