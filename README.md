@@ -72,37 +72,40 @@ cd examples
 ${HOLBA_HOLMAKE}
 ```
 
-## Directories and organization
+## Library organization
 
-```
-├─ doc: Documentation material
-├─ examples: Showcasing HolBA
-│  ├─ aes: lifting + WP of AES on ARMv8 and for Cortex-M0
-│  ├─ bsl-wp-smt: Small BIR example programs to test simplified BIR generation, WP propagation and SMT interface
-│  ├─ nic: NIC formalization
-│  ├─ tutorial: End-to-end tutorial of simple ARMv8 examples
-├─ scripts: CI and installation scripts
-└─ src
-   ├─ aux: Non-HolBA-specific theories and libraries
-   ├─ shared: Libraries shared between tools
-   ├─ theory
-   │  ├─ abstract-hoare-logic: Abstract Hoare-style logic for unstructured code
-   │  ├─ bir: Core BIR language
-   │  ├─ bir-support: Extensions and supporting theories for BIR
-   │  ├─ models: Additional machine models
-   │  └─ tools: Theories for the tool libraries in src/tools
-   └─ tools
-      ├─ backlifter: Gets ISA-level contracts from BIR contracts
-      ├─ cfg: Control Flow Graph utilities
-      ├─ comp: Composition of contracts
-      ├─ exec: Concrete execution
-      ├─ lifter: Transpiler from binary to BIR
-      ├─ pass: Passification utility
-      ├─ scamv: Abstract side channel model validation framework
-      └─ wp: Weakest precondition propagation
-```
+### Directory structure
 
-### Tools status
+- `doc`: Documentation about HolBA and BIR
+- `examples`: Applications of HolBA
+  - `aes`: lifting + WP of an AES block cipher implementation on ARMv8 and Cortex-M0
+  - `bsl-wp-smt`: Small BIR example programs to test simplified BIR generation, WP propagation and SMT interface
+  - `ijr`: Theory and examples related to indirect jumps
+  - `nic`: Network interface controller formalization
+  - `riscv`: Examples of specifying and verifying RISC-V programs
+  - `tutorial`: End-to-end tutorial of simple ARMv8 example programs
+- `scripts`: CI and installation scripts
+- `src`: Library sources
+  - `extra`: General theories and libraries
+  - `shared`: Libraries shared between tools
+  - `theory`: Domain-specific theories
+    - `bir`: Core BIR language
+    - `bir-support`: Extensions and supporting theories for BIR
+    - `models`: Additional machine models
+    - `program_logic`: Abstract Hoare-style logic for unstructured code
+    - `tools`: Theories for the tool libraries in `src/tools`
+  - `tools`: Domain-specific libraries
+    - `backlifter`: Utilities for obtaining ISA-level contracts from BIR contracts
+    - `cfg`: Control flow graph utilities
+    - `comp`: Composition of contracts
+    - `compute`: Utilities for using `cv_compute` in HOL4
+    - `exec`: Concrete execution
+    - `lifter`: Translation from binary ISA code to BIR
+    - `pass`: Passification utility
+    - `scamv`: Abstract side channel model validation framework
+    - `wp`: Weakest precondition propagation
+
+### Tool status
 
 - `tools/backlifter`:
   * Proof-producing
