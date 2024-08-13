@@ -34,7 +34,7 @@ val bir_program = ``BirProgram
    maxdepth, precondition, pd, envupdate_o
 *)
 fun symb_exec_program maxdepth precondition program pd envupdate_o =
-    let open bir_fileLib bir_exec_wrapLib;
+    let open holba_fileLib holba_exec_wrapLib;
         val bir_program_filename = get_tempfile "program" ".bir";
         val _ = write_to_file bir_program_filename (term_to_string program);
         val python_script_filename = fence_insertion_repo_path ^ "/symbolic_execution.py";

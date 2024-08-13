@@ -4,7 +4,7 @@ struct
   open HolKernel Parse boolLib bossLib;
 
   open bir_randLib;
-  open bir_miscLib;
+  open holba_miscLib;
 
   open holba_entryLib;
 
@@ -54,7 +54,7 @@ struct
       (* prepare metadata for run *)
          (* write out git commit and git diff of current directory. *)
          (*    so this code needs to be executed with the working directory in the holbarepo! *)
-      open bir_exec_wrapLib;
+      open holba_exec_wrapLib;
       val run_datestr     = get_datestring();
       val holba_diff      = get_exec_output "git diff";
       val holba_commit    = get_exec_output "git rev-parse HEAD";

@@ -1,8 +1,8 @@
-structure bir_json_execLib =
+structure holba_json_execLib =
 struct
 local
-  val ERR = Feedback.mk_HOL_ERR "bir_json_execLib"
-  val wrap_exn = Feedback.wrap_exn "bir_json_execLib"
+  val ERR = Feedback.mk_HOL_ERR "holba_json_execLib"
+  val wrap_exn = Feedback.wrap_exn "holba_json_execLib"
 
 (*
 val cmd  = "/usr/bin/echo";
@@ -93,8 +93,8 @@ in
     end;
 
 local
-  open bir_fileLib;
-  open bir_exec_wrapLib;
+  open holba_fileLib;
+  open holba_exec_wrapLib;
 
   fun call_json_exec_old command jsonarg =
     let

@@ -101,9 +101,9 @@ fun birs_execute bprog_tm birs_state_init birs_stop_lbls =
 
 (*
 
-val timer = bir_miscLib.timer_start 0;
+val timer = holba_miscLib.timer_start 0;
 val result = birs_execute bprog_tm_ birs_state_init_ birs_stop_lbls_
-val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 *)
 
 

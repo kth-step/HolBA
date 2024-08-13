@@ -3,8 +3,8 @@ struct
 
 local
 
-  open bir_fileLib;
-  open bir_exec_wrapLib;
+  open holba_fileLib;
+  open holba_exec_wrapLib;
 
   val ERR = Feedback.mk_HOL_ERR "bir_smtLib";
 
@@ -189,7 +189,7 @@ local
   open bir_valuesSyntax;
   open wordsSyntax;
 
-  open bir_fileLib;
+  open holba_fileLib;
 
   val ERR = Feedback.mk_HOL_ERR "bir_smtLib";
 

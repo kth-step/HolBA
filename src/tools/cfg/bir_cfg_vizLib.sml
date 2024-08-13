@@ -10,7 +10,7 @@ open bir_programSyntax;
 
   open bir_cfgLib;
 
-  open bir_fileLib;
+  open holba_fileLib;
   open graphVizLib;
 
   (* error handling *)

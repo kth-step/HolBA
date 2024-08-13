@@ -4,7 +4,7 @@ local
   val ERR = Feedback.mk_HOL_ERR "embexp_logsLib"
   val wrap_exn = Feedback.wrap_exn "embexp_logsLib"
 
-  open bir_json_execLib;
+  open holba_json_execLib;
   open Json;
 in
 
@@ -23,7 +23,7 @@ val embexp_logs_dir =
 val command = embexp_logs_dir ^ "/scripts/db-interface.py";
 
 fun run_db_gen extra ops arg =
-  bir_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@extra@[ops], arg);
+  holba_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@extra@[ops], arg);
 
 fun run_db    ops arg = run_db_gen [] ops arg;
 fun run_db_ro ops arg = run_db_gen ["-ro"] ops arg;

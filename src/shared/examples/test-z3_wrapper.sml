@@ -85,14 +85,14 @@ val _ = List.map (fn (name, query, expected) =>
 
 
 (* test of real input, comparison. it is quite rigid in terms of output requirement *)
-open bir_fileLib;
+open holba_fileLib;
 
 val filename = "z3_wrapper_test/z3_wrapper_input_z3_T5bnC5_sat";
 val _ = print ("\n\n=============== >>> RUNNING TEST CASE FILE '" ^ filename ^ "'\n");
 
 val expected_output = read_from_file (filename ^ "_expectedoutput");
 
-val output = bir_exec_wrapLib.get_exec_output ("../z3_wrapper.py " ^ filename);
+val output = holba_exec_wrapLib.get_exec_output ("../z3_wrapper.py " ^ filename);
 
 val _ = if output = expected_output then () else (
             print "=============== >>> TEST CASE FAILED\n";

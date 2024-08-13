@@ -253,9 +253,9 @@ val result = birs_execute bprog_tm_ loop_skip_to_l10_state birs_stop_lbls_;
 (* compose everything, work with the tree structure (and the code in the function buildtree) *)
 
 (*
-val timer = bir_miscLib.timer_start 0;
+val timer = holba_miscLib.timer_start 0;
 
-val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 val _ = (print_term o concl) result;
 
 val _ = show_tags := true;

@@ -5,7 +5,7 @@ struct
   open arm8_progLib arm8AssemblerLib arm8;
 
   open bir_randLib;
-  open bir_miscLib;
+  open holba_miscLib;
   open regExLib;
 
   (* error handling *)

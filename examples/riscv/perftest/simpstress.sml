@@ -7078,12 +7078,12 @@ val bprog_tm = (fst o dest_eq o concl) bir_aespart_prog_def;
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
    
-   val timer_symbanalysis_last = ref (bir_miscLib.timer_start 0);
+   val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
 
    val birs_post_step_fun =
      (fn t => (
-        bir_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
-        timer_symbanalysis_last := bir_miscLib.timer_start 0;
+        holba_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
+        timer_symbanalysis_last := holba_miscLib.timer_start 0;
 	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
 	t)) o
      birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
@@ -7097,7 +7097,7 @@ val bprog_tm = (fst o dest_eq o concl) bir_aespart_prog_def;
 
 (* ================================================================================= *)
 (*
-   val timer_symbanalysis_last = ref (bir_miscLib.timer_start 0);
+   val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
 val _ = birs_rule_STEP_fun_spec state2;
 *)
 
@@ -7120,7 +7120,7 @@ val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
 
 (*
-val teststring = bir_fileLib.read_from_file "/home/andreas/data/hol/HolBA_symbexec/examples/riscv/perftest/tempdir/smtquery_2024-08-08_11-38-51_253062_nil";
+val teststring = holba_fileLib.read_from_file "/home/andreas/data/hol/HolBA_symbexec/examples/riscv/perftest/tempdir/smtquery_2024-08-08_11-38-51_253062_nil";
 
 
 val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";

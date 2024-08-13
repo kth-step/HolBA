@@ -287,7 +287,7 @@ val wp_tests =
 *)
 ];
 
-val _ = bir_fileLib.makedir true "tempdir";
+val _ = holba_fileLib.makedir true "tempdir";
 val _ = OS.FileSys.chDir "tempdir";
 
 (*
