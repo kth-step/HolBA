@@ -104,26 +104,9 @@ fun rev_birs_gen_env (thm, eq_thms) =
     val eq_tms = map (concl) eq_thms;
     (*val s = gen_subst [] eq_tms;*)
   in
-    (*foldl (fn (x,acc) =>  MATCH_MP gen_rev_thm ((INST [mk_gen_subst x] o DISCH x) acc) ) thm eq_tms*)
     foldl (fn (x,acc) =>  MP ((INST [mk_gen_subst x] o DISCH x) acc) ((REFL o snd o dest_eq) x)) thm eq_tms
   end;
 val rev_birs_gen_env = Profile.profile "eval_exp_CONV_rev" rev_birs_gen_env;
-(*
-  fun abbr_app (t, env_tm, pcond_tm) =
-  let
-     val env_eq_tm = mk_eq (env_abbr_tm, env_tm);
-     val pcond_eq_tm = mk_eq (pcond_abbr_tm, pcond_tm);
-     val env_eq_thm = ASSUME (env_eq_tm);
-     val pcond_eq_thm = ASSUME (pcond_eq_tm);
-     val abbr_thm = REWRITE_CONV [GSYM (env_eq_thm), GSYM (pcond_eq_thm)] t;
-  in
-    (abbr_thm, [env_eq_thm, pcond_eq_thm])
-  end;
-val abbr_app = Profile.profile "abbr_app" abbr_app;
-fun abbr_rev (res, env_tm, pcond_tm) =
-  MP (MP ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] o DISCH_ALL) res) (REFL env_tm)) (REFL pcond_tm);
-val abbr_rev = Profile.profile "abbr_rev" abbr_rev;
-*)
 
 local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
@@ -152,6 +135,9 @@ end;
 
 fun birs_eval_exp_CONV_p1 t =
    let
+     (*val _ = print "AAAAAAAA\n";
+     val _ = print_term t;
+     val _ = print "BBBBBBBB\n";*)
      val tm = (snd o dest_comb o snd o dest_comb) t;(*dest_birs_eval_exp;*)
      val (thm, eq_thms) = abbr_birs_gen_env 0 [] I tm;
    in
@@ -810,7 +796,7 @@ let
    continue_eq_rule
     (GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC birs_eval_exp_CONV))
     (continue_eq_rule
-      (Profile.profile "exec_step_CONV_B_1_eval_exp_PREEVAL" (SIMP_CONV (pure_ss++birs_state_ss) [birs_exec_stmt_def, birs_exec_stmtB_def, birs_exec_stmt_assign_def, birs_exec_stmt_assert_def, birs_exec_stmt_assume_def, birs_exec_stmt_observe_def] (* THENC
+      (Profile.profile "exec_step_CONV_B_1_eval_exp_PREEVAL" (SIMP_CONV (pure_ss++birs_state_ss) [birs_exec_stmt_def, birs_exec_stmtB_def, birs_exec_stmt_assign_def, birs_exec_stmt_assert_def, birs_exec_stmt_assume_def, birs_exec_stmt_observe_def, combinTheory.K_THM] (* THENC
        (fn x => (print "AAAAAAAAAAAAAAA"; print_term x;print "BBBBBBBBBBBBBBBBBBBBBBB";  REFL x))*)))
       res_p1)
   ;
