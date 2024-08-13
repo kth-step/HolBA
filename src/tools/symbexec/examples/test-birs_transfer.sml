@@ -115,7 +115,7 @@ val birs_state_init_pre = ``<|
   bsst_status   := BST_Running;
   bsst_pcond    := ^bsysprecond
 |>``;
-val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
+val birs_state_thm = (SIMP_CONV (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm, bir_senv_GEN_list_def, GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC computeLib.RESTR_EVAL_CONV [``birs_gen_env``]) birs_state_init_pre;
 val birs_state_init = (snd o dest_eq o concl) birs_state_thm;
 (* ........................... *)
 
@@ -125,7 +125,8 @@ val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm;
 (* ........................... *)
 
 (* first step *)
-val single_step_thm = birs_rule_STEP_fun_spec birs_state_init;
+val single_step_thm_ = birs_rule_STEP_fun_spec birs_state_init;
+val single_step_thm = REWRITE_RULE [GSYM birs_state_thm] single_step_thm_;
 
 val exec_thm = single_step_thm;
 val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
