@@ -2,7 +2,7 @@ structure HolBACoreSimps :> HolBACoreSimps =
 struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
+open holba_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 open bir_expTheory bir_programTheory bir_typing_progTheory;
 open bir_typing_expTheory;

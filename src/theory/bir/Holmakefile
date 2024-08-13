@@ -1,4 +1,4 @@
-INCLUDES = $(HOLBADIR)/src/aux
+INCLUDES = $(HOLBADIR)/src/extra
 
 all: $(DEFAULT_TARGETS) selftest.exe
 .PHONY: all

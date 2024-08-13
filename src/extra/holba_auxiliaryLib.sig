@@ -1,4 +1,4 @@
-signature bir_auxiliaryLib =
+signature holba_auxiliaryLib =
 sig
   include Abbrev
   type simpset = simpLib.simpset

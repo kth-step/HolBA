@@ -1,6 +1,6 @@
 CLINE_OPTIONS = -r
 
-INCLUDES = $(HOLBADIR)/src/aux \
+INCLUDES = $(HOLBADIR)/src/extra \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/shared/HolSmt \
            $(HOLBADIR)/src/shared/sml-simplejson \

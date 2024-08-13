@@ -4,7 +4,7 @@ open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_exp_immTheory
 open bir_immSyntax bir_programTheory wordsTheory
-open bir_auxiliaryTheory
+open holba_auxiliaryTheory
 open bir_exp_memTheory bir_bool_expTheory
 open bir_program_env_orderTheory
 open bir_program_blocksTheory

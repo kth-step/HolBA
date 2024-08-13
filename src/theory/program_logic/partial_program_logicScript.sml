@@ -1,8 +1,8 @@
 open HolKernel boolLib bossLib BasicProvers dep_rewrite prim_recTheory;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
 open transition_systemTheory total_program_logicTheory;
 

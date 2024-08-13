@@ -1,8 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 open total_program_logicTheory;
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 val _ = new_theory "total_ext_program_logic";
 
@@ -305,10 +305,10 @@ rpt strip_tac >>
 fs [t_ext_jgmt_def] >>
 strip_tac >- (
  subgoal `il2 INTER el2 = {}` >- (
-  irule bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm >>
+  irule INTER_SUBSET_EMPTY_thm >>
   Q.EXISTS_TAC `el1 UNION el2` >>
   fs [Once pred_setTheory.INTER_COMM] >>
-  irule bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm >>
+  irule INTER_SUBSET_EMPTY_thm >>
   Q.EXISTS_TAC `il1 UNION il2` >>
   fs []
  ) >>

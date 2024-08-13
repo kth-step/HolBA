@@ -1,10 +1,10 @@
-structure bir_eq_utilLib =
+structure holba_eq_utilLib :> holba_eq_utilLib =
 struct
 
 local
   open HolKernel Parse;
 
-  val ERR = mk_HOL_ERR "bir_eq_utilLib"
+  val ERR = mk_HOL_ERR "holba_eq_utilLib"
 in
 
 (* val assoc_with : ('b * 'b -> bool) -> 'b -> ('b * 'a) list -> 'a *)

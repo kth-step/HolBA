@@ -1,4 +1,5 @@
-INCLUDES = $(HOLBADIR)/src/theory/bir
+INCLUDES = $(HOLBADIR)/src/extra \
+           $(HOLBADIR)/src/theory/bir
 
 all: $(DEFAULT_TARGETS) selftest.exe
 .PHONY: all

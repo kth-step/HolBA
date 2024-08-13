@@ -241,7 +241,7 @@ End
 Theorem INDEX_OF_b2s_STRCAT[local]:
   !b s. INDEX_OF #"_" (STRCAT (b2s b) (STRING #"_" s)) = SOME (LENGTH (b2s b))
 Proof
-SIMP_TAC (list_ss++QI_ss) [INDEX_OF_def, bir_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
+SIMP_TAC (list_ss++QI_ss) [INDEX_OF_def, holba_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
 SIMP_TAC list_ss [rich_listTheory.EL_APPEND1, rich_listTheory.EL_APPEND2] >>
 REPEAT STRIP_TAC >>
 `MEM #"_" (b2s b)` by METIS_TAC[MEM_EL] >>
@@ -267,7 +267,7 @@ REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
   ASM_REWRITE_TAC[listTheory.APPEND_11] >>
 
   FULL_SIMP_TAC (std_ss++QI_ss) [INDEX_OF_def,
-    bir_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
+    holba_auxiliaryTheory.INDEX_FIND_EQ_SOME] >>
   REPEAT BasicProvers.VAR_EQ_TAC >>
   ASM_SIMP_TAC list_ss [rich_listTheory.DROP_CONS_EL]
 )

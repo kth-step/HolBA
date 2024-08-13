@@ -1,4 +1,3 @@
-
 open HolKernel Parse boolLib bossLib;
 
 open bir_symbTheory;
@@ -26,12 +25,7 @@ open birs_auxTheory;
 open bir_program_transfTheory;
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
-
-
-
 val _ = new_theory "motorfunc_transf";
-
-
 
 val bprog_def = motorfuncTheory.bprog_def;
 val bprog = (fst o dest_eq o concl) bprog_def;
@@ -616,7 +610,7 @@ Proof
 `!A B. A INTER {B} = (EMPTY:bir_programcounter_t -> bool) <=> B NOTIN A` by (
     REPEAT STRIP_TAC >>
     EQ_TAC >> (
-      FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
+      FULL_SIMP_TAC std_ss [holba_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
     ) >>
     REPEAT STRIP_TAC >>
 

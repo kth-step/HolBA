@@ -1,4 +1,4 @@
-structure bir_auxiliaryLib :> bir_auxiliaryLib =
+structure holba_auxiliaryLib :> holba_auxiliaryLib =
 struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;

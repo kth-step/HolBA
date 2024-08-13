@@ -1,5 +1,5 @@
 open HolKernel Parse boolLib bossLib;
-open bir_auxiliaryTheory
+open holba_auxiliaryTheory
 open bir_programTheory bir_program_valid_stateTheory HolBACoreSimps;
 open bir_program_blocksTheory bir_program_multistep_propsTheory;
 

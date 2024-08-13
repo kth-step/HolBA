@@ -1,12 +1,12 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open optionTheory;
-open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
+open holba_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 open bir_expTheory finite_mapTheory
 open pred_setTheory;
 
-open wordsLib bir_auxiliaryLib;
+open wordsLib holba_auxiliaryLib;
 
 val _ = new_theory "bir_typing_exp";
 

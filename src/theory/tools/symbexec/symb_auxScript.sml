@@ -23,10 +23,10 @@ Theorem FUNPOW_OPT_SOME_thm:
 Proof
 GEN_TAC >> GEN_TAC >> STRIP_TAC >>
   Induct_on `n` >- (
-    REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, FUNPOW]
+    REWRITE_TAC [holba_auxiliaryTheory.FUNPOW_OPT_def, FUNPOW]
   ) >>
-  REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, FUNPOW] >>
-  ASM_SIMP_TAC std_ss [GSYM bir_auxiliaryTheory.FUNPOW_OPT_def]
+  REWRITE_TAC [holba_auxiliaryTheory.FUNPOW_OPT_def, FUNPOW] >>
+  ASM_SIMP_TAC std_ss [GSYM holba_auxiliaryTheory.FUNPOW_OPT_def]
 QED
 
 val _ = export_theory();

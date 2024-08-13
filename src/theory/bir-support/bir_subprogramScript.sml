@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open listTheory
 open bir_programTheory bir_program_valid_stateTheory HolBACoreSimps;
-open bir_program_multistep_propsTheory bir_auxiliaryTheory
+open bir_program_multistep_propsTheory holba_auxiliaryTheory
 open bir_valuesTheory bir_immTheory bir_program_valid_stateTheory
 open bir_program_terminationTheory bir_typing_progTheory
 open bir_program_multistep_propsTheory;

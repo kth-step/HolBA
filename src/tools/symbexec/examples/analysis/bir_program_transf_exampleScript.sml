@@ -116,7 +116,7 @@ Proof
 `!A B. A INTER {B} = (EMPTY:bir_programcounter_t -> bool) <=> B NOTIN A` by (
     REPEAT STRIP_TAC >>
     EQ_TAC >> (
-      FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
+      FULL_SIMP_TAC std_ss [holba_auxiliaryTheory.SING_DISJOINT_SING_NOT_IN_thm]
     ) >>
     REPEAT STRIP_TAC >>
 

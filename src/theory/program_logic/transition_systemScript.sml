@@ -1,8 +1,8 @@
 open HolKernel boolLib bossLib BasicProvers dep_rewrite;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
 val _ = new_theory "transition_system";
 

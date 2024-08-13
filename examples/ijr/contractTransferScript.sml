@@ -4,10 +4,10 @@ open listTheory pred_setTheory pred_setSimps;
 
 open bir_programTheory bir_htTheory bir_program_multistep_propsTheory;
 open HolBACoreSimps;
-open bir_wm_instTheory bir_auxiliaryTheory;
+open bir_wm_instTheory holba_auxiliaryTheory;
 open abstract_simp_hoare_logicTheory abstract_hoare_logicTheory;
 open abstract_hoare_logicSimps bir_program_env_orderTheory bir_env_oldTheory;
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 open resolutionTheory simulationTheory simulationFailTheory;
 

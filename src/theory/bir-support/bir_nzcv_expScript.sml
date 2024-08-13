@@ -152,7 +152,7 @@ Theorem nzcv_BIR_ADD_C_CARRY_DEF:
   !w1 w2. nzcv_BIR_ADD_C w1 w2 = awc_BIR_C w1 w2 F
 Proof
 SIMP_TAC arith_ss [nzcv_BIR_ADD_C_def, add_with_carry_def, LET_THM,
-   bir_auxiliaryTheory.BIT_ADD_WORD_CARRY, w2n_n2w, ZERO_LT_dimword,
+   holba_auxiliaryTheory.BIT_ADD_WORD_CARRY, w2n_n2w, ZERO_LT_dimword,
    awc_BIR_C_def]
 QED
 

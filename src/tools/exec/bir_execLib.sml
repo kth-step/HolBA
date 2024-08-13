@@ -3,7 +3,7 @@ struct
 
   open HolKernel boolLib liteLib simpLib Parse bossLib;
 
-  open bir_auxiliaryTheory;
+  open holba_auxiliaryTheory;
   open bir_program_multistep_propsTheory;
   open bir_programSyntax;
   open bir_envSyntax;

@@ -2,7 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 (* bir *)
 open bir_programTheory;
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 open HolBACoreSimps;
 
 (* bir-support *)

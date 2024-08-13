@@ -4,7 +4,7 @@ open stringTheory finite_mapTheory pred_setTheory
 open bir_envTheory listTheory
 open bir_programTheory bir_valuesTheory
 open bir_typing_expTheory
-open bir_auxiliaryTheory bir_expTheory
+open holba_auxiliaryTheory bir_expTheory
 open bir_bool_expTheory bir_program_env_orderTheory
 open bir_temp_varsTheory bir_program_varsTheory
 open bir_program_terminationTheory

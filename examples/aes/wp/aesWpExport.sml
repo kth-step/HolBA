@@ -7,7 +7,7 @@ open bir_typing_progTheory;
 open bir_envTheory;
 open bir_exp_substitutionsTheory;
 open bir_bool_expTheory;
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 open bir_valuesTheory;
 open bir_expTheory;
 open bir_program_env_orderTheory;

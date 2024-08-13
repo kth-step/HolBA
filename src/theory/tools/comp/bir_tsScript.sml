@@ -1,9 +1,9 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 open bir_programTheory;
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;

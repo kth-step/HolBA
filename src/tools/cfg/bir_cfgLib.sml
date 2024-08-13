@@ -215,7 +215,7 @@ in
 
   local
 
-    open bir_auxiliaryLib;
+    open holba_auxiliaryLib;
     open bir_immSyntax;
     open wordsSyntax;
 
