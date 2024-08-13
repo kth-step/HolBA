@@ -194,7 +194,7 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
       val pred1_tm = (snd o dest_comb o fst o dest_comb) imp_tm;
       val pred2_tm = (snd o dest_comb) imp_tm;
       val imp_bexp_tm = bslSyntax.bor (bslSyntax.bnot pred1_tm, pred2_tm);
-      val imp_is_taut = Profile.profile "check_imp_tm::bir_check_taut" (bir_check_taut false) imp_bexp_tm;
+      val imp_is_taut = bir_check_taut false imp_bexp_tm;
       val imp_thm =
             if imp_is_taut then
               (* SOME (prove(imp_tm, cheat)) *)
@@ -207,7 +207,6 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
     in
       imp_thm
     end;
-  val check_imp_tm = Profile.profile "check_imp_tm" check_imp_tm;
 
 
 

@@ -24,32 +24,53 @@ open bir_exp_typecheckLib;
 
 
 (*
-birs_senv_typecheck_CONV test_term_birs_senv_typecheck
+
+val test_term_birs_eval_exp = ``
+          birs_eval_exp
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+val test_term_birs_eval_exp_subst = ``
+          birs_eval_exp_subst
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+val test_term_birs_senv_typecheck = ``
+          birs_senv_typecheck
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
 *)
 
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-in
- val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
-end;
-
-fun birs_senv_typecheck_CONV_ eq_thms = (
-  RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
-  REWRITE_CONV eq_thms THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
-  EVAL
-);
-fun birs_senv_typecheck_CONV x = Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV_ x);
-
 (*
-CBV_CONV (new_compset [
-  birs_eval_exp_subst_def,
-  bir_exp_subst_def,
-  bir_exp_subst_var_def,
-  bir_typing_expTheory.bir_vars_of_exp_def,
-  finite_mapTheory.FLOOKUP_DEF
-]) test_term_birs_eval_exp_subst
+birs_senv_typecheck_CONV test_term_birs_senv_typecheck
 *)
 
 (*
@@ -67,112 +88,6 @@ birs_eval_exp
 
 birs_eval_exp_CONV test_term_birs_eval_exp
 *)
-
-(*
-val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))]``;
-val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-                ("SP_process",
-                 BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-                ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))]``;
-val i = 0;
-val acc = [] : thm list;
-fun consf thm = thm:thm;
-*)
-val bir_exp_t_tm = ``:bir_exp_t``;
-fun gen_abbr_var i = mk_var ("temp_envl_abbr_" ^ (Int.toString i), bir_exp_t_tm);
-fun abbr_birs_gen_env i acc consf t =
-  if not (listSyntax.is_cons t) then (consf (REFL t), acc) else
-  let
-    val (h,tl) = listSyntax.dest_cons t;
-    val (_, e_tm) = pairSyntax.dest_pair h;
-    val e_abbr_tm = gen_abbr_var i;
-    val eq_thm = ASSUME (mk_eq (e_abbr_tm, e_tm));
-    val thm0 = LAND_CONV (REWRITE_CONV [GSYM eq_thm]) t;
-    fun consf_ thm = consf (CONV_RULE (RAND_CONV (RAND_CONV (K thm))) thm0);
-  in
-    abbr_birs_gen_env (i+1) (eq_thm::acc) consf_ tl
-  end;
-(*
-val (thm, eq_thms) = abbr_birs_gen_env 0 [] I t;
-*)
-val gen_rev_thm = prove(``!A B. ((A = A) ==> B) ==> B``, METIS_TAC []);
-val mk_gen_subst = (fn (abbr,x) => (abbr |-> x)) o dest_eq;
-fun gen_subst acc [] = acc
-  | gen_subst acc (x::t) = gen_subst ((mk_gen_subst x)::acc) t;
-fun rev_birs_gen_env (thm, eq_thms) =
-  let
-    val eq_tms = map (concl) eq_thms;
-    (*val s = gen_subst [] eq_tms;*)
-  in
-    foldl (fn (x,acc) =>  MP ((INST [mk_gen_subst x] o DISCH x) acc) ((REFL o snd o dest_eq) x)) thm eq_tms
-  end;
-val rev_birs_gen_env = Profile.profile "eval_exp_CONV_rev" rev_birs_gen_env;
-
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
-  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
-in
- val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
-end;
-
-(*val is_OPTION_BIND = (identical ``OPTION_BIND : bir_exp_t option -> (bir_exp_t -> bir_type_t option) -> bir_type_t option`` o fst o strip_comb);*)
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-in
- val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
-end;
-
-(* val is_birs_update_env = (identical birs_update_env_tm o fst o strip_comb); *)
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-  val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
-in
- val (birs_update_env_tm,  mk_birs_update_env, dest_birs_update_env, is_birs_update_env)  = syntax_fns2_env "birs_update_env";
-end;
-
-fun birs_eval_exp_CONV_p1 t =
-   let
-     (*val _ = print "AAAAAAAA\n";
-     val _ = print_term t;
-     val _ = print "BBBBBBBB\n";*)
-     val tm = (snd o dest_comb o snd o dest_comb) t;(*dest_birs_eval_exp;*)
-     val (thm, eq_thms) = abbr_birs_gen_env 0 [] I tm;
-   in
-     (RAND_CONV (RAND_CONV (K thm)) t, eq_thms)
-   end;
-val birs_eval_exp_CONV_p1 = Profile.profile "eval_exp_CONV_p1" birs_eval_exp_CONV_p1;
-
-val birs_eval_exp_CONV_p2 =
-  REWRITE_CONV [birs_eval_exp_def] THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
-val birs_eval_exp_CONV_p2 = Profile.profile "eval_exp_CONV_p2" birs_eval_exp_CONV_p2;
-
-fun birs_eval_exp_CONV_p3_ eq_thms =
-  GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
-fun birs_eval_exp_CONV_p3 x = Profile.profile "eval_exp_CONV_p3" (birs_eval_exp_CONV_p3_ x);
-
-fun birs_eval_exp_CONV_p4_ eq_thms =
-  EVAL THENC
-  REWRITE_CONV eq_thms THENC
-  EVAL;
-fun birs_eval_exp_CONV_p4 x = Profile.profile "eval_exp_CONV_p4" (birs_eval_exp_CONV_p4_ x);
-
-fun birs_eval_exp_CONV t = (
-  let
-    val (thm_p1, eq_thms) = birs_eval_exp_CONV_p1 t;
-    (*val _ = print_thm thm_p1;*)
-    val thm_p2 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p2)) thm_p1;
-    val thm_p3 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p3 eq_thms)) thm_p2;
-    val thm_p4 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p4 eq_thms)) thm_p3;
-    val thm_p4rev = rev_birs_gen_env (thm_p4, eq_thms);
-  in
-    thm_p4rev
-  end
-);
-val birs_eval_exp_CONV = Profile.profile "eval_exp_CONV" birs_eval_exp_CONV;
 
 (*
 val test_term = ``
@@ -323,19 +238,6 @@ birs_eval_label_exp_CONV test_eval_label_term;
 *)
 
 (*
-is_plain_jumptarget_set ``{BL_Address (Imm64 20w)}``
-is_plain_jumptarget_set ``{BL_Address iv | Imm64 20w = iv}``
-*)
-fun is_plain_jumptarget_set tm =
-  let
-    val l = pred_setSyntax.strip_set tm;
-  in
-    List.all (fn e_tm =>
-      bir_programSyntax.is_BL_Address e_tm andalso
-      bir_immSyntax.gen_is_Imm (bir_programSyntax.dest_BL_Address e_tm)) l
-  end handle _ => false;
-
-(*
 val tm = ``birs_symbval_concretizations
           (BExp_BinExp BIExp_And
              (BExp_BinPred BIExp_Equal
@@ -366,60 +268,86 @@ val tm = ``birs_symbval_concretizations
              (BExp_Const (Imm64 1692w)))``;
 birs_symbval_concretizations_oracle_CONV tm;
 *)
-val is_birs_symbval_concretizations = identical ``birs_symbval_concretizations`` o fst o strip_comb;
-val birs_symbval_concretizations_oracle_CONV =
-  (fn tm => if is_birs_symbval_concretizations tm then REFL tm else
-   (print_term tm;
-    raise ERR "birs_symbval_concretizations_oracle_CONV" "something is not right here, expect a birs_symbval_concretizations")) THENC
-  (fn tm => let
-    val vaex_tm = (snd o dest_comb) tm;
-    val pcond_tm = (snd o dest_comb o fst o dest_comb) tm;
-    val pcond_is_sat = birs_smtLib.bir_check_sat false pcond_tm;
-    val pcond_sat_thm =
-     if pcond_is_sat then
-       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
-     else
-       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
-    val res_thm =
-     if not pcond_is_sat then
-       SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_empty_thm)
-     else
-     let
-      val vaex_thm = EVAL ``birs_interpret_fun i ^vaex_tm``;
-      val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_singletonconst_thm);
-     in
-      concr_thm
-     end;
-   in
-    if
-      identical tm ((fst o dest_eq o concl) res_thm)
-      handle _ => raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem"
-    then res_thm else
-    raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
-   end);
 
-val is_birs_eval_label_exp = identical ``birs_eval_label_exp`` o fst o strip_comb;
-val birs_eval_label_exp_CONV = (
-  (*(fn tm => (print_term tm; REFL tm)) THENC*)
-  (fn tm => if is_birs_eval_label_exp tm then REFL tm else
-   raise ERR "birs_eval_label_exp_CONV" "something is not right here, expect a birs_eval_label_exp") THENC
-  RESTR_EVAL_CONV [``birs_eval_exp``, ``birs_gen_env``, ``birs_symbval_concretizations``] THENC
-  GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
-  RESTR_EVAL_CONV [``birs_symbval_concretizations``] THENC
+(*
+val test_term = (snd o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs_exec_step_def;
+((fn (_,x,_) => x) o TypeBase.dest_case o (fn (_,_,x) => x) o dest_cond) test_term
+(snd o dest_comb o fst o dest_comb o fst o dest_comb o snd o dest_comb) test_term
 
-(* here we should have either NONE or SOME and a set that is either trivially singleton of a constant or we have to resolve it into a set of constants *)
-  (fn tm =>
-    if optionSyntax.is_none tm then REFL tm else
-    if optionSyntax.is_some tm then RAND_CONV (
-      (fn tm => if is_birs_symbval_concretizations tm then birs_symbval_concretizations_oracle_CONV tm else REFL tm) THENC
-      (* here we should have a simple set of constants *)
-      (fn tm => if is_plain_jumptarget_set tm then REFL tm else
-        (print_term tm;
-         raise ERR "birs_eval_label_exp_CONV" "could not resolve the jump targets"))
-    ) tm else
-    raise ERR "birs_eval_label_exp_CONV" "something is not right here, should be NONE or SOME")
+val test_term = (fst o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs_exec_step_def;
+(snd o dest_comb) test_term
+*)
+
+(*
+val test_term = ``ABC (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 0w))
+                            (BExp_BinExp BIExp_LeftShift
+                               (BExp_Cast BIExp_SignedCast
+                                  (BExp_BinExp BIExp_RightShift
+                                     (BExp_Cast BIExp_LowCast
+                                        (BExp_BinExp BIExp_Xor
+                                           (BExp_Cast BIExp_SignedCast
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "sy_MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_Den
+                                                       (BVar "sy_x12"
+                                                          (BType_Imm Bit64)))
+                                                    (BExp_Const (Imm64 4w)))
+                                                 BEnd_LittleEndian Bit32)
+                                              Bit64)
+                                           (BExp_Cast BIExp_SignedCast
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "sy_MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_Den
+                                                       (BVar "sy_x10"
+                                                          (BType_Imm Bit64)))
+                                                    (BExp_Const (Imm64 4w)))
+                                                 BEnd_LittleEndian Bit32)
+                                              Bit64)) Bit32)
+                                     (BExp_Const (Imm32 24w))) Bit64)
+                               (BExp_Const (Imm64 2w)))) (DEF:num) = 0w:word64``;
+val test_thm = prove(test_term, cheat);
+
+val subs_tm = (snd o dest_comb o fst o dest_comb o fst o dest_eq o concl) test_thm;
+val abc_tm = ``(abc:bir_exp_t)``;
+val eq_tm = ``^abc_tm = ^subs_tm``
+
+val B_tm = ``(B:bir_exp_t)``;
+val pat_tm = ``ABC ^B_tm (DEF:num) = 0w:word64``;
+
+SUBST [B_tm |-> GSYM (ASSUME eq_tm)] pat_tm test_thm
+
+val changed_thm = REWRITE_RULE [GSYM (ASSUME eq_tm)] test_thm;
+
+(*
+val changed_back_thm = SIMP_RULE std_ss [] (DISCH_ALL changed_thm);
+
+val changed_back_thm = REWRITE_RULE [] (CONV_RULE (RATOR_CONV EVAL) (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)));
+*)
+
+val changed_back_thm = BETA_RULE (CONV_RULE (RATOR_CONV EVAL) (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)));
+
+val changed_back_thm = MP (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)) (REFL subs_tm);
+
+val changed_back_thm = MP (DISCH_ALL (INST [abc_tm |-> subs_tm] (changed_thm))) (REFL subs_tm);
+
+val changed_back_thm = REWRITE_RULE [gen_rev_thm] (DISCH_ALL (INST [abc_tm |-> subs_tm] (changed_thm)));
+
+prove(``
+  ^test_term
+``,
+  METIS_TAC [changed_back_thm]
 );
 
+*)
+
+
+(* ----------------------------------------------------------------- *)
 val birs_state_t_ty = mk_type ("birs_state_t", []);
 fun dest_birs_state tm = let
   val (ty, l) = TypeBase.dest_record tm
@@ -546,6 +474,187 @@ in
  val (bir_get_current_statement_tm,  mk_bir_get_current_statement, dest_bir_get_current_statement, is_bir_get_current_statement)  = syntax_fns2 "bir_get_current_statement";
 end;
 
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
+end;
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
+  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+  val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+in
+ val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
+end;
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
+end;
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (birs_update_env_tm,  mk_birs_update_env, dest_birs_update_env, is_birs_update_env)  = syntax_fns2_env "birs_update_env";
+end;
+
+
+(* ---------------------------------------------------------------------------- *)
+
+fun birs_senv_typecheck_CONV_ eq_thms = (
+  RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
+  REWRITE_CONV eq_thms THENC
+  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+  EVAL
+);
+fun birs_senv_typecheck_CONV x = Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV_ x);
+
+
+(*
+val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))]``;
+val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+                ("SP_process",
+                 BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+                ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))]``;
+val i = 0;
+val acc = [] : thm list;
+fun consf thm = thm:thm;
+*)
+val bir_exp_t_tm = ``:bir_exp_t``;
+fun gen_abbr_var i = mk_var ("temp_envl_abbr_" ^ (Int.toString i), bir_exp_t_tm);
+fun abbr_birs_gen_env i acc consf t =
+  if not (listSyntax.is_cons t) then (consf (REFL t), acc) else
+  let
+    val (h,tl) = listSyntax.dest_cons t;
+    val (_, e_tm) = pairSyntax.dest_pair h;
+    val e_abbr_tm = gen_abbr_var i;
+    val eq_thm = ASSUME (mk_eq (e_abbr_tm, e_tm));
+    val thm0 = LAND_CONV (REWRITE_CONV [GSYM eq_thm]) t;
+    fun consf_ thm = consf (CONV_RULE (RAND_CONV (RAND_CONV (K thm))) thm0);
+  in
+    abbr_birs_gen_env (i+1) (eq_thm::acc) consf_ tl
+  end;
+(*
+val (thm, eq_thms) = abbr_birs_gen_env 0 [] I t;
+*)
+val mk_gen_subst = (fn (abbr,x) => (abbr |-> x)) o dest_eq;
+fun rev_birs_gen_env (thm, eq_thms) =
+  let
+    val eq_tms = map (concl) eq_thms;
+  in
+    foldl (fn (x,acc) =>  MP ((INST [mk_gen_subst x] o DISCH x) acc) ((REFL o snd o dest_eq) x)) thm eq_tms
+  end;
+
+
+fun birs_eval_exp_CONV_p1 t =
+   let
+     val tm = (snd o dest_comb o snd o dest_comb) t;(*dest_birs_eval_exp;*)
+     val (thm, eq_thms) = abbr_birs_gen_env 0 [] I tm;
+   in
+     (RAND_CONV (RAND_CONV (K thm)) t, eq_thms)
+   end;
+
+val birs_eval_exp_CONV_p2 =
+  REWRITE_CONV [birs_eval_exp_def] THENC
+  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+
+fun birs_eval_exp_CONV_p3 eq_thms =
+  GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
+
+(* TODO: can possibly improve this *)
+fun birs_eval_exp_CONV_p4 eq_thms =
+  EVAL THENC
+  REWRITE_CONV eq_thms THENC
+  EVAL;
+
+fun birs_eval_exp_CONV t = (
+  let
+    val (thm_p1, eq_thms) = birs_eval_exp_CONV_p1 t;
+    (*val _ = print_thm thm_p1;*)
+    val thm_p2 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p2)) thm_p1;
+    val thm_p3 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p3 eq_thms)) thm_p2;
+    val thm_p4 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p4 eq_thms)) thm_p3;
+    val thm_p4rev = rev_birs_gen_env (thm_p4, eq_thms);
+  in
+    thm_p4rev
+  end
+);
+val birs_eval_exp_CONV = Profile.profile "eval_exp_CONV" birs_eval_exp_CONV;
+
+
+(*
+is_plain_jumptarget_set ``{BL_Address (Imm64 20w)}``
+is_plain_jumptarget_set ``{BL_Address iv | Imm64 20w = iv}``
+*)
+fun is_plain_jumptarget_set tm =
+  let
+    val l = pred_setSyntax.strip_set tm;
+  in
+    List.all (fn e_tm =>
+      bir_programSyntax.is_BL_Address e_tm andalso
+      bir_immSyntax.gen_is_Imm (bir_programSyntax.dest_BL_Address e_tm)) l
+  end handle _ => false;
+
+val is_birs_symbval_concretizations = identical ``birs_symbval_concretizations`` o fst o strip_comb;
+val birs_symbval_concretizations_oracle_CONV =
+  (fn tm => if is_birs_symbval_concretizations tm then REFL tm else
+   (print_term tm;
+    raise ERR "birs_symbval_concretizations_oracle_CONV" "something is not right here, expect a birs_symbval_concretizations")) THENC
+  (fn tm => let
+    val vaex_tm = (snd o dest_comb) tm;
+    val pcond_tm = (snd o dest_comb o fst o dest_comb) tm;
+    val pcond_is_sat = birs_smtLib.bir_check_sat false pcond_tm;
+    val pcond_sat_thm =
+     if pcond_is_sat then
+       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
+     else
+       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
+    val res_thm =
+     if not pcond_is_sat then
+       SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_empty_thm)
+     else
+     let
+      val vaex_thm = EVAL ``birs_interpret_fun i ^vaex_tm``;
+      val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_singletonconst_thm);
+     in
+      concr_thm
+     end;
+   in
+    if
+      identical tm ((fst o dest_eq o concl) res_thm)
+      handle _ => raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem"
+    then res_thm else
+    raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
+   end);
+
+val is_birs_eval_label_exp = identical ``birs_eval_label_exp`` o fst o strip_comb;
+val birs_eval_label_exp_CONV = (
+  (fn tm => if is_birs_eval_label_exp tm then REFL tm else
+   raise ERR "birs_eval_label_exp_CONV" "something is not right here, expect a birs_eval_label_exp") THENC
+  RESTR_EVAL_CONV [``birs_eval_exp``, ``birs_gen_env``, ``birs_symbval_concretizations``] THENC
+  GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
+  RESTR_EVAL_CONV [``birs_symbval_concretizations``] THENC
+
+(* here we should have either NONE or SOME and a set that is either trivially singleton of a constant or we have to resolve it into a set of constants *)
+  (fn tm =>
+    if optionSyntax.is_none tm then REFL tm else
+    if optionSyntax.is_some tm then RAND_CONV (
+      (fn tm => if is_birs_symbval_concretizations tm then birs_symbval_concretizations_oracle_CONV tm else REFL tm) THENC
+      (* here we should have a simple set of constants *)
+      (fn tm => if is_plain_jumptarget_set tm then REFL tm else
+        (print_term tm;
+         raise ERR "birs_eval_label_exp_CONV" "could not resolve the jump targets"))
+    ) tm else
+    raise ERR "birs_eval_label_exp_CONV" "something is not right here, should be NONE or SOME")
+);
+
+
 fun birs_exec_step_CONV_pre t =
 let
  val bprog_tm = (snd o dest_comb o fst o dest_comb) t;
@@ -554,7 +663,6 @@ let
          raise ERR "birs_exec_step_CONV" "program term is not a constant";
 in
  t |>
-(* (fn t => ((print_term o snd o dest_comb) t; print "\n"; t)) |>*)
  (fn t => ((print_term o (fn (x,_,_,_) => x) o dest_birs_state o snd o dest_comb) t; t)) |>
  (fn t => (print ("symb state term size = " ^ ((Int.toString o term_size) t) ^ "\n"); t)) |>
  (fn t => (print ("symb state bir expression sizes = " ^ ((Int.toString o get_birs_state_size o snd o dest_comb) t) ^ "\n"); t)) |>
@@ -562,82 +670,6 @@ in
 end;
 val birs_exec_step_CONV_pre = Profile.profile "exec_step_CONV_pre" birs_exec_step_CONV_pre;
 
-(*
-val test_term = (snd o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs_exec_step_def;
-((fn (_,x,_) => x) o TypeBase.dest_case o (fn (_,_,x) => x) o dest_cond) test_term
-(snd o dest_comb o fst o dest_comb o fst o dest_comb o snd o dest_comb) test_term
-
-val test_term = (fst o dest_eq o snd o strip_forall o concl) bir_symbTheory.birs_exec_step_def;
-(snd o dest_comb) test_term
-*)
-
-(*
-val test_term = ``ABC (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 0w))
-                            (BExp_BinExp BIExp_LeftShift
-                               (BExp_Cast BIExp_SignedCast
-                                  (BExp_BinExp BIExp_RightShift
-                                     (BExp_Cast BIExp_LowCast
-                                        (BExp_BinExp BIExp_Xor
-                                           (BExp_Cast BIExp_SignedCast
-                                              (BExp_Load
-                                                 (BExp_Den
-                                                    (BVar "sy_MEM8"
-                                                       (BType_Mem Bit64 Bit8)))
-                                                 (BExp_BinExp BIExp_Plus
-                                                    (BExp_Den
-                                                       (BVar "sy_x12"
-                                                          (BType_Imm Bit64)))
-                                                    (BExp_Const (Imm64 4w)))
-                                                 BEnd_LittleEndian Bit32)
-                                              Bit64)
-                                           (BExp_Cast BIExp_SignedCast
-                                              (BExp_Load
-                                                 (BExp_Den
-                                                    (BVar "sy_MEM8"
-                                                       (BType_Mem Bit64 Bit8)))
-                                                 (BExp_BinExp BIExp_Plus
-                                                    (BExp_Den
-                                                       (BVar "sy_x10"
-                                                          (BType_Imm Bit64)))
-                                                    (BExp_Const (Imm64 4w)))
-                                                 BEnd_LittleEndian Bit32)
-                                              Bit64)) Bit32)
-                                     (BExp_Const (Imm32 24w))) Bit64)
-                               (BExp_Const (Imm64 2w)))) (DEF:num) = 0w:word64``;
-val test_thm = prove(test_term, cheat);
-
-val subs_tm = (snd o dest_comb o fst o dest_comb o fst o dest_eq o concl) test_thm;
-val abc_tm = ``(abc:bir_exp_t)``;
-val eq_tm = ``^abc_tm = ^subs_tm``
-
-val B_tm = ``(B:bir_exp_t)``;
-val pat_tm = ``ABC ^B_tm (DEF:num) = 0w:word64``;
-
-SUBST [B_tm |-> GSYM (ASSUME eq_tm)] pat_tm test_thm
-
-val changed_thm = REWRITE_RULE [GSYM (ASSUME eq_tm)] test_thm;
-
-(*
-val changed_back_thm = SIMP_RULE std_ss [] (DISCH_ALL changed_thm);
-
-val changed_back_thm = REWRITE_RULE [] (CONV_RULE (RATOR_CONV EVAL) (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)));
-*)
-
-val changed_back_thm = BETA_RULE (CONV_RULE (RATOR_CONV EVAL) (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)));
-
-val changed_back_thm = MP (INST [abc_tm |-> subs_tm] (DISCH_ALL changed_thm)) (REFL subs_tm);
-
-val changed_back_thm = MP (DISCH_ALL (INST [abc_tm |-> subs_tm] (changed_thm))) (REFL subs_tm);
-
-val changed_back_thm = REWRITE_RULE [gen_rev_thm] (DISCH_ALL (INST [abc_tm |-> subs_tm] (changed_thm)));
-
-prove(``
-  ^test_term
-``,
-  METIS_TAC [changed_back_thm]
-);
-
-*)
 
 val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
 val pcond_abbr_tm = ``temp_pcond_abbr : bir_exp_t``;
@@ -651,10 +683,8 @@ fun abbr_app (t, env_tm, pcond_tm) =
   in
     (abbr_thm, [env_eq_thm, pcond_eq_thm])
   end;
-val abbr_app = Profile.profile "abbr_app" abbr_app;
 fun abbr_rev (res, env_tm, pcond_tm) =
   MP (MP ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] o DISCH_ALL) res) (REFL env_tm)) (REFL pcond_tm);
-val abbr_rev = Profile.profile "abbr_rev" abbr_rev;
 
 (*
 https://github.com/kth-step/HolBA/blob/master/src/tools/exec/bir_exec_blockLib.sml
@@ -675,7 +705,6 @@ fun pc_lookup_fun (bprog_tm, pc_tm) =
      NONE =>  pc_lookup_fallback_fun pc_lookup_t
    | SOME x => if (identical pc_lookup_t o fst o dest_eq o concl) x then x else pc_lookup_fallback_fun pc_lookup_t
   end;
-val pc_lookup_fun = Profile.profile "pc_lookup_fun" pc_lookup_fun;
 
 val birs_exec_stmt_tm = ``birs_exec_stmt``;
 fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
@@ -714,7 +743,6 @@ val res = abbr_rev (res, env_tm, pcond_tm);
    end
   )
  ) t;
-val birs_exec_step_CONV_p1 = Profile.profile "exec_step_CONV_p1" birs_exec_step_CONV_p1;
 
 val birs_eval_label_exp_tm = ``birs_eval_label_exp``;
 val birs_eval_exp_tm = ``birs_eval_exp``;
@@ -796,15 +824,14 @@ let
    continue_eq_rule
     (GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC birs_eval_exp_CONV))
     (continue_eq_rule
-      (Profile.profile "exec_step_CONV_B_1_eval_exp_PREEVAL" (SIMP_CONV (pure_ss++birs_state_ss) [birs_exec_stmt_def, birs_exec_stmtB_def, birs_exec_stmt_assign_def, birs_exec_stmt_assert_def, birs_exec_stmt_assume_def, birs_exec_stmt_observe_def, combinTheory.K_THM] (* THENC
-       (fn x => (print "AAAAAAAAAAAAAAA"; print_term x;print "BBBBBBBBBBBBBBBBBBBBBBB";  REFL x))*)))
+      (SIMP_CONV (pure_ss++birs_state_ss) [birs_exec_stmt_def, birs_exec_stmtB_def, birs_exec_stmt_assign_def, birs_exec_stmt_assert_def, birs_exec_stmt_assume_def, birs_exec_stmt_observe_def, combinTheory.K_THM])
       res_p1)
   ;
 
   (* lookup type of previous symbolic expression, if is assignment statement *)
   val res_b_option_bind = Profile.profile "exec_step_CONV_B_2_option_bind" (continue_eq_rule
     (GEN_match_conv is_OPTION_BIND (
-      RATOR_CONV (RAND_CONV (REWRITE_CONV ([birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm]@eq_thms) THENC EVAL)) THENC
+      RATOR_CONV (RAND_CONV (REWRITE_CONV ([birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm]@eq_thms) THENC EVAL (* TODO: this can be improved, I think *))) THENC
       REWRITE_CONV [optionTheory.OPTION_BIND_def] (* OPTION_BIND semantics *) THENC
       GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV)
     ))
@@ -853,10 +880,6 @@ fun MEM_proglabels_fun (t, eq_thms) =
   let
     val l_tm = (snd o dest_comb o fst o dest_comb) t;
     val mem_thm_o = !cur_l_mem_lookup_fun l_tm;
-(*
-    val _ = print_term t;
-    val _ = print_term l_tm;
- *)
   fun fallback_fun t =
     (print "falling back to evaluating membership of prog labels"; EVAL t);
   in
@@ -864,7 +887,6 @@ fun MEM_proglabels_fun (t, eq_thms) =
      NONE =>  fallback_fun t
    | SOME x => if (identical t o concl) x then EQ_MP (SPEC t spec_conv_thm) x else fallback_fun t
   end;
-val MEM_proglabels_fun = Profile.profile "MEM_proglabels_fun" MEM_proglabels_fun;
 
 val birs_exec_stmt_jmp_tm = ``birs_exec_stmt_jmp``;
 val MEM_tm = ``MEM : bir_label_t -> bir_label_t list -> bool``;
@@ -926,51 +948,6 @@ val birs_exec_step_CONV =
 val birs_exec_step_CONV = Profile.profile "exec_step_CONV" birs_exec_step_CONV;
 
 
-(*
-
-val test_term_birs_eval_exp = ``
-          birs_eval_exp
-            (BExp_BinPred BIExp_LessOrEqual
-               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
-            (K NONE)⦇
-              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-              "SP_process" ↦
-                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-            ⦈
-``;
-
-
-val test_term_birs_eval_exp_subst = ``
-          birs_eval_exp_subst
-            (BExp_BinPred BIExp_LessOrEqual
-               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
-            (K NONE)⦇
-              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-              "SP_process" ↦
-                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-            ⦈
-``;
-
-
-val test_term_birs_senv_typecheck = ``
-          birs_senv_typecheck
-            (BExp_BinPred BIExp_LessOrEqual
-               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
-            (K NONE)⦇
-              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-              "SP_process" ↦
-                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-            ⦈
-``;
-
-
-*)
 
 in
 
