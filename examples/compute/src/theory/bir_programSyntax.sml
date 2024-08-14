@@ -8,6 +8,14 @@ val ERR = mk_HOL_ERR "bir_programSyntax" ;
 
 
 (* Utilities *)
+
+fun dest_bi_record (ty : hol_type) (err : exn) (tm: term) =
+  let val (ty_rec, attributes) = TypeBase.dest_record tm ;
+      val _ = if ty_rec = ty then () else raise err ;
+  in case map snd attributes of 
+      [tm1, tm2] => (tm1,tm2) 
+    | _ => raise err end
+
 fun dest_tri_record (ty : hol_type) (err : exn) (tm: term) =
   let val (ty_rec, attributes) = TypeBase.dest_record tm ;
       val _ = if ty_rec = ty then () else raise err ;
@@ -46,6 +54,10 @@ fun mk_block (tm1, tm2, tm3) =
 fun mk_program tm =
   list_mk_comb (program_tm, [tm])
 
+fun mk_programcounter (tm1, tm2) = 
+  TypeBase.mk_record (``:bir_programcounter_tm``,
+    [("bpc_label",tm1), ("bpc_index", tm2)])
+
 fun mk_state (tm1, tm2, tm3) = 
   TypeBase.mk_record (``:bir_state_t``,
     [("bst_pc",tm1), ("bst_environ", tm2), ("bst_status", tm3)])
@@ -74,6 +86,9 @@ fun dest_block tm =
 fun dest_program tm =
   dest_monop program_tm (ERR "dest_program" "not BirProgram") tm
 
+fun dest_programcounter tm =
+  dest_bi_record ``:bir_programcounter_t`` (ERR "dest_programcounter" "not bir_programcounter_t") tm
+
 fun dest_state tm =
   dest_tri_record ``:bir_state_t`` (ERR "dest_state" "not bir_state_t") tm
 
@@ -99,6 +114,9 @@ fun is_block tm =
 
 fun is_program tm =
   can dest_program tm
+
+fun is_programcounter tm =
+  can dest_programcounter tm
 
 fun is_state tm =
   can dest_state tm

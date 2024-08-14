@@ -21,7 +21,10 @@ val cv_le_exp_tm = prim_mk_const{Name="BCVLE_Exp", Thy="bir_cv_program"} ;
 val cv_stmt_assign_tm = prim_mk_const{Name="BCVStmt_Assign", Thy="bir_cv_program"} ;
 val cv_stmt_jmp_tm = prim_mk_const{Name="BCVStmt_Jmp", Thy="bir_cv_program"} ;
 val cv_stmt_cjmp_tm = prim_mk_const{Name="BCVStmt_CJmp", Thy="bir_cv_program"} ;
+val cv_block_tm = prim_mk_const{Name="BCVBlock", Thy="bir_cv_program"} ;
 val cv_program_tm = prim_mk_const{Name="BirCVProgram", Thy="bir_cv_program"} ;
+val cv_programcounter_tm = prim_mk_const{Name="BCVProgramCounter", Thy="bir_cv_program"} ;
+val cv_state_tm = prim_mk_const{Name="BCVState", Thy="bir_cv_program"} ;
 
 
 fun mk_cv_le_label tm =
@@ -40,15 +43,16 @@ fun mk_cv_stmt_cjmp (tm1,tm2,tm3) =
   list_mk_comb (cv_stmt_cjmp_tm, [tm1, tm2, tm3])
 
 fun mk_cv_block (tm1, tm2, tm3) = 
-  TypeBase.mk_record (``:bir_cv_block_t``,
-    [("bb_label",tm1), ("bb_statements", tm2), ("bb_last_statement", tm3)])
+  list_mk_comb (cv_block_tm, [tm1, tm2, tm3])
 
 fun mk_cv_program tm =
   list_mk_comb (cv_program_tm, [tm])
 
+fun mk_cv_programcounter (tm1,tm2) =
+  list_mk_comb (cv_programcounter_tm, [tm1, tm2])
+
 fun mk_cv_state (tm1, tm2, tm3) = 
-  TypeBase.mk_record (``:bir_cv_state_t``,
-    [("bst_pc",tm1), ("bst_environ", tm2), ("bst_status", tm3)])
+  list_mk_comb (cv_state_tm, [tm1, tm2, tm3])
 
 
   
@@ -69,13 +73,16 @@ fun dest_cv_stmt_cjmp tm =
   dest_triop cv_stmt_cjmp_tm (ERR "dest_cv_stmt_cjmp" "not BCVStmt_CJmp") tm
 
 fun dest_cv_block tm =
-  dest_tri_record ``:bir_cv_block_t`` (ERR "dest_cv_block" "not bir_cv_block_t") tm
+  dest_triop cv_block_tm (ERR "dest_cv_block" "not BCVBlock") tm
 
 fun dest_cv_program tm =
   dest_monop cv_program_tm (ERR "dest_cv_program" "not BirCVProgram") tm
 
+fun dest_cv_programcounter tm =
+  dest_binop cv_programcounter_tm (ERR "dest_cv_programcounter" "not BCVProgramCounter") tm
+
 fun dest_cv_state tm =
-  dest_tri_record ``:bir_cv_state_t`` (ERR "dest_cv_state" "not bir_cv_state_t") tm
+  dest_triop cv_state_tm (ERR "dest_cv_state" "not BCVState") tm
 
 
 
@@ -99,6 +106,9 @@ fun is_cv_block tm =
 
 fun is_cv_program tm =
   can dest_cv_program tm
+
+fun is_cv_programcounter tm =
+  can dest_cv_programcounter tm
 
 fun is_cv_state tm =
   can dest_cv_state tm

@@ -17,6 +17,7 @@ sig
   val mk_stmt_cjmp : (term * term * term) -> term ;
   val mk_block : (term * term * term) -> term ;
   val mk_program : term -> term ;
+  val mk_programcounter : (term * term) -> term ;
   val mk_state : (term * term * term) -> term ;
 
   val dest_le_label : term -> term ;
@@ -26,6 +27,7 @@ sig
   val dest_stmt_cjmp : term -> (term * term * term) ;
   val dest_block : term -> (term * term * term) ;
   val dest_program : term -> term ;
+  val dest_programcounter : term -> (term * term) ;
   val dest_state : term -> (term * term * term) ;
 
   val is_le_label : term -> bool ;
@@ -35,6 +37,7 @@ sig
   val is_stmt_cjmp : term -> bool ;
   val is_block : term -> bool ;
   val is_program : term -> bool ;
+  val is_programcounter : term -> bool ;
   val is_state : term -> bool ;
 
 
