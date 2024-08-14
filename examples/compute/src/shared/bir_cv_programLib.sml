@@ -139,6 +139,19 @@ fun bir_program_conv (tm : term) : thm =
   in GSYM rw_thm end
 
 
+(* Returns tm = from_cv_programcounter v *)
+fun bir_pc_conv (tm : term) : thm = 
+  let 
+    val (label_tm, index_tm) = dest_programcounter tm ;
+
+    val cv_programcounter_tm = mk_cv_programcounter (label_tm, index_tm) ;
+
+    val thms_for_rewrite = [from_cv_programcounter_def]
+
+    val rw_thm = SIMP_CONV (srw_ss ()) thms_for_rewrite ``from_cv_programcounter ^cv_programcounter_tm``
+  in GSYM rw_thm end
+
+
 (* Returns tm = from_cv_state v *)
 fun bir_state_conv (tm : term) : thm =
   let
@@ -147,9 +160,14 @@ fun bir_state_conv (tm : term) : thm =
     val cv_env_thm = env_to_cv_env_conv env_tm ;
     val cv_env_tm = rand (rhs (concl cv_env_thm)) ;
 
-    val cv_state_tm = mk_cv_state (pc_tm, cv_env_tm, status_tm) ;
+    val cv_pc_thm = bir_pc_conv pc_tm ;
+    val cv_pc_tm = rand (rhs (concl cv_pc_thm)) ;
 
-    val rw_thm = SIMP_CONV (srw_ss()) [from_cv_state_def, GSYM cv_env_thm] ``from_cv_state ^cv_state_tm`` ;
+    val cv_state_tm = mk_cv_state (cv_pc_tm, cv_env_tm, status_tm) ;
+  
+    val thms_for_rewrite = [from_cv_state_def, GSYM cv_env_thm, GSYM cv_pc_thm] ;
+
+    val rw_thm = SIMP_CONV (srw_ss()) thms_for_rewrite ``from_cv_state ^cv_state_tm`` ;
   in GSYM rw_thm end
 
 
