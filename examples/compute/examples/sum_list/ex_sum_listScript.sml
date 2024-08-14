@@ -26,7 +26,7 @@ val _ = new_theory "ex_sum_list"
 (* r0 + list[r1] *)
 Definition sum_one_def:
   sum_one = BExp_BinExp BIExp_Plus (BExp_Den (BVar "r0"))
-    (BExp_Load (BExp_Den (BVar "MEM8")) (BExp_Den (BVar "r1")) BEnd_BigEndian Bit8)
+    (BExp_Load (BExp_Den (BVar "MEM64")) (BExp_Den (BVar "r1")) BEnd_BigEndian Bit64)
 End
 
 (* Statement for r0 = r0 + list[r1] *)
@@ -37,7 +37,7 @@ End
 (* r1 + 1 *)
 Definition incr_r1_def:
   incr_r1 = BExp_BinExp BIExp_Plus 
-      (BExp_Den (BVar "r1")) (BExp_Const (Imm8 1w))
+      (BExp_Den (BVar "r1")) (BExp_Const (Imm64 1w))
 End
 
 (* r1 = r1 + 1 *)
@@ -81,7 +81,7 @@ End
 
 (* Create a memory with a list of size n *)
 Definition start_mem_def:
-  start_mem n = BVal_Mem Bit64 Bit8 (start_mem_aux FEMPTY n 0 1)
+  start_mem n = BVal_Mem Bit64 Bit64 (start_mem_aux FEMPTY n 0 1)
 End
 
 (* Start program counter *)
@@ -95,10 +95,10 @@ Definition start_env_def:
   bir_env_update
     (bir_env_update
       (bir_env_update 
-        (bir_env_update bir_empty_env (BVar "MEM8") (start_mem n)) 
-        (BVar "r0") (BVal_Imm (Imm8 0w)))
-      (BVar "r1") (BVal_Imm (Imm8 0w)))
-    (BVar "n") (BVal_Imm (Imm8 (n2w n)))
+        (bir_env_update bir_empty_env (BVar "MEM64") (start_mem n)) 
+        (BVar "r0") (BVal_Imm (Imm64 0w)))
+      (BVar "r1") (BVal_Imm (Imm64 0w)))
+    (BVar "n") (BVal_Imm (Imm64 (n2w n)))
 End
 
 (* Start program state *)

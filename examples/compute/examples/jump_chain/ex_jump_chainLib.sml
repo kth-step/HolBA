@@ -51,10 +51,11 @@ let
   val eval_value = time (compute_step_EVAL program_tm) init_state_tm ;
 
   val _ = print "cv measurement...\n" ;
-  val _ = translate_program_cv program_def ;
+  val _ = print "Starting cv translation...\n" ;
+  val _ = time translate_program_cv program_def ;
   val cv_value = time (compute_step_cv program_def) init_state_tm ;
 
-
+  val _ = assert (fn x => (Term.compare (x, (rhs (concl cv_value))) = EQUAL)) (rhs (concl eval_value))
 in () end
 
 end
