@@ -163,6 +163,78 @@ end
 fun compute_step_EVAL (program : term) (state: term) : thm =
   EVAL ``bir_compute_step ^program ^state``
 
+(* Deep embeds the expression, if any, in the label expression *)
+fun deep_embed_label_exp (name : string) (cv_le_tm : term) : thm option = 
+  if is_cv_le_exp cv_le_tm then
+    let val cv_exp_tm = dest_cv_le_exp cv_le_tm ;
+    in SOME (deep_embed_term (name ^ "_label_exp") cv_exp_tm) end
+  else NONE
+
+
+(* Deep embeds a basic statement *)
+fun deep_embed_basic_stmt (name : string) (cv_stmt_tm : term) : thm =
+let 
+  (* Deep embed the nested expressions *)
+  val thms_for_rewrite = 
+    if is_cv_stmt_assign cv_stmt_tm then 
+      let val (_, cv_exp_tm) = dest_cv_stmt_assign cv_stmt_tm ;
+      in [deep_embed_term (name ^ "_exp") cv_exp_tm] end
+    else 
+      raise (ERR "deep_embed_basic_stmt" "not a basic statement")
+  val thms_for_rewrite_gsym = map GSYM thms_for_rewrite ;
+  (* Rewrite the statement with the embedded expressions *)
+  val stmt_embed_exp_thm = REWRITE_CONV thms_for_rewrite_gsym cv_stmt_tm ;
+  val stmt_embed_exp_tm = rhs (concl stmt_embed_exp_thm) ;
+  (* Embeds the whole statement *)
+  val deep_embed_stmt_thm = deep_embed_term name stmt_embed_exp_tm
+in REWRITE_RULE [GSYM stmt_embed_exp_thm] deep_embed_stmt_thm end
+
+(* Deep embeds a end statement *)
+fun deep_embed_end_stmt (name : string) (cv_stmt_tm : term) : thm =
+let
+  (* Deep embed the nested expressions *)
+  val thms_for_rewrite = 
+    if is_cv_stmt_jmp cv_stmt_tm then 
+      let val cv_le_tm = dest_cv_stmt_jmp cv_stmt_tm ;
+        val embed_le_thm_opt = deep_embed_label_exp (name ^ "_le") cv_le_tm ;
+      in filter_option [embed_le_thm_opt] end
+    else if is_cv_stmt_cjmp cv_stmt_tm then
+      let val (cv_exp_tm, cv_le_tm1, cv_le_tm2) = dest_cv_stmt_cjmp cv_stmt_tm ;
+        val embed_exp_thm = deep_embed_term (name ^ "_cexp") cv_exp_tm ;
+        val embed_le_thm_opt1 = deep_embed_label_exp (name ^ "_leT") cv_le_tm1 ;
+        val embed_le_thm_opt2 = deep_embed_label_exp (name ^ "_leF") cv_le_tm2 ;
+      in (embed_exp_thm) :: (filter_option [embed_le_thm_opt1, embed_le_thm_opt2]) end
+    else 
+      raise (ERR "deep_embed_end_stmt" "not an end statement")
+  val thms_for_rewrite_gsym = map GSYM thms_for_rewrite ;
+  (* Rewrite the statement with the embedded expressions *)
+  val stmt_embed_exp_thm = QCONV (REWRITE_CONV thms_for_rewrite_gsym) cv_stmt_tm ;
+  val stmt_embed_exp_tm = rhs (concl stmt_embed_exp_thm) ;
+  (* Embeds the whole statement *)
+  val deep_embed_stmt_thm = deep_embed_term name stmt_embed_exp_tm
+in REWRITE_RULE [Once $ GSYM stmt_embed_exp_thm] deep_embed_stmt_thm end
+
+(* Deep embeds a block and its statements *)
+fun deep_embed_block (name : string) (cv_block_tm : term) : thm =
+let
+  val (_, basic_list_tm, end_stmt_tm) = dest_cv_block cv_block_tm ;
+  (* Get basic statements *)
+  val basic_tm_list = fst $ dest_list basic_list_tm ;
+  (* Deep embeds all basic statements *)
+  val embed_basic_thm_list = 
+    map_string_increasing (name ^ "_stmt_basic_") deep_embed_basic_stmt basic_tm_list ;
+
+  (* Deep embeds end statement *)
+  val embed_end_thm = deep_embed_end_stmt (name ^ "_stmt_end") end_stmt_tm ;
+
+  val thm_for_rewrite = map GSYM (embed_end_thm::embed_basic_thm_list) ;
+
+  val rw_thm = ONCE_REWRITE_CONV thm_for_rewrite cv_block_tm ;
+
+in rw_thm end
+  
+
+
 (* Deep embedding of our programs (same as above with expressions *)
 (* Note : here, we only do a deep embedding of program, not the expressions inside *)
 (* WARNING : this creates theorems suffixed by _bir_cv_def, _bir_cv_eq. *)
@@ -175,14 +247,22 @@ let
   val _ = print "Translating to cv_program...\n" ;
   val from_program_thm = translate_named_term bir_program_conv program
   val cv_program = rand (rhs (concl from_program_thm)) ;
-  (* Create the new constant term *)
+  (* Get the block list of the cv program *)
+  val cv_block_list_tm = dest_cv_program cv_program ;
+  val cv_block_tm_list = fst $ dest_list cv_block_list_tm ;
+  (* Recursively deep embeds blocks, statements and expressions *)
+  val _ = print "Starting recursive deep embedding...\n" ;
+  val embed_block_thm_list = 
+    map_string_increasing (program_name ^ "_block_") deep_embed_block cv_block_tm_list
+  val embed_program_thm = REWRITE_CONV embed_block_thm_list cv_program ;
+  (* Get the program with embed statements *)
+  val embed_program_tm = rhs (concl embed_program_thm) ;
 
-  val _ = print "Translating with deep embedding...\n" ;
-  (* WARNING : Deep embedding program doesn’t work. We want to deep embed each exp *)
-  val cv_program_def = deep_embed_term program_name cv_program ;
+  val cv_program_def = deep_embed_term program_name embed_program_tm ;
   (* val _ = time (cv_trans_deep_embedding EVAL) cv_program_def ; *)
-  val _ = time cv_trans cv_program_def ;
-in () end
+  (* This translation is rather slow... Can we skip it ? *)
+  (* val _ = time cv_trans cv_program_def ; *)
+in cv_program_def end
 
 fun compute_step_cv (program_def : thm) (state_tm : term) : thm =
 let
@@ -199,7 +279,7 @@ let
   val cv_program_name = program_name ^ "_bir_cv" ;
   val from_program_thm = DB.fetch "-" (cv_program_name ^ "_eq") ;
   val cv_program_def = DB.fetch "-" (cv_program_name ^ "_def") ;
-  val cv_program = lhs (concl cv_program_def) ;
+  val cv_program = rhs (concl cv_program_def) ;
   (* Term to be computed *)
   val compute_term = ``bir_cv_compute_step ^cv_program ^cv_state_tm`` ;
 
