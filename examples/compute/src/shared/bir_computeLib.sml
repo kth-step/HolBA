@@ -280,9 +280,15 @@ let
   val cv_program_name = program_name ^ "_bir_cv" ;
   val from_program_thm = DB.fetch "-" (cv_program_name ^ "_eq") ;
   val cv_program_def = DB.fetch "-" (cv_program_name ^ "_def") ;
-  val cv_program = rhs (concl cv_program_def) ;
+  (* TODO : change here (lhs to rhs) *)
+  val cv_program = lhs (concl cv_program_def) ;
+  (* Deep Embed state *)
+  val _ = print "Deep embedding state...\n" ;
+  val embed_state_thm = deep_embed_term (program_name ^ "_state") cv_state_tm ;
+  (* TODO : change here (lhs to rhs) *)
+  val embed_state_tm = lhs (concl embed_state_thm) ;
   (* Term to be computed *)
-  val compute_term = ``bir_cv_compute_step ^cv_program ^cv_state_tm`` ;
+  val compute_term = ``bir_cv_compute_step ^cv_program ^embed_state_tm`` ;
 
   (* Evaluates step *)
   val _  = print "Applying cv_eval...\n"
