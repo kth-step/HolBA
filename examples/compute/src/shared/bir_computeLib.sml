@@ -270,7 +270,8 @@ let
   val eval_state_thm = EVAL state_tm ;
   val eval_state_tm = rhs (concl eval_state_thm) ;
   (* Converts state to cv_state *)
-  val cv_state_thm = bir_state_conv eval_state_tm ;
+  val _ = print "Translating state...\n" ;
+  val cv_state_thm = time bir_state_conv eval_state_tm ;
   val cv_state_tm = rand (rhs (concl cv_state_thm)) ;
   (* Get the program term *)
   val program = lhs (concl program_def) ;
@@ -284,7 +285,8 @@ let
   val compute_term = ``bir_cv_compute_step ^cv_program ^cv_state_tm`` ;
 
   (* Evaluates step *)
-  val evaled_term_thm = cv_eval compute_term ;
+  val _  = print "Applying cv_eval...\n"
+  val evaled_term_thm = time cv_eval compute_term ;
   
   (* Apply from_cv_state to match bir_cv_compute_step_eq_compute_exp *)
   val from_evaled_term_thm = AP_TERM ``from_cv_state`` evaled_term_thm ;
