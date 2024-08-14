@@ -15,6 +15,8 @@ open bir_cv_memTheory ;
 open bir_cv_basicLib ;
 open bir_programTheory bir_cv_programTheory ;
 open bir_cv_programLib ;
+open optionSyntax listSyntax bir_cv_programSyntax ;
+open computeLib ;
 
 
 
@@ -22,6 +24,17 @@ open bir_cv_programLib ;
 (* ------------------- UTILITIES ------------------ *)
 (* ------------------------------------------------ *)
 
+val ERR = mk_HOL_ERR "bir_computeLib" ;
+
+(* Map the function f on a list by feeding arguments name1, name2 etc… *)
+fun map_string_increasing (name : string) (f : string -> 'a -> 'b) (l : 'a list): 'b list  = 
+  snd (foldl (fn (tm,(n,t)) => (n+1, (f (name ^ (Int.toString n)) tm)::t)) 
+    (1, []) l );
+
+
+(* Return a list where NONEs are filtered out and SOMEs are stripped *)
+fun filter_option (l : 'a option list) : 'a list =
+  rev $ foldl (fn (h,t) => if isSome h then (valOf h)::t else t) [] l
 
 (* Deep embed a term and returns the definition *)
 (* Creates name_bir_cv_def *)
