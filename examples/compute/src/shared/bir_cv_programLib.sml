@@ -114,6 +114,9 @@ fun bir_block_conv (tm : term) : thm =
 
     val thms_for_rewrite = map GSYM
       ((GSYM from_cv_block_def)::cv_stmt_end_thm::cv_stmt_basic_thm_list)
+    val thms_for_rewrite = 
+      bir_cv_block_get_stmts_def::bir_cv_block_get_end_def::
+        bir_cv_block_get_label_def :: thms_for_rewrite ;
 
     (* We are using SIMP_CONV to simplify record accessors *)
     val rw_thm = SIMP_CONV (srw_ss()) 
@@ -165,7 +168,8 @@ fun bir_state_conv (tm : term) : thm =
 
     val cv_state_tm = mk_cv_state (cv_pc_tm, cv_env_tm, status_tm) ;
   
-    val thms_for_rewrite = [from_cv_state_def, GSYM cv_env_thm, GSYM cv_pc_thm] ;
+    val thms_for_rewrite = [from_cv_state_def, GSYM cv_env_thm, GSYM cv_pc_thm,
+        bir_cv_state_get_environ_def, bir_cv_state_get_pc_def, bir_cv_state_get_status_def] ;
 
     val rw_thm = SIMP_CONV (srw_ss()) thms_for_rewrite ``from_cv_state ^cv_state_tm`` ;
   in GSYM rw_thm end

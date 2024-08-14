@@ -44,8 +44,9 @@ let
   val _ = new_constant (deep_name, type_of tm) ;
   val deep_constant = mk_const (deep_name, type_of tm) ;
   val deep_constant_def = new_definition (deep_name ^ "_def", ``^deep_constant = ^tm``) ;
-  (* Add to compset *)
+  (* Add to compset / stateful simpset *)
   val _ = add_thms [deep_constant_def] the_compset ;
+  val _ = export_rewrites [deep_name ^ "_def"] ;
 
   val _ = print "Translating with deep embedding...\n" ;
   val _ = time (cv_trans_deep_embedding EVAL) deep_constant_def ;
@@ -75,7 +76,7 @@ let
   (* Translate using conversion *)
   val _ = print "Translating one named term...\n" ;
   val from_val_thm = time bir_conv evaled_tm ;
-  val from_named_thm = REWRITE_RULE [GSYM evaled_thm] from_val_thm ;
+  val from_named_thm = SIMP_RULE (srw_ss()) [GSYM evaled_thm] from_val_thm ;
   val _ = save_thm (name ^ "_bir_cv_eq", from_named_thm) ;
 in from_named_thm end
 
@@ -301,11 +302,10 @@ let
   
   (* Rewrites for correct theorem *)
   val rewritten_term_thm = 
-      REWRITE_RULE [evaled_from_result, bir_cv_compute_step_eq_compute_exp, GSYM
+      SIMP_RULE (srw_ss ()) [evaled_from_result, bir_cv_compute_step_eq_compute_exp, GSYM
                    cv_state_thm, cv_program_def, GSYM from_program_thm, 
-                   Once $ GSYM eval_state_thm] 
+                   Once $ GSYM eval_state_thm, embed_state_thm] 
         from_evaled_term_thm
-
 in rewritten_term_thm end
 
 
