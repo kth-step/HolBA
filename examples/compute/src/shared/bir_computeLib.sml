@@ -48,8 +48,9 @@ let
   val _ = add_thms [deep_constant_def] the_compset ;
   val _ = export_rewrites [deep_name ^ "_def"] ;
 
-  val _ = print "Translating with deep embedding...\n" ;
-  val _ = time (cv_trans_deep_embedding EVAL) deep_constant_def ;
+  (* val _ = print "Translating with deep embedding...\n" ; *)
+  (* val _ = time (cv_trans_deep_embedding EVAL) deep_constant_def ; *)
+  val _ = (cv_trans_deep_embedding EVAL) deep_constant_def ;
 in deep_constant_def end
 
 (* Translates a raw term (unamed), outputing a theorem tm = from v *)
@@ -254,15 +255,12 @@ let
   (* Recursively deep embeds blocks, statements and expressions *)
   val _ = print "Starting recursive deep embedding...\n" ;
   val embed_block_thm_list = 
-    map_string_increasing (program_name ^ "_block_") deep_embed_block cv_block_tm_list
+    time (map_string_increasing (program_name ^ "_block_") deep_embed_block) cv_block_tm_list
   val embed_program_thm = REWRITE_CONV embed_block_thm_list cv_program ;
   (* Get the program with embed statements *)
   val embed_program_tm = rhs (concl embed_program_thm) ;
 
   val cv_program_def = deep_embed_term program_name embed_program_tm ;
-  (* val _ = time (cv_trans_deep_embedding EVAL) cv_program_def ; *)
-  (* This translation is rather slow... Can we skip it ? *)
-  (* val _ = time cv_trans cv_program_def ; *)
 in cv_program_def end
 
 fun compute_step_cv (program_def : thm) (state_tm : term) : thm =
@@ -281,12 +279,10 @@ let
   val cv_program_name = program_name ^ "_bir_cv" ;
   val from_program_thm = DB.fetch "-" (cv_program_name ^ "_eq") ;
   val cv_program_def = DB.fetch "-" (cv_program_name ^ "_def") ;
-  (* TODO : change here (lhs to rhs) *)
   val cv_program = lhs (concl cv_program_def) ;
   (* Deep Embed state *)
   val _ = print "Deep embedding state...\n" ;
   val embed_state_thm = deep_embed_term (program_name ^ "_state") cv_state_tm ;
-  (* TODO : change here (lhs to rhs) *)
   val embed_state_tm = lhs (concl embed_state_thm) ;
   (* Term to be computed *)
   val compute_term = ``bir_cv_compute_step ^cv_program ^embed_state_tm`` ;
