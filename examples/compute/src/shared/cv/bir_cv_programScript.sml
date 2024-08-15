@@ -327,9 +327,9 @@ Theorem bir_cv_state_is_terminated_eq_state_is_terminated:
   !cv_st. (bir_cv_state_is_terminated cv_st) = 
     bir_state_is_terminated (from_cv_state cv_st)
 Proof
-  cheat >>
+  Cases_on `cv_st` >>
   rw [bir_cv_state_is_terminated_def, bir_state_is_terminated_def] >>
-  rw [from_cv_state_def]
+  rw [from_cv_state_def, bir_cv_state_get_status_def]
 QED
 
 (* Definition for theorem purposes *)
@@ -351,9 +351,10 @@ Theorem bir_cv_get_current_statement_eq_get_current_statement:
   !cv_prog pc. from_cv_stmt_option (bir_cv_get_current_statement cv_prog pc) =
     bir_get_current_statement (from_cv_program cv_prog) (from_cv_programcounter pc)
 Proof
-  cheat >>
-  Cases_on `cv_prog` >>
+  Cases_on `cv_prog` >> Cases_on `pc` >>
+  rw [from_cv_programcounter_def] >>
   rw [bir_get_current_statement_def, bir_cv_get_current_statement_def] >>
+  rw [bir_cv_programcounter_get_label_def, bir_cv_programcounter_get_index_def] >>
   rw [bir_cv_get_program_block_info_by_label_def] >>
   rw [bir_get_program_block_info_by_label_def, from_cv_program_def] >>
   rw [INDEX_FIND_from_cv_block, from_cv_block_def] >>
@@ -396,16 +397,25 @@ Proof
   ]
 QED
 
+Theorem bir_cv_block_pc_eq_block_pc:
+  !l. from_cv_programcounter (bir_cv_block_pc l) = bir_block_pc l
+Proof
+  rw [bir_cv_block_pc_def, bir_block_pc_def] >>
+  rw [from_cv_programcounter_def]
+QED
+
 (* bir_jmp_to_label *)
 Theorem bir_cv_jmp_to_label_eq_jmp_to_label:
   !cv_prog l cv_st. 
   from_cv_state (bir_cv_jmp_to_label cv_prog l cv_st) =
     bir_jmp_to_label (from_cv_program cv_prog) l (from_cv_state cv_st)
 Proof
-  cheat >>
+  Cases_on `cv_st` >>
   rw [bir_cv_jmp_to_label_def, bir_jmp_to_label_def] >>
   fs [bir_is_label_in_program_eq_MEM] >>
-  rw [from_cv_state_def]
+  rw [from_cv_state_def] >>
+  rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def,
+    bir_cv_state_get_status_def, bir_cv_block_pc_eq_block_pc]
 QED
 
 (* bir_compute_stmt_jmp *)
@@ -414,12 +424,13 @@ Theorem bir_cv_compute_stmt_jmp_eq_compute_stmt_jmp:
     from_cv_state (bir_cv_compute_stmt_jmp cv_prog cv_le cv_st) =
       bir_compute_stmt_jmp (from_cv_program cv_prog) (from_cv_label_exp cv_le) (from_cv_state cv_st)
 Proof
-  cheat >>
+  Cases_on `cv_st` >>
   rw [bir_cv_compute_stmt_jmp_def, bir_compute_stmt_jmp_def] >>
   rw [bir_cv_compute_label_exp_eq_compute_label_exp] >>
   rw [SimpRHS, Once from_cv_state_def] >>
   CASE_TAC >| [
-    rw [from_cv_state_def, bir_state_set_typeerror_def, bir_cv_state_set_typeerror_def],
+    rw [from_cv_state_def, bir_state_set_typeerror_def, bir_cv_state_set_typeerror_def] >>
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def],
 
     rw [bir_cv_jmp_to_label_eq_jmp_to_label]
   ]
@@ -432,18 +443,21 @@ Theorem bir_cv_compute_stmt_cjmp_eq_compute_stmt_cjmp:
     bir_compute_stmt_cjmp (from_cv_program cv_prog) (from_cv_exp cv_cexp)
         (from_cv_label_exp cv_le1) (from_cv_label_exp cv_le2)(from_cv_state cv_st)
 Proof
-  cheat >>
+  Cases_on `cv_st` >>
   rw [bir_cv_compute_stmt_cjmp_def, bir_compute_stmt_cjmp_def] >>
   CASE_TAC >| [
     rw [bir_compute_exp_eq_cv_compute_exp, from_cv_state_def] >>
     rw [from_cv_val_option_def] >>
-    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def],
+    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def],
+
 
     rw [SimpRHS, bir_compute_exp_eq_cv_compute_exp, from_cv_state_def] >>
     rw [from_cv_val_option_def] >>
     rw [bir_cv_dest_bool_val_eq_dest_bool_val] >>
     CASE_TAC >| [
-      rw [from_cv_state_def, bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def],
+      rw [from_cv_state_def, bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+      rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def],
 
       rw [bir_cv_compute_stmt_jmp_eq_compute_stmt_jmp] >>
       rw [from_cv_state_def]
@@ -469,13 +483,22 @@ Theorem bir_cv_compute_stmt_assign_eq_compute_stmt_assign:
   !var cv_exp cv_st . from_cv_state (bir_cv_compute_stmt_assign var cv_exp cv_st) = 
     bir_compute_stmt_assign var (from_cv_exp cv_exp) (from_cv_state cv_st)
 Proof
-  cheat >>
+  Cases_on `cv_st` >>
   rw [bir_cv_compute_stmt_assign_def, bir_compute_stmt_assign_def] >>
   rw [from_cv_state_def] >>
+  rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
   rw [bir_compute_exp_eq_cv_compute_exp] >>
   CASE_TAC >> rw [from_cv_val_option_def] >| [
-    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def],
+    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def],
 
+    rw [bir_cv_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def],
+
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
+    METIS_TAC [from_cv_env_cv_env_update],
+
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
     METIS_TAC [from_cv_env_cv_env_update]
   ]
 QED
@@ -491,12 +514,21 @@ Proof
   ]
 QED
 
+Theorem bir_cv_pc_next_eq_pc_next:
+  !b. from_cv_programcounter (bir_cv_pc_next b) = bir_pc_next (from_cv_programcounter b)
+Proof
+  Cases_on `b` >>
+  rw [from_cv_programcounter_def, bir_pc_next_def, bir_cv_pc_next_def]
+QED
+
 Theorem bir_cv_state_next_eq_state_next:
   !cv_st. from_cv_state (bir_cv_state_next cv_st) = bir_state_next (from_cv_state cv_st)
 Proof
-  cheat >>
+  Cases_on `cv_st` >>
   rw [bir_cv_state_next_def, bir_state_next_def] >>
-  fs [from_cv_state_def, bir_cv_state_is_terminated_def, bir_state_is_terminated_def]
+  fs [from_cv_state_def, bir_cv_state_is_terminated_def, bir_state_is_terminated_def] >>
+  fs [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
+  rw [bir_cv_pc_next_eq_pc_next]
 QED
 
 (* bir_compute_stmt *)
@@ -516,16 +548,21 @@ Theorem bir_cv_compute_step_eq_compute_exp:
   !cv_p cv_st. from_cv_state (bir_cv_compute_step cv_p cv_st) =
    bir_compute_step (from_cv_program cv_p) (from_cv_state cv_st)
 Proof
-  cheat >>
-  Cases_on `cv_p` >>
+  Cases_on `cv_p` >> Cases_on `cv_st` >>
   rw [bir_compute_step_def, bir_cv_compute_step_def] >>
   fs [bir_cv_state_is_terminated_eq_state_is_terminated] >>
-  rw [GSYM bir_cv_get_current_statement_eq_get_current_statement] >>
+  rw [bir_cv_state_get_pc_def] >>
   CASE_TAC >| [
+    rw [from_cv_state_def, from_cv_stmt_option_def, bir_state_set_failed_def, bir_cv_state_set_failed_def] >>
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
+    rw [GSYM bir_cv_get_current_statement_eq_get_current_statement] >>
     rw [from_cv_state_def, from_cv_stmt_option_def, bir_state_set_failed_def, bir_cv_state_set_failed_def],
 
     rw [SimpRHS, Once from_cv_state_def, from_cv_stmt_option_def] >>
-    rw [bir_cv_compute_stmt_eq_compute_stmt]
+    rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
+    rw [bir_cv_compute_stmt_eq_compute_stmt] >>
+    rw [GSYM bir_cv_get_current_statement_eq_get_current_statement] >>
+    rw [from_cv_stmt_option_def]
   ]
 QED
 
