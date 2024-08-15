@@ -509,8 +509,142 @@ Proof
   METIS_TAC [post_bircont_nL_vars_EQ_postcond_IMP_thm, bir_state_EQ_FOR_VARS_SYM_thm]
 QED
 
+Theorem post_bircont_nL_vars_EQ_postcond_IMP_two_albl_1_thm[local]:
+  !vs p bpost_1 bpost_2 exit_albl_1 exit_albl_2 st1' st2' st2.
+    (vs = bir_vars_of_program p) ==>
+    (bir_vars_of_exp bpost_1 SUBSET vs) ==>
+    (bir_is_bool_exp bpost_1) ==>
+    (bir_state_EQ_FOR_VARS vs st1' st2') ==>
+    (post_bircont_nL
+       <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|>
+       vs bpost_1 st2 st2') ==>
+    (bir_exec_to_labels_triple_postcond st1'
+      (\l. if l = BL_Address exit_albl_1 then bpost_1
+           else if l = BL_Address exit_albl_2 then bpost_2
+           else bir_exp_false) p)
+Proof
+  REPEAT GEN_TAC >>
+  STRIP_TAC >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  REPEAT STRIP_TAC >>
 
+  FULL_SIMP_TAC std_ss [post_bircont_nL_def, bir_exec_to_labels_triple_postcond_def] >>
 
+  `bir_env_vars_are_initialised st1'.bst_environ vs` by (
+    METIS_TAC [bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+  ) >>
+  `st1'.bst_pc.bpc_label = BL_Address exit_albl_1 /\ st1'.bst_pc.bpc_index = 0` by (
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
+  ) >>
+  sg `bir_is_bool_exp_env st1'.bst_environ bpost_1` >-
+   (ASM_REWRITE_TAC [bir_is_bool_exp_env_def] >>
+    METIS_TAC [bir_env_vars_are_initialised_SUBSET]) >>
+  ASM_SIMP_TAC std_ss [] >>
 
+  METIS_TAC [bir_vars_of_exp_SUBSET_THM_EQ_FOR_VARS, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_EQ_FOR_VARS_SYM_thm]
+QED
+
+Theorem post_bircont_nL_vars_EQ_postcond_IMP_two_albl_2_thm[local]:
+  !vs p bpost_1 bpost_2 exit_albl_1 exit_albl_2 st1' st2' st2.
+    exit_albl_1 <> exit_albl_2 ==>
+    (vs = bir_vars_of_program p) ==>
+    (bir_vars_of_exp bpost_2 SUBSET vs) ==>
+    (bir_is_bool_exp bpost_2) ==>
+    (bir_state_EQ_FOR_VARS vs st1' st2') ==>
+    (post_bircont_nL
+       <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|>
+       vs bpost_2 st2 st2') ==>
+    (bir_exec_to_labels_triple_postcond st1'
+      (\l. if l = BL_Address exit_albl_1 then bpost_1
+           else if l = BL_Address exit_albl_2 then bpost_2
+           else bir_exp_false) p)
+Proof
+  REPEAT GEN_TAC >>
+  STRIP_TAC >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [post_bircont_nL_def, bir_exec_to_labels_triple_postcond_def] >>
+  `bir_env_vars_are_initialised st1'.bst_environ vs` by (
+    METIS_TAC [bir_state_EQ_FOR_VARS_env_vars_are_initialised_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+  ) >>
+  `st1'.bst_pc.bpc_label = BL_Address exit_albl_2 /\ st1'.bst_pc.bpc_index = 0` by (
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF]
+  ) >>
+  sg `bir_is_bool_exp_env st1'.bst_environ bpost_2` >-
+   (ASM_REWRITE_TAC [bir_is_bool_exp_env_def] >>
+    METIS_TAC [bir_env_vars_are_initialised_SUBSET]) >>
+  ASM_SIMP_TAC std_ss [] >>
+  Cases_on `exit_albl_2 = exit_albl_1` >> rw [] >>
+  METIS_TAC [bir_vars_of_exp_SUBSET_THM_EQ_FOR_VARS, bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_EQ_FOR_VARS_SYM_thm]
+QED
+
+Theorem abstract_jgmt_rel_bir_exec_to_two_labels_triple_thm:
+!p start_albl exit_albl_1 exit_albl_2 L envtyl vars bpre bpost_1 bpost_2.
+  exit_albl_1 <> exit_albl_2 ==>
+
+  (vars = bir_vars_of_program p) ==>
+  (bir_vars_of_exp bpre SUBSET vars) ==>
+
+  (bir_vars_of_exp bpost_1 SUBSET vars) ==>
+  (bir_vars_of_exp bpost_2 SUBSET vars) ==>
+
+  (bir_is_bool_exp bpost_1) ==>
+  (bir_is_bool_exp bpost_2) ==>
+
+  (ALL_DISTINCT (MAP FST envtyl)) ==>
+  (set (MAP PairToBVar envtyl) = vars) ==>
+
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl_1; BL_Address exit_albl_2}
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. post_bircont_nL <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st')) ==>
+
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl_1; BL_Address exit_albl_2}
+    (\st. bir_exec_to_labels_triple_precond st bpre p)
+    (\st st'. bir_exec_to_labels_triple_postcond st'
+      (\l. if l = BL_Address exit_albl_1 then bpost_1
+           else if l = BL_Address exit_albl_2 then bpost_2
+           else bir_exp_false) p))
+Proof
+  REWRITE_TAC [abstract_jgmt_rel_def] >>
+  REPEAT STRIP_TAC >>
+  Q.ABBREV_TAC `vs = bir_vars_of_program p` >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  (* reduce ms here to a state that only has the program variables and is equal in all program variables, ms_r, then use this new state instead in the next line *)
+  Q.ABBREV_TAC `ms_r = bir_state_restrict_vars vs ms` >>
+  `bir_state_EQ_FOR_VARS vs ms ms_r` by (
+    METIS_TAC [bir_vars_EQ_state_restrict_vars_THM]
+  ) >>
+
+  (* here we prove that all the precondition stuff also holds in ms_r *)
+  `pre_bircont_nL envtyl bpre ms_r /\ (bir_ts p).ctrl ms_r = BL_Address start_albl` by (
+    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def] >>
+    FULL_SIMP_TAC (std_ss) [bir_program_varsTheory.bir_state_EQ_FOR_VARS_ALT_DEF] >>
+    METIS_TAC [pre_bircont_nL_vars_EQ_precond_IMP_thm]
+  ) >>
+
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPECL [`ms_r`]) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  rename1 `(bir_ts p).weak {BL_Address exit_albl_1; BL_Address exit_albl_2} ms_r ms_r'` >>
+
+  (* because ms_r equals ms in the program variables, we know that the weak transition from ms and ms_r leads to a state that is equal in the program variables *)
+  `?ms'. (bir_ts p).weak {BL_Address exit_albl_1; BL_Address exit_albl_2} ms ms' /\ bir_state_EQ_FOR_VARS vs ms' ms_r'` by (
+    METIS_TAC [bir_prop_transferTheory.bir_vars_bir_ts_thm, bir_state_EQ_FOR_VARS_SYM_thm]
+  ) >>
+  Q.EXISTS_TAC `ms'` >>
+  REV_FULL_SIMP_TAC (std_ss) [] >-
+
+  (* and because these are equal the postcondition stuff is established as well *)
+  METIS_TAC [post_bircont_nL_vars_EQ_postcond_IMP_two_albl_1_thm, bir_state_EQ_FOR_VARS_SYM_thm] >-
+
+  METIS_TAC [post_bircont_nL_vars_EQ_postcond_IMP_two_albl_2_thm, GSYM bir_state_EQ_FOR_VARS_SYM_thm]
+QED
 
 val _ = export_theory ();
