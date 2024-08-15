@@ -650,7 +650,7 @@ Theorem lsrs_C_fold_M0:
 Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
-  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w]
+  word_ls_n2w, holba_auxiliaryTheory.word_sub_n2w]
 QED
 
 
@@ -665,7 +665,7 @@ Theorem asrs_C_fold_M0:
 Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
-  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w, arithmeticTheory.MIN_DEF,
+  word_ls_n2w, holba_auxiliaryTheory.word_sub_n2w, arithmeticTheory.MIN_DEF,
   word_msb_def] >>
 REPEAT STRIP_TAC >>
 Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []
@@ -681,7 +681,7 @@ Theorem lsls_C_fold_M0:
 Proof
 Cases >> rename1 `n1 < dimword _` >>
 FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
-  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w] >>
+  word_ls_n2w, holba_auxiliaryTheory.word_sub_n2w] >>
 Cases_on `n1 = 0` >> ASM_SIMP_TAC arith_ss [] >>
 
 ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_lsl_def,

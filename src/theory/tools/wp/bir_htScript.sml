@@ -2,7 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 (* Theories from theory/bir: *)
 open bir_programTheory bir_typing_progTheory bir_envTheory
-     bir_auxiliaryTheory bir_valuesTheory bir_expTheory
+     holba_auxiliaryTheory bir_valuesTheory bir_expTheory
      bir_exp_immTheory bir_typing_expTheory bir_immTheory;
 
 (* Theories from theory/bir-support: *)

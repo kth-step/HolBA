@@ -63,13 +63,13 @@ fun birs_rule_STEP_SEQ_fun_ (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
     val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
 
     (*
-    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
     *)
 
     val step3_thm = CONV_RULE birs_exec_step_CONV_fun step2_thm;
 
     (*
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP_SEQ in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP_SEQ in " ^ delta_s ^ "\n")) timer_exec_step_p3;
     *)
     val step4_thm = (* (birs_rule_SUBST_trysimp_fun SUBST_thm o birs_rule_tryjustassert_fun true) *) step3_thm;
   in
@@ -130,11 +130,11 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
 
 (*
           val birs_state_mid = hd birs_states_mid;
-    val timer_exec_step_P1 = bir_miscLib.timer_start 0;
+    val timer_exec_step_P1 = holba_miscLib.timer_start 0;
           val single_step_B_thm = take_step birs_state_mid;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> executed a whole step in " ^ delta_s ^ "\n")) timer_exec_step_P1;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>> executed a whole step in " ^ delta_s ^ "\n")) timer_exec_step_P1;
 *)
-    val timer_exec_step_P2 = bir_miscLib.timer_start 0;
+    val timer_exec_step_P2 = holba_miscLib.timer_start 0;
 (*
           (* TODO: derive freesymbols EMPTY from birs *)
           val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) single_step_B_thm;
@@ -148,7 +148,7 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
           val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm (SOME freesymbols_B_thm);
 *)
           val bprog_composed_thm = STEP_SEQ_fun_spec symbex_A_thm;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> FINISH took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>> FINISH took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
 
         in
           build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) bprog_composed_thm stop_lbls

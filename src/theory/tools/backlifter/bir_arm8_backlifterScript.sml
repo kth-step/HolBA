@@ -4,7 +4,7 @@ open bir_immTheory;
 open bir_programTheory;
 open bir_tsTheory;
 open bir_program_multistep_propsTheory;
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
 (* From lifter: *)
 open bir_inst_liftingTheory;
@@ -20,7 +20,7 @@ open HolBASimps;
 open HolBACoreSimps;
 open program_logicSimps;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 open m0_mod_stepLib;
 

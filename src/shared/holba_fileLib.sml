@@ -1,10 +1,10 @@
-structure bir_fileLib =
+structure holba_fileLib =
 struct
 local
-  val ERR = Feedback.mk_HOL_ERR "bir_fileLib"
-  val wrap_exn = Feedback.wrap_exn "bir_fileLib"
+  val ERR = Feedback.mk_HOL_ERR "holba_fileLib"
+  val wrap_exn = Feedback.wrap_exn "holba_fileLib"
 
-  open bir_miscLib;
+  open holba_miscLib;
 
 in
 

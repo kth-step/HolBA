@@ -1,8 +1,8 @@
-structure bir_miscLib =
+structure holba_miscLib =
 struct
 local
-  val ERR = Feedback.mk_HOL_ERR "bir_miscLib"
-  val wrap_exn = Feedback.wrap_exn "bir_miscLib"
+  val ERR = Feedback.mk_HOL_ERR "holba_miscLib"
+  val wrap_exn = Feedback.wrap_exn "holba_miscLib"
 
   open HolKernel boolLib liteLib simpLib Parse bossLib;
 

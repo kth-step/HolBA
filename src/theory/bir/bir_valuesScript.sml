@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory listTheory pred_setTheory;
 open finite_mapTheory;
-open bir_auxiliaryTheory bir_immTheory;
+open holba_auxiliaryTheory bir_immTheory;
 
 val _ = new_theory "bir_values";
 

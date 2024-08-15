@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
-open bir_auxiliaryTheory bir_immTheory bir_immSyntax;
+open holba_auxiliaryTheory bir_immTheory bir_immSyntax;
 open finite_mapTheory;
 
 val _ = new_theory "bir_exp_mem";

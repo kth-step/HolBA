@@ -24,15 +24,15 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
      bsst_status   := BST_Running;
      bsst_pcond    := ^birs_pcond
    |>``;
-   val timer_symbanalysis = bir_miscLib.timer_start 0;
-   val timer_symbanalysis_last = ref (bir_miscLib.timer_start 0);
+   val timer_symbanalysis = holba_miscLib.timer_start 0;
+   val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
    val birs_post_step_fun =
      (fn t => (
-        bir_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
-        bir_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
-        timer_symbanalysis_last := bir_miscLib.timer_start 0;
+        holba_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
+        holba_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
+        timer_symbanalysis_last := holba_miscLib.timer_start 0;
 	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
 	t)) o
      birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
@@ -56,12 +56,12 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
      birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm));
 
    val _ = print "now reducing it to one sound structure\n";
-   val timer = bir_miscLib.timer_start 0;
+   val timer = holba_miscLib.timer_start 0;
    val result = exec_until
      (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec)
      single_step_A_thm birs_end_lbls
      handle e => (Profile.print_profile_results (Profile.results ()); raise e);
-   val _ = bir_miscLib.timer_stop
+   val _ = holba_miscLib.timer_stop
     (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 
 (*
@@ -81,7 +81,7 @@ fun bir_symb_analysis_thm bir_prog_def
  init_addr_def end_addr_defs bspec_pre_def birenvtyl_def =
  let
    val _ = print "\n======\n > bir_symb_analysis_thm started\n";
-   val timer = bir_miscLib.timer_start 0;
+   val timer = holba_miscLib.timer_start 0;
    val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
    val birs_state_init_lbl_tm =
@@ -106,7 +106,7 @@ fun bir_symb_analysis_thm bir_prog_def
    val symb_analysis_thm = bir_symb_analysis
     bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
     birs_env_tm birs_pcond_tm;
-   val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
+   val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
    val symb_analysis_fix_thm = REWRITE_RULE [GSYM birs_env_thm] symb_analysis_thm;
  in
    (bsysprecond_thm, symb_analysis_fix_thm)

@@ -9,7 +9,7 @@ val _ = load "sml-simplejson/jsonparse";
 *)
 
 fun readFile filename =
-  String.concat (bir_fileLib.read_file_lines filename);
+  String.concat (holba_fileLib.read_file_lines filename);
 
 fun parseJson input =
     let
@@ -264,7 +264,7 @@ val jsonarg = Json.STRING (term_to_string t);
 
 val command = "./try_deserialize_serialize_json.py";
 val operation = "test";
-val jsonback = bir_json_execLib.call_json_exec (command, ["-v", operation], jsonarg);
+val jsonback = holba_json_execLib.call_json_exec (command, ["-v", operation], jsonarg);
 
 val stringback = case jsonback of
                     Json.STRING s => s
@@ -280,7 +280,7 @@ end
 val command = "./try_deserialize_serialize_json.py";
 val operation = "wrong";
 val jsonarg = Json.STRING "";
-val r = (bir_json_execLib.call_json_exec (command, ["-v", operation], jsonarg); true)
+val r = (holba_json_execLib.call_json_exec (command, ["-v", operation], jsonarg); true)
         handle _ => false;
 
 val _ = if not r then () else

@@ -331,9 +331,9 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
 
   val simp_conv = (SIMP_CONV (arith_ss++bitstringLib.v2w_n2w_ss++wordsLib.SIZES_ss)
      ((if endian_fl then m0_extra_FOLDS_BE else m0_extra_FOLDS_LE)::[nzcv_FOLDS_M0,
-     EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
-     m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
-     bir_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
+     EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, holba_auxiliaryTheory.w2w_n2w,
+     m0_extra_FOLDS_GEN, Mode_Handler_INTRO, holba_auxiliaryTheory.align_aligned_add,
+     holba_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
      alignmentTheory.aligned_numeric, alignmentTheory.align_aligned, wordsTheory.word_bit_n2w]));
 
   val compset_2 = reduceLib.num_compset ();
@@ -500,9 +500,9 @@ fun m0_mod_step_hex' (endian_fl, sel_fl) = let
 
   val simp_conv = (SIMP_CONV (arith_ss++bitstringLib.v2w_n2w_ss++wordsLib.SIZES_ss)
      ((if endian_fl then m0_extra_FOLDS_BE else m0_extra_FOLDS_LE)::[nzcv_FOLDS_M0,
-     EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
-     m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
-     bir_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
+     EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, holba_auxiliaryTheory.w2w_n2w,
+     m0_extra_FOLDS_GEN, Mode_Handler_INTRO, holba_auxiliaryTheory.align_aligned_add,
+     holba_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
      alignmentTheory.aligned_numeric, alignmentTheory.align_aligned, wordsTheory.word_bit_n2w]));
 
   val compset_2 = reduceLib.num_compset ();

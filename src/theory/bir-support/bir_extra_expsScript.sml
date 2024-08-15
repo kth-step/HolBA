@@ -1685,7 +1685,7 @@ REPEAT STRIP_TAC >>
 Cases_on `w2` >>
 ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   word_ror_bv_def, word_lsl_bv_def,
-  word_lsr_def, w2n_n2w, bir_auxiliaryTheory.word_sub_n2w,
+  word_lsr_def, w2n_n2w, holba_auxiliaryTheory.word_sub_n2w,
   WORD_AND_EXP_SUB1] >>
 `n' MOD 2 ** n <= 2 ** n` by METIS_TAC[
   bitTheory.MOD_2EXP_LT, arithmeticTheory.LESS_IMP_LESS_OR_EQ] >>
@@ -1711,7 +1711,7 @@ ASM_SIMP_TAC arith_ss [fcpTheory.FCP_BETA, word_lsl_def, word_lsr_def,
 Cases_on `i + n' MOD 2 ** n < 2 ** n` >> (
   ASM_SIMP_TAC arith_ss []
 ) >>
-ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB]
+ASM_SIMP_TAC arith_ss [holba_auxiliaryTheory.MOD_ADD_EQ_SUB]
 QED
 
 
@@ -1800,7 +1800,7 @@ ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
 REPEAT STRIP_TAC >>
 Cases_on `i + n < dimindex (:'a)` >> ASM_SIMP_TAC arith_ss [] >>
 Cases_on `n = dimindex (:'a)` >> (
-  ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB,
+  ASM_SIMP_TAC arith_ss [holba_auxiliaryTheory.MOD_ADD_EQ_SUB,
     arithmeticTheory.ADD_MODULUS]
 )
 QED
@@ -1893,7 +1893,7 @@ REPEAT STRIP_TAC >>
 Cases_on `w2` >>
 ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   word_rol_bv_def, word_lsl_bv_def,
-  word_lsr_def, w2n_n2w, bir_auxiliaryTheory.word_sub_n2w,
+  word_lsr_def, w2n_n2w, holba_auxiliaryTheory.word_sub_n2w,
   WORD_AND_EXP_SUB1] >>
 `n' MOD 2 ** n <= 2 ** n` by METIS_TAC[
   bitTheory.MOD_2EXP_LT, arithmeticTheory.LESS_IMP_LESS_OR_EQ] >>
@@ -1921,7 +1921,7 @@ Cases_on `n' MOD 2 ** n <= i` >> (
   ASM_SIMP_TAC std_ss [arithmeticTheory.ADD_MODULUS] >>
   ASM_SIMP_TAC arith_ss []
 ) >>
-ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB]
+ASM_SIMP_TAC arith_ss [holba_auxiliaryTheory.MOD_ADD_EQ_SUB]
 QED
 
 
@@ -2014,7 +2014,7 @@ Cases_on `n <= i` >- (
 ) >>
 ASM_SIMP_TAC arith_ss [] >>
 Cases_on `n = dimindex (:'a)` >> (
-  ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB,
+  ASM_SIMP_TAC arith_ss [holba_auxiliaryTheory.MOD_ADD_EQ_SUB,
     arithmeticTheory.ADD_MODULUS]
 )
 QED

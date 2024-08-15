@@ -219,7 +219,7 @@ Theorem m0_mem_store_half_BE_32:
      m0_mem_store_half_BE a (w2w w) mmap
 Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [m0_mem_store_half_BE_def,
-  wordsTheory.word_bits_w2w, bir_auxiliaryTheory.word_extract_bits_w2w,
+  wordsTheory.word_bits_w2w, holba_auxiliaryTheory.word_extract_bits_w2w,
   w2w_REMOVE_FOLDS]
 QED
 
@@ -231,7 +231,7 @@ Theorem m0_mem_store_half_LE_32:
      m0_mem_store_half_LE a (w2w w) mmap
 Proof
 SIMP_TAC (std_ss++wordsLib.SIZES_ss) [m0_mem_store_half_LE_def,
-  wordsTheory.word_bits_w2w, bir_auxiliaryTheory.word_extract_bits_w2w,
+  wordsTheory.word_bits_w2w, holba_auxiliaryTheory.word_extract_bits_w2w,
   w2w_REMOVE_FOLDS]
 QED
 
@@ -474,7 +474,7 @@ ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [
   word_and_def, fcpTheory.FCP_BETA,
   dimindex_lt_dimword, word_concat_def, w2w,
-  word_join_index, word_0, bir_auxiliaryTheory.word_extract_bits_w2w,
+  word_join_index, word_0, holba_auxiliaryTheory.word_extract_bits_w2w,
   word_bits_def, word_1comp_def, word_index] >>
 REPEAT STRIP_TAC >>
 `BIT i 1 = (0 = i)` by (

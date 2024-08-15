@@ -7,8 +7,8 @@ struct
 
   open bir_inst_liftingLibTypes;
 
-  open bir_auxiliaryLib;
-  open bir_fileLib;
+  open holba_auxiliaryLib;
+  open holba_fileLib;
 
   val ERR = mk_HOL_ERR "gcc_supportLib"
 

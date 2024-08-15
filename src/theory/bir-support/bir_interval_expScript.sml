@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open bir_immTheory bir_expTheory
-open bir_nzcv_expTheory bir_auxiliaryTheory
+open bir_nzcv_expTheory holba_auxiliaryTheory
 open HolBACoreSimps
 open bir_expTheory bir_typing_expTheory bir_valuesTheory
 open wordsTheory

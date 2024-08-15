@@ -38,7 +38,7 @@ REPEAT GEN_TAC >- (
 SIMP_TAC list_ss [] >>
 ASM_SIMP_TAC arith_ss [INDEX_FIND_def] >>
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [‘SUC n’, ‘n'’, ‘P’, ‘(xs ++ ys)’, ‘x’] bir_auxiliaryTheory.INDEX_FIND_PRE) >>
+MP_TAC (Q.SPECL [‘SUC n’, ‘n'’, ‘P’, ‘(xs ++ ys)’, ‘x’] holba_auxiliaryTheory.INDEX_FIND_PRE) >>
 ASM_SIMP_TAC std_ss []
 QED
 

@@ -1,4 +1,5 @@
 open HolKernel Parse boolLib bossLib;
+
 open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_exp_immTheory
@@ -10,7 +11,7 @@ open bir_lifter_general_auxTheory
 open bir_extra_expsTheory
 open finite_mapTheory;
 open pred_setTheory;
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -616,7 +617,7 @@ Theorem bir_is_lifted_imm_exp_LCAST0[local]:
   ^thm_t
 Proof
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_auxiliaryTheory.sw2sw_w2w_downcast,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, holba_auxiliaryTheory.sw2sw_w2w_downcast,
   w2w_id]
 QED
 
@@ -790,7 +791,7 @@ SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
 
   ASM_SIMP_TAC std_ss [bir_load_from_mem_def, GSYM bitstringTheory.w2v_v2w, bitstringTheory.v2w_n2v,
     bir_load_bitstring_from_mmap_def,
-    w2bs_def, b2n_n2bs, n2w_w2n, bir_auxiliaryTheory.w2n_MOD_2EXP_ID] >>
+    w2bs_def, b2n_n2bs, n2w_w2n, holba_auxiliaryTheory.w2n_MOD_2EXP_ID] >>
   ASM_SIMP_TAC arith_ss [w2n_n2w, bir_mem_addr_def, GSYM wordsTheory.MOD_2EXP_DIMINDEX,
     wordsTheory.ZERO_LT_dimword, bir_load_mmap_MOD_dimword_thm, n2w_mod, bir_load_w2n_mf2mm_load_n2w_thm]
 QED

@@ -10,7 +10,7 @@ open bir_prog_mutrecTheory;
 open mutrec_wpTheory;
 open mutrec_smtTheory;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 open HolBACoreSimps;
 open HolBASimps;

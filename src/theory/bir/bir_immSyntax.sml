@@ -1,7 +1,7 @@
 structure bir_immSyntax :> bir_immSyntax =
 struct
 
-open HolKernel boolLib liteLib simpLib Parse bossLib bir_eq_utilLib;
+open HolKernel boolLib liteLib simpLib Parse bossLib holba_eq_utilLib;
 open bir_immTheory;
 
 

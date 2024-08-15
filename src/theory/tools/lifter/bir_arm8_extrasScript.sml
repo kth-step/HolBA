@@ -361,7 +361,7 @@ REPEAT STRIP_TAC >>
 ASM_SIMP_TAC (list_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss) [word_shift_extract_def,
   word_or_def, fcpTheory.FCP_BETA, word_lsl_def, word_lsr_def, w2w] >>
 ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [rich_listTheory.LENGTH_BUTLASTN,
-    bir_auxiliaryTheory.testbit_el_iff, length_w2v, rich_listTheory.BUTLASTN_def,
+    holba_auxiliaryTheory.testbit_el_iff, length_w2v, rich_listTheory.BUTLASTN_def,
     listTheory.EL_REVERSE, GSYM arithmeticTheory.ADD1, rich_listTheory.LASTN_REVERSE,
     rich_listTheory.EL_TAKE] >>
 STRIP_TAC >>

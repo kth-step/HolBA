@@ -3,7 +3,7 @@ struct
 local
   open HolKernel Parse boolLib bossLib;
 
-  open bir_miscLib;
+  open holba_miscLib;
 
   (* error handling *)
   val libname = "experimentsLib"

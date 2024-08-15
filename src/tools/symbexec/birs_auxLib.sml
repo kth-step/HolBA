@@ -8,7 +8,7 @@ open HolKernel Parse boolLib bossLib;
 open birs_auxTheory;
 
   (* error handling *)
-  val libname = "bir_auxLib"
+  val libname = "birs_auxLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
@@ -108,7 +108,7 @@ end (* local *)
 local
   open HolKernel Parse boolLib bossLib;
 
-  open bir_auxiliaryTheory;
+  open holba_auxiliaryTheory;
   open bir_programTheory;
 
 in

@@ -20,7 +20,7 @@ struct
   open asm_genLib;
   open armv8_prefetch_genLib;
 
-  open bir_fileLib;
+  open holba_fileLib;
   open bir_randLib;
 
   (* error handling *)

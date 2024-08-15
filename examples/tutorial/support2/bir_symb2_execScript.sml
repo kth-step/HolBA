@@ -2,7 +2,7 @@
 (*
 app load ["HolKernel", "Parse", "boolLib" ,"bossLib"];
 app load ["wordsTheory", "bitstringTheory"];
-app load ["bir_auxiliaryTheory", "bir_immTheory", "bir_valuesTheory"];
+app load ["holba_auxiliaryTheory", "bir_immTheory", "bir_valuesTheory"];
 app load ["bir_symb2_envTheory"];
 app load ["bir_programTheory", "bir_expTheory", "bir_envTheory"];
 app load ["llistTheory", "wordsLib"];
@@ -10,7 +10,7 @@ app load ["llistTheory", "wordsLib"];
 
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
-open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
+open holba_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_envTheory;
 open bir_expTheory;
 open bir_programTheory;

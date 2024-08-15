@@ -1,11 +1,11 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 open wordsTheory bitstringTheory ASCIInumbersTheory;
 open pred_setTheory;
 
-val _ = new_theory "bir_auxiliary";
+val _ = new_theory "holba_auxiliary";
 
 (* -------------------------------------------------------------------------- *)
 (* List lemmata                                                               *)

@@ -90,9 +90,9 @@ val _ = print "done building the tree\n";
 
 val _ = print "now reducing it to one sound structure\n";
 
-val timer = bir_miscLib.timer_start 0;
+val timer = holba_miscLib.timer_start 0;
 val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
-val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 
 val _ = (print_term o concl) result;
 

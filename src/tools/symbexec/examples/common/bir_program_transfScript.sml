@@ -1,4 +1,3 @@
-
 open HolKernel Parse boolLib bossLib;
 
 open pred_setTheory;
@@ -1119,7 +1118,7 @@ ASSUME_TAC (ISPECL [``r:('c, 'd, 'b) bir_lifting_machine_rec_t``, ``mu:'c word_i
                     ``mms:(('c word)# ('d word) list) list``,
                     ``p:'a bir_program_t``] bir_inst_liftingTheory.bir_is_lifted_prog_MULTI_STEP_EXEC) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-bir_auxiliaryLib.QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
+holba_auxiliaryLib.QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_state_is_terminated_def]
 QED
 
@@ -1432,7 +1431,7 @@ open bir_immTheory;
 open bir_programTheory;
 open bir_tsTheory;
 open bir_program_multistep_propsTheory;
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
 (* From lifter: *)
 open bir_inst_liftingTheory;
@@ -1446,7 +1445,7 @@ open HolBASimps;
 open HolBACoreSimps;
 open program_logicSimps;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 in
 
 (* TODO: copied and adjusted *)
@@ -1984,11 +1983,11 @@ Theorem m0_mod_SIM_m0_thm:
     (m0_mod_R ms' mms'))
 Proof
 Induct_on `n` >- (
-    FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.FUNPOW_OPT_REWRS] >>
+    FULL_SIMP_TAC std_ss [holba_auxiliaryTheory.FUNPOW_OPT_REWRS] >>
     METIS_TAC []
   ) >>
 
-  FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.FUNPOW_OPT_REWRS] >>
+  FULL_SIMP_TAC std_ss [holba_auxiliaryTheory.FUNPOW_OPT_REWRS] >>
   REPEAT STRIP_TAC >>
 
   Cases_on `NextStateM0_mod mms` >> (

@@ -10,7 +10,7 @@ open arm8_progLib arm8AssemblerLib arm8;
   val wrap_exn = Feedback.wrap_exn libname
 
 open bir_randLib;
-open bir_miscLib;
+open holba_miscLib;
      
 fun remChars  (c,s) =
     let fun rem [] = []

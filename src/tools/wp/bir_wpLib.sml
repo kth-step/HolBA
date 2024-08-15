@@ -36,7 +36,7 @@ open bir_inst_liftingHelpersLib;
 
   (* From /theory/bir *)
   open bir_programTheory bir_typing_progTheory bir_envTheory
-       bir_auxiliaryTheory bir_valuesTheory bir_expTheory
+       holba_auxiliaryTheory bir_valuesTheory bir_expTheory
        bir_exp_memTheory bir_immTheory;
   open bir_immSyntax bir_expSyntax;
 

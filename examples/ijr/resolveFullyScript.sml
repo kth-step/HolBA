@@ -61,7 +61,7 @@ CASE_TAC >- (
 FULL_SIMP_TAC (list_ss++bir_TYPES_ss) [fresh_label_def, direct_jump_target_def,
                                        bir_get_current_block_def, bir_block_pc_def,
                                        bir_get_program_block_info_by_label_def] >>
-SIMP_TAC std_ss [Once bir_auxiliaryTheory.INDEX_FIND_INDEX_CHANGE] >>
+SIMP_TAC std_ss [Once holba_auxiliaryTheory.INDEX_FIND_INDEX_CHANGE] >>
 Q.PAT_X_ASSUM ‘∀l'' bl. _’ (MP_TAC o Q.SPECL [‘l'’, ‘bl’]) >>
 EVERY_CASE_TAC >>
 FULL_SIMP_TAC std_ss [] >>

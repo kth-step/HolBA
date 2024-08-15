@@ -142,7 +142,7 @@ Theorem symb_SEQ_interpr_dom_INTER_thm:
   ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY)
 Proof
 METIS_TAC [symb_minimal_interpretation_EQ_dom_thm,
-             symb_symbols_set_SUBSET_thm, bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm, SUBSET_of_DIFF_thm]
+             symb_symbols_set_SUBSET_thm, holba_auxiliaryTheory.INTER_SUBSET_EMPTY_thm, SUBSET_of_DIFF_thm]
 QED
 
 (* TODO: split this into two *)

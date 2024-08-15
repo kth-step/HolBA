@@ -1,16 +1,14 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
 open wordsTheory bitstringTheory;
-open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
+open holba_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 open bir_expTheory bir_programTheory;
 open bir_program_valid_stateTheory;
 open llistTheory wordsLib pred_setTheory;
-open HolBACoreSimps
-
-open bir_auxiliaryTheory;
+open HolBACoreSimps;
 
 val _ = new_theory "bir_program_multistep_props";
 

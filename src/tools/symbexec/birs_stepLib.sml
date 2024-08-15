@@ -425,9 +425,9 @@ fun get_birs_state_size t =
 
 fun measure_fun s f v =
   let
-    val timer = bir_miscLib.timer_start 0;
+    val timer = holba_miscLib.timer_start 0;
     val res = f v;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print (s ^ delta_s ^ "\n")) timer;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print (s ^ delta_s ^ "\n")) timer;
   in
     res
   end;
@@ -1113,10 +1113,10 @@ fun birs_exec_step_CONV_fun tm =
 
   (fn tm_i =>
     let
-      val timer_exec_step = bir_miscLib.timer_start 0;
+      val timer_exec_step = holba_miscLib.timer_start 0;
       (* TODO: optimize *)
       val birs_exec_thm = birs_exec_step_CONV tm_i;
-      val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
+      val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
     in
       birs_exec_thm
     end) THENC
@@ -1175,7 +1175,7 @@ fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
 
     val birs_exec_thm = CONV_RULE (birs_exec_step_CONV_fun) (SPEC bstate_tm birs_rule_STEP_thm);
 
-    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
     (* TODO: optimize *)
     val single_step_prog_thm =
       REWRITE_RULE
@@ -1183,7 +1183,7 @@ fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
          bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM]
         birs_exec_thm;
 
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
 
     val _ = if symb_sound_struct_is_normform (concl single_step_prog_thm) then () else
             (print_term (concl single_step_prog_thm);
@@ -1272,7 +1272,7 @@ fun birs_rule_tryjustassert_fun_ force_assert_justify single_step_prog_thm =
     case continue_thm_o_2 of
        SOME continue_thm =>
         let
-    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (*val _ = print_term pcond_tm;*)
           val pcond_is_contr = bir_check_unsat false pcond_tm;
@@ -1286,7 +1286,7 @@ fun birs_rule_tryjustassert_fun_ force_assert_justify single_step_prog_thm =
               SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], mk_comb (birs_pcondinf_tm, pcond_tm)))
             else
               NONE;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryassert in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryassert in " ^ delta_s ^ "\n")) timer_exec_step_p3;
         in
           (* val SOME pcond_thm = pcond_thm_o; *)
           case pcond_thm_o of
@@ -1310,7 +1310,7 @@ fun birs_rule_tryprune_fun_ prune_thm single_step_prog_thm =
     case continue_thm_o_2 of
        SOME continue_thm =>
         let
-    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (* val _ = print_term pcond_tm; *)
           val pcond_is_contr = bir_check_unsat false pcond_tm;
@@ -1320,7 +1320,7 @@ fun birs_rule_tryprune_fun_ prune_thm single_step_prog_thm =
               SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], mk_comb (birs_pcondinf_tm, pcond_tm)))
             else
               NONE;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryprune2 in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryprune2 in " ^ delta_s ^ "\n")) timer_exec_step_p3;
         in
           case pcond_thm_o of
              SOME pcond_thm =>
@@ -1395,11 +1395,11 @@ fun birs_rule_SUBST_trysimp_fun_ birs_rule_SUBST_thm single_step_prog_thm =
       let
         val simp_tm = (fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
 
-    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
         val simp_t = birs_simpLib.birs_simp_repeat simp_tm;
         (* TODO: need to remove the following line later and enable the simp function above *)
         (*val simp_t_o = NONE;*)
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> SUBST in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> SUBST in " ^ delta_s ^ "\n")) timer_exec_step_p3;
       in
         SOME (simp_t, assignment_thm)
       end) assignment_thm_o;

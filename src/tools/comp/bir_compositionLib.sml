@@ -25,7 +25,7 @@ open bir_inst_liftingHelpersLib;
 
     open bslSyntax;
     open bir_wp_interfaceLib;
-    open bir_auxiliaryLib;
+    open holba_auxiliaryLib;
     open HolBACoreSimps;
   in
 
@@ -744,7 +744,7 @@ open bir_inst_liftingHelpersLib;
 	val spec_noteq_trans_impl1 =
 	  ISPECL [el 1 (get_labels_from_set_repr include_ending_label_set1),
 		  el 1 (get_labels_from_set_repr include_ending_label_set2)]
-            bir_auxiliaryTheory.noteq_trans_impl
+            holba_auxiliaryTheory.noteq_trans_impl
         val include_inter_lbls = (get_labels_from_set_repr include_ending_label_set1)@
                                (get_labels_from_set_repr include_ending_label_set2)
         val cases_on_x_lbls_tac = List.foldr (fn (lbl, st) => Cases_on `x = ^lbl` >> st) ALL_TAC include_inter_lbls

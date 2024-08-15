@@ -1,4 +1,5 @@
-INCLUDES = $(HOLBADIR)/src/theory/bir \
+INCLUDES = $(HOLBADIR)/src/extra \
+           $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/program_logic \
            $(HOLBADIR)/src/theory/tools/wp

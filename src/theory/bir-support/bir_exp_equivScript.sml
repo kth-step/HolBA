@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
 (* From /core: *)
 open bir_immTheory bir_expTheory bir_exp_immTheory

@@ -347,7 +347,7 @@ fun get_patched_step_hex ms_v hex_code =
      val lifted_thms_raw = let
        val res = get_patched_step_hex ms_v hex_code
        val _ = assert (not o List.null) res
-       val _ = assert (List.all (fn thm => not (bir_eq_utilLib.mem_with (fn (a,b) => identical a b) F (hyp thm)))) res
+       val _ = assert (List.all (fn thm => not (holba_eq_utilLib.mem_with (fn (a,b) => identical a b) F (hyp thm)))) res
      in res end handle HOL_ERR _ =>
        raise (bir_inst_liftingExn (hex_code, BILED_msg "bmr_step_hex failed"));
 
@@ -369,11 +369,11 @@ fun get_patched_step_hex ms_v hex_code =
 
         val thm2 = foldl (uncurry DISCH) thm1 (List.filter disch_hyp_check (hyp thm1))
         val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w, wordsTheory.word_and_n2w,
-              wordsTheory.word_or_n2w, bir_auxiliaryTheory.word_sub_n2w,
+              wordsTheory.word_or_n2w, holba_auxiliaryTheory.word_sub_n2w,
               addressTheory.word_arith_lemma1,
               addressTheory.word_arith_lemma3,
               addressTheory.word_arith_lemma4,
-              addr_sz_dimword_THM, bir_auxiliaryTheory.align_n2w] thm2 handle UNCHANGED => thm2
+              addr_sz_dimword_THM, holba_auxiliaryTheory.align_n2w] thm2 handle UNCHANGED => thm2
      in
         thm3
      end

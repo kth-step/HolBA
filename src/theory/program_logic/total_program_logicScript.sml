@@ -1,8 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_auxiliaryLib;
+open holba_auxiliaryLib;
 
-open bir_auxiliaryTheory;
+open holba_auxiliaryTheory;
 
 open transition_systemTheory;
 

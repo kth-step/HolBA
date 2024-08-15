@@ -3,7 +3,7 @@ open HolKernel Parse boolLib bossLib;
 open listTheory pred_setSimps;
 
 open bir_programTheory bir_expTheory bir_exp_immTheory bir_typing_expTheory;
-open bir_valuesTheory bir_auxiliaryTheory
+open bir_valuesTheory holba_auxiliaryTheory
 open bir_program_blocksTheory bir_program_multistep_propsTheory;
 open HolBACoreSimps;
 
