@@ -100,7 +100,13 @@ open pred_setTheory;
 open distribute_generic_stuffTheory;
 open distribute_generic_stuffLib;
 
+open bir_symb_sound_coreTheory;
+open bir_typing_expTheory;
+open bir_env_oldTheory;
+open bir_envTheory;
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+
 val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
 val prog_vars_list_tm = (fst o dest_eq o concl) prog_vars_list_def;
 val birenvtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
@@ -215,9 +221,12 @@ val (Pi_func, Pi_set) = dest_comb Pi_f;
 
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
-val sys2ps = [(List.nth (sys2s,0), bspec_post_1_tm), (List.nth (sys2s,1), bspec_post_2_tm)];
+val sys2ps = [
+ (List.nth (sys2s,0), bspec_post_1_tm, birs_state_end_lbl_1_tm),
+ (List.nth (sys2s,1), bspec_post_2_tm, birs_state_end_lbl_2_tm)
+];
 
-val strongpostcond_goals = List.map (fn (sys2,post_tm) => ``
+val strongpostcond_goals = List.map (fn (sys2,post_tm,_) => ``
  sys1 = ^sys1 ==>
  sys2 = ^sys2 ==>
  birs_symb_matchstate sys1 H' bs ==>
@@ -226,10 +235,60 @@ val strongpostcond_goals = List.map (fn (sys2,post_tm) => ``
  bir_eval_exp ^post_tm bs'.bst_environ = SOME bir_val_true``) 
 sys2ps;
 
-(*val bla = prove(``^(List.nth (strongpostcond_goals,1))``, birs_strongpostcond_impl_TAC);*)
-
 val strongpostcond_thms = List.map (fn goal =>
   prove(``^goal``, birs_strongpostcond_impl_TAC)) strongpostcond_goals;
+
+val Pi_thms = List.map (fn (sys2,post_tm,birs_state_end_lbl_tm) =>
+ prove(``
+  sys1 = ^sys1 ==>
+  sys2 = ^sys2 ==>
+  birs_symb_matchstate sys1 H bs ==>
+  P_bircont ^birenvtyl_tm ^bspec_pre_tm (birs_symb_to_concst bs) ==>
+  symb_interpr_ext H' H ==>
+  birs_symb_matchstate sys2 H' bs' ==>
+  Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^post_tm
+   (birs_symb_to_concst bs) (birs_symb_to_concst bs')``,
+
+ REPEAT STRIP_TAC >>
+
+ FULL_SIMP_TAC (std_ss) [Q_bircont_thm] >>
+ CONJ_TAC >- (
+  REV_FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+ ) >>
+
+ CONJ_TAC >- (
+  REV_FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+ )  >>
+
+ CONJ_TAC >- (
+  PAT_X_ASSUM ``A = B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+  PAT_X_ASSUM ``A = B`` (K ALL_TAC) >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def, prog_vars_thm] >>
+
+  IMP_RES_TAC birs_env_vars_are_initialised_IMP_thm >>
+  POP_ASSUM (K ALL_TAC) >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ((snd o dest_eq o concl) prog_vars_thm)) >>
+  POP_ASSUM (MATCH_MP_TAC) >>
+
+  REPEAT (POP_ASSUM (K ALL_TAC)) >>
+
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_auxTheory.birs_exps_of_senv_COMP_thm] >>
+  CONV_TAC (RATOR_CONV (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_exp``] THENC SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL))) >>
+  CONV_TAC (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_program``] THENC SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [] THENC EVAL)) >>
+  REWRITE_TAC [birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
+
+  EVAL_TAC >>
+  SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] >>
+  EVAL_TAC) >>
+
+  `birs_symb_matchstate sys1 H' bs` by
+   METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm] >>
+  FULL_SIMP_TAC std_ss [P_bircont_thm] >>
+  METIS_TAC strongpostcond_thms))
+sys2ps;
 
 (*
 val label_0 = (snd o dest_eq o concl o EVAL) `` ^(List.nth (sys2s,0)).bsst_pc``;
