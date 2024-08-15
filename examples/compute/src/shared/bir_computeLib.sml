@@ -306,7 +306,7 @@ let
   val compute_term = ``bir_cv_compute_step ^cv_program ^embed_state_tm`` ;
 
   (* Evaluates step *)
-  val _  = print "Applying cv_eval...\n"
+  val _  = print "Applying cv_eval...\n" ;
   val evaled_term_thm = time cv_eval compute_term ;
   
   (* Apply from_cv_state to match bir_cv_compute_step_eq_compute_exp *)
@@ -314,11 +314,12 @@ let
   (* Evaluates the from_cv_state conversion of the response *)
   val evaled_from_result = EVAL (rhs (concl from_evaled_term_thm)) ;
   
+  val _ = print "Rewritting output theorem...\n" ;
   (* Rewrites for correct theorem *)
   val rewritten_term_thm = 
-      SIMP_RULE (srw_ss ()) [evaled_from_result, bir_cv_compute_step_eq_compute_exp, GSYM
+      time (SIMP_RULE (srw_ss ()) [evaled_from_result, bir_cv_compute_step_eq_compute_exp, GSYM
                    cv_state_thm, cv_program_def, GSYM from_program_thm, 
-                   Once $ GSYM eval_state_thm, embed_state_thm] 
+                   Once $ GSYM eval_state_thm, embed_state_thm] )
         from_evaled_term_thm
 in rewritten_term_thm end
 
