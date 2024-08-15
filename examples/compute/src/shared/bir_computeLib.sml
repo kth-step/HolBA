@@ -236,6 +236,25 @@ let
 in rw_thm end
   
 
+(* Deep embeds a state and its environment *)
+fun deep_embed_state (name : string) (cv_state_tm : term) : thm = 
+let
+  val (pc_tm, env_tm, status_tm) = dest_cv_state cv_state_tm ;
+  (* Deep embeds environment *)
+  val _ = print "Deep embedding environment...\n"
+  val embed_env_thm = time (deep_embed_term (name ^ "_state_env")) env_tm ;
+  val embed_env_tm = rhs (concl embed_env_thm) ;
+
+  (* Rewrite state with embedded environment *)
+  val state_embed_env_thm = REWRITE_CONV [GSYM embed_env_thm] cv_state_tm ;
+  val state_embed_env_tm = rhs (concl state_embed_env_thm) ;
+
+  (* Embeds the state *)
+  val _ = print "Deep embedding state...\n" ;
+  val embed_state_thm = time (deep_embed_term (name ^ "_state")) state_embed_env_tm ;
+in REWRITE_RULE [GSYM state_embed_env_thm] embed_state_thm end
+
+
 
 (* Deep embedding of our programs (same as above with expressions *)
 (* Note : here, we only do a deep embedding of program, not the expressions inside *)
@@ -281,8 +300,7 @@ let
   val cv_program_def = DB.fetch "-" (cv_program_name ^ "_def") ;
   val cv_program = lhs (concl cv_program_def) ;
   (* Deep Embed state *)
-  val _ = print "Deep embedding state...\n" ;
-  val embed_state_thm = deep_embed_term (program_name ^ "_state") cv_state_tm ;
+  val embed_state_thm = deep_embed_state program_name cv_state_tm ;
   val embed_state_tm = lhs (concl embed_state_thm) ;
   (* Term to be computed *)
   val compute_term = ``bir_cv_compute_step ^cv_program ^embed_state_tm`` ;
