@@ -107,7 +107,7 @@ fun bir_symb_analysis_thm bir_prog_def
     bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
     birs_env_tm birs_pcond_tm;
    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
-   val symb_analysis_fix_thm = REWRITE_RULE [GSYM birs_env_thm] symb_analysis_thm;
+   val symb_analysis_fix_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
  in
    (bsysprecond_thm, symb_analysis_fix_thm)
  end (* let *)
