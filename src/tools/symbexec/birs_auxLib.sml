@@ -133,14 +133,6 @@ fun get_el_thms list_tm restr_consts =
 
 (* ------------------------------------------------------------------------- *)
 
-(* patch for lifter theorem *)
-fun patch_lifter_thm lift_thm =
-   if (List.null o hyp) lift_thm
-   then lift_thm
-   else patch_lifter_thm ((REWRITE_RULE [] o CONV_RULE (RATOR_CONV (RAND_CONV EVAL)) o (fn t => DISCH ((hd o hyp) t) t)) lift_thm);
-
-(* ------------------------------------------------------------------------- *)
-
 fun dest_block_thm block_thm =
   let
     val block_thm_tm = concl block_thm;
