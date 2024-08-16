@@ -130,6 +130,18 @@ Proof
  EVAL_TAC
 QED
 
+Theorem analysis_L_NOTIN_thm_1[local]:
+ ^birs_state_end_lbl_1_tm NOTIN ^L_s
+Proof
+ EVAL_TAC
+QED
+
+Theorem analysis_L_NOTIN_thm_2[local]:
+ ^birs_state_end_lbl_2_tm NOTIN ^L_s
+Proof
+ EVAL_TAC
+QED
+
 val birs_state_init_pre_EQ_thm =
   prove (``^((snd o dest_comb) sys_i) = ^birs_state_init_pre_tm``,
    REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
@@ -221,6 +233,7 @@ val (Pi_func, Pi_set) = dest_comb Pi_f;
 
 val sys2s = pred_setSyntax.strip_set Pi_set;
 
+(* FIXME *)
 val sys2ps = [
  (List.nth (sys2s,0), bspec_post_1_tm, birs_state_end_lbl_1_tm),
  (List.nth (sys2s,1), bspec_post_2_tm, birs_state_end_lbl_2_tm)
@@ -294,5 +307,38 @@ sys2ps;
 val label_0 = (snd o dest_eq o concl o EVAL) `` ^(List.nth (sys2s,0)).bsst_pc``;
 val label_1 = (snd o dest_eq o concl o EVAL) `` ^(List.nth (sys2s,1)).bsst_pc``;
 *)
+
+(* FIXME *)
+val bprog_Q_birconts_tm =
+ ``\st st'.
+     Q_bircont ^(#3 (List.nth (sys2ps,0))) (set ^prog_vars_list_tm)
+      ^(#2 (List.nth (sys2ps,0))) st st' \/
+     Q_bircont ^(#3 (List.nth (sys2ps,1))) (set ^prog_vars_list_tm)
+      ^(#2 (List.nth (sys2ps,1))) st st'``;
+
+val bprog_Pi_overapprox_Q_thm =
+ prove (``Pi_overapprox_Q
+  (bir_symb_rec_sbir ^bprog_tm)
+  (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
+  (birs_symb_to_symbst ^birs_state_init_pre_tm) ^Pi_f
+  ^bprog_Q_birconts_tm``,
+
+  REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, bsysprecond_thm] >>
+  REPEAT GEN_TAC >>
+  REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
+  REPEAT STRIP_TAC >> (
+  FULL_SIMP_TAC std_ss [] >>
+  METIS_TAC Pi_thms));
+
+val bprog_prop_holds_thm =
+  SIMP_RULE (std_ss++birs_state_ss)
+   [birs_state_init_pre_GEN_def, birs_symb_symbst_pc_thm] (
+     MATCH_MP
+     (MATCH_MP
+      (MATCH_MP
+       birs_prop_transfer_thm
+       bprog_P_entails_thm)
+      bprog_Pi_overapprox_Q_thm)
+     analysis_thm);
 
 val _ = export_theory ();
