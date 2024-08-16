@@ -1,7 +1,7 @@
 CLINE_OPTIONS = -r
 
-INCLUDES = $(SMOLBIRDIR)/src/theory \
-					 $(SMOLBIRDIR)/src/shared/cv
+INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
+					 $(HOLBADIR)/examples/compute/src/shared/cv
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

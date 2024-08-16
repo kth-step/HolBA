@@ -1,4 +1,4 @@
-INCLUDES = $(SMOLBIRDIR)/src/theory
+INCLUDES = $(HOLBADIR)/examples/compute/src/theory
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

@@ -1,5 +1,5 @@
-INCLUDES = $(SMOLBIRDIR)/src/theory \
-					 $(SMOLBIRDIR)/src/shared
+INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
+					 $(HOLBADIR)/examples/compute/src/shared
 
 all: $(DEFAULT_TARGETS) test-sum-list.exe
 .PHONY: all
