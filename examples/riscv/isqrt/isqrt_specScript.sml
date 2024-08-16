@@ -351,4 +351,25 @@ Definition bspec_isqrt_post_3_ret_def:
   ^bspec_isqrt_post_3_ret_tm
 End
 
+(* ------------------------------------- *)
+(* Connecting RISC-V and BSPEC contracts *)
+(* ------------------------------------- *)
+
+Theorem isqrt_riscv_pre_1_imp_bspec_pre_1_thm:
+ bir_pre_riscv_to_bir
+  (riscv_isqrt_pre_1 pre_x10)
+  (bspec_isqrt_pre_1 pre_x10)
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_post_1_imp_bspec_post_1_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_1 pre_x10)
+   (\l. (bspec_isqrt_post_1 pre_x10))
+   ls
+Proof
+ cheat
+QED
+
 val _ = export_theory ();

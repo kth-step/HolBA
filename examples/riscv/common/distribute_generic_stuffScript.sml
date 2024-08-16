@@ -268,6 +268,7 @@ Proof
    ))] >>
   FULL_SIMP_TAC (std_ss) []
 QED
+
 (* finish translation to pure BIR property *)
 Theorem prop_holds_TO_step_n_in_L_BIR_thm:
 !p start_lbl exit_lbl L envtyl vars bpre bpost.
