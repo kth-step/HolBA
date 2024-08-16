@@ -1,35 +1,9 @@
 ## General
-- Tidy code 
-    - [x] Change indent to 2 spaces (or less for proofs)
-    - [x] Add semicolons at the end of statements
-    - [x] Clean double asterisks comment
-    - [x] Add a top level comment describing each files / theories
-    - Split into more directories
-        - [x] Create theories directory
-        - [x] Create example directories
-    - [x] Add `.holpath`
-- [ ] Begin presentation
-
-## Expression semantics
-- Add Examples
-    
-- Benchmark examples
-    - [ ] `EVAL`
-    - [ ] `cv_eval` with the deep embedding translation
-
 - Tidy files
     - [ ] Name variables (like in case split)
-
-- Add Memory expressions
-    - [x] Syntax
-    - [x] Semantics
-    - [x] Update proofs
+    - [ ] Use `CASE_TAC` more instead of `Cases_of`
 
 
-## Statements semantics
-- Add statement semantics
-    - [ ] Assign / Jumps
-    - [ ] Rest of the statements
 
 ## Future
 - Try lifting

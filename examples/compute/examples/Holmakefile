@@ -6,5 +6,13 @@ INCLUDES = $(SMOLBIRDIR)/examples/increment \
 					 $(SMOLBIRDIR)/examples/sum_list \
 					 $(SMOLBIRDIR)/examples/jump_chain
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-examples.exe
 .PHONY: all
+
+test-examples.exe: test-examples.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-examples.exe
+	./test-examples.exe
+
+EXTRA_CLEANS = test-examples.exe
