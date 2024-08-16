@@ -40,3 +40,9 @@ Tags are usually used to indicate “stable” release that can be built without
 Examples have an executable generated when you run `Holmake` in the root directory. 
 You can run them either by running `Holmake test` in the directory or by executing the binary.
 These executables act as benchmarks. The size of the input is hard-coded in the associated Lib file, usually by a parameter called `n` at the beginning of the `benchmark` function
+
+## Status of code
+Currently, all pieces of code in the repository work. Here are some caveats :
+  - Using `cv_compute` on programs can lead to various speedups, both negative and positive
+  - Only a few operations (like Binary operations) were implemented
+  - Multi-stepping of programs is not implemented
