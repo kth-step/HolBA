@@ -346,6 +346,106 @@ prove(``
 
 *)
 
+(*
+val bstate_tm = ``
+  <|bsst_pc := <|bpc_label := BL_Address (Imm32 2826w); bpc_index := 1|>;
+    bsst_environ :=
+      birs_gen_env
+        [("SP_process",
+          BExp_BinExp BIExp_Minus
+            (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 8w)));
+         ("MEM",
+          BExp_Store
+            (BExp_Store (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+               (BExp_BinExp BIExp_Minus
+                  (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                  (BExp_Const (Imm32 8w))) BEnd_LittleEndian
+               (BExp_Den (BVar "sy_R7" (BType_Imm Bit32))))
+            (BExp_BinExp BIExp_Minus
+               (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+               (BExp_Const (Imm32 4w))) BEnd_LittleEndian
+            (BExp_Den (BVar "sy_LR" (BType_Imm Bit32))));
+         ("countw",
+          BExp_BinExp BIExp_Plus
+            (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            (BExp_Const (Imm64 3w)));
+         ("tmp_SP_process",
+          BExp_BinExp BIExp_Minus
+            (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 8w)));
+         ("PSR_C",BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+         ("PSR_N",BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+         ("PSR_V",BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+         ("PSR_Z",BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+         ("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+         ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+         ("R2",BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+         ("R3",BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+         ("R4",BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+         ("R5",BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+         ("R6",BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+         ("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+         ("R8",BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+         ("R9",BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+         ("R10",BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+         ("R11",BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+         ("R12",BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+         ("LR",BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+         ("SP_main",BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+         ("ModeHandler",BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+         ("tmp_PC",BExp_Den (BVar "sy_tmp_PC" (BType_Imm Bit32)));
+         ("tmp_COND",BExp_Den (BVar "sy_tmp_COND" (BType_Imm Bit1)));
+         ("tmp_MEM",BExp_Den (BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8)));
+         ("tmp_PSR_C",BExp_Den (BVar "sy_tmp_PSR_C" (BType_Imm Bit1)));
+         ("tmp_PSR_N",BExp_Den (BVar "sy_tmp_PSR_N" (BType_Imm Bit1)));
+         ("tmp_PSR_V",BExp_Den (BVar "sy_tmp_PSR_V" (BType_Imm Bit1)));
+         ("tmp_PSR_Z",BExp_Den (BVar "sy_tmp_PSR_Z" (BType_Imm Bit1)));
+         ("tmp_R0",BExp_Den (BVar "sy_tmp_R0" (BType_Imm Bit32)));
+         ("tmp_R1",BExp_Den (BVar "sy_tmp_R1" (BType_Imm Bit32)));
+         ("tmp_R2",BExp_Den (BVar "sy_tmp_R2" (BType_Imm Bit32)));
+         ("tmp_R3",BExp_Den (BVar "sy_tmp_R3" (BType_Imm Bit32)));
+         ("tmp_R4",BExp_Den (BVar "sy_tmp_R4" (BType_Imm Bit32)));
+         ("tmp_R5",BExp_Den (BVar "sy_tmp_R5" (BType_Imm Bit32)));
+         ("tmp_R6",BExp_Den (BVar "sy_tmp_R6" (BType_Imm Bit32)));
+         ("tmp_R7",BExp_Den (BVar "sy_tmp_R7" (BType_Imm Bit32)));
+         ("tmp_R8",BExp_Den (BVar "sy_tmp_R8" (BType_Imm Bit32)));
+         ("tmp_R9",BExp_Den (BVar "sy_tmp_R9" (BType_Imm Bit32)));
+         ("tmp_R10",BExp_Den (BVar "sy_tmp_R10" (BType_Imm Bit32)));
+         ("tmp_R11",BExp_Den (BVar "sy_tmp_R11" (BType_Imm Bit32)));
+         ("tmp_R12",BExp_Den (BVar "sy_tmp_R12" (BType_Imm Bit32)));
+         ("tmp_LR",BExp_Den (BVar "sy_tmp_LR" (BType_Imm Bit32)));
+         ("tmp_SP_main",BExp_Den (BVar "sy_tmp_SP_main" (BType_Imm Bit32)));
+         ("tmp_ModeHandler",
+          BExp_Den (BVar "sy_tmp_ModeHandler" (BType_Imm Bit1)));
+         ("tmp_countw",BExp_Den (BVar "sy_tmp_countw" (BType_Imm Bit64)))];
+    bsst_status := BST_Running;
+    bsst_pcond :=
+      BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+           (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm32 0xFFFFFFw))
+              (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
+           (BExp_BinPred BIExp_Equal
+              (BExp_BinExp BIExp_And
+                 (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                 (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w))))
+        (BExp_BinPred BIExp_LessOrEqual
+           (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+           (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>
+``;
+*)
+(*
+val bstate_tm = birs_state_init;
+val bstate_tm = birs_state_mid;
+
+val bstate_tm = birs_state_init_tm;
+val bprog_tm = bprog_tm;
+
+val tm = ``ABCD (birs_exec_step ^bprog_tm ^bstate_tm)``;
+val tm = ``birs_exec_step ^bprog_tm ^bstate_tm``;
+birs_exec_step_CONV_fun tm
+*)
+
 
 (* ----------------------------------------------------------------- *)
 val birs_state_t_ty = mk_type ("birs_state_t", []);
@@ -359,6 +459,17 @@ fun dest_birs_state tm = let
 in
   (pc, env, status, pcond)
 end handle e => (print_term tm; raise wrap_exn "dest_bir_state" e);
+
+val is_birs_state = can dest_birs_state;
+
+fun mk_birs_state (pc, env, status, pcond) = let
+  val l = [("bsst_pc", pc),
+           ("bsst_environ", env),
+           ("bsst_status", status),
+           ("bsst_pcond", pcond)];
+in
+  TypeBase.mk_record (birs_state_t_ty, l)
+end handle e => raise wrap_exn "mk_birs_state" e;
 
 local
   open bir_expSyntax;
@@ -467,6 +578,13 @@ fun measure_fun s f v =
   end;
 
 local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+in
+ val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
+end;
+
+local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
  open bir_programTheory;
@@ -475,10 +593,10 @@ in
 end;
 
 local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "symb_record"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 in
- val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
+ val (symb_hl_step_in_L_sound_tm,  mk_symb_hl_step_in_L_sound, dest_symb_hl_step_in_L_sound, is_symb_hl_step_in_L_sound)  = syntax_fns2 "symb_hl_step_in_L_sound";
 end;
 
 local
@@ -490,20 +608,42 @@ in
 end;
 
 local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-in
- val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
-end;
-
-local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+  val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
 in
+ val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
+ 
  val (birs_update_env_tm,  mk_birs_update_env, dest_birs_update_env, is_birs_update_env)  = syntax_fns2_env "birs_update_env";
+ 
+ val (birs_exec_step_tm,  mk_birs_exec_step, dest_birs_exec_step, is_birs_exec_step)  = syntax_fns2_set "birs_exec_step";
+ 
+ val (birs_symb_to_symbst_tm,  mk_birs_symb_to_symbst, dest_birs_symb_to_symbst, is_birs_symb_to_symbst)  = syntax_fns1 "birs_symb_to_symbst";
 end;
 
+fun is_IMAGE_birs_symb_to_symbst Pi = is_comb Pi andalso (identical ``IMAGE birs_symb_to_symbst`` o fst o dest_comb) Pi;
+fun dest_IMAGE_birs_symb_to_symbst Pi = (snd o dest_comb) Pi;
+
+val is_birs_symbval_concretizations = identical ``birs_symbval_concretizations`` o fst o strip_comb;
+
+val is_birs_eval_label_exp = identical ``birs_eval_label_exp`` o fst o strip_comb;
+val birs_eval_exp_tm = ``birs_eval_exp``;
+val birs_gen_env_tm = ``birs_gen_env``;
+val birs_symbval_concretizations_tm = ``birs_symbval_concretizations``;
+val is_birs_eval_exp = (identical ``birs_eval_exp`` o fst o strip_comb);
+
+val birs_eval_label_exp_tm = ``birs_eval_label_exp``;
+val birs_eval_exp_tm = ``birs_eval_exp``;
+val is_birs_eval_exp = (identical birs_eval_exp_tm o fst o strip_comb);
+
+val birs_exec_stmt_jmp_tm = ``birs_exec_stmt_jmp``;
+
+
+val birs_exec_stmt_tm = ``birs_exec_stmt``;
+
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (* ---------------------------------------------------------------------------- *)
 
@@ -526,8 +666,7 @@ val i = 0;
 val acc = [] : thm list;
 fun consf thm = thm:thm;
 *)
-val bir_exp_t_tm = ``:bir_exp_t``;
-fun gen_abbr_var i = mk_var ("temp_envl_abbr_" ^ (Int.toString i), bir_exp_t_tm);
+fun gen_abbr_var i = mk_var ("temp_envl_abbr_" ^ (Int.toString i), bir_expSyntax.bir_exp_t_ty);
 fun abbr_birs_gen_env i acc consf t =
   if not (listSyntax.is_cons t) then (consf (REFL t), acc) else
   let
@@ -601,7 +740,6 @@ fun is_plain_jumptarget_set tm =
       bir_immSyntax.gen_is_Imm (bir_programSyntax.dest_BL_Address e_tm)) l
   end handle _ => false;
 
-val is_birs_symbval_concretizations = identical ``birs_symbval_concretizations`` o fst o strip_comb;
 val birs_symbval_concretizations_oracle_CONV =
   (fn tm => if is_birs_symbval_concretizations tm then REFL tm else
    (print_term tm;
@@ -633,13 +771,12 @@ val birs_symbval_concretizations_oracle_CONV =
     raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
    end);
 
-val is_birs_eval_label_exp = identical ``birs_eval_label_exp`` o fst o strip_comb;
 val birs_eval_label_exp_CONV = (
   (fn tm => if is_birs_eval_label_exp tm then REFL tm else
    raise ERR "birs_eval_label_exp_CONV" "something is not right here, expect a birs_eval_label_exp") THENC
-  RESTR_EVAL_CONV [``birs_eval_exp``, ``birs_gen_env``, ``birs_symbval_concretizations``] THENC
-  GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
-  RESTR_EVAL_CONV [``birs_symbval_concretizations``] THENC
+  RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm, birs_symbval_concretizations_tm] THENC
+  GEN_match_conv is_birs_eval_exp (birs_eval_exp_CONV) THENC
+  RESTR_EVAL_CONV [birs_symbval_concretizations_tm] THENC
 
 (* here we should have either NONE or SOME and a set that is either trivially singleton of a constant or we have to resolve it into a set of constants *)
   (fn tm =>
@@ -706,7 +843,6 @@ fun pc_lookup_fun (bprog_tm, pc_tm) =
    | SOME x => if (identical pc_lookup_t o fst o dest_eq o concl) x then x else pc_lookup_fallback_fun pc_lookup_t
   end;
 
-val birs_exec_stmt_tm = ``birs_exec_stmt``;
 fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
  ((fn t =>
    let
@@ -714,21 +850,15 @@ fun birs_exec_step_CONV_p1 (bprog_tm, t) = (* get the statement *)
      val (pc_tm,env_tm,_,pcond_tm) = (dest_birs_state) st_tm;
      val pc_lookup_thm = pc_lookup_fun (bprog_tm, pc_tm);
      (*val _ = print_thm pc_lookup_thm;*)
-     (*val _ = computeLib.del_consts [bprog_tm]; (* (fst o strip_comb) pc_lookup_t,  *)*)
-     (*val _ = computeLib.del_funs [bir_programTheory.bir_get_current_statement_def];*)
-     (*val _ = computeLib.add_funs [pc_lookup_thm];*)
-     (*val _ = computeLib.add_thms [pc_lookup_thm] (computeLib.the_compset);*)
 
      val (abbr_thm, eq_thms) = abbr_app (t, env_tm, pcond_tm);
 
      val rhs_tm = (snd o dest_eq o concl) abbr_thm;
-     val res = (*CONV_RULE (RAND_CONV*) (
+     val res = (
              REWRITE_CONV [birs_exec_step_def, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM, pc_lookup_thm]
        THENC RESTR_EVAL_CONV ([bprog_tm, birs_exec_stmt_tm])
        ) rhs_tm;
-(*      )) abbr_thm;*)
      val res = TRANS abbr_thm res;
-(*TRANS (EVAL ``1+3:num``) (GSYM (EVAL ``2+2:num``))*)
 
 (*
 val res = abbr_rev (res, env_tm, pcond_tm);
@@ -744,24 +874,10 @@ val res = abbr_rev (res, env_tm, pcond_tm);
   )
  ) t;
 
-val birs_eval_label_exp_tm = ``birs_eval_label_exp``;
-val birs_eval_exp_tm = ``birs_eval_exp``;
-(*
-val birs_update_env_tm = ``birs_update_env : string # bir_exp_t -> (string -> bir_exp_t option) -> string -> bir_exp_t option``;
-val birs_gen_env_tm = ``birs_gen_env``;
-*)
-
-val is_birs_eval_exp = (identical birs_eval_exp_tm o fst o strip_comb);
-
 (*
 val birs_exec_step_CONV_p2 =
   GEN_match_conv is_birs_eval_label_exp birs_eval_label_exp_CONV;
 val birs_exec_step_CONV_p2 = Profile.profile "exec_step_CONV_p2" birs_exec_step_CONV_p2;
-
-val birs_exec_step_CONV_p3 =
-  (* TODO: remove this patch later *)
-   REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm];
-val birs_exec_step_CONV_p3 = Profile.profile "exec_step_CONV_p3" birs_exec_step_CONV_p3;
 
 val birs_exec_step_CONV_p4 =
   GEN_match_conv is_birs_eval_exp (birs_eval_exp_CONV) THENC
@@ -815,7 +931,6 @@ val test_term =
 is_birs_update_env test_term;
 *)
 
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 (*  RESTR_EVAL_CONV [birs_eval_exp_tm, birs_update_env_tm] *)
 fun birs_exec_step_CONV_B (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
 let
@@ -867,16 +982,10 @@ in
 end;
 val birs_exec_step_CONV_B = Profile.profile "exec_step_CONV_B" birs_exec_step_CONV_B;
 
-
-
-
-(*
-val t = ``MEM (BL_Address (Imm64 0w)) (bir_labels_of_program bir_aes_prog)``;
-val x = (snd o hd) label_mem_thms;
-val t = concl x;
-*)
-val spec_conv_thm = (GSYM o GEN_ALL) (List.nth((CONJUNCTS o Q.SPEC `t`) boolTheory.EQ_CLAUSES,1));
-fun MEM_proglabels_fun (t, eq_thms) =
+local
+ val spec_conv_thm = (GSYM o GEN_ALL) (List.nth((CONJUNCTS o Q.SPEC `t`) boolTheory.EQ_CLAUSES,1));
+in
+ fun MEM_proglabels_fun (t, eq_thms) =
   let
     val l_tm = (snd o dest_comb o fst o dest_comb) t;
     val mem_thm_o = !cur_l_mem_lookup_fun l_tm;
@@ -887,11 +996,13 @@ fun MEM_proglabels_fun (t, eq_thms) =
      NONE =>  fallback_fun t
    | SOME x => if (identical t o concl) x then EQ_MP (SPEC t spec_conv_thm) x else fallback_fun t
   end;
+end;
 
-val birs_exec_stmt_jmp_tm = ``birs_exec_stmt_jmp``;
-val MEM_tm = ``MEM : bir_label_t -> bir_label_t list -> bool``;
-fun birs_exec_step_CONV_E (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
-let
+local
+ val MEM_tm = ``MEM : bir_label_t -> bir_label_t list -> bool``;
+in
+ fun birs_exec_step_CONV_E (bprog_tm, (res_p1, env_tm, pcond_tm, eq_thms)) =
+ let
   val res_e_eval_exp = restr_conv_eq_rule
     [bprog_tm, birs_exec_stmt_jmp_tm, birs_eval_exp_tm]
     (GEN_match_conv is_birs_eval_exp (REWRITE_CONV eq_thms THENC birs_eval_exp_CONV))
@@ -911,15 +1022,17 @@ let
     EVAL
     res_e_mem_proglabels;
 
-(*
+  (*
   val _ = print_thm res_e_eval_label;
   val _ = raise ERR "" "";
-*)
+  *)
 
   val res = (abbr_rev (res_e_finish, env_tm, pcond_tm));
-in
+ in
   res
+ end;
 end;
+
 val birs_exec_step_CONV_E = Profile.profile "exec_step_CONV_E" birs_exec_step_CONV_E;
 
 val birs_exec_step_CONV =
@@ -956,33 +1069,40 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
 
 (* helpers to check if sound structure terms (and subterms) are in normalform *)
 (* ----------------------------------------------- *)
-  local
-
-    fun is_bsst_pc_fupd tm =
-      is_comb tm andalso
-      (identical ``bsst_pc_fupd`` o fst o dest_comb) tm;
-    fun is_bsst_environ_fupd tm =
-      is_comb tm andalso
-      (identical ``bsst_environ_fupd`` o fst o dest_comb) tm;
-    fun is_bsst_status_fupd tm =
-      is_comb tm andalso
-      (identical ``bsst_status_fupd`` o fst o dest_comb) tm;
-    fun is_bsst_pcond_fupd tm =
-      is_comb tm andalso
-      (identical ``bsst_pcond_fupd`` o fst o dest_comb) tm;
-
-  in
-
+    (*
+    val bir_state_init = ``<|bsst_pc := <|bpc_label := BL_Address (Imm32 2824w); bpc_index := 0|>;
+      bsst_environ :=
+                 birs_gen_env
+                    [("x15",BExp_Den (BVar "sy_x15" (BType_Imm Bit64)));
+                     ("x13",BExp_Den (BVar "sy_x13" (BType_Imm Bit64)));
+                     ("x14",BExp_Den (BVar "sy_x14" (BType_Imm Bit64)));
+                     ("x10",BExp_Den (BVar "sy_x10" (BType_Imm Bit64)));
+                     ("MEM8",
+                      BExp_Den (BVar "sy_MEM8" (BType_Mem Bit64 Bit8)));
+                     ("x2",BExp_Den (BVar "sy_x2" (BType_Imm Bit64)));
+                     ("x1",BExp_Den (BVar "sy_x1" (BType_Imm Bit64)))];
+      bsst_status := BST_Running;
+      bsst_pcond :=
+        BExp_BinExp BIExp_And
+          (BExp_BinExp BIExp_And
+             (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0xFFFFFFw))
+                (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
+             (BExp_Aligned Bit32 2
+                (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
+          (BExp_BinPred BIExp_LessOrEqual
+             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+             (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>``;
+    *)
     fun birs_state_is_normform tm =
-      is_comb tm andalso
-      ((is_bsst_pc_fupd o fst o dest_comb) tm orelse
-       (is_bsst_environ_fupd o fst o dest_comb) tm orelse
-       (is_bsst_status_fupd o fst o dest_comb) tm orelse
-       (is_bsst_pcond_fupd o fst o dest_comb) tm);
+      is_birs_state tm andalso
+      let
+        val (_, env, _, _) = dest_birs_state tm;
+      in
+        is_birs_gen_env env
+      end;
 
     fun is_a_normform_set tm =
-      (pred_setSyntax.strip_set tm; true)
-      handle _ => false;
+      can pred_setSyntax.strip_set tm;
 
     fun birs_states_are_normform tm =
       is_a_normform_set tm andalso
@@ -1005,41 +1125,16 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
         birs_states_are_normform_CONV sfun bstates_tm
 	handle e => (print "\n[[[[\n"; print_term bstate_tm; print "\n]]]]\n"; raise e);
 
-(*
-val THE_NONE_tm = ``(THE NONE) : ``;
-    fun is_THE_NONE tm =
-      aconv tm THE_NONE_tm;
-*)
-    fun contains_THE_NONE tm =
-      String.isSubstring "THE NONE" (term_to_string tm);
-(*
-(GEN_match_conv is_THE_NONE REFL tm; true) handle _ => false;
-contains_THE_NONE freesymbols_tm
-(is_birs_exec_step)
-(fn bstate_tm
-*)
-    fun contains_THE_NONE_CONV_with_extra sfun extra_tm tm =
-      if contains_THE_NONE tm then (
-        print "\n[[[[\n"; print_term extra_tm; print "\n]]]]\n";
-        print "\n[[[[\n"; print_term tm; print "\n]]]]\n";
-        raise ERR (sfun^"::contains_THE_NONE_CONV_with_extra") "something is not right, there is THE NONE in the term"
-      ) else
-	REFL tm;
-
-  end;
-
 (* extract information from a sound structure *)
 (* ----------------------------------------------- *)
 fun symb_sound_struct_get_sysLPi_fun tm =
   let
     val sysLPi_tm =
-      case (strip_comb) tm of
-         (_,[_,tm]) => tm
-       | _ => raise Fail "symb_sound_struct_get_sysLPi_fun::unexpected term1";
+      (snd o dest_symb_hl_step_in_L_sound) tm;
     val res =
       case pairSyntax.strip_pair sysLPi_tm of
          [sys_tm, L_tm, Pi_tm] => (sys_tm, L_tm, Pi_tm)
-       | _ => raise Fail "symb_sound_struct_get_sysLPi_fun::unexpected term2";
+       | _ => raise ERR "symb_sound_struct_get_sysLPi_fun" "unexpected structure triple";
   in
     res
   end;
@@ -1049,37 +1144,17 @@ fun symb_sound_struct_get_sysLPi_fun tm =
 fun symb_sound_struct_is_normform tm =
   let
     val (sys, L, Pi) = symb_sound_struct_get_sysLPi_fun tm
-                       handle _ => raise Fail "symb_sound_struct_is_normform::unexpected term1";
-
-    (*
-    val bir_state_init = ``<|bsst_pc := <|bpc_label := BL_Address (Imm32 2824w); bpc_index := 0|>;
-      bsst_environ := bir_senv_GEN_list birenvtyl;
-      bsst_status := BST_Running;
-      bsst_pcond :=
-        BExp_BinExp BIExp_And
-          (BExp_BinExp BIExp_And
-             (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0xFFFFFFw))
-                (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
-             (BExp_Aligned Bit32 2
-                (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
-          (BExp_BinPred BIExp_LessOrEqual
-             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-             (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>``;
-    is_bsst_pc_fupd bir_state_init
-    birs_state_is_ok bir_state_init
-    *)
+                       handle _ => raise ERR "symb_sound_struct_is_normform" "unexpected term, should be a symb_hl_step_in_L_sound with a triple as structure";
 
     val sys_ok =
-      is_comb sys andalso
-      (identical ``birs_symb_to_symbst`` o fst o dest_comb) sys andalso
-      (birs_state_is_normform o snd o dest_comb) sys;
+      is_birs_symb_to_symbst sys andalso
+      (birs_state_is_normform o dest_birs_symb_to_symbst) sys;
 
     val L_ok = is_a_normform_set L;
 
     val Pi_ok =
-      is_comb Pi andalso
-      (identical ``IMAGE birs_symb_to_symbst`` o fst o dest_comb) Pi andalso
-      (birs_states_are_normform o snd o dest_comb) Pi;
+      is_IMAGE_birs_symb_to_symbst Pi andalso
+      (birs_states_are_normform o dest_IMAGE_birs_symb_to_symbst) Pi;
   in
     sys_ok andalso L_ok andalso Pi_ok
   end;
@@ -1087,109 +1162,6 @@ fun symb_sound_struct_is_normform tm =
 
 (* bir symbolic execution steps *)
 (* ----------------------------------------------- *)
-(*
-val bstate_tm = ``
-  <|bsst_pc := <|bpc_label := BL_Address (Imm32 2826w); bpc_index := 1|>;
-    bsst_environ :=
-      birs_gen_env
-        [("SP_process",
-          BExp_BinExp BIExp_Minus
-            (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
-            (BExp_Const (Imm32 8w)));
-         ("MEM",
-          BExp_Store
-            (BExp_Store (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
-               (BExp_BinExp BIExp_Minus
-                  (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
-                  (BExp_Const (Imm32 8w))) BEnd_LittleEndian
-               (BExp_Den (BVar "sy_R7" (BType_Imm Bit32))))
-            (BExp_BinExp BIExp_Minus
-               (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
-               (BExp_Const (Imm32 4w))) BEnd_LittleEndian
-            (BExp_Den (BVar "sy_LR" (BType_Imm Bit32))));
-         ("countw",
-          BExp_BinExp BIExp_Plus
-            (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-            (BExp_Const (Imm64 3w)));
-         ("tmp_SP_process",
-          BExp_BinExp BIExp_Minus
-            (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
-            (BExp_Const (Imm32 8w)));
-         ("PSR_C",BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
-         ("PSR_N",BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
-         ("PSR_V",BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
-         ("PSR_Z",BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
-         ("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
-         ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
-         ("R2",BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
-         ("R3",BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
-         ("R4",BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
-         ("R5",BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
-         ("R6",BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
-         ("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-         ("R8",BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
-         ("R9",BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
-         ("R10",BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
-         ("R11",BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
-         ("R12",BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
-         ("LR",BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
-         ("SP_main",BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
-         ("ModeHandler",BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
-         ("tmp_PC",BExp_Den (BVar "sy_tmp_PC" (BType_Imm Bit32)));
-         ("tmp_COND",BExp_Den (BVar "sy_tmp_COND" (BType_Imm Bit1)));
-         ("tmp_MEM",BExp_Den (BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8)));
-         ("tmp_PSR_C",BExp_Den (BVar "sy_tmp_PSR_C" (BType_Imm Bit1)));
-         ("tmp_PSR_N",BExp_Den (BVar "sy_tmp_PSR_N" (BType_Imm Bit1)));
-         ("tmp_PSR_V",BExp_Den (BVar "sy_tmp_PSR_V" (BType_Imm Bit1)));
-         ("tmp_PSR_Z",BExp_Den (BVar "sy_tmp_PSR_Z" (BType_Imm Bit1)));
-         ("tmp_R0",BExp_Den (BVar "sy_tmp_R0" (BType_Imm Bit32)));
-         ("tmp_R1",BExp_Den (BVar "sy_tmp_R1" (BType_Imm Bit32)));
-         ("tmp_R2",BExp_Den (BVar "sy_tmp_R2" (BType_Imm Bit32)));
-         ("tmp_R3",BExp_Den (BVar "sy_tmp_R3" (BType_Imm Bit32)));
-         ("tmp_R4",BExp_Den (BVar "sy_tmp_R4" (BType_Imm Bit32)));
-         ("tmp_R5",BExp_Den (BVar "sy_tmp_R5" (BType_Imm Bit32)));
-         ("tmp_R6",BExp_Den (BVar "sy_tmp_R6" (BType_Imm Bit32)));
-         ("tmp_R7",BExp_Den (BVar "sy_tmp_R7" (BType_Imm Bit32)));
-         ("tmp_R8",BExp_Den (BVar "sy_tmp_R8" (BType_Imm Bit32)));
-         ("tmp_R9",BExp_Den (BVar "sy_tmp_R9" (BType_Imm Bit32)));
-         ("tmp_R10",BExp_Den (BVar "sy_tmp_R10" (BType_Imm Bit32)));
-         ("tmp_R11",BExp_Den (BVar "sy_tmp_R11" (BType_Imm Bit32)));
-         ("tmp_R12",BExp_Den (BVar "sy_tmp_R12" (BType_Imm Bit32)));
-         ("tmp_LR",BExp_Den (BVar "sy_tmp_LR" (BType_Imm Bit32)));
-         ("tmp_SP_main",BExp_Den (BVar "sy_tmp_SP_main" (BType_Imm Bit32)));
-         ("tmp_ModeHandler",
-          BExp_Den (BVar "sy_tmp_ModeHandler" (BType_Imm Bit1)));
-         ("tmp_countw",BExp_Den (BVar "sy_tmp_countw" (BType_Imm Bit64)))];
-    bsst_status := BST_Running;
-    bsst_pcond :=
-      BExp_BinExp BIExp_And
-        (BExp_BinExp BIExp_And
-           (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm32 0xFFFFFFw))
-              (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
-           (BExp_BinPred BIExp_Equal
-              (BExp_BinExp BIExp_And
-                 (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
-                 (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w))))
-        (BExp_BinPred BIExp_LessOrEqual
-           (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-           (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>
-``;
-*)
-(*
-val bstate_tm = birs_state_init;
-val bstate_tm = birs_state_mid;
-
-val bstate_tm = birs_state_init_tm;
-val bprog_tm = bprog_tm;
-
-val tm = ``ABCD (birs_exec_step ^bprog_tm ^bstate_tm)``;
-val tm = ``birs_exec_step ^bprog_tm ^bstate_tm``;
-*)
-val birs_exec_step_tm = ``birs_exec_step``;
-fun is_birs_exec_step tm =
-  is_comb tm andalso
-  (is_comb o fst o dest_comb) tm andalso
-  (same_const birs_exec_step_tm o fst o dest_comb o fst o dest_comb) tm;
 fun birs_exec_step_CONV_fun tm =
   GEN_match_conv
 (is_birs_exec_step)
@@ -1207,7 +1179,6 @@ fun birs_exec_step_CONV_fun tm =
     end) THENC
 
   birs_states_are_normform_CONV_with_start "birs_exec_step_CONV_fun" bstate_tm
-  (* THENC contains_THE_NONE_CONV_with_extra "birs_exec_step_CONV_fun" bstate_tm *)
   ) bstate_tm
 )
 tm;
@@ -1252,7 +1223,6 @@ fun birs_rule_STEP_prog_fun no_halt_thm =
 (* plugging in the execution of steps to obtain sound structure *)
 (* ----------------------------------------------- *)
 local
-  val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
   open birs_auxTheory;
 in
 fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
@@ -1312,7 +1282,6 @@ val pcond_tm = ``
 val bstate_tm = birs_state_init_tm;
 *)
 local
-  val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
   open birs_auxTheory;
 
   open birs_rulesTheory;
