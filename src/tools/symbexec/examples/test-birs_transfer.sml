@@ -3,7 +3,7 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_symbTheory;
 
-open birs_stepLib;
+open birs_execLib;
 open birs_composeLib;
 
 open birs_auxTheory;
