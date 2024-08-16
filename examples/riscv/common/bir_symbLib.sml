@@ -6,7 +6,7 @@ open Abbrev;
 local
   open HolKernel Parse boolLib bossLib;
   open bitTheory;
-  open birs_stepLib;
+  open birs_execLib;
   open birs_composeLib;
   open birs_driveLib;
   open birs_auxTheory;
