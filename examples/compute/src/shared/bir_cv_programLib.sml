@@ -10,8 +10,6 @@ open listSyntax ;
 
 val ERR = mk_HOL_ERR "bir_cv_programLib" ;
 
-(* TODO : Remove test *)
-val exp = ``BExp_Const (Imm64 1w)``
 
 fun assert_correct tm thm = assert (fn (x,y) => (Term.compare (x, y)) = EQUAL) (tm, lhs (concl thm))
 
