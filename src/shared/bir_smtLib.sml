@@ -11,7 +11,9 @@ local
 in
 
 (* =========================================================== *)
-(*val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";*)
+(*
+val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";
+*)
 fun openz3 z3bin = 
   (Unix.execute (z3bin, ["-in"])) : (TextIO.instream, TextIO.outstream) Unix.proc;
 
@@ -19,15 +21,26 @@ fun endmeexit p = Unix.fromStatus (Unix.reap p);
 
 fun get_streams p = Unix.streamsOf p;
 
+val z3proc_bin_o = ref (NONE : string option);
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
 val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
 val bir_smtLib_z3_prelude_n = bir_smtLib_z3_prelude ^ "\n";
 fun get_z3proc z3bin =
   let
    val z3proc_ = !z3proc_o;
-   val p = if isSome z3proc_ then valOf z3proc_ else
+   fun check_and_restart z3p =
+     if z3bin = valOf (!z3proc_bin_o) then z3p else
+       let
+         val _ = endmeexit z3p;
+         val _ = z3proc_o := NONE;
+       in
+         get_z3proc z3bin
+       end;
+   val p = if isSome z3proc_ then check_and_restart (valOf z3proc_) else
       let
+        val _ = print ("starting: " ^ z3bin ^ "\n");
         val p = openz3 z3bin;
+	val _ = z3proc_bin_o := SOME z3bin;
         (*val (_,s_out) = get_streams p;
 	(* prepare prelude and push *)
         val () = TextIO.output (s_out, bir_smtLib_z3_prelude ^ "\n");
@@ -50,10 +63,6 @@ fun sendreceive_query z3bin q =
    val () = TextIO.output (s_out, "(reset)\n");
    (*val () = TextIO.output (s_out, "(pop)\n");
    val () = TextIO.output (s_out, "(push)\n");*)
-   (*
-   val _ = endmeexit p;
-   val _ = z3proc_o := NONE;
-   *)
  in
    out
  end;
@@ -64,10 +73,18 @@ fun sendreceive_query z3bin q =
     | BirSmtUnsat
     | BirSmtUnknown;
 
-  fun querysmt_raw q =
+  fun get_default_z3 () =
     case OS.Process.getEnv "HOL4_Z3_EXECUTABLE" of
-      SOME z3bin =>
+      SOME z3bin => z3bin
+    | NONE =>
+      raise ERR "get_default_z3"
+        "Z3 not configured: set the HOL4_Z3_EXECUTABLE environment variable to point to the Z3 executable file.";
+
+  fun querysmt_raw_gen z3bin_o q =
       let
+        val z3bin = case z3bin_o of
+	     NONE => get_default_z3 ()
+	   | SOME x => x;
         val out = sendreceive_query z3bin q;
       in
         if out = "sat\n" then
@@ -82,9 +99,8 @@ fun sendreceive_query z3bin q =
 	   print "\n============================\n";
 	   raise ERR "querysmt_raw" "unknown output from z3")
       end
-    | NONE =>
-      raise ERR "querysmt_raw"
-        "Z3 not configured: set the HOL4_Z3_EXECUTABLE environment variable to point to the Z3 executable file.";
+
+  val querysmt_raw = querysmt_raw_gen NONE;
 
   (* https://rise4fun.com/z3/tutorial *)
   (*
@@ -104,8 +120,8 @@ fun sendreceive_query z3bin q =
   val q = "(declare-const a Int)\n" ^
 	  "(declare-const b Real)\n" ^
 	  "(declare-const c Real)\n" ^
-	  "(assert (> (* a a) 3))\n" ^
-	  "(assert (= (+ (* b b b) (* b c)) 3.0))\n" ^
+	  "(assert (> ("^"* a a) 3))\n" ^
+	  "(assert (= (+ ("^"* b b b) ("^"* b c)) 3.0))\n" ^
 	  "(check-sat)\n";
 
   val q = "(echo \"Z3 does not always find solutions to non-linear problems\")\n";
@@ -113,7 +129,7 @@ fun sendreceive_query z3bin q =
   val q = "(check-sat)\n";
 
   val result = querysmt_raw q;
-  *)*)*)*)
+  *)
 
   datatype bir_smt_type =
       SMTTY_Bool
@@ -140,7 +156,7 @@ fun sendreceive_query z3bin q =
 	) ^ "\n") "" vars;
 
   (* TODO: this should be split into generic z3 interface and bir_z3 interface *)
-  fun querysmt_wtimeout timeout_o vars asserts =
+  fun querysmt_gen timeout_o z3bin_o vars asserts =
     if List.exists (fn (_,qt) => qt <> SMTTY_Bool) asserts then
       raise ERR "querysmt" "don't know how to handle expression type in assert"
     else
@@ -155,14 +171,15 @@ fun sendreceive_query z3bin q =
              NONE => ("", "")
            | SOME timeout => ("(set-option :timeout " ^ (Int.toString timeout) ^ ")", "(set-option :timeout 4294967295)");
       in
-	querysmt_raw (timeout_s_before ^
-                      decls       ^ "\n" ^
-		      asserts_str ^ "\n" ^
-		      "(check-sat)\n" ^
-                      timeout_s_after)
+	querysmt_raw_gen z3bin_o
+	       (timeout_s_before ^
+                decls       ^ "\n" ^
+	        asserts_str ^ "\n" ^
+	        "(check-sat)\n" ^
+                timeout_s_after)
       end;
 
-  val querysmt = querysmt_wtimeout NONE;
+  val querysmt = querysmt_gen NONE NONE;
 
   fun smtlib_vars_compare ((an, aty),(bn, bty)) =
     if an = bn then

@@ -10,7 +10,6 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_types := true;
 val _ = PolyML.print_depth 1;
 
-(* TODO: run this on different z3 versions and see what happens *)
 (* TODO: then try what happens when the export works differently: prelude/direct-concat-extract/extract-multiple-asserts-abbreviations *)
 
 (*
@@ -100,6 +99,16 @@ fun gen_testcase ad_sz val_sz =
   ("swap case ad=" ^ (Int.toString ad_sz) ^ " val=" ^ (Int.toString val_sz), vars, query_conds, BirSmtUnsat)
  end;
 
+val z3_binaries = [NONE];
+
+(*
+val z3_binaries =
+ [SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3",
+  SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.17/bin/z3",
+  SOME "/home/andreas/data/hol/HolBA_opt/z3-4.12.2/bin/z3",
+  SOME "/home/andreas/data/hol/HolBA_opt/z3-4.13.0/bin/z3"];
+*)
+
 val test_cases =
   [gen_testcase 32 8,
    gen_testcase 32 16,
@@ -110,27 +119,43 @@ val test_cases =
    gen_testcase 64 32,
    gen_testcase 64 64];
 
+fun z3bin_to_id NONE = "default"
+  | z3bin_to_id (SOME x) = ((fn l => List.nth (l, 2)) o rev o String.tokens (fn x => x = #"/")) x;
+
+fun combine_test_cases test_cases z3bin_o =
+  List.map (fn (name, vars, query_conds, expected) =>
+     ((z3bin_to_id z3bin_o) ^ ": " ^ name, z3bin_o, vars, query_conds, expected)) test_cases;
+val test_cases = List.concat (List.map (combine_test_cases test_cases) z3_binaries);
+
 val _ = print "Testing with z3\n";
 
+val timeout_o = SOME 4000;
+
 (*
+val z3bin_o = NONE : string option;
 val (name, vars, query_conds, expected) = gen_testcase 64 64;
-val (name, vars, query_conds, expected) = hd test_cases;
+
+val (name, z3bin_o, vars, query_conds, expected) = hd test_cases;
 val test_cases = tl test_cases;
 *)
-val _ = List.map (fn (name, vars, query_conds, expected) =>
+
+val results = List.map (fn (name, z3bin_o, vars, query_conds, expected) =>
     let
       val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");
 
       (* check with timeout, because these test cases might cause excessive runtime or non-termination *)
-      val result = querysmt_wtimeout (SOME 4000) vars query_conds;
+      val result = querysmt_gen timeout_o z3bin_o vars query_conds;
+      val res = result = expected;
 
-      val _ = if result = expected then print ("=============== >>> SUCCESS\n") else (
+      val _ = if res then print ("=============== >>> SUCCESS\n") else (
             print ("=============== >>> TEST CASE FAILED: '" ^ name ^ "'\n");
             print ("have: \n");
             PolyML.print result;
             print ("expected: \n");
             PolyML.print expected;
 	    ());
-    in () end
+    in res end
   ) test_cases;
 
+val _ = if all I results then () else
+  raise Fail "at least one test case failed";
