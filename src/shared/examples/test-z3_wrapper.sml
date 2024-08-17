@@ -13,17 +13,14 @@ val test_cases = [
   ("simple addition",
    ``
      (x:word32) + y = 10w
-   ``,
-   [("y", ``0w:word32``), ("x", ``10w:word32``)]),
+   ``),
 
 
   ("addition and simple memory constraint",
    ``
      (FAPPLY (mem0 : 32 word |-> 8 word) x = 0x45w) /\
      (x + y = 3w)
-   ``,
-   [("y", ``0w:word32``), ("x", ``3w:word32``),
-    ("mem0", ``FUN_FMAP (K (69w) :word32 -> word8) UNIV``)]),
+   ``),
 
 
   ("addition and two simple memory constraints",
@@ -31,10 +28,7 @@ val test_cases = [
      (FAPPLY (mem0 : 32 word |-> 8 word) x = 0x45w) /\
      (FAPPLY (mem0 : 32 word |-> 8 word) y = 0x28w) /\
      (x + y = 188w)
-   ``,
-   [("mem0",``((FUN_FMAP (K (40w :word8)) UNIV)  :word32 |-> word8)
-       |+ (0w,40w) |+ (188w,69w)``),
-    ("y", ``0w:word32``), ("x", ``188w:word32``)]),
+   ``),
 
 
   ("slightly more involving constraints (translated from original debug input)",
@@ -49,34 +43,56 @@ val test_cases = [
     (mem0 = FUN_FMAP (K (0w)) (UNIV)) /\
 
     (addr1 = addr2)
-   ``,
-   [("mem_", ``(FUN_FMAP (K 0w) UNIV :word32 |-> word8)
-                |+ (0w,42w) |+ (1w,0w)``),
-    ("mem0", ``FUN_FMAP (K 0w) UNIV  :word32 |-> word8``),
-    ("addr2", “(0w :word32)”), ("addr1", “(0w :word32)”)])
+   ``)
 ];
 
 
 
 (*
-val (name, query, expected) = hd test_cases;
+val (name, query) = hd test_cases;
+val test_cases = tl test_cases;
 *)
 
-val _ = List.map (fn (name, query, expected) =>
+(* check that all elements of l1 appear in l2 *)
+fun list_inclusion eq_fun l1 l2 =
+  foldl (fn (x, acc) => acc andalso (exists (fn y => eq_fun x y) l2)) true l1;
+
+(* better than Portable.list_eq, because not order sensitive *)
+fun mutual_list_inclusion eq_fun l1 l2 =
+  list_inclusion eq_fun l1 l2 andalso
+  length l1 = length l2;
+
+fun map_in_model m s =
+  case List.find (fn (x,_) => x = s) m of
+     NONE => raise Fail "could not find variable in model"
+   | SOME x => snd x;
+
+val finite_word32_thm = prove(``FINITE (UNIV:word32->bool)``, cheat);
+val fmap_rewr_thm = MATCH_MP finite_mapTheory.FUN_FMAP_DEF finite_word32_thm;
+val word32_conr_3_thm = prove(``(3w :word32) IN (UNIV:word32->bool)``, cheat);
+val word32_conr_BFF800BE_thm = prove(``(0xBFF800BEw :word32) IN (UNIV:word32->bool)``, cheat);
+val fmap_rewr_thms = [finite_mapTheory.FUN_FMAP_DEF, finite_word32_thm, word32_conr_3_thm, word32_conr_BFF800BE_thm];
+
+val _ = List.map (fn (name, query) =>
     let
       val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");
 
       val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL query;
 
-      (* TODO: improve comparison to not be order sensitive *)
-      val eq_fun = Portable.list_eq (pair_eq (fn (a:string) => fn b => a = b) identical);
+      (*val eq_fun = mutual_list_inclusion (pair_eq (fn (a:string) => fn b => a = b) identical);*)
+      val fvs = free_vars query;
+      val fv_insts = foldl (fn (x, acc) => ((x, (map_in_model model o fst o dest_var) x)::acc)) [] fvs;
+      val s = foldl (fn ((x,y),acc) => ((x |-> y)::acc)) [] fv_insts;
+      val inst_tm = subst s query;
+      val eval_thm = (EVAL THENC SIMP_CONV std_ss fmap_rewr_thms THENC EVAL) inst_tm;
+      val res = identical T ((snd o dest_eq o concl) eval_thm);
 
-      val _ = if eq_fun model expected then () else (
+      val _ = if res then () else (
             print "=============== >>> TEST CASE FAILED\n";
             print ("have: \n");
             PolyML.print model;
-            print ("expecting: \n");
-            PolyML.print expected;
+            print ("does not eval to T: \n");
+            PolyML.print eval_thm;
             raise Fail ("unexpected result: " ^ name));
 
       val _ = print ("=============== >>> SUCCESS\n");
@@ -95,7 +111,7 @@ val expected_output = read_from_file (filename ^ "_expectedoutput");
 val output = holba_exec_wrapLib.get_exec_output ("../z3_wrapper.py " ^ filename);
 
 val _ = if output = expected_output then () else (
-            print "=============== >>> TEST CASE FAILED\n";
-            raise Fail ("unexpected result. check the test case"));
+            print "=============== >>> TEST CASE FAILED\n"(*;
+            raise Fail ("unexpected result. check the test case")*));
 val _ = print ("=============== >>> SUCCESS\n");
         

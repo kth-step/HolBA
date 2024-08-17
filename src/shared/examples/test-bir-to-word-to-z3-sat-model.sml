@@ -68,7 +68,8 @@ fun produce_sat_thm term model =
 val model_eq = option_eq (list_eq (pair_eq (fn (a:string) => fn (b:string) => a=b) identical));
 
 (*
-val (name, bir_exp, expected_model_o, expected_sat_o) = List.nth(bir_exprs, 2);
+val (name, bir_exp, expected_model_o, expected_sat_o) = hd bir_exprs;
+val bir_exprs = tl bir_exprs;
 *)
 
 (* Print all BIR expressions as words expressions and check that they are correct. *)

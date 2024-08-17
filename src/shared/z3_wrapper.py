@@ -7,7 +7,7 @@ from z3 import *
 def model_compress_string():
     major,minor,build,rev = z3.get_version()
     result = ""
-    if major >= 4 and minor >= 8 and build >= 7:
+    if major >= 4 and ((not (major == 4)) or minor >= 8) and ((not (major == 4 and minor == 8)) or build >= 7):
         result = "model.compact"
     else:
         result = "model_compress"
