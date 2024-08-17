@@ -75,8 +75,9 @@ let
   val evaled_thm = EVAL tm ;
   val evaled_tm = rhs (concl evaled_thm) ;
   (* Translate using conversion *)
-  val _ = print "Translating one named term...\n" ;
-  val from_val_thm = time bir_conv evaled_tm ;
+  (* val _ = print "Translating one named term...\n" ; *)
+  (* val from_val_thm = time bir_conv evaled_tm ; *)
+  val from_val_thm = bir_conv evaled_tm ;
   val from_named_thm = SIMP_RULE (srw_ss()) [GSYM evaled_thm] from_val_thm ;
   val _ = save_thm (name ^ "_bir_cv_eq", from_named_thm) ;
 in from_named_thm end
@@ -113,10 +114,12 @@ let
   (* Fetch expression information *)
   val exp = lhs (concl exp_def) ;
   val exp_name = fst $ dest_const exp ;
-  val from_exp_thm = translate_named_term bir_exp_conv exp ;
+  val _ =  print "Translating exp to bir_cv...\n" ;
+  val from_exp_thm = time (translate_named_term bir_exp_conv) exp ;
   val cv_exp = rand (rhs (concl from_exp_thm)) ;
   (* Create the new constant term *)
-  val cv_exp_def = deep_embed_term exp_name cv_exp ;
+  val _ = print "Deep emebedding expression...\n" ;
+  val cv_exp_def = time (deep_embed_term exp_name) cv_exp ;
 in () end
 
 (* Takes an expression definition and evaluates it using cv_eval and deep embedding translation *)
@@ -126,7 +129,8 @@ let
   val eval_env_thm = EVAL env ;
   val eval_env = rhs (concl eval_env_thm) ;
   (* Converts the env to a cv_env *)
-  val cv_env_thm = env_to_cv_env_conv eval_env ;
+  val _ = print "Converting environment to bir_cv...\n" ;
+  val cv_env_thm = time env_to_cv_env_conv eval_env ;
   val cv_env = rand (rhs (concl cv_env_thm)) ;
   (* Get the expression term *)
   val exp = lhs (concl exp_def) ;
@@ -140,7 +144,8 @@ let
   val compute_term = ``bir_cv_compute_exp ^cv_exp ^cv_env`` ;
 
   (* Evaluates term *)
-  val evaled_term_thm = cv_eval compute_term ;
+  val _ = print "Using cv_eval...\n" ;
+  val evaled_term_thm = time cv_eval compute_term ;
   
   (* Apply from to match bir_compute_exp_eq_cv_compute_exp *)
   val from_opt_evaled_term_thm = AP_TERM ``from_cv_val_option`` evaled_term_thm ;
@@ -266,13 +271,13 @@ let
   val program_name = fst (dest_const program) ;
   (* Translate to cv_program *)
   val _ = print "Translating to cv_program...\n" ;
-  val from_program_thm = translate_named_term bir_program_conv program
+  val from_program_thm = time (translate_named_term bir_program_conv) program
   val cv_program = rand (rhs (concl from_program_thm)) ;
   (* Get the block list of the cv program *)
   val cv_block_list_tm = dest_cv_program cv_program ;
   val cv_block_tm_list = fst $ dest_list cv_block_list_tm ;
   (* Recursively deep embeds blocks, statements and expressions *)
-  val _ = print "Starting recursive deep embedding...\n" ;
+  val _ = print "Starting recursive deep embedding of program...\n" ;
   val embed_block_thm_list = 
     time (map_string_increasing (program_name ^ "_block_") deep_embed_block) cv_block_tm_list
   val embed_program_thm = REWRITE_CONV embed_block_thm_list cv_program ;

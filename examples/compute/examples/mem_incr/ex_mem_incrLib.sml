@@ -57,7 +57,7 @@ let
 
   val _ = print "cv measurement...\n" ;
   val _ = translate_exp_cv exp_def ;
-  val cv_value = time (compute_exp_cv exp_def) env ;
+  val cv_value = compute_exp_cv exp_def env ;
 
   val _ = assert (fn x => (Term.compare (x, (rhs (concl cv_value))) = EQUAL)) (rhs (concl eval_value ))
 in 
