@@ -360,13 +360,16 @@ Theorem isqrt_riscv_pre_1_imp_bspec_pre_1_thm:
   (riscv_isqrt_pre_1 pre_x10)
   (bspec_isqrt_pre_1 pre_x10)
 Proof
- cheat
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_1_def,bspec_isqrt_pre_1_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
 QED
 
 Theorem isqrt_riscv_post_1_imp_bspec_post_1_thm:
  !ls. bir_post_bir_to_riscv
    (riscv_isqrt_post_1 pre_x10)
-   (\l. (bspec_isqrt_post_1 pre_x10))
+   (\l. bspec_isqrt_post_1 pre_x10)
    ls
 Proof
  cheat

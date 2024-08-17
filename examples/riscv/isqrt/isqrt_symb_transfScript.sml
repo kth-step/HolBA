@@ -79,8 +79,8 @@ val bspec_post_2_tm = (lhs o snd o strip_forall o concl) bspec_isqrt_post_3_ret_
 val bir_prog_def = bir_isqrt_prog_def;
 val birenvtyl_def = isqrt_birenvtyl_def;
 val bspec_pre_def = bspec_isqrt_pre_3_def;
-val bspec_post_1_def = isqrt_end_addr_3_loop_def;
-val bspec_post_2_def = isqrt_end_addr_3_ret_def;
+val bspec_post_1_def = bspec_isqrt_post_3_loop_def;
+val bspec_post_2_def = bspec_isqrt_post_3_ret_def;
 val prog_vars_list_def = isqrt_prog_vars_list_def;
 val symb_analysis_thm = isqrt_symb_analysis_3_thm;
 val bsysprecond_thm = isqrt_bsysprecond_3_thm;
@@ -340,5 +340,67 @@ val bprog_prop_holds_thm =
        bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
      analysis_thm);
+
+val bir_abstract_jgmt_rel_thm =
+ (MATCH_MP
+  (MATCH_MP
+    (MATCH_MP prop_holds_TO_abstract_jgmt_rel_two_thm analysis_L_NOTIN_thm_1) analysis_L_NOTIN_thm_2)
+  (REWRITE_RULE [] bprog_prop_holds_thm));
+
+val abstract_jgmt_rel_thm =
+ prove (``abstract_jgmt_rel (bir_ts ^bprog_tm)
+  (BL_Address (Imm64 ^init_addr_tm))
+  {BL_Address (Imm64 ^end_addr_1_tm); BL_Address (Imm64 ^end_addr_2_tm);}
+  (\st. bir_exec_to_labels_triple_precond st ^bspec_pre_tm ^bprog_tm)
+  (\st st'. bir_exec_to_labels_triple_postcond st'
+  (\l. if l = BL_Address (Imm64 ^end_addr_1_tm) then ^bspec_post_1_tm
+       else if l = BL_Address (Imm64 ^end_addr_2_tm) then ^bspec_post_2_tm
+       else bir_exp_false) ^bprog_tm)``,
+
+  MATCH_MP_TAC (REWRITE_RULE
+   [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_two_labels_triple_thm) >>
+  SIMP_TAC std_ss [] >>
+  EXISTS_TAC birenvtyl_tm >>
+  CONJ_TAC >- rw [] >>
+  CONJ_TAC >- (
+   (* bpre subset *)
+   REWRITE_TAC [bspec_pre_def] >>
+   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
+   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT] >>
+   EVAL_TAC
+  ) >>
+  CONJ_TAC >- (
+   (* bpost_1 subset *)
+   REWRITE_TAC [bspec_post_1_def] >>
+   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
+   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
+  ) >>
+  CONJ_TAC >- (
+   (* bpost_2 subset *)
+   REWRITE_TAC [bspec_post_2_def] >>
+   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
+   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
+  ) >>
+  CONJ_TAC >- (
+   (* bpost_1 is bool *)
+   REWRITE_TAC [bspec_post_1_def] >>
+   SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_REWRS, type_of_bir_exp_def]
+  ) >>
+  CONJ_TAC >- (
+   (* bpost_2 is bool *)
+   REWRITE_TAC [bspec_post_2_def] >>
+   SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_REWRS, type_of_bir_exp_def]
+  ) >>
+  CONJ_TAC >- (
+   (* ALL_DISTINCT envtyl *)
+   SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm] >>
+   EVAL_TAC
+  ) >>
+  CONJ_TAC >- (
+   (* envtyl = vars_of_prog *)
+   REWRITE_TAC [GSYM prog_vars_thm] >>
+   SIMP_TAC std_ss [birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
+  ) >>
+  METIS_TAC [bir_abstract_jgmt_rel_thm, prog_vars_thm]);
 
 val _ = export_theory ();

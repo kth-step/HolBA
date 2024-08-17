@@ -30,7 +30,6 @@ open program_logicSimps;
 open bir_env_oldTheory;
 open bir_program_varsTheory;
 
-
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "distribute_generic_stuff";
@@ -291,6 +290,29 @@ Proof
   METIS_TAC []
 QED
 
+Theorem prop_holds_TO_step_n_in_L_BIR_two_thm:
+!p start_lbl exit_lbl_1 exit_lbl_2 L envtyl vars bpre bpost_1 bpost_2.
+  (prop_holds (bir_symb_rec_sbir p)
+    start_lbl L (P_bircont envtyl bpre) 
+    (\st st'. Q_bircont exit_lbl_1 vars bpost_1 st st' \/ Q_bircont exit_lbl_2 vars bpost_2 st st')) ==>
+  (!st.
+       st.bst_pc = start_lbl ==>
+       pre_bircont_nL envtyl bpre st ==>
+       ?n st'.
+         step_n_in_L (\x. x.bst_pc) (\x. bir_exec_step_state p x)
+           st n L st' /\
+           (post_bircont_nL exit_lbl_1 vars bpost_1 st st' \/ post_bircont_nL exit_lbl_2 vars bpost_2 st st'))
+Proof
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC prop_holds_TO_step_n_in_L_thm >>
+
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [birs_symb_concst_pc_thm, P_bircont_pre_nL_thm, Q_bircont_post_nL_thm] >>
+  PAT_X_ASSUM ``!x. A`` IMP_RES_TAC >>
+  FULL_SIMP_TAC std_ss [P_bircont_pre_nL_thm, Q_bircont_post_nL_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def] >>
+  METIS_TAC []
+QED
+
 Theorem prop_holds_TO_bir_step_n_in_L_jgmt_thm:
 !p start_lbl exit_lbl L envtyl vars bpre bpost.
   (prop_holds (bir_symb_rec_sbir p)
@@ -304,6 +326,25 @@ Theorem prop_holds_TO_bir_step_n_in_L_jgmt_thm:
 Proof
   REPEAT STRIP_TAC >>
   IMP_RES_TAC prop_holds_TO_step_n_in_L_BIR_thm >>
+
+  REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
+  METIS_TAC []
+QED
+
+Theorem prop_holds_TO_bir_step_n_in_L_jgmt_two_thm:
+!p start_lbl exit_lbl_1 exit_lbl_2 L envtyl vars bpre bpost_1 bpost_2.
+  (prop_holds (bir_symb_rec_sbir p)
+       start_lbl L (P_bircont envtyl bpre)
+   (\st st'. Q_bircont exit_lbl_1 vars bpost_1 st st' \/ Q_bircont exit_lbl_2 vars bpost_2 st st')) ==>
+  (bir_step_n_in_L_jgmt
+    p
+    start_lbl
+    L
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. post_bircont_nL exit_lbl_1 vars bpost_1 st st' \/ post_bircont_nL exit_lbl_2 vars bpost_2 st st'))
+Proof
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC prop_holds_TO_step_n_in_L_BIR_two_thm >>
 
   REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
   METIS_TAC []
@@ -347,6 +388,56 @@ Proof
   FULL_SIMP_TAC (std_ss++holBACore_ss) [post_bircont_nL_def, IN_SING]
 QED
 
+(* use the reasoning on label sets to get to abstract_jgmt_rel for two *)
+Theorem bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_two_thm:
+!p start_albl exit_albl_1 exit_albl_2 L envtyl vars bpre bpost_1 bpost_2.
+  (<|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> NOTIN L) ==>
+  (<|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> NOTIN L) ==>
+  (bir_step_n_in_L_jgmt
+    p
+    <|bpc_label := BL_Address start_albl; bpc_index := 0|>
+    L
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. 
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st')) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl_1; BL_Address exit_albl_2}
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. 
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st'))
+Proof
+  REPEAT STRIP_TAC >>
+
+  IMP_RES_TAC (
+    (REWRITE_RULE
+       [bir_programTheory.bir_block_pc_def]
+       bir_program_transfTheory.bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm)) >>
+
+  FULL_SIMP_TAC std_ss [pre_bircont_nL_def] >>
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `{BL_Address exit_albl_1; BL_Address exit_albl_2}`) >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [IMAGE_SING, IN_SING, bir_programTheory.bir_block_pc_def] >>
+  sg `L INTER {<|bpc_label := BL_Address exit_albl_1; bpc_index := 0|>; <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|>} = {}` >-
+   (REWRITE_TAC [GSYM DISJOINT_DEF, IN_DISJOINT] >>
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >> rw [] >> fs []) >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [IMAGE_DEF,bir_block_pc_def] >>
+
+  `!st st'. post_bircont_nL
+     <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st' ==>
+    ?x. st'.bst_pc = <|bpc_label := x; bpc_index := 0|> /\ (x = BL_Address exit_albl_1 ∨ x = BL_Address exit_albl_2)`
+   by METIS_TAC [post_bircont_nL_def] >>
+  `!st st'. post_bircont_nL
+    <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+   post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st' ==>
+    ~bir_state_is_terminated st'` by (METIS_TAC [post_bircont_nL_def,bir_state_is_terminated_def]) >>
+  METIS_TAC []
+QED
 
 (* overall symbolic execution to BIR abstract_jgmt_rel *)
 Theorem prop_holds_TO_abstract_jgmt_rel_thm:
@@ -367,7 +458,29 @@ Proof
   METIS_TAC [prop_holds_TO_bir_step_n_in_L_jgmt_thm, bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_thm]
 QED
 
-
+(* overall symbolic execution to BIR abstract_jgmt_rel *)
+Theorem prop_holds_TO_abstract_jgmt_rel_two_thm:
+!p start_albl exit_albl_1 exit_albl_2 L envtyl vars bpre bpost_1 bpost_2.
+  (<|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> NOTIN L) ==>
+  (<|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> NOTIN L) ==>
+  (prop_holds (bir_symb_rec_sbir p)
+       <|bpc_label := BL_Address start_albl; bpc_index := 0|>
+       L
+       (P_bircont envtyl bpre)
+       (\st st'.
+         Q_bircont <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+         Q_bircont <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st')) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    {BL_Address exit_albl_1; BL_Address exit_albl_2}
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. 
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st'))
+Proof
+  METIS_TAC [prop_holds_TO_bir_step_n_in_L_jgmt_two_thm, bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_two_thm]
+QED
 
 
 (* TODO: MOVE THIS AWAY *)
