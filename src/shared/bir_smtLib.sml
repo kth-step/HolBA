@@ -140,7 +140,7 @@ fun sendreceive_query z3bin q =
 	) ^ "\n") "" vars;
 
   (* TODO: this should be split into generic z3 interface and bir_z3 interface *)
-  fun querysmt vars asserts =
+  fun querysmt_wtimeout timeout_o vars asserts =
     if List.exists (fn (_,qt) => qt <> SMTTY_Bool) asserts then
       raise ERR "querysmt" "don't know how to handle expression type in assert"
     else
@@ -150,11 +150,19 @@ fun sendreceive_query z3bin q =
 	  List.foldr (fn ((q,_), str) => str ^ (
 	    "(assert " ^ q ^ ")\n"
 	  )) "" asserts;
+	val (timeout_s_before, timeout_s_after) =
+	  case timeout_o of
+             NONE => ("", "")
+           | SOME timeout => ("(set-option :timeout " ^ (Int.toString timeout) ^ ")", "(set-option :timeout 4294967295)");
       in
-	querysmt_raw (decls       ^ "\n" ^
+	querysmt_raw (timeout_s_before ^
+                      decls       ^ "\n" ^
 		      asserts_str ^ "\n" ^
-		      "(check-sat)\n")
+		      "(check-sat)\n" ^
+                      timeout_s_after)
       end;
+
+  val querysmt = querysmt_wtimeout NONE;
 
   fun smtlib_vars_compare ((an, aty),(bn, bty)) =
     if an = bn then
