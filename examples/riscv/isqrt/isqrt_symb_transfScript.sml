@@ -105,6 +105,8 @@ open bir_typing_expTheory;
 open bir_env_oldTheory;
 open bir_envTheory;
 
+open jgmt_rel_bir_contTheory;
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
@@ -402,5 +404,40 @@ val abstract_jgmt_rel_thm =
    SIMP_TAC std_ss [birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
   ) >>
   METIS_TAC [bir_abstract_jgmt_rel_thm, prog_vars_thm]);
+
+val bspec_cont_thm =
+ prove (``bir_cont ^bprog_tm bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_1_tm); BL_Address (Imm64 ^end_addr_2_tm)} {}
+  ^bspec_pre_tm
+  (\l. if l = BL_Address (Imm64 ^end_addr_1_tm) then ^bspec_post_1_tm
+       else if l = BL_Address (Imm64 ^end_addr_2_tm) then ^bspec_post_2_tm
+       else bir_exp_false)``,
+
+ `{BL_Address (Imm64 ^end_addr_1_tm); BL_Address (Imm64 ^end_addr_2_tm)} <> {}` by fs [] >>
+
+ MP_TAC ((Q.SPECL [
+     `BL_Address (Imm64 ^init_addr_tm)`,
+      `{BL_Address (Imm64 ^end_addr_1_tm); BL_Address (Imm64 ^end_addr_2_tm)}`,
+      `^bspec_pre_tm`,
+      `\l. if l = BL_Address (Imm64 ^end_addr_1_tm) then ^bspec_post_1_tm
+       else if l = BL_Address (Imm64 ^end_addr_2_tm) then ^bspec_post_2_tm
+       else bir_exp_false`
+    ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`])
+    abstract_jgmt_rel_bir_cont) >>
+
+ rw [] >>
+ METIS_TAC [abstract_jgmt_rel_thm]);
+
+Theorem bspec_cont_isqrt_3:
+ bir_cont bir_isqrt_prog bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm))
+  {BL_Address (Imm64 ^end_addr_1_tm); BL_Address (Imm64 ^end_addr_2_tm)} {}
+  ^bspec_pre_tm
+  (\l. if l = BL_Address (Imm64 ^end_addr_1_tm) then ^bspec_post_1_tm
+       else if l = BL_Address (Imm64 ^end_addr_2_tm) then ^bspec_post_2_tm
+       else bir_exp_false)
+Proof
+ rw [bir_isqrt_prog_def,bspec_cont_thm]
+QED
 
 val _ = export_theory ();
