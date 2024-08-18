@@ -85,7 +85,7 @@ val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_m
 (* ---------------------------------- *)
 
 val riscv_cont_mod2_mem_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bir_cont_mod2_mem
   progbin_tm riscv_pre_tm riscv_post_tm
   bir_mod2_mem_prog_def

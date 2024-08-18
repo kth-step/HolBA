@@ -54,7 +54,7 @@ val riscv_post_3_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv
 (* ---------------------------------- *)
 
 val riscv_cont_isqrt_1_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bspec_cont_isqrt_1
   progbin_tm riscv_pre_1_tm riscv_post_1_tm
   bir_isqrt_prog_def
@@ -73,7 +73,7 @@ Proof
 QED
 
 val riscv_cont_isqrt_2_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bspec_cont_isqrt_2
   progbin_tm riscv_pre_2_tm riscv_post_2_tm
   bir_isqrt_prog_def
@@ -92,7 +92,7 @@ Proof
 QED
 
 val riscv_cont_isqrt_3_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bspec_cont_isqrt_3
   progbin_tm riscv_pre_3_tm riscv_post_3_tm
   bir_isqrt_prog_def

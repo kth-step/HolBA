@@ -489,7 +489,7 @@ bir_arm8_backlifterTheory.bir_post_bir_to_arm8_def
 lift_contract_thm
 src/tools/backlifter/bir_backlifterLib.sml
 
-get_arm8_contract_sing
+get_arm8_contract
 
 examples/tutorial/7-composition/tutorial_backliftingScript.sml
 *)

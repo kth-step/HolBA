@@ -45,7 +45,7 @@ open bir_inst_liftingHelpersLib;
     open bir_compositionLib;
   in
 
-fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm = 
+fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm = 
   let
     val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
 
@@ -110,7 +110,7 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
     arm8_contract_thm
   end;
 
-  fun get_riscv_contract_sing bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+  fun get_riscv_contract bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
   let
     val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
 

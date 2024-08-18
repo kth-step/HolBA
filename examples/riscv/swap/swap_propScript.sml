@@ -47,7 +47,7 @@ val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_s
 (* ---------------------------------- *)
 
 val riscv_cont_swap_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bspec_cont_swap
   progbin_tm riscv_pre_tm riscv_post_tm
   bir_swap_prog_def

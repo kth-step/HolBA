@@ -27,7 +27,7 @@ val _ = new_theory "tutorial_backlifting";
 val arm_add_reg_contract_thm =
   save_thm("arm_add_reg_contract_thm",
 
-get_arm8_contract_sing bir_add_reg_ct ``bir_add_reg_progbin`` ``arm8_add_reg_pre``
+get_arm8_contract bir_add_reg_ct ``bir_add_reg_progbin`` ``arm8_add_reg_pre``
                        ``arm8_add_reg_post`` bir_add_reg_prog_def
                        [bir_add_reg_contract_1_pre_def, bir_add_reg_pre_def]
                        bir_add_reg_contract_1_pre_def arm8_pre_imp_bir_pre_thm
