@@ -375,4 +375,47 @@ Proof
  cheat
 QED
 
+Theorem isqrt_riscv_pre_2_imp_bspec_pre_2_thm:
+ bir_pre_riscv_to_bir
+  (riscv_isqrt_pre_2 pre_x13 pre_x15)
+  (bspec_isqrt_pre_2 pre_x13 pre_x15)
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_post_2_imp_bspec_post_2_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_2 pre_x13 pre_x15)
+   (\l. bspec_isqrt_post_2 pre_x13 pre_x15)
+   ls
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_pre_3_imp_bspec_pre_3_thm:
+ bir_pre_riscv_to_bir
+  (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
+  (bspec_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_post_3_loop_imp_bspec_post_3_loop_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_3_loop pre_x10 pre_x13 pre_x14)
+   (\l. bspec_isqrt_post_3_loop pre_x10 pre_x13 pre_x14)
+   ls
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_post_3_ret_imp_bspec_post_3_ret_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_3_ret pre_x10 pre_x13 pre_x14)
+   (\l. bspec_isqrt_post_3_ret pre_x10 pre_x13 pre_x14)
+   ls
+Proof
+ cheat
+QED
+
 val _ = export_theory ();
