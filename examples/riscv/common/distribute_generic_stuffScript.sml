@@ -1,5 +1,7 @@
 open HolKernel boolLib Parse bossLib;
 
+open finite_mapTheory;
+
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -290,6 +292,22 @@ Proof
   METIS_TAC []
 QED
 
+Theorem prop_holds_TO_step_n_in_L_BIR_fmap_thm[local]:
+!p start_lbl L envtyl vars bpre fm.
+  (prop_holds (bir_symb_rec_sbir p)
+    start_lbl L (P_bircont envtyl bpre)
+    (\st st'. ITFMAP (\exit_albl bpost Qs. Qs \/ Q_bircont exit_albl vars bpost st st') fm F)) ==>
+  (!st.
+       st.bst_pc = start_lbl ==>
+       pre_bircont_nL envtyl bpre st ==>
+       ?n st'.
+         step_n_in_L (\x. x.bst_pc) (\x. bir_exec_step_state p x)
+           st n L st' /\
+           (ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL exit_albl vars bpost st st') fm F))
+Proof
+ cheat
+QED
+
 Theorem prop_holds_TO_step_n_in_L_BIR_two_thm:
 !p start_lbl exit_lbl_1 exit_lbl_2 L envtyl vars bpre bpost_1 bpost_2.
   (prop_holds (bir_symb_rec_sbir p)
@@ -310,6 +328,25 @@ Proof
   FULL_SIMP_TAC std_ss [birs_symb_concst_pc_thm, P_bircont_pre_nL_thm, Q_bircont_post_nL_thm] >>
   PAT_X_ASSUM ``!x. A`` IMP_RES_TAC >>
   FULL_SIMP_TAC std_ss [P_bircont_pre_nL_thm, Q_bircont_post_nL_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def] >>
+  METIS_TAC []
+QED
+
+Theorem prop_holds_TO_bir_step_n_in_L_jgmt_fmap_thm[local]:
+!p start_lbl L envtyl vars bpre fm.
+  (prop_holds (bir_symb_rec_sbir p)
+       start_lbl L (P_bircont envtyl bpre)
+   (\st st'. ITFMAP (\exit_albl bpost Qs. Qs \/ Q_bircont exit_albl vars bpost st st') fm F)) ==>
+  (bir_step_n_in_L_jgmt
+    p
+    start_lbl
+    L
+    (pre_bircont_nL envtyl bpre)
+     (\st st'. ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL exit_albl vars bpost st st') fm F))
+Proof
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC prop_holds_TO_step_n_in_L_BIR_fmap_thm >>
+
+  REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
   METIS_TAC []
 QED
 
@@ -348,6 +385,27 @@ Proof
 
   REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
   METIS_TAC []
+QED
+
+(* use the reasoning on label sets to get to abstract_jgmt_rel for fmap *)
+Theorem bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_fmap_thm[local]:
+!p start_albl L envtyl vars bpre fm.
+  (IMAGE (\exit_albl. <|bpc_label := BL_Address exit_albl; bpc_index := 0|>) (FDOM fm)) INTER L = {} ==>
+  (bir_step_n_in_L_jgmt
+    p
+    <|bpc_label := BL_Address start_albl; bpc_index := 0|>
+    L
+    (pre_bircont_nL envtyl bpre)
+    (\st st'.
+      ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost st st') fm F)) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    (IMAGE (\exit_albl. BL_Address exit_albl) (FDOM fm))
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost st st') fm F))
+Proof
+  cheat
 QED
 
 (* use the reasoning on label sets to get to abstract_jgmt_rel *)
@@ -437,6 +495,26 @@ Proof
    post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st' ==>
     ~bir_state_is_terminated st'` by (METIS_TAC [post_bircont_nL_def,bir_state_is_terminated_def]) >>
   METIS_TAC []
+QED
+
+(* overall symbolic execution to BIR abstract_jgmt_rel *)
+Theorem prop_holds_TO_abstract_jgmt_rel_fmap_thm[local]:
+!p start_albl L envtyl vars bpre fm.
+  (IMAGE (\exit_albl. <|bpc_label := BL_Address exit_albl; bpc_index := 0|>) (FDOM fm)) INTER L = {} ==>
+  (prop_holds (bir_symb_rec_sbir p)
+       <|bpc_label := BL_Address start_albl; bpc_index := 0|>
+       L
+       (P_bircont envtyl bpre)
+       (\st st'. ITFMAP (\exit_albl bpost Qs. Qs \/ Q_bircont <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost st st') fm F)) ==>
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    (IMAGE (\exit_albl. BL_Address exit_albl) (FDOM fm))
+    (pre_bircont_nL envtyl bpre)
+    (\st st'.
+      ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost st st') fm F))
+Proof
+  cheat
 QED
 
 (* overall symbolic execution to BIR abstract_jgmt_rel *)
