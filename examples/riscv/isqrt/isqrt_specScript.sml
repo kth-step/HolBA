@@ -185,6 +185,16 @@ Definition riscv_isqrt_post_3_ret_def:
    pre_x13 < pre_x14)
 End
 
+Definition riscv_isqrt_post_3_def:
+ riscv_isqrt_post_3 (pre_x10:word64) (pre_x13:word64)
+  (pre_x14:word64) (m:riscv_state) : bool =
+  if m.c_PC m.procID = isqrt_end_addr_3_loop then
+    riscv_isqrt_post_3_loop pre_x10 pre_x13 pre_x14 m
+  else if m.c_PC m.procID = isqrt_end_addr_3_ret then
+    riscv_isqrt_post_3_ret pre_x10 pre_x13 pre_x14 m
+  else F
+End
+
 (* --------------- *)
 (* HL BIR contract *)
 (* --------------- *)
@@ -400,19 +410,12 @@ Proof
  cheat
 QED
 
-Theorem isqrt_riscv_post_3_loop_imp_bspec_post_3_loop_thm:
+Theorem isqrt_riscv_post_3_imp_bspec_post_3_thm:
  !ls. bir_post_bir_to_riscv
-   (riscv_isqrt_post_3_loop pre_x10 pre_x13 pre_x14)
-   (\l. bspec_isqrt_post_3_loop pre_x10 pre_x13 pre_x14)
-   ls
-Proof
- cheat
-QED
-
-Theorem isqrt_riscv_post_3_ret_imp_bspec_post_3_ret_thm:
- !ls. bir_post_bir_to_riscv
-   (riscv_isqrt_post_3_ret pre_x10 pre_x13 pre_x14)
-   (\l. bspec_isqrt_post_3_ret pre_x10 pre_x13 pre_x14)
+   (riscv_isqrt_post_3 pre_x10 pre_x13 pre_x14)
+   (\l. if l = BL_Address (Imm64 0x10490w) then bspec_isqrt_post_3_loop pre_x10 pre_x13 pre_x14
+     else if l = BL_Address (Imm64 0x104A0w) then bspec_isqrt_post_3_ret pre_x10 pre_x13 pre_x14
+     else bir_exp_false)
    ls
 Proof
  cheat

@@ -47,8 +47,7 @@ val riscv_pre_2_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_
 val riscv_post_2_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_isqrt_post_2_def;
 
 val riscv_pre_3_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_isqrt_pre_3_def;
-val riscv_post_3_loop_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_isqrt_post_3_loop_def;
-val riscv_post_3_ret_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_isqrt_post_3_ret_def;
+val riscv_post_3_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_isqrt_post_3_def;
 
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
@@ -64,6 +63,15 @@ val riscv_cont_isqrt_1_thm =
   [bspec_isqrt_post_1_def] isqrt_riscv_post_1_imp_bspec_post_1_thm
   bir_isqrt_riscv_lift_THM;
 
+Theorem riscv_cont_isqrt_1:
+ riscv_cont bir_isqrt_progbin isqrt_init_addr_1 {isqrt_end_addr_1}
+  (riscv_isqrt_pre_1 pre_x10)
+  (riscv_isqrt_post_1 pre_x10)
+Proof
+ rw [isqrt_init_addr_1_def,isqrt_end_addr_1_def] >>
+ ACCEPT_TAC riscv_cont_isqrt_1_thm
+QED
+
 val riscv_cont_isqrt_2_thm =
  get_riscv_contract_sing
   bspec_cont_isqrt_2
@@ -73,5 +81,33 @@ val riscv_cont_isqrt_2_thm =
   bspec_isqrt_pre_2_def isqrt_riscv_pre_2_imp_bspec_pre_2_thm
   [bspec_isqrt_post_2_def] isqrt_riscv_post_2_imp_bspec_post_2_thm
   bir_isqrt_riscv_lift_THM;
+
+Theorem riscv_cont_isqrt_2:
+ riscv_cont bir_isqrt_progbin isqrt_init_addr_2 {isqrt_end_addr_2}
+  (riscv_isqrt_pre_2 pre_x13 pre_x15)
+  (riscv_isqrt_post_2 pre_x13 pre_x15)
+Proof
+ rw [isqrt_init_addr_2_def,isqrt_end_addr_2_def] >>
+ ACCEPT_TAC riscv_cont_isqrt_2_thm
+QED
+
+val riscv_cont_isqrt_3_thm =
+ get_riscv_contract_sing
+  bspec_cont_isqrt_3
+  progbin_tm riscv_pre_3_tm riscv_post_3_tm
+  bir_isqrt_prog_def
+  [bspec_isqrt_pre_3_def]
+  bspec_isqrt_pre_3_def isqrt_riscv_pre_3_imp_bspec_pre_3_thm
+  [bspec_isqrt_post_3_loop_def,bspec_isqrt_post_3_ret_def] isqrt_riscv_post_3_imp_bspec_post_3_thm
+  bir_isqrt_riscv_lift_THM;
+
+Theorem riscv_cont_isqrt_3:
+ riscv_cont bir_isqrt_progbin isqrt_init_addr_3 {isqrt_end_addr_3_loop; isqrt_end_addr_3_ret}
+  (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
+  (riscv_isqrt_post_3 pre_x10 pre_x13 pre_x14)
+Proof
+ rw [isqrt_init_addr_3_def,isqrt_end_addr_3_loop_def,isqrt_end_addr_3_ret_def] >>
+ ACCEPT_TAC riscv_cont_isqrt_3_thm
+QED
 
 val _ = export_theory ();
