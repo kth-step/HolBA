@@ -1,5 +1,8 @@
-structure bir_backlifterLib =
+structure bir_backlifterLib :> bir_backlifterLib =
 struct
+
+open Abbrev;
+
 (* For debugging add_reg example:
   val bir_ct = bir_add_reg_ct;
   val prog_bin = ``bir_add_reg_progbin``;
