@@ -87,7 +87,7 @@ Definition bir_mem_concat_def:
   bir_mem_concat vl rty = v2bs (FLAT vl) rty
 End
 
-(* Compute the address modulo the adress space *)
+(* Compute the address modulo the address space *)
 Definition bir_mem_addr_def:
   bir_mem_addr aty a = MOD_2EXP (size_of_bir_immtype aty) a
 End

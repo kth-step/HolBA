@@ -156,7 +156,7 @@ Definition is_label_in_program_def:
   is_label_in_program label (BirCVProgram p) = is_label_in_program_aux label p
 End
 
-(* Retuern the program counter at the start of the block *)
+(* Return the program counter at the start of the block *)
 Definition bir_cv_block_pc_def:
   bir_cv_block_pc label = BCVProgramCounter label 0
 End

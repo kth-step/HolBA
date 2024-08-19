@@ -149,7 +149,7 @@ Definition bir_stmts_of_program_def:
   FLAT (MAP (\bl. bir_stmts_of_block bl) blist)
 End
 
-(* Retuern the program counter at the start of the block *)
+(* Return the program counter at the start of the block *)
 Definition bir_block_pc_def:
   bir_block_pc l = <| bpc_label := l; bpc_index := 0 |>
 End

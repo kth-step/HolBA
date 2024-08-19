@@ -1,5 +1,5 @@
 (* ------------------------------------------------------------------------- *)
-(*  Example whene ther program computes the sum of a list in memory          *)
+(*  Example where the program is a long chain of jumps                       *)
 (* ------------------------------------------------------------------------- *)
 
 

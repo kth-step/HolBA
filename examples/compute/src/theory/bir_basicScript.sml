@@ -37,7 +37,7 @@ Datatype:
 End
 
 
-(* Endian for memomy operations *)
+(* Endian for memory operations *)
 Datatype:
   bir_endian_t =
   | BEnd_BigEndian

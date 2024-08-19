@@ -53,7 +53,7 @@ let
   val _ = (cv_trans_deep_embedding EVAL) deep_constant_def ;
 in deep_constant_def end
 
-(* Translates a raw term (unamed), outputing a theorem tm = from v *)
+(* Translates a raw term (unnamed), outputting a theorem tm = from v *)
 (* Creates name_bir_cv_eq *)
 fun translate_raw_term (bir_conv : conv) (name : string) (tm : term) : thm =
 let
@@ -64,7 +64,7 @@ let
 in from_thm end
 
 
-(* Translates a name term, outputing a theorem tm = from v *)
+(* Translates a name term, outputting a theorem tm = from v *)
 (* Creates name_bir_cv_eq *)
 (* NOTE : The term has to be EVALable *)
 fun translate_named_term (bir_conv : conv) (tm : term) : thm = 
@@ -289,7 +289,7 @@ in cv_program_def end
 
 fun compute_step_cv (program_def : thm) (state_tm : term) : thm =
 let
-  (* Quickly EVAl the state so that the env inside as a correct form *)
+  (* Quickly EVAL the state so that the env inside as a correct form *)
   val eval_state_thm = EVAL state_tm ;
   val eval_state_tm = rhs (concl eval_state_thm) ;
   (* Converts state to cv_state *)
