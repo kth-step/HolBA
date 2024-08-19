@@ -3,9 +3,20 @@ CLINE_OPTIONS = -r
 INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
 					 $(HOLBADIR)/examples/compute/test \
 					 $(HOLBADIR)/examples/compute/examples \
-					 $(HOLBADIR)/examples/compute/src/shared
+					 $(HOLBADIR)/examples/compute/src/shared \
+					 $(HOLBADIR)/examples/compute/examples/increment \
+  				 $(HOLBADIR)/examples/compute/examples/mem_incr \
+					 $(HOLBADIR)/examples/compute/examples/sum_list \
+					 $(HOLBADIR)/examples/compute/examples/jump_chain
 
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-compute.exe
 .PHONY: all
 
+test-compute.exe: test-compute.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-compute.exe
+	./test-compute.exe
+
+EXTRA_CLEANS = test-compute.exe
