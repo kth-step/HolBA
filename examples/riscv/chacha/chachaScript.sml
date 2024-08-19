@@ -8,7 +8,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "chacha";
 
-val _ = lift_da_and_store progname "chacha.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x106bc));
+val _ = lift_da_and_store "chacha" "chacha.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x111C4));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)

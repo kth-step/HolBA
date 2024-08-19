@@ -856,7 +856,3 @@ Disassembly of section .text:
    111b8:	15010113          	addi	sp,sp,336
    111bc:	00008067          	ret
    111c0:	00008067          	ret
-
-00000000000111c4 <main>:
-   111c4:	00000513          	li	a0,0
-   111c8:	00008067          	ret
