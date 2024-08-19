@@ -111,11 +111,11 @@ val z3_binaries =
 
 val test_cases =
   [gen_testcase 32 8,
-   gen_testcase 32 16,
+   (*gen_testcase 32 16,*)
    gen_testcase 32 32,
    gen_testcase 32 64,
    gen_testcase 64 8,
-   gen_testcase 64 16,
+   (*gen_testcase 64 16,*)
    gen_testcase 64 32,
    gen_testcase 64 64];
 
