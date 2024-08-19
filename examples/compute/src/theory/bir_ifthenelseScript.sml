@@ -19,9 +19,9 @@ Inductive bir_eval_ifthenelse:
   bir_eval_ifthenelse birF v1 v2 v2
 End
 
-(* ****************************************** *)
-(* ***************** COMPUTE **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ----------------- COMPUTE ---------------- *)
+(* ------------------------------------------ *)
 
 (* Computes an ifthenelse expression of two values *)
 Definition bir_compute_ifthenelse_def:
@@ -33,9 +33,9 @@ End
 
 
 
-(* ****************************************** *)
-(* **************** THEOREMS **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
 (* Eval and compute are similar *)
 Theorem bir_eval_ifthenelse_eq_compute_ifthenelse:
@@ -45,7 +45,7 @@ Theorem bir_eval_ifthenelse_eq_compute_ifthenelse:
 Proof
   Cases_on `v` >> Cases_on `v1` >> Cases_on `v2` >> Cases_on `v3` >>
   rw [bir_eval_ifthenelse_cases, bir_compute_ifthenelse_def, birT_def, birF_def] >>
-    METIS_TAC []
+    metis_tac []
 QED
 
 (* If the condition is typed, then the expression evaluates *)
@@ -58,7 +58,7 @@ Proof
   Cases_on `v` >| [
     Cases_on `b` >>
     Cases_on `c` >>
-      METIS_TAC [bir_compute_ifthenelse_def, bit1_is_boolean],
+      metis_tac [bir_compute_ifthenelse_def, bit1_is_boolean],
 
     fs [type_of_bir_val_def]
     ]

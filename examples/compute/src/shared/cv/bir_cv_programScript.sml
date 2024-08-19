@@ -387,13 +387,13 @@ Proof
   rw [MEM_MAP] >>
   Induct_on `l` >>
   rw [is_label_in_program_def, is_label_in_program_aux_def] >>
-  EQ_TAC >>
+  eq_tac >>
   rw [] >| [
     qexists `from_cv_block h` >> rw [from_cv_block_def] >>
     qexists `h` >> rw [],
-    METIS_TAC [is_label_in_program_def, from_cv_block_def],
+    metis_tac [is_label_in_program_def, from_cv_block_def],
     rw [is_label_in_program_def, from_cv_block_def],
-    METIS_TAC [is_label_in_program_def, from_cv_block_def]
+    metis_tac [is_label_in_program_def, from_cv_block_def]
   ]
 QED
 
@@ -496,10 +496,10 @@ Proof
     rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def],
 
     rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
-    METIS_TAC [from_cv_env_cv_env_update],
+    metis_tac [from_cv_env_cv_env_update],
 
     rw [bir_cv_state_get_pc_def, bir_cv_state_get_environ_def, bir_cv_state_get_status_def] >>
-    METIS_TAC [from_cv_env_cv_env_update]
+    metis_tac [from_cv_env_cv_env_update]
   ]
 QED
 

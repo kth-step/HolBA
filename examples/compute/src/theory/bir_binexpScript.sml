@@ -45,9 +45,9 @@ End
 
 
 
-(* ****************************************** *)
-(* ***************** COMPUTE **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ----------------- COMPUTE ---------------- *)
+(* ------------------------------------------ *)
 
 (* Computes a binary expression of two immediates *)
 Definition bir_compute_binexp_imm_def:
@@ -76,9 +76,9 @@ End
 
 
 
-(* ****************************************** *)
-(* **************** THEOREMS **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
 (* Eval and compute are similar *)
 Theorem bir_eval_binexp_eq_compute_binexp:
@@ -92,7 +92,7 @@ Proof
     Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
       rw [bir_compute_binexp_imm_def, bir_imm_t_nchotomy, bir_binexp_get_oper_def] >>
       rw [val_from_imm_option_def] >>
-      METIS_TAC []
+      metis_tac []
 QED
 
 

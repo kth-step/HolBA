@@ -20,9 +20,9 @@ End
 
 
 
-(* ****************************************** *)
-(* **************** THEOREMS **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
 (* compute and cv_compute are similar *)
 Theorem bir_cv_compute_binexp_eq_compute_binexp:
@@ -31,15 +31,15 @@ Theorem bir_cv_compute_binexp_eq_compute_binexp:
      (bir_compute_binexp binexp (from_cv_val_option v1) (from_cv_val_option v2))
 Proof
   Cases_on `v1` >> Cases_on `v2` >| [
-    ALL_TAC,
-    ALL_TAC,
+    all_tac,
+    all_tac,
     Cases_on `x`,
     Cases_on `x` >> Cases_on `x'`
   ] >>
     rw [from_cv_val_option_def, from_cv_val_def] >>
     rw [bir_cv_compute_binexp_def, bir_compute_binexp_def] >>
     rw [from_cv_val_option_def, from_cv_val_def] >>
-    METIS_TAC [val_from_cv_val_option_from_imm_option]
+    metis_tac [val_from_cv_val_option_from_imm_option]
 QED
 
 

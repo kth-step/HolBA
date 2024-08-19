@@ -68,7 +68,7 @@ Proof
   Cases_on `bst` >>
     rw [is_stmt_typed_in_env_def] >>
     fs [MEM_MAP] >>
-    METIS_TAC []
+    metis_tac []
 QED
 
 
@@ -78,9 +78,9 @@ Theorem is_prog_typed_get_current_statement:
     (bir_get_current_statement p st.bst_pc = SOME bst) ==>
     (is_stmt_typed_in_env (st.bst_environ) p bst)
 Proof
-  rpt STRIP_TAC >>
+  rpt strip_tac >>
   `MEM bst (bir_stmts_of_program p)` 
-    by METIS_TAC [MEM_bir_get_current_statement_stmts_of_program] >>
+    by metis_tac [MEM_bir_get_current_statement_stmts_of_program] >>
   rw [is_prog_typed_bir_stmts_of_program]
 QED
 

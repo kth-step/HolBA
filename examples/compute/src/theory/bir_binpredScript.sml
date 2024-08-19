@@ -42,9 +42,9 @@ Inductive bir_eval_binpred:
 End
 
 
-(* ****************************************** *)
-(* ***************** COMPUTE **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ----------------- COMPUTE ---------------- *)
+(* ------------------------------------------ *)
 
 (* Computes a binary predicate of two immediates *)
 Definition bir_compute_binpred_imm_def:
@@ -73,9 +73,9 @@ End
 
 
 
-(* ****************************************** *)
-(* **************** THEOREMS **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
 
 
@@ -90,7 +90,7 @@ Proof
     Cases_on `b` >> Cases_on `b'` >>
       rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, bir_imm_t_nchotomy] >>
       fs [bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
-      METIS_TAC []
+      metis_tac []
 QED
 
 
@@ -109,7 +109,7 @@ Proof
     rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, bir_imm_t_nchotomy] >>
     fs [bir_eval_binpred_imm_cases, type_of_bir_val_def, type_of_bir_imm_def,
       bir_binpred_get_oper_def] >>
-    METIS_TAC []
+    metis_tac []
 QED
 
 

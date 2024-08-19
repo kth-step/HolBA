@@ -63,7 +63,7 @@ Proof
       rw [from_cv_val_option_def, from_cv_val_def],
 
       (* BCVExp_Den *)
-      METIS_TAC [env_eq_from_cv_env, env_eq_def],
+      metis_tac [env_eq_from_cv_env, env_eq_def],
 
       (* BCVExp_BinExp *)
       rw [bir_cv_compute_binexp_eq_compute_binexp] >>

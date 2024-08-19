@@ -20,9 +20,9 @@ End
 
 
 
-(* ****************************************** *)
-(* **************** THEOREMS **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
 (* compute and cv_compute are similar *)
 Theorem bir_cv_compute_unaryexp_eq_compute_unaryexp:
@@ -31,13 +31,13 @@ Theorem bir_cv_compute_unaryexp_eq_compute_unaryexp:
     (bir_compute_unaryexp unaryexp (from_cv_val_option v))
 Proof
   Cases_on `v` >| [
-    ALL_TAC,
+    all_tac,
     Cases_on `x`
   ] >>
     rw [from_cv_val_option_def, from_cv_val_def] >>
     rw [bir_cv_compute_unaryexp_def, bir_compute_unaryexp_def] >>
     rw [from_cv_val_option_def, from_cv_val_def] >>
-    METIS_TAC [val_from_cv_val_option_from_imm_option]
+    metis_tac [val_from_cv_val_option_from_imm_option]
 QED
 
 

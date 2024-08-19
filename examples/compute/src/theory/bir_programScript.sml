@@ -357,7 +357,7 @@ Theorem MEM_INDEX_FIND_SOME:
     INDEX_FIND n P l = SOME (i,e) ==>
     MEM e l
 Proof
-  Induct_on `l` >> rw [INDEX_FIND_def] >> METIS_TAC []
+  Induct_on `l` >> rw [INDEX_FIND_def] >> metis_tac []
 QED
 
 Theorem MEM_bir_get_program_block_info_by_label:
@@ -365,7 +365,7 @@ Theorem MEM_bir_get_program_block_info_by_label:
     bir_get_program_block_info_by_label (BirProgram blist) l = SOME (i,b) ==>
     MEM b blist
 Proof
-  METIS_TAC [bir_get_program_block_info_by_label_def, MEM_INDEX_FIND_SOME]
+  metis_tac [bir_get_program_block_info_by_label_def, MEM_INDEX_FIND_SOME]
 QED
 
 Theorem MEM_bir_get_current_statement_stmts_of_program:
@@ -380,10 +380,10 @@ Proof
     rw [bir_stmts_of_program_def] >>
     rw [MEM_FLAT, MEM_MAP] >>
     qexists `bir_stmts_of_block r` >> rw [] >| [
-      qexists `r` >> METIS_TAC [MEM_bir_get_program_block_info_by_label], 
+      qexists `r` >> metis_tac [MEM_bir_get_program_block_info_by_label], 
       Cases_on `pc.bpc_index < LENGTH r.bb_statements` >> 
       fs [bir_stmts_of_block_def] >>
-        METIS_TAC [MEM_MAP, MEM_EL] 
+        metis_tac [MEM_MAP, MEM_EL] 
     ]
 QED
 

@@ -35,9 +35,9 @@ Definition bir_env_update_def:
   bir_env_update ((BEnv env):bir_var_environment_t) (BVar id) v = BEnv ((id =+ SOME v) env)
 End
 
-(* ****************************************** *)
-(* **************** THEOREMS **************** *)
-(* ****************************************** *)
+(* ------------------------------------------ *)
+(* ---------------- THEOREMS ---------------- *)
+(* ------------------------------------------ *)
 
 
 (* Some theorems about bir_env functions *)
@@ -58,7 +58,7 @@ QED
 Theorem bir_env_lookup_update:
   !env var v. bir_env_lookup (bir_env_update env var v) var = SOME v 
 Proof
-  rpt GEN_TAC >>
+  rpt gen_tac >>
   Cases_on `var` >> Cases_on `env` >>
   rw [bir_env_update_def, bir_env_lookup_def]
 QED
@@ -74,14 +74,14 @@ Proof
   simp [bir_env_update_def] >>
   rw [bir_env_lookup_def] >>
   EVAL_TAC >>
-  METIS_TAC []
+  metis_tac []
 QED
 
 (* Lookup and relation are the same *)
 Theorem bir_env_lookup_eq_rel:
   !env var v. bir_env_lookup_rel env var v <=> bir_env_lookup env var = SOME v
 Proof
-  rpt STRIP_TAC >>
+  rpt strip_tac >>
   Cases_on `env` >>
   Cases_on `var` >>
     rw [bir_env_lookup_def, bir_env_lookup_rel_def]

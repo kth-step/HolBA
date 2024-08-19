@@ -36,31 +36,31 @@ Proof
 
     (* BExp_Den *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_env_lookup_rel_inj],
+    metis_tac [bir_env_lookup_rel_inj],
 
     (* BExp_BinExp *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_binexp_def, bir_eval_binexp_keep_type, type_of_bir_val_def],
+    metis_tac [bir_eval_binexp_def, bir_eval_binexp_keep_type, type_of_bir_val_def],
 
     (* BExp_UnaryExp *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_unaryexp_def, bir_eval_unaryexp_keep_type, type_of_bir_val_def],
+    metis_tac [bir_eval_unaryexp_def, bir_eval_unaryexp_keep_type, type_of_bir_val_def],
 
     (* BExp_BinPred *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_binpred_cases, bir_eval_binpred_correct_type, type_of_bir_val_def],
+    metis_tac [bir_eval_binpred_cases, bir_eval_binpred_correct_type, type_of_bir_val_def],
 
     (* BExp_IfThenElse *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_ifthenelse_cases, bir_eval_ifthenelse_keep_type, type_of_bir_val_def],
+    metis_tac [bir_eval_ifthenelse_cases, bir_eval_ifthenelse_keep_type, type_of_bir_val_def],
 
     (* BExp_Load *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_load_def, bir_eval_load_correct_type, type_of_bir_val_def],
+    metis_tac [bir_eval_load_def, bir_eval_load_correct_type, type_of_bir_val_def],
 
     (* BExp_Store *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [bir_eval_store_def, bir_eval_store_correct_type, type_of_bir_val_def]
+    metis_tac [bir_eval_store_def, bir_eval_store_correct_type, type_of_bir_val_def]
   ]
 QED
 
@@ -81,52 +81,52 @@ Proof
 
     (* BExp_Den *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    METIS_TAC [],
+    metis_tac [],
 
     (* BExp_BinExp *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    `?v1. bir_eval_exp env e v1` by METIS_TAC [] >>
-    `?v2. bir_eval_exp env e' v2` by METIS_TAC [] >>
+    `?v1. bir_eval_exp env e v1` by metis_tac [] >>
+    `?v2. bir_eval_exp env e' v2` by metis_tac [] >>
     qrefinel [`_`, `v1`, `v2`] >>
-    METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_binexp],
+    metis_tac [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_binexp],
 
     (* BExp_UnaryExp *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    `?v1. bir_eval_exp env e v1` by METIS_TAC [] >>
+    `?v1. bir_eval_exp env e v1` by metis_tac [] >>
     qrefinel [`_`, `v1`] >>
-    METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_unaryexp],
+    metis_tac [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_unaryexp],
 
     (* BExp_BinPred *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    `?v1. bir_eval_exp env e v1` by METIS_TAC [] >>
-    `?v2. bir_eval_exp env e' v2` by METIS_TAC [] >>
+    `?v1. bir_eval_exp env e v1` by metis_tac [] >>
+    `?v2. bir_eval_exp env e' v2` by metis_tac [] >>
     qrefinel [`_`, `v1`, `v2`] >>
-    METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_binpred],
+    metis_tac [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_binpred],
 
     (* BExp_IfThenElse *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    `?v. bir_eval_exp env e v` by METIS_TAC [] >>
-    `?v1. bir_eval_exp env e' v1` by METIS_TAC [] >>
-    `?v2. bir_eval_exp env e'' v2` by METIS_TAC [] >>
+    `?v. bir_eval_exp env e v` by metis_tac [] >>
+    `?v1. bir_eval_exp env e' v1` by metis_tac [] >>
+    `?v2. bir_eval_exp env e'' v2` by metis_tac [] >>
     qrefinel [`_`, `v`, `v1`, `v2`] >>
-    METIS_TAC [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_ifthenelse],
+    metis_tac [bir_eval_exp_correct_type, type_of_bir_val_imp_bir_eval_ifthenelse],
 
     (* BExp_Load *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    `?v_mem. bir_eval_exp env e v_mem` by METIS_TAC [] >>
-    `?v_addr. bir_eval_exp env e' v_addr` by METIS_TAC [] >>
+    `?v_mem. bir_eval_exp env e v_mem` by metis_tac [] >>
+    `?v_addr. bir_eval_exp env e' v_addr` by metis_tac [] >>
     qrefinel [`_`, `v_mem`, `v_addr`] >>
-    METIS_TAC [bir_eval_exp_correct_type, 
+    metis_tac [bir_eval_exp_correct_type, 
       type_of_bir_val_imp_bir_eval_load_bigendian,
       type_of_bir_val_imp_bir_eval_load_littleendian,
       type_of_bir_val_imp_bir_eval_load_noendian],
 
     (* BExp_Store *)
     rw [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    `?v_mem. bir_eval_exp env e v_mem` by METIS_TAC [] >>
-    `?v_addr. bir_eval_exp env e' v_addr` by METIS_TAC [] >>
+    `?v_mem. bir_eval_exp env e v_mem` by metis_tac [] >>
+    `?v_addr. bir_eval_exp env e' v_addr` by metis_tac [] >>
     qrefinel [`_`, `v_mem`, `v_addr`] >>
-    METIS_TAC [bir_eval_exp_correct_type, 
+    metis_tac [bir_eval_exp_correct_type, 
       type_of_bir_val_imp_bir_eval_store_bigendian,
       type_of_bir_val_imp_bir_eval_store_littleendian,
       type_of_bir_val_imp_bir_eval_store_noendian]
@@ -145,11 +145,11 @@ Proof
 
     (* BExp_Const *)
     rw [Once bir_eval_exp_cases, bir_compute_exp_def] >>
-    METIS_TAC [],
+    metis_tac [],
 
     (* BExp_MemConst *)
     rw [Once bir_eval_exp_cases, bir_compute_exp_def] >>
-    METIS_TAC [],
+    metis_tac [],
 
     (* BExp_Den *)
     rw [Once bir_eval_exp_cases] >>
@@ -166,25 +166,25 @@ Proof
       rw [Once type_of_bir_exp_cases, bir_compute_binexp_def, bir_eval_binexp_eq_compute_binexp],
       rw [Once type_of_bir_exp_cases, bir_eval_binexp_eq_compute_binexp]
     ] >>
-    METIS_TAC [],
+    metis_tac [],
 
     (* BExp_UnaryExp *)
     simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
     Cases_on `bir_compute_exp e (BEnv f)` >>
       rw [Once type_of_bir_exp_cases, bir_compute_unaryexp_def, bir_eval_unaryexp_eq_compute_unaryexp] >>
-      METIS_TAC [],
+      metis_tac [],
 
     (* BExp_BinPred *)
     simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
     Cases_on `bir_compute_exp e (BEnv f)` >>
     Cases_on `bir_compute_exp e' (BEnv f)` >| [
-      ALL_TAC,
-      ALL_TAC,
+      all_tac,
+      all_tac,
       Cases_on `x`,
-      ALL_TAC
+      all_tac
     ] >>
     rw [Once type_of_bir_exp_cases, bir_compute_binpred_def, well_typed_bir_eval_binpred_eq_compute_binpred] >>
-    METIS_TAC [well_typed_bir_eval_binpred_eq_compute_binpred, bir_eval_exp_correct_type],
+    metis_tac [well_typed_bir_eval_binpred_eq_compute_binpred, bir_eval_exp_correct_type],
 
 
 
@@ -194,37 +194,37 @@ Proof
     Cases_on `bir_compute_exp e' (BEnv f)` >>
     Cases_on `bir_compute_exp e'' (BEnv f)` >>
       rw [Once type_of_bir_exp_cases, bir_compute_ifthenelse_def] >>
-      METIS_TAC [well_typed_bir_eval_exp_value, bir_eval_ifthenelse_eq_compute_ifthenelse,
+      metis_tac [well_typed_bir_eval_exp_value, bir_eval_ifthenelse_eq_compute_ifthenelse,
         bir_eval_exp_correct_type, bir_eval_ifthenelse_cases],
 
     (* BExp_Load *)
     simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
     Cases_on `bir_compute_exp e (BEnv f)` >>
     Cases_on `bir_compute_exp e' (BEnv f)` >| [
-      ALL_TAC,
-      ALL_TAC,
+      all_tac,
+      all_tac,
       Cases_on `x`,
-      ALL_TAC
+      all_tac
     ] >>
     rw [Once type_of_bir_exp_cases, bir_compute_load_def, bir_eval_load_eq_compute_load] >>
-    METIS_TAC [bir_eval_load_eq_compute_load, bir_eval_exp_correct_type],
+    metis_tac [bir_eval_load_eq_compute_load, bir_eval_exp_correct_type],
 
     (* BExp_Store *)
     simp [Once bir_eval_exp_cases, bir_compute_exp_def] >>
     Cases_on `bir_compute_exp e (BEnv f)` >>
     Cases_on `bir_compute_exp e' (BEnv f)` >>
     Cases_on `bir_compute_exp e'' (BEnv f)` >| [
-      ALL_TAC,
-      ALL_TAC,
-      ALL_TAC,
-      ALL_TAC,
+      all_tac,
+      all_tac,
+      all_tac,
+      all_tac,
       Cases_on `x`,
       Cases_on `x`,
       Cases_on `x` >> Cases_on `x'`,
-      ALL_TAC
+      all_tac
     ] >>
     rw [Once type_of_bir_exp_cases, bir_compute_store_def, bir_eval_store_eq_compute_store] >>
-    METIS_TAC [bir_eval_store_eq_compute_store, bir_eval_exp_correct_type]
+    metis_tac [bir_eval_store_eq_compute_store, bir_eval_exp_correct_type]
   ]
 QED
 
@@ -242,9 +242,9 @@ Proof
   rw [bir_eval_label_exp_def, bir_compute_label_exp_def] >| [
     Cases_on `bir_compute_exp b env` >> TRY (Cases_on `x`) >> rw [],
 
-    `?ity. type_of_bir_exp env b (BType_Imm ity)` by METIS_TAC [is_label_exp_typed_in_env_def] >>
+    `?ity. type_of_bir_exp env b (BType_Imm ity)` by metis_tac [is_label_exp_typed_in_env_def] >>
     `bir_eval_exp env b (BVal_Imm b') = (bir_compute_exp b env = SOME (BVal_Imm b'))`
-      by METIS_TAC [bir_eval_exp_eq_compute_exp] >>
+      by metis_tac [bir_eval_exp_eq_compute_exp] >>
     Cases_on `bir_compute_exp b env` >> 
       TRY (Cases_on `x`) >>
       rw []
@@ -258,20 +258,20 @@ Theorem well_typed_bir_eval_label_exp_value:
 Proof
   `!f. (?l. f l) <=> ((?l. f (BL_Label l)) \/ (?a. f (BL_Address a)))` by
     (rw [] >>
-    EQ_TAC >| [
-      rw [] >> Cases_on `l` >> METIS_TAC [],
-      rw [] >> METIS_TAC []
+    eq_tac >| [
+      rw [] >> Cases_on `l` >> metis_tac [],
+      rw [] >> metis_tac []
     ])>>
   Cases_on `le` >> 
   rw [bir_eval_label_exp_def] >| [
     Cases_on `b` >> rw [],
 
     fs [is_label_exp_typed_in_env_def, is_exp_well_typed_def] >>
-    `?v. bir_eval_exp env b v` by METIS_TAC [well_typed_bir_eval_exp_value] >>
+    `?v. bir_eval_exp env b v` by metis_tac [well_typed_bir_eval_exp_value] >>
     Cases_on `v` >| [
-      METIS_TAC [],
+      metis_tac [],
       `type_of_bir_val (BVal_Mem b' b0 f) = BType_Imm ity` by 
-        METIS_TAC [bir_eval_exp_correct_type] >>
+        metis_tac [bir_eval_exp_correct_type] >>
       fs [type_of_bir_val_def]
     ]
   ]
@@ -284,9 +284,9 @@ Theorem bir_eval_stmt_jmp_eq_compute_stmt_jmp:
 Proof
   rw [bir_eval_stmt_jmp_def, bir_compute_stmt_jmp_def] >>
   `!l. bir_eval_label_exp le st.bst_environ l = (bir_compute_label_exp le st.bst_environ = SOME l)`
-    by METIS_TAC [bir_eval_label_exp_eq_compute_label_exp] >>
+    by metis_tac [bir_eval_label_exp_eq_compute_label_exp] >>
   `?l. bir_eval_label_exp le (st.bst_environ) l` 
-    by METIS_TAC [well_typed_bir_eval_label_exp_value] >>
+    by metis_tac [well_typed_bir_eval_label_exp_value] >>
   CASE_TAC >>
   fs []
 QED
@@ -303,13 +303,13 @@ Proof
 
     rw [bir_eval_stmt_cjmp_def, bir_compute_stmt_cjmp_def] >>
     rw [bir_eval_stmt_jmp_eq_compute_stmt_jmp] >| [
-      `bir_compute_exp b st.bst_environ = SOME birT` by METIS_TAC [bir_eval_exp_eq_compute_exp] >>
+      `bir_compute_exp b st.bst_environ = SOME birT` by metis_tac [bir_eval_exp_eq_compute_exp] >>
       rw [bir_dest_bool_val_def, birT_def],
     
-      `?v. bir_eval_exp st.bst_environ b v` by METIS_TAC [well_typed_bir_eval_exp_value] >>
-      `type_of_bir_val v = BType_Imm Bit1` by METIS_TAC [bir_eval_exp_correct_type] >>
-      `v = birF` by METIS_TAC [bit1_is_boolean] >>
-      `bir_compute_exp b st.bst_environ = SOME birF` by METIS_TAC [bir_eval_exp_eq_compute_exp] >>
+      `?v. bir_eval_exp st.bst_environ b v` by metis_tac [well_typed_bir_eval_exp_value] >>
+      `type_of_bir_val v = BType_Imm Bit1` by metis_tac [bir_eval_exp_correct_type] >>
+      `v = birF` by metis_tac [bit1_is_boolean] >>
+      `bir_compute_exp b st.bst_environ = SOME birF` by metis_tac [bir_eval_exp_eq_compute_exp] >>
       rw [bir_dest_bool_val_def, birF_def]
     ]
   ]
@@ -324,10 +324,10 @@ Proof
   rw [bir_eval_stmtB_def, bir_compute_stmtB_def, bir_compute_stmt_assign_def] >>
   fs [is_stmt_basic_typed_in_env_def, is_exp_well_typed_def] >>
   `!va. bir_eval_exp st.bst_environ b0 va = (bir_compute_exp b0 st.bst_environ = SOME va)`
-    by METIS_TAC [bir_eval_exp_eq_compute_exp] >>
-  EQ_TAC >| [
+    by metis_tac [bir_eval_exp_eq_compute_exp] >>
+  eq_tac >| [
     CASE_TAC >> rw [],
-    `?va. bir_eval_exp st.bst_environ b0 va` by METIS_TAC [well_typed_bir_eval_exp_value] >>
+    `?va. bir_eval_exp st.bst_environ b0 va` by metis_tac [well_typed_bir_eval_exp_value] >>
     CASE_TAC >> fs []
   ]
 QED
@@ -342,14 +342,14 @@ Proof
   rw [bir_eval_step_cases, bir_compute_step_def] >>
   Cases_on `bir_get_current_statement p st.bst_pc` >| [
     simp [] >>
-    METIS_TAC [],
+    metis_tac [],
 
     `is_stmt_typed_in_env st.bst_environ p x`
-      by METIS_TAC [is_prog_typed_get_current_statement] >>
+      by metis_tac [is_prog_typed_get_current_statement] >>
     Cases_on `x` >>
     rw [bir_compute_stmt_def] >>
     fs [is_stmt_typed_in_env_def] >>
-    METIS_TAC [bir_eval_stmtB_eq_compute_stmtB, bir_eval_stmtE_eq_compute_stmtE] 
+    metis_tac [bir_eval_stmtB_eq_compute_stmtB, bir_eval_stmtE_eq_compute_stmtE] 
   ]
 QED
 

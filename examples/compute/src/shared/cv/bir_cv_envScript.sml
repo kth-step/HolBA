@@ -56,7 +56,7 @@ Proof
       simp [from_cv_val_def, from_cv_val_option_def],
 
       rw [bir_env_lookup_update_neq] >>
-      METIS_TAC [env_eq_def, bir_cv_env_lookup_def]
+      metis_tac [env_eq_def, bir_cv_env_lookup_def]
     ]
   ]
 QED

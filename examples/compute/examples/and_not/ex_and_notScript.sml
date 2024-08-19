@@ -49,7 +49,7 @@ Theorem lookup_start_env_var_ret:
   !b1 b2 w. bir_env_lookup (start_env b1 b2 w) var_ret = SOME (BVal_Imm (Imm64 w))
 Proof
   EVAL_TAC >>
-  METIS_TAC []
+  metis_tac []
 QED
 
 
@@ -57,14 +57,14 @@ Theorem lookup_start_env_var_cond1:
   !b1 b2 w. bir_env_lookup (start_env b1 b2 w) var_cond1 = SOME (BVal_Imm (bool2b b1))
 Proof
   EVAL_TAC >>
-  METIS_TAC []
+  metis_tac []
 QED
 
 Theorem lookup_start_env_var_cond2:
   !b1 b2 w. bir_env_lookup (start_env b1 b2 w) var_cond2 = SOME (BVal_Imm (bool2b b2))
 Proof
   EVAL_TAC >>
-  METIS_TAC []
+  metis_tac []
 QED
 
 
@@ -74,7 +74,7 @@ Theorem and_not_exp_correct:
 Proof
   Cases_on `b1` >> Cases_on `b2` >>
       EVAL_TAC >>
-      METIS_TAC []
+      metis_tac []
 QED
 
 
