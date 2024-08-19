@@ -19,7 +19,7 @@ Public domain.
 #define CHACHA_BLOCKLEN		64
 
 /* use memcpy() to copy blocks of memory (typically faster) */
-#define USE_MEMCPY          1
+#define USE_MEMCPY          0
 /* use unaligned little-endian load/store (can be faster) */
 #define USE_UNALIGNED       0
 

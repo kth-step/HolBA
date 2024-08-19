@@ -225,3 +225,7 @@ chacha_encrypt_bytes(struct chacha_ctx *x,const unsigned char *m,unsigned char *
     m += 64;
   }
 }
+
+int main(void) {
+  return 0;
+}
