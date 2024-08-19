@@ -58,3 +58,18 @@ Here are some various remarks about the project :
     - You either keep the project structure the same and add support for unimplemented operations in the `bir_cv` representation.
     The representation of HolBA and the `compute` one here are really similar (to a few differences like enforcing typing in environment manipulation).
     - The other way would be to change the BIR representation in HolBA and use the `bir_cv` representation instead. This would remove translation cost but a lot more rewriting would be necessary.
+
+
+## Future Work
+
+### General
+- Tidy files
+    - [ ] Name variables (like in case split)
+    - [ ] Use `CASE_TAC` more instead of `Cases_of`
+
+### Future
+- Try lifting
+    - Check `examples/riscv/isqrt` for reference cf `bir_isqrt_prog_def`
+    - Benchmark evaluation on those bigger programs
+- Check Quotation library and apply it to smol-bir
+    - Check `src/shared/bir_quotationLib.sml` and comments in it
