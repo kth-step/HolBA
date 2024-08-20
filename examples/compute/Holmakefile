@@ -1,7 +1,6 @@
 CLINE_OPTIONS = -r
 
 INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
-					 $(HOLBADIR)/examples/compute/test \
 					 $(HOLBADIR)/examples/compute/examples \
 					 $(HOLBADIR)/examples/compute/src/shared \
 					 $(HOLBADIR)/examples/compute/examples/increment \
