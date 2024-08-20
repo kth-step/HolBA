@@ -2,14 +2,14 @@
 (*  Definition of memory expression evaluation and theorems associated       *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse boolLib bossLib ;
-open bir_basicTheory ;
-open bir_typingTheory ;
-open bitstringTheory numeral_bitTheory ;
+open HolKernel Parse boolLib bossLib;
+open bir_basicTheory;
+open bir_typingTheory;
+open bitstringTheory numeral_bitTheory;
 
 
 
-val _ = new_theory "bir_mem" ;
+val _ = new_theory "bir_mem";
 
 
 (* ------------------------------------------ *)
@@ -481,4 +481,4 @@ Proof
   metis_tac [type_of_bir_val_def, type_of_bir_imm_def]
 QED
 
-val _ = export_theory () ;
+val _ = export_theory ();

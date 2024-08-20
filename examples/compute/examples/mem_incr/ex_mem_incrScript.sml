@@ -3,14 +3,14 @@
 (* ------------------------------------------------------------------------- *)
 
 
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory ;
-open bir_envTheory ;
-open finite_mapTheory ;
-open bir_computeTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory;
+open bir_envTheory;
+open finite_mapTheory;
+open bir_computeTheory;
 
 
-val _ = new_theory "ex_mem_incr" ;
+val _ = new_theory "ex_mem_incr";
 
 Definition mem_var_def:
   mem_var = BVar "MEM8"
@@ -36,4 +36,4 @@ Definition mem_incr_exp_def:
 End
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

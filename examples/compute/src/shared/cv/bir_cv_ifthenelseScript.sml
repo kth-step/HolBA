@@ -2,12 +2,12 @@
 (*  Definition of ifthenelse expression evaluation and theorems associated   *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory bir_cv_basicTheory ;
-open bir_ifthenelseTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory bir_cv_basicTheory;
+open bir_ifthenelseTheory;
 
 
-val _ = new_theory "bir_cv_ifthenelse" ;
+val _ = new_theory "bir_cv_ifthenelse";
 
 
 (* Computes an ifthenelse expression of two values *)
@@ -40,4 +40,4 @@ Proof
 QED
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

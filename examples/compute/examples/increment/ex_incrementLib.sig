@@ -1,9 +1,9 @@
 signature ex_incrementLib =
 sig
 
-  include Abbrev ;
+  include Abbrev;
 
-  val generate_bigger_inc : term -> int -> term ;
-  val benchmark : unit -> unit ;
+  val generate_bigger_inc : term -> int -> term;
+  val benchmark : unit -> unit;
 
 end

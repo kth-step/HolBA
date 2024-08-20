@@ -2,15 +2,15 @@
 (*  Basic type definition of BIR expressions                                 *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open wordsTheory ;
-open finite_mapTheory ;
+open HolKernel Parse bossLib boolLib;
+open wordsTheory;
+open finite_mapTheory;
 
-val _ = new_theory "bir_basic" ;
+val _ = new_theory "bir_basic";
 
 
 (* Identifier for variable name *)
-Type ident = ``:string`` ;
+Type ident = ``:string``;
 
 
 (* Immediates *)
@@ -155,4 +155,4 @@ Definition val_from_imm_option_def:
 End
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

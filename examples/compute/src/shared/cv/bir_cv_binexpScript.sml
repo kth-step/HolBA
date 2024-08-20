@@ -2,13 +2,13 @@
 (*  Definition of binary expression evaluation and theorems associated       *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory bir_cv_basicTheory ;
-open bir_binexpTheory ;
-open wordsTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory bir_cv_basicTheory;
+open bir_binexpTheory;
+open wordsTheory;
 
 
-val _ = new_theory "bir_cv_binexp" ;
+val _ = new_theory "bir_cv_binexp";
 
 
 (* Computes a general binary expression with values as parameters *)
@@ -43,4 +43,4 @@ Proof
 QED
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

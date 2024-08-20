@@ -1,3 +1,3 @@
-open ex_incrementLib ;
+open ex_incrementLib;
 
-val _ = benchmark () ;
+val _ = benchmark ();

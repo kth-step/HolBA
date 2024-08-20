@@ -2,12 +2,12 @@
 (*  Alternate env representation for cv computation                          *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory bir_cv_basicTheory ;
-open bir_envTheory ;
-open alistTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory bir_cv_basicTheory;
+open bir_envTheory;
+open alistTheory;
 
-val _ = new_theory "bir_cv_env" ;
+val _ = new_theory "bir_cv_env";
 
 
 Datatype:
@@ -87,6 +87,6 @@ Proof
 QED
 
 
-val _ = export_theory () ;
+val _ = export_theory ();
 
 

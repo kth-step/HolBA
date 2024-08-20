@@ -1,3 +1,3 @@
-open ex_sum_listLib ;
+open ex_sum_listLib;
 
-val _ = benchmark_one_step () ;
+val _ = benchmark_one_step ();

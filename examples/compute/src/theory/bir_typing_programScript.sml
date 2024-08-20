@@ -3,13 +3,13 @@
 (* ------------------------------------------------------------------------- *)
 
 
-open HolKernel Parse bossLib boolLib ;
-open bir_programTheory ;
-open bir_envTheory ;
-open bir_typingTheory ;
-open listTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_programTheory;
+open bir_envTheory;
+open bir_typingTheory;
+open listTheory;
 
-val _ = new_theory "bir_typing_program" ;
+val _ = new_theory "bir_typing_program";
 
 (* We say that a basic statement is typed when its operands are typed *)
 Definition is_stmt_basic_typed_in_env_def:
@@ -84,5 +84,5 @@ Proof
   rw [is_prog_typed_bir_stmts_of_program]
 QED
 
-val _ = export_theory () ;
+val _ = export_theory ();
 

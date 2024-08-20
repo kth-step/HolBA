@@ -3,13 +3,13 @@
 (* ------------------------------------------------------------------------- *)
 
 
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory bir_envTheory ;
-open bir_computeTheory bir_evalTheory ;
-open listTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory bir_envTheory;
+open bir_computeTheory bir_evalTheory;
+open listTheory;
 
 
-val _ = new_theory "bir_program" ;
+val _ = new_theory "bir_program";
 
 
 (* Label values for jumps *)
@@ -53,7 +53,7 @@ End
 (* Block type : a label, basic statements and an end statement *)
 Datatype:
   bir_block_t = <|
-  bb_label          : bir_label_t ;
+  bb_label          : bir_label_t;
   bb_statements     : bir_stmt_basic_t list;
   bb_last_statement : bir_stmt_end_t |>
 End
@@ -387,4 +387,4 @@ Proof
     ]
 QED
 
-val _ = export_theory () ;
+val _ = export_theory ();

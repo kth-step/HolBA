@@ -2,14 +2,14 @@
 (*  Definition of BIR programs and statements                                *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open bir_cv_basicTheory bir_cv_envTheory ;
-open bir_programTheory ;
-open bir_cv_computeTheory ;
-open listTheory ;
-open optionTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_cv_basicTheory bir_cv_envTheory;
+open bir_programTheory;
+open bir_cv_computeTheory;
+open listTheory;
+open optionTheory;
 
-val _ = new_theory "bir_cv_program" ;
+val _ = new_theory "bir_cv_program";
 
 
 (* Label expressions that may be computed *)
@@ -296,8 +296,8 @@ End
 
 Definition from_cv_block_def:
   from_cv_block cv_block = <|
-    bb_label          := bir_cv_block_get_label cv_block ;
-    bb_statements     := MAP from_cv_stmt_basic (bir_cv_block_get_stmts cv_block) ;
+    bb_label          := bir_cv_block_get_label cv_block;
+    bb_statements     := MAP from_cv_stmt_basic (bir_cv_block_get_stmts cv_block);
     bb_last_statement := (from_cv_stmt_end (bir_cv_block_get_end cv_block)) |>
 End
 
@@ -307,13 +307,13 @@ End
 
 Definition from_cv_programcounter_def:
   from_cv_programcounter (BCVProgramCounter label index) = 
-    <| bpc_label := label ; bpc_index := index |>
+    <| bpc_label := label; bpc_index := index |>
 End
 
 Definition from_cv_state_def:
   from_cv_state cv_st = <|
-  bst_pc       := from_cv_programcounter (bir_cv_state_get_pc cv_st) ;
-  bst_environ  := (from_cv_env (bir_cv_state_get_environ cv_st)) ;
+  bst_pc       := from_cv_programcounter (bir_cv_state_get_pc cv_st);
+  bst_environ  := (from_cv_env (bir_cv_state_get_environ cv_st));
   bst_status   := bir_cv_state_get_status cv_st |>
 End
 

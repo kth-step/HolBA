@@ -2,13 +2,13 @@
 (*  Definition of the type system and the typing relation                    *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse boolLib bossLib ;
-open bir_basicTheory ;
-open bir_envTheory ;
-open wordsTheory ;
+open HolKernel Parse boolLib bossLib;
+open bir_basicTheory;
+open bir_envTheory;
+open wordsTheory;
 
 
-val _ = new_theory "bir_typing" ;
+val _ = new_theory "bir_typing";
 
 (* Gives the size of an immediate as a number *)
 Definition size_of_bir_immtype_def:
@@ -174,4 +174,4 @@ Proof
         fs [dimword_1]
 QED
 
-val _ = export_theory () ;
+val _ = export_theory ();

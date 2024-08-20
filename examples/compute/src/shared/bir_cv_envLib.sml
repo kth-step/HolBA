@@ -6,12 +6,12 @@
 structure bir_cv_envLib :> bir_cv_envLib =
 struct
 
-open HolKernel Parse boolLib bossLib ;
-open bir_cv_basicTheory ;
-open bir_cv_basicLib ;
-open bir_cv_envTheory bir_envTheory ;
-open combinSyntax ;
-open optionSyntax ;
+open HolKernel Parse boolLib bossLib;
+open bir_cv_basicTheory;
+open bir_cv_basicLib;
+open bir_cv_envTheory bir_envTheory;
+open combinSyntax;
+open optionSyntax;
 
 
 (* Converts a chain of update calls to cv_env *)
@@ -24,44 +24,26 @@ fun update_conv (env_comb : term) : thm =
   else 
     let 
       (* Destroy the update call *)
-      val ((id, val_opt), aux_env_comb) = dest_update_comb env_comb ;
+      val ((id, val_opt), aux_env_comb) = dest_update_comb env_comb;
       (* Converts val_opt to cv_val_opt *)
-      val from_val_opt_thm = bir_val_option_conv val_opt ;
-      val cv_val_opt = rand (rhs (concl from_val_opt_thm)) ;
+      val from_val_opt_thm = bir_val_option_conv val_opt;
+      val cv_val_opt = rand (rhs (concl from_val_opt_thm));
       (* Recursively conv *)
-      val aux_thm = update_conv aux_env_comb ;
+      val aux_thm = update_conv aux_env_comb;
       (* SPEC the cons theorem *)
-      val spec_cons_thm = SPECL [id, (dest_some cv_val_opt)] from_cv_env_cons ;
+      val spec_cons_thm = SPECL [id, (dest_some cv_val_opt)] from_cv_env_cons;
       (* Apply cons theorem *)
-      val from_cv_env_thm = MATCH_MP spec_cons_thm aux_thm ;
+      val from_cv_env_thm = MATCH_MP spec_cons_thm aux_thm;
       (* EVAL the from_cv_val from cons theorem *)
-      val evaled_from_cv_val_thm = EVAL (lhs (concl from_cv_env_thm)) ;
+      val evaled_from_cv_val_thm = EVAL (lhs (concl from_cv_env_thm));
     in 
       REWRITE_RULE [evaled_from_cv_val_thm] from_cv_env_thm
-    end
-
-
+    end;
 
 
 
 fun env_to_cv_env_conv (env : term) : thm =
-  update_conv (rand env)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  update_conv (rand env);
 
 
 end

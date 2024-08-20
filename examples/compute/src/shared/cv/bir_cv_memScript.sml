@@ -2,15 +2,15 @@
 (*  Definition of memory expression evaluation and theorems associated       *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse boolLib bossLib ;
-open bir_basicTheory bir_cv_basicTheory ;
-open bir_memTheory ;
-open bir_typingTheory ;
-open bitstringTheory numeral_bitTheory numposrepTheory ;
+open HolKernel Parse boolLib bossLib;
+open bir_basicTheory bir_cv_basicTheory;
+open bir_memTheory;
+open bir_typingTheory;
+open bitstringTheory numeral_bitTheory numposrepTheory;
 
 
 
-val _ = new_theory "bir_cv_mem" ;
+val _ = new_theory "bir_cv_mem";
 
 
 (* ------------------------------------------ *)
@@ -206,4 +206,4 @@ Proof
 QED
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

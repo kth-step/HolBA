@@ -2,12 +2,12 @@
 (*  Definition of binary predicate evaluation and theorems associated        *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse boolLib bossLib ;
-open bir_cv_basicTheory ;
-open bir_binpredTheory ;
+open HolKernel Parse boolLib bossLib;
+open bir_cv_basicTheory;
+open bir_binpredTheory;
 
 
-val _ = new_theory "bir_cv_binpred" ;
+val _ = new_theory "bir_cv_binpred";
 
 
 (* Computes a general binary predicate with values as parameters *)
@@ -43,4 +43,4 @@ QED
 
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

@@ -2,13 +2,13 @@
 (*  Definition of the general evaluation relation                            *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory ;
-open bir_binpredTheory bir_ifthenelseTheory ;
-open bir_memTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory;
+open bir_binpredTheory bir_ifthenelseTheory;
+open bir_memTheory;
 
 
-val _ = new_theory "bir_eval" ;
+val _ = new_theory "bir_eval";
 
 
 (* General evaluation relation of bir expressions *)
@@ -72,4 +72,4 @@ End
 
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

@@ -1,3 +1,3 @@
-open ex_mem_incrLib ;
+open ex_mem_incrLib;
 
-val _ = benchmark () ;
+val _ = benchmark ();

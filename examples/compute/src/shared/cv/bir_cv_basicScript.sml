@@ -2,12 +2,12 @@
 (*  Basic type definition of BIR expressions                                 *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open wordsTheory ;
-open bir_basicTheory ;
-open alistTheory ;
+open HolKernel Parse bossLib boolLib;
+open wordsTheory;
+open bir_basicTheory;
+open alistTheory;
 
-val _ = new_theory "bir_cv_basic" ;
+val _ = new_theory "bir_cv_basic";
 
 
 (* Values for evaluation relation *)
@@ -187,4 +187,4 @@ Proof
 QED
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

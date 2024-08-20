@@ -2,13 +2,13 @@
 (*  Definition of unary expression evaluation and theorems associated        *)
 (* ------------------------------------------------------------------------- *)
 
-open HolKernel Parse bossLib boolLib ;
-open bir_cv_basicTheory ;
-open bir_unaryexpTheory ;
-open wordsTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_cv_basicTheory;
+open bir_unaryexpTheory;
+open wordsTheory;
 
 
-val _ = new_theory "bir_cv_unaryexp" ;
+val _ = new_theory "bir_cv_unaryexp";
 
 
 (* Computes Unary expression *)
@@ -41,4 +41,4 @@ Proof
 QED
 
 
-val _ = export_theory () ;
+val _ = export_theory ();

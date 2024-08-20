@@ -1,13 +1,13 @@
 (* ------------------------------------------------------------------------- *)
 (*  Example where the program computes the sum of a list in memory           *)
 (* ------------------------------------------------------------------------- *)
-open HolKernel Parse bossLib boolLib ;
-open bir_basicTheory bir_envTheory ;
-open bir_programTheory ;
-open finite_mapTheory ;
+open HolKernel Parse bossLib boolLib;
+open bir_basicTheory bir_envTheory;
+open bir_programTheory;
+open finite_mapTheory;
 
 
-val _ = new_theory "ex_sum_list"
+val _ = new_theory "ex_sum_list";
 
 
 (* The program is something like this :
@@ -52,13 +52,13 @@ End
 
 (* Block for the condition *)
 Definition block_cond_def:
-  block_cond = <| bb_label := BL_Label "cond" ; bb_statements := [] ;
+  block_cond = <| bb_label := BL_Label "cond"; bb_statements := [];
     bb_last_statement := BStmt_CJmp condition (BLE_Label (BL_Label "loop")) (BLE_Label (BL_Label "out")) |>
 End
 
 (* Block for the inside of the loop *)
 Definition block_loop_def:
-  block_loop = <| bb_label := BL_Label "loop" ; bb_statements := [stmt_sum_one ; stmt_incr_r1] ;
+  block_loop = <| bb_label := BL_Label "loop"; bb_statements := [stmt_sum_one; stmt_incr_r1];
     bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "cond")) |>
 End
 
@@ -86,7 +86,7 @@ End
 
 (* Start program counter *)
 Definition start_pc_def:
-  start_pc = <| bpc_label := BL_Label "cond" ; bpc_index := 0 |>
+  start_pc = <| bpc_label := BL_Label "cond"; bpc_index := 0 |>
 End
 
 (* Start variable environment *)
@@ -103,11 +103,11 @@ End
 
 (* Start program state *)
 Definition start_state_def:
-  start_state n = <| bst_pc := start_pc ; bst_environ := (start_env n) ;
+  start_state n = <| bst_pc := start_pc; bst_environ := (start_env n);
     bst_status := BST_Running |>
 End
 
 
 
 
-val _ = export_theory ()
+val _ = export_theory ();
