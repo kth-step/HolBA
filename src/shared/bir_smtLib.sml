@@ -502,40 +502,41 @@ fun gen_smt_store_v2 valm valad valv (szadi, szci, szi) =
 val gen_smt_load = gen_smt_load_v1;
 val gen_smt_store = gen_smt_store_v1;
 
-val varcounter = ref 0;
-fun get_varid () =
-  let
-    val v = !varcounter;
-    val _ = varcounter := v + 1;
-  in
-    v
-  end;
-
 (* TODO: rewrite conjunction and negated disjunction from top level to keep query as readable/debuggable as possible *)
 (* TODO: build a simplification dictionary so that do not introduce the same thing twice, practically: abbreviation simplification *)
-(* TODO: prevent to add the same conjunct in conds twice *)
-(* TODO: add the counter for the abbreviation variables into the export state exst of the expression exporting function *)
 	  
 val exst_empty =
  ([]: (string * bir_smt_type) list,
-  (Redblackset.empty smtlib_vars_compare) : (string * bir_smt_type) Redblackset.set);
+  (Redblackset.empty smtlib_vars_compare) : (string * bir_smt_type) Redblackset.set,
+  0:int);
 
-fun exst_add_var (conds, vars) v =
-  (conds, Redblackset.add(vars, v));
+fun exst_add_var (conds, vars, abbr_idx) v =
+  (conds, Redblackset.add(vars, v), abbr_idx);
 
-fun exst_add_cond (conds, vars) cond =
-  (cond::conds, vars);
-
-fun exst_to_querysmt (conds, vars) = (vars, conds)
-
-fun abbreviate_exp exst v_varname v_val =
+fun exst_add_cond (conds, vars, abbr_idx) cond =
   let
-	  val v_var = (v_varname, snd v_val);
-	  val v_var_cond = gen_smtlib_expr "=" [v_val, v_var] SMTTY_Bool;
-
-	  val exst' = exst_add_cond (exst_add_var exst v_var) v_var_cond;
+    (* TODO: probably better implement this with redblackset *)
+    val alreadyin = List.exists (fn x => x = cond) conds;
+    val conds' = if alreadyin then conds else (cond::conds);
   in
-    (exst', v_var)
+    (conds', vars, abbr_idx)
+  end;
+
+fun exst_get_abbr_idx (conds, vars, abbr_idx) =
+  ((conds, vars, abbr_idx + 1), abbr_idx);
+
+fun exst_to_querysmt (conds, vars, abbr_idx) = (vars, conds)
+
+fun abbreviate_exp exst v_varprefix v_val =
+  let
+    val (exst1, abbr_idx) = exst_get_abbr_idx exst;
+    val v_varname = v_varprefix ^ "_" ^ (Int.toString abbr_idx);
+    val v_var = (v_varname, snd v_val);
+    val v_var_cond = gen_smtlib_expr "=" [v_val, v_var] SMTTY_Bool;
+
+    val exst2 = exst_add_cond (exst_add_var exst1 v_var) v_var_cond;
+  in
+    (exst2, v_var)
   end;
 
   fun bexp_to_smtlib exst exp =
@@ -728,8 +729,7 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 	  val loadval = gen_smt_load valm valad (szadi, szci, szi)
                         handle _ => problem exp "could not generate smt load expression";
 
-	  val v_varname = "vv_" ^ (Int.toString (get_varid ()));
-	  val (exst3, v_var) = abbreviate_exp exst2 v_varname loadval;
+	  val (exst3, v_var) = abbreviate_exp exst2 "vv_" loadval;
         in
 	  (exst3, v_var)
         end
@@ -769,8 +769,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val storeval = gen_smt_store valm valad valv (szadi, szci, szi)
                          handle _ => problem exp "could not generate smt store expression";
 
-	  val m_varname = "memv_" ^ (Int.toString (get_varid ()));
-	  val (exst4, m_var) = abbreviate_exp exst3 m_varname storeval;
+	  val (exst4, m_var) = abbreviate_exp exst3 "mv_" storeval;
         in
           (exst4, m_var)
         end
