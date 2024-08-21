@@ -26,7 +26,7 @@ val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) optio
 val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
 val bir_smtLib_z3_prelude_n = bir_smtLib_z3_prelude ^ "\n";
 val use_stack = true;
-val debug_print = false;
+val debug_print = true;
 fun get_z3proc z3bin =
   let
    val z3proc_ = !z3proc_o;
@@ -792,11 +792,77 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
         end
     end;
 
-  fun export_bexp e exst =
+  (* preprocess into CNF, into list of conjuncted clauses *)
+ local
+   fun is_bir_binop is_bop_fun e =
+     if not (is_BExp_BinExp e) then false else
+     let
+       val (bop,_,_) = dest_BExp_BinExp e;
+     in
+       is_bop_fun bop
+     end;
+   fun is_bir_unop is_uop_fun e =
+     if not (is_BExp_UnaryExp e) then false else
+     let
+       val (uop,_) = dest_BExp_UnaryExp e;
+     in
+       is_uop_fun uop
+     end;
+
+   val is_bir_and = is_bir_binop is_BIExp_And;
+   val is_bir_or = is_bir_binop is_BIExp_Or;
+   val is_bir_neg = is_bir_unop is_BIExp_Not;
+   fun mk_bir_neg e = mk_BExp_UnaryExp (BIExp_Not_tm, e);
+
+   (* these three are only correct if the is_... functions have been applied before *)
+   val dest_bir_or = (fn (_,e1,e2) => (e1,e2)) o dest_BExp_BinExp;
+   val dest_bir_and = dest_bir_or;
+   val dest_bir_neg = snd o dest_BExp_UnaryExp;
+
+   fun is_bir_neg_or e = (is_bir_neg e) andalso ((is_bir_or o dest_bir_neg) e);
+   val dest_bir_neg_or = dest_bir_or o dest_bir_neg;
+   fun is_bir_neg_neg e = (is_bir_neg e) andalso ((is_bir_neg o dest_bir_neg) e);
+   val dest_bir_neg_neg = dest_bir_neg o dest_bir_neg;
+ in
+  fun preprocess_bexp acc [] = acc
+    | preprocess_bexp acc (e::l) =
+    if is_bir_and e then
+      let
+        val (e1, e2) = dest_bir_and e;
+      in
+        preprocess_bexp acc (e1::e2::l)
+      end
+    else if is_bir_neg_or e then
+      let
+        val (e1, e2) = dest_bir_neg_or e;
+	val e1' = mk_bir_neg e1;
+	val e2' = mk_bir_neg e2;
+      in
+        preprocess_bexp acc (e1'::e2'::l)
+      end
+    else if is_bir_neg_neg e then
+      let
+        val e1 = dest_bir_neg_neg e;
+      in
+        preprocess_bexp acc (e1::l)
+      end
+    else
+      preprocess_bexp (e::acc) l;
+ end;
+
+  fun append_bexp e exst =
     let
       val (exst', e_smtlib) = bexp_to_smtlib exst e;
     in
       exst_add_cond exst' e_smtlib
+    end;
+
+  fun export_bexp e exst =
+    let
+      val es = preprocess_bexp [] [e];
+      (*val es = [e]*)
+    in
+      foldl (fn (e,exst) => append_bexp e exst) exst es
     end;
 
 (* TODO: add a model importer *)
