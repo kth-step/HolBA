@@ -839,4 +839,41 @@ Proof
   METIS_TAC [post_bircont_nL_vars_EQ_postcond_IMP_two_albl_2_thm, GSYM bir_state_EQ_FOR_VARS_SYM_thm]
 QED
 
+Theorem abstract_jgmt_rel_bir_exec_to_two_labels_fmap_thm[local]:
+!p start_albl L envtyl vars bpre fm.
+
+  (vars = bir_vars_of_program p) ==>
+  (bir_vars_of_exp bpre SUBSET vars) ==>
+
+  ITFMAP (\end_albl bpost vs. vs UNION bir_vars_of_exp bpost) fm {} SUBSET vars ==>
+
+  ITFMAP (\end_albl bpost Bs. Bs /\ bir_is_bool_exp bpost) fm T ==>
+
+  (ALL_DISTINCT (MAP FST envtyl)) ==>
+  (set (MAP PairToBVar envtyl) = vars) ==>
+
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    (IMAGE (\exit_albl. BL_Address exit_albl) (FDOM fm))
+    (pre_bircont_nL envtyl bpre)
+    (\st st'. ITFMAP (\exit_albl bpost pLs. pLs \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost st st') fm F)) ==>
+
+  (abstract_jgmt_rel
+    (bir_ts p)
+    (BL_Address start_albl)
+    (IMAGE (\exit_albl. BL_Address exit_albl) (FDOM fm))
+    (\st. bir_exec_to_labels_triple_precond st bpre p)
+    (\st st'. bir_exec_to_labels_triple_postcond st'
+      (\l. case l of
+           | BL_Label s => bir_exp_false
+           | BL_Address addr =>
+             (case FLOOKUP fm addr of
+              | SOME bpost => bpost
+              | NONE => bir_exp_false)) p))
+Proof
+ cheat
+QED
+
 val _ = export_theory ();
