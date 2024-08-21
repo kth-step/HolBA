@@ -1,5 +1,8 @@
+CLINE_OPTIONS = -r
+
 INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
-					 $(HOLBADIR)/examples/compute/src/shared
+					 $(HOLBADIR)/examples/compute/src/shared \
+					 $(HOLBADIR)/examples/compute/examples/sum_list/cv
 
 all: $(DEFAULT_TARGETS) test-sum-list.exe
 .PHONY: all
