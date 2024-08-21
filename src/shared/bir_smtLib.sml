@@ -26,7 +26,7 @@ val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) optio
 val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
 val bir_smtLib_z3_prelude_n = bir_smtLib_z3_prelude ^ "\n";
 val use_stack = true;
-val debug_print = true;
+val debug_print = false;
 fun get_z3proc z3bin =
   let
    val z3proc_ = !z3proc_o;
@@ -518,9 +518,11 @@ fun exst_add_cond (conds, vars, abbr_idx, abbr_dict, abbr_skip) cond =
 fun exst_get_abbr_idx (conds, vars, abbr_idx, abbr_dict, abbr_skip) =
   ((conds, vars, abbr_idx + 1, abbr_dict, abbr_skip), abbr_idx);
 
-(* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: handle case that abbreviation is mapped twice, have to add an equality assertion? *)
 fun exst_add_abbr (conds, vars, abbr_idx, abbr_dict, abbr_skip) t t_var =
-  (conds, vars, abbr_idx, Redblackmap.insert (abbr_dict, t, t_var), abbr_skip);
+  if not (isSome (Redblackmap.peek (abbr_dict, t))) then
+    (conds, vars, abbr_idx, Redblackmap.insert (abbr_dict, t, t_var), abbr_skip)
+  else
+    raise ERR "exst_add_abbr" "this should not happen, something is wrong, should not need to map the same term to two different abbreviations";
 
 fun exst_get_abbr (conds, vars, abbr_idx, abbr_dict, abbr_skip) t =
   Redblackmap.peek (abbr_dict, t);
@@ -618,9 +620,10 @@ fun is_bir_eq_abbrevd e =
       if isSome abbr_o then (exst, valOf abbr_o)
       else if is_tl andalso is_bir_eq_abbrevd exp then
         let
-	  val _ = print_term exp;
 	  val (expval, expvar) = dest_bir_eq exp;
           val (exst1, v_var) = bexp_to_smtlib false exst expvar;
+	  
+	  val has_abbr = isSome (exst_get_abbr exst1 expval);
 	  val exst2 = exst_set_abbr_skip exst1 true;
           val (exst3, v_val) = bexp_to_smtlib false exst2 expval;
 
@@ -629,7 +632,9 @@ fun is_bir_eq_abbrevd e =
           val _ = get_smtlib_type_args probfun args;
           val v_var_cond = gen_smtlib_expr "=" args SMTTY_Bool;
 
-          val exst4 = exst_add_abbr exst3 expval v_var;
+          (* this must be done with care, can only be at toplevel and the resulting assertion have to be added to the conds in the exporter state *)
+	  (* maybe should just add it to the state, as it is a set it will not be added twice anyways? *)
+          val exst4 = if has_abbr then exst3 else exst_add_abbr exst3 expval v_var;
 	in
 	  (exst4, v_var_cond)
 	end
@@ -928,8 +933,14 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
     let
       val es = preprocess_bexp [] [e];
       (*val es = [e]*)
+      val (exst, _) = foldl
+        (fn (e,(exst,acc)) =>
+          if Redblackset.member(acc,e) then (exst,acc) else
+	  (append_bexp e exst, Redblackset.add(acc,e)))
+	(exst, Redblackset.empty Term.compare)
+	es;
     in
-      foldl (fn (e,exst) => append_bexp e exst) exst es
+      exst
     end;
 
 (* TODO: add a model importer *)
