@@ -55,8 +55,6 @@ fun birsmt_check_unsat bexp =
     result = BirSmtUnsat
   end;
 
-val vars_empty = Redblackset.empty smtlib_vars_compare;
-
 (* ======================================= *)
 
 fun bir_check_unsat use_holsmt =
