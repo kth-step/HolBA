@@ -506,32 +506,40 @@ val exst_empty =
  ((Redblackset.empty smtlib_exp_compare) : (string * bir_smt_type) Redblackset.set,
   (Redblackset.empty smtlib_exp_compare) : (string * bir_smt_type) Redblackset.set,
   0:int,
-  (Redblackmap.mkDict Term.compare) : (term, string * bir_smt_type) Redblackmap.dict);
+  (Redblackmap.mkDict Term.compare) : (term, string * bir_smt_type) Redblackmap.dict,
+  false);
 
-fun exst_add_var (conds, vars, abbr_idx, abbr_dict) v =
-  (conds, Redblackset.add(vars, v), abbr_idx, abbr_dict);
+fun exst_add_var (conds, vars, abbr_idx, abbr_dict, abbr_skip) v =
+  (conds, Redblackset.add(vars, v), abbr_idx, abbr_dict, abbr_skip);
 
-fun exst_add_cond (conds, vars, abbr_idx, abbr_dict) cond =
-  (Redblackset.add(conds, cond), vars, abbr_idx, abbr_dict);
+fun exst_add_cond (conds, vars, abbr_idx, abbr_dict, abbr_skip) cond =
+  (Redblackset.add(conds, cond), vars, abbr_idx, abbr_dict, abbr_skip);
 
-fun exst_get_abbr_idx (conds, vars, abbr_idx, abbr_dict) =
-  ((conds, vars, abbr_idx + 1, abbr_dict), abbr_idx);
+fun exst_get_abbr_idx (conds, vars, abbr_idx, abbr_dict, abbr_skip) =
+  ((conds, vars, abbr_idx + 1, abbr_dict, abbr_skip), abbr_idx);
 
-(* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: handle case that abbreviation is mapped twice *)
-fun exst_add_abbr (conds, vars, abbr_idx, abbr_dict) t t_var =
-  (conds, vars, abbr_idx, Redblackmap.insert (abbr_dict, t, t_var));
+(* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: handle case that abbreviation is mapped twice, have to add an equality assertion? *)
+fun exst_add_abbr (conds, vars, abbr_idx, abbr_dict, abbr_skip) t t_var =
+  (conds, vars, abbr_idx, Redblackmap.insert (abbr_dict, t, t_var), abbr_skip);
 
-fun exst_get_abbr (conds, vars, abbr_idx, abbr_dict) t =
+fun exst_get_abbr (conds, vars, abbr_idx, abbr_dict, abbr_skip) t =
   Redblackmap.peek (abbr_dict, t);
 
-fun exst_to_querysmt (conds, vars, abbr_idx, abbr_dict) =
+fun exst_get_abbr_skip (conds, vars, abbr_idx, abbr_dict, abbr_skip) =
+  ((conds, vars, abbr_idx, abbr_dict, false), abbr_skip);
+
+fun exst_set_abbr_skip (conds, vars, abbr_idx, abbr_dict, abbr_skip) v =
+  (conds, vars, abbr_idx, abbr_dict, v);
+
+fun exst_to_querysmt (conds, vars, abbr_idx, abbr_dict, abbr_skip) =
   let
     val condsl = Redblackset.listItems conds;
   in
     (vars, condsl)
   end
 
-fun abbreviate_exp exst v_varprefix (t, v_val) =
+fun abbreviate_exp exst abbr_skip v_varprefix (t, v_val) =
+  if abbr_skip then (exst, v_val) else
   let
     val (exst1, abbr_idx) = exst_get_abbr_idx exst;
     val v_varname = v_varprefix ^ "_" ^ (Int.toString abbr_idx);
@@ -544,7 +552,61 @@ fun abbreviate_exp exst v_varprefix (t, v_val) =
     (exst3, v_var)
   end;
 
-  fun bexp_to_smtlib exst exp =
+ local
+   fun is_bir_binop is_bop_fun e =
+     if not (is_BExp_BinExp e) then false else
+     let
+       val (bop,_,_) = dest_BExp_BinExp e;
+     in
+       is_bop_fun bop
+     end;
+   fun is_bir_unop is_uop_fun e =
+     if not (is_BExp_UnaryExp e) then false else
+     let
+       val (uop,_) = dest_BExp_UnaryExp e;
+     in
+       is_uop_fun uop
+     end;
+   fun is_bir_bpop is_bpop_fun e =
+     if not (is_BExp_BinPred e) then false else
+     let
+       val (bpop,_,_) = dest_BExp_BinPred e;
+     in
+       is_bpop_fun bpop
+     end;
+ in
+   val is_bir_den = is_BExp_Den;
+   fun is_bir_constfv e =
+     (is_BExp_Const e) andalso
+     ((is_var o snd o gen_dest_Imm o dest_BExp_Const) e);
+   val is_bir_and = is_bir_binop is_BIExp_And;
+   val is_bir_or = is_bir_binop is_BIExp_Or;
+   val is_bir_neg = is_bir_unop is_BIExp_Not;
+   val is_bir_eq = is_bir_bpop is_BIExp_Equal;
+   fun mk_bir_neg e = mk_BExp_UnaryExp (BIExp_Not_tm, e);
+   fun mk_bir_eq (e1,e2) = mk_BExp_BinPred (BIExp_Equal_tm, e1, e2);
+
+   (* the following group of functions are only correct if the corresponding is_... functions have been applied before and return true *)
+   val dest_bir_or = (fn (_,e1,e2) => (e1,e2)) o dest_BExp_BinExp;
+   val dest_bir_and = dest_bir_or;
+   val dest_bir_neg = snd o dest_BExp_UnaryExp;
+   val dest_bir_eq = (fn (_,e1,e2) => (e1,e2)) o dest_BExp_BinPred;
+   val get_bir_eq_den_left =
+     fst o dest_bir_eq;
+
+   fun is_bir_neg_or e = (is_bir_neg e) andalso ((is_bir_or o dest_bir_neg) e);
+   val dest_bir_neg_or = dest_bir_or o dest_bir_neg;
+   fun is_bir_neg_neg e = (is_bir_neg e) andalso ((is_bir_neg o dest_bir_neg) e);
+   val dest_bir_neg_neg = dest_bir_neg o dest_bir_neg;
+   fun is_bir_eq_denfv e = (is_bir_eq e) andalso (((fn t => (is_bir_den t) orelse (is_bir_constfv t)) o snd o dest_bir_eq) e);
+ end;
+
+(* this has to match exactly the condition under which abbreviations are applied in bexp_to_smtlib *)
+fun is_bir_eq_abbrevd e =
+  ((is_bir_eq_denfv) e) andalso
+  (((fn t => is_BExp_Load t orelse is_BExp_Store t) o get_bir_eq_den_left) e);
+
+  fun bexp_to_smtlib is_tl exst exp =
     let
       fun problem exp msg = problem_gen "bexp_to_smtlib" exp msg;
 
@@ -553,8 +615,25 @@ fun abbreviate_exp exst v_varprefix (t, v_val) =
 
       val abbr_o = exst_get_abbr exst exp;
     in
-      if isSome abbr_o then (exst, valOf abbr_o) else
-      if is_BExp_Const exp then
+      if isSome abbr_o then (exst, valOf abbr_o)
+      else if is_tl andalso is_bir_eq_abbrevd exp then
+        let
+	  val _ = print_term exp;
+	  val (expval, expvar) = dest_bir_eq exp;
+          val (exst1, v_var) = bexp_to_smtlib false exst expvar;
+	  val exst2 = exst_set_abbr_skip exst1 true;
+          val (exst3, v_val) = bexp_to_smtlib false exst2 expval;
+
+          val args = [v_val, v_var];
+          fun probfun () = problem exp "equality needs same type for both sides: ";
+          val _ = get_smtlib_type_args probfun args;
+          val v_var_cond = gen_smtlib_expr "=" args SMTTY_Bool;
+
+          val exst4 = exst_add_abbr exst3 expval v_var;
+	in
+	  (exst4, v_var_cond)
+	end
+      else if is_BExp_Const exp then
         if (is_var o snd o gen_dest_Imm o dest_BExp_Const) exp then
           let
             val hv    = (snd o gen_dest_Imm o dest_BExp_Const) exp;
@@ -580,8 +659,7 @@ fun abbreviate_exp exst v_varprefix (t, v_val) =
               (exst, ("false", SMTTY_Bool))
           else
             (exst, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
-               SMTTY_BV sz
-               handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "..."))
+               SMTTY_BV sz))
         end
 
 (*
@@ -620,7 +698,7 @@ BExp_Cast BIExp_LowCast
       else if is_BExp_Cast exp then
         let
           val (castt, exp, sz) = (dest_BExp_Cast) exp;
-          val (exst1, (stre, stye)) = bexp_to_smtlib exst exp;
+          val (exst1, (stre, stye)) = bexp_to_smtlib false exst exp;
 
           val szi = size_of_bir_immtype_t sz;
           val sty = SMTTY_BV szi;
@@ -639,7 +717,7 @@ BExp_Cast BIExp_LowCast
         let
           val (uop, exp_) = (dest_BExp_UnaryExp) exp;
 
-          val (exst1, (str, sty)) = bexp_to_smtlib exst exp_;
+          val (exst1, (str, sty)) = bexp_to_smtlib false exst exp_;
           val (str, sty) = if not (is_BIExp_Not uop) then (str, sty) else
                          case sty of
                            SMTTY_BV 1 => ("(= " ^ str ^ " (_ bv1 1))", SMTTY_Bool)
@@ -654,8 +732,8 @@ BExp_Cast BIExp_LowCast
       else if is_BExp_BinExp exp then
         let
           val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
-          val (exst1, val1) = bexp_to_smtlib exst  exp1;
-          val (exst2, val2) = bexp_to_smtlib exst1 exp2;
+          val (exst1, val1) = bexp_to_smtlib false exst  exp1;
+          val (exst2, val2) = bexp_to_smtlib false exst1 exp2;
           val args = [val1, val2];
 
           val sty =
@@ -672,8 +750,8 @@ BExp_Cast BIExp_LowCast
       else if is_BExp_BinPred exp then
         let
           val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
-          val (exst1, val1) = bexp_to_smtlib exst  exp1;
-          val (exst2, val2) = bexp_to_smtlib exst1 exp2;
+          val (exst1, val1) = bexp_to_smtlib false exst  exp1;
+          val (exst2, val2) = bexp_to_smtlib false exst1 exp2;
           val args = [val1, val2];
 
           fun probfun () = problem exp "binary predicate operator needs same type for both sides: ";
@@ -695,9 +773,9 @@ BExp_Cast BIExp_LowCast
       else if is_BExp_IfThenElse exp then
         let
           val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
-          val (exst1, (strc, styc)) = bexp_to_smtlib exst  expc;
-          val (exst2, (strt, styt)) = bexp_to_smtlib exst1 expt;
-          val (exst3, (strf, styf)) = bexp_to_smtlib exst2 expf;
+          val (exst1, (strc, styc)) = bexp_to_smtlib false exst  expc;
+          val (exst2, (strt, styt)) = bexp_to_smtlib false exst1 expt;
+          val (exst3, (strf, styf)) = bexp_to_smtlib false exst2 expf;
           val _ = if smt_type_is_bool styc then () else
                   problem exp "if-then-else needs bool in condition: ";
           val _ = if styt = styf then () else
@@ -716,9 +794,10 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 *)
       else if is_BExp_Load exp then
         let
+	  val (exst, abbr_skip) = exst_get_abbr_skip exst;
           val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
-          val (exst1, valm)  = bexp_to_smtlib exst  expm;
-          val (exst2, valad) = bexp_to_smtlib exst1 expad;
+          val (exst1, valm)  = bexp_to_smtlib false exst  expm;
+          val (exst2, valad) = bexp_to_smtlib false exst1 expad;
 
           val (_,stym) = valm;
           val (_,styad) = valad;
@@ -737,7 +816,7 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 	  val loadval = gen_smt_load valm valad (szadi, szci, szi)
                         handle _ => problem exp "could not generate smt load expression";
 
-	  val (exst3, v_var) = abbreviate_exp exst2 "vv" (exp, loadval);
+	  val (exst3, v_var) = abbreviate_exp exst2 abbr_skip "vv" (exp, loadval);
         in
 	  (exst3, v_var)
         end
@@ -751,10 +830,11 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 *)
       else if is_BExp_Store exp then
         let
+	  val (exst, abbr_skip) = exst_get_abbr_skip exst;
           val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
-          val (exst1, valm)  = bexp_to_smtlib exst  expm;
-          val (exst2, valad) = bexp_to_smtlib exst1 expad;
-          val (exst3, valv)  = bexp_to_smtlib exst2 expv;
+          val (exst1, valm)  = bexp_to_smtlib false exst  expm;
+          val (exst2, valad) = bexp_to_smtlib false exst1 expad;
+          val (exst3, valv)  = bexp_to_smtlib false exst2 expv;
 
           val (_,stym) = valm;
           val (_,styad) = valad;
@@ -777,7 +857,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val storeval = gen_smt_store valm valad valv (szadi, szci, szi)
                          handle _ => problem exp "could not generate smt store expression";
 
-	  val (exst4, m_var) = abbreviate_exp exst3 "mv" (exp, storeval);
+	  val (exst4, m_var) = abbreviate_exp exst3 abbr_skip "mv" (exp, storeval);
         in
           (exst4, m_var)
         end
@@ -794,55 +874,13 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val eqexp = (snd o dest_eq o concl o EVAL) exp;
         in
           if not (identical exp eqexp) then
-            bexp_to_smtlib exst eqexp
+            bexp_to_smtlib is_tl exst eqexp
           else
             problem exp "don't know BIR expression: "
         end
     end;
 
   (* preprocess into CNF, into list of conjuncted clauses *)
- local
-   fun is_bir_binop is_bop_fun e =
-     if not (is_BExp_BinExp e) then false else
-     let
-       val (bop,_,_) = dest_BExp_BinExp e;
-     in
-       is_bop_fun bop
-     end;
-   fun is_bir_unop is_uop_fun e =
-     if not (is_BExp_UnaryExp e) then false else
-     let
-       val (uop,_) = dest_BExp_UnaryExp e;
-     in
-       is_uop_fun uop
-     end;
-   fun is_bir_bpop is_bpop_fun e =
-     if not (is_BExp_BinPred e) then false else
-     let
-       val (bpop,_,_) = dest_BExp_BinPred e;
-     in
-       is_bpop_fun bpop
-     end;
-   val is_bir_den = is_BExp_Den;
-
-   val is_bir_and = is_bir_binop is_BIExp_And;
-   val is_bir_or = is_bir_binop is_BIExp_Or;
-   val is_bir_neg = is_bir_unop is_BIExp_Not;
-   val is_bir_eq = is_bir_bpop is_BIExp_Equal;
-   fun mk_bir_neg e = mk_BExp_UnaryExp (BIExp_Not_tm, e);
-   fun mk_bir_eq (e1,e2) = mk_BExp_BinPred (BIExp_Equal_tm, e1, e2);
-
-   (* these three are only correct if the is_... functions have been applied before *)
-   val dest_bir_or = (fn (_,e1,e2) => (e1,e2)) o dest_BExp_BinExp;
-   val dest_bir_and = dest_bir_or;
-   val dest_bir_neg = snd o dest_BExp_UnaryExp;
-   val dest_bir_eq = (fn (_,e1,e2) => (e1,e2)) o dest_BExp_BinPred;
-
-   fun is_bir_neg_or e = (is_bir_neg e) andalso ((is_bir_or o dest_bir_neg) e);
-   val dest_bir_neg_or = dest_bir_or o dest_bir_neg;
-   fun is_bir_neg_neg e = (is_bir_neg e) andalso ((is_bir_neg o dest_bir_neg) e);
-   val dest_bir_neg_neg = dest_bir_neg o dest_bir_neg;
- in
   fun preprocess_bexp acc [] = acc
     | preprocess_bexp acc (e::l) =
     if is_bir_and e then
@@ -878,11 +916,10 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
       end
     else
       preprocess_bexp (e::acc) l;
- end;
 
   fun append_bexp e exst =
     let
-      val (exst', e_smtlib) = bexp_to_smtlib exst e;
+      val (exst', e_smtlib) = bexp_to_smtlib true exst e;
     in
       exst_add_cond exst' e_smtlib
     end;
