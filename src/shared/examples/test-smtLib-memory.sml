@@ -8,6 +8,7 @@ open bir_smtLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_types := true;
+val _ = PolyML.print_depth 1000;
 val _ = PolyML.print_depth 1;
 
 (* TODO: then try what happens when the export works differently: prelude/direct-concat-extract/extract-multiple-asserts-abbreviations *)
@@ -16,7 +17,7 @@ val _ = PolyML.print_depth 1;
 val ad_sz = 64;
 val val_sz = 32;
 *)
-fun gen_testcase ad_sz val_sz =
+fun gen_testcase is_sat ad_sz val_sz =
  let
   val align_val = (val_sz div 8) - 1;
   val align_val_tm = wordsSyntax.mk_wordii (align_val, ad_sz);
@@ -48,23 +49,18 @@ fun gen_testcase ad_sz val_sz =
                                       (^MEM_e_tm)
                                       (^ad0_tm)
                                       ^end_tm ^val_sz_bit_tm)
-                                   (^ad0_deref_tm)``,
-             ``BExp_BinPred BIExp_Equal
+                                   (^ad0_deref_tm)``];
+  val conds_tms = conds_tms@(if is_sat then [] else
+             [``BExp_BinPred BIExp_Equal
                                       (BExp_Load
                                          (^MEM_e_tm)
                                          (^ad1_tm)
                                          ^end_tm ^val_sz_bit_tm)
-                                      (^ad1_deref_tm)``];
+                                      (^ad1_deref_tm)``]);
 
-  val conds = [];
-  val vars = Redblackset.empty smtlib_vars_compare;
+  val exst = exst_empty;
 
-  val (conds,vars) = foldr (fn (cond_tm,(conds,vars)) =>
-    let
-      val (conds, vars, str) = bexp_to_smtlib conds vars cond_tm;
-    in
-      (str::conds, vars)
-    end) (conds,vars) conds_tms;
+  val exst = foldr (fn (cond_tm,exst) => export_bexp cond_tm exst) exst conds_tms;
 
   (*
   (assert (= (bvand ad0 (_ bv1 64)) (_ bv0 64)))
@@ -86,45 +82,54 @@ fun gen_testcase ad_sz val_sz =
   val query_tm = bnot (band (beq (bload M_tm ad0_tm end_tm val_sz_bit_tm, ad1_deref_tm),
                              beq (bload M_tm ad1_tm end_tm val_sz_bit_tm, ad0_deref_tm)));
 
-  val (conds, vars, str) = bexp_to_smtlib conds vars query_tm;
+  val exst = export_bexp query_tm exst;
 
   (*
   (assert (not (and 
     (= (loadfun_64_8_16 (storefun_64_8_16 (storefun_64_8_16 M ad0 ad1_deref) ad1 ad0_deref) ad0) ad1_deref)
     (= (loadfun_64_8_16 (storefun_64_8_16 (storefun_64_8_16 M ad0 ad1_deref) ad1 ad0_deref) ad1) ad0_deref))))
   *)
-
-  val query_conds = [str]@conds;
  in
-  ("swap case ad=" ^ (Int.toString ad_sz) ^ " val=" ^ (Int.toString val_sz), vars, query_conds, BirSmtUnsat)
+  ("swap case " ^ (if is_sat then "sat" else "unsat") ^ " ad=" ^ (Int.toString ad_sz) ^ " val=" ^ (Int.toString val_sz),
+   exst, if is_sat then BirSmtSat else BirSmtUnsat)
  end;
 
 val z3_binaries = [NONE];
 
-(*
 val z3_binaries =
  [SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3",
-  SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.17/bin/z3",
-  SOME "/home/andreas/data/hol/HolBA_opt/z3-4.12.2/bin/z3",
+  (*SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.17/bin/z3",
+  SOME "/home/andreas/data/hol/HolBA_opt/z3-4.12.2/bin/z3",*)
   SOME "/home/andreas/data/hol/HolBA_opt/z3-4.13.0/bin/z3"];
-*)
 
 val test_cases =
-  [gen_testcase 32 8,
-   (*gen_testcase 32 16,*)
-   gen_testcase 32 32,
-   gen_testcase 32 64,
-   gen_testcase 64 8,
-   (*gen_testcase 64 16,*)
-   gen_testcase 64 32,
-   gen_testcase 64 64];
+  [gen_testcase false 32 8,
+   gen_testcase false 32 16,
+   gen_testcase false 32 32,
+   gen_testcase false 32 64,
+   gen_testcase true  32 8,
+   gen_testcase true  32 16,
+   gen_testcase true  32 32,
+   gen_testcase true  32 64,
+   gen_testcase false 64 8,
+   gen_testcase false 64 16,
+   gen_testcase false 64 32,
+   gen_testcase false 64 64,
+   gen_testcase true  64 8,
+   gen_testcase true  64 16,
+   gen_testcase true  64 32,
+   gen_testcase true  64 64];
+(*
+val test_cases =
+  [gen_testcase false 64 32];
+  *)
 
 fun z3bin_to_id NONE = "default"
   | z3bin_to_id (SOME x) = ((fn l => List.nth (l, 2)) o rev o String.tokens (fn x => x = #"/")) x;
 
 fun combine_test_cases test_cases z3bin_o =
-  List.map (fn (name, vars, query_conds, expected) =>
-     ((z3bin_to_id z3bin_o) ^ ": " ^ name, z3bin_o, vars, query_conds, expected)) test_cases;
+  List.map (fn (name, exst, expected) =>
+     ((z3bin_to_id z3bin_o) ^ ": " ^ name, z3bin_o, exst, expected)) test_cases;
 val test_cases = List.concat (List.map (combine_test_cases test_cases) z3_binaries);
 
 val _ = print "Testing with z3\n";
@@ -133,20 +138,23 @@ val timeout_o = SOME 4000;
 
 (*
 val z3bin_o = NONE : string option;
-val (name, vars, query_conds, expected) = gen_testcase 64 64;
+val (name, exst, expected) = gen_testcase 64 64;
 
-val (name, z3bin_o, vars, query_conds, expected) = hd test_cases;
+val (name, z3bin_o, exst, expected) = hd test_cases;
 val test_cases = tl test_cases;
 *)
 
-val results = List.map (fn (name, z3bin_o, vars, query_conds, expected) =>
+val results = List.map (fn (name, z3bin_o, exst, expected) =>
     let
       val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");
 
       (* check with timeout, because these test cases might cause excessive runtime or non-termination *)
-      val result = querysmt_gen timeout_o z3bin_o vars query_conds;
-      val res = result = expected;
+      val timer = holba_miscLib.timer_start 0;
+      val result = querysmt_gen z3bin_o timeout_o (exst_to_querysmt exst);
+      val _ = holba_miscLib.timer_stop
+        (fn delta_s => print ("  took " ^ delta_s ^ "\n")) timer;
 
+      val res = result = expected;
       val _ = if res then print ("=============== >>> SUCCESS\n") else (
             print ("=============== >>> TEST CASE FAILED: '" ^ name ^ "'\n");
             print ("have: \n");

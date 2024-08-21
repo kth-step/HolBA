@@ -46,14 +46,8 @@ open bir_smtLib;
 
 fun birsmt_check_unsat bexp =
   let
-    val vars_empty = Redblackset.empty smtlib_vars_compare;
-    val (_, vars, query) = bexp_to_smtlib [] vars_empty bexp;
-
-    (* little amounts of output *)
-(*
-    val _ = (print o fst) query;
-*)
-    val result = querysmt vars [query];
+    val exst = export_bexp bexp exst_empty;
+    val result = querysmt NONE (exst_to_querysmt exst);
 
     val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
             raise ERR "bir_smt_check_unsat" "smt solver couldn't determine satisfiability"
