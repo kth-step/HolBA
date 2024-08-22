@@ -36,6 +36,30 @@ POLY_DIR_SRC=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}_src
 
 ##################################################################
 
+if [[ "${POLY_VERSION}" == "PREPACKAGED" ]]; then
+  # check if poly is available
+  POLY_CMD=$(which poly || echo "")
+  if [[ -z "${POLY_CMD}" ]]; then
+    echo "could not find poly, installing polyml now"
+    sudo apt install polyml libpolyml-dev
+    # check again after installing
+    POLY_CMD=$(which poly || echo "")
+    if [[ -z "${POLY_CMD}" ]]; then
+      echo "couldn't install poly"
+      exit 1
+    fi
+  fi
+  echo ${POLY_CMD}
+  # try to run poly
+  POLY_VERSION_STR=$(poly -v)
+  echo "polyml is installed, version: ${POLY_VERSION_STR}"
+  # check if the version output is as expected
+  if [[ ! "${POLY_VERSION_STR}" =~ ^"Poly/ML " ]]; then
+    echo "something is wrong with the version string"
+    exit 2
+  fi
+  exit 0
+fi
 
 # if the output directory exists, we already have a polyml in the cache
 if [[ -d "${POLY_DIR}" ]]; then
