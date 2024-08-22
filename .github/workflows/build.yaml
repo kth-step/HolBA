@@ -41,7 +41,7 @@ jobs:
         with:
           path: |
             ${{ env.HOLBA_OPT_DIR }}
-          key: os-${{ matrix.os }}_polyml-${{ matrix.polyml }}_z3-${{ matrix.z3 }}_hol4-${{ matrix.hol4 }}
+          key: os-${{ matrix.os }}_polyml-${{ matrix.polyml.version }}_z3-${{ matrix.z3 }}_hol4-${{ matrix.hol4 }}
 
       - name: Static analysis
         timeout-minutes: 5
