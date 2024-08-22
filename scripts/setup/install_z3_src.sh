@@ -16,7 +16,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 ##################################################################
 
 # use a default z3 version if it is not specified in the environment
-Z3_VERSION="4.12.2"
+Z3_VERSION="4.13.0"
 if [[ ! -z "${HOLBA_Z3_VERSION}" ]]; then
   Z3_VERSION=${HOLBA_Z3_VERSION}
 fi
