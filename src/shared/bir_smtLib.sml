@@ -67,8 +67,12 @@ fun sendreceive_query z3bin q =
    val _ = if not use_stack then
             TextIO.output (s_out, bir_smtLib_z3_prelude_n)
            else ();
+   val timer = holba_miscLib.timer_start 0;
    val () = TextIO.output (s_out, q);
    val out  = TextIO.input s_in;
+   val _ = if debug_print then holba_miscLib.timer_stop
+     (fn delta_s => print ("  query took " ^ delta_s ^ "\n")) timer else ();
+
    val _ = if not debug_print then () else
            (print out; print "\n\n");
    (* https://microsoft.github.io/z3guide/docs/logic/basiccommands/ *)
@@ -608,12 +612,20 @@ fun is_bir_eq_abbrevd e =
   ((is_bir_eq_denfv) e) andalso
   (((fn t => is_BExp_Load t orelse is_BExp_Store t) o get_bir_eq_den_left) e);
 
+fun smtlib_wrap_to_bool   str = "(= #b1 " ^ str ^ ")";
+fun smtlib_wrap_from_bool str = "(ite " ^ str ^ " #b1 #b0)";
+
+fun to_smtlib_bool (str, sty) =
+  if sty = SMTTY_Bool then
+    (str, sty)
+  else if sty = SMTTY_BV 1 then
+    (smtlib_wrap_to_bool str, SMTTY_Bool)
+  else
+    raise ERR "to_smtlib_bool" ("cannot convert the given type to bool: " ^ (smt_type_to_smtlib sty));
+
   fun bexp_to_smtlib is_tl exst exp =
     let
       fun problem exp msg = problem_gen "bexp_to_smtlib" exp msg;
-
-      fun smtlib_wrap_to_bool   str = "(= #b1 " ^ str ^ ")";
-      fun smtlib_wrap_from_bool str = "(ite " ^ str ^ " #b1 #b0)";
 
       val abbr_o = exst_get_abbr exst exp;
     in
@@ -926,7 +938,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
     let
       val (exst', e_smtlib) = bexp_to_smtlib true exst e;
     in
-      exst_add_cond exst' e_smtlib
+      exst_add_cond exst' (to_smtlib_bool e_smtlib)
     end;
 
   fun export_bexp e exst =
