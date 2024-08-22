@@ -1,0 +1,18 @@
+CLINE_OPTIONS = -r
+
+INCLUDES = $(HOLBADIR)/examples/compute/examples/increment \
+					 $(HOLBADIR)/examples/compute/examples/and_not \
+  				 $(HOLBADIR)/examples/compute/examples/mem_incr \
+					 $(HOLBADIR)/examples/compute/examples/sum_list \
+					 $(HOLBADIR)/examples/compute/examples/jump_chain
+
+all: $(DEFAULT_TARGETS) test-examples.exe
+.PHONY: all
+
+test-examples.exe: test-examples.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-examples.exe
+	./test-examples.exe
+
+EXTRA_CLEANS = test-examples.exe

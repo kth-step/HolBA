@@ -1,0 +1,14 @@
+INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
+					 $(HOLBADIR)/examples/compute/src/shared
+
+all: $(DEFAULT_TARGETS) test-mem-incr.exe
+.PHONY: all
+
+
+test-mem-incr.exe: test-mem-incr.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-mem-incr.exe
+	./test-mem-incr.exe
+
+EXTRA_CLEANS = test-mem-incr.exe

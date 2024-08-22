@@ -1,0 +1,7 @@
+CLINE_OPTIONS = -r
+
+INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
+					 $(HOLBADIR)/examples/compute/src/shared/cv
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

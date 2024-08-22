@@ -1,0 +1,14 @@
+INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
+					 $(HOLBADIR)/examples/compute/src/shared
+
+all: $(DEFAULT_TARGETS) test-jump-chain.exe
+.PHONY: all
+
+
+test-jump-chain.exe: test-jump-chain.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-jump-chain.exe
+	./test-jump-chain.exe
+
+EXTRA_CLEANS = test-jump-chain.exe
