@@ -15,9 +15,12 @@ in (* local *)
 
 
 (* ======================================= *)
-val debug_z3_taut_on = false;
-fun holsmt_is_taut wtm =
-  let val wtm_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] wtm; in
+local
+  val debug_z3_taut_on = false;
+  val fix_wtm = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`];
+in
+ fun holsmt_is_taut wtm =
+  let val wtm_fixed = fix_wtm wtm; in
     ((HolBA_HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
     handle HOL_ERR e => (
       if not debug_z3_taut_on then () else
@@ -31,6 +34,7 @@ fun holsmt_is_taut wtm =
       in () end;
         false))
   end;
+end;
 
 fun holsmt_bir_check_unsat bexp =
   let
@@ -67,7 +71,7 @@ fun bir_check_sat use_holsmt ex =
   not (bir_check_unsat use_holsmt ex);
 
 fun bir_check_taut use_holsmt ex =
-  bir_check_unsat use_holsmt ``BExp_UnaryExp BIExp_Not ^ex``;
+  bir_check_unsat use_holsmt (bir_expSyntax.mk_BExp_UnaryExp (bir_exp_immSyntax.BIExp_Not_tm, ex));
 
 
 end (* local *)

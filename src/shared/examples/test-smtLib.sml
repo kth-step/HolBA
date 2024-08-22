@@ -80,7 +80,7 @@ val (exp, expected) = List.nth(exporting_exp_testcases, 0);
 *)
 val _ = List.map (fn (exp, expected) =>
   let
-    val (_, res) = bexp_to_smtlib exst_empty exp;
+    val (_, res) = bexp_to_smtlib false exst_empty exp;
     val _ = if res = expected then () else (
             print ("have: ");
             PolyML.print res;

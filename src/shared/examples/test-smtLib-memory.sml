@@ -96,11 +96,13 @@ fun gen_testcase is_sat ad_sz val_sz =
 
 val z3_binaries = [NONE];
 
+(*
 val z3_binaries =
  [SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3",
   (*SOME "/home/andreas/data/hol/HolBA_opt/z3-4.8.17/bin/z3",
   SOME "/home/andreas/data/hol/HolBA_opt/z3-4.12.2/bin/z3",*)
   SOME "/home/andreas/data/hol/HolBA_opt/z3-4.13.0/bin/z3"];
+  *)
 
 val test_cases =
   [gen_testcase false 32 8,
