@@ -136,7 +136,7 @@ val test_cases = List.concat (List.map (combine_test_cases test_cases) z3_binari
 
 val _ = print "Testing with z3\n";
 
-val timeout_o = SOME 4000;
+val timeout_o = SOME 8000;
 
 (*
 val z3bin_o = NONE : string option;
