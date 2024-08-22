@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open wordsTheory;
+open finite_mapTheory;
+
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_types := true;
 
@@ -62,30 +65,37 @@ fun mutual_list_inclusion eq_fun l1 l2 =
   list_inclusion eq_fun l1 l2 andalso
   length l1 = length l2;
 
-fun map_in_model m s =
+
+local
+ fun map_in_model m s =
   case List.find (fn (x,_) => x = s) m of
      NONE => raise Fail "could not find variable in model"
    | SOME x => snd x;
 
-val finite_word32_thm = prove(``FINITE (UNIV:word32->bool)``, cheat);
-val fmap_rewr_thm = MATCH_MP finite_mapTheory.FUN_FMAP_DEF finite_word32_thm;
-val word32_conr_3_thm = prove(``(3w :word32) IN (UNIV:word32->bool)``, cheat);
-val word32_conr_BFF800BE_thm = prove(``(0xBFF800BEw :word32) IN (UNIV:word32->bool)``, cheat);
-val fmap_rewr_thms = [finite_mapTheory.FUN_FMAP_DEF, finite_word32_thm, word32_conr_3_thm, word32_conr_BFF800BE_thm];
+ val finite_word32_thm = prove(``FINITE (UNIV:word32->bool)``, cheat);
+ val fmap_rewr_thm = MATCH_MP finite_mapTheory.FUN_FMAP_DEF finite_word32_thm;
+ val word32_conr_thm = prove(``!x. (x :word32) IN (UNIV:word32->bool)``, cheat);
+ val fmap_rewr_thms = [finite_mapTheory.FUN_FMAP_DEF, finite_word32_thm, word32_conr_thm];
+in
+ fun check_model query model =
+  let
+     val fvs = free_vars query;
+      val fv_insts = foldl (fn (x, acc) => ((x, (map_in_model model o fst o dest_var) x)::acc)) [] fvs;
+      val s = foldl (fn ((x,y),acc) => ((x |-> y)::acc)) [] fv_insts;
+      val inst_tm = subst s query;
+      val eval_thm = (EVAL THENC SIMP_CONV std_ss fmap_rewr_thms THENC EVAL) inst_tm;
+      val res = identical T ((snd o dest_eq o concl) eval_thm);
+  in
+    (res, eval_thm)
+  end;
+end;
 
 val _ = List.map (fn (name, query) =>
     let
       val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");
 
       val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL query;
-
-      (*val eq_fun = mutual_list_inclusion (pair_eq (fn (a:string) => fn b => a = b) identical);*)
-      val fvs = free_vars query;
-      val fv_insts = foldl (fn (x, acc) => ((x, (map_in_model model o fst o dest_var) x)::acc)) [] fvs;
-      val s = foldl (fn ((x,y),acc) => ((x |-> y)::acc)) [] fv_insts;
-      val inst_tm = subst s query;
-      val eval_thm = (EVAL THENC SIMP_CONV std_ss fmap_rewr_thms THENC EVAL) inst_tm;
-      val res = identical T ((snd o dest_eq o concl) eval_thm);
+      val (res, eval_thm) = check_model query model;
 
       val _ = if res then () else (
             print "=============== >>> TEST CASE FAILED\n";
@@ -100,17 +110,18 @@ val _ = List.map (fn (name, query) =>
   ) test_cases;
 
 
-(* test of real input, comparison. it is quite rigid in terms of output requirement *)
+(* test of real input, cannot compare the model as it changes for different z3 versions *)
 open holba_fileLib;
 
 val filename = "z3_wrapper_test/z3_wrapper_input_z3_T5bnC5_sat";
 val _ = print ("\n\n=============== >>> RUNNING TEST CASE FILE '" ^ filename ^ "'\n");
 
-val expected_output = read_from_file (filename ^ "_expectedoutput");
-
 val output = holba_exec_wrapLib.get_exec_output ("../z3_wrapper.py " ^ filename);
 
-val _ = if output = expected_output then () else (
+val result = String.substring (output, 0, 4) = "sat\n" andalso
+             size output > 40;
+
+val _ = if result then () else (
             print "=============== >>> TEST CASE FAILED\n"(*;
             raise Fail ("unexpected result. check the test case")*));
 val _ = print ("=============== >>> SUCCESS\n");
