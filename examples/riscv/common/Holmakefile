@@ -9,17 +9,3 @@ INCLUDES = $(HOLBADIR)/src/theory/program_logic \
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
-
-ifdef POLY
-HEAP = holba-riscv-heap
-DEPS = $(HOLBADIR)/src/tools/lifter/bir_lifter_interfaceLib.uo \
-       $(HOLBADIR)/src/tools/backlifter/bir_backlifterLib.uo \
-       $(HOLBADIR)/src/shared/HolSmt/HolBA_HolSmtLib.uo \
-       $(HOLBADIR)/src/tools/symbexec/birs_auxLib.uo
-EXTRA_CLEANS += $(HEAP)
-
-all: $(HEAP)
-
-$(HEAP): $(DEPS)
-	$(HOLDIR)/bin/buildheap -o $@ $(patsubst %.uo,-f %.uo,$(DEPS))
-endif
