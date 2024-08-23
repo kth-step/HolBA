@@ -1,4 +1,5 @@
-INCLUDES = $(HOLBADIR)/src/shared/HolSmt \
+INCLUDES = $(HOLBADIR)/src/shared/smt/HolSmt \
+           $(HOLBADIR)/src/shared/smt \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support

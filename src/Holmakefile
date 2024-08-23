@@ -1,6 +1,6 @@
 INCLUDES = $(HOLBADIR)/src/tools/lifter \
            $(HOLBADIR)/src/tools/backlifter \
-           $(HOLBADIR)/src/shared/HolSmt \
+           $(HOLBADIR)/src/shared/smt/HolSmt \
            $(HOLBADIR)/src/tools/symbexec
 
 all: $(DEFAULT_TARGETS)
@@ -10,7 +10,7 @@ ifdef POLY
 HEAP = holba-heap
 DEPS = $(HOLBADIR)/src/tools/lifter/bir_lifter_interfaceLib.uo \
        $(HOLBADIR)/src/tools/backlifter/bir_backlifterLib.uo \
-       $(HOLBADIR)/src/shared/HolSmt/HolBA_HolSmtLib.uo \
+       $(HOLBADIR)/src/shared/smt/HolSmt/HolBA_HolSmtLib.uo \
        $(HOLBADIR)/src/tools/symbexec/birs_auxLib.uo
 EXTRA_CLEANS += $(HEAP)
 

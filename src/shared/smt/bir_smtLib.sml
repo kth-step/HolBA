@@ -23,7 +23,7 @@ fun get_streams p = Unix.streamsOf p;
 
 val z3proc_bin_o = ref (NONE : string option);
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
-val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
+val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/bir_smtLib.z3_prelude");
 val bir_smtLib_z3_prelude_n = bir_smtLib_z3_prelude ^ "\n";
 val use_stack = true;
 val debug_print = false;

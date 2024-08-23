@@ -116,7 +116,7 @@ open holba_fileLib;
 val filename = "z3_wrapper_test/z3_wrapper_input_z3_T5bnC5_sat";
 val _ = print ("\n\n=============== >>> RUNNING TEST CASE FILE '" ^ filename ^ "'\n");
 
-val output = holba_exec_wrapLib.get_exec_output ("../z3_wrapper.py " ^ filename);
+val output = holba_exec_wrapLib.get_exec_output ("../smt/z3_wrapper.py " ^ filename);
 
 val result = String.substring (output, 0, 4) = "sat\n" andalso
              size output > 40;
