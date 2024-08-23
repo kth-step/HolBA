@@ -15,10 +15,17 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/examples/tutorial/2-lift \
            $(HOLBADIR)/examples/tutorial/4-bir-to-arm \
            $(HOLBADIR)/examples/tutorial/5-wp \
-           $(HOLBADIR)/examples/tutorial/6-smt
+           $(HOLBADIR)/examples/tutorial/6-smt \
+           $(HOLBADIR)/src
 
 all: $(DEFAULT_TARGETS) test-composition.exe
 .PHONY: all
+
+ifdef POLY
+ifndef HOLBA_POLYML_HEAPLESS
+HOLHEAP = $(HOLBADIR)/src/holba-heap
+endif
+endif
 
 test-composition.exe: test-composition.uo
 	$(HOLMOSMLC) -o $@ $<
