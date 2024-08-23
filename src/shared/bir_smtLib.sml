@@ -964,8 +964,10 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
     end;
 
   fun export_bexp e exst =
-    if not export_preprocessing then append_bexp e exst else
-    let
+    (if not debug_print then () else
+     (print "export_bexp:::\n"; print_term e);
+     if not export_preprocessing then append_bexp e exst else
+     let
       val es = preprocess_bexp [] [e];
       (*val es = [e]*)
       val (exst, _) = foldl
@@ -974,9 +976,9 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 	  (append_bexp e exst, Redblackset.add(acc,e)))
 	(exst, Redblackset.empty Term.compare)
 	es;
-    in
+     in
       exst
-    end;
+     end);
 
 (* TODO: add a model importer *)
 
