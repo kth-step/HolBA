@@ -6,7 +6,7 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLDIR)/examples/l3-machine-code/riscv/model \
            $(HOLDIR)/examples/l3-machine-code/riscv/step \
            $(HOLBADIR)/src/shared \
-           $(HOLBADIR)/examples/tutorial/support2 \
+           $(HOLBADIR)/src/tools/symbexec \
            $(HOLBADIR)/examples/tutorial/2-lift \
            $(HOLBADIR)/src
 
