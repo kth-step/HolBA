@@ -121,7 +121,6 @@ local
   open bir_programSyntax bir_program_labelsTheory;
   open bir_immTheory bir_valuesTheory bir_expTheory;
   open bir_tsTheory bir_bool_expTheory bir_programTheory;
-  open bir_compositionLib;
   open bir_lifting_machinesTheory;
   open bir_typing_expTheory;
   open bir_htTheory;

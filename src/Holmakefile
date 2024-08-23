@@ -1,3 +1,8 @@
+INCLUDES = $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/backlifter \
+           $(HOLBADIR)/src/shared/HolSmt \
+           $(HOLBADIR)/src/tools/symbexec
+
 all: $(DEFAULT_TARGETS)
 .PHONY: all
 
