@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open birs_auxLib;
 open bir_symbLib;
 open birsSyntax;
@@ -112,7 +115,7 @@ fun model_t2s model =
   end;
 fun get_init_vals wtm =
   let
-    val model = ((Z3_SAT_modelLib.Z3_GET_SAT_MODEL wtm)
+    val model = ((bir_smt_get_model use_holsmt wtm)
                        handle HOL_ERR e => []);
     val model_w_strs = model_t2s model
   in

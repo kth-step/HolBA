@@ -328,6 +328,12 @@ struct
   val brshift = bbinexp BIExp_RightShift_tm
   val bsrshift = bbinexp BIExp_SignedRightShift_tm
 
+  fun bimp (ante, conseq) = bor (bnot ante, conseq)
+    handle e => raise pretty_exnLib.pp_exn_s
+      ( "Failed to create the implication. "
+      ^ "Make sure that `ante` and `conseq` are BIR expression terms.")
+      (wrap_exn "bimp" e);
+
   (* Canonical form of binary expression lists:
    *   Left operator is always a leaf *)
   local

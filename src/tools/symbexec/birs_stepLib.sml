@@ -662,7 +662,7 @@ val birs_symbval_concretizations_oracle_CONV =
   (fn tm => let
     val vaex_tm = (snd o dest_comb) tm;
     val pcond_tm = (snd o dest_comb o fst o dest_comb) tm;
-    val pcond_is_sat = birs_smtLib.bir_check_sat false pcond_tm;
+    val pcond_is_sat = bir_smtLib.bir_smt_check_sat false pcond_tm;
     val pcond_sat_thm =
      if pcond_is_sat then
        mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)

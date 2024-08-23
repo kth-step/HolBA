@@ -15,7 +15,7 @@ in
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
   birs_end_lbls birs_env birs_pcond =
  let
-   val pcond_is_sat = birs_smtLib.bir_check_sat false birs_pcond;
+   val pcond_is_sat = bir_smtLib.bir_smt_check_sat false birs_pcond;
    val _ = if pcond_is_sat then () else
         raise Feedback.mk_HOL_ERR "bir_symbLib" "bir_symb_analysis" "initial pathcondition is not satisfiable; it seems to contain a contradiction";
    val birs_state_init = ``<|

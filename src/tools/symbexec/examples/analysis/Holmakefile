@@ -2,7 +2,7 @@ INCLUDES = $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/tools/symbexec \
            $(HOLBADIR)/src/tools/symbexec/examples/common \
            $(HOLBADIR)/src/tools/symbexec/examples/binaries \
-           $(HOLBADIR)/src/shared/smt/HolSmt
+           $(HOLBADIR)/src/shared/smt
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

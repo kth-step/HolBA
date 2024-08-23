@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open bslSyntax;
 
-open bir_smtLib;
+open bir_smtlibLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_types := true;

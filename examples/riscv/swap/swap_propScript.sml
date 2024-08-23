@@ -14,8 +14,6 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
-
 open total_program_logicTheory;
 open total_ext_program_logicTheory;
 

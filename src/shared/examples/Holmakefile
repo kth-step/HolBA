@@ -1,6 +1,5 @@
 INCLUDES = $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/shared/smt \
-           $(HOLBADIR)/src/shared/smt/HolSmt \
            $(HOLBADIR)/src/shared/sml-simplejson \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support

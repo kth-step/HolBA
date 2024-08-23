@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open finite_mapTheory;
 
 (* Load the dependencies in interactive sessions *)
@@ -13,7 +16,7 @@ val _ = Globals.show_tags := true;
 (*
 val _ = Globals.linewidth := 100;
 val _ = wordsLib.add_word_cast_printer ();
-val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
+val _ = bir_smt_set_trace use_holsmt 4;
 val _ = Globals.show_assums := true;
 val _ = Globals.show_types := true;
 *)
@@ -75,7 +78,7 @@ val term = ``(z + y = 2 * x) /\ ((x * x + y - 25) = z:int)``;
 (*
 val term = ``(m2 = FUPDATE (m1: word32 |-> word8) (3w, 2w)) /\ (FAPPLY m2 3w = 2w)``;
 *)
-val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
+val model = bir_smt_get_model use_holsmt term;
 val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 val sat_thm = produce_sat_thm term model;
 val _ = (print "SAT thm:\n"; Hol_pp.print_thm sat_thm; print "\n");
@@ -91,7 +94,7 @@ val _ = if res then () else
 (* TODO: too complicated/too much time to port these two now *)
 (*
 val term = “mem123 <> (FUN_FMAP (K (144w :word8) :word64 -> word8) 𝕌(:word64))”;
-val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
+val model = bir_smt_get_model use_holsmt term;
 val (res, _) = check_model term model;
 
 val _ = if res then () else
@@ -100,7 +103,7 @@ val _ = if res then () else
 (* ============================================================= *)
 
 val term = “mem123 <> (FUN_FMAP ((K 144w) :word64 -> word8) 𝕌(:word64) |+ (0w,111w))”;
-val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
+val model = bir_smt_get_model use_holsmt term;
 val (res, _) = check_model term model;
 
 val _ = if res then () else

@@ -110,7 +110,7 @@ local
 
   open birs_rulesTheory;
 
-  open birs_smtLib;
+  open bir_smtLib;
 
   fun justify_assumption_EVAL t =
     if (not o is_imp o concl) t then
@@ -153,7 +153,7 @@ fun birs_rule_tryjustassert_fun_ force_assert_justify single_step_prog_thm =
     val timer_exec_step_p3 = holba_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (*val _ = print_term pcond_tm;*)
-          val pcond_is_contr = bir_check_unsat false pcond_tm;
+          val pcond_is_contr = bir_smt_check_unsat false pcond_tm;
           val _ = if (not force_assert_justify) orelse pcond_is_contr then () else
             (print "\n\n\n<<<<<<<<<<<< ASSERTION MAY FAIL <<<<<<<<<<<< \n";
              print_term (concl single_step_prog_thm);
@@ -191,7 +191,7 @@ fun birs_rule_tryprune_fun_ prune_thm single_step_prog_thm =
     val timer_exec_step_p3 = holba_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (* val _ = print_term pcond_tm; *)
-          val pcond_is_contr = bir_check_unsat false pcond_tm;
+          val pcond_is_contr = bir_smt_check_unsat false pcond_tm;
 	  val _ = if pcond_is_contr then print "can prune" else ();
           val pcond_thm_o =
             if pcond_is_contr then

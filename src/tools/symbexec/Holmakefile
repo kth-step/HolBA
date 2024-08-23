@@ -6,7 +6,6 @@ INCLUDES = $(HOLBADIR)/src/extra \
            $(HOLBADIR)/src/theory/tools/symbexec \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/shared/smt \
-           $(HOLBADIR)/src/shared/smt/HolSmt \
            $(HOLBADIR)/src/theory/tools/lifter
 
 all: $(DEFAULT_TARGETS)

@@ -3,7 +3,10 @@ struct
 
   open HolKernel Parse boolLib bossLib;
   open bslSyntax;
+  open bir_smtLib;
   open pretty_exnLib;
+
+  val use_holsmt = true;
 
   val ERR = mk_HOL_ERR "nic_helpersLib";
   val wrap_exn = Feedback.wrap_exn "nic_helpersLib";
@@ -132,11 +135,11 @@ struct
 
       (* Prove it using an SMT solver *)
       val start_time = timer_start ();
-      val smt_thm = HolBA_HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
+      val smt_thm = bir_smt_prove use_holsmt smt_ready_tm
         handle sat_exn => (* Pretty-exn + try to show a SAT model if level_log=DEBUG *)
           let
             (* Wrap the exn, and pretty-print it to the user *)
-            val wrapped_exn = pp_exn_s (proof_prefix ^ "Z3_ORACLE_PROVE failed") (wrap_exn sat_exn);
+            val wrapped_exn = pp_exn_s (proof_prefix ^ "bir_smt_prove failed") (wrap_exn sat_exn);
 
             (* Show a SAT model if level_log=DEBUG *)
             val _ = if not (!level_log >= logLib.DEBUG) then () else
@@ -144,8 +147,8 @@ struct
                 fun print_model model = List.foldl
                   (fn ((name, tm), _) => (print (" - " ^ name ^ ": "); pprint_term tm))
                   () (rev model)
-                val _ = debug "Asking Z3 for a SAT model..."
-                val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg smt_ready_tm)
+                val _ = debug "Asking bir_smt for a SAT model..."
+                val model = bir_smt_get_model use_holsmt (mk_neg smt_ready_tm)
                 val _ = (debug "SAT model:"; print_model model; print "\n")
               in () end
                 handle _ => debug "Failed to compute a SAT model. Ignoring.";

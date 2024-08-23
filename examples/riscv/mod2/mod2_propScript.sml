@@ -19,8 +19,6 @@ open bir_wpLib bir_wp_expLib;
 open bir_wpTheory bir_htTheory;
 open bir_wp_interfaceLib;
 
-open tutorial_smtSupportLib;
-
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;
 open bir_program_transfTheory;

@@ -10,24 +10,25 @@ open pretty_exnLib;
 (* To simplify the life of our poor vim users *)
 if !Globals.interactive then let
   val _ = load "HolBA_HolSmtLib";
-  val _ = load "tutorial_smtSupportLib";
+  val _ = load "bir_smtLib";
 in () end else ();
 
 (* From examples: *)
-open tutorial_smtSupportLib;
+open bir_smtLib;
+val use_holsmt = true;
 
 if !Globals.interactive then let
   val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
   val _ = Globals.show_tags := true;
   val _ = Globals.linewidth := 100;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 2;
+  val _ = bir_smt_set_trace use_holsmt 2;
   val _ = bir_ppLib.install_bir_pretty_printers ();
   (*
   val _ = bir_ppLib.remove_bir_pretty_printers ();
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 0;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 1;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 3;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
+  val _ = bir_smt_set_trace use_holsmt 0;
+  val _ = bir_smt_set_trace use_holsmt 1;
+  val _ = bir_smt_set_trace use_holsmt 3;
+  val _ = bir_smt_set_trace use_holsmt 4;
   *)
 in () end else ();
 
@@ -36,24 +37,24 @@ in () end else ();
 (*****************************************************************************)
 (* 1. Prove the truth to check that Z3 is working                            *)
 
-val TRUTH = HolBA_HolSmtLib.Z3_ORACLE_PROVE ``T``;
+val TRUTH = bir_smt_prove use_holsmt ``T``;
 
 (* You can raise the trace level to see what is sent to Z3.
 
-val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
+val _ = bir_smt_set_trace use_holsmt 4;
 *)
 
 (*****************************************************************************)
 (* 2. The arithmetic theory                                                  *)
 
 (* Fix me! *)
-val LESS_TRANS = Z3_prove_or_print_model ``!m n p: int. m < n ∧ p < n ==> m < p``;
+val LESS_TRANS = bir_smt_prove_or_print_model ``!m n p: int. m < n ∧ p < n ==> m < p``;
 
 (*****************************************************************************)
 (* 3. The bit-vector theory                                                  *)
 
 (* Fix me! *)
-val INC_GREATER = Z3_prove_or_print_model ``!x: word32. x + 1w >+ x``;
+val INC_GREATER = bir_smt_prove_or_print_model ``!x: word32. x + 1w >+ x``;
 
 (*****************************************************************************)
 (* 4. Proving BIR expressions                                                *)
@@ -63,5 +64,5 @@ val bir_exp_tm = bandl [
   ble (bplus (bconstii 32 10, bconstii 32 8), bconstii 32 50)
 ];
 val words_exp_tm = bir2bool bir_exp_tm;
-val bir_exp_thm = Z3_prove_or_print_model words_exp_tm
+val bir_exp_thm = bir_smt_prove_or_print_model words_exp_tm
 

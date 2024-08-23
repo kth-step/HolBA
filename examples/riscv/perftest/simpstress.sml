@@ -7113,7 +7113,7 @@ Profile.output_profile_results (iostream) (Profile.results ())
 val smt_check_exp = ``BExp_Den (BVar "abc" (BType_Imm Bit1))``;
 
 val howmanylist = List.tabulate (1000, fn _ => ());
-val _ = List.foldr (fn (_,_) => birs_smtLib.bir_check_sat false smt_check_exp) true howmanylist;
+val _ = List.foldr (fn (_,_) => bir_smtLib.bir_smt_check_sat false smt_check_exp) true howmanylist;
 
 
 val _ = print "\n";

@@ -17,9 +17,10 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
+open bir_exp_tautologiesTheory;
+
 open bir_predLib;
-open birs_smtLib;
+open bir_smtLib;
 
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;
@@ -208,7 +209,7 @@ Theorem mod2_mem_bir_pre_imp_bspec_pre_thm[local]:
   (bir_exp_imp (bir_mod2_mem_pre pre_x10 pre_x10_deref)
     (bspec_mod2_mem_pre pre_x10 pre_x10_deref))
 Proof
- rw [prove_exp_is_taut ``bir_exp_imp
+ rw [bir_smt_prove_is_taut ``bir_exp_imp
   (bir_mod2_mem_pre pre_x10 pre_x10_deref) (bspec_mod2_mem_pre pre_x10 pre_x10_deref)``]
 QED
 

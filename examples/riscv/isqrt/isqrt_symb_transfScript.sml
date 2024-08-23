@@ -88,6 +88,7 @@ val prog_vars_thm = isqrt_prog_vars_thm;
 
 (* ---- *)
 
+open birsSyntax;
 open birs_stepLib;
 open birs_composeLib;
 open birs_driveLib;

@@ -15,7 +15,7 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
+open bir_smtLib;
 
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;
@@ -152,7 +152,7 @@ Theorem incr_bir_pre_imp_bspec_pre_thm[local]:
  bir_exp_is_taut
   (bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10))
 Proof
- rw [prove_exp_is_taut ``bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10)``]
+ rw [bir_smt_prove_is_taut ``bir_exp_imp (bir_incr_pre pre_x10) (bspec_incr_pre pre_x10)``]
 QED
 
 val incr_bir_pre_imp_bspec_pre_eq_thm =
@@ -170,7 +170,7 @@ Theorem incr_bspec_post_imp_bir_post_thm[local]:
  bir_exp_is_taut
   (bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10))
 Proof
- rw [prove_exp_is_taut ``bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10)``]
+ rw [bir_smt_prove_is_taut ``bir_exp_imp (bspec_incr_post pre_x10) (bir_incr_post pre_x10)``]
 QED
 
 val incr_bspec_post_imp_bir_post_eq_thm =

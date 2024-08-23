@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open wordsTheory;
 open finite_mapTheory;
 
@@ -94,7 +97,7 @@ val _ = List.map (fn (name, query) =>
     let
       val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");
 
-      val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL query;
+      val model = bir_smt_get_model use_holsmt query;
       val (res, eval_thm) = check_model query model;
 
       val _ = if res then () else (

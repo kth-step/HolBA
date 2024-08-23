@@ -16,8 +16,7 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
-open birs_smtLib;
+open bir_smtLib;
 
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;

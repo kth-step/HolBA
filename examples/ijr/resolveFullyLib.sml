@@ -5,7 +5,8 @@ open HolKernel Parse boolLib bossLib;
 open optionSyntax bir_htSyntax bir_wm_instSyntax;
 
 open bir_wp_interfaceLib;
-open tutorial_smtSupportLib;
+open bslSyntax;
+open bir_smtLib;
 open bir_compositionLib;
 
 open listTheory;
@@ -92,7 +93,7 @@ fun prove_and_transfer_contract(prog'_thm, prefix, pre_tm, entry_label_tm, endin
     (*Prove implication using SMT solvers*)
     val smt_start = timer_start ()
     val contract_imp = bimp (pre_tm, (lhs o concl) wp_def)
-    val contract_imp_taut_thm = prove_exp_is_taut contract_imp
+    val contract_imp_taut_thm = bir_smt_prove_is_taut contract_imp
     val contract = label_ct_to_simp_ct_predset ht_thm' contract_imp_taut_thm
     val _ = print ("SMT time: " ^ timer_stop_str smt_start ^ "\n")
 

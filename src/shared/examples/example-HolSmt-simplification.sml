@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open wordsTheory;
 open finite_mapTheory;
 
@@ -145,5 +148,5 @@ CONV_TAC (DEPTH_CONV wordsLib.EXTEND_EXTRACT_CONV) goal;
 (DEPTH_CONV wordsLib.EXTEND_EXTRACT_CONV) term;
 
 (*
-Z3_SAT_modelLib.Z3_GET_SAT_MODEL term
+bir_smt_get_model use_holsmt term
 *)

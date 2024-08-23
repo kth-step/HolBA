@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open bir_exp_to_wordsLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
@@ -79,7 +82,7 @@ val _ = List.map
       val word_exp_bool = bir2bool bir_exp;
 
       val model_o =
-        SOME (Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_exp_bool)
+        SOME (bir_smt_get_model use_holsmt word_exp_bool)
         handle _ => NONE;
 
       val sat_o =

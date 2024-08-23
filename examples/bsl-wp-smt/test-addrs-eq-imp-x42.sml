@@ -1,6 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open pretty_exnLib;
 open bir_programTheory;
+open bir_smtLib;
 
 (* Load dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
@@ -11,12 +12,14 @@ val _ = if !Globals.interactive then (
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_tags := true;
 
+val use_holsmt = true;
+
 (*
 val _ = Globals.linewidth := 100;
 val _ = Globals.show_types := true;
 val _ = Globals.show_assums := true;
 val _ = wordsLib.add_word_cast_printer ();
-val _ = Feedback.set_trace "HolBA_HolSmtLib" 0;
+val _ = bir_smt_set_trace use_holsmt 0;
 val _ = Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 2;
 val _ = Feedback.set_trace "easy_noproof_wpLib" logLib.TRACE;
 val _ = Feedback.set_trace "Define.storage_message" 1;
@@ -115,8 +118,8 @@ val addrs_eq_imp_x42_thm =
     val smt_ready_tm = bir_exp_to_wordsLib.bir2bool p_imp_wp_bir_tm
       handle e => raise pp_exn_s "bir2bool failed" e
   in
-    HolBA_HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
-      handle e => raise pp_exn_s "Z3_ORACLE_PROVE failed" e
+    bir_smt_prove use_holsmt smt_ready_tm
+      handle e => raise pp_exn_s "bir_smt_prove failed" e
   end;
 val _ = (Hol_pp.print_thm addrs_eq_imp_x42_thm; print "\n");
 
