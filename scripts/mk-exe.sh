@@ -20,8 +20,8 @@ function mk_exe_for_sml_file {
     declare BUILDHEAP="$HOLBINDIR/buildheap"
     declare HEAPNAME="$HOLBINDIR/heapname"
 
-    # Determine in which heap to execute by looking at the Holmakefile.gen file
-    declare HEAP=$(grep -E '^HOLHEAP' Holmakefile.gen | sed -r 's/HOLHEAP\s*=\s*(\S+)/\1/')
+    # Determine in which heap to execute by looking at the Holmakefile file
+    declare HEAP=$(grep -E '^HOLHEAP' Holmakefile | sed -r 's/HOLHEAP\s*=\s*(\S+)/\1/')
     if [ ! -f "$HEAP" ]; then
         declare HEAP=`$HEAPNAME`
     fi
