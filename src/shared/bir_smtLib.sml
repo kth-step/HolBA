@@ -179,10 +179,10 @@ fun sendreceive_query z3bin q =
 	  "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
 	) ^ "\n") "" vars;
 
-  (* TODO: this should be split into generic z3 interface and bir_z3 interface *)
+  (* TODO: this should be split into generic z3 interface and bir_z3 interface, should be called querysat as opposed to querymodel *)
   fun querysmt_gen z3bin_o timeout_o (vars, asserts) =
-    if List.exists (fn (_,qt) => qt <> SMTTY_Bool) asserts then
-      raise ERR "querysmt" "don't know how to handle expression type in assert"
+    if List.exists (fn (qs,qt) => let val res = qt <> SMTTY_Bool in (if res then print ("problem: " ^ qs ^ "\n") else (); res) end) asserts then
+      raise ERR "querysmt" "don't know how to handle expression type. must be bool"
     else
       let
 	val decls = smt_vars_to_smtlib vars;
@@ -503,8 +503,18 @@ fun gen_smt_store_v2 valm valad valv (szadi, szci, szi) =
     storeval
   end;
 
-val gen_smt_load = gen_smt_load_v1;
-val gen_smt_store = gen_smt_store_v1;
+val export_loadstore_asfunction = true;
+val export_preprocessing = true;
+val export_abbreviation_dict = true;
+val export_abbreviation_load = true;
+val export_abbreviation_store = true;
+val export_abbreviation_from_query = true;
+
+val (gen_smt_load, gen_smt_store) =
+  if export_loadstore_asfunction then
+    (gen_smt_load_v1, gen_smt_store_v1)
+  else
+    (gen_smt_load_v2, gen_smt_store_v2);
 
 val exst_empty =
  ((Redblackset.empty smtlib_exp_compare) : (string * bir_smt_type) Redblackset.set,
@@ -629,8 +639,8 @@ fun to_smtlib_bool (str, sty) =
 
       val abbr_o = exst_get_abbr exst exp;
     in
-      if isSome abbr_o then (exst, valOf abbr_o)
-      else if is_tl andalso is_bir_eq_abbrevd exp then
+      if export_abbreviation_dict andalso isSome abbr_o then (exst, valOf abbr_o)
+      else if export_abbreviation_from_query andalso is_tl andalso is_bir_eq_abbrevd exp then
         let
 	  val (expval, expvar) = dest_bir_eq exp;
           val (exst1, v_var) = bexp_to_smtlib false exst expvar;
@@ -638,6 +648,7 @@ fun to_smtlib_bool (str, sty) =
 	  val has_abbr = isSome (exst_get_abbr exst1 expval);
 	  val exst2 = exst_set_abbr_skip exst1 true;
           val (exst3, v_val) = bexp_to_smtlib false exst2 expval;
+	  val exst3 = exst_set_abbr_skip exst3 false;
 
           val args = [v_val, v_var];
           fun probfun () = problem exp "equality needs same type for both sides: ";
@@ -833,7 +844,11 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 	  val loadval = gen_smt_load valm valad (szadi, szci, szi)
                         handle _ => problem exp "could not generate smt load expression";
 
-	  val (exst3, v_var) = abbreviate_exp exst2 abbr_skip "vv" (exp, loadval);
+	  val (exst3, v_var) =
+	    if export_abbreviation_load then
+	      abbreviate_exp exst2 abbr_skip "vv" (exp, loadval)
+	    else
+	      (exst2, loadval);
         in
 	  (exst3, v_var)
         end
@@ -874,7 +889,11 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val storeval = gen_smt_store valm valad valv (szadi, szci, szi)
                          handle _ => problem exp "could not generate smt store expression";
 
-	  val (exst4, m_var) = abbreviate_exp exst3 abbr_skip "mv" (exp, storeval);
+	  val (exst4, m_var) =
+	    if export_abbreviation_store then
+	      abbreviate_exp exst3 abbr_skip "mv" (exp, storeval)
+	    else
+	      (exst3, storeval);
         in
           (exst4, m_var)
         end
@@ -898,6 +917,9 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
     end;
 
   (* preprocess into CNF, into list of conjuncted clauses *)
+  (* TODO: all these rewritings are actually type-sensitive,
+      would need to do typechecks (only practical when using a function that includes a dictionary for repeated typechecks for performance),
+      and also would need to include is_BIExp_LessOrEqual for the implication rewriting *)
   fun preprocess_bexp acc [] = acc
     | preprocess_bexp acc (e::l) =
     if is_bir_and e then
@@ -942,6 +964,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
     end;
 
   fun export_bexp e exst =
+    if not export_preprocessing then append_bexp e exst else
     let
       val es = preprocess_bexp [] [e];
       (*val es = [e]*)
