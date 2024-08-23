@@ -5,35 +5,15 @@ local
 
 open HolKernel Parse boolLib bossLib;
 
+open symb_recordTheory;
+open birs_auxTheory;
+
   (* error handling *)
   val libname = "birSyntax"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
 in (* local *)
-
-val birs_state_t_ty = mk_type ("birs_state_t", []);
-fun dest_birs_state tm = let
-  val (ty, l) = TypeBase.dest_record tm
-  val _ = if ty = birs_state_t_ty then () else fail()
-  val pc = Lib.assoc "bsst_pc" l
-  val env = Lib.assoc "bsst_environ" l
-  val status = Lib.assoc "bsst_status" l
-  val pcond = Lib.assoc "bsst_pcond" l
-in
-  (pc, env, status, pcond)
-end handle e => (print_term tm; raise wrap_exn "dest_bir_state" e);
-
-val is_birs_state = can dest_birs_state;
-
-fun mk_birs_state (pc, env, status, pcond) = let
-  val l = [("bsst_pc", pc),
-           ("bsst_environ", env),
-           ("bsst_status", status),
-           ("bsst_pcond", pcond)];
-in
-  TypeBase.mk_record (birs_state_t_ty, l)
-end handle e => raise wrap_exn "mk_birs_state" e;
 
 local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
@@ -91,7 +71,30 @@ in
  val (birs_exec_stmt_jmp_tm,  mk_birs_exec_stmt_jmp, dest_birs_exec_stmt_jmp, is_birs_exec_stmt_jmp)  = syntax_fns3_set "birs_exec_stmt_jmp";
  val (birs_exec_stmt_tm,  mk_birs_exec_stmt, dest_birs_exec_stmt, is_birs_exec_stmt)  = syntax_fns3_set "birs_exec_stmt";
 
-(* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
+ val birs_state_t_ty = mk_type ("birs_state_t", []);
+ fun dest_birs_state tm = let
+  val (ty, l) = TypeBase.dest_record tm
+  val _ = if ty = birs_state_t_ty then () else fail()
+  val pc = Lib.assoc "bsst_pc" l
+  val env = Lib.assoc "bsst_environ" l
+  val status = Lib.assoc "bsst_status" l
+  val pcond = Lib.assoc "bsst_pcond" l
+ in
+  (pc, env, status, pcond)
+ end handle e => (print_term tm; raise wrap_exn "dest_bir_state" e);
+
+ val is_birs_state = can dest_birs_state;
+
+ fun mk_birs_state (pc, env, status, pcond) = let
+  val l = [("bsst_pc", pc),
+           ("bsst_environ", env),
+           ("bsst_status", status),
+           ("bsst_pcond", pcond)];
+ in
+  TypeBase.mk_record (birs_state_t_ty, l)
+ end handle e => raise wrap_exn "mk_birs_state" e;
+
+ (* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
 end;
 
 fun is_IMAGE_birs_symb_to_symbst Pi = pred_setSyntax.is_image Pi andalso (identical birs_symb_to_symbst_tm o fst o pred_setSyntax.dest_image) Pi;

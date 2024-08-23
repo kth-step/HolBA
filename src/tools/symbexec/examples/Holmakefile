@@ -1,6 +1,5 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/tools/symbexec \
-           $(HOLBADIR)/src/tools/symbexec/examples/common \
            $(HOLBADIR)/src/tools/symbexec/examples/binaries
 
 all: $(DEFAULT_TARGETS)
