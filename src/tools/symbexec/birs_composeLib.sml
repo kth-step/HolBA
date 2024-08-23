@@ -21,7 +21,7 @@ open HolBACoreSimps;
 open symb_interpretTheory;
 open pred_setTheory;
 *)
-  open birs_stepLib;
+  open birsSyntax;
   open birs_auxTheory;
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 

@@ -1,7 +1,5 @@
 open HolKernel Parse boolLib bossLib;
 
-open wordsTheory;
-
 open bir_symbLib;
 
 open aesTheory aes_specTheory;
