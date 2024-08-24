@@ -1,4 +1,5 @@
-INCLUDES = $(HOLBADIR)/src/shared
+INCLUDES = $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/shared/sml-simplejson
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

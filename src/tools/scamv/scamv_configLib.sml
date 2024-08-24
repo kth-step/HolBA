@@ -2,6 +2,8 @@ structure scamv_configLib : scamv_configLib =
 struct
 
 open holba_entryLib;
+open bir_smtLib;
+val use_holsmt = true;
 
   (* error handling *)
   val libname  = "scamv_configLib"
@@ -361,7 +363,7 @@ fun set_exec_conc (cfg : scamv_config) s =
       exec_conc = s };
 
 fun set_hsmtltl (cfg : scamv_config) s =
-    (HolBA_Library.trace := s; cfg);
+    (bir_smt_set_trace use_holsmt s; cfg);
 
 (* end boilerplate *)
 
@@ -403,7 +405,7 @@ val opt_table =
               handle_conv_arg_with (fn x => SOME (SOME x)) set_run_description)
     , Arity0 ("ec", "exec_conc", "Execute generated states to validate obs eq",
               fn cfg => fn b => set_exec_conc cfg b)
-    , Arity1 ("hsmtltl", "holsmt_library_trace_level", "Set HolSmt library trace level (e.g., 4 to keep z3 temporary exchange files)",
+    , Arity1 ("bsmtltl", "bir_smt_trace_level", "Set bir_smt library trace level (e.g., 4 to keep z3 temporary exchange files)",
               handle_conv_arg_with Int.fromString set_hsmtltl)
     ];
 end

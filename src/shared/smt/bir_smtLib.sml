@@ -177,7 +177,7 @@ fun bir_smt_tac use_holsmt =
 
 fun bir_smt_set_trace use_holsmt =
   if use_holsmt then
-    Feedback.set_trace "HolBA_HolSmtLib"
+    (fn x => HolBA_Library.trace := x) (* same as Feedback.set_trace "HolBA_HolSmtLib" *)
   else
     (fn _ => ());
 

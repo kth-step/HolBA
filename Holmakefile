@@ -3,7 +3,6 @@ CLINE_OPTIONS = -r
 INCLUDES = $(HOLBADIR)/src/extra \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/shared/smt \
-           $(HOLBADIR)/src/shared/sml-simplejson \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/models/l3mod \
@@ -12,6 +11,7 @@ INCLUDES = $(HOLBADIR)/src/extra \
            $(HOLBADIR)/src/theory/tools/wp \
            $(HOLBADIR)/src/theory/tools/comp \
            $(HOLBADIR)/src/theory/tools/backlifter \
+           $(HOLBADIR)/src/theory/tools/symbexec \
            $(HOLBADIR)/src/tools/lifter \
            $(HOLBADIR)/src/tools/wp \
            $(HOLBADIR)/src/tools/comp \

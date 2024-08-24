@@ -11,7 +11,7 @@ val _ = Globals.show_types := true;
 
 (*
 (* for debugging the z3 input and output (keep the temporary files) *)
-val _ = HolBA_Library.trace := 5;
+val _ = bir_smt_set_trace use_holsmt 5;
 *)
 
 val bir_exprs = [

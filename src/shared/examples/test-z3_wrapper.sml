@@ -11,7 +11,7 @@ val _ = Globals.show_types := true;
 
 (*
 (* trace that also controls whether temporary z3 input files are preserved *)
-val _ = HolBA_Library.trace := 100;
+val _ = bir_smt_set_trace use_holsmt 100;
 *)
 
 
