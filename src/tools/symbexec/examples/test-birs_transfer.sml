@@ -4,12 +4,10 @@ open HolKernel Parse boolLib bossLib;
 open birsSyntax;
 open bir_symbTheory;
 
-open birs_execLib;
+open bir_symbLib;
 open birs_composeLib;
 
 open birs_auxTheory;
-
-  open birs_stepLib;
 
 open symb_recordTheory;
 open symb_prop_transferTheory;
@@ -51,10 +49,13 @@ val bprog = (fst o dest_eq o concl) bprog_test_def;
 (* TODO: execute two steps using composition *)
 (* TODO: execute until end of block using sequential composition function *)
 (* TODO: add cheat flag to sequential composition? one block should execute quickly through sequential code *)
+
+
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_block_pc (BL_Address (Imm32 2826w)))``;
 val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (^birs_state_init_lbl)``;
 
 
+(* ---------------------------------------------------------------------- *)
 val m0_mod_vars_def = Define `
     m0_mod_vars = bmr_vars (m0_mod_bmr (T,T))
 `;
@@ -85,6 +86,9 @@ val birenvtyl_EVAL_thm = save_thm(
 (*
     ``bprecond = BExp_Const (Imm1 1w)``
 *)
+(* ---------------------------------------------------------------------- *)
+
+
 val bprecond_def = Define `
     bprecond = BExp_BinPred BIExp_Equal (BExp_Den (BVar "R0" (BType_Imm Bit32))) (BExp_Den (BVar "R1" (BType_Imm Bit32)))
 `;
@@ -110,28 +114,31 @@ val bprecond_birs_eval_exp_thm2 = save_thm(
 );
 val bsysprecond = (snd o dest_eq o concl) bsysprecond_thm (*(fst o dest_eq o concl) bsysprecond_def*);
 
-val birs_state_init_pre = ``<|
-  bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := bir_senv_GEN_list birenvtyl;
-  bsst_status   := BST_Running;
-  bsst_pcond    := ^bsysprecond
-|>``;
-val birs_state_thm = (SIMP_CONV (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm, bir_senv_GEN_list_def, GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC computeLib.RESTR_EVAL_CONV [``birs_gen_env``]) birs_state_init_pre;
-val birs_state_init = (snd o dest_eq o concl) birs_state_thm;
-(* ........................... *)
+(* ---------------------------------------------------------------------- *)
 
-val bprog_tm = bprog;
-val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
-val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm;
-(* ........................... *)
 
-(* first step *)
-val single_step_thm_ = birs_rule_STEP_fun_spec birs_state_init;
-val single_step_thm = REWRITE_RULE [GSYM birs_state_thm] single_step_thm_;
+val bprog_tm = (fst o dest_eq o concl) bprog_test_def;
+val birs_state_init_lbl_tm = birs_state_init_lbl;
+val birs_state_end_tm_lbls = [birs_state_end_lbl];
+val birs_pcond_tm = bsysprecond;
 
-val exec_thm = single_step_thm;
+val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list birenvtyl``;
+val birs_env_tm = (snd o dest_eq o concl) birs_env_thm;
+
+val symb_analysis_thm =
+  bir_symb_analysis
+    bprog_tm
+    birs_state_init_lbl_tm
+    birs_state_end_tm_lbls
+    birs_env_tm
+    birs_pcond_tm;
+
+val exec_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
 val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
-(* ........................... *)
+
+(* ---------------------------------------------------------------------- *)
+(* ---------------------------------------------------------------------- *)
+(* ---------------------------------------------------------------------- *)
 
 (* now the transfer *)
 (* ........................... *)
@@ -412,7 +419,7 @@ val bprog_prop_holds_thm =
          birs_prop_transfer_thm
          bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
-    single_step_thm;
+    exec_thm;
 
 (* lift to concrete state property *)
 val bprog_concst_prop_thm =
