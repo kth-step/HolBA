@@ -2,7 +2,6 @@ structure bir_smtlibLib =
 struct
 
 local
-
   open HolKernel boolLib liteLib simpLib Parse bossLib;
 
   open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
@@ -63,9 +62,9 @@ in
         else if is_BType_Imm64 btype then
           (SMTTY_BV 64)
         else if is_BType_Mem btype andalso pair_eq identical identical (dest_BType_Mem btype) (Bit32_tm, Bit8_tm) then
-          (SMTTY_MEM (32, 8))
+          (SMTTY_ARR (32, 8))
         else if is_BType_Mem btype andalso pair_eq identical identical (dest_BType_Mem btype) (Bit64_tm, Bit8_tm) then
-          (SMTTY_MEM (64, 8))
+          (SMTTY_ARR (64, 8))
         else problem_gen "bvar_to_smtlib_type" btype "don't know how to convert BIR type: "
     end;
 
@@ -73,29 +72,8 @@ in
   fun problem_gen_sty fname t sty =
     problem_gen fname t ("don't know how to convert as " ^ (smt_type_to_smtlib sty) ^ ": ");
 
-  fun get_smtlib_type_args probfun args =
-    let
-      val _   = if length(args) > 0 then () else
-                  (print "\n!!!\nneed at least one argument for type unification!!!\n"; probfun ());
-      val sty = snd (hd args);
-      val _   = if List.all (fn x => snd x = sty) args then () else
-                  probfun ();
-    in
-      sty
-    end;
-
-  fun gen_smtlib_expr opstr args sty =
-    let
-      val argstr = List.foldl (fn ((s,_),str) => str ^ " " ^ s) "" args;
-    in
-      ("(" ^ opstr ^ argstr ^ ")", sty)
-    end;
-
-  fun apply_smtlib_op wrapfun (str, sty) =
-     (wrapfun str, sty);
-
   fun mk_0s i = String.implode (List.tabulate(i,fn _ => #"0"));
-
+  
 (* unsignedcast and lowcast is the same: lowest bits *)
 (* highcast: highest bits for downcasting, otherwise like lowcast *)
 (* signedcast: preserve signed bit for upcasting, otherwise like unsignedcast *)
@@ -194,94 +172,11 @@ in
     end;
 
   fun endi_to_smtlib sty endi =
-(* NOTICE: stick to little endian for now! *)
-    if is_BEnd_LittleEndian endi then ()
-(*
-    else if is_BEnd_BigEndian endi then "B"
-    else if is_BEnd_NoEndian endi then "N"
-*)
+    if is_BEnd_LittleEndian endi then SMTMEM_LittleEndian
+    else if is_BEnd_BigEndian endi then SMTMEM_BigEndian
+    else if is_BEnd_NoEndian endi then SMTMEM_NoEndian
     else problem_gen_sty "endi_to_smtlib" endi sty;
 
-
-fun gen_smt_load_v1 valm valad (szadi, szci, szi) =
-  let
-          (* current restrictions *)
-          val () = if szadi = 32 orelse szadi = 64 then () else
-                    raise ERR "gen_smt_load_v1" "address type other than 32 or 64bits cannot be handled currently: ";
-          val () = if szci  =  8 then () else
-                    raise ERR "gen_smt_load_v1" "cell types other than 8bits cannot be handled currently: ";
-          val () = if szi   =  8 orelse
-                     szi   = 16 orelse
-                     szi   = 32 orelse
-                     szi   = 64 then () else
-                    raise ERR "gen_smt_load_v1" "load types other than 8, 16, 32 and 64bits cannot be handled currently: ";
-
-          val z3funname = "loadfun_" ^ (Int.toString szadi) ^
-                                 "_" ^ (Int.toString szci) ^
-                                 "_" ^ (Int.toString szi);
-
-          val loadval = gen_smtlib_expr z3funname [valm, valad] (SMTTY_BV szi);
-  in
-    loadval
-  end;
-
-
-fun gen_smt_store_v1 valm valad valv (szadi, szci, szi) =
-  let
-          (* current restrictions *)
-          val _ = if szadi = 32 orelse szadi = 64 then () else
-                    raise ERR "gen_smt_store_v1" "address type other than 32 or 64bits cannot be handled currently: ";
-          val _ = if szci  =  8 then () else
-                    raise ERR "gen_smt_store_v1" "cell types other than 8bits cannot be handled currently: ";
-          val _ = if szi   =  8 orelse
-                     szi   = 16 orelse
-                     szi   = 32 orelse
-                     szi   = 64 then () else
-                    raise ERR "gen_smt_store_v1" "store types other than 8, 16, 32 and 64bits cannot be handled currently: ";
-
-          val z3funname = "storefun_" ^ (Int.toString szadi) ^
-                                 "_" ^ (Int.toString szci) ^
-                                 "_" ^ (Int.toString szi);
-
-          val storeval = gen_smtlib_expr z3funname [valm, valad, valv] (snd valm);
-  in
-    storeval
-  end;
-
-(*
-fun problem_exp s = raise ERR "some problem" s;
-val (szadi, szci, szi) = (64,8,32);
-val valm = ("mem1", SMTTY_MEM (szadi, szci));
-val valad = ("mem_ad1", SMTTY_BV szadi);
-val valv = ("mem_v1", SMTTY_BV szi);
-*)
-fun gen_smt_load_v2 valm valad (szadi, szci, szi) =
-  let
-          fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
-          fun gen_addr_val i = ("(bvadd " ^ (fst valad) ^ " " ^ (gen_addr_const i) ^ ")", SMTTY_BV szadi);
-	  
-          val selects = List.tabulate (szi div 8, fn i => gen_smtlib_expr "select" [valm, gen_addr_val i] (SMTTY_BV szci));
-	  (* TODO: other endianness can be easily implemented here *)
-	  val loadval = gen_smtlib_expr "concat" (rev selects) (SMTTY_BV szi);
-  in
-    loadval
-  end;
-
-fun gen_smt_store_v2 valm valad valv (szadi, szci, szi) =
-  let
-          fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
-          fun gen_addr_val i = ("(bvadd " ^ (fst valad) ^ " " ^ (gen_addr_const i) ^ ")", SMTTY_BV szadi);
-
-          fun gen_extract_val i = ("((_ extract "^(Int.toString ((i+1)*szci-1))^" "^(Int.toString (i*szci))^") " ^ (fst valv) ^ ")", SMTTY_BV szci);
-
-          fun gen_store a i = gen_smtlib_expr "store" [a, gen_addr_val i, gen_extract_val i] (snd valm);
-	  val idxs = List.tabulate (szi div 8, I);
-	  
-	  (* TODO: other endianness can be easily implemented here *)
-          val storeval = List.foldl (fn (i,a) => gen_store a i) valm (rev idxs);
-  in
-    storeval
-  end;
 
 val export_loadstore_asfunction = true;
 val export_preprocessing = true;
@@ -292,9 +187,9 @@ val export_abbreviation_from_query = true;
 
 val (gen_smt_load, gen_smt_store) =
   if export_loadstore_asfunction then
-    (gen_smt_load_v1, gen_smt_store_v1)
+    (gen_smt_load_as_funcall, gen_smt_store_as_funcall)
   else
-    (gen_smt_load_v2, gen_smt_store_v2);
+    (gen_smt_load_as_exp, gen_smt_store_as_exp);
 
 val exst_empty =
  ((Redblackset.empty smtlib_exp_compare) : (string * bir_smt_type) Redblackset.set,
@@ -609,10 +504,10 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 
           val (_,stym) = valm;
           val (_,styad) = valad;
-          val _ = endi_to_smtlib stym endi;
+          val smt_endi = endi_to_smtlib stym endi;
 
           val (styad_bvt, styc_bvt) = case stym of
-                    SMTTY_MEM (ad, c) => (ad, c)
+                    SMTTY_ARR (ad, c) => (ad, c)
                   | _ => problem exp "memory must be of memory type: ";
           val () = if styad = (SMTTY_BV styad_bvt) then () else
                     problem exp "address type doesn't match memory address type: ";
@@ -621,7 +516,7 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val szci  = styc_bvt;
           val szi  = (size_of_bir_immtype_t) sz;
 
-	  val loadval = gen_smt_load valm valad (szadi, szci, szi)
+	  val loadval = gen_smt_load smt_endi valm valad (szadi, szci, szi)
                         handle _ => problem exp "could not generate smt load expression";
 
 	  val (exst3, v_var) =
@@ -651,10 +546,10 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val (_,stym) = valm;
           val (_,styad) = valad;
           val (_,styv) = valv;
-          val () = endi_to_smtlib stym endi;
+          val smt_endi = endi_to_smtlib stym endi;
 
           val (styad_bvt, styc_bvt) = case stym of
-                    SMTTY_MEM (ad, c) => (ad, c)
+                    SMTTY_ARR (ad, c) => (ad, c)
                   | _ => problem exp "memory must be of memory type: ";
           val _ = if styad = (SMTTY_BV styad_bvt) then () else
                     problem exp "address type doesn't match memory address type: ";
@@ -666,7 +561,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
                   | _ => problem exp "can only write bitvectors to memory: ";
           val szi = styv_bvt;
 
-          val storeval = gen_smt_store valm valad valv (szadi, szci, szi)
+          val storeval = gen_smt_store smt_endi valm valad valv (szadi, szci, szi)
                          handle _ => problem exp "could not generate smt store expression";
 
 	  val (exst4, m_var) =
