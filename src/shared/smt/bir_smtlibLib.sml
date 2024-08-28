@@ -171,11 +171,11 @@ in
       problem_gen_sty "uop_to_smtlib" uop sty
     end;
 
-  fun endi_to_smtlib sty endi =
+  fun endi_to_smtlib endi (szci, szi) =
     if is_BEnd_LittleEndian endi then SMTMEM_LittleEndian
     else if is_BEnd_BigEndian endi then SMTMEM_BigEndian
-    else if is_BEnd_NoEndian endi then SMTMEM_NoEndian
-    else problem_gen_sty "endi_to_smtlib" endi sty;
+    else if is_BEnd_NoEndian endi andalso szci = szi then SMTMEM_NoEndian
+    else problem_gen "endi_to_smtlib" endi ("cannot convert endianness ("^ Int.toString szci ^", "^ Int.toString szi ^")");
 
 
 val export_loadstore_asfunction = true;
@@ -504,7 +504,6 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 
           val (_,stym) = valm;
           val (_,styad) = valad;
-          val smt_endi = endi_to_smtlib stym endi;
 
           val (styad_bvt, styc_bvt) = case stym of
                     SMTTY_ARR (ad, c) => (ad, c)
@@ -515,8 +514,10 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val szadi = styad_bvt;
           val szci  = styc_bvt;
           val szi  = (size_of_bir_immtype_t) sz;
+	  
+          val smt_endi = endi_to_smtlib endi (szci, szi);
 
-	  val loadval = gen_smt_load smt_endi valm valad (szadi, szci, szi)
+	  val loadval = gen_smt_load valm valad (smt_endi, szadi, szci, szi)
                         handle _ => problem exp "could not generate smt load expression";
 
 	  val (exst3, v_var) =
@@ -546,7 +547,6 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val (_,stym) = valm;
           val (_,styad) = valad;
           val (_,styv) = valv;
-          val smt_endi = endi_to_smtlib stym endi;
 
           val (styad_bvt, styc_bvt) = case stym of
                     SMTTY_ARR (ad, c) => (ad, c)
@@ -560,8 +560,10 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
                     SMTTY_BV bvt => bvt
                   | _ => problem exp "can only write bitvectors to memory: ";
           val szi = styv_bvt;
+	  
+          val smt_endi = endi_to_smtlib endi (szci, szi);
 
-          val storeval = gen_smt_store smt_endi valm valad valv (szadi, szci, szi)
+          val storeval = gen_smt_store valm valad valv (smt_endi, szadi, szci, szi)
                          handle _ => problem exp "could not generate smt store expression";
 
 	  val (exst4, m_var) =

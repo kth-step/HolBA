@@ -249,53 +249,30 @@ querysmt_raw NONE NONE "(display (_ bv20 16))"
       SMTMEM_LittleEndian
     | SMTMEM_BigEndian
     | SMTMEM_NoEndian;
-    
-fun gen_smt_load_as_funcall endi valm valad (szadi, szci, szi) =
+
+  fun bir_smt_mem_endianness_to_string SMTMEM_LittleEndian = "LE"
+    | bir_smt_mem_endianness_to_string SMTMEM_BigEndian = "BE"
+      (* NoEndian only applies if load/store operation value size matches exactly with memory cell size *)
+    | bir_smt_mem_endianness_to_string SMTMEM_NoEndian = "NE";
+
+  val gen_smt_as_funcall_endis = [SMTMEM_LittleEndian];
+  val gen_smt_as_funcall_szadis = [32, 64];
+  val gen_smt_as_funcall_szcis = [8];
+  val gen_smt_as_funcall_szis = [8, 16, 32, 64];
+
+fun gen_smt_as_funcall_validate_input funname (endi, szadi, szci, szi) =
   let
-          (* current restrictions *)
-          val () = if endi = SMTMEM_LittleEndian then () else
-                    raise ERR "gen_smt_load_as_funcall" "endianness other than LittleEndian cannot be handled currently";
-          val () = if szadi = 32 orelse szadi = 64 then () else
-                    raise ERR "gen_smt_load_as_funcall" "address type other than 32 or 64bits cannot be handled currently";
-          val () = if szci  =  8 then () else
-                    raise ERR "gen_smt_load_as_funcall" "cell types other than 8bits cannot be handled currently";
-          val () = if szi   =  8 orelse
-                     szi   = 16 orelse
-                     szi   = 32 orelse
-                     szi   = 64 then () else
-                    raise ERR "gen_smt_load_as_funcall" "load types other than 8, 16, 32 and 64bits cannot be handled currently";
-
-          val z3funname = "loadfun_" ^ (Int.toString szadi) ^
-                                 "_" ^ (Int.toString szci) ^
-                                 "_" ^ (Int.toString szi);
-
-          val loadval = gen_smtlib_expr z3funname [valm, valad] (SMTTY_BV szi);
+          (* parameter based restrictions *)
+          val () = if List.exists (fn x => x = endi) gen_smt_as_funcall_endis then () else
+                    raise ERR funname ("unsupported endianness: " ^ bir_smt_mem_endianness_to_string endi);
+          val () = if List.exists (fn x => x = szadi) gen_smt_as_funcall_szadis then () else
+                    raise ERR funname ("unsupported memory address size: " ^ Int.toString szadi);
+          val () = if List.exists (fn x => x = szci) gen_smt_as_funcall_szcis then () else
+                    raise ERR funname ("unsupported memory cell size: " ^ Int.toString szci);
+          val () = if List.exists (fn x => x = szi) gen_smt_as_funcall_szis then () else
+                    raise ERR funname ("unsupported load/store value size: " ^ Int.toString szi);
   in
-    loadval
-  end;
-
-fun gen_smt_store_as_funcall endi valm valad valv (szadi, szci, szi) =
-  let
-          (* current restrictions *)
-          val () = if endi = SMTMEM_LittleEndian then () else
-                    raise ERR "gen_smt_store_as_funcall" "endianness other than LittleEndian cannot be handled currently";
-          val _ = if szadi = 32 orelse szadi = 64 then () else
-                    raise ERR "gen_smt_store_as_funcall" "address type other than 32 or 64bits cannot be handled currently";
-          val _ = if szci  =  8 then () else
-                    raise ERR "gen_smt_store_as_funcall" "cell types other than 8bits cannot be handled currently";
-          val _ = if szi   =  8 orelse
-                     szi   = 16 orelse
-                     szi   = 32 orelse
-                     szi   = 64 then () else
-                    raise ERR "gen_smt_store_as_funcall" "store types other than 8, 16, 32 and 64bits cannot be handled currently";
-
-          val z3funname = "storefun_" ^ (Int.toString szadi) ^
-                                 "_" ^ (Int.toString szci) ^
-                                 "_" ^ (Int.toString szi);
-
-          val storeval = gen_smtlib_expr z3funname [valm, valad, valv] (snd valm);
-  in
-    storeval
+    ()
   end;
 
 (*
@@ -305,27 +282,30 @@ val valm = ("mem1", SMTTY_ARR (szadi, szci));
 val valad = ("mem_ad1", SMTTY_BV szadi);
 val valv = ("mem_v1", SMTTY_BV szi);
 *)
-fun gen_smt_load_as_exp endi valm valad (szadi, szci, szi) =
+fun gen_smt_load_as_exp valm valad (endi, szadi, szci, szi) =
   let
-          (* current restrictions *)
-          val () = if endi = SMTMEM_LittleEndian then () else
-                    raise ERR "gen_smt_load_as_exp" "endianness other than LittleEndian cannot be handled currently";
+          val revfun =
+	    if endi = SMTMEM_LittleEndian then List.rev else
+	    if endi = SMTMEM_BigEndian then I else
+	    if endi = SMTMEM_NoEndian andalso szci = szi then I else
+            raise ERR "gen_smt_load_as_exp" "unsupported combination of endianness and memory dimension";
 
           fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
           fun gen_addr_val i = ("(bvadd " ^ (fst valad) ^ " " ^ (gen_addr_const i) ^ ")", SMTTY_BV szadi);
 	  
           val selects = List.tabulate (szi div 8, fn i => gen_smtlib_expr "select" [valm, gen_addr_val i] (SMTTY_BV szci));
-	  (* TODO: other endianness can be easily implemented here *)
-	  val loadval = gen_smtlib_expr "concat" (rev selects) (SMTTY_BV szi);
+	  val loadval = gen_smtlib_expr "concat" (revfun selects) (SMTTY_BV szi);
   in
     loadval
   end;
 
-fun gen_smt_store_as_exp endi valm valad valv (szadi, szci, szi) =
+fun gen_smt_store_as_exp valm valad valv (endi, szadi, szci, szi) =
   let
-          (* current restrictions *)
-          val () = if endi = SMTMEM_LittleEndian then () else
-                    raise ERR "gen_smt_store_as_exp" "endianness other than LittleEndian cannot be handled currently";
+          val revfun =
+	    if endi = SMTMEM_LittleEndian then List.rev else
+	    if endi = SMTMEM_BigEndian then I else
+	    if endi = SMTMEM_NoEndian andalso szci = szi then I else
+            raise ERR "gen_smt_load_as_exp" "unsupported combination of endianness and memory dimension";
 
           fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
           fun gen_addr_val i = ("(bvadd " ^ (fst valad) ^ " " ^ (gen_addr_const i) ^ ")", SMTTY_BV szadi);
@@ -335,8 +315,44 @@ fun gen_smt_store_as_exp endi valm valad valv (szadi, szci, szi) =
           fun gen_store a i = gen_smtlib_expr "store" [a, gen_addr_val i, gen_extract_val i] (snd valm);
 	  val idxs = List.tabulate (szi div 8, I);
 	  
-	  (* TODO: other endianness can be easily implemented here *)
-          val storeval = List.foldl (fn (i,a) => gen_store a i) valm (rev idxs);
+          val storeval = List.foldl (fn (i,a) => gen_store a i) valm (revfun idxs);
+  in
+    storeval
+  end;
+
+fun gen_smt_loadstore_funname opstr (endi, szadi, szci, szi) =
+  opstr ^ "fun_" ^ (bir_smt_mem_endianness_to_string endi) ^
+             "_" ^ (Int.toString szadi) ^
+             "_" ^ (Int.toString szci) ^
+             "_" ^ (Int.toString szi);
+
+fun get_opparam_endi (endi, szadi, szci, szi) = endi;
+fun get_opparam_szi (endi, szadi, szci, szi) = szi;
+
+fun gen_smt_load_as_funcall valm valad opparam =
+  if get_opparam_endi opparam = SMTMEM_NoEndian then
+    gen_smt_load_as_exp valm valad opparam
+  else
+  let
+          val _ = gen_smt_as_funcall_validate_input "gen_smt_load_as_funcall" opparam;
+
+          val z3funname = gen_smt_loadstore_funname "load" opparam;
+
+          val loadval = gen_smtlib_expr z3funname [valm, valad] (SMTTY_BV (get_opparam_szi opparam));
+  in
+    loadval
+  end;
+
+fun gen_smt_store_as_funcall valm valad valv opparam =
+  if get_opparam_endi opparam = SMTMEM_NoEndian then
+    gen_smt_store_as_exp valm valad valv opparam
+  else
+  let
+          val _ = gen_smt_as_funcall_validate_input "gen_smt_store_as_funcall" opparam;
+
+          val z3funname = gen_smt_loadstore_funname "store" opparam;
+
+          val storeval = gen_smtlib_expr z3funname [valm, valad, valv] (snd valm);
   in
     storeval
   end;
