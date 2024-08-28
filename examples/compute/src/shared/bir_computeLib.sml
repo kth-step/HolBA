@@ -259,6 +259,22 @@ let
   val embed_state_thm = time (deep_embed_term (name ^ "_state")) state_embed_env_tm;
 in REWRITE_RULE [GSYM state_embed_env_thm] embed_state_thm end;
 
+(* Deep embeds a program and all its blocks *)
+fun deep_embed_program (name : string) (cv_program_tm : term) : thm =
+let
+  (* Get the block list of the cv program *)
+  val cv_block_list_tm = dest_cv_program cv_program_tm;
+  val cv_block_tm_list = fst $ dest_list cv_block_list_tm;
+  (* Recursively deep embeds blocks, statements and expressions *)
+  val _ = print "Starting recursive deep embedding of program...\n";
+  val embed_block_thm_list = 
+    time (map_string_increasing (name ^ "_block_") deep_embed_block) cv_block_tm_list
+  val embed_program_thm = REWRITE_CONV embed_block_thm_list cv_program_tm;
+  (* Get the program with embed statements *)
+  val embed_program_tm = rhs (concl embed_program_thm);
+
+  val cv_program_def = deep_embed_term name embed_program_tm;
+in cv_program_def end
 
 
 (* Deep embedding of our programs (same as above with expressions *)
@@ -273,18 +289,7 @@ let
   val _ = print "Translating to cv_program...\n";
   val from_program_thm = time (translate_named_term bir_program_conv) program
   val cv_program = rand (rhs (concl from_program_thm));
-  (* Get the block list of the cv program *)
-  val cv_block_list_tm = dest_cv_program cv_program;
-  val cv_block_tm_list = fst $ dest_list cv_block_list_tm;
-  (* Recursively deep embeds blocks, statements and expressions *)
-  val _ = print "Starting recursive deep embedding of program...\n";
-  val embed_block_thm_list = 
-    time (map_string_increasing (program_name ^ "_block_") deep_embed_block) cv_block_tm_list
-  val embed_program_thm = REWRITE_CONV embed_block_thm_list cv_program;
-  (* Get the program with embed statements *)
-  val embed_program_tm = rhs (concl embed_program_thm);
-
-  val cv_program_def = deep_embed_term program_name embed_program_tm;
+  val cv_program_def = deep_embed_program program_name cv_program;
 in cv_program_def end;
 
 fun compute_step_cv (program_def : thm) (state_tm : term) : thm =

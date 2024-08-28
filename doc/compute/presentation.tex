@@ -1,0 +1,250 @@
+\documentclass{beamer}
+
+\usepackage[english]{babel}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+
+
+\usetheme{Madrid}
+
+\title{Fast verified computation for BIR}
+\date{August 19th 2024}
+\author{Jules~\textsc{Timmerman}}
+
+
+\begin{document}
+
+\begin{frame}{\phantom{}}
+  \maketitle
+\end{frame}
+
+\begin{frame}{Table of Contents}
+  \tableofcontents
+\end{frame}
+
+\section{Background}
+
+% TODO : ENS
+% \subsection{HOL4}
+
+\subsection{BIR}
+
+\begin{frame}[fragile]{What is BIR ?}
+  % TODO : Citation
+  \begin{itemize}
+    \item BIR : Binary Intermediate Representation
+    \item Machine independent 
+    \item Represents programs in HOL
+    \item Usually, BIR generated (lifter…)
+    % \item Statements and expressions
+  \end{itemize}
+
+  \begin{example}<2->[BIR Expression]
+    \begin{lstlisting}[language=Caml]
+      BExp_BinExp BIExp_Plus
+        (BExp_Den (BVar "r0"))
+        (BExp_Const (Imm64 1w))
+    \end{lstlisting}
+  \end{example}
+
+\end{frame}
+
+\begin{frame}{Overview of the Syntax}
+  \begin{itemize}
+    \item Expressions
+    \begin{itemize}
+      \item Constants
+      \item Variable Environment Read
+      \item Operations (Unary / Binary) 
+      \item If Then Else / Predicates
+      \item Memory Operations (Store / Load)
+    \end{itemize}
+    \item Statements
+      \begin{itemize}
+        \item Assign in environment
+        \item (Conditional) Jumps  
+      \end{itemize}
+    \item Programs / Blocks / Labels
+  \end{itemize}
+
+\end{frame}
+
+% \begin{frame}
+% \end{frame}
+
+
+\subsection{\texttt{cv\_compute}}
+
+\begin{frame}{\texttt{cv\_compute} library}
+  % TODO : cite paper cf Candle
+  \begin{itemize}
+    \item Fast computation library for \emph{ground terms}
+    \item Translate to a type called \texttt{cv}
+    \item \texttt{cv ::= Num | Pair cv cv}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Automation}
+  Manually converting to \texttt{cv} can be tedious…
+  \begin{itemize}
+    \item<2-> Automatic translation using \texttt{cv\_transLib}
+    \item<2-> Also support \emph{deep embedding} terms
+  \end{itemize}
+
+  \onslide<3->{
+    \begin{alertblock}{Limitations}
+      \begin{itemize}
+        \item Higher-order
+        \item Free variables
+      \end{itemize}
+    \end{alertblock}
+  }
+\end{frame}
+
+
+
+\section{Contribution}
+\subsection{\texttt{eval} and \texttt{compute} semantics}
+
+\begin{frame}{Motivation}
+  Why recreate two semantics ?
+  \begin{itemize}
+    \item<2-> \texttt{eval} : Easier to understand
+    \item<2-> Smaller : easier to test \texttt{cv}
+    \item<2-> Fairly close to the original
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Key differences with HolBA}
+  \begin{itemize}
+    \item Typing less enforced
+      % TODO : Check other cases
+      \begin{itemize}
+        \item Environments
+        \item If / Then / Else
+      \end{itemize}
+    \item Instead, Typing relation
+    \item Fewer operations (ex : + and bitwise \texttt{AND} for binary operations)
+  \end{itemize}
+\end{frame}
+
+
+
+\subsection{\texttt{cv} computation}
+
+% \begin{frame}{Motivation}
+%   % Fast computation
+% \end{frame}
+
+
+\begin{frame}{Alternative representation}
+  Limitation of translation\onslide<1>{…} \onslide<2->{$\Rightarrow$ Alternate Syntax}
+
+  % table with differences (mmap, env)
+  \onslide<3->{
+    \begin{center}
+    \resizebox{11cm}{!}{
+      \begin{tabular}{| c | c | c |}
+        \hline
+        Datatype & BIR & CV\\
+        \hline
+        \hline
+        Environment & \texttt{ident -> val option} & \texttt{(ident \# val) list}\\
+        \hline
+        Memory maps & \texttt{num |-> num} & \texttt{(num \# num) list}\\
+        \hline
+        Program Counter & & \\
+        State & Records & Tuples\\
+        Block & & \\
+        \hline
+      \end{tabular}
+    }
+    \end{center}
+  }
+\end{frame}
+
+
+\begin{frame}{Benchmarks}
+  % Results
+  % + conclusion about results
+  \begin{center}
+    \begin{tabular}{| c | c |     c | c | c |}
+      \hline
+      % TODO : Center vertically
+      Example & \texttt{EVAL} & \multicolumn{3}{|c|}{\texttt{cv\_compute}}\\
+      \cline{3-5}
+              & & Compute & Embedding & Translation \\
+      \hline
+      \hline
+      \cellcolor{green} Increment & 6.7 & 0.2 & 4.4 & 11.5 \\
+      \hline
+      \cellcolor{green} Mem Incr & 32.8 & 0.06 & 7.4 & 24.6 \\
+      \hline
+      \hline
+      % TODO : Measurements without translation to go on bigger scale
+      \cellcolor{red} Sum List & 0.1 & 0.2 & 0.3 + 0.2 & 106 \\
+      \hline
+      \cellcolor{orange} Jump Chain & 0.3 & 0.02\footnote{Rewrite time : 14} & 90 + 0.1 & 0.4 \\
+      \hline
+    \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Embedding for programs : expressions + statements + state
+    \item Good Results for expressions
+    \item Program stepping need some work...
+    \item Embedding for programs : Program + State
+  \end{itemize}
+  
+\end{frame}
+
+
+\begin{frame}{Some issues I faced}
+  \begin{itemize}
+    \item Low performance using \texttt{cv} initially\\
+      {$\Rightarrow$ Use \texttt{cv\_trans\_deep\_embedding}}
+    \item Weird errors regarding non \texttt{cv} type\\
+      {$\Rightarrow$ Don’t use record types}
+    \item Preconditions with \texttt{cv\_auto\_trans}\\
+      {$\Rightarrow$ Not propagated. Translate the problematic function yourself.}
+  \end{itemize}
+\end{frame}
+
+
+\section{Future Work}
+
+\begin{frame}{Implementation in HolBA}
+  Two possibilities :
+  \begin{itemize}
+    \item Keep Translation
+    \begin{itemize}
+      \item Less work
+      \item Less performance
+      \item More flexibility for datatypes in theory
+    \end{itemize}
+    \item Change HolBA types
+    \begin{itemize}
+      \item Big refactor
+      \item More performance
+      \item Less flexibility
+    \end{itemize}
+
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Future work}
+  \begin{itemize}
+    \item Program stepping performance
+    \begin{itemize}
+      \item What to embed ?
+      \item Measure without translation to \texttt{bir\_cv}
+    \end{itemize}
+    \item Program multi-stepping
+    \begin{itemize}
+      \item Embed state ?
+    \end{itemize}
+    \item Other operations (cf. binary operations / statements)
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
