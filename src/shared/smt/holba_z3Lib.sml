@@ -24,8 +24,8 @@ fun get_streams p = Unix.streamsOf p;
 
 val z3proc_bin_o = ref (NONE : string option);
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
-val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/bir_smtlibLib.z3_prelude");
-val bir_smtLib_z3_prelude_n = bir_smtLib_z3_prelude ^ "\n";
+val prelude_z3 = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/holba_z3Lib_prelude.z3");
+val prelude_z3_n = prelude_z3 ^ "\n";
 val use_stack = true;
 val debug_print = false;
 fun get_z3proc z3bin =
@@ -49,7 +49,7 @@ fun get_z3proc z3bin =
 	 let
           val (_,s_out) = get_streams p;
           (* prepare prelude and push *)
-          val () = TextIO.output (s_out, bir_smtLib_z3_prelude ^ "\n");
+          val () = TextIO.output (s_out, prelude_z3 ^ "\n");
           val () = TextIO.output (s_out, "(push)\n");
 	 in
 	  ()
@@ -81,7 +81,7 @@ fun sendreceive_query z3bin q =
    val p = get_z3proc z3bin;
    val (s_in,s_out) = get_streams p;
    val _ = if not use_stack then
-            TextIO.output (s_out, bir_smtLib_z3_prelude_n)
+            TextIO.output (s_out, prelude_z3_n)
            else ();
 
    val timer = holba_miscLib.timer_start 0;
@@ -283,11 +283,14 @@ val valad = ("mem_ad1", SMTTY_BV szadi);
 val valv = ("mem_v1", SMTTY_BV szi);
 *)
 fun gen_smt_load_as_exp valm valad (endi, szadi, szci, szi) =
+  (* special case for szci = szi *)
+  if szci = szi then
+    gen_smtlib_expr "select" [valm, valad] (SMTTY_BV szi)
+  else
   let
           val revfun =
 	    if endi = SMTMEM_LittleEndian then List.rev else
 	    if endi = SMTMEM_BigEndian then I else
-	    if endi = SMTMEM_NoEndian andalso szci = szi then I else
             raise ERR "gen_smt_load_as_exp" "unsupported combination of endianness and memory dimension";
 
           fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
@@ -300,11 +303,14 @@ fun gen_smt_load_as_exp valm valad (endi, szadi, szci, szi) =
   end;
 
 fun gen_smt_store_as_exp valm valad valv (endi, szadi, szci, szi) =
+  (* special case for szci = szi *)
+  if szci = szi then
+    gen_smtlib_expr "store" [valm, valad, valv] (snd valm)
+  else
   let
           val revfun =
 	    if endi = SMTMEM_LittleEndian then List.rev else
 	    if endi = SMTMEM_BigEndian then I else
-	    if endi = SMTMEM_NoEndian andalso szci = szi then I else
             raise ERR "gen_smt_load_as_exp" "unsupported combination of endianness and memory dimension";
 
           fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
