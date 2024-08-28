@@ -1,14 +1,17 @@
 INCLUDES = $(HOLBADIR)/examples/compute/src/theory \
- $(HOLBADIR)/examples/compute/src/shared \
- $(HOLBADIR)/examples/compute/examples/sum_list/cv
+ $(HOLBADIR)/examples/compute/src/shared
 
-all: $(DEFAULT_TARGETS) test-sum-list.exe
+all: $(DEFAULT_TARGETS) test-sum-list.exe test-cv-sum-list.exe
 .PHONY: all
 
 test-sum-list.exe: test-sum-list.uo
 	$(HOLMOSMLC) -o $@ $<
 
-test: test-sum-list.exe
-	./test-sum-list.exe
+test-cv-sum-list.exe: test-cv-sum-list.uo
+	$(HOLMOSMLC) -o $@ $<
 
-EXTRA_CLEANS = test-sum-list.exe
+test: test-sum-list.exe test-cv-sum-list.exe
+	./test-sum-list.exe
+	./test-cv-sum-list.exe
+
+EXTRA_CLEANS = test-sum-list.exe test-cv-sum-list.exe
