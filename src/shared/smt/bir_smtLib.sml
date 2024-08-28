@@ -52,7 +52,7 @@ in
  fun birsmt_check_unsat bexp =
   let
     val exst = export_bexp bexp exst_empty;
-    val result = querysmt NONE (exst_to_querysmt exst);
+    val result = querysmt_checksat NONE (querysmt_mk_q (exst_to_querysmt exst));
 
     val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
             raise ERR "bir_smt_check_unsat" "smt solver couldn't determine satisfiability"

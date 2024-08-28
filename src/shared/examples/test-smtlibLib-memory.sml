@@ -4,6 +4,7 @@ open bir_immSyntax;
 
 open bslSyntax;
 
+open holba_z3Lib;
 open bir_smtlibLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
@@ -152,7 +153,7 @@ val results = List.map (fn (name, z3bin_o, exst, expected) =>
 
       (* check with timeout, because these test cases might cause excessive runtime or non-termination *)
       val timer = holba_miscLib.timer_start 0;
-      val result = querysmt_gen z3bin_o timeout_o (exst_to_querysmt exst);
+      val result = querysmt_checksat_gen z3bin_o timeout_o (querysmt_mk_q (exst_to_querysmt exst));
       val _ = holba_miscLib.timer_stop
         (fn delta_s => print ("  took " ^ delta_s ^ "\n")) timer;
 

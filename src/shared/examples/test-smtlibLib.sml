@@ -1,6 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open bslSyntax;
 
+open holba_z3Lib;
 open bir_smtlibLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
@@ -32,7 +33,7 @@ val varlist = Redblackset.listItems vars;
 
 val _ = print "Testing with z3\n";
 
-val result = querysmt NONE (exst_to_querysmt exst);
+val result = querysmt_checksat NONE (querysmt_mk_q (exst_to_querysmt exst));
 
 val _ = if result = BirSmtUnsat then () else
         raise Fail "Unexpected result. Should be unsat.";
