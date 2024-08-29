@@ -18,13 +18,21 @@ val z3bin = "/home/andreas/data/hol/HolBA_opt/z3-4.8.4/bin/z3";
 fun openz3 z3bin = 
   (Unix.execute (z3bin, ["-in"])) : (TextIO.instream, TextIO.outstream) Unix.proc;
 
+(*
+val z3wrap = "/home/andreas/data/hol/HolBA_symbexec/src/shared/smt/z3_wrapper.py";
+val prelude_path = "/home/andreas/data/hol/HolBA_symbexec/src/shared/smt/holba_z3Lib_prelude.z3";
+*)
+fun openz3wrap z3wrap prelude_path = 
+  (Unix.execute (z3wrap, [prelude_path, "loop"])) : (TextIO.instream, TextIO.outstream) Unix.proc;
+
 fun endmeexit p = Unix.fromStatus (Unix.reap p);
 
 fun get_streams p = Unix.streamsOf p;
 
 val z3proc_bin_o = ref (NONE : string option);
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
-val prelude_z3 = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/holba_z3Lib_prelude.z3");
+val prelude_z3_path = holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/holba_z3Lib_prelude.z3";
+val prelude_z3 = read_from_file prelude_z3_path;
 val prelude_z3_n = prelude_z3 ^ "\n";
 val use_stack = true;
 val debug_print = false;
@@ -58,6 +66,25 @@ fun get_z3proc z3bin =
   in
     p
   end;
+
+val z3wrapproc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
+fun get_z3wrapproc () =
+  let
+   val z3wrapproc_ = !z3wrapproc_o;
+   val p = if isSome z3wrapproc_ then valOf z3wrapproc_ else
+      let
+        val z3wrap = case OS.Process.getEnv "HOL4_Z3_WRAPPED_EXECUTABLE" of
+           SOME x => x
+         | NONE => raise ERR "get_z3wrapproc" "variable HOL4_Z3_WRAPPED_EXECUTABLE not defined";
+        val _ = if not debug_print then () else
+	        print ("starting: " ^ z3wrap ^ "\n");
+        val p = openz3wrap z3wrap prelude_z3_path;
+      in (z3wrapproc_o := SOME p; p) end;
+  in
+    p
+  end;
+
+(* =========================================================== *)
 
 fun inputLines_until m ins acc =
   let
@@ -102,6 +129,34 @@ fun sendreceive_query z3bin q =
  in
    out_lines
  end;
+
+fun sendreceive_wrap_query q =
+ let
+   val p = get_z3wrapproc ();
+   val (s_in,s_out) = get_streams p;
+
+   val q_fixed = String.concat (List.map (fn c => if c = #"\n" then "\\n" else str c) (String.explode q));
+   val _ = if not debug_print then () else
+           (print "sending: "; print q_fixed; print "\n");
+
+   val timer = holba_miscLib.timer_start 0;
+   val z3wrap_done_marker = "z3_wrapper query done";
+   val () = TextIO.output (s_out, q_fixed ^ "\n");
+   val out_lines = inputLines_until (z3wrap_done_marker ^ "\n") s_in [];
+   val _ = if debug_print then holba_miscLib.timer_stop
+     (fn delta_s => print ("  wrapped query took " ^ delta_s ^ "\n")) timer else ();
+
+   val _ = if not debug_print then () else
+           (map print out_lines; print "\n\n");
+ in
+   out_lines
+ end;
+(*
+  val q = "(declare-const x (_ BitVec 8))\n(assert (= x #xFF))\n";
+  val q = "(declare-const x (_ BitVec 8))\n(assert (= x #xAA))\n(assert (= x #xFF))\n";
+  
+  sendreceive_wrap_query q;
+*)
 (* =========================================================== *)
 
   datatype bir_smt_result =
@@ -134,6 +189,9 @@ fun sendreceive_query z3bin q =
         out_lines
       end;
 
+  fun querysmt_prepare_getmodel z3bin_o =
+    querysmt_raw z3bin_o NONE "(set-option :model.compact false)\n";
+
 (*
 querysmt_raw NONE NONE "(simplify ((_ extract 3 2) #xFC))";
 
@@ -154,6 +212,24 @@ querysmt_raw NONE NONE "(display (_ bv20 16))"
 	   map print out_lines;
 	   print "\n============================\n";
 	   raise ERR "querysmt_parse_checksat" "unknown output from z3");
+
+  fun querysmt_parse_getmodel out_lines =
+        if hd out_lines = "sat\n" then
+	  let
+	    val model_lines = tl out_lines;
+	    val model_lines_fix = map (fn line => if (hd o rev o explode) line = #"\n" then (implode o rev o tl o rev o explode) line else line) model_lines;
+	  in
+	    (BirSmtSat, model_lines_fix)
+	  end
+        else if hd out_lines = "unsat\n" then
+	  (BirSmtUnsat, [])
+        else if hd out_lines = "unknown\n" then
+	  (BirSmtUnknown, [])
+        else
+	  (print "\n============================\n";
+	   map print out_lines;
+	   print "\n============================\n";
+	   raise ERR "querysmt_parse_getmodel" "unknown output from z3");
 
   (* https://rise4fun.com/z3/tutorial *)
   (*
@@ -182,13 +258,23 @@ querysmt_raw NONE NONE "(display (_ bv20 16))"
   val q = "(check-sat)\n";
 
   val result = querysmt_parse_checksat (querysmt_raw NONE NONE q);
+  val result = (querysmt_raw NONE NONE (q^"(get-model)\n"));
   *)
 
   fun querysmt_checksat_gen z3bin_o timeout_o q =
         querysmt_parse_checksat (querysmt_raw z3bin_o timeout_o (q ^ "(check-sat)\n"));
   val querysmt_checksat = querysmt_checksat_gen NONE;
   
-  (* TODO: add querysmt_getmodel *)
+  fun querysmt_getmodel q =
+        querysmt_parse_getmodel (sendreceive_wrap_query q);
+
+  (*
+  val q = "(declare-const x (_ BitVec 8))\n(assert (= x #xFF))\n";
+  val q = "(declare-const x (_ BitVec 8))\n(assert (= x #xAA))\n(assert (= x #xFF))\n";
+
+  querysmt_checksat NONE q
+  querysmt_getmodel q
+  *)
 
 (* ------------------------------------------------------------------------ *)
 
@@ -387,6 +473,7 @@ fun gen_smt_store_as_funcall valm valad valv opparam =
                          [("(= x #xFF)", SMTTY_Bool), ("(= x #xAA)", SMTTY_Bool)]);
 
   querysmt_checksat NONE q
+  querysmt_getmodel q
   *)
 
 end (* local *)

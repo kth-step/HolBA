@@ -657,7 +657,20 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
       exst
      end);
 
-(* TODO: add a model importer *)
+local
+  (* TODO: need to add conversion from word to bir: values are constant bitvector/imm or constant array/memory *)
+  (* TODO: also need variable name conversion, holv_ are going to be words, birv_ would be bir constant expressions *)
+  fun modellines_to_pairs [] acc = acc
+    | modellines_to_pairs [_] _ = raise ERR "modellines_to_pairs" "the returned model does not have an even number of lines"
+    | modellines_to_pairs (vname::holterm::lines) acc =
+        modellines_to_pairs lines ((vname, Parse.Term [QUOTE holterm])::acc);
+  open wordsSyntax;
+  open finite_mapSyntax;
+in
+  fun smtmodel_to_wordfmap model =
+    rev (modellines_to_pairs model []);
+  (*fun smtmodel_to_bexp model = ;*)
+end
 
 end (* local *)
 

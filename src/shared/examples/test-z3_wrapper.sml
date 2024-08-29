@@ -93,6 +93,29 @@ in
   end;
 end;
 
+(*
+val use_holsmt = true;
+val name = "simple addition";
+val query = 
+   ``
+     ((x:word32) + y = 10w)
+   ``;
+val name = "simple contradiction";
+val query = 
+   ``
+     ((x:word32) + y = 10w) /\
+     ((x:word32) + y = 11w)
+   ``;
+
+val use_holsmt = false;
+open bslSyntax;
+val name = "simple addition bir";
+val query = beq (bplus (bden (bvarimm32 "x"), bden (bvarimm32 "y")), bconstii 32 10);
+
+val name = "simple contradiction bir";
+val query = band (beq (bplus (bden (bvarimm32 "x"), bden (bvarimm32 "y")), bconstii 32 10),
+                  beq (bplus (bden (bvarimm32 "x"), bden (bvarimm32 "y")), bconstii 32 11));
+*)
 val _ = List.map (fn (name, query) =>
     let
       val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");

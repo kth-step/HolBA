@@ -182,11 +182,28 @@ fun bir_smt_set_trace use_holsmt =
   else
     (fn _ => ());
 
+(* TODO: should not be operating on word expressions in this library, just bir expressions *)
 fun bir_smt_get_model use_holsmt =
   if use_holsmt then
     Z3_SAT_modelLib.Z3_GET_SAT_MODEL
   else
-    raise ERR "bir_smt_get_model" "not implemented";
+    let
+      open holba_z3Lib;
+      open bir_smtlibLib;
+    in
+    (fn bexp =>
+    let
+      val _ = if type_of bexp = bir_expSyntax.bir_exp_t_ty then () else
+              raise ERR "bir_smt_get_model" "need a bir expression";
+      val exst = export_bexp bexp exst_empty;
+      val q = querysmt_mk_q (exst_to_querysmt exst);
+      val (res, model) = querysmt_getmodel q;
+      val _ = if res = BirSmtSat then () else
+              raise ERR "bir_smt_get_model" "unsatisfiable";
+    in
+      smtmodel_to_wordfmap model
+    end)
+    end;
 
 (* ======================================= *)
 
