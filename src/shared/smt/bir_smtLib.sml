@@ -48,6 +48,7 @@ fun holsmt_bir_check_unsat bexp =
 
 local
  open bir_smtlibLib;
+ open holba_z3Lib;
 in
  fun birsmt_check_unsat bexp =
   let
