@@ -16,6 +16,7 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
+open bir_predLib;
 open bir_smtLib;
 
 open bir_symbTheory birs_auxTheory;
@@ -55,12 +56,17 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
-Definition bspec_chacha_ivsetup_pre_def:
- bspec_chacha_ivsetup_pre (pre_x15:word64) : bir_exp_t =
-  BExp_BinPred
+val bspec_chacha_pre_tm = bslSyntax.bandl [
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
+  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15))
+    (BExp_Const (Imm64 pre_x15))``
+];
+
+Definition bspec_chacha_ivsetup_pre_def:
+ bspec_chacha_ivsetup_pre (pre_x15:word64) : bir_exp_t =
+  ^bspec_chacha_pre_tm
 End
 
 val _ = export_theory ();
