@@ -34,7 +34,6 @@ val _ = wordsLib.guess_lengths()
 (* Load *)
 (********)
 
-(* TODO: Can use same as for ARMv8? *)
 Definition riscv_mem_load_half_def:
   riscv_mem_load_half (m : (word64 -> word8)) (a:word64) =
   ((m (a + 1w) @@ m a):word16)
@@ -120,7 +119,6 @@ QED
 (* Store  *)
 (**********)
 
-(* TODO: Can use same as for ARMv8? *)
 Definition riscv_mem_store_dword_def:
   riscv_mem_store_dword (a:word64) (w:word64) (mmap : (word64 -> word8)) =
    (a + 7w =+ (63 >< 56) w)
@@ -146,12 +144,6 @@ Definition riscv_mem_store_half_def:
    (a + 1w =+ (15 >< 8)  w)
   ((a + 0w =+ (7  >< 0)  w) mmap)
 End
-(*
-Definition riscv_mem_store_byte_def:
-  riscv_mem_store_byte (a:word64) w (mmap : (word64 -> word8)) =
-  ((a + 0w =+ (7  >< 0)  w) mmap)
-End
-*)
 
 (* The below theorem are for rewriting the memory representations
  * in the step theorem produced by the lifter.
@@ -276,7 +268,6 @@ let
      mem_word_rev_simp,
      mem_dword_rev_simp]);
 
-  val thm0 = GSYM mem_store_byte_def
   fun mk_thm_GEN thm =
     REWRITE_RULE [GSYM mem_store_byte_def] (GSYM thm)
 
@@ -821,7 +812,6 @@ Theorem riscv_extra_LIFTS = LIST_CONJ [
     riscv_is_lifted_imm_exp_GEU]
 
 
-(* TODO: What should be here? *)
 Theorem riscv_CHANGE_INTERVAL_THMS = LIST_CONJ [riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL,
              riscv_LIFT_STORE_WORD_CHANGE_INTERVAL,
              riscv_LIFT_STORE_HALF_CHANGE_INTERVAL,

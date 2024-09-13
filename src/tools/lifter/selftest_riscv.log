@@ -330,7 +330,7 @@ SW x14, 8(x2): 00E12423 @ 0x10030 - OK
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
-SW x0, 0(t2): 0003A023 @ 0x10030 - OK
+SW x0, 0(x7): 0003A023 @ 0x10030 - OK
  []
 |- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
      (0x10030w,[35w; 160w; 3w; 0w])
