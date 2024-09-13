@@ -1304,7 +1304,7 @@ fun get_patched_step_hex ms_v hex_code =
   (* Lifting an instruction *)
   (**************************)
 
-  (* Lifting single instructiions, is the main workhorse of this library.
+  (* Support for lifting single instructions constitutes the main workhorse of this library.
      The top-level interface provides a function "bir_lift_instr" that given
 
      - a memory region not to touch
