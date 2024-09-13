@@ -204,7 +204,6 @@ open bir_inst_liftingLibTypes
         mk_var ("ms1", ms_ty),
         mk_var ("ms2", ms_ty)];
 
-  (* RISC-V TODO: This changed to not loop in presence of process IDs, see if it still works... *)
      fun mk_lift_thm tm =
        GEN_ALL (QCONV (SIMP_CONV std_ss [PROTECTED_COND_RAND, Once PROTECTED_COND_RATOR])
                       (subst [ms_v |-> cond_tm] tm))
@@ -214,7 +213,7 @@ open bir_inst_liftingLibTypes
 
   in
     LIST_CONJ (
-     (mk_lift_thm mr_mem_lf_of_ms) :: (* RISC-V TODO: OK. *)
+     (mk_lift_thm mr_mem_lf_of_ms) ::
      (mk_lift_thm (rand mr_pc_lf_of_ms)) ::
      map (mk_lift_thm o rand o snd) mr_imms_lf_of_ms)
   end;
@@ -1154,8 +1153,6 @@ fun get_patched_step_hex ms_v hex_code =
   (*-------------------------------*)
   (* Combine it all, main function *)
   (*-------------------------------*)
-  (* RISC-V TODO: All seemingly OK in lifting procedure up to here, except what has been
-   * commented. *)
   (* DEBUG
 
      val (lb, ms_case_cond_t, next_thm) = el 1 sub_block_work_list
@@ -1307,7 +1304,7 @@ fun get_patched_step_hex ms_v hex_code =
   (* Lifting an instruction *)
   (**************************)
 
-  (* Lifting single instructings, is the main workhorse of this library.
+  (* Support for lifting single instructions constitutes the main workhorse of this library.
      The top-level interface provides a function "bir_lift_instr" that given
 
      - a memory region not to touch

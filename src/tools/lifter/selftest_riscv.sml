@@ -156,6 +156,9 @@ val _ = print_msg "\n";
    * memory address in x2 with offset 8 *)
   val _ = riscv_test_hex_print_asm "SW x14, 8(x2)" "00E12423";
 
+  (* Usage of the zero register: ("SW x0, 0(x7)") *)
+  val _ = riscv_test_hex_print_asm "SW x0, 0(x7)" "0003A023";
+
 (* I-format (opcode OP-IMM) *)
   val _ = riscv_test_asms [
     (* Addition by constant *)
