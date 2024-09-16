@@ -261,3 +261,7 @@ poly1305_auth(unsigned char mac[16], const unsigned char *m, size_t bytes, const
     poly1305_update(&ctx, m, bytes);
     poly1305_finish(&ctx, mac);
 }
+
+int main(void) {
+  return 0;
+}
