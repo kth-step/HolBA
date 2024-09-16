@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open wordsTheory;
 open finite_mapTheory;
 
@@ -9,7 +12,7 @@ val _ = Globals.show_types := true;
 
 (*
 (* for debugging the z3 input and output (keep the temporary files) *)
-val _ = HolBA_Library.trace := 5;
+val _ = bir_smt_set_trace use_holsmt 5;
 *)
 
 val mem1_var = mk_var ("MEM", “:word64 |-> word8”);
@@ -145,5 +148,5 @@ CONV_TAC (DEPTH_CONV wordsLib.EXTEND_EXTRACT_CONV) goal;
 (DEPTH_CONV wordsLib.EXTEND_EXTRACT_CONV) term;
 
 (*
-Z3_SAT_modelLib.Z3_GET_SAT_MODEL term
+bir_smt_get_model use_holsmt term
 *)

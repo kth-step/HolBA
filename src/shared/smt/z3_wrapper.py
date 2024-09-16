@@ -7,7 +7,7 @@ from z3 import *
 def model_compress_string():
     major,minor,build,rev = z3.get_version()
     result = ""
-    if major >= 4 and minor >= 8 and build >= 7:
+    if major >= 4 and ((not (major == 4)) or minor >= 8) and ((not (major == 4 and minor == 8)) or build >= 7):
         result = "model.compact"
     else:
         result = "model_compress"
@@ -210,9 +210,10 @@ def strip_z3_name(x):
     return len(x.split('_', maxsplit=1)) > 1 and x.split('_', maxsplit=1)[1] or x.split('_', maxsplit=1)[0]
 
 # create list of string pairs from model: (varname, holterm)
-def model_to_list(model):
+def model_to_list(model, strip_names):
     # map to pair (model variables (stripped hol name), variables value) and filter auxiliary assignments
-    assigns_pre = filter (lambda x: not ("!" in x[0]), map(lambda x: (strip_z3_name(str(x.name())), model[x]), model))
+    stripfun = strip_z3_name if strip_names else (lambda x: x)
+    assigns_pre = filter (lambda x: not ("!" in x[0]), map(lambda x: (stripfun(str(x.name())), model[x]), model))
 
     # partition, sort individually, put together again
     assign_ast = []
@@ -234,21 +235,79 @@ def model_to_list(model):
     # return the collected hol assignments
     return sml_list
 
+def print_model_for_holba(model, strip_names = True):
+    hol_list = model_to_list(model, strip_names)
+
+    for (varname, term) in hol_list:
+        print(varname)
+        print(term)
+        #print("on stdout: {}".format(line), file=sys.stderr)
+
+def send_query(s):
+    r = s.check()
+    model = []
+    if r == sat:
+        model = s.model()
+    return (r, model)
+
+s = Solver()
+
+# from z3_wrapper import *
+# load_prelude("holba_z3Lib_prelude.z3")
+# q = "(declare-const x (_ BitVec 8))\n(assert (= x #xFF))\n"
+# preluded_query(q)
+def load_prelude(filename):
+    with open(filename, "r") as f:
+        pre = f.read()
+    s.from_string(pre)
+    s.push()
+
+def preluded_query(q):
+    s.from_string(q)
+    (r, model) = send_query(s)
+    s.pop()
+    s.push()
+    if r == unsat:
+        print("unsat")
+    elif r == unknown:
+        print("unknown")
+    else:
+        print("sat")
+        print_model_for_holba(model, strip_names = False)
+
+# python3 z3_wrapper.py holba_z3Lib_prelude.z3 loop
 # script entry point
 def main():
-    use_files = len(sys.argv) > 1
-    s = Solver()
+    use_files = False
+    preluded_loop = False
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+        if len(sys.argv) > 2:
+            preluded_loop = True
+        else:
+            use_files = True
+
+    if preluded_loop:
+        load_prelude(filename)
+        while True:
+            #print("waiting for input", file=sys.stderr)
+            q = sys.stdin.readline().replace("\\n", "\n")
+            #print("sending input to query", file=sys.stderr)
+            preluded_query(q)
+            print("z3_wrapper query done", flush=True)
+            
+        exit(-1)
 
     do_debug = False
     if do_debug:
         debug_input(s)
     elif use_files:
-        s.from_file(sys.argv[1])
+        s.from_file(filename)
     else:
         stdin = "\n".join(sys.stdin.readlines())
         s.from_string(stdin)
 
-    r = s.check()
+    (r, model) = send_query(s)
     if r == unsat:
         print("unsat")
         exit(0)
@@ -261,13 +320,7 @@ def main():
         print("sat")
         #print(s.model(), file=sys.stderr)
 
-    model = s.model()
-    hol_list = model_to_list(model)
-
-    for (varname, term) in hol_list:
-        print(varname)
-        print(term)
-        #print("on stdout: {}".format(line), file=sys.stderr)
+    print_model_for_holba(model)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,12 @@
 INCLUDES = $(HOLBADIR)/src/tools/exec \
-           $(HOLBADIR)/examples/tutorial/2-lift
+           $(HOLBADIR)/examples/tutorial/2-lift \
+           $(HOLBADIR)/src
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+ifdef POLY
+ifndef HOLBA_POLYML_HEAPLESS
+HOLHEAP = $(HOLBADIR)/src/holba-heap
+endif
+endif

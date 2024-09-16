@@ -1,6 +1,5 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
-           $(HOLBADIR)/src/shared/HolSmt \
            $(HOLBADIR)/src/shared/sml-simplejson
 
 all: $(DEFAULT_TARGETS)

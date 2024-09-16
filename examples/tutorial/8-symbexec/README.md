@@ -2,8 +2,9 @@
 
 ## Experiments
 
-1. See structure of `exec.sml`.
+1. See structure of `test-symbexec.sml`.
 1. Run the script as it is.
+1. The following points are outdated but one might want to revisit them later and showcase these points with the current proof-producing symbolic execution.
 1. Change initial path condition, and observe:
   * the path conditions (see contradictions for infeasible paths),
   * number of resulting symbolic states (leafs in execution tree).

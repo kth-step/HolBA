@@ -6,7 +6,7 @@ open Abbrev;
 local
   open HolKernel Parse boolLib bossLib;
   open bitTheory;
-  open birs_stepLib;
+  open birs_execLib;
   open birs_composeLib;
   open birs_driveLib;
   open birs_auxTheory;
@@ -15,7 +15,7 @@ in
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
   birs_end_lbls birs_env birs_pcond =
  let
-   val pcond_is_sat = birs_smtLib.bir_check_sat false birs_pcond;
+   val pcond_is_sat = bir_smtLib.bir_smt_check_sat false birs_pcond;
    val _ = if pcond_is_sat then () else
         raise Feedback.mk_HOL_ERR "bir_symbLib" "bir_symb_analysis" "initial pathcondition is not satisfiable; it seems to contain a contradiction";
    val birs_state_init = ``<|
@@ -107,7 +107,7 @@ fun bir_symb_analysis_thm bir_prog_def
     bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
     birs_env_tm birs_pcond_tm;
    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
-   val symb_analysis_fix_thm = REWRITE_RULE [GSYM birs_env_thm] symb_analysis_thm;
+   val symb_analysis_fix_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
  in
    (bsysprecond_thm, symb_analysis_fix_thm)
  end (* let *)
@@ -121,7 +121,6 @@ local
   open bir_programSyntax bir_program_labelsTheory;
   open bir_immTheory bir_valuesTheory bir_expTheory;
   open bir_tsTheory bir_bool_expTheory bir_programTheory;
-  open bir_compositionLib;
   open bir_lifting_machinesTheory;
   open bir_typing_expTheory;
   open bir_htTheory;
@@ -133,7 +132,7 @@ local
   open symb_prop_transferTheory;
   open jgmt_rel_bir_contTheory;
   open bir_symbTheory;
-  open birs_stepLib;
+  open birsSyntax;
   open bir_symb_sound_coreTheory;
   open symb_recordTheory;
   open symb_interpretTheory;

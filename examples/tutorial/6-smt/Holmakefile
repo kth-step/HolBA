@@ -8,9 +8,15 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
-           $(HOLBADIR)/examples/tutorial/support \
            $(HOLBADIR)/examples/tutorial/4-bir-to-arm \
-           $(HOLBADIR)/examples/tutorial/5-wp
+           $(HOLBADIR)/examples/tutorial/5-wp \
+           $(HOLBADIR)/src
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+ifdef POLY
+ifndef HOLBA_POLYML_HEAPLESS
+HOLHEAP = $(HOLBADIR)/src/holba-heap
+endif
+endif

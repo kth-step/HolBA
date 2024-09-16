@@ -16,8 +16,7 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
-open birs_smtLib;
+open bir_smtLib;
 
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;
@@ -185,6 +184,16 @@ Definition riscv_isqrt_post_3_ret_def:
    pre_x13 < pre_x14)
 End
 
+Definition riscv_isqrt_post_3_def:
+ riscv_isqrt_post_3 (pre_x10:word64) (pre_x13:word64)
+  (pre_x14:word64) (m:riscv_state) : bool =
+  if m.c_PC m.procID = isqrt_end_addr_3_loop then
+    riscv_isqrt_post_3_loop pre_x10 pre_x13 pre_x14 m
+  else if m.c_PC m.procID = isqrt_end_addr_3_ret then
+    riscv_isqrt_post_3_ret pre_x10 pre_x13 pre_x14 m
+  else F
+End
+
 (* --------------- *)
 (* HL BIR contract *)
 (* --------------- *)
@@ -350,5 +359,65 @@ Definition bspec_isqrt_post_3_ret_def:
  bspec_isqrt_post_3_ret (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
   ^bspec_isqrt_post_3_ret_tm
 End
+
+(* ------------------------------------- *)
+(* Connecting RISC-V and BSPEC contracts *)
+(* ------------------------------------- *)
+
+Theorem isqrt_riscv_pre_1_imp_bspec_pre_1_thm:
+ bir_pre_riscv_to_bir
+  (riscv_isqrt_pre_1 pre_x10)
+  (bspec_isqrt_pre_1 pre_x10)
+Proof
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_1_def,bspec_isqrt_pre_1_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
+QED
+
+Theorem isqrt_riscv_post_1_imp_bspec_post_1_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_1 pre_x10)
+   (\l. bspec_isqrt_post_1 pre_x10)
+   ls
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_pre_2_imp_bspec_pre_2_thm:
+ bir_pre_riscv_to_bir
+  (riscv_isqrt_pre_2 pre_x13 pre_x15)
+  (bspec_isqrt_pre_2 pre_x13 pre_x15)
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_post_2_imp_bspec_post_2_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_2 pre_x13 pre_x15)
+   (\l. bspec_isqrt_post_2 pre_x13 pre_x15)
+   ls
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_pre_3_imp_bspec_pre_3_thm:
+ bir_pre_riscv_to_bir
+  (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
+  (bspec_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
+Proof
+ cheat
+QED
+
+Theorem isqrt_riscv_post_3_imp_bspec_post_3_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_isqrt_post_3 pre_x10 pre_x13 pre_x14)
+   (\l. if l = BL_Address (Imm64 0x10490w) then bspec_isqrt_post_3_loop pre_x10 pre_x13 pre_x14
+     else if l = BL_Address (Imm64 0x104A0w) then bspec_isqrt_post_3_ret pre_x10 pre_x13 pre_x14
+     else bir_exp_false)
+   ls
+Proof
+ cheat
+QED
 
 val _ = export_theory ();

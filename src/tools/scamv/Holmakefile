@@ -1,6 +1,7 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/shared/smt \
            $(HOLBADIR)/src/theory/tools/lifter \
            $(HOLBADIR)/src/tools/scamv/persistence
 

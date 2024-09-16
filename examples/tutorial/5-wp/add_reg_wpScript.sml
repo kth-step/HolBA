@@ -256,7 +256,7 @@ val contract_0_imp =
 
 (* Display the model *)
 val _ =
-  Z3_SAT_modelLib.Z3_GET_SAT_MODEL (
+  bir_smt_get_model true (
     bir2bool (
       bimp(contract_0_pre, bir_add_reg_mem_wp)
     )

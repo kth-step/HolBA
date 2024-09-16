@@ -12,7 +12,7 @@ val _ = new_theory "aes_symb_exec";
 (* prepare program lookups     *)
 (* --------------------------- *)
 
-val bir_lift_thm = birs_auxLib.patch_lifter_thm bir_aes_riscv_lift_THM;
+val bir_lift_thm = bir_aes_riscv_lift_THM;
 val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 
 (* --------------------------- *)

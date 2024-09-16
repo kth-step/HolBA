@@ -1,5 +1,8 @@
-structure bir_backlifterLib =
+structure bir_backlifterLib :> bir_backlifterLib =
 struct
+
+open Abbrev;
+
 (* For debugging add_reg example:
   val bir_ct = bir_add_reg_ct;
   val prog_bin = ``bir_add_reg_progbin``;
@@ -42,16 +45,15 @@ open bir_inst_liftingHelpersLib;
     open bir_compositionLib;
   in
 
-fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm = 
+fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm = 
   let
     val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
 
     val bir_prog = get_bir_cont_prog bir_ct
     val l =
       word_from_address (get_bir_cont_start_label bir_ct)
-    val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set (get_bir_cont_ilist bir_ct)))
-    (* TODO: Note that the proof below assumes ls is a singleton *)
-    val ls_sing = el 1 (pred_setSyntax.strip_set ls)
+    val ls_set = get_bir_cont_ilist bir_ct
+    val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set ls_set))
 
     val add_lift_thm =
       ISPECL [bir_prog,
@@ -96,10 +98,11 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 
       (* 6. Provide the BIR triple in the requisite format *)
       ASSUME_TAC bir_ct >>
-      `{BL_Address (Imm64 ml') | ml' IN ^ls} = {BL_Address (Imm64 ^ls_sing)}` suffices_by (
+      `{BL_Address (Imm64 ml') | ml' IN ^ls} = ^ls_set` suffices_by (
               FULL_SIMP_TAC std_ss []
       ) >>
-      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION]
+      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION] >>
+      METIS_TAC []
     ]
     );
 
@@ -107,16 +110,15 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
     arm8_contract_thm
   end;
 
-  fun get_riscv_contract_sing bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+  fun get_riscv_contract bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
   let
     val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
 
     val bir_prog = get_bir_cont_prog bir_ct
     val l =
       word_from_address (get_bir_cont_start_label bir_ct)
-    val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set (get_bir_cont_ilist bir_ct)))
-    (* TODO: Note that the proof below assumes ls is a singleton *)
-    val ls_sing = el 1 (pred_setSyntax.strip_set ls)
+    val ls_set = get_bir_cont_ilist bir_ct
+    val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set ls_set))
 
     val add_lift_thm =
       ISPECL [bir_prog,
@@ -128,7 +130,7 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 	      get_bir_cont_pre bir_ct,
 	      get_bir_cont_post bir_ct] riscv_lift_contract_thm;
 
-    (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
+    (* Prove the RISC-V triple by supplying the antecedents of lift_contract_thm *)
     val riscv_contract_thm = prove(
       ``riscv_cont ^prog_bin ^l ^ls ^riscv_pre ^riscv_post``,
 
@@ -160,10 +162,11 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 
       (* 6. Provide the BIR triple in the requisite format *)
       ASSUME_TAC bir_ct >>
-      `{BL_Address (Imm64 ml') | ml' IN ^ls} = {BL_Address (Imm64 ^ls_sing)}` suffices_by (
+      `{BL_Address (Imm64 ml') | ml' IN ^ls} = ^ls_set` suffices_by (
               FULL_SIMP_TAC std_ss []
       ) >>
-      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION]
+      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION] >>
+      METIS_TAC []
     ]
     );
 

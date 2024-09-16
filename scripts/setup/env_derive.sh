@@ -65,7 +65,7 @@ if [[ ! -z "${HOLBA_Z3_DIR}" ]]; then
     export PATH="${HOLBA_Z3_DIR}/bin:${PATH}"
 
     export HOL4_Z3_EXECUTABLE="${HOLBA_Z3_DIR}/bin/z3"
-    export HOL4_Z3_WRAPPED_EXECUTABLE="${HOLBA_DIR}/src/shared/z3_wrapper.py"
+    export HOL4_Z3_WRAPPED_EXECUTABLE="${HOLBA_DIR}/src/shared/smt/z3_wrapper.py"
 
     echo "Using PYTHONPATH=${PYTHONPATH}"
     echo "Using LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"

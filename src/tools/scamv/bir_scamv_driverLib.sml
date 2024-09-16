@@ -28,6 +28,9 @@ open visited_statesLib;
 open bir_utilLib;
 open scamv_trainingLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
   (* error handling *)
   val libname  = "bir_scamv_driverLib"
   val ERR      = Feedback.mk_HOL_ERR libname
@@ -235,7 +238,7 @@ val t = hd vars
       val varnames_to_new = List.map (fn (a,b) => ((fst o dest_var) a, (fst o dest_var) b)) vars_to_new;
 
       val word_relation_newnames = subst (List.map (|->) vars_to_new) word_relation;
-      val model_newnames = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation_newnames;
+      val model_newnames = bir_smt_get_model use_holsmt word_relation_newnames;
       val model = List.map (rev_model_name varnames_to_new) model_newnames;
       val _ = min_verb 4 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 

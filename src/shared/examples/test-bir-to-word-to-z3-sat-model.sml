@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open bir_exp_to_wordsLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
@@ -8,7 +11,7 @@ val _ = Globals.show_types := true;
 
 (*
 (* for debugging the z3 input and output (keep the temporary files) *)
-val _ = HolBA_Library.trace := 5;
+val _ = bir_smt_set_trace use_holsmt 5;
 *)
 
 val bir_exprs = [
@@ -68,7 +71,8 @@ fun produce_sat_thm term model =
 val model_eq = option_eq (list_eq (pair_eq (fn (a:string) => fn (b:string) => a=b) identical));
 
 (*
-val (name, bir_exp, expected_model_o, expected_sat_o) = List.nth(bir_exprs, 2);
+val (name, bir_exp, expected_model_o, expected_sat_o) = hd bir_exprs;
+val bir_exprs = tl bir_exprs;
 *)
 
 (* Print all BIR expressions as words expressions and check that they are correct. *)
@@ -78,7 +82,7 @@ val _ = List.map
       val word_exp_bool = bir2bool bir_exp;
 
       val model_o =
-        SOME (Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_exp_bool)
+        SOME (bir_smt_get_model use_holsmt word_exp_bool)
         handle _ => NONE;
 
       val sat_o =

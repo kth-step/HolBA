@@ -133,14 +133,6 @@ fun get_el_thms list_tm restr_consts =
 
 (* ------------------------------------------------------------------------- *)
 
-(* patch for lifter theorem *)
-fun patch_lifter_thm lift_thm =
-   if (List.null o hyp) lift_thm
-   then lift_thm
-   else patch_lifter_thm ((REWRITE_RULE [] o CONV_RULE (RATOR_CONV (RAND_CONV EVAL)) o (fn t => DISCH ((hd o hyp) t) t)) lift_thm);
-
-(* ------------------------------------------------------------------------- *)
-
 fun dest_block_thm block_thm =
   let
     val block_thm_tm = concl block_thm;
@@ -243,7 +235,7 @@ fun gen_lookup_functions (stmt_thms, label_mem_thms) =
 
 fun prepare_program_lookups bir_lift_thm =
 let
-  val prep_structure = Profile.profile "gen_exec_prep_thms" gen_exec_prep_thms_from_lift_thm bir_lift_thm;
+  val prep_structure = gen_exec_prep_thms_from_lift_thm bir_lift_thm;
   val (stmt_lookup_fun, l_mem_lookup_fun) = gen_lookup_functions prep_structure;
   val _ = cur_stmt_lookup_fun := stmt_lookup_fun;
   val _ = cur_l_mem_lookup_fun := l_mem_lookup_fun;

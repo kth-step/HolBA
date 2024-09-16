@@ -135,7 +135,7 @@ fun birs_strongpostcond_impl_TAC (assum_list, goal) =
     val bpost = subst tm_subst ``BPOST:bir_exp_t``;
     val bs_imp_tm = gen_birs_smt_implcond bsys1 bpre bsys2 bpost;
 
-    val imp_is_taut = birs_smtLib.bir_check_taut false bs_imp_tm;
+    val imp_is_taut = bir_smtLib.bir_smt_check_taut false bs_imp_tm;
     val oracle_thm = 
       if imp_is_taut then
         mk_oracle_thm "BIRS_TRANSF_LIB_Z3" ([], goal)

@@ -2,6 +2,9 @@ structure scamv_trainingLib =
 struct
 
 local
+  open bir_smtLib;
+  val use_holsmt = true;
+
   (* error handling *)
   val libname  = "scamv_trainingLib"
   val ERR      = Feedback.mk_HOL_ERR libname
@@ -41,7 +44,7 @@ fun compute_training_state current_full_specs current_obs_projection
 			val training_relation = mk_conj (new_word_relation, current_word_rel);
 			val _ = print ("Calling Z3 to get training state\n")
 		    in
-			(Z3_SAT_modelLib.Z3_GET_SAT_MODEL training_relation)
+			(bir_smt_get_model use_holsmt training_relation)
 			handle e => training_input_mining (tries - 1)
 		    end
 		else raise ERR "training_branch_predictor" "not enough paths";

@@ -1,7 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 open bslSyntax;
 
-open bir_smtLib;
+open holba_z3Lib;
+open bir_smtlibLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_types := true;
@@ -22,21 +23,17 @@ val exp = ``(BExp_BinPred BIExp_Equal
                (BExp_Const (Imm64 4w)))
           )``;
 
-val conds_init = [("(= birv_fr_0_countw birv_fr_1_countw)", SMTTY_Bool)];
-
-
 val _ = print "Processing expressions\n";
 
-val vars_empty = Redblackset.empty smtlib_vars_compare;
-val (conds, vars, str) = bexp_to_smtlib conds_init vars_empty exp;
+val exst = exst_add_cond exst_empty ("(= birv_fr_0_countw birv_fr_1_countw)", SMTTY_Bool);
+val exst = export_bexp exp exst;
 (*
-val vars = vars_empty;
 val varlist = Redblackset.listItems vars;
 *)
 
 val _ = print "Testing with z3\n";
 
-val result = querysmt vars ([str]@conds);
+val result = querysmt_checksat NONE (querysmt_mk_q (exst_to_querysmt exst));
 
 val _ = if result = BirSmtUnsat then () else
         raise Fail "Unexpected result. Should be unsat.";
@@ -84,7 +81,7 @@ val (exp, expected) = List.nth(exporting_exp_testcases, 0);
 *)
 val _ = List.map (fn (exp, expected) =>
   let
-    val (_, _, res) = bexp_to_smtlib [] vars_empty exp;
+    val (_, res) = bexp_to_smtlib false exst_empty exp;
     val _ = if res = expected then () else (
             print ("have: ");
             PolyML.print res;

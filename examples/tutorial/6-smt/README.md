@@ -72,7 +72,7 @@ In the output above, `/tmp/MLTEMPrXDSxg` is the SMT-LIB 2.0 translation being se
 Now, let's try to prove the transitivity of the less operator for integers.
 
 ```sml
-val LESS_TRANS = Z3_prove_or_print_model ``!m n p: int. m < n ∧ p < n ==> m < p``;
+val LESS_TRANS = bir_smt_prove_or_print_model ``!m n p: int. m < n ∧ p < n ==> m < p``;
 ```
 
 Evaluating this line will (of course) fail, and should give a counter-example:
@@ -98,7 +98,7 @@ Subtituing the given counter-example in the term that we want to prove gives: `-
 HolBA being about binary analysis, let's use the bit-vector theory by proving that `x + 1 < x` with `x` a 32-bit word.
 
 ```sml
-val INC_GREATER = Z3_prove_or_print_model ``!x: word32. x + 1w >+ x``;
+val INC_GREATER = bir_smt_prove_or_print_model ``!x: word32. x + 1w >+ x``;
 ```
 
 **Note**: `>+` is the unsigned greater-than operator.
@@ -107,7 +107,7 @@ Damn, that failed again! Z3 gives `x = 0xFFFFFFFF` as a counter-example, which i
 `2^32 - 1`, i.e. the greatest representable value for unsigned 32-bit integers. If we substitute this in our term, we get `0xFFFFFFFF + 1 > 0xFFFFFFFF` or `0x00000000 > 0x7FFFFFFF`, or `0 > INT_MAX`. As we can see, 32-bit integers being bounded, they can wrap-around, meaning that our term is simply false for words. However, we can "fix" it by imposing that x is less than `INT_MAX`:
 
 ```sml
-val INC_GREATER = Z3_prove_or_print_model ``!x: word32. x < 0xFFFFFFFFw ==> x + 1w >+ x``;
+val INC_GREATER = bir_smt_prove_or_print_model ``!x: word32. x < 0xFFFFFFFFw ==> x + 1w >+ x``;
 ```
 
 You can try using `>`, the unsigned greater-than operator. This will also fail because of a similar wrap-around problem.
@@ -130,7 +130,7 @@ Now that we have a words expression, we know how to prove it. The example in thi
 
 ### 2. Proving the Hoare triples
 
-Now that we know how to use Z3, we don't want to have to invoke it by hand for each triple. To this end, we defined a function `prove_exp_is_taut` that takes a BIR expression and prove that it is a BIR tautology. We now need to prove that it is a tautology because in the previous section we assumed well-typedness and intialization.
+Now that we know how to use Z3, we don't want to have to invoke it by hand for each triple. To this end, we defined a function `bir_smt_prove_is_taut` that takes a BIR expression and prove that it is a BIR tautology. We now need to prove that it is a tautology because in the previous section we assumed well-typedness and intialization.
 
 Open the file `tutorial_smtScript.sml` and evaluate the header (from the top of the file until `new_theory "tutorial_smt"`).
 

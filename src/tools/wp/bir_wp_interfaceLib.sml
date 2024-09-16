@@ -5,6 +5,9 @@ local
 (* TODO: Clean up in includes... *)
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 (* From tools/wp: *)
 open bir_wpLib bir_wp_expLib;
 open bir_program_no_assumeLib;
@@ -223,12 +226,12 @@ fun prove_imp_w_smt ante conseq =
     val bir_impl = bor (bnot ante, conseq)
     val w_tm = bir2bool bir_impl
   in
-    HolBA_HolSmtLib.Z3_ORACLE_PROVE w_tm
+    bir_smt_prove use_holsmt w_tm
 
     handle HOL_ERR e =>
       let
         val neg_tm = mk_neg w_tm
-        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL neg_tm
+        val model = bir_smt_get_model use_holsmt neg_tm
         val _ = print "Failed to prove the implication. Anyways, have a SAT model: ";
         val _ = PolyML.print model;
       in

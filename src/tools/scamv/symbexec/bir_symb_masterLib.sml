@@ -10,6 +10,9 @@ open bir_symb_execLib;
 
 open bir_exp_to_wordsLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 val pdecide_on = true;
 val debug_on = false;
 
@@ -30,10 +33,10 @@ fun pdecide btm =
     val _ = if debug_on then print_term wtm else ();
     val _ = if debug_on then print "\n" else ();
 
-    val taut =     ((HolBA_HolSmtLib.Z3_ORACLE_PROVE wtm; true)
+    val taut =     ((bir_smt_prove use_holsmt wtm; true)
                        handle HOL_ERR e => false);
 
-    val model = ((Z3_SAT_modelLib.Z3_GET_SAT_MODEL wtm; true)
+    val model = ((bir_smt_get_model use_holsmt wtm; true)
                        handle HOL_ERR e => false);
 
     val _ = if debug_on then print ("taut: "  ^ (if taut then "true\n" else "false\n")) else ();
@@ -88,7 +91,7 @@ val get_sp = bconst ``SP_EL0:word64``;
 *)
 fun symb_exec_get_init_vals wtm =
   let
-    val model = ((Z3_SAT_modelLib.Z3_GET_SAT_MODEL wtm)
+    val model = ((bir_smt_get_model use_holsmt wtm)
                        handle HOL_ERR e => []);
     val model_w_strs = symb_exec_model_t2s model
   in

@@ -15,7 +15,6 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
 open bir_predLib;
 
 open bir_symbTheory birs_auxTheory;

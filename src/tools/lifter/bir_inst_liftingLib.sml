@@ -1795,6 +1795,25 @@ val cache = lift_inst_cache_empty;
         val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s\n")) else ();
       in thm2 end;
 
+      (* try to fix the remaining hypotheses, for example RISC-V "¬word_bit 0 1840w", but this will also fail if the program memory range is conflicting *)
+      fun eval_error_on_not_T tm =
+        let
+          val thm = EVAL tm;
+          val res_tm = (snd o dest_eq o concl) thm;
+          val _ = if identical res_tm T then () else
+                  (print_term tm; print_term res_tm;
+                  raise ERR "eval_error_on_not_T" ("could not evaluate the term '" ^ (term_to_string tm) ^ "' to true, instead got '" ^ (term_to_string res_tm) ^ "'"));
+        in
+          thm
+        end;
+      fun fix_remaining_hyps thm =
+        let
+          val hyps = hyp thm;
+          val hyp_thms = map eval_error_on_not_T hyps;
+        in
+          REWRITE_RULE hyp_thms (DISCH_ALL thm)
+        end;
+      val prog_thm3 = fix_remaining_hyps prog_thm2;
 
       val d_s = timer_stop timer;
       val _ = if (!debug_trace > 1) then
@@ -1805,7 +1824,7 @@ val cache = lift_inst_cache_empty;
              print_with_style_ sty_FAIL " FAILED\n")) else ();
 
     in
-      (prog_thm2, List.rev (!failing_inst_r))
+      (prog_thm3, List.rev (!failing_inst_r))
     end
   end;
 

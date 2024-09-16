@@ -4,7 +4,7 @@ open bir_expSyntax;
 open bir_exp_tautologiesTheory;
 
 (* From shared: *)
-open bir_exp_to_wordsLib bslSyntax;
+open bir_smtLib bslSyntax;
 open pretty_exnLib;
 
 (* To simplify the life of our poor vim users *)
@@ -12,26 +12,27 @@ if !Globals.interactive then let
   val _ = load "HolBA_HolSmtLib";
   val _ = load "tutorial_bir_to_armTheory";
   val _ = load "tutorial_wpTheory";
-  val _ = load "tutorial_smtSupportLib";
+  val _ = load "bir_smtLib";
 in () end else ();
 
 (* From examples: *)
 open tutorial_bir_to_armTheory;
 open add_reg_wpTheory;
-open tutorial_smtSupportLib;
+
+val use_holsmt = true;
 
 if !Globals.interactive then let
   val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
   val _ = Globals.show_tags := true;
   val _ = Globals.linewidth := 100;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 2;
+  val _ = bir_smt_set_trace use_holsmt 2;
   val _ = bir_ppLib.install_bir_pretty_printers ();
   (*
   val _ = bir_ppLib.remove_bir_pretty_printers ();
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 0;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 1;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 3;
-  val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
+  val _ = bir_smt_set_trace use_holsmt 0;
+  val _ = bir_smt_set_trace use_holsmt 1;
+  val _ = bir_smt_set_trace use_holsmt 3;
+  val _ = bir_smt_set_trace use_holsmt 4;
   *)
 in () end else ();
 
@@ -50,7 +51,7 @@ val contract_1_pre = btrue;
 val contract_1_wp  = (lhs o concl) bir_add_reg_entry_wp_def;
 val contract_1_imp = bimp (contract_1_pre, contract_1_wp);
 
-val contract_1_imp_taut_thm = prove_exp_is_taut contract_1_imp
+val contract_1_imp_taut_thm = bir_smt_prove_is_taut contract_1_imp
   handle e => (print "This didn't work.\n"; TRUTH);
 
 (* Oh my, that didn't work!
@@ -74,7 +75,7 @@ val contract_1_pre = (lhs o concl) bir_add_reg_contract_1_pre_def;
 val contract_1_imp = bimp (contract_1_pre, contract_1_wp);
 
 val contract_1_imp_taut_thm = save_thm ("contract_1_imp_taut_thm",
-  prove_exp_is_taut contract_1_imp);
+  bir_smt_prove_is_taut contract_1_imp);
 
 (*********************************)
 
@@ -93,7 +94,7 @@ val contract_2v_wp  = (lhs o concl o (SPEC contract_2v_freevar))
 val contract_2v_imp = bimp (contract_2v_pre, contract_2v_wp);
 
 val contract_2v_imp_taut_thm = save_thm ("contract_2v_imp_taut_thm",
-  prove_exp_is_taut contract_2v_imp);
+  bir_smt_prove_is_taut contract_2v_imp);
 
 (*********************************)
 
@@ -109,7 +110,7 @@ val contract_3v_wp  = (lhs o concl o (SPEC contract_3v_freevar))
 val contract_3v_imp = bimp (contract_3v_pre, contract_3v_wp);
 
 val contract_3v_imp_taut_thm = save_thm ("contract_3v_imp_taut_thm",
-  prove_exp_is_taut contract_3v_imp);
+  bir_smt_prove_is_taut contract_3v_imp);
 
 (*********************************)
 
@@ -122,7 +123,7 @@ val contract_4_wp  = (lhs o concl) bir_add_reg_loop_exit_wp_def;
 val contract_4_imp = bimp (contract_4_pre, contract_4_wp);
 
 val contract_4_imp_taut_thm = save_thm ("contract_4_imp_taut_thm",
-  prove_exp_is_taut contract_4_imp);
+  bir_smt_prove_is_taut contract_4_imp);
 
 (*****************************************************************************)
 (* 1.2. Hoare triples containing memories                                    *)
@@ -142,7 +143,7 @@ val contract_0_wp  = (lhs o concl) bir_add_reg_mem_wp_def;
 val contract_0_imp = bimp (contract_0_pre, contract_0_wp);
 
 val contract_0_imp_taut_thm = save_thm ("contract_0_imp_taut_thm",
-  prove_exp_is_taut contract_0_imp);
+  bir_smt_prove_is_taut contract_0_imp);
 *)
 
 val _ = export_theory();

@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 open bir_symbTheory;
 
 open birs_stepLib;
@@ -438,7 +441,7 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
     now we are only left with the word relation
 *)
 
-    HolBA_HolSmtLib.Z3_ORACLE_TAC
+    bir_smt_tac use_holsmt
   )
 QED
 (* ........................... *)

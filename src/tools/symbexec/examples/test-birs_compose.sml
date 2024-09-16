@@ -1,6 +1,8 @@
 
 open HolKernel Parse boolLib bossLib;
 
+open birsSyntax;
+open birs_execLib;
 open birs_stepLib;
 open birs_composeLib;
 
@@ -63,21 +65,19 @@ val bprog = (fst o dest_eq o concl) bprog_test_def;
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 2826w))``;
 val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
-                   (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
-                      (("countw"     =+ (SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))))
-                       (K NONE)
-                   ));
+  bsst_environ  := birs_gen_env
+                   [("R7", BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+                    ("SP_process", BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+                    ("countw", BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))];
   bsst_status   := BST_Running;
   bsst_pcond    := BExp_Const (Imm1 1w)
 |>``;
 val birs_state_init_2 = ``<|
   bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
-                   (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
-                      (("countw"     =+ (SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))))
-                       (K NONE)
-                   ));
+  bsst_environ  := birs_gen_env
+                   [("R7", BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+                    ("SP_process", BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+                    ("countw", BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))];
   bsst_status   := BST_Running;
   bsst_pcond    := BExp_BinPred BIExp_LessOrEqual
                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))

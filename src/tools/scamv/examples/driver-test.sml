@@ -1,9 +1,12 @@
 open bir_scamv_driverLib;
 open bir_rel_synthLib;
 
+open bir_smtLib;
+val use_holsmt = true;
+
 (*
 (* trace that also controls whether temporary z3 input files are preserved *)
-val _ = HolBA_Library.trace := 100;
+val _ = bir_smt_set_trace use_holsmt 100;
 *)
 
 
@@ -48,7 +51,7 @@ val relation = mkRel paths;
 val word_relation = make_word_relation relation all_exps true;
 print_term (word_relation);
 
-val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
+val model = bir_smt_get_model use_holsmt word_relation;
 *)
 
 (*TODO try to make 'complement' relation that doesn't include the invalid paths,

@@ -14,8 +14,6 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
-open tutorial_smtSupportLib;
-
 open total_program_logicTheory;
 open total_ext_program_logicTheory;
 
@@ -70,7 +68,7 @@ val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_i
 (* ---------------------------------- *)
 
 val riscv_cont_incr_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bir_cont_incr
   progbin_tm
   riscv_pre_tm riscv_post_tm bir_incr_prog_def

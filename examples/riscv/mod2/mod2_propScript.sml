@@ -19,8 +19,6 @@ open bir_wpLib bir_wp_expLib;
 open bir_wpTheory bir_htTheory;
 open bir_wp_interfaceLib;
 
-open tutorial_smtSupportLib;
-
 open bir_symbTheory birs_auxTheory;
 open HolBACoreSimps;
 open bir_program_transfTheory;
@@ -85,7 +83,7 @@ val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_m
 (* ---------------------------------- *)
 
 val riscv_cont_mod2_thm =
- get_riscv_contract_sing
+ get_riscv_contract
   bir_cont_mod2
   progbin_tm riscv_pre_tm riscv_post_tm
   bir_mod2_prog_def

@@ -480,6 +480,9 @@ sig
      * brshift:     (bir_exp_t * bir_exp_t) -> bir_exp_t
      * bsrshift:    (bir_exp_t * bir_exp_t) -> bir_exp_t
 
+     (* constructed by either "A or (not B)" or "A <= B" (BinPred BIExp_LessOrEqual) *)
+     * bimp:        (bir_exp_t * bir_exp_t) -> bir_exp_t
+
      * bandl:       bir_exp_t list -> bir_exp_t
      * borl:        bir_exp_t list -> bir_exp_t
      * bxorl:       bir_exp_t list -> bir_exp_t
@@ -511,6 +514,8 @@ sig
     val brshift:    (term * term) -> term
     val bsrshift:   (term * term) -> term
 
+    val bimp:       (term * term) -> term
+    
     val bandl:      term list -> term
     val borl:       term list -> term
     val bxorl:      term list -> term
