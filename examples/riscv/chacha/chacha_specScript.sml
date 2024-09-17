@@ -42,6 +42,16 @@ val _ = new_theory "chacha_spec";
 (* Block boundaries *)
 (* ---------------- *)
 
+(* keysetup *)
+
+Definition chacha_keysetup_init_addr_def:
+ chacha_keysetup_init_addr : word64 = 0x10488w
+End
+
+Definition chacha_keysetup_end_addr_def:
+ chacha_keysetup_end_addr : word64 = (*0x106a8w*) 0x1053cw
+End
+
 (* ivsetup *)
 
 Definition chacha_ivsetup_init_addr_def:
@@ -56,7 +66,24 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
-val bspec_chacha_pre_tm = bslSyntax.bandl [
+(* keysetup *)
+
+val bspec_chacha_keysetup_pre_tm = bslSyntax.bandl [
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x15))``
+];
+
+Definition bspec_chacha_keysetup_pre_def:
+ bspec_chacha_keysetup_pre (pre_x15:word64) : bir_exp_t =
+  ^bspec_chacha_keysetup_pre_tm
+End
+
+(* ivsetup *)
+
+val bspec_chacha_ivsetup_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   ``BExp_BinPred
     BIExp_Equal
@@ -66,7 +93,7 @@ val bspec_chacha_pre_tm = bslSyntax.bandl [
 
 Definition bspec_chacha_ivsetup_pre_def:
  bspec_chacha_ivsetup_pre (pre_x15:word64) : bir_exp_t =
-  ^bspec_chacha_pre_tm
+  ^bspec_chacha_ivsetup_pre_tm
 End
 
 val _ = export_theory ();
