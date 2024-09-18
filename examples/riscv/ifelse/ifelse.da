@@ -1,0 +1,27 @@
+
+ifelse:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000010488 <ifelse>:
+   10488:	00053783          	ld	a5,0(a0)
+   1048c:	10000713          	li	a4,256
+   10490:	02e60863          	beq	a2,a4,104c0 <ifelse+0x38>
+   10494:	02058593          	addi	a1,a1,32
+   10498:	00e78793          	addi	a5,a5,14
+   1049c:	00378793          	addi	a5,a5,3
+   104a0:	00f53023          	sd	a5,0(a0)
+   104a4:	0005b703          	ld	a4,0(a1)
+   104a8:	00e787b3          	add	a5,a5,a4
+   104ac:	00f53023          	sd	a5,0(a0)
+   104b0:	0005b703          	ld	a4,0(a1)
+   104b4:	00f707b3          	add	a5,a4,a5
+   104b8:	00f53023          	sd	a5,0(a0)
+   104bc:	00008067          	ret
+   104c0:	00678793          	addi	a5,a5,6
+   104c4:	fd9ff06f          	j	1049c <ifelse+0x14>
+
+00000000000104c8 <main>:
+   104c8:	00000513          	li	a0,0
+   104cc:	00008067          	ret
