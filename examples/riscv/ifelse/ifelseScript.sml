@@ -8,7 +8,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "ifelse";
 
-val _ = lift_da_and_store "ifelse" "ifelse.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x104D0));
+val _ = lift_da_and_store "ifelse" "ifelse.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x104D4));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)

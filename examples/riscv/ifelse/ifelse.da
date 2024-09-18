@@ -1,27 +1,27 @@
 
 ifelse:     file format elf64-littleriscv
 
-
 Disassembly of section .text:
 
 0000000000010488 <ifelse>:
-   10488:	00053783          	ld	a5,0(a0)
-   1048c:	10000713          	li	a4,256
-   10490:	02e60863          	beq	a2,a4,104c0 <ifelse+0x38>
-   10494:	02058593          	addi	a1,a1,32
-   10498:	00e78793          	addi	a5,a5,14
-   1049c:	00378793          	addi	a5,a5,3
-   104a0:	00f53023          	sd	a5,0(a0)
-   104a4:	0005b703          	ld	a4,0(a1)
-   104a8:	00e787b3          	add	a5,a5,a4
+   10488:	00053683          	ld	a3,0(a0)
+   1048c:	10000793          	li	a5,256
+   10490:	02f60863          	beq	a2,a5,104c0 <ifelse+0x38>
+   10494:	00010737          	lui	a4,0x10
+   10498:	4f070713          	addi	a4,a4,1264 # 104f0 <tau>
+   1049c:	00968693          	addi	a3,a3,9
+   104a0:	00d53023          	sd	a3,0(a0)
+   104a4:	00074783          	lbu	a5,0(a4)
+   104a8:	00d787b3          	add	a5,a5,a3
    104ac:	00f53023          	sd	a5,0(a0)
-   104b0:	0005b703          	ld	a4,0(a1)
+   104b0:	00074703          	lbu	a4,0(a4)
    104b4:	00f707b3          	add	a5,a4,a5
    104b8:	00f53023          	sd	a5,0(a0)
    104bc:	00008067          	ret
-   104c0:	00678793          	addi	a5,a5,6
-   104c4:	fd9ff06f          	j	1049c <ifelse+0x14>
+   104c0:	00010737          	lui	a4,0x10
+   104c4:	4e070713          	addi	a4,a4,1248 # 104e0 <sigma>
+   104c8:	fd5ff06f          	j	1049c <ifelse+0x14>
 
-00000000000104c8 <main>:
-   104c8:	00000513          	li	a0,0
-   104cc:	00008067          	ret
+00000000000104cc <main>:
+   104cc:	00000513          	li	a0,0
+   104d0:	00008067          	ret
