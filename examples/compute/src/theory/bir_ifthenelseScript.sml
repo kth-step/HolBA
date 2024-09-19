@@ -3,8 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory;
-open bir_typingTheory;
+open birTheory;
 
 
 val _ = new_theory "bir_ifthenelse";

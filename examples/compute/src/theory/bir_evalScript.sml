@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory;
+open birTheory bir_binexpTheory bir_unaryexpTheory;
 open bir_binpredTheory bir_ifthenelseTheory;
 open bir_memTheory;
 

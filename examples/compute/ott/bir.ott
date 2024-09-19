@@ -286,12 +286,31 @@ formula :: formula_ ::=
 | judgement           ::   :: judgement
 | bir_env_lookup_rel ( bir_var_environment , bir_var , bir_val ) :: M :: bir_env_lookup_rel
   {{ hol (bir_env_lookup_rel [[bir_var_environment]] [[bir_var]] [[bir_val]]) }}
+| n = n' :: M :: n_eq
+  {{ hol ([[n]] = [[n']]) }}
+| n '<=' n' :: M :: n_lt
+  {{ hol ([[n]] <= [[n']]) }}
+
+n :: n_ ::=
+  {{ hol num }}
+| n MOD n' :: M :: mod
+  {{ hol ([[n]] MOD [[n']]) }}
+| n DIV n' :: M :: div
+  {{ hol ([[n]] DIV [[n']]) }}
+| 2 ^ n :: M :: two_pow
+  {{ hol (2**[[n]]) }}
+| 0 :: M :: zero
+  {{ hol 0 }}
+| 1 :: M :: one
+  {{ hol 1 }}
+| size_of_bir_immtype ( bir_immtype ) :: M :: size_of_bir_immtype
+  {{ hol (size_of_bir_immtype [[bir_immtype]]) }}
 
 defns
   type_of_bir_exp :: '' ::= 
 
 defn
-  bir_var_environment |- bir_exp : bir_type :: :: type_of_bir_exp_rel :: BExp_
+  bir_var_environment |- bir_exp : bir_type :: :: type_of_bir_exp :: BExp_
   {{ com typing relation for BIR expressions }} by
 
   --------------- :: Const
@@ -316,14 +335,75 @@ defn
   env |- bir_exp1 : Type_Imm(bir_immtype)
   env |- bir_exp2 : Type_Imm(bir_immtype)
   ------------------------------ :: BinPred
-  env |- BinPred(bir_binpred,bir_exp1,bir_exp2) : Type_Imm(bir_immtype)
+  env |- BinPred(bir_binpred,bir_exp1,bir_exp2) : Type_Imm(Bit_one)
 
   env |- bir_exp1 : bir_type
   env |- bir_exp2 : bir_type
   env |- bir_exp : Type_Imm(Bit_one)
   ------------------------------ :: IfThenElse
   env |- IfThenElse(bir_exp,bir_exp1,bir_exp2) : bir_type
+
+  env |- bir_exp1 : Type_Mem(bir_immtype1,bir_immtype2)
+  env |- bir_exp2 : Type_Imm(bir_immtype1)
+  size_of_bir_immtype(bir_immtype) MOD size_of_bir_immtype(bir_immtype2) = 0
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2^size_of_bir_immtype(bir_immtype1)
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) = 1
+  ----------------------------------- :: Load_NoEndian
+  env |- Load(bir_exp1,bir_exp2,NoEndian,bir_immtype) : Type_Imm(bir_immtype)
+
+  env |- bir_exp1 : Type_Mem(bir_immtype1,bir_immtype2)
+  env |- bir_exp2 : Type_Imm(bir_immtype1)
+  size_of_bir_immtype(bir_immtype) MOD size_of_bir_immtype(bir_immtype2) = 0
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2^size_of_bir_immtype(bir_immtype1)
+  -------- :: Load_BigEndian
+  env |- Load(bir_exp1,bir_exp2,BigEndian,bir_immtype) : Type_Imm(bir_immtype)
+
+  env |- bir_exp1 : Type_Mem(bir_immtype1,bir_immtype2)
+  env |- bir_exp2 : Type_Imm(bir_immtype1)
+  size_of_bir_immtype(bir_immtype) MOD size_of_bir_immtype(bir_immtype2) = 0
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2^size_of_bir_immtype(bir_immtype1)
+  -------- :: Load_LittleEndian
+  env |- Load(bir_exp1,bir_exp2,LittleEndian,bir_immtype) : Type_Imm(bir_immtype)
   
+  env |- bir_exp1 : Type_Mem(bir_immtype1,bir_immtype2)
+  env |- bir_exp2 : Type_Imm(bir_immtype1)
+  env |- bir_exp3 : Type_Imm(bir_immtype)
+  size_of_bir_immtype(bir_immtype) MOD size_of_bir_immtype(bir_immtype2) = 0
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2^size_of_bir_immtype(bir_immtype1)
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) = 1
+  ------------------------------------------------------------ :: Store_NoEndian
+  env |- Store(bir_exp1,bir_exp2,NoEndian,bir_exp3) : Type_Mem(bir_immtype1,bir_immtype2)
+
+  env |- bir_exp1 : Type_Mem(bir_immtype1,bir_immtype2)
+  env |- bir_exp2 : Type_Imm(bir_immtype1)
+  env |- bir_exp3 : Type_Imm(bir_immtype)
+  size_of_bir_immtype(bir_immtype) MOD size_of_bir_immtype(bir_immtype2) = 0
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2^size_of_bir_immtype(bir_immtype1)
+  ------------------------------------------------------------ :: Store_BigEndian
+  env |- Store(bir_exp1,bir_exp2,BigEndian,bir_exp3) : Type_Mem(bir_immtype1,bir_immtype2)
+
+  env |- bir_exp1 : Type_Mem(bir_immtype1,bir_immtype2)
+  env |- bir_exp2 : Type_Imm(bir_immtype1)
+  env |- bir_exp3 : Type_Imm(bir_immtype)
+  size_of_bir_immtype(bir_immtype) MOD size_of_bir_immtype(bir_immtype2) = 0
+  size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2^size_of_bir_immtype(bir_immtype1)
+  ------------------------------------------------------------ :: Store_LittleEndian
+  env |- Store(bir_exp1,bir_exp2,LittleEndian,bir_exp3) : Type_Mem(bir_immtype1,bir_immtype2)
   
-  
-  
+embed {{ hol
+
+Definition is_exp_well_typed_def:
+  is_exp_well_typed env exp = ?ty. type_of_bir_exp env exp ty
+End
+
+(* 1 bit values are booleans *)
+Theorem bit1_is_boolean:
+  !v. type_of_bir_val v = (BType_Imm Bit1) ==> (v = birT \/ v = birF)
+Proof
+  Cases_on `v` >>
+    Cases_on `b` >>
+      rw [birT_def, birF_def, type_of_bir_val_def, type_of_bir_imm_def] >>
+      Cases_on `c` >>
+        fs [dimword_1]
+QED
+}}

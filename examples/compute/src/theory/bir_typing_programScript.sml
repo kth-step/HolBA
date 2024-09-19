@@ -4,9 +4,8 @@
 
 
 open HolKernel Parse bossLib boolLib;
+open birTheory;
 open bir_programTheory;
-open bir_envTheory;
-open bir_typingTheory;
 open listTheory;
 
 val _ = new_theory "bir_typing_program";
