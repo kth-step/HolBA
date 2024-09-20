@@ -12,6 +12,7 @@ local open arithmeticTheory stringTheory containerTheory pred_setTheory listTheo
 val _ = new_theory "bir";
 
 open wordsTheory;
+open bitstringTheory numeral_bitTheory;
 
 Type mmap = ``:(num |-> num)`` (* BIR memory map *)
 Type ident = ``:string`` (* Identifier for variable name *)
@@ -22,15 +23,6 @@ Type word_thirtytwo = ``:word32`` (* 32-bit word *)
 Type word_sixtyfour = ``:word64`` (* 64-bit word *)
 Type word_hundredtwentyeight = ``:word128`` (* 128-bit word *)
 val _ = Hol_datatype ` 
-bir_immtype_t =  (* immediate typing size *)
-   Bit1
- | Bit8
- | Bit16
- | Bit32
- | Bit64
- | Bit128
-`;
-val _ = Hol_datatype ` 
 bir_imm_t =  (* immediates *)
    Imm1 of word_one
  | Imm8 of word_eight
@@ -38,6 +30,15 @@ bir_imm_t =  (* immediates *)
  | Imm32 of word_thirtytwo
  | Imm64 of word_sixtyfour
  | Imm128 of word_hundredtwentyeight
+`;
+val _ = Hol_datatype ` 
+bir_immtype_t =  (* immediate typing size *)
+   Bit1
+ | Bit8
+ | Bit16
+ | Bit32
+ | Bit64
+ | Bit128
 `;
 val _ = Hol_datatype ` 
 bir_endian_t =  (* endian for memory operations *)
@@ -65,9 +66,9 @@ bir_binpred_t =  (* binary predicates *)
  | BIExp_LessThan
 `;
 val _ = Hol_datatype ` 
-bir_type_t =  (* general typing *)
-   BType_Imm of bir_immtype_t
- | BType_Mem of bir_immtype_t => bir_immtype_t
+bir_val_t =  (* values for evaluation relation *)
+   BVal_Imm of bir_imm_t
+ | BVal_Mem of bir_immtype_t => bir_immtype_t => mmap (* address type / value type *)
 `;
 val _ = Hol_datatype ` 
 bir_exp_t =  (* BIR expressions *)
@@ -82,9 +83,9 @@ bir_exp_t =  (* BIR expressions *)
  | BExp_Store of bir_exp_t => bir_exp_t => bir_endian_t => bir_exp_t (* Memory value / Address Value (Imm) / Endian / Value to store *)
 `;
 val _ = Hol_datatype ` 
-bir_val_t =  (* values for evaluation relation *)
-   BVal_Imm of bir_imm_t
- | BVal_Mem of bir_immtype_t => bir_immtype_t => mmap (* address type / value type *)
+bir_type_t =  (* general typing *)
+   BType_Imm of bir_immtype_t
+ | BType_Mem of bir_immtype_t => bir_immtype_t
 `;
 (* Booleans *)
 
@@ -250,52 +251,52 @@ Type n = ``:num``
 Inductive type_of_bir_exp:
 (* defn type_of_bir_exp *)
 
-[BExp_Const:] (! (env:bir_var_environment_t) (bir_imm:bir_imm_t) .
-(clause_name "BExp_Const")
+[Type_BExp_Const:] (! (env:bir_var_environment_t) (bir_imm:bir_imm_t) .
+(clause_name "Type_BExp_Const")
  ==> 
 ( ( type_of_bir_exp env (BExp_Const bir_imm) (BType_Imm  (type_of_bir_imm  bir_imm ) ) )))
 
-[BExp_MemConst:] (! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) .
-(clause_name "BExp_MemConst")
+[Type_BExp_MemConst:] (! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) .
+(clause_name "Type_BExp_MemConst")
  ==> 
 ( ( type_of_bir_exp env (BExp_MemConst bir_immtype1 bir_immtype2 mmap) (BType_Mem bir_immtype1 bir_immtype2) )))
 
-[BExp_Den:] (! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) .
-(clause_name "BExp_Den") /\
+[Type_BExp_Den:] (! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) .
+(clause_name "Type_BExp_Den") /\
 (( (bir_env_lookup_rel  env   bir_var   bir_val ) ))
  ==> 
 ( ( type_of_bir_exp env (BExp_Den bir_var)  (type_of_bir_val  bir_val )  )))
 
-[BExp_BinExp:] (! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) .
-(clause_name "BExp_BinExp") /\
+[Type_BExp_BinExp:] (! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) .
+(clause_name "Type_BExp_BinExp") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Imm bir_immtype) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_BinExp bir_binexp bir_exp1 bir_exp2) (BType_Imm bir_immtype) )))
 
-[BExp_UnaryExp:] (! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_immtype:bir_immtype_t) .
-(clause_name "BExp_UnaryExp") /\
+[Type_BExp_UnaryExp:] (! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_immtype:bir_immtype_t) .
+(clause_name "Type_BExp_UnaryExp") /\
 (( ( type_of_bir_exp env bir_exp (BType_Imm bir_immtype) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_UnaryExp bir_unaryexp bir_exp) (BType_Imm bir_immtype) )))
 
-[BExp_BinPred:] (! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) .
-(clause_name "BExp_BinPred") /\
+[Type_BExp_BinPred:] (! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) .
+(clause_name "Type_BExp_BinPred") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Imm bir_immtype) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_BinPred bir_binpred bir_exp1 bir_exp2) (BType_Imm Bit1) )))
 
-[BExp_IfThenElse:] (! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_type:bir_type_t) .
-(clause_name "BExp_IfThenElse") /\
+[Type_BExp_IfThenElse:] (! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_type:bir_type_t) .
+(clause_name "Type_BExp_IfThenElse") /\
 (( ( type_of_bir_exp env bir_exp1 bir_type )) /\
 ( ( type_of_bir_exp env bir_exp2 bir_type )) /\
 ( ( type_of_bir_exp env bir_exp (BType_Imm Bit1) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_IfThenElse bir_exp bir_exp1 bir_exp2) bir_type )))
 
-[BExp_Load_NoEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
-(clause_name "BExp_Load_NoEndian") /\
+[Type_BExp_Load_NoEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
+(clause_name "Type_BExp_Load_NoEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( (  (  (size_of_bir_immtype  bir_immtype )   MOD   (size_of_bir_immtype  bir_immtype2 )  )   =   0  ) ) /\
@@ -304,8 +305,8 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Load bir_exp1 bir_exp2 BEnd_NoEndian bir_immtype) (BType_Imm bir_immtype) )))
 
-[BExp_Load_BigEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
-(clause_name "BExp_Load_BigEndian") /\
+[Type_BExp_Load_BigEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
+(clause_name "Type_BExp_Load_BigEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( (  (  (size_of_bir_immtype  bir_immtype )   MOD   (size_of_bir_immtype  bir_immtype2 )  )   =   0  ) ) /\
@@ -313,8 +314,8 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Load bir_exp1 bir_exp2 BEnd_BigEndian bir_immtype) (BType_Imm bir_immtype) )))
 
-[BExp_Load_LittleEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
-(clause_name "BExp_Load_LittleEndian") /\
+[Type_BExp_Load_LittleEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
+(clause_name "Type_BExp_Load_LittleEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( (  (  (size_of_bir_immtype  bir_immtype )   MOD   (size_of_bir_immtype  bir_immtype2 )  )   =   0  ) ) /\
@@ -322,8 +323,8 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Load bir_exp1 bir_exp2 BEnd_LittleEndian bir_immtype) (BType_Imm bir_immtype) )))
 
-[BExp_Store_NoEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
-(clause_name "BExp_Store_NoEndian") /\
+[Type_BExp_Store_NoEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
+(clause_name "Type_BExp_Store_NoEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( ( type_of_bir_exp env bir_exp3 (BType_Imm bir_immtype) )) /\
@@ -333,8 +334,8 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Store bir_exp1 bir_exp2 BEnd_NoEndian bir_exp3) (BType_Mem bir_immtype1 bir_immtype2) )))
 
-[BExp_Store_BigEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
-(clause_name "BExp_Store_BigEndian") /\
+[Type_BExp_Store_BigEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
+(clause_name "Type_BExp_Store_BigEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( ( type_of_bir_exp env bir_exp3 (BType_Imm bir_immtype) )) /\
@@ -343,8 +344,8 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Store bir_exp1 bir_exp2 BEnd_BigEndian bir_exp3) (BType_Mem bir_immtype1 bir_immtype2) )))
 
-[BExp_Store_LittleEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
-(clause_name "BExp_Store_LittleEndian") /\
+[Type_BExp_Store_LittleEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
+(clause_name "Type_BExp_Store_LittleEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( ( type_of_bir_exp env bir_exp3 (BType_Imm bir_immtype) )) /\
@@ -369,6 +370,883 @@ Proof
         fs [dimword_1]
 QED
 
+(* Gets the operator for a given binary operation *)
+Definition bir_binexp_get_oper_def:
+  (bir_binexp_get_oper BIExp_And = word_and) /\
+  (bir_binexp_get_oper BIExp_Plus = word_add)
+End
+(* Evaluates a binary expression of two immediates *)
+Inductive bir_eval_binexp_imm:
+  (!binexp w1 w2. 
+    bir_eval_binexp_imm binexp (Imm1 w1) (Imm1 w2) (Imm1 ((bir_binexp_get_oper binexp) w1 w2))) /\
+  (!binexp w1 w2. 
+    bir_eval_binexp_imm binexp (Imm8 w1) (Imm8 w2) (Imm8 ((bir_binexp_get_oper binexp) w1 w2))) /\
+  (!binexp w1 w2. 
+    bir_eval_binexp_imm binexp (Imm16 w1) (Imm16 w2) (Imm16 ((bir_binexp_get_oper binexp) w1 w2))) /\
+  (!binexp w1 w2. 
+    bir_eval_binexp_imm binexp (Imm32 w1) (Imm32 w2) (Imm32 ((bir_binexp_get_oper binexp) w1 w2))) /\
+  (!binexp w1 w2. 
+    bir_eval_binexp_imm binexp (Imm64 w1) (Imm64 w2) (Imm64 ((bir_binexp_get_oper binexp) w1 w2))) /\
+  (!binexp w1 w2. 
+    bir_eval_binexp_imm binexp (Imm128 w1) (Imm128 w2) (Imm128 ((bir_binexp_get_oper binexp) w1 w2)))
+End
+
+(* Evaluates a general binary expression with values as parameters *)
+Definition bir_eval_binexp_def:
+  (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
+    (bir_eval_binexp_imm binexp imm1 imm2 imm)) /\
+  (bir_eval_binexp _ _ _ _ = F)
+End
+
+(* Computes a binary expression of two immediates *)
+Definition bir_compute_binexp_imm_def:
+  (bir_compute_binexp_imm BIExp_And (Imm1 w1) (Imm1 w2) = SOME (Imm1 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm8 w1) (Imm8 w2) = SOME (Imm8 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm16 w1) (Imm16 w2) = SOME (Imm16 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm32 w1) (Imm32 w2) = SOME (Imm32 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm64 w1) (Imm64 w2) = SOME (Imm64 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_And (Imm128 w1) (Imm128 w2) = SOME (Imm128 (word_and w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm1 w1) (Imm1 w2) = SOME (Imm1 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm8 w1) (Imm8 w2) = SOME (Imm8 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm16 w1) (Imm16 w2) = SOME (Imm16 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm32 w1) (Imm32 w2) = SOME (Imm32 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm64 w1) (Imm64 w2) = SOME (Imm64 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm BIExp_Plus (Imm128 w1) (Imm128 w2) = SOME (Imm128 (word_add w1 w2))) /\
+  (bir_compute_binexp_imm binexp _ _ = NONE)
+End
+
+
+(* Computes a general binary expression with values as parameters *)
+Definition bir_compute_binexp_def:
+  (bir_compute_binexp binexp (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
+    val_from_imm_option (bir_compute_binexp_imm binexp imm1 imm2)) /\
+  (bir_compute_binexp _ _ _ = NONE)
+End
+
+(* Eval and compute are similar *)
+Theorem bir_eval_binexp_eq_compute_binexp:
+  !binexp v1 v2 v. bir_eval_binexp binexp v1 v2 v <=> 
+    bir_compute_binexp binexp (SOME v1) (SOME v2) = SOME v
+Proof
+  Cases_on `binexp` >>
+  Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+    rw [bir_eval_binexp_def, bir_compute_binexp_def] >>
+    rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
+    Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
+      rw [bir_compute_binexp_imm_def, fetch "-" "bir_imm_t_nchotomy", bir_binexp_get_oper_def] >>
+      rw [val_from_imm_option_def] >>
+      metis_tac []
+QED
+
+
+(* If the operands are typed, then the expression evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_binexp:
+  !binexp v1 v2 ty.
+    ((type_of_bir_val v1 = BType_Imm ty) /\ (type_of_bir_val v2 = BType_Imm ty)) ==>
+    ?v. bir_eval_binexp binexp v1 v2 v
+Proof
+  Cases_on `binexp` >>
+  Cases_on `v1` >> Cases_on `v2` >>
+  Cases_on `b` >> Cases_on `b'` >>
+    rw [bir_eval_binexp_eq_compute_binexp] >>
+    rw [bir_compute_binexp_def, bir_compute_binexp_imm_def] >>
+    rw [val_from_imm_option_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+
+(* Type conservation Theorem *)
+Theorem bir_eval_binexp_keep_type:
+  !binexp v1 v2 v ty.
+    bir_eval_binexp binexp v1 v2 v ==>
+    ((type_of_bir_val v1 = ty /\ type_of_bir_val v2 = ty) <=>
+      type_of_bir_val v = ty)
+Proof
+  Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+  Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
+    rw [type_of_bir_val_def, bir_eval_binexp_def, type_of_bir_imm_def, bir_eval_binexp_imm_cases]
+QED
+
+(* Gets the operator for a given unary operation *)
+Definition bir_unaryexp_get_oper_def:
+  (bir_unaryexp_get_oper BIExp_Not = word_1comp) /\
+  (bir_unaryexp_get_oper BIExp_ChangeSign = word_2comp)
+End
+
+
+(* Evaluates a binary expression of an immediate *)
+Inductive bir_eval_unaryexp_imm:
+  (!unaryexp w1. 
+    bir_eval_unaryexp_imm unaryexp (Imm1 w1) (Imm1 ((bir_unaryexp_get_oper unaryexp) w1))) /\
+  (!unaryexp w1. 
+    bir_eval_unaryexp_imm unaryexp (Imm8 w1) (Imm8 ((bir_unaryexp_get_oper unaryexp) w1))) /\
+  (!unaryexp w1. 
+    bir_eval_unaryexp_imm unaryexp (Imm16 w1) (Imm16 ((bir_unaryexp_get_oper unaryexp) w1))) /\
+  (!unaryexp w1. 
+    bir_eval_unaryexp_imm unaryexp (Imm32 w1) (Imm32 ((bir_unaryexp_get_oper unaryexp) w1))) /\
+  (!unaryexp w1. 
+    bir_eval_unaryexp_imm unaryexp (Imm64 w1) (Imm64 ((bir_unaryexp_get_oper unaryexp) w1))) /\
+  (!unaryexp w1. 
+    bir_eval_unaryexp_imm unaryexp (Imm128 w1) (Imm128 ((bir_unaryexp_get_oper unaryexp) w1)))
+End
+
+
+(* Evaluates a general unary expression with values as parameters *)
+Definition bir_eval_unaryexp_def:
+  (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
+    (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
+  (bir_eval_unaryexp _ _ _ = F)
+End
+
+(* Computes a binary expression of an immediate *)
+Definition bir_compute_unaryexp_imm_def:
+  (bir_compute_unaryexp_imm BIExp_Not (Imm1 w1) = SOME (Imm1 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm8 w1) = SOME (Imm8 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm16 w1) = SOME (Imm16 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm32 w1) = SOME (Imm32 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm64 w1) = SOME (Imm64 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_Not (Imm128 w1) = SOME (Imm128 (word_1comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm1 w1) = SOME (Imm1 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm8 w1) = SOME (Imm8 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm16 w1) = SOME (Imm16 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm32 w1) = SOME (Imm32 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm64 w1) = SOME (Imm64 (word_2comp w1))) /\
+  (bir_compute_unaryexp_imm BIExp_ChangeSign (Imm128 w1) = SOME (Imm128 (word_2comp w1)))
+End
+
+(* Computes Unary expression *)
+Definition bir_compute_unaryexp_def:
+  (bir_compute_unaryexp unaryexp (SOME (BVal_Imm imm1)) = 
+    val_from_imm_option (bir_compute_unaryexp_imm unaryexp imm1)) /\
+  (bir_compute_unaryexp _ _ = NONE)
+End
+
+(* Eval and Compute are similar *)
+Theorem bir_eval_unaryexp_eq_compute_unaryexp:
+  !unaryexp v1 v. bir_eval_unaryexp unaryexp v1 v <=> 
+    bir_compute_unaryexp unaryexp (SOME v1) = SOME v
+Proof
+  Cases_on `unaryexp` >>
+  Cases_on `v1` >> Cases_on `v` >>
+    rw [bir_eval_unaryexp_def, bir_compute_unaryexp_def] >>
+    rw [bir_eval_unaryexp_imm_cases, bir_compute_unaryexp_imm_def] >>
+    Cases_on `b` >> Cases_on `b'` >>
+      rw [bir_compute_unaryexp_imm_def, fetch "-" "bir_imm_t_nchotomy", bir_unaryexp_get_oper_def] >>
+      rw [val_from_imm_option_def] >>
+      metis_tac []
+QED
+
+
+(* Unary_exp always evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_unaryexp:
+  !unaryexp v ty.
+    (type_of_bir_val v = BType_Imm ty) ==>
+    ?v'. bir_eval_unaryexp unaryexp v v'
+Proof
+  Cases_on `unaryexp` >>
+  Cases_on `v` >>
+  Cases_on `b` >>
+    rw [bir_eval_unaryexp_eq_compute_unaryexp, type_of_bir_val_def] >>
+    rw [bir_compute_unaryexp_def, bir_compute_unaryexp_imm_def] >>
+    rw [val_from_imm_option_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+(* Type conservation theorem *)
+Theorem bir_eval_unaryexp_keep_type:
+  !unaryexp v1 v2 ty.
+    bir_eval_unaryexp unaryexp v1 v2 ==>
+    (type_of_bir_val v1 = type_of_bir_val v2)
+Proof
+  Cases_on `v1` >> Cases_on `v2` >>
+  Cases_on `b` >> Cases_on `b'` >>
+    rw [type_of_bir_val_def, bir_eval_unaryexp_def, type_of_bir_imm_def, bir_eval_unaryexp_imm_cases]
+QED
+
+(* Gets the operator for a given binary predicate *)
+Definition bir_binpred_get_oper_def:
+  (bir_binpred_get_oper BIExp_Equal = $=) /\
+  (bir_binpred_get_oper BIExp_LessThan = word_lo)
+End
+
+
+(* Evaluates a binary predicate of two immediates *)
+Inductive bir_eval_binpred_imm:
+  (!binpred w1 w2. 
+    bir_eval_binpred_imm binpred (Imm1 w1) (Imm1 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
+  (!binpred w1 w2. 
+    bir_eval_binpred_imm binpred (Imm8 w1) (Imm8 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
+  (!binpred w1 w2. 
+    bir_eval_binpred_imm binpred (Imm16 w1) (Imm16 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
+  (!binpred w1 w2. 
+    bir_eval_binpred_imm binpred (Imm32 w1) (Imm32 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
+  (!binpred w1 w2. 
+    bir_eval_binpred_imm binpred (Imm64 w1) (Imm64 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
+  (!binpred w1 w2. 
+    bir_eval_binpred_imm binpred (Imm128 w1) (Imm128 w2) ((bir_binpred_get_oper binpred) w1 w2))
+End
+
+
+(* Evaluates a general binary predicate with values as parameters *)
+Inductive bir_eval_binpred:
+  (!binpred imm1 imm2 b. 
+    (bir_eval_binpred_imm binpred imm1 imm2 b) ==>
+    (bir_eval_binpred binpred (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm (bool2b b))))
+End
+
+(* Computes a binary predicate of two immediates *)
+Definition bir_compute_binpred_imm_def:
+  (bir_compute_binpred_imm BIExp_Equal (Imm1 w1) (Imm1 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm8 w1) (Imm8 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm16 w1) (Imm16 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm32 w1) (Imm32 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm64 w1) (Imm64 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_Equal (Imm128 w1) (Imm128 w2) = $= w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm1 w1) (Imm1 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm8 w1) (Imm8 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm16 w1) (Imm16 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm32 w1) (Imm32 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm64 w1) (Imm64 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm BIExp_LessThan (Imm128 w1) (Imm128 w2) = word_lo w1 w2) /\
+  (bir_compute_binpred_imm binpred _ _ = F)
+End
+
+
+(* Computes a general binary predicate with values as parameters *)
+Definition bir_compute_binpred_def:
+  (bir_compute_binpred binpred (SOME (BVal_Imm imm1)) (SOME (BVal_Imm imm2)) =
+    SOME (BVal_Imm (bool2b (bir_compute_binpred_imm binpred imm1 imm2)))) /\
+  (bir_compute_binpred _ _ _ = NONE)
+End
+
+Theorem bir_eval_binpred_imp_compute_binpred:
+  !binpred v1 v2 v. bir_eval_binpred binpred v1 v2 v ==> 
+    bir_compute_binpred binpred (SOME v1) (SOME v2) = SOME v
+Proof
+  Cases_on `binpred` >>
+  Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+    rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
+    rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
+    Cases_on `b` >> Cases_on `b'` >>
+      rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "-" "bir_imm_t_nchotomy"] >>
+      fs [bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
+      metis_tac []
+QED
+
+(* If the term is well typed, then eval and compute are the same *)
+Theorem well_typed_bir_eval_binpred_eq_compute_binpred:
+  !binpred v1 v2 v. 
+    (type_of_bir_val v1 = type_of_bir_val v2) ==>
+  ( bir_eval_binpred binpred v1 v2 v <=> 
+    bir_compute_binpred binpred (SOME v1) (SOME v2) = SOME v)
+Proof
+  Cases_on `binpred` >>
+  Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+  rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
+  rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
+  Cases_on `b` >> Cases_on `b'` >>
+    rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "-" "bir_imm_t_nchotomy"] >>
+    fs [bir_eval_binpred_imm_cases, type_of_bir_val_def, type_of_bir_imm_def,
+      bir_binpred_get_oper_def] >>
+    metis_tac []
+QED
+
+
+(* If the operands are typed, then the expression evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_binpred:
+  !binpred v1 v2 ty.
+    ((type_of_bir_val v1 = BType_Imm ty) /\ (type_of_bir_val v2 = BType_Imm ty)) ==>
+    ?v. bir_eval_binpred binpred v1 v2 v
+Proof
+  Cases_on `v1` >> Cases_on `v2` >>
+  Cases_on `b` >> Cases_on `b'` >>
+    rw [well_typed_bir_eval_binpred_eq_compute_binpred] >>
+    rw [bir_compute_binpred_def, bir_compute_binpred_imm_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+
+(* Type conservation theorem *)
+Theorem bir_eval_binpred_correct_type:
+  !binpred v1 v2 v ty.
+    bir_eval_binpred binpred v1 v2 v ==>
+    ((type_of_bir_val v1 = type_of_bir_val v2) /\ type_of_bir_val v = (BType_Imm Bit1))
+Proof
+  Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
+  Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
+    rw [type_of_bir_val_def, bir_eval_binpred_cases, type_of_bir_imm_def, bir_eval_binpred_imm_cases, bool2b_def]
+QED
+
+(* Evaluates a general ifthenelse expression with values as parameters *)
+Inductive bir_eval_ifthenelse:
+[~BExp_IfThenElseT:]
+  bir_eval_ifthenelse birT (v1:bir_val_t) (v2:bir_val_t) v1 
+
+[~BExp_IfThenElseF:]
+  bir_eval_ifthenelse birF v1 v2 v2
+End
+
+(* Computes an ifthenelse expression of two values *)
+Definition bir_compute_ifthenelse_def:
+  bir_compute_ifthenelse b v1 v2 = 
+    if b = SOME birT then v1 
+    else if b = SOME birF then v2
+    else NONE
+End
+(* Eval and compute are similar *)
+Theorem bir_eval_ifthenelse_eq_compute_ifthenelse:
+  !v (v1:bir_val_t) (v2:bir_val_t) (v3:bir_val_t).
+  (bir_eval_ifthenelse v v1 v2 v3 <=>
+    bir_compute_ifthenelse (SOME v) (SOME v1) (SOME v2) = SOME v3)
+Proof
+  Cases_on `v` >> Cases_on `v1` >> Cases_on `v2` >> Cases_on `v3` >>
+  rw [bir_eval_ifthenelse_cases, bir_compute_ifthenelse_def, birT_def, birF_def] >>
+    metis_tac []
+QED
+
+(* If the condition is typed, then the expression evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_ifthenelse:
+  !v v1 v2.
+    (type_of_bir_val v = (BType_Imm Bit1)) ==>
+    ?v3. bir_eval_ifthenelse v v1 v2 v3
+Proof
+  rw [bir_eval_ifthenelse_eq_compute_ifthenelse] >>
+  Cases_on `v` >| [
+    Cases_on `b` >>
+    Cases_on `c` >>
+      metis_tac [bir_compute_ifthenelse_def, bit1_is_boolean],
+
+    fs [type_of_bir_val_def]
+    ]
+QED
+
+(* Type conservation Theorem *)
+Theorem bir_eval_ifthenelse_keep_type:
+  !v v1 v2 v3 ty.
+    bir_eval_ifthenelse v v1 v2 v3 ==>
+    (type_of_bir_val v1 = ty /\ type_of_bir_val v2 = ty) ==>
+    (type_of_bir_val v = (BType_Imm Bit1) <=> type_of_bir_val v3 = ty)
+Proof
+  Cases_on `v` >> Cases_on `v1` >> Cases_on `v2` >> Cases_on `v3` >>
+  Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >> Cases_on `b'''` >>
+  rw [type_of_bir_val_def, bir_eval_ifthenelse_cases, type_of_bir_imm_def,
+    birT_def, birF_def]
+QED
+
+(* Number to Bitstring *)
+Definition n2bs_def:
+  (n2bs n Bit1   = Imm1   (n2w n)) /\
+  (n2bs n Bit8   = Imm8   (n2w n)) /\
+  (n2bs n Bit16  = Imm16  (n2w n)) /\
+  (n2bs n Bit32  = Imm32  (n2w n)) /\
+  (n2bs n Bit64  = Imm64  (n2w n)) /\
+  (n2bs n Bit128 = Imm128 (n2w n))
+End
+
+(* Boolean list (vector) to bitstring *)
+Definition v2bs_def:
+  v2bs v s = n2bs (v2n v) s
+End
+
+
+(* Immediate to number *)
+Definition b2n_def:
+  (b2n ( Imm1   w ) = w2n w) /\
+  (b2n ( Imm8   w ) = w2n w) /\
+  (b2n ( Imm16  w ) = w2n w) /\
+  (b2n ( Imm32  w ) = w2n w) /\
+  (b2n ( Imm64  w ) = w2n w) /\
+  (b2n ( Imm128 w ) = w2n w)
+End
+
+(* Immediate to bitstring *)
+Definition b2v_def:
+  (b2v ( Imm1   w ) = w2v w) /\
+  (b2v ( Imm8   w ) = w2v w) /\
+  (b2v ( Imm16  w ) = w2v w) /\
+  (b2v ( Imm32  w ) = w2v w) /\
+  (b2v ( Imm64  w ) = w2v w) /\
+  (b2v ( Imm128 w ) = w2v w)
+End
+
+Definition bitstring_split_aux_def:
+  (bitstring_split_aux 0 acc bs = NONE) /\
+  (bitstring_split_aux n acc [] = SOME $ REVERSE acc) /\
+  (bitstring_split_aux n acc bs =
+    bitstring_split_aux n ((TAKE n bs)::acc) (DROP n bs))
+Termination
+  WF_REL_TAC `measure (\ (_, _, l). LENGTH l)` >>
+  simp_tac list_ss []
+End
+
+(* Splits a bitstring in chunks of n bits *)
+Definition bitstring_split_def:
+  bitstring_split n bs = bitstring_split_aux n [] bs
+End
+
+
+(* ------------------------------------------ *)
+(* ------------------ LOAD ------------------ *)
+(* ------------------------------------------ *)
+
+
+(* Load a value from the mmap at the given address *)
+Definition bir_load_mmap_def:
+  bir_load_mmap (mmap: num |-> num) a =
+      case FLOOKUP mmap a of
+        | NONE => 0
+        | SOME v => v
+End
+
+
+(* Concatenate multiple bitstrings to a number on the correct number of bits *)
+Definition bir_mem_concat_def:
+  bir_mem_concat vl rty = v2bs (FLAT vl) rty
+End
+
+(* Compute the address modulo the address space *)
+Definition bir_mem_addr_def:
+  bir_mem_addr aty a = MOD_2EXP (size_of_bir_immtype aty) a
+End
+
+(* Computes the number of memory splits we will read *)
+Definition bir_number_of_mem_splits_def:
+  bir_number_of_mem_splits vty rty aty =
+    if ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) then
+      if ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)) then
+          SOME ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty))
+      else NONE
+    else NONE
+End
+
+
+(* Load a bitstring at the given address from a mmap and pad it *)
+Definition bir_load_bitstring_from_mmap_def:
+  bir_load_bitstring_from_mmap vty mmap (a:num) =
+    fixwidth (size_of_bir_immtype vty) (n2v (bir_load_mmap mmap a))
+End
+  
+(* Load n splits of size vty from mmap starting at addr *) 
+Definition bir_load_splits_from_mmap_def:
+  bir_load_splits_from_mmap aty vty mmap addr n =
+    (MAP (\k. bir_load_bitstring_from_mmap vty mmap (bir_mem_addr aty (addr + k))) (COUNT_LIST n)) 
+End
+
+
+(* Eval an already unpacked load expression *)
+Inductive bir_eval_load_from_mem:
+[~BEnd_BigEndian:]
+  (!aty vty mmap addr rty n.
+    (bir_number_of_mem_splits vty rty aty = SOME n)
+    ==>
+    bir_eval_load_from_mem vty rty aty mmap BEnd_BigEndian addr 
+      (BVal_Imm (bir_mem_concat (bir_load_splits_from_mmap aty vty mmap addr n) rty)))
+
+[~BEnd_LittleEndian:]
+  (!aty vty mmap addr rty n.
+    (bir_number_of_mem_splits vty rty aty = SOME n)
+    ==>
+    bir_eval_load_from_mem vty rty aty mmap BEnd_LittleEndian addr
+      (BVal_Imm (bir_mem_concat (REVERSE (bir_load_splits_from_mmap aty vty mmap addr n)) rty)))
+
+[~BEnd_NoEndian:]
+  (!aty vty mmap addr rty.
+    (bir_number_of_mem_splits vty rty aty = SOME 1)
+    ==>
+    bir_eval_load_from_mem vty rty aty mmap BEnd_NoEndian addr
+      (BVal_Imm (bir_mem_concat (bir_load_splits_from_mmap aty vty mmap addr 1) rty)))
+End
+
+Definition bir_eval_load_def:
+  (bir_eval_load (BVal_Mem aty vty mmap) (BVal_Imm addr) en rty v = 
+    bir_eval_load_from_mem vty rty aty mmap en (b2n addr) v) /\
+  (bir_eval_load _ _ _ _ _ = F)
+End
+
+(* Computes an already unpacked load expression *)
+Definition bir_compute_load_from_mem_def:
+  bir_compute_load_from_mem
+  (vty : bir_immtype_t) (rty : bir_immtype_t) (aty : bir_immtype_t) (mmap : num |-> num) (en: bir_endian_t) (addr:num) =
+
+   case (bir_number_of_mem_splits vty rty aty) of
+    | NONE => NONE
+    | SOME (n:num) => (
+        let vs = bir_load_splits_from_mmap aty vty mmap addr n in
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
+        case vs' of NONE => NONE
+                 |  SOME vs'' => SOME (bir_mem_concat vs'' rty)
+   )
+End
+
+Definition bir_compute_load_def:
+  (bir_compute_load (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm addr)) en rty = 
+    val_from_imm_option (bir_compute_load_from_mem vty rty aty mmap en (b2n addr))) /\
+  (bir_compute_load _ _ _ _ = NONE)
+End
+
+
+(* ----------------------------------------- *)
+(* ----------------- STORE ----------------- *)
+(* ----------------------------------------- *)
+
+
+(* Add all the bitstrings in the mmap at address a *)
+Definition bir_update_mmap_def:
+  (bir_update_mmap aty mmap a [] = mmap) /\
+  (bir_update_mmap aty mmap a (v::vs) =
+    bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs)
+End
+
+
+Inductive bir_eval_store_in_mem:
+[~BEnd_BigEndian:]
+  !vty aty result mmap addr ll.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _) /\
+    (bitstring_split (size_of_bir_immtype vty) (b2v result) = SOME ll)
+    ==>
+    bir_eval_store_in_mem vty aty result mmap BEnd_BigEndian addr
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr ll))
+
+[~BEnd_LittleEndian:]
+  !vty aty result mmap addr ll.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME _) /\
+    (bitstring_split (size_of_bir_immtype vty) (b2v result) = SOME ll)
+    ==>
+    bir_eval_store_in_mem vty aty result mmap BEnd_LittleEndian addr
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr (REVERSE ll)))
+
+[~BEnd_NoEndian:]
+  !vty aty result mmap addr ll.
+    (bir_number_of_mem_splits vty (type_of_bir_imm result) aty = SOME 1) /\
+    (bitstring_split (size_of_bir_immtype vty) (b2v result) = SOME ll)
+    ==>
+    bir_eval_store_in_mem vty aty result mmap BEnd_NoEndian addr
+      (BVal_Mem aty vty (bir_update_mmap aty mmap addr ll))
+
+End
+
+Definition bir_eval_store_def:
+  (bir_eval_store (BVal_Mem aty vty mmap) (BVal_Imm addr) en (BVal_Imm result) v = 
+    bir_eval_store_in_mem vty aty result mmap en (b2n addr) v) /\
+  (bir_eval_store _ _ _ _ _ = F)
+End
+
+(* Compute an already unpacked store expression *)
+Definition bir_compute_store_in_mem_def:
+  bir_compute_store_in_mem
+  (vty : bir_immtype_t) (aty : bir_immtype_t) (result : bir_imm_t) (mmap : num |-> num) (en: bir_endian_t) (addr:num) =
+
+   let rty = type_of_bir_imm result in
+   case (bir_number_of_mem_splits vty rty aty) of
+    | NONE => NONE
+    | SOME (n:num) => (
+      case  (bitstring_split (size_of_bir_immtype vty) (b2v result)) of
+        | NONE => NONE
+        | SOME vs =>
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
+
+        case vs' of NONE => NONE
+                 |  SOME vs'' => SOME (BVal_Mem aty vty (bir_update_mmap aty mmap addr vs''))
+   )
+End
+
+
+Definition bir_compute_store_def:
+  (bir_compute_store (SOME (BVal_Mem aty vty mmap)) (SOME (BVal_Imm addr)) en (SOME (BVal_Imm result)) = 
+    bir_compute_store_in_mem vty aty result mmap en (b2n addr)) /\
+  (bir_compute_store _ _ _ _ = NONE)
+End
+
+Theorem size_of_bir_immtype_leq_1:
+  !b. 1 <= 2 ** (size_of_bir_immtype b)
+Proof
+  Cases_on `b` >>
+  rw [size_of_bir_immtype_def]
+QED
+
+(* Eval and compute are similar *)
+Theorem bir_eval_load_eq_compute_load:
+  !v_mem v_addr en rty v.
+    bir_eval_load v_mem v_addr en rty v <=>
+    (bir_compute_load (SOME v_mem) (SOME v_addr) en rty = SOME v)
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `en` >>
+    rw [bir_eval_load_def, bir_eval_load_from_mem_cases] >>
+    rw [bir_compute_load_def, bir_compute_load_from_mem_def] >>
+    CASE_TAC >>
+    simp [] >>
+    rw [val_from_imm_option_def] >>
+    metis_tac []
+QED
+
+
+
+(* If the operands are correctly typed, then the expression evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_load_bigendian:
+  !aty vty v_mem v_addr rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+  ==>
+  ?v. bir_eval_load v_mem v_addr BEnd_BigEndian rty v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >>
+    rw [bir_eval_load_eq_compute_load] >>
+    rw [bir_compute_load_def, bir_compute_load_from_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    rw [val_from_imm_option_def] >>
+    metis_tac []
+QED
+
+Theorem type_of_bir_val_imp_bir_eval_load_littleendian:
+  !aty vty v_mem v_addr rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+  ==>
+  ?v. bir_eval_load v_mem v_addr BEnd_LittleEndian rty v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >>
+    rw [bir_eval_load_eq_compute_load] >>
+    rw [bir_compute_load_def, bir_compute_load_from_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    rw [val_from_imm_option_def] >>
+    metis_tac []
+QED
+
+Theorem type_of_bir_val_imp_bir_eval_load_noendian:
+  !aty vty v_mem v_addr rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) = 1))
+  ==>
+  ?v. bir_eval_load v_mem v_addr BEnd_NoEndian rty v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >>
+    rw [bir_eval_load_eq_compute_load] >>
+    rw [bir_compute_load_def, bir_compute_load_from_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    rw [val_from_imm_option_def] >>
+    metis_tac [size_of_bir_immtype_leq_1]
+QED
+
+
+(* Type of bir_mem_concat *)
+Theorem type_of_bir_imm_bir_mem_concat:
+  !vl rty. type_of_bir_imm (bir_mem_concat vl rty) = rty
+Proof
+  Cases_on `rty` >>
+    rw [bir_mem_concat_def, v2bs_def, n2bs_def] >>
+    rw [type_of_bir_imm_def]
+QED
+  
+
+(* Type conservation theorem *)
+Theorem bir_eval_load_correct_type:
+  !v_mem v_addr en rty v.
+    bir_eval_load v_mem v_addr en rty v ==>
+    (type_of_bir_val v = (BType_Imm rty))
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >>
+  Cases_on `en` >>
+
+  simp [bir_eval_load_def, bir_eval_load_from_mem_cases] >>
+  metis_tac [type_of_bir_val_def, type_of_bir_imm_def, type_of_bir_imm_bir_mem_concat]
+QED
+
+(* bitstring_split will never be NONE *)
+Theorem bitstring_split_aux_size_of_bir_immtype:
+  !ty acc bs. ?ll. bitstring_split_aux (size_of_bir_immtype ty) acc bs = SOME ll
+Proof
+  gen_tac >>
+  `?n. size_of_bir_immtype ty = SUC n` by (Cases_on `ty` >> simp [size_of_bir_immtype_def]) >>
+  measureInduct_on `LENGTH bs` >>
+    Cases_on `bs` >>
+    fs [bitstring_split_def, bitstring_split_aux_def] >>
+    `LENGTH (DROP n t) < SUC (LENGTH t)` by rw [listTheory.LENGTH_DROP] >>
+    metis_tac [bitstring_split_aux_def, listTheory.LENGTH_DROP]
+QED
+
+Theorem bitstring_split_size_of_bir_immtype:
+  !ty bs. bitstring_split (size_of_bir_immtype ty) bs <> NONE
+Proof
+  simp [bitstring_split_def] >>
+  metis_tac [bitstring_split_aux_size_of_bir_immtype, optionTheory.NOT_SOME_NONE]
+QED
+
+(* Eval and compute are similar *)
+Theorem bir_eval_store_eq_compute_store:
+  !v_mem v_addr en result v.
+    bir_eval_store v_mem v_addr en result v <=>
+    (bir_compute_store (SOME v_mem) (SOME v_addr) en (SOME result) = SOME v)
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `en` >> Cases_on `result` >>
+    rw [bir_eval_store_def, bir_eval_store_in_mem_cases] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def] >>
+    CASE_TAC >> CASE_TAC >> TRY CASE_TAC >>
+      simp [] >>
+      metis_tac []
+QED
+
+(* If the operands are correctly typed, then the expression evaluates *)
+Theorem type_of_bir_val_imp_bir_eval_store_bigendian:
+  !aty vty v_mem v_addr v_result rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+    (type_of_bir_val v_result = BType_Imm rty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+  ==>
+  ?v. bir_eval_store v_mem v_addr BEnd_BigEndian v_result v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+    rw [bir_eval_store_eq_compute_store] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    TRY CASE_TAC >>
+      fs [bitstring_split_size_of_bir_immtype, bitstring_split_def] >>
+      metis_tac [bitstring_split_aux_size_of_bir_immtype]
+QED
+
+Theorem type_of_bir_val_imp_bir_eval_store_littleendian:
+  !aty vty v_mem v_addr v_result rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+    (type_of_bir_val v_result = BType_Imm rty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)))
+  ==>
+  ?v. bir_eval_store v_mem v_addr BEnd_LittleEndian v_result v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+    rw [bir_eval_store_eq_compute_store] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    TRY CASE_TAC >>
+      fs [bitstring_split_size_of_bir_immtype] >>
+      metis_tac []
+QED
+
+Theorem type_of_bir_val_imp_bir_eval_store_noendian:
+  !aty vty v_mem v_addr v_result rty.
+  ((type_of_bir_val v_mem = (BType_Mem aty vty)) /\ 
+    (type_of_bir_val v_addr = BType_Imm aty) /\
+    (type_of_bir_val v_result = BType_Imm rty) /\
+     ((size_of_bir_immtype rty) MOD (size_of_bir_immtype vty) = 0) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) <= 
+        2 **(size_of_bir_immtype aty)) /\
+     ((size_of_bir_immtype rty) DIV (size_of_bir_immtype vty) = 1))
+  ==>
+  ?v. bir_eval_store v_mem v_addr BEnd_NoEndian v_result v
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+    rw [bir_eval_store_eq_compute_store] >>
+    rw [bir_compute_store_def, bir_compute_store_in_mem_def, bir_number_of_mem_splits_def] >>
+    fs [type_of_bir_val_def, type_of_bir_imm_def] >>
+    TRY CASE_TAC >>
+      fs [bitstring_split_size_of_bir_immtype] >>
+      metis_tac [size_of_bir_immtype_leq_1]
+QED
+
+(* Type conservation theorem *)
+Theorem bir_eval_store_correct_type:
+  !v_mem v_addr en v_result v.
+    bir_eval_store v_mem v_addr en v_result v ==>
+    (type_of_bir_val v = type_of_bir_val v_mem)
+Proof
+  Cases_on `v_mem` >> Cases_on `v_addr` >> Cases_on `v_result` >>
+  Cases_on `en` >>
+
+  simp [bir_eval_store_def, bir_eval_store_in_mem_cases] >>
+  rw [type_of_bir_val_def, type_of_bir_imm_def] >>
+  metis_tac [type_of_bir_val_def, type_of_bir_imm_def]
+QED
+
+(** definitions *)
+
+(* defns bir_eval_exp *)
+Inductive bir_eval_exp:
+(* defn bir_eval_exp *)
+
+[Eval_BExp_Const:] (! (env:bir_var_environment_t) (bir_imm:bir_imm_t) .
+(clause_name "Eval_BExp_Const")
+ ==> 
+( ( bir_eval_exp env (BExp_Const bir_imm) (BVal_Imm bir_imm) )))
+
+[Eval_BExp_MemConst:] (! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) .
+(clause_name "Eval_BExp_MemConst")
+ ==> 
+( ( bir_eval_exp env (BExp_MemConst bir_immtype1 bir_immtype2 mmap) (BVal_Mem bir_immtype1 bir_immtype2 mmap) )))
+
+[Eval_BExp_Den:] (! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) .
+(clause_name "Eval_BExp_Den") /\
+(( (bir_env_lookup_rel  env   bir_var   bir_val ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_Den bir_var) bir_val )))
+
+[Eval_BExp_BinExp:] (! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
+(clause_name "Eval_BExp_BinExp") /\
+(( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
+( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
+( (bir_eval_binexp  bir_binexp   bir_val1   bir_val2   bir_val ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_BinExp bir_binexp bir_exp1 bir_exp2) bir_val )))
+
+[Eval_BExp_UnaryExp:] (! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_val':bir_val_t) (bir_val:bir_val_t) .
+(clause_name "Eval_BExp_UnaryExp") /\
+(( ( bir_eval_exp env bir_exp bir_val )) /\
+( (bir_eval_unaryexp  bir_unaryexp   bir_val   bir_val' ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_UnaryExp bir_unaryexp bir_exp) bir_val' )))
+
+[Eval_BExp_BinPred:] (! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
+(clause_name "Eval_BExp_BinPred") /\
+(( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
+( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
+( (bir_eval_binpred  bir_binpred   bir_val1   bir_val2   bir_val ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_BinPred bir_binpred bir_exp1 bir_exp2) bir_val )))
+
+[Eval_BExp_IfThenElse:] (! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val3:bir_val_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
+(clause_name "Eval_BExp_IfThenElse") /\
+(( ( bir_eval_exp env bir_exp bir_val )) /\
+( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
+( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
+( (bir_eval_ifthenelse  bir_val   bir_val1   bir_val2   bir_val3 ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_IfThenElse bir_exp bir_exp1 bir_exp2) bir_val3 )))
+
+[Eval_BExp_Load:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_endian:bir_endian_t) (bir_immtype:bir_immtype_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
+(clause_name "Eval_BExp_Load") /\
+(( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
+( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
+( (bir_eval_load  bir_val1   bir_val2   bir_endian   bir_immtype   bir_val ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_Load bir_exp1 bir_exp2 bir_endian bir_immtype) bir_val )))
+
+[Eval_BExp_Store:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_endian:bir_endian_t) (bir_exp3:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) (bir_val3:bir_val_t) .
+(clause_name "Eval_BExp_Store") /\
+(( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
+( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
+( ( bir_eval_exp env bir_exp3 bir_val3 )) /\
+( (bir_eval_store  bir_val1   bir_val2   bir_endian   bir_val3   bir_val ) ))
+ ==> 
+( ( bir_eval_exp env (BExp_Store bir_exp1 bir_exp2 bir_endian bir_exp3) bir_val )))
+End
 
 val _ = export_theory ();
 
