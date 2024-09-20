@@ -478,6 +478,28 @@ subgoal `((w2w vr):word8) = (7 >< 0) vr` >- (
 FULL_SIMP_TAC std_ss []
 QED
 
+Theorem riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_8LSB_alt:
+  (!env em ea va er vr mem_f.
+ bir_is_lifted_mem_exp env em mem_f ==>
+ bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+ bir_is_lifted_imm_exp env er (Imm8 vr) ==>
+ bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian er)
+   mem_f(| va |-> vr |))
+Proof
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+  bir_is_lifted_mem_exp_def, PULL_EXISTS,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+rpt strip_tac >>
+`sa = Bit64` by metis_tac[size_of_bir_immtype_INJ, size_of_bir_immtype_def] >>
+`sb = Bit8` by metis_tac[size_of_bir_immtype_INJ, size_of_bir_immtype_def] >>
+gs[bir_store_in_mem_def] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_load_mmap_w_bir_mmap_n2w_thm, FUN_EQ_THM] >>
+subgoal `size_of_bir_immtype Bit64 = dimindex (:64)` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [dimindex_64]
+) >>
+gs[bir_update_mmap_words_INTRO_w2n, bitstring_split_SINGLE, bir_update_mmap_words_def]
+QED
+
 Theorem riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_16LSB:
   (!env em ea va er vr mem_f.
  bir_is_lifted_mem_exp env em mem_f ==>
@@ -568,6 +590,18 @@ Q.SUBGOAL_THEN `(7 >< 0) (vv:word64) = ((w2w vv):word8)` (fn thm => FULL_SIMP_TA
 FULL_SIMP_TAC std_ss [mem_store_byte_def]
 QED
 
+Theorem riscv_LIFT_STORE_BYTE_alt:
+  !env em ea va ev vv ms mem_f.
+    bir_is_lifted_mem_exp env em mem_f ==>
+    bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+    bir_is_lifted_imm_exp env ev (Imm8 vv) ==>
+    bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
+      (mem_store_byte va vv mem_f)
+Proof
+SIMP_TAC std_ss [mem_store_byte_def, elim_zero_for_def_thm,
+                 riscv_is_lifted_mem_exp_STORE_ENDIAN_BYTE_8LSB_alt]
+QED
+
 Theorem riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL:
   !va vv mem_f.
     FUNS_EQ_OUTSIDE_WI_size va 8 (riscv_mem_store_dword va vv mem_f)
@@ -655,6 +689,21 @@ Proof
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
    bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY] >>
+blastLib.BBLAST_TAC
+QED
+
+(*************************************************)
+(* 8 LSBs (8-bit) - for SB                       *)
+(*************************************************)
+
+Theorem riscv_is_lifted_imm_exp_8LSBs[local]:
+  !env w e.
+  bir_is_lifted_imm_exp env e (Imm64 w) ==>
+  bir_is_lifted_imm_exp env (BExp_Cast BIExp_LowCast e Bit8)
+    (Imm8 ((7 >< 0) w))
+Proof
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+   bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
 blastLib.BBLAST_TAC
 QED
 
@@ -800,12 +849,14 @@ Theorem riscv_extra_LIFTS = LIST_CONJ [
     riscv_LIFT_LOAD_HALF,
     riscv_LIFT_LOAD_BYTE,
     riscv_LIFT_STORE_BYTE,
+    riscv_LIFT_STORE_BYTE_alt,
     riscv_LIFT_STORE_HALF,
     riscv_LIFT_STORE_WORD,
     riscv_LIFT_STORE_DWORD,
     riscv_is_lifted_imm_exp_BIN_PRED,
     riscv_is_lifted_imm_exp_6LSBs,
     riscv_is_lifted_imm_exp_5LSBs,
+    riscv_is_lifted_imm_exp_8LSBs,
     riscv_is_lifted_imm_exp_32LSBsLC,
     riscv_is_lifted_imm_exp_64MSBs,
     riscv_is_lifted_imm_exp_GE,
