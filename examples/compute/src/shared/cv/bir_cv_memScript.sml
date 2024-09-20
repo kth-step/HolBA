@@ -3,9 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse boolLib bossLib;
-open bir_basicTheory bir_cv_basicTheory;
-open bir_memTheory;
-open bir_typingTheory;
+open birTheory bir_cv_basicTheory;
 open bitstringTheory numeral_bitTheory numposrepTheory;
 
 

@@ -3,8 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory bir_cv_basicTheory;
-open bir_envTheory;
+open birTheory bir_cv_basicTheory;
 open alistTheory;
 
 val _ = new_theory "bir_cv_env";

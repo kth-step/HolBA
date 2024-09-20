@@ -4,7 +4,7 @@
 
 open HolKernel Parse bossLib boolLib;
 open bir_cv_basicTheory;
-open bir_unaryexpTheory;
+open birTheory;
 open wordsTheory;
 
 
