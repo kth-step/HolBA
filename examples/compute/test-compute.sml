@@ -3,9 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory bir_binexpTheory bir_evalTheory;
-open bir_binpredTheory;
-open bir_envTheory;
+open ottTheory birTheory;
 open bir_cv_basicLib;
 open bir_cv_envLib;
 open bir_cv_programLib;
@@ -48,18 +46,18 @@ fun print_and_check_conv name conv input t_concl =
 val _ = prove(``
   !imm. bir_eval_exp bir_empty_env (BExp_Const imm) (BVal_Imm imm)``,
 
-  rw [Once bir_eval_exp_cases]);
+  rw [Once bir_eval_exp_cases,clause_name_def]);
 
 val _ = prove(``
   !imm. bir_eval_exp bir_empty_env (BExp_Const imm) (BVal_Imm imm)``,
 
-  rw [Once bir_eval_exp_cases]);
+  rw [Once bir_eval_exp_cases,clause_name_def]);
 
 val _ = prove (``
   !env var vimm. bir_eval_exp (bir_env_update env var vimm) (BExp_Den var) vimm``, 
 
   Cases_on `var` >> Cases_on `env` >>
-  rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_def]);
+  rw [Once bir_eval_exp_cases, bir_env_update_def, bir_env_lookup_rel_def,clause_name_def]);
 
 val _ = prove (``
   !imm1 imm2. bir_eval_exp bir_empty_env 
@@ -67,7 +65,7 @@ val _ = prove (``
     (BVal_Imm (Imm64 (imm1 + imm2)))``,
 
   rw [Ntimes bir_eval_exp_cases 3, bir_eval_binexp_def, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def] >>
-  rw [Once bir_eval_exp_cases, bir_eval_binexp_def, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def]);
+  rw [Once bir_eval_exp_cases, bir_eval_binexp_def, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def,clause_name_def]);
 
 
 (* ------------------------------------------------- *)

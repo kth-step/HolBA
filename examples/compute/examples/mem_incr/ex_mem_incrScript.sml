@@ -4,8 +4,7 @@
 
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory;
-open bir_envTheory;
+open birTheory;
 open finite_mapTheory;
 open bir_computeTheory;
 

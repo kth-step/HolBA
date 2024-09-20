@@ -4,8 +4,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse boolLib bossLib;
-open bir_basicTheory bir_envTheory;
-open bir_binexpTheory bir_ifthenelseTheory bir_unaryexpTheory;
+open birTheory;
 open bir_computeTheory;
 open wordsLib;
 
