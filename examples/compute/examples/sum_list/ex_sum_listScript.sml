@@ -2,7 +2,7 @@
 (*  Example where the program computes the sum of a list in memory           *)
 (* ------------------------------------------------------------------------- *)
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory bir_envTheory;
+open birTheory;
 open bir_programTheory;
 open finite_mapTheory;
 

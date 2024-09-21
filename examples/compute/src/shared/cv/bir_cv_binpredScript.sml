@@ -4,7 +4,7 @@
 
 open HolKernel Parse boolLib bossLib;
 open bir_cv_basicTheory;
-open bir_binpredTheory;
+open birTheory;
 
 
 val _ = new_theory "bir_cv_binpred";

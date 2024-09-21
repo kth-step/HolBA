@@ -9,7 +9,7 @@ struct
 open HolKernel Parse boolLib bossLib;
 open bir_cv_basicTheory;
 open bir_cv_basicLib;
-open bir_cv_envTheory bir_envTheory;
+open bir_cv_envTheory birTheory;
 open combinSyntax;
 open optionSyntax;
 

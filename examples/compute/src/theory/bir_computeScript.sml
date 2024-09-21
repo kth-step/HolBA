@@ -3,9 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory bir_binexpTheory bir_unaryexpTheory bir_envTheory bir_ifthenelseTheory;
-open bir_binpredTheory;
-open bir_memTheory;
+open birTheory;
 
 
 val _ = new_theory "bir_compute";

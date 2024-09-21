@@ -12,17 +12,17 @@ val ERR = mk_HOL_ERR "bir_basicSyntax";
 
 
 
-val val_imm_tm = prim_mk_const{Name="BVal_Imm", Thy="bir_basic"};
-val val_mem_tm = prim_mk_const{Name="BVal_Mem", Thy="bir_basic"};
-val exp_const_tm = prim_mk_const{Name="BExp_Const", Thy="bir_basic"};
-val exp_mem_const_tm = prim_mk_const{Name="BExp_MemConst", Thy="bir_basic"};
-val exp_den_tm = prim_mk_const{Name="BExp_Den", Thy="bir_basic"};
-val exp_bin_exp_tm = prim_mk_const{Name="BExp_BinExp", Thy="bir_basic"};
-val exp_unary_exp_tm = prim_mk_const{Name="BExp_UnaryExp", Thy="bir_basic"};
-val exp_bin_pred_tm = prim_mk_const{Name="BExp_BinPred", Thy="bir_basic"};
-val exp_if_then_else_tm = prim_mk_const{Name="BExp_IfThenElse", Thy="bir_basic"};
-val exp_load_tm = prim_mk_const{Name="BExp_Load", Thy="bir_basic"};
-val exp_store_tm = prim_mk_const{Name="BExp_Store", Thy="bir_basic"};
+val val_imm_tm = prim_mk_const{Name="BVal_Imm", Thy="bir"};
+val val_mem_tm = prim_mk_const{Name="BVal_Mem", Thy="bir"};
+val exp_const_tm = prim_mk_const{Name="BExp_Const", Thy="bir"};
+val exp_mem_const_tm = prim_mk_const{Name="BExp_MemConst", Thy="bir"};
+val exp_den_tm = prim_mk_const{Name="BExp_Den", Thy="bir"};
+val exp_bin_exp_tm = prim_mk_const{Name="BExp_BinExp", Thy="bir"};
+val exp_unary_exp_tm = prim_mk_const{Name="BExp_UnaryExp", Thy="bir"};
+val exp_bin_pred_tm = prim_mk_const{Name="BExp_BinPred", Thy="bir"};
+val exp_if_then_else_tm = prim_mk_const{Name="BExp_IfThenElse", Thy="bir"};
+val exp_load_tm = prim_mk_const{Name="BExp_Load", Thy="bir"};
+val exp_store_tm = prim_mk_const{Name="BExp_Store", Thy="bir"};
 
 
 

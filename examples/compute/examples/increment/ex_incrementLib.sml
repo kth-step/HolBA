@@ -6,7 +6,7 @@ structure ex_incrementLib :> ex_incrementLib =
 struct
 
 open HolKernel Parse bossLib boolLib;
-open bir_basicTheory;
+open birTheory;
 open ex_incrementTheory;
 open bir_computeLib;
 

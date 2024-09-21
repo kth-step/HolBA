@@ -6,7 +6,7 @@ structure bir_computeLib :> bir_computeLib =
 struct
 
 open HolKernel Parse boolLib bossLib;
-open bir_basicTheory bir_cv_basicTheory;
+open birTheory bir_cv_basicTheory;
 open bir_computeTheory;
 open wordsLib;
 open cv_transLib cv_stdTheory cvTheory;
