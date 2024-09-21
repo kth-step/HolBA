@@ -1,2 +1,7 @@
+OTT = ott
+
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+birScript.sml: ../../ott/bir.ott
+	$(OTT) -o birScript.sml ../../ott/bir.ott
