@@ -50,11 +50,16 @@ in
 fun gen_prog_vars_set_thm bir_prog_def =
  let
   val prog_tm = (fst o dest_eq o concl) bir_prog_def;
+  val _ = print "\ncollecting program variables";
+  val timer = holba_miscLib.timer_start 0;
+  val var_set_thm = 
+    (REWRITE_CONV [bir_typing_progTheory.bir_vars_of_program_ALT_thm] THENC
+     EVAL)
+    ``bir_vars_of_program ^prog_tm``;
+  val _ = holba_miscLib.timer_stop
+    (fn delta_s => print (" - " ^ delta_s ^ "\n")) timer;
  in
-  (SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
-   [bir_prog_def] THENC
-   EVAL)
-  ``bir_vars_of_program ^prog_tm``
+   var_set_thm
  end;
 
 fun gen_prog_vars_list_def_thm progname prog_vars_set_thm =

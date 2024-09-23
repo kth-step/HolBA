@@ -184,6 +184,57 @@ SIMP_TAC std_ss [bir_vars_of_program_def, bir_stmts_of_prog_def,
 METIS_TAC[]
 QED
 
+(* alternative defintinition of bir_vars_of_block and bir_vars_of_prog to support faster collection for bigger programs *)
+Definition bir_vars_of_block_as_setlist_def:
+  bir_vars_of_block_as_setlist bl <=>
+  ((bir_vars_of_stmtE bl.bb_last_statement)::(MAP bir_vars_of_stmtB bl.bb_statements))
+End
+
+local
+  open listTheory;
+in
+Theorem bir_vars_of_block_ALT_thm:
+  !bl.
+  (bir_vars_of_block bl = flat_setlist (bir_vars_of_block_as_setlist bl))
+Proof
+  GEN_TAC >>
+  REWRITE_TAC [bir_vars_of_block_def, bir_vars_of_block_as_setlist_def, flat_setlist_thm] >>
+  fs [LIST_TO_SET_MAP] >>
+  REWRITE_TAC [Once UNION_COMM]
+QED
+
+Theorem bir_vars_of_block_ALT_IMAGE_set_thm:
+  !l.
+  (IMAGE bir_vars_of_block (set l) = IMAGE (flat_setlist o bir_vars_of_block_as_setlist) (set l))
+Proof
+  GEN_TAC >>
+  REWRITE_TAC [Once (prove(“bir_vars_of_block = \x. bir_vars_of_block x”, METIS_TAC[]))] >>
+  REWRITE_TAC [combinTheory.o_DEF, bir_vars_of_block_ALT_thm]
+QED
+end
+
+Definition bir_vars_of_program_as_setlist_def:
+  bir_vars_of_program_as_setlist (BirProgram p) <=>
+  (flat_setlist (FLAT (MAP bir_vars_of_block_as_setlist p)))
+End
+
+local
+  open listTheory;
+in
+Theorem bir_vars_of_program_ALT_thm:
+  !p.
+  (bir_vars_of_program p = bir_vars_of_program_as_setlist p)
+Proof
+  Cases_on ‘p’ >>
+  REWRITE_TAC [bir_vars_of_program_def, bir_vars_of_program_as_setlist_def, flat_setlist_thm] >>
+
+  REWRITE_TAC [LIST_TO_SET_FLAT, LIST_TO_SET_MAP] >>
+  REWRITE_TAC [bir_vars_of_block_ALT_IMAGE_set_thm, flat_setlist_thm2] >>
+
+  REWRITE_TAC [IMAGE_COMPOSE, BIGUNION_IMAGE_BIGUNION_thm]
+QED
+end
+
 
 Theorem bir_get_current_statement_vars_of:
   !p pc stmt. (bir_get_current_statement p pc = SOME stmt) ==>
