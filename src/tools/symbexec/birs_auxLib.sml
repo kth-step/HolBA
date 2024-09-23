@@ -240,10 +240,14 @@ fun gen_lookup_functions (stmt_thms, label_mem_thms) =
 
 fun prepare_program_lookups bir_lift_thm =
 let
+  val _ = print "\npreparing program lookups";
+  val timer = holba_miscLib.timer_start 0;
   val prep_structure = gen_exec_prep_thms_from_lift_thm bir_lift_thm;
   val (stmt_lookup_fun, l_mem_lookup_fun) = gen_lookup_functions prep_structure;
   val _ = cur_stmt_lookup_fun := stmt_lookup_fun;
   val _ = cur_l_mem_lookup_fun := l_mem_lookup_fun;
+  val _ = holba_miscLib.timer_stop
+    (fn delta_s => print (" - " ^ delta_s ^ "\n")) timer;
 in
   ()
 end;

@@ -10,6 +10,7 @@ local
   open birs_composeLib;
   open birs_driveLib;
   open birs_auxTheory;
+  open bir_immSyntax;
 in
 
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
@@ -85,12 +86,12 @@ fun bir_symb_analysis_thm bir_prog_def
    val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
    val birs_state_init_lbl_tm =
-    (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
+    (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address ^(gen_mk_Imm init_addr_tm))``;
    val birs_state_end_tm_lbls =
     List.map 
      (fn end_addr_def =>
        let val end_addr_tm = (snd o dest_eq o concl) end_addr_def in
-         (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))`` 
+         (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address ^(gen_mk_Imm end_addr_tm))`` 
        end) end_addr_defs;
    val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
    val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
@@ -141,6 +142,7 @@ local
   open bir_env_oldTheory;
   open bir_program_varsTheory;
   open distribute_generic_stuffTheory;
+  open bir_immSyntax;
 in
 
 fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
@@ -151,10 +153,12 @@ fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
    val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
    val prog_vars_list_tm = (fst o dest_eq o concl) prog_vars_list_def;
    val birenvtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
+   val bir_init_lbl_tm = ``BL_Address ^(gen_mk_Imm init_addr_tm)``;
+   val bir_end_lbl_tm = ``BL_Address ^(gen_mk_Imm end_addr_tm)``;
    val bir_state_init_lbl_tm = (snd o dest_eq o concl o EVAL)
-    ``bir_block_pc (BL_Address (Imm64 ^init_addr_tm))``;
+    ``bir_block_pc (BL_Address ^(gen_mk_Imm init_addr_tm))``;
    val birs_state_end_lbl_tm = (snd o dest_eq o concl o EVAL)
-    ``bir_block_pc (BL_Address (Imm64 ^end_addr_tm))``;
+    ``bir_block_pc (BL_Address ^(gen_mk_Imm end_addr_tm))``;
    val birs_state_init_pre_tm =
     ``birs_state_init_pre_GEN ^bir_state_init_lbl_tm ^birenvtyl_tm
       (mk_bsysprecond ^bspec_pre_tm ^birenvtyl_tm)``;
@@ -315,10 +319,10 @@ fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
 
    val abstract_jgmt_rel_thm =
     prove (``abstract_jgmt_rel (bir_ts ^bprog_tm)
-     (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)}
+     (^bir_init_lbl_tm) {^bir_end_lbl_tm}
      (\st. bir_exec_to_labels_triple_precond st ^bspec_pre_tm ^bprog_tm)
      (\st st'. bir_exec_to_labels_triple_postcond st'
-     (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+     (\l. if l = ^bir_end_lbl_tm
           then ^bspec_post_tm
           else bir_exp_false) ^bprog_tm)``,
 
@@ -358,18 +362,18 @@ fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
 
   val bspec_cont_thm =
    prove (``bir_cont ^bprog_tm bir_exp_true
-    (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+    (^bir_init_lbl_tm) {^bir_end_lbl_tm} {}
     ^bspec_pre_tm
-    (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+    (\l. if l = ^bir_end_lbl_tm
          then ^bspec_post_tm
          else bir_exp_false)``,
 
-    `{BL_Address (Imm64 ^end_addr_tm)} <> {}` by fs [] >>
+    `{^bir_end_lbl_tm} <> {}` by fs [] >>
     MP_TAC ((Q.SPECL [
-     `BL_Address (Imm64 ^init_addr_tm)`,
-      `{BL_Address (Imm64 ^end_addr_tm)}`,
+     `^bir_init_lbl_tm`,
+      `{^bir_end_lbl_tm}`,
       `^bspec_pre_tm`,
-      `\l. if l = BL_Address (Imm64 ^end_addr_tm)
+      `\l. if l = ^bir_end_lbl_tm
            then ^bspec_post_tm
            else bir_exp_false`
     ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`])
