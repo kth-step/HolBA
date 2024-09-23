@@ -292,7 +292,7 @@ Proof
   METIS_TAC []
 QED
 
-Theorem prop_holds_TO_step_n_in_L_BIR_fmap_thm[local]:
+Theorem prop_holds_TO_step_n_in_L_BIR_fmap_thm:
 !p start_lbl L envtyl vars bpre fm.
   (prop_holds (bir_symb_rec_sbir p)
     start_lbl L (P_bircont envtyl bpre)
@@ -305,7 +305,13 @@ Theorem prop_holds_TO_step_n_in_L_BIR_fmap_thm[local]:
            st n L st' /\
            (ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL exit_albl vars bpost st st') fm F))
 Proof
- cheat
+ REPEAT STRIP_TAC >>
+ IMP_RES_TAC prop_holds_TO_step_n_in_L_thm >>
+
+ FULL_SIMP_TAC std_ss [birs_symb_concst_pc_thm, P_bircont_pre_nL_thm, Q_bircont_post_nL_thm] >>
+ PAT_X_ASSUM ``!x. A`` IMP_RES_TAC >>
+ FULL_SIMP_TAC std_ss [P_bircont_pre_nL_thm, Q_bircont_post_nL_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def] >>
+ METIS_TAC []
 QED
 
 Theorem prop_holds_TO_step_n_in_L_BIR_two_thm:
@@ -405,7 +411,35 @@ Theorem bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_SPEC_fmap_thm[local]:
     (pre_bircont_nL envtyl bpre)
     (\st st'. ITFMAP (\exit_albl bpost pLs. pLs \/ post_bircont_nL <|bpc_label := BL_Address exit_albl; bpc_index := 0|> vars bpost st st') fm F))
 Proof
+  REPEAT STRIP_TAC >>
+
+  IMP_RES_TAC (
+    (REWRITE_RULE
+       [bir_programTheory.bir_block_pc_def]
+       bir_program_transfTheory.bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm)) >>
+
+  FULL_SIMP_TAC std_ss [pre_bircont_nL_def] >>
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `IMAGE (\exit_albl. BL_Address exit_albl) (FDOM (fm : bir_imm_t |-> bir_exp_t))`) >>
   cheat
+
+  (*
+  sg `L INTER {<|bpc_label := BL_Address exit_albl_1; bpc_index := 0|>; <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|>} = {}` >-
+   (REWRITE_TAC [GSYM DISJOINT_DEF, IN_DISJOINT] >>
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >> rw [] >> fs []) >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [IMAGE_DEF,bir_block_pc_def] >>
+
+  `!st st'. post_bircont_nL
+     <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+      post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st' ==>
+    ?x. st'.bst_pc = <|bpc_label := x; bpc_index := 0|> /\ (x = BL_Address exit_albl_1 ∨ x = BL_Address exit_albl_2)`
+   by METIS_TAC [post_bircont_nL_def] >>
+  `!st st'. post_bircont_nL
+    <|bpc_label := BL_Address exit_albl_1; bpc_index := 0|> vars bpost_1 st st' \/
+   post_bircont_nL <|bpc_label := BL_Address exit_albl_2; bpc_index := 0|> vars bpost_2 st st' ==>
+    ~bir_state_is_terminated st'` by (METIS_TAC [post_bircont_nL_def,bir_state_is_terminated_def]) >>
+  METIS_TAC []
+  *)
 QED
 
 (* use the reasoning on label sets to get to abstract_jgmt_rel *)
