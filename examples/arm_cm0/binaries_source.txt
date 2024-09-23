@@ -1,0 +1,17 @@
+
+andreas@nukunonu:~/data/hol/HolBA_symbold/src/tools/symbexec/examples/binaries/balrob$
+
+git remote -v
+origin  git@github.com:kth-step/HolBA.git (fetch)
+origin  git@github.com:kth-step/HolBA.git (push)
+
+git rev-parse HEAD
+444e7c0be9e30693bb7944180a69eea3dae4e957
+
+git branch -v
+* dev_symbexec         444e7c0b Fix mymodexp analysis
+
+cp balrob.elf.da ~/data/hol/HolBA_symbcm0/examples/arm_cm0/balrob/
+cp balrob_otherbenchs.elf.da ~/data/hol/HolBA_symbcm0/examples/arm_cm0/otherbenchs/
+
+
