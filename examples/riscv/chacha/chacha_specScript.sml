@@ -70,14 +70,11 @@ End
 
 val bspec_chacha_keysetup_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15))``
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
 
 Definition bspec_chacha_keysetup_pre_def:
- bspec_chacha_keysetup_pre (pre_x15:word64) : bir_exp_t =
+ bspec_chacha_keysetup_pre : bir_exp_t =
   ^bspec_chacha_keysetup_pre_tm
 End
 
@@ -85,14 +82,11 @@ End
 
 val bspec_chacha_ivsetup_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15))``
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
 
 Definition bspec_chacha_ivsetup_pre_def:
- bspec_chacha_ivsetup_pre (pre_x15:word64) : bir_exp_t =
+ bspec_chacha_ivsetup_pre : bir_exp_t =
   ^bspec_chacha_ivsetup_pre_tm
 End
 
