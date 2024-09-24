@@ -18,7 +18,6 @@ local
 in
 
 
-
 (* TODO: MOVE AWAY !!!!! GENERIC DEFINITIONS AND THEOREMS *)
 (*
 val varset_thm = incr_prog_vars_thm;
@@ -49,18 +48,30 @@ fun Q_bircont_SOLVE3CONJS_TAC varset_thm = (
       REPEAT (POP_ASSUM (K ALL_TAC)) >>
 
       (* concretize and normalize *)
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
+      (* --- first the variable set *)
+      REWRITE_TAC [GSYM varset_thm] >>
+      CONV_TAC (RAND_CONV (EVAL)) >>
+      (* --- then the symbolic environment *)
       FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_auxTheory.birs_exps_of_senv_COMP_thm] >>
+      (* --- then the symbol set *)
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
+      REPEAT (CHANGED_TAC (fn x => (
+        FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss++pred_setLib.PRED_SET_ss++stringSimps.STRING_ss) [Once birs_auxTheory.birs_exps_of_senv_COMP_thm]
+       ) x)) >>
       CONV_TAC (RATOR_CONV (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_exp``] THENC SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL))) >>
-      (* TODO: improve this *)
-      CONV_TAC (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_program``] THENC SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [] THENC EVAL)) >>
 
       (* finish the proof *)
-      REWRITE_TAC [birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
-      EVAL_TAC >>
-      SIMP_TAC (std_ss++holBACore_ss) [] >>
-      EVAL_TAC
+      REPEAT (CHANGED_TAC (fn x => (
+        REWRITE_TAC [Once birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
+	let
+	  val fix_tac =
+	    EVAL_TAC >>
+            SIMP_TAC (std_ss++holBACore_ss) [bir_valuesTheory.BType_Bool_def] >>
+	    EVAL_TAC;
+	in
+	 (CONJ_TAC >- fix_tac) ORELSE (fix_tac)
+	end
+       ) x))
     )
 );
 

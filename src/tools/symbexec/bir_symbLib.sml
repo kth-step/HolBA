@@ -265,10 +265,21 @@ fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
     bir_eval_exp ^bspec_post_tm bs'.bst_environ = SOME bir_val_true``) 
    sys2s;
 
+   val _ = print "\nproving strong postcondition implications for each symbolic execution leaf with the smt solver";
    val strongpostcond_thms = List.map (fn goal =>
     prove(``^goal``, birs_strongpostcond_impl_TAC)) strongpostcond_goals;
+   val _ = print " - done\n";
 
+   val Pi_thms_idx = ref 0;
    val Pi_thms = List.map (fn sys2 =>
+    let
+      val idx = (!Pi_thms_idx);
+      (*
+      val sys2 = List.nth(sys2s, idx);
+      *)
+      val _ = print ("proving leaf #" ^ (Int.toString idx) ^ "\n");
+      val _ = Pi_thms_idx := idx + 1;
+    in
     prove(``
      sys1 = ^sys1 ==>
      sys2 = ^sys2 ==>
@@ -280,11 +291,11 @@ fun bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
       (birs_symb_to_concst bs) (birs_symb_to_concst bs')``,
 
     REPEAT STRIP_TAC >>
-    Q_bircont_SOLVE3CONJS_TAC prog_vars_thm >>
+    Q_bircont_SOLVE3CONJS_TAC prog_vars_thm >> (* val varset_thm = prog_vars_thm; *)
     `birs_symb_matchstate sys1 H' bs` by
      METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm] >>
     FULL_SIMP_TAC std_ss [P_bircont_thm] >>
-    METIS_TAC strongpostcond_thms))
+    METIS_TAC strongpostcond_thms) end)
    sys2s;
 
    val bprog_Pi_overapprox_Q_thm =
