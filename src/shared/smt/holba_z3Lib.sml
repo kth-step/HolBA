@@ -35,7 +35,7 @@ val prelude_z3_path = holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/holba
 val prelude_z3 = read_from_file prelude_z3_path;
 val prelude_z3_n = prelude_z3 ^ "\n";
 val use_stack = true;
-val debug_print = false;
+val debug_print = ref false;
 fun get_z3proc z3bin =
   let
    val z3proc_ = !z3proc_o;
@@ -49,7 +49,7 @@ fun get_z3proc z3bin =
        end;
    val p = if isSome z3proc_ then check_and_restart (valOf z3proc_) else
       let
-        val _ = if not debug_print then () else
+        val _ = if not (!debug_print) then () else
 	        print ("starting: " ^ z3bin ^ "\n");
         val p = openz3 z3bin;
 	val _ = z3proc_bin_o := SOME z3bin;
@@ -76,7 +76,7 @@ fun get_z3wrapproc () =
         val z3wrap = case OS.Process.getEnv "HOL4_Z3_WRAPPED_EXECUTABLE" of
            SOME x => x
          | NONE => raise ERR "get_z3wrapproc" "variable HOL4_Z3_WRAPPED_EXECUTABLE not defined";
-        val _ = if not debug_print then () else
+        val _ = if not (!debug_print) then () else
 	        print ("starting: " ^ z3wrap ^ "\n");
         val p = openz3wrap z3wrap prelude_z3_path;
       in (z3wrapproc_o := SOME p; p) end;
@@ -92,7 +92,7 @@ fun inputLines_until m ins acc =
     val _ = if isSome line_o then () else
             raise ERR "inputLines_until" "stream ended before reaching the marker";
     val line = valOf line_o;
-    val _ = if not debug_print then () else
+    val _ = if not (!debug_print) then () else
             (print "collecting: "; print line);
   in
     if line = m then
@@ -103,7 +103,7 @@ fun inputLines_until m ins acc =
 
 fun sendreceive_query z3bin q =
  let
-   val _ = if not debug_print then () else
+   val _ = if not (!debug_print) then () else
            (print q; print "\n");
    val p = get_z3proc z3bin;
    val (s_in,s_out) = get_streams p;
@@ -115,10 +115,10 @@ fun sendreceive_query z3bin q =
    val z3_done_marker = "holba_z3 qdm";
    val () = TextIO.output (s_out, q ^ "(echo \"" ^ z3_done_marker ^ "\")\n");
    val out_lines = inputLines_until (z3_done_marker ^ "\n") s_in [];
-   val _ = if debug_print then holba_miscLib.timer_stop
+   val _ = if !debug_print then holba_miscLib.timer_stop
      (fn delta_s => print ("  query took " ^ delta_s ^ "\n")) timer else ();
 
-   val _ = if not debug_print then () else
+   val _ = if not (!debug_print) then () else
            (map print out_lines; print "\n\n");
    (* https://microsoft.github.io/z3guide/docs/logic/basiccommands/ *)
    val _ = if not use_stack then
@@ -136,17 +136,17 @@ fun sendreceive_wrap_query q =
    val (s_in,s_out) = get_streams p;
 
    val q_fixed = String.concat (List.map (fn c => if c = #"\n" then "\\n" else str c) (String.explode q));
-   val _ = if not debug_print then () else
+   val _ = if not (!debug_print) then () else
            (print "sending: "; print q_fixed; print "\n");
 
    val timer = holba_miscLib.timer_start 0;
    val z3wrap_done_marker = "z3_wrapper query done";
    val () = TextIO.output (s_out, q_fixed ^ "\n");
    val out_lines = inputLines_until (z3wrap_done_marker ^ "\n") s_in [];
-   val _ = if debug_print then holba_miscLib.timer_stop
+   val _ = if !debug_print then holba_miscLib.timer_stop
      (fn delta_s => print ("  wrapped query took " ^ delta_s ^ "\n")) timer else ();
 
-   val _ = if not debug_print then () else
+   val _ = if not (!debug_print) then () else
            (map print out_lines; print "\n\n");
  in
    out_lines

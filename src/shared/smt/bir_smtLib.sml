@@ -180,7 +180,7 @@ fun bir_smt_set_trace use_holsmt =
   if use_holsmt then
     (fn x => HolBA_Library.trace := x) (* same as Feedback.set_trace "HolBA_HolSmtLib" *)
   else
-    (fn _ => ());
+    (fn x => if x > 0 then (holba_z3Lib.debug_print := true) else (holba_z3Lib.debug_print := false));
 
 (* TODO: should not be operating on word expressions in this library, just bir expressions *)
 fun bir_smt_get_model use_holsmt =
