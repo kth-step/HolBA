@@ -79,7 +79,8 @@ Profile.output_profile_results (iostream) (Profile.results ())
  end (* let *)
 
 fun bir_symb_analysis_thm bir_prog_def
- init_addr_def end_addr_defs bspec_pre_def birenvtyl_def =
+ init_addr_def end_addr_defs
+ bspec_pre_def birenvtyl_def =
  let
    val _ = print "\n======\n > bir_symb_analysis_thm started\n";
    val timer = holba_miscLib.timer_start 0;
@@ -396,6 +397,25 @@ fun bir_symb_transfer
     METIS_TAC [abstract_jgmt_rel_thm]);
  in
    bspec_cont_thm
+ end (* let *)
+
+fun bir_symb_transfer_thm
+ bir_prog_def init_addr_def end_addr_def
+ bspec_pre_def bspec_post_def
+ birenvtyl_def prog_vars_list_def
+ symb_analysis_thm bsysprecond_thm prog_vars_thm =
+ let
+   val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
+   val end_addr_tm = (snd o dest_eq o concl) end_addr_def;
+   val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
+   val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_post_def;
+ in
+   bir_symb_transfer
+     init_addr_tm end_addr_tm
+     bspec_pre_tm bspec_post_tm
+     bir_prog_def birenvtyl_def
+     bspec_pre_def bspec_post_def prog_vars_list_def
+     symb_analysis_thm bsysprecond_thm prog_vars_thm
  end (* let *)
 
 end (* local *)
@@ -735,6 +755,28 @@ fun bir_symb_transfer_two
  in
    bspec_cont_thm
  end (* let *)
+
+fun bir_symb_transfer_two_thm
+  bir_prog_def 
+  init_addr_def end_addr_1_def end_addr_2_def  
+  bspec_pre_def bspec_post_1_def bspec_post_2_def
+  birenvtyl_def prog_vars_list_def
+  symb_analysis_thm bsysprecond_thm prog_vars_thm =
+  let
+    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
+    val end_addr_1_tm = (snd o dest_eq o concl) end_addr_1_def;
+    val end_addr_2_tm = (snd o dest_eq o concl) end_addr_2_def;
+    val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
+    val bspec_post_1_tm = (lhs o snd o strip_forall o concl) bspec_post_1_def;
+    val bspec_post_2_tm = (lhs o snd o strip_forall o concl) bspec_post_2_def;
+  in
+    bir_symb_transfer_two
+     init_addr_tm end_addr_1_tm end_addr_2_tm
+     bspec_pre_tm bspec_post_1_tm bspec_post_2_tm
+     bir_prog_def birenvtyl_def
+     bspec_pre_def bspec_post_1_def bspec_post_2_def prog_vars_list_def
+     symb_analysis_thm bsysprecond_thm prog_vars_thm
+  end (* let *)
 
 end (* local *)
 
