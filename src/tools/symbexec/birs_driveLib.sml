@@ -28,9 +28,17 @@ val tm = ``<|bsst_pc := a;
              bsst_pcond := c|>``;
 *)
 fun birs_get_pc tm =
-  ((snd o dest_eq o concl o EVAL) ``(^tm).bsst_pc``);
+  let
+    val (pc, _, _, _) = dest_birs_state tm;
+  in
+    pc
+  end;
 fun birs_is_running tm =
-  identical ((snd o dest_eq o concl o EVAL) ``(^tm).bsst_status``) ``BST_Running``;
+  let
+    val (_, _, status, _) = dest_birs_state tm;
+  in
+    identical status bir_programSyntax.BST_Running_tm
+  end;
 
 datatype symbexec_tree_t =
   Symb_Node of (thm  * (symbexec_tree_t list));
