@@ -17,9 +17,6 @@ local
 
 in (* local *)
 
-(* ----------------------------------------------------------------------------------- *)
-(* ----------------------------------------------------------------------------------- *)
-(* ----------------------------------------------------------------------------------- *)
 (*
 val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
 val bexp_stores_ = mk_BExp_Store_list (mexp1, stores1);
@@ -127,57 +124,6 @@ fun birs_simp_store_cheater simp_tm =
   special treatment of store sequences, and load operations
 *)
 
-  val birs_simp_exp_plain_thms = List.rev (
-    [birs_simplification_UnsignedCast_LowCast_Twice_thm,
-
-     birs_simplification_Plus_Const64_thm,
-
-     birs_simplification_Plus_Plus_Const64_thm,
-     birs_simplification_Minus_Plus_Const64_thm,
-     birs_simplification_Minus_Minus_Const64_thm,
-     birs_simplification_Plus_Minus_Const64_thm(*,
-
-     birs_simplification_Plus_Plus_Const32_thm,
-     birs_simplification_Minus_Plus_Const32_thm,
-     birs_simplification_Minus_Minus_Const32_thm,
-     birs_simplification_Plus_Minus_Const32_thm*)]
-  );
-
-  val birs_simp_exp_pcond_thms = List.rev (
-    [(*birs_simplification_And_Minus_CM0_thm,*)
-     birs_simplification_LSB0_And64_RV_thm,
-     birs_simplification_SignedLowCast3264_RV_thm,
-
-     birs_simplification_IfThenElse_T_thm,
-     birs_simplification_IfThenElse_F_thm]@
-    (CONJUNCTS birs_simplification_Mem_Match_64_8_thm)@
-    (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)(*@
-    (CONJUNCTS birs_simplification_Mem_Match_32_8_thm)@
-    (CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm)*)
-  );
-
-  val birs_simp_exp_subexp_thms = List.rev (
-    [birs_simplification_UnsignedCast_thm,
-     birs_simplification_SignedCast_thm,
-     birs_simplification_LowCast_thm,
-     birs_simplification_Minus_left_thm,
-     birs_simplification_Plus_left_thm,
-     birs_simplification_Plus_right_thm,
-     birs_simplification_Load_addr_thm,
-     birs_simplification_Store_addr_thm]
-  );
-
-  val simp_thms_tuple = (birs_simp_exp_plain_thms, birs_simp_exp_pcond_thms, birs_simp_exp_subexp_thms);
-
-      val cast_thms =
-        [birs_simplification_UnsignedCast_thm,
-         birs_simplification_SignedCast_thm,
-         birs_simplification_LowCast_thm];
-  val load_thms_tuple =
-      (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm,
-       CONJUNCTS birs_simplification_Mem_Match_64_8_thm,
-       cast_thms);
-
 (* ----------------------------------------------------------------------------------- *)
 
   (* combination function of the two kinds above (direct simplification) *)
@@ -239,7 +185,7 @@ fun birs_simp_store_cheater simp_tm =
     val is_store_tm_fun = is_BExp_Store;
   end
 
-  fun birs_simp_gen simp_tm =
+  fun birs_simp_gen simp_thms_tuple load_thms_tuple simp_tm =
     let
         val start_exp_tm = get_larg simp_tm;
         val use_store_cheater = false;
@@ -262,8 +208,112 @@ fun birs_simp_store_cheater simp_tm =
       simp_apply_fun simp_tm
     end;
 
+(* ----------------------------------------------------------------------------------- *)
+
+  fun plain_thms include_64 include_32 =
+    (if include_64 then
+       [birs_simplification_Plus_Minus_Const64_thm,
+        birs_simplification_Minus_Minus_Const64_thm,
+        birs_simplification_Minus_Plus_Const64_thm,
+        birs_simplification_Plus_Plus_Const64_thm]
+     else
+       [])@
+    (if include_32 then
+       [birs_simplification_Plus_Minus_Const32_thm,
+        birs_simplification_Minus_Minus_Const32_thm,
+        birs_simplification_Minus_Plus_Const32_thm,
+        birs_simplification_Plus_Plus_Const32_thm]
+     else
+       [])@
+    [birs_simplification_Plus_Const64_thm,
+     birs_simplification_UnsignedCast_LowCast_Twice_thm];
+
+  fun pcond_thms mem_64 mem_32 riscv cm0 =
+    (if mem_64 then
+       (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)@
+       (CONJUNCTS birs_simplification_Mem_Match_64_8_thm)
+     else
+       [])@
+    (if mem_32 then
+       (CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm)@
+       (CONJUNCTS birs_simplification_Mem_Match_32_8_thm)
+     else
+       [])@
+    [birs_simplification_IfThenElse_T_thm,
+     birs_simplification_IfThenElse_F_thm]@
+    (if riscv then
+       [birs_simplification_SignedLowCast3264_RV_thm,
+        birs_simplification_LSB0_And64_RV_thm]
+     else
+       [])@
+    (if cm0 then
+       [birs_simplification_And_Minus_CM0_thm]
+     else
+       []);
+
+  val subexp_cast_thms =
+    [birs_simplification_LowCast_thm,
+     birs_simplification_SignedCast_thm,
+     birs_simplification_UnsignedCast_thm];
+
+  val subexp_thms =
+    [birs_simplification_Store_addr_thm,
+     birs_simplification_Load_addr_thm,
+     birs_simplification_Plus_right_thm,
+     birs_simplification_Plus_left_thm,
+     birs_simplification_Minus_left_thm]@
+    subexp_cast_thms;
+
+(* ----------------------------------------------------------------------------------- *)
+
+  fun simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 = (plain_thms include_64 include_32, pcond_thms mem_64 mem_32 riscv cm0, subexp_thms);
+
+  fun load_thms_tuple mem_64 mem_32 =
+      ((if mem_64 then
+          CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm
+        else
+          [])@
+       (if mem_32 then
+          CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm
+        else
+          []),
+       (if mem_64 then
+          CONJUNCTS birs_simplification_Mem_Match_64_8_thm
+        else
+          [])@
+       (if mem_32 then
+          CONJUNCTS birs_simplification_Mem_Match_32_8_thm
+        else
+          []),
+       subexp_cast_thms);
+
   val birs_simp_default_riscv =
-    birs_simp_gen;
+    let
+      val include_64 = true;
+      val include_32 = false;
+      val mem_64 = true;
+      val mem_32 = false;
+      val riscv = true;
+      val cm0 = false;
+    in
+      birs_simp_gen
+        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        (load_thms_tuple mem_64 mem_32)
+    end;
+
+  val birs_simp_default_armcm0 =
+    let
+      val include_64 = true;
+      val include_32 = true;
+      val mem_64 = false;
+      val mem_32 = true;
+      val riscv = false;
+      val cm0 = true;
+    in
+      birs_simp_gen
+        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        (load_thms_tuple mem_64 mem_32)
+    end;
 
 end (* local *)
 
