@@ -479,6 +479,82 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
   );
 
 (* ----------------------------------------------------------------------------------- *)
+(*
+val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
+val bexp_stores_ = mk_BExp_Store_list (mexp1, stores1);
+identical bexp_stores bexp_stores_;
+*)
+ local
+  open bir_expSyntax;
+ in
+  fun dest_BExp_Store_list bexp acc =
+    if not (is_BExp_Store bexp) then
+      (bexp, acc)
+    else
+      let
+        val (expm, expad, endi, expv) = dest_BExp_Store bexp;
+      in
+        dest_BExp_Store_list expm ((expad, endi, expv)::acc)
+      end;
+  fun mk_BExp_Store_list (expm, []) = expm
+    | mk_BExp_Store_list (expm, (expad, endi, expv)::l) =
+      mk_BExp_Store_list (mk_BExp_Store (expm, expad, endi, expv), l);
+ end
+
+(*
+val bexp_stores = ``
+                  (BExp_Store
+                     ^bexp_stores
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_BinExp BIExp_Minus
+                           (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
+                           (BExp_Const (Imm64 33w))) (BExp_Const (Imm64 25w)))
+                     BEnd_LittleEndian
+                     (BExp_Den (BVar "sy_x1" (BType_Imm Bit64))))
+``;
+val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
+val store_to_check = List.last stores1;
+val stores2 = List.take(stores1, List.length stores1 - 1);
+
+filter (not o stores_match pcond store_to_check) stores2
+
+val bexp = bexp_stores;
+val simp_tm = birs_simp_gen_term pcond bexp;
+birs_simp_load simp_tm;
+*)
+local
+  open optionSyntax;
+  open bir_typing_expSyntax;
+  open bslSyntax;
+in
+ fun get_type_of_bexp tm =
+  let
+    val thm = type_of_bir_exp_DIRECT_CONV (mk_type_of_bir_exp tm);
+  in
+    (dest_some o snd o dest_eq o concl) thm
+  end
+  handle _ => raise ERR "get_type_of_bexp" "not well-typed expression or other issue";
+
+ (*
+ val (expad1:term, endi1:term, expv1:term) = store_to_check;
+ *)
+ fun stores_match pcond store1 store2 =
+  let
+    val (expad1, endi1, expv1) = store1;
+    val (expad2, endi2, expv2) = store2;
+    val endi_eq = identical endi1 endi2;
+    val vsz_eq = identical (get_type_of_bexp expv1) (get_type_of_bexp expv2);
+    
+    val imp_bexp_tm = bor (bnot pcond, beq (expad1, expad2));
+    val ad_is_eq = bir_smt_check_taut false imp_bexp_tm;
+  in
+    endi_eq andalso
+    vsz_eq andalso
+    ad_is_eq
+  end;
+end
+(* ----------------------------------------------------------------------------------- *)
+
 
   val birs_simp_try_direct =
     simp_try_list_gen [
@@ -494,11 +570,11 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
     in
       simp_try_apply_gen (simp_try_repeat_gen simp_fun) simp_tm
     end;
-  val birs_simp_repeat = Profile.profile "birs_simp_repeat" birs_simp_repeat;
 
   fun birs_simp_load simp_tm =
     let
-      (* TODO: constant propagation on the address, bypass as many stores as possible, try to match the load with a store *)
+      (* bypass as many stores as possible, try to match the load with a store *)
+      (* TODO: constant propagation on the address *)
       val load_thms =
         (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)@
         (CONJUNCTS birs_simplification_Mem_Match_64_8_thm);
@@ -516,17 +592,44 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
       simp_thm
     end;
   val birs_simp_load = Profile.profile "birs_simp_load" birs_simp_load;
-  fun birs_simp_store simp_tm = birs_simp_ID_fun simp_tm; (* constant propagation on the address/value, try to remove another store (only one) *)
+  
+  fun birs_simp_store simp_tm =
+    let
+      (* TODO: constant propagation on the address/value *)
+      (* try to remove another store (only one) *)
+      (* TODO: this implementation is only crude and not correct *)
+      open birsSyntax;
+      val (pcond_tm, symbexp_tm, _) = dest_birs_simplification simp_tm;
+      val (mexp, stores1) = dest_BExp_Store_list symbexp_tm [];
+      val store_to_check = List.last stores1;
+      val stores = List.take(stores1, List.length stores1 - 1);
+      val filtered_stores = filter (not o stores_match pcond_tm store_to_check) stores;
+      val symbexp_1_tm = mk_BExp_Store_list (mexp, filtered_stores@[store_to_check]);
+      val num_removed = List.length stores - List.length filtered_stores;
+      val _ = if num_removed = 0 then () else print ("removed stores: " ^ (Int.toString num_removed) ^ "\n");
+    in
+      prove(mk_birs_simplification (pcond_tm, symbexp_tm, symbexp_1_tm), cheat)
+    end;
   val birs_simp_store = Profile.profile "birs_simp_store" birs_simp_store;
-  (*fun birs_simp_load simp_tm = birs_simp_repeat simp_tm;*)
-  fun birs_simp_store simp_tm = birs_simp_repeat simp_tm;
+
+  fun birs_simp_regular simp_tm = birs_simp_repeat simp_tm;
+  val birs_simp_regular = Profile.profile "birs_simp_regular" birs_simp_regular;
+
+  local
+    open bir_expSyntax;
+  in
+    (* loads are more complicated, in this case we have a cast, and within there is a load *)
+    fun is_load_tm_fun tm = is_BExp_Load tm orelse (is_BExp_Cast tm andalso (is_BExp_Load o (fn (_,x,_) => x) o dest_BExp_Cast) tm);
+    val is_store_tm_fun = is_BExp_Store;
+  end
+
+  (*fun birs_simp_load simp_tm = birs_simp_regular simp_tm;*)
+  (*fun birs_simp_store simp_tm = birs_simp_regular simp_tm;*)
   fun birs_simp_gen simp_tm =
     let
         val start_exp_tm = get_larg simp_tm;
-        open bir_expSyntax;
-        (* loads are more complicated, in this case we have a cast, and within there is a load *)
-        val isLoad = (fn t => is_BExp_Load t orelse (is_BExp_Cast t andalso (is_BExp_Load o (fn (_,x,_) => x) o dest_BExp_Cast) t)) start_exp_tm;
-        val isStore = (is_BExp_Store) start_exp_tm;
+        val isLoad = is_load_tm_fun start_exp_tm;
+        val isStore = is_store_tm_fun start_exp_tm;
         val _ =
           if isLoad then print "simplifying a load\n" else
           if isStore then print "simplifying a store\n" else
@@ -534,7 +637,7 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
     in
       if isLoad then birs_simp_load simp_tm else
       if isStore then birs_simp_store simp_tm else
-      birs_simp_repeat simp_tm (* TODO: needs refactoring, bound the depth *)
+      birs_simp_regular simp_tm
     end;
 (*
 
@@ -608,7 +711,7 @@ val bexp = ``(BExp_Load
                                  (BExp_Const (Imm64 32w)))
                               (BExp_Const (Imm64 28w))) BEnd_LittleEndian
                            Bit32)``;
-val bexp = ``(BExp_Load
+val bexp_stores = ``
                            (BExp_Store
                               (BExp_Store
                                  (BExp_Store
@@ -678,6 +781,10 @@ val bexp = ``(BExp_Load
                               BEnd_LittleEndian
                               (BExp_Cast BIExp_LowCast
                                  (BExp_Const (Imm64 7w)) Bit32))
+``;
+val bexp = bexp_stores;
+val bexp = ``(BExp_Load
+                           ^bexp_stores
                            (BExp_BinExp BIExp_Minus
                               (BExp_BinExp BIExp_Minus
                                  (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
