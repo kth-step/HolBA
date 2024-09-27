@@ -93,7 +93,11 @@ val bprog_tm = bprog;
 fun execute_two_steps bprog_tm birs_state_init_tm =
  let
   val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
-  val birs_rule_STEP_fun_spec = birs_rule_tryjustassert_fun false o birs_rule_STEP_fun birs_rule_STEP_thm;
+  
+  fun birs_post_step_fun (t, _) = (
+    birs_rule_tryjustassert_fun false
+  ) t;
+  val birs_rule_STEP_fun_spec = birs_post_step_fun o birs_rule_STEP_fun birs_rule_STEP_thm;
   (* ........................... *)
 
   (* first step *)

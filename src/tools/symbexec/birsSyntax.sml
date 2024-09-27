@@ -98,6 +98,7 @@ in
 end
 
 local
+  open bir_symb_simpTheory;
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_simp";
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 in
