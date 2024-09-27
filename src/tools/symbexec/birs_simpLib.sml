@@ -624,7 +624,7 @@ end
   end
 
   (*fun birs_simp_load simp_tm = birs_simp_regular simp_tm;*)
-  (*fun birs_simp_store simp_tm = birs_simp_regular simp_tm;*)
+  fun birs_simp_store simp_tm = birs_simp_regular simp_tm;
   fun birs_simp_gen simp_tm =
     let
         val start_exp_tm = get_larg simp_tm;
