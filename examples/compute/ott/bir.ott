@@ -7,7 +7,7 @@ metavar mmap ::=
   {{ hol (num |-> num) }}
 metavar ident ::=
   {{ hol string }}
-  {{ com Identifier for variable name }}
+  {{ com Identifier }}
 metavar word_one ::=
   {{ hol word1 }}
   {{ tex \mathit{word1} }}
@@ -32,6 +32,8 @@ metavar word_hundredtwentyeight ::=
   {{ hol word128 }}
   {{ tex \mathit{word128} }}
   {{ com 128-bit word }}
+indexvar k ::=
+  {{ hol num }}
 grammar
 bir_imm_t, bir_imm :: '' ::=
 {{ com immediates }}
@@ -141,6 +143,15 @@ terminals :: terminals_ ::=
 | ~> :: :: leadsto {{ tex \leadsto }}
 | <= :: :: leq {{ tex \leq }}
 | ** :: :: pow {{ tex \mathit{**} }}
+| Label :: :: Label {{ tex \mathsf{Label} }}
+| Address :: :: Address {{ tex \mathsf{Address} }}
+| Exp :: :: Exp {{ tex \mathsf{Exp} }}
+| Assign :: :: Assign {{ tex \mathsf{Assign} }}
+| Jmp :: :: Jmp {{ tex \mathsf{Jmp} }}
+| CJmp :: :: CJmp {{ tex \mathsf{CJmp} }}
+| Basic :: :: Basic {{ tex \mathsf{Basic} }}
+| End :: :: End {{ tex \mathsf{End} }}
+| BirProgram :: :: BirProgram {{ tex \mathsf{BirProgram} }}
 
 embed {{ hol
 (* Booleans *)
@@ -1301,3 +1312,45 @@ defn
   bir_val1 bir_val2 bir_endian bir_val3 ~> bir_val
   ----- :: Store
   env |- Store(bir_exp1,bir_exp2,bir_endian,bir_exp3) ~> bir_val
+
+grammar
+bir_label_t, bir_label :: BL_ ::=
+{{ com Label values for jumps }}
+| Label ( ident ) :: :: Label
+| Address ( bir_imm ) :: :: Address
+
+bir_label_exp_t, bir_label_exp :: BLE_ ::=
+{{ com Label expressions that may be computed }}
+| Label ( bir_label ) :: :: Label
+| Exp ( bir_exp ) :: :: Exp
+
+bir_stmt_basic_t, bir_stmt_basic :: BStmt_ ::=
+{{ com Statements inside a program block }}
+| Assign ( bir_var , bir_exp ) :: :: Assign
+
+bir_stmt_end_t, bir_stmt_end :: BStmt_ ::=
+{{ com Statements at the end of a block }}
+| Jmp ( bir_label_exp ) :: :: Jmp
+| CJmp ( bir_exp , bir_label_exp1 , bir_label_exp2 ) :: :: CJmp
+
+bir_stmt_t, bir_stmt :: BStmt ::=
+{{ com General statement }}
+| Basic ( bir_stmt_basic ) :: :: B
+| End ( bir_stmt_end ) :: :: E
+
+embed {{ hol
+ (* Block type : a label, basic statements and an end statement *)
+Datatype:
+  bir_block_t = <|
+  bb_label          : bir_label_t;
+  bb_statements     : bir_stmt_basic_t list;
+  bb_last_statement : bir_stmt_end_t |>
+End
+}}
+
+metavar bir_block_t, bir_block ::=
+ {{ hol bir_block_t }}
+
+grammar
+bir_program_t, bir_progam :: '' ::=
+| BirProgram ( bir_block1 , ... , bir_blockk ) :: :: BirProgram
