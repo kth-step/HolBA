@@ -58,7 +58,7 @@ val SUBST_thm = birs_rule_SUBST_thm;
 val STEP_SEQ_thm = birs_rule_STEP_SEQ_thm;
 val symbex_A_thm = single_step_A_thm;
 *)
-fun birs_rule_STEP_SEQ_fun_ (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
+fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
   let
     val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
     val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
@@ -67,16 +67,17 @@ fun birs_rule_STEP_SEQ_fun_ (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
     val timer_exec_step_p3 = holba_miscLib.timer_start 0;
     *)
 
-    val step3_thm = CONV_RULE birs_exec_step_CONV_fun step2_thm;
+    val (step3_conv_thm, extra_info) = birs_exec_step_CONV_fun (concl step2_thm);
+    val step3_thm = EQ_MP step3_conv_thm step2_thm;
 
     (*
     val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP_SEQ in " ^ delta_s ^ "\n")) timer_exec_step_p3;
     *)
     val step4_thm = (* (birs_rule_SUBST_trysimp_fun SUBST_thm o birs_rule_tryjustassert_fun true) *) step3_thm;
   in
-    step4_thm
+    (step4_thm, extra_info)
   end;
-fun birs_rule_STEP_SEQ_fun x = Profile.profile "birs_rule_STEP_SEQ_fun" (birs_rule_STEP_SEQ_fun_ x);
+val birs_rule_STEP_SEQ_fun = fn x => Profile.profile "birs_rule_STEP_SEQ_fun" (birs_rule_STEP_SEQ_fun x);
 
 
 (*

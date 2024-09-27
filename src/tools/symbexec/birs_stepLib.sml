@@ -681,7 +681,7 @@ val birs_symbval_concretizations_oracle_CONV =
    in
     if
       identical tm ((fst o dest_eq o concl) res_thm)
-      handle _ => raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem"
+      handle _ => (print_thm res_thm; raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem")
     then res_thm else
     raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
    end);
@@ -987,6 +987,10 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
 (* bir symbolic execution steps *)
 (* ----------------------------------------------- *)
 fun birs_exec_step_CONV_fun tm =
+  let
+    val last_pc = ref T;
+    val last_stmt = ref T;
+    val birs_step_thm =
   GEN_match_conv
 (is_birs_exec_step)
 (fn bstate_tm => (
@@ -994,6 +998,10 @@ fun birs_exec_step_CONV_fun tm =
 
   (fn tm_i =>
     let
+      val (bprog_tm, st_i) = dest_birs_exec_step tm_i;
+      val (pc, _, _, _) = dest_birs_state st_i;
+      val _ = last_pc := pc;
+      val _ = last_stmt := (snd o dest_eq o concl o pc_lookup_fun) (bprog_tm, pc); (* TODO: avoid pc_lookup_fun twice *)
       val timer_exec_step = holba_miscLib.timer_start 0;
       (* TODO: optimize *)
       val birs_exec_thm = birs_exec_step_CONV tm_i;
@@ -1006,6 +1014,9 @@ fun birs_exec_step_CONV_fun tm =
   ) bstate_tm
 )
 tm;
+  in
+    (birs_step_thm, (!last_pc, !last_stmt))
+  end;
 
 
 end (* local *)

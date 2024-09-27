@@ -46,7 +46,7 @@ in
 end;
 
 local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb"
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb";
   val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
@@ -95,7 +95,14 @@ in
  end handle e => raise wrap_exn "mk_birs_state" e;
 
  (* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
-end;
+end
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_simp";
+  val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+in
+  val (birs_simplification_tm,  mk_birs_simplification, dest_birs_simplification, is_birs_simplification)  = syntax_fns3 "birs_simplification";
+end
 
 fun is_IMAGE_birs_symb_to_symbst Pi = pred_setSyntax.is_image Pi andalso (identical birs_symb_to_symbst_tm o fst o pred_setSyntax.dest_image) Pi;
 fun dest_IMAGE_birs_symb_to_symbst Pi =

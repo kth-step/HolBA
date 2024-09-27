@@ -29,7 +29,7 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
    val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
-   val birs_post_step_fun =
+   fun birs_post_step_fun (t, (last_pc, last_stmt)) = (
      (fn t => (
         holba_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
         holba_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
@@ -39,7 +39,8 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
      birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
-     birs_rule_tryjustassert_fun true;
+     birs_rule_tryjustassert_fun true
+   ) t;
    val birs_rule_STEP_fun_spec =
      (birs_post_step_fun o
       birs_rule_STEP_fun birs_rule_STEP_thm);

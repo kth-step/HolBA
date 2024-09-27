@@ -58,8 +58,9 @@ local
 in
 fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
   let
-
-    val birs_exec_thm = CONV_RULE (birs_exec_step_CONV_fun) (SPEC bstate_tm birs_rule_STEP_thm);
+    val step1_thm = SPEC bstate_tm birs_rule_STEP_thm;
+    val (step2_thm, extra_info) = birs_exec_step_CONV_fun (concl step1_thm);
+    val birs_exec_thm = EQ_MP step2_thm step1_thm;
 
     val timer_exec_step_p3 = holba_miscLib.timer_start 0;
     (* TODO: optimize *)
@@ -75,7 +76,7 @@ fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
             (print_term (concl single_step_prog_thm);
              raise ERR "birs_rule_STEP_fun" "something is not right, the produced theorem is not evaluated enough");
   in
-    single_step_prog_thm
+    (single_step_prog_thm, extra_info)
   end;
 end;
 fun birs_rule_STEP_fun x = Profile.profile "birs_rule_STEP_fun" (birs_rule_STEP_fun_ x);
@@ -272,9 +273,9 @@ fun birs_rule_SUBST_trysimp_fun_ birs_rule_SUBST_thm single_step_prog_thm =
     val simp_t_o = Option.mapPartial (fn assignment_thm =>
       let
         val simp_tm = (fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
-
+        (*val _ = print_term simp_tm;*)
     val timer_exec_step_p3 = holba_miscLib.timer_start 0;
-        val simp_t = birs_simpLib.birs_simp_repeat simp_tm;
+        val simp_t = birs_simpLib.birs_simp_gen simp_tm;
         (* TODO: need to remove the following line later and enable the simp function above *)
         (*val simp_t_o = NONE;*)
     val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> SUBST in " ^ delta_s ^ "\n")) timer_exec_step_p3;
