@@ -56,7 +56,7 @@ fun birs_rule_STEP_prog_fun no_halt_thm =
 local
   open birs_auxTheory;
 in
-fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
+fun birs_rule_STEP_fun birs_rule_STEP_thm bstate_tm =
   let
     val step1_thm = SPEC bstate_tm birs_rule_STEP_thm;
     val (step2_thm, extra_info) = birs_exec_step_CONV_fun (concl step1_thm);
@@ -79,7 +79,7 @@ fun birs_rule_STEP_fun_ birs_rule_STEP_thm bstate_tm =
     (single_step_prog_thm, extra_info)
   end;
 end;
-fun birs_rule_STEP_fun x = Profile.profile "birs_rule_STEP_fun" (birs_rule_STEP_fun_ x);
+val birs_rule_STEP_fun = fn x => Profile.profile "birs_rule_STEP_fun" (birs_rule_STEP_fun x);
 
 
 
@@ -135,7 +135,7 @@ local
 
   val birs_pcondinf_tm = ``birs_pcondinf``;
 in
-fun birs_rule_tryjustassert_fun_ force_assert_justify single_step_prog_thm =
+fun birs_rule_tryjustassert_fun force_assert_justify single_step_prog_thm =
   let
     (*
     val single_step_prog_thm = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm;
@@ -174,9 +174,9 @@ fun birs_rule_tryjustassert_fun_ force_assert_justify single_step_prog_thm =
         end
      | _ => single_step_prog_thm
   end;
-fun birs_rule_tryjustassert_fun x = Profile.profile "birs_rule_tryjustassert_fun" (birs_rule_tryjustassert_fun_ x);
+val birs_rule_tryjustassert_fun = fn x => Profile.profile "birs_rule_tryjustassert_fun" (birs_rule_tryjustassert_fun x);
 
-fun birs_rule_tryprune_fun_ prune_thm single_step_prog_thm =
+fun birs_rule_tryprune_fun prune_thm single_step_prog_thm =
   let
     (* val _ = print "try prune now \n"; *)
     val continue_thm_o_1 =
@@ -215,7 +215,7 @@ fun birs_rule_tryprune_fun_ prune_thm single_step_prog_thm =
      | _ => single_step_prog_thm
   end;
 end;
-fun birs_rule_tryprune_fun x = Profile.profile "birs_rule_tryprune_fun" (birs_rule_tryprune_fun_ x);
+val birs_rule_tryprune_fun = fn x => Profile.profile "birs_rule_tryprune_fun" (birs_rule_tryprune_fun x);
 
 
 (* stepping a sound structure, try to simplify after assignment *)

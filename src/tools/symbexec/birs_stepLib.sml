@@ -562,13 +562,13 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (* ---------------------------------------------------------------------------- *)
 
-fun birs_senv_typecheck_CONV_ eq_thms = (
+fun birs_senv_typecheck_CONV eq_thms = (
   RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
   REWRITE_CONV eq_thms THENC
   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
   EVAL
 );
-fun birs_senv_typecheck_CONV x = Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV_ x);
+val birs_senv_typecheck_CONV = fn x => Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV x);
 
 
 (*
