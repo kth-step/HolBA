@@ -11,17 +11,19 @@ local open arithmeticTheory stringTheory containerTheory pred_setTheory listTheo
 
 val _ = new_theory "bir";
 
+
 open wordsTheory;
 open bitstringTheory numeral_bitTheory;
 
-Type mmap = ``:(num |-> num)`` (* BIR memory map *)
-Type ident = ``:string`` (* Identifier for variable name *)
-Type word_one = ``:word1`` (* 1-bit word *)
-Type word_eight = ``:word8`` (* 8-bit word *)
-Type word_sixteen = ``:word16`` (* 16-bit word *)
-Type word_thirtytwo = ``:word32`` (* 32-bit word *)
-Type word_sixtyfour = ``:word64`` (* 64-bit word *)
-Type word_hundredtwentyeight = ``:word128`` (* 128-bit word *)
+val _ = type_abbrev("mmap", ``:(num |-> num)``); (* BIR memory map *)
+val _ = type_abbrev("ident", ``:string``); (* Identifier *)
+val _ = type_abbrev("word_one", ``:word1``); (* 1-bit word *)
+val _ = type_abbrev("word_eight", ``:word8``); (* 8-bit word *)
+val _ = type_abbrev("word_sixteen", ``:word16``); (* 16-bit word *)
+val _ = type_abbrev("word_thirtytwo", ``:word32``); (* 32-bit word *)
+val _ = type_abbrev("word_sixtyfour", ``:word64``); (* 64-bit word *)
+val _ = type_abbrev("word_hundredtwentyeight", ``:word128``); (* 128-bit word *)
+val _ = type_abbrev("k", ``:num``);
 val _ = Hol_datatype ` 
 bir_imm_t =  (* immediates *)
    Imm1 of word_one
@@ -242,61 +244,50 @@ Definition type_of_bir_val_def:
   (type_of_bir_val (BVal_Mem aty vty mmap) = (BType_Mem aty vty) )
 End
 
-Type bir_var_environment_t = ``:bir_var_environment_t``
-
-Type n = ``:num``
+val _ = type_abbrev("bir_var_environment_t", ``:bir_var_environment_t``);
+val _ = type_abbrev("n", ``:num``);
 (** definitions *)
-
 (* defns type_of_bir_exp *)
-Inductive type_of_bir_exp:
+
+val (type_of_bir_exp_rules, type_of_bir_exp_ind, type_of_bir_exp_cases) = Hol_reln`
 (* defn type_of_bir_exp *)
 
-[Type_BExp_Const:] (! (env:bir_var_environment_t) (bir_imm:bir_imm_t) .
-(clause_name "Type_BExp_Const")
- ==> 
+( (* Type_BExp_Const *) ! (env:bir_var_environment_t) (bir_imm:bir_imm_t) . (clause_name "Type_BExp_Const") ==> 
 ( ( type_of_bir_exp env (BExp_Const bir_imm) (BType_Imm  (type_of_bir_imm  bir_imm ) ) )))
 
-[Type_BExp_MemConst:] (! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) .
-(clause_name "Type_BExp_MemConst")
- ==> 
+/\ ( (* Type_BExp_MemConst *) ! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) . (clause_name "Type_BExp_MemConst") ==> 
 ( ( type_of_bir_exp env (BExp_MemConst bir_immtype1 bir_immtype2 mmap) (BType_Mem bir_immtype1 bir_immtype2) )))
 
-[Type_BExp_Den:] (! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) .
-(clause_name "Type_BExp_Den") /\
+/\ ( (* Type_BExp_Den *) ! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) . (clause_name "Type_BExp_Den") /\
 (( (bir_env_lookup_rel  env   bir_var   bir_val ) ))
  ==> 
 ( ( type_of_bir_exp env (BExp_Den bir_var)  (type_of_bir_val  bir_val )  )))
 
-[Type_BExp_BinExp:] (! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) .
-(clause_name "Type_BExp_BinExp") /\
+/\ ( (* Type_BExp_BinExp *) ! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) . (clause_name "Type_BExp_BinExp") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Imm bir_immtype) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_BinExp bir_binexp bir_exp1 bir_exp2) (BType_Imm bir_immtype) )))
 
-[Type_BExp_UnaryExp:] (! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_immtype:bir_immtype_t) .
-(clause_name "Type_BExp_UnaryExp") /\
+/\ ( (* Type_BExp_UnaryExp *) ! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_immtype:bir_immtype_t) . (clause_name "Type_BExp_UnaryExp") /\
 (( ( type_of_bir_exp env bir_exp (BType_Imm bir_immtype) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_UnaryExp bir_unaryexp bir_exp) (BType_Imm bir_immtype) )))
 
-[Type_BExp_BinPred:] (! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) .
-(clause_name "Type_BExp_BinPred") /\
+/\ ( (* Type_BExp_BinPred *) ! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) . (clause_name "Type_BExp_BinPred") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Imm bir_immtype) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_BinPred bir_binpred bir_exp1 bir_exp2) (BType_Imm Bit1) )))
 
-[Type_BExp_IfThenElse:] (! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_type:bir_type_t) .
-(clause_name "Type_BExp_IfThenElse") /\
+/\ ( (* Type_BExp_IfThenElse *) ! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_type:bir_type_t) . (clause_name "Type_BExp_IfThenElse") /\
 (( ( type_of_bir_exp env bir_exp1 bir_type )) /\
 ( ( type_of_bir_exp env bir_exp2 bir_type )) /\
 ( ( type_of_bir_exp env bir_exp (BType_Imm Bit1) )))
  ==> 
 ( ( type_of_bir_exp env (BExp_IfThenElse bir_exp bir_exp1 bir_exp2) bir_type )))
 
-[Type_BExp_Load_NoEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
-(clause_name "Type_BExp_Load_NoEndian") /\
+/\ ( (* Type_BExp_Load_NoEndian *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) . (clause_name "Type_BExp_Load_NoEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( (  (  (size_of_bir_immtype  bir_immtype )   MOD   (size_of_bir_immtype  bir_immtype2 )  )   =   0  ) ) /\
@@ -305,8 +296,7 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Load bir_exp1 bir_exp2 BEnd_NoEndian bir_immtype) (BType_Imm bir_immtype) )))
 
-[Type_BExp_Load_BigEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
-(clause_name "Type_BExp_Load_BigEndian") /\
+/\ ( (* Type_BExp_Load_BigEndian *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) . (clause_name "Type_BExp_Load_BigEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( (  (  (size_of_bir_immtype  bir_immtype )   MOD   (size_of_bir_immtype  bir_immtype2 )  )   =   0  ) ) /\
@@ -314,8 +304,7 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Load bir_exp1 bir_exp2 BEnd_BigEndian bir_immtype) (BType_Imm bir_immtype) )))
 
-[Type_BExp_Load_LittleEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) .
-(clause_name "Type_BExp_Load_LittleEndian") /\
+/\ ( (* Type_BExp_Load_LittleEndian *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_immtype:bir_immtype_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) . (clause_name "Type_BExp_Load_LittleEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( (  (  (size_of_bir_immtype  bir_immtype )   MOD   (size_of_bir_immtype  bir_immtype2 )  )   =   0  ) ) /\
@@ -323,8 +312,7 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Load bir_exp1 bir_exp2 BEnd_LittleEndian bir_immtype) (BType_Imm bir_immtype) )))
 
-[Type_BExp_Store_NoEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
-(clause_name "Type_BExp_Store_NoEndian") /\
+/\ ( (* Type_BExp_Store_NoEndian *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) . (clause_name "Type_BExp_Store_NoEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( ( type_of_bir_exp env bir_exp3 (BType_Imm bir_immtype) )) /\
@@ -334,8 +322,7 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Store bir_exp1 bir_exp2 BEnd_NoEndian bir_exp3) (BType_Mem bir_immtype1 bir_immtype2) )))
 
-[Type_BExp_Store_BigEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
-(clause_name "Type_BExp_Store_BigEndian") /\
+/\ ( (* Type_BExp_Store_BigEndian *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) . (clause_name "Type_BExp_Store_BigEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( ( type_of_bir_exp env bir_exp3 (BType_Imm bir_immtype) )) /\
@@ -344,8 +331,7 @@ Inductive type_of_bir_exp:
  ==> 
 ( ( type_of_bir_exp env (BExp_Store bir_exp1 bir_exp2 BEnd_BigEndian bir_exp3) (BType_Mem bir_immtype1 bir_immtype2) )))
 
-[Type_BExp_Store_LittleEndian:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) .
-(clause_name "Type_BExp_Store_LittleEndian") /\
+/\ ( (* Type_BExp_Store_LittleEndian *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_exp3:bir_exp_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (bir_immtype:bir_immtype_t) . (clause_name "Type_BExp_Store_LittleEndian") /\
 (( ( type_of_bir_exp env bir_exp1 (BType_Mem bir_immtype1 bir_immtype2) )) /\
 ( ( type_of_bir_exp env bir_exp2 (BType_Imm bir_immtype1) )) /\
 ( ( type_of_bir_exp env bir_exp3 (BType_Imm bir_immtype) )) /\
@@ -353,7 +339,8 @@ Inductive type_of_bir_exp:
 ( (  (  (size_of_bir_immtype  bir_immtype )   DIV   (size_of_bir_immtype  bir_immtype2 )  )   <=   (2**  (size_of_bir_immtype  bir_immtype1 )  )  ) ))
  ==> 
 ( ( type_of_bir_exp env (BExp_Store bir_exp1 bir_exp2 BEnd_LittleEndian bir_exp3) (BType_Mem bir_immtype1 bir_immtype2) )))
-End
+
+`;
 
 Definition is_exp_well_typed_def:
   is_exp_well_typed env exp = ?ty. type_of_bir_exp env exp ty
@@ -1177,52 +1164,43 @@ Proof
 QED
 
 (** definitions *)
-
 (* defns bir_eval_exp *)
-Inductive bir_eval_exp:
+
+val (bir_eval_exp_rules, bir_eval_exp_ind, bir_eval_exp_cases) = Hol_reln`
 (* defn bir_eval_exp *)
 
-[Eval_BExp_Const:] (! (env:bir_var_environment_t) (bir_imm:bir_imm_t) .
-(clause_name "Eval_BExp_Const")
- ==> 
+( (* Eval_BExp_Const *) ! (env:bir_var_environment_t) (bir_imm:bir_imm_t) . (clause_name "Eval_BExp_Const") ==> 
 ( ( bir_eval_exp env (BExp_Const bir_imm) (BVal_Imm bir_imm) )))
 
-[Eval_BExp_MemConst:] (! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) .
-(clause_name "Eval_BExp_MemConst")
- ==> 
+/\ ( (* Eval_BExp_MemConst *) ! (env:bir_var_environment_t) (bir_immtype1:bir_immtype_t) (bir_immtype2:bir_immtype_t) (mmap:mmap) . (clause_name "Eval_BExp_MemConst") ==> 
 ( ( bir_eval_exp env (BExp_MemConst bir_immtype1 bir_immtype2 mmap) (BVal_Mem bir_immtype1 bir_immtype2 mmap) )))
 
-[Eval_BExp_Den:] (! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) .
-(clause_name "Eval_BExp_Den") /\
+/\ ( (* Eval_BExp_Den *) ! (env:bir_var_environment_t) (bir_var:bir_var_t) (bir_val:bir_val_t) . (clause_name "Eval_BExp_Den") /\
 (( (bir_env_lookup_rel  env   bir_var   bir_val ) ))
  ==> 
 ( ( bir_eval_exp env (BExp_Den bir_var) bir_val )))
 
-[Eval_BExp_BinExp:] (! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
-(clause_name "Eval_BExp_BinExp") /\
+/\ ( (* Eval_BExp_BinExp *) ! (env:bir_var_environment_t) (bir_binexp:bir_binexp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) . (clause_name "Eval_BExp_BinExp") /\
 (( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
 ( (bir_eval_binexp  bir_binexp   bir_val1   bir_val2   bir_val ) ))
  ==> 
 ( ( bir_eval_exp env (BExp_BinExp bir_binexp bir_exp1 bir_exp2) bir_val )))
 
-[Eval_BExp_UnaryExp:] (! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_val':bir_val_t) (bir_val:bir_val_t) .
-(clause_name "Eval_BExp_UnaryExp") /\
+/\ ( (* Eval_BExp_UnaryExp *) ! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_val':bir_val_t) (bir_val:bir_val_t) . (clause_name "Eval_BExp_UnaryExp") /\
 (( ( bir_eval_exp env bir_exp bir_val )) /\
 ( (bir_eval_unaryexp  bir_unaryexp   bir_val   bir_val' ) ))
  ==> 
 ( ( bir_eval_exp env (BExp_UnaryExp bir_unaryexp bir_exp) bir_val' )))
 
-[Eval_BExp_BinPred:] (! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
-(clause_name "Eval_BExp_BinPred") /\
+/\ ( (* Eval_BExp_BinPred *) ! (env:bir_var_environment_t) (bir_binpred:bir_binpred_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) . (clause_name "Eval_BExp_BinPred") /\
 (( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
 ( (bir_eval_binpred  bir_binpred   bir_val1   bir_val2   bir_val ) ))
  ==> 
 ( ( bir_eval_exp env (BExp_BinPred bir_binpred bir_exp1 bir_exp2) bir_val )))
 
-[Eval_BExp_IfThenElse:] (! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val3:bir_val_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
-(clause_name "Eval_BExp_IfThenElse") /\
+/\ ( (* Eval_BExp_IfThenElse *) ! (env:bir_var_environment_t) (bir_exp:bir_exp_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_val3:bir_val_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) . (clause_name "Eval_BExp_IfThenElse") /\
 (( ( bir_eval_exp env bir_exp bir_val )) /\
 ( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
@@ -1230,23 +1208,59 @@ Inductive bir_eval_exp:
  ==> 
 ( ( bir_eval_exp env (BExp_IfThenElse bir_exp bir_exp1 bir_exp2) bir_val3 )))
 
-[Eval_BExp_Load:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_endian:bir_endian_t) (bir_immtype:bir_immtype_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
-(clause_name "Eval_BExp_Load") /\
+/\ ( (* Eval_BExp_Load *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_endian:bir_endian_t) (bir_immtype:bir_immtype_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) . (clause_name "Eval_BExp_Load") /\
 (( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
 ( (bir_eval_load  bir_val1   bir_val2   bir_endian   bir_immtype   bir_val ) ))
  ==> 
 ( ( bir_eval_exp env (BExp_Load bir_exp1 bir_exp2 bir_endian bir_immtype) bir_val )))
 
-[Eval_BExp_Store:] (! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_endian:bir_endian_t) (bir_exp3:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) (bir_val3:bir_val_t) .
-(clause_name "Eval_BExp_Store") /\
+/\ ( (* Eval_BExp_Store *) ! (env:bir_var_environment_t) (bir_exp1:bir_exp_t) (bir_exp2:bir_exp_t) (bir_endian:bir_endian_t) (bir_exp3:bir_exp_t) (bir_val:bir_val_t) (bir_val1:bir_val_t) (bir_val2:bir_val_t) (bir_val3:bir_val_t) . (clause_name "Eval_BExp_Store") /\
 (( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
 ( ( bir_eval_exp env bir_exp3 bir_val3 )) /\
 ( (bir_eval_store  bir_val1   bir_val2   bir_endian   bir_val3   bir_val ) ))
  ==> 
 ( ( bir_eval_exp env (BExp_Store bir_exp1 bir_exp2 bir_endian bir_exp3) bir_val )))
+
+`;
+val _ = Hol_datatype ` 
+bir_label_t =  (* Label values for jumps *)
+   BL_Label of ident
+ | BL_Address of bir_imm_t
+`;
+val _ = Hol_datatype ` 
+bir_label_exp_t =  (* Label expressions that may be computed *)
+   BLE_Label of bir_label_t
+ | BLE_Exp of bir_exp_t
+`;
+val _ = Hol_datatype ` 
+bir_stmt_basic_t =  (* Statements inside a program block *)
+   BStmt_Assign of bir_var_t => bir_exp_t
+`;
+val _ = Hol_datatype ` 
+bir_stmt_end_t =  (* Statements at the end of a block *)
+   BStmt_Jmp of bir_label_exp_t
+ | BStmt_CJmp of bir_exp_t => bir_label_exp_t => bir_label_exp_t
+`;
+val _ = Hol_datatype ` 
+bir_stmt_t =  (* General statement *)
+   BStmtB of bir_stmt_basic_t
+ | BStmtE of bir_stmt_end_t
+`;
+ (* Block type : a label, basic statements and an end statement *)
+Datatype:
+  bir_block_t = <|
+  bb_label          : bir_label_t;
+  bb_statements     : bir_stmt_basic_t list;
+  bb_last_statement : bir_stmt_end_t |>
 End
+
+val _ = type_abbrev("bir_block_t", ``:bir_block_t``);
+val _ = Hol_datatype ` 
+bir_program_t = 
+   BirProgram of bir_block_t list
+`;
 
 val _ = export_theory ();
 
