@@ -7098,7 +7098,7 @@ val bprog_tm = (fst o dest_eq o concl) bir_aespart_prog_def;
 
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
-   val birs_simp_fun = birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm;
+   val birs_simp_fun = birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm birs_simp_instancesLib.birs_simp_default_riscv;
 
 local
   open bir_programSyntax;

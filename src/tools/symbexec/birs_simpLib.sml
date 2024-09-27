@@ -72,18 +72,6 @@ in (* local *)
 (* ----------------------------------------------------------------------------------- *)
 
   (* try simplifying with the theorems of the list in order and return NONE or SOME simplification theorem *)
-(*
-  fun simp_try_fold_fun_gen simp_try_fun (t, thm_o) =
-      if isSome thm_o then
-        thm_o
-      else
-        (* SOME (MATCH_MP simp_thm (try_inst t simp_thm)) *)
-        simp_try_fun (t, NONE)
-        (*handle _ => NONE*);
-
-  fun simp_try_fold_gen simp_try_fun h_thms (simp_tm, simp_thm_o) =
-    List.foldl (fn (h_thm, simp_thm_o) => simp_try_fold_fun_gen (simp_try_fun h_thm) (simp_tm, simp_thm_o)) simp_thm_o h_thms;
-*)
   fun simp_try_fold_gen simp_try_fun [] (_, simp_thm_o) = simp_thm_o
     | simp_try_fold_gen simp_try_fun (h_thm::h_thms) (simp_tm, simp_thm_o) =
         if isSome simp_thm_o then
@@ -146,7 +134,7 @@ in (* local *)
 (* ----------------------------------------------------------------------------------- *)
 
 (*
-val t = ASSUME ``
+val instd_thm = ASSUME ``
   IS_SOME
        (type_of_bir_exp
           (BExp_IfThenElse
@@ -167,13 +155,8 @@ val t = ASSUME ``
                    (BExp_Const (Imm64 19w))) (BExp_Const (Imm64 1w)))))
   ==> (abcd)
 ``;
-*)
 
-
-
-
-(*
-val t = instd_thm;
+birs_simp_try_fix_assumptions instd_thm;
 *)
   fun wrap_cache_result f =
     let
@@ -244,7 +227,7 @@ val t = instd_thm;
       val _ = if isSome final_thm_o andalso (birsSyntax.is_birs_simplification o concl) (valOf final_thm_o) then () else
         raise ERR "birs_simp_try_fix_assumptions" "this should not happen";
     in
-      (* Option.map (CONV_RULE (TRY_CONV (RAND_CONV EVAL) THENC REFL)) (* why was this here??*) *) final_thm_o
+      final_thm_o
     end;
   val birs_simp_try_fix_assumptions = Profile.profile "birs_simp_try_fix_assumptions" birs_simp_try_fix_assumptions;
   
@@ -285,6 +268,8 @@ val t = instd_thm;
 (*
 val simp_t = birs_simplification_Plus_Plus_Const_thm;
 val simp_inst_tm = birs_simp_gen_term pcond bexp;
+
+birs_simp_try_inst simp_t simp_inst_tm;
 *)
   (* for the plain cases (not subexpression, not pcond implication) *)
   (* select only the operations because in case of plain theorems, the last operand is the symbexp' we are trying to find *)
@@ -304,14 +289,12 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
    let
       (* input term: birs_exp_imp *)
       (* ================================================= *)
-      (* TODO: function/code to remove imp assumption, with smt solver *)
       val pred1_tm = get_larg imp_tm;
       val pred2_tm = get_rarg imp_tm;
       val imp_bexp_tm = bslSyntax.bor (bslSyntax.bnot pred1_tm, pred2_tm);
       val imp_is_taut = bir_smt_check_taut false imp_bexp_tm;
       val imp_thm =
             if imp_is_taut then
-              (* SOME (prove(imp_tm, cheat)) *)
               mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm)
             else (
 	      (*print_term imp_tm;*)
@@ -368,16 +351,10 @@ val simp_tm = birs_simp_gen_term pcond bexp;
     end
     handle _ => NONE;
   val birs_simp_try_pcond = fn h_thm => simp_try_make_option_fun (birs_simp_try_pcond h_thm);
-
-
-
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val abc = simp_try_fold_gen birs_simp_try_pcond birs_simp_exp_pcond_thms (simp_inst_tm, NONE);
 *)
-
-
-
 
   (* "recursion" into certain subexpressions *)
 (*
@@ -398,247 +375,13 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
     end
     handle _ => NONE;
   val birs_simp_try_subexp = fn sub_simp_fun => fn simp_t => simp_try_make_option_fun (birs_simp_try_subexp sub_simp_fun simp_t);
-
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val abc = simp_try_fold_gen birs_simp_try_subexp birs_simp_exp_subexp_thms (simp_inst_tm, NONE);
 *)
 
 
-  (* TODO: need to keep simplifying using the three functions above repeatedly until not possible to simplify anymore *)
-  (* - try direct simplification *)
-  (* - try direct simplification in subexpressions *)
-  (* - repeat the above until can't find anything to simplify *)
 
-
-
-(*
-  val simp_inst_tm = birs_simp_gen_term pcond bexp;
-  val pre_simp_thm = birs_simp_ID_fun simp_inst_tm;
-  birs_simp_repeat simp_inst_tm;
-*)
-
-  (* combination function of the two kinds above (direct simplification) *)
-  (* - try plain simplification *)
-  (* - try implied simplification *)
-(*
-  val simp_inst_tm = birs_simp_gen_term pcond bexp;
-*)
-(* ----------------------------------------------------------------------------------- *)
-
-(*
-  4 types of simplification functions, and recursive rinse&repeat
-    - plain (only basic assumptions as typing or some numbers or other basic equalities)
-    - pcond (starts out with basic assumptions, justify pcond implication with smt solver)
-    - direct (first try all plain, then try pcond)
-    - subexp (go into subexpression and then try direct, no recusion into subexpressions of subexpressions)
-
-  recursive rinse&repeat
-    - try direct, then try subexp, one simplification = one iteration, repeat until no more possible
-  special treatment of store sequences, and load operations
-*)
-
-  val birs_simp_exp_plain_thms = List.rev (
-    [birs_simplification_UnsignedCast_LowCast_Twice_thm,
-
-     birs_simplification_Plus_Const64_thm,
-
-     birs_simplification_Plus_Plus_Const64_thm,
-     birs_simplification_Minus_Plus_Const64_thm,
-     birs_simplification_Minus_Minus_Const64_thm,
-     birs_simplification_Plus_Minus_Const64_thm(*,
-
-     birs_simplification_Plus_Plus_Const32_thm,
-     birs_simplification_Minus_Plus_Const32_thm,
-     birs_simplification_Minus_Minus_Const32_thm,
-     birs_simplification_Plus_Minus_Const32_thm*)]
-  );
-
-  val birs_simp_exp_pcond_thms = List.rev (
-    [(*birs_simplification_And_Minus_CM0_thm,*)
-     birs_simplification_LSB0_And64_RV_thm,
-     birs_simplification_SignedLowCast3264_RV_thm,
-
-     birs_simplification_IfThenElse_T_thm,
-     birs_simplification_IfThenElse_F_thm]@
-    (CONJUNCTS birs_simplification_Mem_Match_64_8_thm)@
-    (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)(*@
-    (CONJUNCTS birs_simplification_Mem_Match_32_8_thm)@
-    (CONJUNCTS birs_simplification_Mem_Bypass_32_8_thm)*)
-  );
-
-  val birs_simp_exp_subexp_thms = List.rev (
-    [birs_simplification_UnsignedCast_thm,
-     birs_simplification_SignedCast_thm,
-     birs_simplification_LowCast_thm,
-     birs_simplification_Minus_left_thm,
-     birs_simplification_Plus_left_thm,
-     birs_simplification_Plus_right_thm,
-     birs_simplification_Load_addr_thm,
-     birs_simplification_Store_addr_thm]
-  );
-
-(* ----------------------------------------------------------------------------------- *)
-(*
-val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
-val bexp_stores_ = mk_BExp_Store_list (mexp1, stores1);
-identical bexp_stores bexp_stores_;
-*)
- local
-  open bir_expSyntax;
- in
-  fun dest_BExp_Store_list bexp acc =
-    if not (is_BExp_Store bexp) then
-      (bexp, acc)
-    else
-      let
-        val (expm, expad, endi, expv) = dest_BExp_Store bexp;
-      in
-        dest_BExp_Store_list expm ((expad, endi, expv)::acc)
-      end;
-  fun mk_BExp_Store_list (expm, []) = expm
-    | mk_BExp_Store_list (expm, (expad, endi, expv)::l) =
-      mk_BExp_Store_list (mk_BExp_Store (expm, expad, endi, expv), l);
- end
-
-(*
-val bexp_stores = ``
-                  (BExp_Store
-                     ^bexp_stores
-                     (BExp_BinExp BIExp_Plus
-                        (BExp_BinExp BIExp_Minus
-                           (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
-                           (BExp_Const (Imm64 33w))) (BExp_Const (Imm64 25w)))
-                     BEnd_LittleEndian
-                     (BExp_Den (BVar "sy_x1" (BType_Imm Bit64))))
-``;
-val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
-val store_to_check = List.last stores1;
-val stores2 = List.take(stores1, List.length stores1 - 1);
-
-filter (not o stores_match pcond store_to_check) stores2
-
-val bexp = bexp_stores;
-val simp_tm = birs_simp_gen_term pcond bexp;
-birs_simp_load simp_tm;
-*)
-local
-  open optionSyntax;
-  open bir_typing_expSyntax;
-  open bslSyntax;
-in
- fun get_type_of_bexp tm =
-  let
-    val thm = type_of_bir_exp_DIRECT_CONV (mk_type_of_bir_exp tm);
-  in
-    (dest_some o snd o dest_eq o concl) thm
-  end
-  handle _ => raise ERR "get_type_of_bexp" "not well-typed expression or other issue";
-
- (*
- val (expad1:term, endi1:term, expv1:term) = store_to_check;
- *)
- fun stores_match pcond store1 store2 =
-  let
-    val (expad1, endi1, expv1) = store1;
-    val (expad2, endi2, expv2) = store2;
-    val endi_eq = identical endi1 endi2;
-    val vsz_eq = identical (get_type_of_bexp expv1) (get_type_of_bexp expv2);
-    
-    val imp_bexp_tm = bor (bnot pcond, beq (expad1, expad2));
-    val ad_is_eq = bir_smt_check_taut false imp_bexp_tm;
-  in
-    endi_eq andalso
-    vsz_eq andalso
-    ad_is_eq
-  end;
-end
-(* ----------------------------------------------------------------------------------- *)
-
-
-  val birs_simp_try_direct =
-    simp_try_list_gen [
-      simp_try_fold_gen birs_simp_try_plain birs_simp_exp_plain_thms,
-      simp_try_fold_gen birs_simp_try_pcond birs_simp_exp_pcond_thms
-    ];
-  
-  fun birs_simp_repeat simp_tm =
-    let
-      val simp_fun = simp_try_list_gen
-          [birs_simp_try_direct,
-           simp_try_fold_gen (birs_simp_try_subexp birs_simp_try_direct) birs_simp_exp_subexp_thms];
-    in
-      simp_try_apply_gen (simp_try_repeat_gen simp_fun) simp_tm
-    end;
-
-  fun birs_simp_load simp_tm =
-    let
-      (* bypass as many stores as possible, try to match the load with a store *)
-      (* TODO: constant propagation on the address *)
-      val load_thms =
-        (CONJUNCTS birs_simplification_Mem_Bypass_64_8_thm)@
-        (CONJUNCTS birs_simplification_Mem_Match_64_8_thm);
-      val simp_fun_mem_load = simp_try_repeat_gen (simp_try_fold_gen birs_simp_try_pcond load_thms);
-      val cast_thms =
-        [birs_simplification_UnsignedCast_thm,
-         birs_simplification_SignedCast_thm,
-         birs_simplification_LowCast_thm];
-      val simp_fun = simp_try_list_gen
-        [simp_try_fold_gen (birs_simp_try_subexp simp_fun_mem_load) cast_thms,
-         simp_fun_mem_load];
-      val simp_thm = simp_try_apply_gen simp_fun simp_tm;
-      (*val _ = (print_term o get_rarg o concl) simp_thm;*)
-    in
-      simp_thm
-    end;
-  val birs_simp_load = Profile.profile "birs_simp_load" birs_simp_load;
-  
-  fun birs_simp_store simp_tm =
-    let
-      (* TODO: constant propagation on the address/value *)
-      (* try to remove another store (only one) *)
-      (* TODO: this implementation is only crude and not correct *)
-      open birsSyntax;
-      val (pcond_tm, symbexp_tm, _) = dest_birs_simplification simp_tm;
-      val (mexp, stores1) = dest_BExp_Store_list symbexp_tm [];
-      val store_to_check = List.last stores1;
-      val stores = List.take(stores1, List.length stores1 - 1);
-      val filtered_stores = filter (not o stores_match pcond_tm store_to_check) stores;
-      val symbexp_1_tm = mk_BExp_Store_list (mexp, filtered_stores@[store_to_check]);
-      val num_removed = List.length stores - List.length filtered_stores;
-      val _ = if num_removed = 0 then () else print ("removed stores: " ^ (Int.toString num_removed) ^ "\n");
-    in
-      prove(mk_birs_simplification (pcond_tm, symbexp_tm, symbexp_1_tm), cheat)
-    end;
-  val birs_simp_store = Profile.profile "birs_simp_store" birs_simp_store;
-
-  fun birs_simp_regular simp_tm = birs_simp_repeat simp_tm;
-  val birs_simp_regular = Profile.profile "birs_simp_regular" birs_simp_regular;
-
-  local
-    open bir_expSyntax;
-  in
-    (* loads are more complicated, in this case we have a cast, and within there is a load *)
-    fun is_load_tm_fun tm = is_BExp_Load tm orelse (is_BExp_Cast tm andalso (is_BExp_Load o (fn (_,x,_) => x) o dest_BExp_Cast) tm);
-    val is_store_tm_fun = is_BExp_Store;
-  end
-
-  (*fun birs_simp_load simp_tm = birs_simp_regular simp_tm;*)
-  fun birs_simp_store simp_tm = birs_simp_regular simp_tm;
-  fun birs_simp_gen simp_tm =
-    let
-        val start_exp_tm = get_larg simp_tm;
-        val isLoad = is_load_tm_fun start_exp_tm;
-        val isStore = is_store_tm_fun start_exp_tm;
-        val _ =
-          if isLoad then print "simplifying a load\n" else
-          if isStore then print "simplifying a store\n" else
-          print "it is neither a load nor a store\n";
-    in
-      if isLoad then birs_simp_load simp_tm else
-      if isStore then birs_simp_store simp_tm else
-      birs_simp_regular simp_tm
-    end;
 (*
 
 val pcond = ````;
