@@ -263,9 +263,8 @@ birs_simp_try_inst simp_t simp_inst_tm;
 *)
 
   fun check_imp_tm imp_tm =
+   if not (birsSyntax.is_birs_exp_imp imp_tm) then raise ERR "check_imp_tm" "term needs to be birs_exp_imp" else
    let
-      (* input term: birs_exp_imp *)
-      (* ================================================= *)
       val pred1_tm = get_larg imp_tm;
       val pred2_tm = get_rarg imp_tm;
       val imp_bexp_tm = bslSyntax.bor (bslSyntax.bnot pred1_tm, pred2_tm);

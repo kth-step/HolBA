@@ -76,6 +76,7 @@ in
  (*
  val (expad1:term, endi1:term, expv1:term) = store_to_check;
  *)
+ 
  fun stores_match pcond store1 store2 =
   let
     val (expad1, endi1, expv1) = store1;
@@ -83,8 +84,8 @@ in
     val endi_eq = identical endi1 endi2;
     val vsz_eq = identical (get_type_of_bexp expv1) (get_type_of_bexp expv2);
     
-    val imp_bexp_tm = bor (bnot pcond, beq (expad1, expad2));
-    val ad_is_eq = bir_smt_check_taut false imp_bexp_tm;
+    val imp_tm = birsSyntax.mk_birs_exp_imp (pcond, beq (expad1, expad2));
+    val ad_is_eq = isSome (check_imp_tm imp_tm);
   in
     endi_eq andalso
     vsz_eq andalso
