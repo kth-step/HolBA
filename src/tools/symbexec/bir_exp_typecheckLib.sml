@@ -72,11 +72,7 @@ in (* local *)
     end
       handle _ => raise ERR "type_of_bir_exp_CONV" "conversion failed";
 
- val typecheck_dict = ref ((Redblackmap.mkDict Term.compare) : (term, thm) Redblackmap.dict);
- fun typecheck_add (k_tm, tc_thm) = typecheck_dict := Redblackmap.insert (!typecheck_dict, k_tm, tc_thm);
- fun typecheck_lookup k_tm = 
-      SOME (Redblackmap.find (!typecheck_dict, k_tm))
-      handle NotFound => NONE;
+ val (typecheck_add, typecheck_lookup) = aux_moveawayLib.result_cache Term.compare;
 
 fun check_typeof thm =
   let

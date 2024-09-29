@@ -158,29 +158,6 @@ val instd_thm = ASSUME ``
 
 birs_simp_try_fix_assumptions instd_thm;
 *)
-  fun wrap_cache_result f =
-    let
-      val assumption_dict = ref (Redblackmap.mkDict Term.compare);
-      fun assumption_add (k_tm, tc_thm) = assumption_dict := Redblackmap.insert (!assumption_dict, k_tm, tc_thm);
-      fun assumption_lookup k_tm = 
-        SOME (Redblackmap.find (!assumption_dict, k_tm))
-        handle NotFound => NONE;
-      fun f_wrapped tm =
-        let
-          val a_thm_o = assumption_lookup tm;
-        in
-          if isSome a_thm_o then valOf a_thm_o else
-          let
-            val a_thm = f tm;
-          in
-            assumption_add (tm, a_thm);
-            a_thm
-          end
-        end;
-    in
-      f_wrapped
-    end;
-
   fun birs_simp_try_justify_assumption assmpt =
     let
         val type_ofbirexp_CONV = GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
@@ -201,7 +178,7 @@ birs_simp_try_fix_assumptions instd_thm;
         NONE
     end
     handle _ => NONE;
-   val birs_simp_try_justify_assumption = wrap_cache_result birs_simp_try_justify_assumption;
+   val birs_simp_try_justify_assumption = aux_moveawayLib.wrap_cache_result Term.compare birs_simp_try_justify_assumption;
 
   (* need to handle typecheck, IS_SOME typecheck *)
   fun birs_simp_try_justify_assumptions NONE = NONE
@@ -305,7 +282,7 @@ birs_simp_try_inst simp_t simp_inst_tm;
       SOME imp_thm
    end
    handle _ => NONE;
-   val check_imp_tm = wrap_cache_result check_imp_tm;
+   val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
 
 
 
