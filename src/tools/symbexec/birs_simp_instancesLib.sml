@@ -185,10 +185,9 @@ fun birs_simp_store_cheater simp_tm =
     val is_store_tm_fun = is_BExp_Store;
   end
 
-  fun birs_simp_gen simp_thms_tuple load_thms_tuple simp_tm =
+  fun birs_simp_gen simp_thms_tuple load_thms_tuple use_store_cheater simp_tm =
     let
         val start_exp_tm = get_larg simp_tm;
-        val use_store_cheater = false;
 
         val simp_apply_fun =
           if is_load_tm_fun start_exp_tm then (
@@ -287,7 +286,7 @@ fun birs_simp_store_cheater simp_tm =
           []),
        subexp_cast_thms);
 
-  val birs_simp_default_riscv =
+  fun birs_simp_default_riscv_gen use_store_cheater =
     let
       val include_64 = true;
       val include_32 = false;
@@ -299,9 +298,10 @@ fun birs_simp_store_cheater simp_tm =
       birs_simp_gen
         (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
         (load_thms_tuple mem_64 mem_32)
+        use_store_cheater
     end;
 
-  val birs_simp_default_armcm0 =
+  fun birs_simp_default_armcm0_gen use_store_cheater =
     let
       val include_64 = true;
       val include_32 = true;
@@ -313,7 +313,11 @@ fun birs_simp_store_cheater simp_tm =
       birs_simp_gen
         (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
         (load_thms_tuple mem_64 mem_32)
+        use_store_cheater
     end;
+  
+  val birs_simp_default_riscv = birs_simp_default_riscv_gen false;
+  val birs_simp_default_armcm0 = birs_simp_default_armcm0_gen false;
 
 end (* local *)
 

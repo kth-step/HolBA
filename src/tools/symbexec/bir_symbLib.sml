@@ -25,6 +25,9 @@ local
   end
 in
 
+(* TODO: later make the whole post step function a parameter to the symb_analysis function *)
+val birs_simp_select = ref birs_simp_instancesLib.birs_simp_default_riscv;
+
 fun bir_symb_analysis bprog_tm birs_state_init_lbl
   birs_end_lbls birs_env birs_pcond =
  let
@@ -48,7 +51,7 @@ fun bir_symb_analysis bprog_tm birs_state_init_lbl
         timer_symbanalysis_last := holba_miscLib.timer_start 0;
 	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
 	t)) o
-     apply_if_assign last_stmt (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm birs_simp_instancesLib.birs_simp_default_riscv) o
+     apply_if_assign last_stmt (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm (!birs_simp_select)) o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
      birs_rule_tryjustassert_fun true
