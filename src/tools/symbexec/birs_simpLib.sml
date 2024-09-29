@@ -160,7 +160,7 @@ birs_simp_try_fix_assumptions instd_thm;
 *)
   fun birs_simp_try_justify_assumption assmpt =
     let
-        val type_ofbirexp_CONV = GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+        val type_ofbirexp_CONV = type_of_bir_exp_CONV;
         val assmpt_thm = (type_ofbirexp_CONV THENC EVAL) assmpt;
 
         val assmpt_new = (snd o dest_eq o concl) assmpt_thm;

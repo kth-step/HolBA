@@ -61,18 +61,8 @@ val simp_tm = birs_simp_gen_term pcond bexp;
 birs_simp_load simp_tm;
 *)
 local
-  open optionSyntax;
-  open bir_typing_expSyntax;
-  open bslSyntax;
+  open bir_exp_typecheckLib;
 in
- fun get_type_of_bexp tm =
-  let
-    val thm = type_of_bir_exp_DIRECT_CONV (mk_type_of_bir_exp tm);
-  in
-    (dest_some o snd o dest_eq o concl) thm
-  end
-  handle _ => raise ERR "get_type_of_bexp" "not well-typed expression or other issue";
-
  (*
  val (expad1:term, endi1:term, expv1:term) = store_to_check;
  *)
@@ -84,7 +74,7 @@ in
     val endi_eq = identical endi1 endi2;
     val vsz_eq = identical (get_type_of_bexp expv1) (get_type_of_bexp expv2);
     
-    val imp_tm = birsSyntax.mk_birs_exp_imp (pcond, beq (expad1, expad2));
+    val imp_tm = birsSyntax.mk_birs_exp_imp (pcond, bslSyntax.beq (expad1, expad2));
     val ad_is_eq = isSome (check_imp_tm imp_tm);
   in
     endi_eq andalso

@@ -565,7 +565,7 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 fun birs_senv_typecheck_CONV eq_thms = (
   RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
   REWRITE_CONV eq_thms THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+  type_of_bir_exp_CONV THENC
   EVAL
 );
 val birs_senv_typecheck_CONV = fn x => Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV x);
@@ -616,7 +616,7 @@ fun birs_eval_exp_CONV_p1 t =
 
 val birs_eval_exp_CONV_p2 =
   REWRITE_CONV [birs_eval_exp_def] THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+  type_of_bir_exp_CONV;
 
 fun birs_eval_exp_CONV_p3 eq_thms =
   GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
@@ -802,7 +802,7 @@ val birs_exec_step_CONV_p4 =
   GEN_match_conv is_birs_eval_exp (birs_eval_exp_CONV) THENC
    REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC
    RESTR_EVAL_CONV [birs_update_env_tm, birs_gen_env_tm, bir_typing_expSyntax.type_of_bir_exp_tm] THENC
-   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+   type_of_bir_exp_CONV THENC
    RESTR_EVAL_CONV [birs_update_env_tm, birs_gen_env_tm];
 val birs_exec_step_CONV_p4 = Profile.profile "exec_step_CONV_p4" birs_exec_step_CONV_p4;
 
@@ -867,7 +867,7 @@ let
     (GEN_match_conv is_OPTION_BIND (
       RATOR_CONV (RAND_CONV (REWRITE_CONV ([birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm]@eq_thms) THENC EVAL (* TODO: this can be improved, I think *))) THENC
       REWRITE_CONV [optionTheory.OPTION_BIND_def] (* OPTION_BIND semantics *) THENC
-      GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV)
+      type_of_bir_exp_CONV
     ))
     ) res_b_eval_exp;
 

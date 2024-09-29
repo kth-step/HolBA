@@ -17,7 +17,7 @@ open HolBACoreSimps;
 
 in (* local *)
 
-  (* TODO: can probably speed this up by extending the caching into the evaluation of variables subexpressions,
+  (* TODO: can probably speed this up by extending the caching into the evaluation of variables subexpressions, like in the function type_of_bir_exp_DIRECT_CONV,
        but only relevant for handling of bigger expressions *)
   fun bir_vars_of_exp_DIRECT_CONV tm =
     let
