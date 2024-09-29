@@ -61,47 +61,13 @@ fun birs_rule_SEQ_prog_fun bprog_tm =
 fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
   let
 
-fun freevarset_CONV tm =
-(
-  REWRITE_CONV [Once (prove(``
-!s t g.
-g INTER (s DIFF t) =
-s INTER (g DIFF t)
-``,
-(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
-METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
-))] THENC
-
-  (* DIFF first *)
-(*
-  RATOR_CONV (RAND_CONV (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY])) THENC
-*)
- (* RATOR_CONV (RAND_CONV (INTER_INSERT_CONV)) THENC*)
-  (RAND_CONV (
-(*
-   (fn tm => prove (``^tm = EMPTY``, cheat))
-*)
-   aux_setLib.DIFF_INSERT_CONV
-)) THENC
-(*
-(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC
-*)
-
-  
-
-  (* then INTER *)
-  aux_setLib.INTER_INSERT_CONV
-) tm;
-
-(* EVAL tm *)
-
 (* ------------------------------------------------------------------------ *)
 (* ------------------------------------------------------------------------ *)
 
-    val superspeedcheat = false;
+    val speedcheat = ref false;
 
     val freesymbols_thm = prove(freesymbols_tm,
-      (if superspeedcheat then cheat else ALL_TAC) >> 
+      (if !speedcheat then cheat else ALL_TAC) >> 
       (case freesymbols_B_thm_o of
           NONE => ALL_TAC
         | SOME freesymbols_B_thm => REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
@@ -113,7 +79,7 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 
 
 
-      CONV_TAC (aux_setLib.birs_symb_symbols_MATCH_CONV) >>
+      CONV_TAC (bir_vars_ofLib.birs_symb_symbols_MATCH_CONV) >>
 (*
       CONV_TAC (
   SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
@@ -240,7 +206,7 @@ prove(``{BVar "sy_tmp_countw" (BType_Imm Bit64);
 *)
 
 
-      CONV_TAC (RATOR_CONV (RAND_CONV (aux_setLib.freevarset_CONV))) >>
+      CONV_TAC (RATOR_CONV (RAND_CONV (bir_vars_ofLib.freevarset_CONV))) >>
       (fn (al,g) => (print "finished to proof free symbols operation\n"; ([(al,g)], fn ([t]) => t))) >>
 
       REWRITE_TAC [pred_setTheory.EMPTY_SUBSET]
