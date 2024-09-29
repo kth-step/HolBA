@@ -621,7 +621,9 @@ val birs_eval_exp_CONV_p2 =
 fun birs_eval_exp_CONV_p3 eq_thms =
   GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
 
-(* TODO: can possibly improve this *)
+(* TODO: can possibly improve this,
+     for example by only taking the environment into the expressions where there are symbol lookups,
+     could even work with a cache of lookup theorems for the present symbols *)
 fun birs_eval_exp_CONV_p4 eq_thms =
   EVAL THENC
   REWRITE_CONV eq_thms THENC

@@ -16,7 +16,7 @@ in
 
 (* ============================================================================ *)
 
-(* TODO: this is stolen from exec tool *)
+  (* TODO: this is stolen from exec tool, better unify them later: bir_exec_auxLib *)
   fun GEN_match_conv is_tm_fun conv tm =
     if is_tm_fun tm then
       conv tm
@@ -28,7 +28,8 @@ in
     else
       raise UNCHANGED
     ;
-(* TODO: this is stolen from exec tool, and then modified for extraction of the expressions *)
+
+  (* TODO: this is a modified version of the above function, better unify them later *)
   fun GEN_match_extract is_tm_fun acc [] = acc
     | GEN_match_extract is_tm_fun acc (tm::l) =
     if is_tm_fun tm then

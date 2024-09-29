@@ -744,18 +744,6 @@ birs_exps_of_senv_COMP {"tmp_SP_process"}
 val debug_conv = (fn tm => (print_term tm; raise Fail "abcdE!!!"));
 val debug_conv2 = (fn tm => (if true then print ".\n" else print_term tm; REFL tm));
 
-  fun GEN_match_conv is_tm_fun conv tm =
-    if is_tm_fun tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_match_conv is_tm_fun conv)) THENC
-         (RATOR_CONV (GEN_match_conv is_tm_fun conv))) tm
-    else if is_abs tm then
-        TRY_CONV (ABS_CONV (GEN_match_conv is_tm_fun conv)) tm
-    else
-      raise UNCHANGED
-    ;
-
 (*
 REPEATC
       (SIMP_CONV (std_ss) []) THENC
@@ -874,9 +862,10 @@ fun birs_symb_symbols_CONV tm =
 (
   SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
   debug_conv2 THENC
-  GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
+  birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
   debug_conv2 THENC
-  REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, bir_typing_expTheory.bir_vars_of_exp_def] THENC
+  REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] THENC
+  bir_vars_ofLib.bir_vars_of_exp_CONV THENC
 
   debug_conv2 THENC
   RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
@@ -889,7 +878,7 @@ fun is_birs_symb_symbols tm = is_comb tm andalso
                               (is_const o fst o dest_comb) tm andalso
                               ((fn tm2 => tm2 = "birs_symb_symbols") o fst o dest_const o fst o dest_comb) tm;
 fun birs_symb_symbols_MATCH_CONV tm =
-  GEN_match_conv is_birs_symb_symbols birs_symb_symbols_CONV tm;
+  birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_CONV tm;
 
 (* ................................................ *)
 
