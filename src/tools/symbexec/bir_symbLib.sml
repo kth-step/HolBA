@@ -188,7 +188,7 @@ fun bir_symb_transfer
    val analysis_L_NOTIN_thm = prove (``^birs_state_end_lbl_tm NOTIN ^L_s``, EVAL_TAC);
 
    val birs_state_init_pre_EQ_thm =
-    prove (``^((snd o dest_comb) sys_i) = ^birs_state_init_pre_tm``,
+    prove (``^(sys_i) = ^birs_state_init_pre_tm``,
      REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
      CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV));
 
@@ -238,8 +238,7 @@ fun bir_symb_transfer
     POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]));
 
    val sys1 = (snd o dest_eq o concl o REWRITE_CONV [bsysprecond_thm]) birs_state_init_pre_tm;
-   val (Pi_func, Pi_set) = dest_comb Pi_f;
-   val sys2s = pred_setSyntax.strip_set Pi_set;
+   val sys2s = pred_setSyntax.strip_set Pi_f;
 
    val strongpostcond_goals = List.map (fn sys2 => ``
     sys1 = ^sys1 ==>
@@ -287,7 +286,7 @@ fun bir_symb_transfer
     prove (``Pi_overapprox_Q
      (bir_symb_rec_sbir ^bprog_tm)
      (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
-     (birs_symb_to_symbst ^birs_state_init_pre_tm) ^Pi_f
+     (birs_symb_to_symbst ^birs_state_init_pre_tm) (IMAGE birs_symb_to_symbst ^Pi_f)
      (Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^bspec_post_tm)``,
 
     REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, bsysprecond_thm] >>
@@ -306,7 +305,7 @@ fun bir_symb_transfer
           birs_prop_transfer_thm
           bprog_P_entails_thm)
          bprog_Pi_overapprox_Q_thm)
-        analysis_thm);
+        (REWRITE_RULE [birs_rulesTheory.birs_symb_exec_def] analysis_thm));
 
    val bir_abstract_jgmt_rel_thm =
     (MATCH_MP
@@ -458,7 +457,7 @@ fun bir_symb_transfer_two
    val analysis_L_NOTIN_thm_2 = prove (``^birs_state_end_lbl_2_tm NOTIN ^L_s``, EVAL_TAC);
    
    val birs_state_init_pre_EQ_thm =
-    prove (``^((snd o dest_comb) sys_i) = ^birs_state_init_pre_tm``,
+    prove (``^(sys_i) = ^birs_state_init_pre_tm``,
      REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
      CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV));
    
@@ -508,10 +507,7 @@ fun bir_symb_transfer_two
     POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]));
 
   val sys1 = (snd o dest_eq o concl o REWRITE_CONV [bsysprecond_thm]) birs_state_init_pre_tm;
-
-  val (Pi_func, Pi_set) = dest_comb Pi_f;
-
-  val sys2s = pred_setSyntax.strip_set Pi_set;
+  val sys2s = pred_setSyntax.strip_set Pi_f;
 
   val sys2ps = [
    (List.nth (sys2s,0), bspec_post_1_tm, birs_state_end_lbl_1_tm),
@@ -594,7 +590,7 @@ fun bir_symb_transfer_two
   prove (``Pi_overapprox_Q
    (bir_symb_rec_sbir ^bprog_tm)
    (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
-   (birs_symb_to_symbst ^birs_state_init_pre_tm) ^Pi_f
+   (birs_symb_to_symbst ^birs_state_init_pre_tm) (IMAGE birs_symb_to_symbst ^Pi_f)
    ^bprog_Q_birconts_tm``,
   
    REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, bsysprecond_thm] >>
@@ -613,7 +609,7 @@ fun bir_symb_transfer_two
        birs_prop_transfer_thm
        bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
-     analysis_thm);
+     (REWRITE_RULE [birs_rulesTheory.birs_symb_exec_def] analysis_thm));
 
  val bir_abstract_jgmt_rel_thm =
   (MATCH_MP
