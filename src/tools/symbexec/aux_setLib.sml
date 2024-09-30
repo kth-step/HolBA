@@ -88,7 +88,7 @@ fun INTER_INSERT_CONV_norm el_EQ_CONV tm =
       else
        (REFL))) tm))
 (* the following causes trouble as "normal exit" if there is nothing to be done at the first call *)
-    (fn tm => (print_term tm; raise Fail "unexpected here"))
+    (fn tm => (print_term tm; raise Fail "unexpected here: INTER_INSERT_CONV_norm"))
 ) tm;
 
 

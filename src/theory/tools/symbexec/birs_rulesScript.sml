@@ -83,14 +83,21 @@ QED
 
 Definition birs_freesymbs_def:
   birs_freesymbs bs sbs =
-      ((BIGUNION (IMAGE birs_symb_symbols sbs)) DIFF (birs_symb_symbols bs))
+      ((birs_symb_symbols_set sbs) DIFF (birs_symb_symbols bs))
 End
+
+Theorem birs_freesymbs_thm:
+  birs_freesymbs bs sbs =
+      ((BIGUNION (IMAGE birs_symb_symbols sbs)) DIFF (birs_symb_symbols bs))
+Proof
+  fs [birs_freesymbs_def, birs_symb_symbols_set_def]
+QED
 
 Theorem birs_freesymbs_EQ_thm:
   !prog L bs sbs.
   birs_freesymbs bs sbs = symb_freesymbs (bir_symb_rec_sbir prog) (birs_symb_to_symbst bs, L, IMAGE birs_symb_to_symbst sbs)
 Proof
-  REWRITE_TAC [birs_freesymbs_def, symb_freesymbs_def] >>
+  REWRITE_TAC [birs_freesymbs_thm, symb_freesymbs_def] >>
   REWRITE_TAC [birs_auxTheory.symb_symbols_set_ALT_thm] >>
   REWRITE_TAC [pred_setTheory.IMAGE_IMAGE, combinTheory.o_DEF, birs_symb_symbols_EQ_thm] >>
   METIS_TAC []
@@ -549,11 +556,11 @@ SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, IN_DIFF] >>
   METIS_TAC []
 QED
 
-Theorem birs_freesymbs_thm:
+Theorem birs_freesymbs_thm2:
   !bs sbs.
   (birs_freesymbs bs sbs = BIGUNION (IMAGE (\bs2. birs_freesymbs_SING bs bs2) sbs))
 Proof
-SIMP_TAC std_ss [birs_freesymbs_def, birs_freesymbs_SING_def, BIGUNION_IMAGE_DIFF_EQ_thm]
+SIMP_TAC std_ss [birs_freesymbs_thm, birs_freesymbs_SING_def, BIGUNION_IMAGE_DIFF_EQ_thm]
 QED
 
 Theorem birs_freesymbs_EMPTY_thm:
@@ -561,7 +568,7 @@ Theorem birs_freesymbs_EMPTY_thm:
   (birs_freesymbs_EMPTY bs sbs =
    !bs2. bs2 IN sbs ==> (birs_freesymbs_SING_EMPTY bs bs2))
 Proof
-SIMP_TAC std_ss [birs_freesymbs_EMPTY_def, birs_freesymbs_thm, birs_freesymbs_SING_EMPTY_def] >>
+SIMP_TAC std_ss [birs_freesymbs_EMPTY_def, birs_freesymbs_thm2, birs_freesymbs_SING_EMPTY_def] >>
   SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, NOT_IN_EMPTY] >>
   METIS_TAC []
 QED
@@ -912,7 +919,7 @@ Proof
   ASSUME_TAC (Q.SPEC `prog` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
   IMP_RES_TAC (REWRITE_RULE [symb_freesymbs_def] symb_rulesTheory.symb_rule_SEQ_thm) >>
   POP_ASSUM (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst bs2`, `birs_symb_to_symbst bs1`, `IMAGE birs_symb_to_symbst (birs_exec_step prog bs2)`]) >>
-  ASSUME_TAC (REWRITE_RULE [birs_freesymbs_EMPTY_def, birs_freesymbs_def] birs_exec_step_NO_FRESH_SYMBS) >>
+  ASSUME_TAC (REWRITE_RULE [birs_freesymbs_EMPTY_def, birs_freesymbs_thm] birs_exec_step_NO_FRESH_SYMBS) >>
   FULL_SIMP_TAC std_ss [INTER_EMPTY,
     birs_auxTheory.birs_symb_symbols_set_EQ_thm, bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm] >>
 

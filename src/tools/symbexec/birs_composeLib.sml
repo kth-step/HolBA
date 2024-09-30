@@ -21,11 +21,71 @@ open HolBACoreSimps;
 open symb_interpretTheory;
 open pred_setTheory;
 *)
+  open bir_vars_ofLib;
+
   open birsSyntax;
   open birs_auxTheory;
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 in
+
+(* TODO: this should go to auxTheory *)
+val simplerewrite_thm = prove(``
+!s t g.
+g INTER (s DIFF t) =
+s INTER (g DIFF t)
+``,
+(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
+METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
+);
+
+fun freevarset_CONV tm =
+(
+  (*REWRITE_CONV [Once (simplerewrite_thm)] THENC*) (* TODO: was this a good thing for composition when there are many unused/unchanged symbols around? *)
+
+  (RAND_CONV (
+   aux_setLib.DIFF_CONV EVAL
+  )) THENC
+
+  (* then INTER *)
+  aux_setLib.INTER_INSERT_CONV
+) tm;
+
+(*
+fun freevarset_CONV tm =
+(
+  REWRITE_CONV [Once (prove(``
+!s t g.
+g INTER (s DIFF t) =
+s INTER (g DIFF t)
+``,
+(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
+METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
+))] THENC
+
+  (* DIFF first *)
+(*
+  RATOR_CONV (RAND_CONV (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY])) THENC
+*)
+ (* RATOR_CONV (RAND_CONV (INTER_INSERT_CONV)) THENC*)
+  (RAND_CONV (
+(*
+   (fn tm => prove (``^tm = EMPTY``, cheat))
+*)
+   aux_setLib.DIFF_INSERT_CONV
+)) THENC
+(*
+(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC
+*)
+
+  
+
+  (* then INTER *)
+  aux_setLib.INTER_INSERT_CONV
+) tm;
+
+(* EVAL tm *)
+*)
 
 (* first prepare the SEQ rule for prog *)
 fun birs_rule_SEQ_prog_fun bprog_tm =
@@ -44,22 +104,16 @@ fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
           NONE => ALL_TAC
         | SOME freesymbols_B_thm => (print_thm freesymbols_B_thm; raise ERR "" ""; REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY])) >>
 
-      FULL_SIMP_TAC (std_ss) [birs_rulesTheory.birs_symb_symbols_set_def, birs_rulesTheory.birs_freesymbs_def] >>
-
-      (* this is to unfold the definitions within the states (env_list_gen) so that the vars_of_symbol function can work *)
-      CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``, ``$BIGUNION``]) >>
-
-      CONV_TAC (bir_vars_ofLib.birs_symb_symbols_CONV) >>
-
-      REWRITE_TAC [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY] >>
-      REWRITE_TAC [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY] >>
+      CONV_TAC (LAND_CONV (LAND_CONV (birs_symb_symbols_DIRECT_CONV))) >>
+      CONV_TAC (LAND_CONV (RAND_CONV (birs_freesymbs_DIRECT_CONV))) >>
+      (* now have A INTER (B DIFF C) = EMPTY*)
 
 (*
       (fn (al,g) => (print_term g; ([(al,g)], fn ([t]) => t))) >>
 *)
       (fn (al,g) => (print "starting to proof free symbols\n"; ([(al,g)], fn ([t]) => t))) >>
 
-      CONV_TAC (RATOR_CONV (RAND_CONV (bir_vars_ofLib.freevarset_CONV))) >>
+      CONV_TAC (RATOR_CONV (RAND_CONV (freevarset_CONV))) >>
       (fn (al,g) => (print "finished to proof free symbols operation\n"; ([(al,g)], fn ([t]) => t))) >>
 
       REWRITE_TAC [pred_setTheory.EMPTY_SUBSET]

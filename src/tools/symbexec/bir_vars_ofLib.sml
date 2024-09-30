@@ -427,7 +427,7 @@ fun birs_exps_of_senv_COMP_CONV_norm tm =
       else
         birs_exps_of_senv_COMP_CONV_norm
     ) tm))
-    (fn tm => (print_term tm; raise Fail "unexpected here"))
+    (fn tm => (print_term tm; raise Fail "unexpected here: birs_exps_of_senv_COMP_CONV_norm"))
 ) tm;
 
 val speedcheat = ref false;
@@ -452,6 +452,7 @@ fun birs_symb_symbols_DIRECT_CONV tm =
     raise ERR "birs_symb_symbols_DIRECT_CONV" "cannot handle term"
   else
   (
+    SIMP_CONV std_ss [birs_gen_env_thm, birs_gen_env_NULL_thm] THENC
     SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
     debug_conv2 THENC
     birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
@@ -467,75 +468,48 @@ fun birs_symb_symbols_DIRECT_CONV tm =
   ) tm;
 val birs_symb_symbols_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_DIRECT_CONV;
 
-fun birs_symb_symbols_CONV tm =
-  birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV tm;
+val birs_symb_symbols_CONV =
+  birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV;
 
 
 (* ---------------------------------------------------------------------------------- *)
 (*  symbols of set of symbolic bir states                                             *)
 (* ---------------------------------------------------------------------------------- *)
+fun birs_symb_symbols_set_DIRECT_CONV tm =
+  if not (is_birs_symb_symbols_set tm) then
+    raise ERR "birs_symb_symbols_set_DIRECT_CONV" "cannot handle term"
+  else
+  (
+    SIMP_CONV (std_ss) [birs_rulesTheory.birs_symb_symbols_set_def] THENC
+    computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``, ``$BIGUNION``] THENC
+    birs_symb_symbols_CONV THENC
+
+    REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY] THENC
+    REWRITE_CONV [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]
+  ) tm;
+val birs_symb_symbols_set_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_set_DIRECT_CONV;
+
+val birs_symb_symbols_set_CONV =
+  birs_auxLib.GEN_match_conv is_birs_symb_symbols_set birs_symb_symbols_set_DIRECT_CONV;
 
 
 (* ---------------------------------------------------------------------------------- *)
 (*  free symbols of execution structure (sys, L, Pi)                                  *)
 (* ---------------------------------------------------------------------------------- *)
-(* TODO: this should go to auxTheory *)
-val simplerewrite_thm = prove(``
-!s t g.
-g INTER (s DIFF t) =
-s INTER (g DIFF t)
-``,
-(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
-METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
-);
+fun birs_freesymbs_DIRECT_CONV tm =
+  if not (is_birs_freesymbs tm) then
+    raise ERR "birs_freesymbs_DIRECT_CONV" "cannot handle term"
+  else
+  (
+    SIMP_CONV (std_ss) [birs_rulesTheory.birs_freesymbs_def] THENC
+    LAND_CONV (birs_symb_symbols_set_DIRECT_CONV) THENC
+    RAND_CONV (birs_symb_symbols_DIRECT_CONV)
+    (* TODO: EVAL (* var set DIFF *) *)
+  ) tm;
+val birs_freesymbs_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_freesymbs_DIRECT_CONV;
 
-fun freevarset_CONV tm =
-(
-  (*REWRITE_CONV [Once (simplerewrite_thm)] THENC*) (* TODO: was this a good thing for composition when there are many unused/unchanged symbols around? *)
-
-  (RAND_CONV (
-   aux_setLib.DIFF_CONV EVAL
-  )) THENC
-
-  (* then INTER *)
-  aux_setLib.INTER_INSERT_CONV
-) tm;
-
-(*
-fun freevarset_CONV tm =
-(
-  REWRITE_CONV [Once (prove(``
-!s t g.
-g INTER (s DIFF t) =
-s INTER (g DIFF t)
-``,
-(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
-METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
-))] THENC
-
-  (* DIFF first *)
-(*
-  RATOR_CONV (RAND_CONV (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY])) THENC
-*)
- (* RATOR_CONV (RAND_CONV (INTER_INSERT_CONV)) THENC*)
-  (RAND_CONV (
-(*
-   (fn tm => prove (``^tm = EMPTY``, cheat))
-*)
-   aux_setLib.DIFF_INSERT_CONV
-)) THENC
-(*
-(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC
-*)
-
-  
-
-  (* then INTER *)
-  aux_setLib.INTER_INSERT_CONV
-) tm;
-
-(* EVAL tm *)
-*)
+val birs_freesymbs_CONV =
+  birs_auxLib.GEN_match_conv is_birs_freesymbs birs_freesymbs_DIRECT_CONV;
 
 end (* local *)
 
