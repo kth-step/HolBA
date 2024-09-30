@@ -50,6 +50,7 @@ in
 end;
 
 local
+  open birs_rulesTheory;
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_rules"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;

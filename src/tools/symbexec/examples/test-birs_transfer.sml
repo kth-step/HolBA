@@ -203,7 +203,7 @@ val bprog_Q_thm = store_thm(
 
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
-P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
+P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm)
 ``,
   REWRITE_TAC [GSYM bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
@@ -232,7 +232,7 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
 (* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
-Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm ^Pi_tm bprog_Q
+Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm) (IMAGE birs_symb_to_symbst ^Pi_tm) bprog_Q
 ``,
   SIMP_TAC std_ss [(REWRITE_RULE [EVAL ``birenvtyl``] o EVAL) ``bir_senv_GEN_list birenvtyl``, bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
@@ -419,7 +419,7 @@ val bprog_prop_holds_thm =
          birs_prop_transfer_thm
          bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
-    exec_thm;
+    (REWRITE_RULE [birs_rulesTheory.birs_symb_exec_def] exec_thm);
 
 (* lift to concrete state property *)
 val bprog_concst_prop_thm =

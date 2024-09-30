@@ -30,28 +30,13 @@ in
 (* first prepare the SEQ rule for prog *)
 fun birs_rule_SEQ_prog_fun bprog_tm =
     (ISPEC (bprog_tm) birs_rulesTheory.birs_rule_SEQ_gen_thm, bprog_tm);
-    (*
-  let
-    val prog_type = (hd o snd o dest_type o type_of) bprog_tm;
-    val symbols_f_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_symbols_f_sound_thm;
-    val birs_symb_symbols_f_sound_prog_thm =
-      (SPEC (bprog_tm) symbols_f_sound_thm);
-  in
-    print_thm (MATCH_MP birs_rule_SEQ_gen_thm birs_symb_symbols_f_sound_prog_thm);
-    raise ERR "" "";
-    (MATCH_MP birs_rule_SEQ_gen_thm birs_symb_symbols_f_sound_prog_thm)
-  end;
-  *)
 
 (* symbol freedom helper function *)
-(* probably should remove the parameter freesymbols_B_thm_o, because obsolete since we have a special STEP_SEQ rule *)
+(* has to solve this ((birs_symb_symbols bsys_A) INTER (birs_freesymbs bsys_B bPi_B) = EMPTY) *)
+(* TODO: probably should remove the parameter freesymbols_B_thm_o, because obsolete since we have a special STEP_SEQ rule *)
+val speedcheat = ref false;
 fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
   let
-
-(* ------------------------------------------------------------------------ *)
-(* ------------------------------------------------------------------------ *)
-
-    val speedcheat = ref false;
 
     val freesymbols_thm = prove(freesymbols_tm,
       (if !speedcheat then cheat else ALL_TAC) >> 
@@ -151,7 +136,6 @@ fun birs_rule_SEQ_fun (birs_rule_SEQ_thm, bprog_tm) step_A_thm step_B_thm freesy
     val prep_thm =
       HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
 
-    (* has to solve this ((birs_symb_symbols bsys_A) INTER (birs_freesymbs bsys_B bPi_B) = EMPTY) *)
     val freesymbols_tm = (fst o dest_imp o concl) prep_thm;
     val freesymbols_thm = birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o;
     val _ = print "finished to proof free symbols altogether\n";
