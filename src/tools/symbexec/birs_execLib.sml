@@ -72,6 +72,7 @@ fun birs_rule_STEP_fun birs_rule_STEP_thm bstate_tm =
 
     val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
 
+    (*val _ = print_thm single_step_prog_thm;*)
     val _ = if symb_sound_struct_is_normform (concl single_step_prog_thm) then () else
             (print_term (concl single_step_prog_thm);
              raise ERR "birs_rule_STEP_fun" "something is not right, the produced theorem is not evaluated enough");

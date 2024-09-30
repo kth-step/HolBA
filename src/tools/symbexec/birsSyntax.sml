@@ -30,12 +30,14 @@ in
  val (bir_get_current_statement_tm,  mk_bir_get_current_statement, dest_bir_get_current_statement, is_bir_get_current_statement)  = syntax_fns2 "bir_get_current_statement";
 end;
 
+(*
 local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "symb_record"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 in
  val (symb_hl_step_in_L_sound_tm,  mk_symb_hl_step_in_L_sound, dest_symb_hl_step_in_L_sound, is_symb_hl_step_in_L_sound)  = syntax_fns2 "symb_hl_step_in_L_sound";
 end;
+*)
 
 local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
@@ -45,6 +47,17 @@ local
 in
   val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
   val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
+end;
+
+local
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_rules"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+  val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+in
+  val (birs_symb_exec_tm,  mk_birs_symb_exec, dest_birs_symb_exec, is_birs_symb_exec)  = syntax_fns2 "birs_symb_exec";
+  val (birs_symb_symbols_set_tm,  mk_birs_symb_symbols_set, dest_birs_symb_symbols_set, is_birs_symb_symbols_set)  = syntax_fns1_set "birs_symb_symbols_set";
+  val (birs_freesymbs_tm,  mk_birs_freesymbs, dest_birs_freesymbs, is_birs_freesymbs)  = syntax_fns2_set "birs_freesymbs";
 end;
 
 local
@@ -117,6 +130,7 @@ in
   val (birs_exp_imp_tm,  mk_birs_exp_imp, dest_birs_exp_imp, is_birs_exp_imp)  = syntax_fns2 "birs_exp_imp";
 end
 
+(*
 fun is_IMAGE_birs_symb_to_symbst Pi = pred_setSyntax.is_image Pi andalso (identical birs_symb_to_symbst_tm o fst o pred_setSyntax.dest_image) Pi;
 fun dest_IMAGE_birs_symb_to_symbst Pi =
   let
@@ -126,6 +140,7 @@ fun dest_IMAGE_birs_symb_to_symbst Pi =
   in
     im_set_tm
   end;
+  *)
 
 (* ====================================================================================== *)
 
@@ -194,7 +209,7 @@ fun dest_IMAGE_birs_symb_to_symbst Pi =
 fun symb_sound_struct_get_sysLPi_fun tm =
   let
     val sysLPi_tm =
-      (snd o dest_symb_hl_step_in_L_sound) tm;
+      (snd o dest_birs_symb_exec) tm;
     val res =
       case pairSyntax.strip_pair sysLPi_tm of
          [sys_tm, L_tm, Pi_tm] => (sys_tm, L_tm, Pi_tm)
@@ -207,24 +222,18 @@ fun symb_sound_struct_get_sysLPi_fun tm =
 val Pi_tm = Pi_A_tm;
 *)
 fun symb_sound_struct_Pi_to_birstatelist_fun Pi_tm =
-  (pred_setSyntax.strip_set o snd o dest_comb) Pi_tm;
+  pred_setSyntax.strip_set Pi_tm;
 
 (* check if sound structure term is in normalform *)
 (* ----------------------------------------------- *)
 fun symb_sound_struct_is_normform tm =
   let
     val (sys, L, Pi) = symb_sound_struct_get_sysLPi_fun tm
-                       handle _ => raise ERR "symb_sound_struct_is_normform" "unexpected term, should be a symb_hl_step_in_L_sound with a triple as structure";
+                       handle _ => raise ERR "symb_sound_struct_is_normform" "unexpected term, should be a birs_symb_exec with a triple as structure";
 
-    val sys_ok =
-      is_birs_symb_to_symbst sys andalso
-      (birs_state_is_normform o dest_birs_symb_to_symbst) sys;
-
+    val sys_ok = birs_state_is_normform sys;
     val L_ok = is_a_normform_set L;
-
-    val Pi_ok =
-      is_IMAGE_birs_symb_to_symbst Pi andalso
-      (birs_states_are_normform o dest_IMAGE_birs_symb_to_symbst) Pi;
+    val Pi_ok = birs_states_are_normform Pi;
   in
     sys_ok andalso L_ok andalso Pi_ok
   end;

@@ -799,52 +799,9 @@ IMAGE birs_symb_to_symbst
             (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>}``;
 *)
 
-val IMAGE_DIFF_SING_thm = prove(``
-!f s x.
-  (IMAGE f s) DIFF {f x} =
-  (IMAGE f s) DIFF (IMAGE f {x})
-``,
-  SIMP_TAC std_ss [IMAGE_INSERT, IMAGE_EMPTY]
-);
-
-
-val IMAGE_DIFF_ASSOC_thm = prove(``
-!f s1 s2.
-  (!x y. f x = f y <=> x = y) ==>
-  ((IMAGE f s1) DIFF (IMAGE f s2) =
-   IMAGE f (s1 DIFF s2))
-``,
-  REPEAT STRIP_TAC >>
-  SIMP_TAC std_ss [IMAGE_INSERT, IMAGE_EMPTY, EXTENSION] >>
-  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >>
-  EQ_TAC >> (
-    REPEAT STRIP_TAC >>
-    METIS_TAC []
-  )
-);
-
-
-val IMAGE_UNION_ASSOC_thm = prove(``
-!f s1 s2.
-  (!x y. f x = f y <=> x = y) ==>
-  ((IMAGE f s1) UNION (IMAGE f s2) =
-   IMAGE f (s1 UNION s2))
-``,
-  REPEAT STRIP_TAC >>
-  SIMP_TAC std_ss [IMAGE_INSERT, IMAGE_EMPTY, EXTENSION] >>
-  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >>
-  EQ_TAC >> (
-    REPEAT STRIP_TAC >>
-    METIS_TAC []
-  )
-);
-
-
     fun DIFF_UNION_CONV_cheat tm =
       let
-        val pat_tm = ``(IMAGE (birs_symb_to_symbst) Pi_a) DIFF {birs_symb_to_symbst sys_b} UNION (IMAGE birs_symb_to_symbst Pi_b)``;
+        val pat_tm = ``(Pi_a) DIFF {sys_b} UNION (Pi_b)``;
         val (tm_match, ty_match) = match_term pat_tm tm;
 
         val Pi_a  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_a:birs_state_t->bool``));
@@ -857,13 +814,8 @@ val IMAGE_UNION_ASSOC_thm = prove(``
         fun UNION_foldfun (sys,Pi) = if in_f Pi sys then Pi else (sys::Pi);
         val Pi_c = List.foldr UNION_foldfun Pi_a_minus_b Pi_b;
         val tm_l_set = if List.null Pi_c then pred_setSyntax.mk_empty (``:birs_state_t``) else pred_setSyntax.mk_set Pi_c;
-(*
-length Pi_a
-length Pi_a_minus_b
-length Pi_c
-*)
       in
-        prove(``^tm = IMAGE birs_symb_to_symbst ^tm_l_set``, cheat)
+        prove(``^tm = ^tm_l_set``, cheat)
       end;
 
     val speedcheat_diffunion = ref false;
@@ -871,29 +823,9 @@ length Pi_c
       if !speedcheat_diffunion then
         DIFF_UNION_CONV_cheat
       else
-        fn tm =>
-          (REWRITE_CONV [IMAGE_DIFF_SING_thm, MATCH_MP IMAGE_DIFF_ASSOC_thm bir_symbTheory.birs_symb_to_symbst_EQ_thm, GSYM DELETE_DEF] THENC
-           RATOR_CONV (RAND_CONV (RAND_CONV (
-
-fn tm =>
-(
-pred_setLib.DELETE_CONV birs_state_EQ_CONV tm
-handle ex =>
-  (print "\n\n\n";
-   print_term tm;
-   print "\n\n\n";
-   raise ex
-  )
-)
-
-
-))) THENC
-           REWRITE_CONV [MATCH_MP IMAGE_UNION_ASSOC_thm bir_symbTheory.birs_symb_to_symbst_EQ_thm] THENC
-           RAND_CONV (pred_setLib.UNION_CONV birs_state_EQ_CONV))
-
-          tm;
-
-
+        REWRITE_CONV [GSYM DELETE_DEF] THENC
+        LAND_CONV (pred_setLib.DELETE_CONV birs_state_EQ_CONV) THENC
+        pred_setLib.UNION_CONV birs_state_EQ_CONV;
 
 end (* local *)
 
