@@ -41,8 +41,10 @@ local
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
   val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+  val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
 in
- val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
+  val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
+  val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
 end;
 
 local
@@ -95,6 +97,14 @@ in
  end handle e => raise wrap_exn "mk_birs_state" e;
 
  (* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
+end
+
+local
+  open bir_symb_sound_coreTheory;
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_sound_core";
+  val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+in
+  val (birs_symb_symbols_tm,  mk_birs_symb_symbols, dest_birs_symb_symbols, is_birs_symb_symbols)  = syntax_fns1_set "birs_symb_symbols";
 end
 
 local

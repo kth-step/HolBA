@@ -329,6 +329,18 @@ REPEAT STRIP_TAC >>
   METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
 QED
 
+
+(*
+NOTATION: FREE SYMBOLS
+=======================================================
+*)
+
+Definition symb_freesymbs_def:
+  symb_freesymbs sr (sys, L, Pi) =
+    (symb_symbols_set sr Pi) DIFF (symb_symbols sr sys)
+End
+
+
 (*
 NOTATION: WELL-TYPED INTERPRETATION
 =======================================================

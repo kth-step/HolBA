@@ -359,45 +359,110 @@ QED
 
 
 (* ******************************************************* *)
-(*      NO FRESH SYMBS                                     *)
+(*      FREE SYMBS                                         *)
 (* ******************************************************* *)
-Definition birs_fresh_symbs_def:
-  birs_fresh_symbs bs1 bs2 =
-      ((birs_symb_symbols bs2) DIFF (birs_symb_symbols bs1))
+Definition birs_symb_symbols_set_def:
+  birs_symb_symbols_set Pi =
+      BIGUNION (IMAGE birs_symb_symbols Pi)
 End
 
-Definition birs_NO_fresh_symbs_def:
-  birs_NO_fresh_symbs bs1 bs2 =
-      (birs_fresh_symbs bs1 bs2 = EMPTY)
-End
+Theorem birs_symb_symbols_set_EQ_thm:
+  !prog Pi. symb_symbols_set (bir_symb_rec_sbir prog) (IMAGE birs_symb_to_symbst Pi) = birs_symb_symbols_set Pi
+Proof
+  REWRITE_TAC [birs_auxTheory.symb_symbols_set_ALT_thm, birs_symb_symbols_set_def] >>
+  REWRITE_TAC [pred_setTheory.IMAGE_IMAGE, combinTheory.o_DEF, birs_symb_symbols_EQ_thm] >>
+  METIS_TAC []
+QED
 
-Definition birs_set_fresh_symbs_def:
-  birs_set_fresh_symbs bs sbs =
+Definition birs_freesymbs_def:
+  birs_freesymbs bs sbs =
       ((BIGUNION (IMAGE birs_symb_symbols sbs)) DIFF (birs_symb_symbols bs))
 End
 
-Definition birs_set_NO_fresh_symbs_def:
-  birs_set_NO_fresh_symbs bs sbs =
-      (birs_set_fresh_symbs bs sbs = EMPTY)
+Theorem birs_freesymbs_EQ_thm:
+  !prog L bs sbs.
+  birs_freesymbs bs sbs = symb_freesymbs (bir_symb_rec_sbir prog) (birs_symb_to_symbst bs, L, IMAGE birs_symb_to_symbst sbs)
+Proof
+  REWRITE_TAC [birs_freesymbs_def, symb_freesymbs_def] >>
+  REWRITE_TAC [birs_auxTheory.symb_symbols_set_ALT_thm] >>
+  REWRITE_TAC [pred_setTheory.IMAGE_IMAGE, combinTheory.o_DEF, birs_symb_symbols_EQ_thm] >>
+  METIS_TAC []
+QED
+
+Definition birs_freesymbs_SING_def:
+  birs_freesymbs_SING bs1 bs2 =
+      ((birs_symb_symbols bs2) DIFF (birs_symb_symbols bs1))
 End
 
-Theorem birs_NO_fresh_symbs_SUFFICIENT_thm:
+
+(* ******************************************************* *)
+(*      SEQ rule                                           *)
+(* ******************************************************* *)
+val betterTheorem = prove(``
+!sr.
+!sys_A L_A Pi_A sys_B L_B Pi_B.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
+  (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
+
+  (* can't reintroduce symbols in fragment B that have been lost in A *)
+  ((symb_symbols sr sys_A) INTER (symb_freesymbs sr (sys_B, L_B, Pi_B)) = EMPTY) ==>
+
+  (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
+``,
+  METIS_TAC[symb_rulesTheory.symb_rule_SEQ_thm]
+);
+
+Theorem birs_rule_SEQ_gen_thm:
+  !prog bsys_A L_A bPi_A bsys_B L_B bPi_B.
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (birs_symb_to_symbst bsys_A, L_A, IMAGE birs_symb_to_symbst bPi_A)) ==>
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (birs_symb_to_symbst bsys_B, L_B, IMAGE birs_symb_to_symbst bPi_B)) ==>
+
+  ((birs_symb_symbols bsys_A) INTER (birs_freesymbs bsys_B bPi_B) = EMPTY) ==>
+
+  (*(symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (birs_symb_to_symbst bsys_A, L_A UNION L_B, IMAGE birs_symb_to_symbst ((bPi_A DIFF {bsys_B}) UNION bPi_B))) *)
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (birs_symb_to_symbst bsys_A, L_A UNION L_B, ((IMAGE birs_symb_to_symbst bPi_A) DIFF {birs_symb_to_symbst bsys_B}) UNION (IMAGE birs_symb_to_symbst bPi_B)))
+Proof
+  REPEAT GEN_TAC >>
+  REWRITE_TAC [ISPECL [``prog: 'a bir_program_t``, ``L_B:bir_programcounter_t -> bool``, ``bsys_B:birs_state_t``, ``bPi_B:birs_state_t -> bool``] birs_freesymbs_EQ_thm] >>
+  REWRITE_TAC [GSYM birs_symb_symbols_EQ_thm] >>
+  REPEAT STRIP_TAC >>
+  ASSUME_TAC (ISPEC ``prog: 'a bir_program_t`` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+  METIS_TAC [betterTheorem]
+QED
+
+
+(* ******************************************************* *)
+(*      NO FREE SYMBS                                      *)
+(* ******************************************************* *)
+Definition birs_freesymbs_EMPTY_def:
+  birs_freesymbs_EMPTY bs sbs =
+      (birs_freesymbs bs sbs = EMPTY)
+End
+
+Definition birs_freesymbs_SING_EMPTY_def:
+  birs_freesymbs_SING_EMPTY bs1 bs2 =
+      (birs_freesymbs_SING bs1 bs2 = EMPTY)
+End
+
+Theorem birs_freesymbs_SING_EMPTY_SUFFICIENT_thm:
   !bs1 bs2.
   (bs1.bsst_environ = bs2.bsst_environ /\
    bs1.bsst_pcond   = bs2.bsst_pcond) ==>
-  (birs_NO_fresh_symbs bs1 bs2)
+  (birs_freesymbs_SING_EMPTY bs1 bs2)
 Proof
-SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY]
+SIMP_TAC std_ss [birs_freesymbs_SING_EMPTY_def, birs_freesymbs_SING_def, birs_symb_symbols_def, DIFF_EQ_EMPTY]
 QED
 
-Theorem birs_NO_fresh_symbs_SUFFICIENT2_thm:
+Theorem birs_freesymbs_SING_EMPTY_SUFFICIENT2_thm:
   !bs1 bs2 bs2'.
-  (birs_NO_fresh_symbs bs1 bs2 /\
+  (birs_freesymbs_SING_EMPTY bs1 bs2 /\
    bs2.bsst_environ = bs2'.bsst_environ /\
    bs2.bsst_pcond   = bs2'.bsst_pcond) ==>
-  (birs_NO_fresh_symbs bs1 bs2')
+  (birs_freesymbs_SING_EMPTY bs1 bs2')
 Proof
-SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY] >>
+SIMP_TAC std_ss [birs_freesymbs_SING_EMPTY_def, birs_freesymbs_SING_def, birs_symb_symbols_def, DIFF_EQ_EMPTY] >>
   REPEAT STRIP_TAC >>
   METIS_TAC []
 QED
@@ -412,13 +477,13 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DEF] >>
   METIS_TAC []
 QED
 
-Theorem birs_NO_fresh_symbs_SUFFICIENT3_thm:
+Theorem birs_freesymbs_SING_EMPTY_SUFFICIENT3_thm:
   !bs1 bs1' bs2.
-  (birs_NO_fresh_symbs bs1 bs2 /\
+  (birs_freesymbs_SING_EMPTY bs1 bs2 /\
    (birs_symb_symbols bs1) SUBSET (birs_symb_symbols bs1')) ==>
-  (birs_NO_fresh_symbs bs1' bs2)
+  (birs_freesymbs_SING_EMPTY bs1' bs2)
 Proof
-SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, DIFF_EQ_EMPTY] >>
+SIMP_TAC std_ss [birs_freesymbs_SING_EMPTY_def, birs_freesymbs_SING_def, DIFF_EQ_EMPTY] >>
   REPEAT STRIP_TAC >>
 
   METIS_TAC [SUBSET_of_DIFF_2_thm, SUBSET_EMPTY]
@@ -432,19 +497,19 @@ SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, IN_DIFF] >>
   METIS_TAC []
 QED
 
-Theorem birs_set_fresh_symbs_thm:
+Theorem birs_freesymbs_thm:
   !bs sbs.
-  (birs_set_fresh_symbs bs sbs = BIGUNION (IMAGE (\bs2. birs_fresh_symbs bs bs2) sbs))
+  (birs_freesymbs bs sbs = BIGUNION (IMAGE (\bs2. birs_freesymbs_SING bs bs2) sbs))
 Proof
-SIMP_TAC std_ss [birs_set_fresh_symbs_def, birs_fresh_symbs_def, BIGUNION_IMAGE_DIFF_EQ_thm]
+SIMP_TAC std_ss [birs_freesymbs_def, birs_freesymbs_SING_def, BIGUNION_IMAGE_DIFF_EQ_thm]
 QED
 
-Theorem birs_set_NO_fresh_symbs_thm:
+Theorem birs_freesymbs_EMPTY_thm:
   !bs sbs.
-  (birs_set_NO_fresh_symbs bs sbs =
-   !bs2. bs2 IN sbs ==> (birs_NO_fresh_symbs bs bs2))
+  (birs_freesymbs_EMPTY bs sbs =
+   !bs2. bs2 IN sbs ==> (birs_freesymbs_SING_EMPTY bs bs2))
 Proof
-SIMP_TAC std_ss [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_thm, birs_NO_fresh_symbs_def] >>
+SIMP_TAC std_ss [birs_freesymbs_EMPTY_def, birs_freesymbs_thm, birs_freesymbs_SING_EMPTY_def] >>
   SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, NOT_IN_EMPTY] >>
   METIS_TAC []
 QED
@@ -539,16 +604,16 @@ QED
 
 Theorem birs_exec_stmt_jmp_NO_FRESH_SYMBS:
   !prog bsys l.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_jmp prog l bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_stmt_jmp prog l bsys)
 Proof
 SIMP_TAC std_ss [birs_exec_stmt_jmp_def] >>
     REPEAT STRIP_TAC >>
 
     CASE_TAC >> (
-      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
+      SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
       REPEAT STRIP_TAC >>
 
-      MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+      MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm >>
       SIMP_TAC (std_ss++birs_state_ss) [birs_exec_stmt_jmp_to_label_def] >>
       TRY CASE_TAC >> (
         SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
@@ -558,26 +623,26 @@ QED
 
 Theorem birs_exec_stmt_cjmp_NO_FRESH_SYMBS:
   !prog bsys e l1 l2.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_cjmp prog e l1 l2 bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_stmt_cjmp prog e l1 l2 bsys)
 Proof
 SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
   REPEAT STRIP_TAC >>
   CASE_TAC >- (
-    SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
   ) >>
 
   Cases_on `x` >>
   Cases_on `r` >> (
-    SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
-    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC (std_ss++holBACore_ss) [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+    TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
   ) >>
 
   Cases_on `b` >> (
-    SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
-    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC (std_ss++holBACore_ss) [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+    TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
   ) >>
 
@@ -593,15 +658,15 @@ SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
   ) >>
 
   REPEAT STRIP_TAC >> (
-    IMP_RES_TAC (REWRITE_RULE [birs_set_NO_fresh_symbs_thm] birs_exec_stmt_jmp_NO_FRESH_SYMBS) >>
-    METIS_TAC [birs_NO_fresh_symbs_SUFFICIENT3_thm, SUBSET_REFL]
+    IMP_RES_TAC (REWRITE_RULE [birs_freesymbs_EMPTY_thm] birs_exec_stmt_jmp_NO_FRESH_SYMBS) >>
+    METIS_TAC [birs_freesymbs_SING_EMPTY_SUFFICIENT3_thm, SUBSET_REFL]
   )
 QED
   
 
 Theorem birs_exec_stmtE_NO_FRESH_SYMBS:
   !prog bsys estmt.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmtE prog estmt bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_stmtE prog estmt bsys)
 Proof
 REPEAT STRIP_TAC >>
   Cases_on `estmt` >- (
@@ -610,22 +675,22 @@ REPEAT STRIP_TAC >>
     SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_NO_FRESH_SYMBS]
   ) >> (
     SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_halt_def] >>
-    SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
-    MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+    SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
+    MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
   )
 QED
 
 Theorem birs_exec_stmt_assign_NO_FRESH_SYMBS:
   !bsys var be.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_assign var be bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_stmt_assign var be bsys)
 Proof
 SIMP_TAC std_ss [birs_exec_stmt_assign_def] >>
   REPEAT STRIP_TAC >>
 
   CASE_TAC >- (
-    SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
   ) >>
 
@@ -634,40 +699,40 @@ SIMP_TAC std_ss [birs_exec_stmt_assign_def] >>
 
   CASE_TAC >- (
     IMP_RES_TAC birs_eval_exp_IMP_symb_symbols_SUBSET_environ_thm >>
-    SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    SIMP_TAC (std_ss++holBACore_ss) [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
 
-    SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def] >>
+    SIMP_TAC std_ss [birs_freesymbs_SING_EMPTY_def, birs_freesymbs_SING_def] >>
     METIS_TAC [SUBSET_DIFF_EMPTY]
   ) >>
 
-  SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-  TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+  SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+  TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
   SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
 QED
 
 Theorem birs_exec_stmt_assert_assume_NO_FRESH_SYMBS:
   !bsys be.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_assert be bsys) /\
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_assume be bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_stmt_assert be bsys) /\
+  birs_freesymbs_EMPTY bsys (birs_exec_stmt_assume be bsys)
 Proof
 SIMP_TAC std_ss [birs_exec_stmt_assert_def, birs_exec_stmt_assume_def] >>
   REPEAT STRIP_TAC >> (
     CASE_TAC >- (
-      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+      SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+      TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
       SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
     ) >>
 
     Cases_on `x` >>
     Cases_on `r` >> (
-      SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
-      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+      SIMP_TAC (std_ss++holBACore_ss) [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+      TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
       SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
     ) >>
 
     Cases_on `b` >> (
-      SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
-      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+      SIMP_TAC (std_ss++holBACore_ss) [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+      TRY (MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm) >>
       SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
     ) >>
 
@@ -686,7 +751,7 @@ SIMP_TAC std_ss [birs_exec_stmt_assert_def, birs_exec_stmt_assume_def] >>
     ) >>
 
     REPEAT STRIP_TAC >> (
-      ASM_SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def] >>
+      ASM_SIMP_TAC std_ss [birs_freesymbs_SING_EMPTY_def, birs_freesymbs_SING_def] >>
       METIS_TAC [DIFF_EQ_EMPTY]
     )
   )
@@ -694,7 +759,7 @@ QED
 
 Theorem birs_exec_stmtB_NO_FRESH_SYMBS:
   !bsys stmt.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmtB stmt bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_stmtB stmt bsys)
 Proof
 REPEAT STRIP_TAC >>
   Cases_on `stmt` >- (
@@ -706,8 +771,8 @@ REPEAT STRIP_TAC >>
   ) >> (
     SIMP_TAC std_ss [birs_exec_stmtB_def, birs_exec_stmt_observe_def, LET_DEF] >>
     CASE_TAC >- (
-      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-      MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+      SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+      MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm >>
       SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
     ) >>
 
@@ -715,8 +780,8 @@ REPEAT STRIP_TAC >>
     CASE_TAC >> (
       TRY CASE_TAC >> (
         TRY CASE_TAC >> (
-          SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-          MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+          SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+          MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm >>
           SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
         )
       )
@@ -730,19 +795,19 @@ Theorem birs_exec_step_NO_FRESH_SYMBS[local]:
   (* this assumption is only needed because of the proof with the soundness of steps *)
   (bir_prog_has_no_halt prog) ==>
 *)
-  birs_set_NO_fresh_symbs bsys (birs_exec_step prog bsys)
+  birs_freesymbs_EMPTY bsys (birs_exec_step prog bsys)
 Proof
 SIMP_TAC std_ss [birs_exec_step_def] >>
   REPEAT STRIP_TAC >>
   Cases_on `birs_state_is_terminated bsys` >- (
-    ASM_SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-    METIS_TAC [birs_NO_fresh_symbs_SUFFICIENT_thm]
+    ASM_SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    METIS_TAC [birs_freesymbs_SING_EMPTY_SUFFICIENT_thm]
   ) >>
 
   ASM_SIMP_TAC std_ss [] >>
   Cases_on `bir_get_current_statement prog bsys.bsst_pc` >- (
-    ASM_SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-    MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+    ASM_SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT_thm >>
     SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_failed_def]
   ) >>
 
@@ -752,16 +817,16 @@ SIMP_TAC std_ss [birs_exec_step_def] >>
     ASM_SIMP_TAC std_ss [birs_exec_stmt_def, LET_DEF, birs_exec_stmtE_NO_FRESH_SYMBS]
   ) >>
 
-  SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_IMAGE] >>
+  SIMP_TAC std_ss [birs_freesymbs_EMPTY_thm, FORALL_IN_IMAGE] >>
   REPEAT STRIP_TAC >>
   ASSUME_TAC (Q.SPECL [`bsys`, `b`] birs_exec_stmtB_NO_FRESH_SYMBS) >>
-  IMP_RES_TAC birs_set_NO_fresh_symbs_thm >>
+  IMP_RES_TAC birs_freesymbs_EMPTY_thm >>
 
   Cases_on `birs_state_is_terminated st'` >> (
     ASM_SIMP_TAC std_ss []
   ) >>
 
-  MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT2_thm >>
+  MATCH_MP_TAC birs_freesymbs_SING_EMPTY_SUFFICIENT2_thm >>
   SIMP_TAC (std_ss++birs_state_ss) [] >>
   METIS_TAC []
 QED
@@ -786,16 +851,16 @@ Theorem birs_rule_STEP_SEQ_gen_thm:
      IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)
   ))
 Proof
-REPEAT STRIP_TAC >>
+  REPEAT STRIP_TAC >>
 
   ASSUME_TAC (Q.SPECL [`prog`, `bsys2`] birs_rule_STEP_gen2_thm) >>
   REV_FULL_SIMP_TAC std_ss [] >>
 
 
   ASSUME_TAC (Q.SPEC `prog` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
-  IMP_RES_TAC symb_rulesTheory.symb_rule_SEQ_thm >>
+  IMP_RES_TAC (REWRITE_RULE [symb_freesymbs_def] symb_rulesTheory.symb_rule_SEQ_thm) >>
   POP_ASSUM (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst bsys2`, `birs_symb_to_symbst bsys1`, `IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)`]) >>
-  ASSUME_TAC (REWRITE_RULE [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_def] birs_exec_step_NO_FRESH_SYMBS) >>
+  ASSUME_TAC (REWRITE_RULE [birs_freesymbs_EMPTY_def, birs_freesymbs_def] birs_exec_step_NO_FRESH_SYMBS) >>
   FULL_SIMP_TAC std_ss [INTER_EMPTY,
     birs_auxTheory.birs_symb_symbols_set_EQ_thm, bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm] >>
 
@@ -828,6 +893,11 @@ cheat
 QED
 *)
 
+
+
+(* ******************************************************* *)
+(*      jump resolution - birs_symbval_concretizations     *)
+(* ******************************************************* *)
 
 local
   open bir_bool_expTheory

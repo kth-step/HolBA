@@ -153,14 +153,14 @@ Theorem symb_rule_SEQ_thm:
 
   (* can't reintroduce symbols in fragment B that have been lost in A *)
   (((symb_symbols sr sys_A) (* DIFF (symb_symbols sr sys_B) *))
-       INTER ((symb_symbols_set sr Pi_B) DIFF (symb_symbols sr sys_B))
+       INTER (symb_freesymbs sr (sys_B, L_B, Pi_B))
    = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
   (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
   (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
 Proof
-REWRITE_TAC [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
+  REWRITE_TAC [symb_freesymbs_def, symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
   REPEAT STRIP_TAC >>
 
   PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_A H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
@@ -474,15 +474,15 @@ Theorem symb_rule_CONS_thm:
   (symb_ARB_val_sound sr) ==>
 
   (* can't reintroduce symbols in fragment that have been lost in the path condition widening *)
-  (((symb_symbols sr sys1) (*  DIFF (symb_symbols sr sys') *))
-   INTER ((symb_symbols_set sr Pi) DIFF (symb_symbols sr sys1')) = EMPTY) ==>
+  ((symb_symbols sr sys1) INTER (symb_freesymbs sr (sys1', L, Pi)) = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys1', L, Pi)) ==>
   (symb_pcondwiden_sys sr sys1 sys1') ==>
   (symb_pcondwiden_sys sr sys2 sys2') ==>
   (symb_hl_step_in_L_sound sr (sys1, L, (Pi DIFF {sys2}) UNION {sys2'}))
 Proof
-METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
+  REWRITE_TAC [symb_freesymbs_def] >>
+  METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
 QED
 
 
@@ -1089,12 +1089,12 @@ Theorem symb_rule_INST_thm:
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
 
   (* exclude the freshly introduced symbols between sys and Pi in the expression symb_inst *)
-  ((sr.sr_symbols_f symb_inst) INTER ((symb_symbols_set sr Pi) DIFF (symb_symbols sr sys)) = EMPTY) ==>
+  ((sr.sr_symbols_f symb_inst) INTER (symb_freesymbs sr (sys, L, Pi)) = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   (symb_hl_step_in_L_sound sr (symb_subst sr (symb, symb_inst) sys, L, symb_subst_set sr (symb, symb_inst) Pi))
 Proof
-REWRITE_TAC [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
+  REWRITE_TAC [symb_freesymbs_def, symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
   REPEAT STRIP_TAC >>
 
   Q.ABBREV_TAC `sys_s = symb_subst sr (symb,symb_inst) sys` >>
@@ -1688,7 +1688,7 @@ REPEAT STRIP_TAC >>
 
       METIS_TAC [INTER_COMM, DIFF_INTER, EMPTY_DIFF]
     ) >>
-    METIS_TAC [symb_rule_INST_thm]
+    METIS_TAC [symb_rule_INST_thm, symb_freesymbs_def]
   ) >>
 
 (* do we have theorem that substition has no effect if substituted symbol is not present? then this part of the proof will be relatively simple and just needs a bit argument for the last step *)

@@ -7,6 +7,7 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_typing_expTheory;
 open bir_typing_expSyntax;
+open birsSyntax;
 
 open HolBACoreSimps;
 
@@ -20,6 +21,9 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 in (* local *)
 
+(* ---------------------------------------------------------------------------------- *)
+(*  variables of bir expressions                                                      *)
+(* ---------------------------------------------------------------------------------- *)
   (* TODO: can probably speed this up by extending the caching into the evaluation of variables subexpressions, like in the function type_of_bir_exp_DIRECT_CONV,
        but only relevant for handling of bigger expressions *)
   fun bir_vars_of_exp_DIRECT_CONV tm =
@@ -34,12 +38,11 @@ in (* local *)
   val bir_vars_of_exp_CONV =
     birs_auxLib.GEN_match_conv (is_bir_vars_of_exp) bir_vars_of_exp_DIRECT_CONV;
 
-(* ------------------------------------------------------------ *)
+(* ---------------------------------------------------------------------------------- *)
+(*  symbols of set of symbolic states                                                 *)
+(* ---------------------------------------------------------------------------------- *)
 
-(* ------------------------------------------------------------------------ *)
 (* COPIED FROM TRANSFER-TEST (and modified) *)
-(* ------------------------------------------------------------------------ *)
-
 (*
 val tm = ``
 birs_symb_symbols
@@ -444,35 +447,39 @@ fun birs_exps_of_senv_CONV tm =
   ((*TRY_CONV*) birs_exps_of_senv_COMP_CONV)
 ) tm;
 
-fun is_birs_exps_of_senv tm = is_comb tm andalso
-                              (is_const o fst o dest_comb) tm andalso
-                              ((fn tm2 => tm2 = "birs_exps_of_senv") o fst o dest_const o fst o dest_comb) tm;
+fun birs_symb_symbols_DIRECT_CONV tm =
+  if not (is_birs_symb_symbols tm) then
+    raise ERR "birs_symb_symbols_DIRECT_CONV" "cannot handle term"
+  else
+  (
+    SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
+    debug_conv2 THENC
+    birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
+    debug_conv2 THENC
+    REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] THENC
+    bir_vars_of_exp_CONV THENC
+
+    debug_conv2 THENC
+    RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
+
+    REWRITE_CONV [Once pred_setTheory.UNION_COMM] THENC
+    REWRITE_CONV [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]
+  ) tm;
+val birs_symb_symbols_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_DIRECT_CONV;
+
 fun birs_symb_symbols_CONV tm =
-(
-  SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
-  debug_conv2 THENC
-  birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
-  debug_conv2 THENC
-  REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] THENC
-  bir_vars_of_exp_CONV THENC
-
-  debug_conv2 THENC
-  RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
-
-  REWRITE_CONV [Once pred_setTheory.UNION_COMM] THENC
-  REWRITE_CONV [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]
-) tm;
-
-fun is_birs_symb_symbols tm = is_comb tm andalso
-                              (is_const o fst o dest_comb) tm andalso
-                              ((fn tm2 => tm2 = "birs_symb_symbols") o fst o dest_const o fst o dest_comb) tm;
-fun birs_symb_symbols_MATCH_CONV tm =
-  birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_CONV tm;
+  birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV tm;
 
 
 (* ---------------------------------------------------------------------------------- *)
-(*  set of free vars                                                            *)
+(*  symbols of set of symbolic bir states                                             *)
 (* ---------------------------------------------------------------------------------- *)
+
+
+(* ---------------------------------------------------------------------------------- *)
+(*  free symbols of execution structure (sys, L, Pi)                                  *)
+(* ---------------------------------------------------------------------------------- *)
+(* TODO: this should go to auxTheory *)
 val simplerewrite_thm = prove(``
 !s t g.
 g INTER (s DIFF t) =
@@ -484,7 +491,7 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 
 fun freevarset_CONV tm =
 (
-  REWRITE_CONV [Once (simplerewrite_thm)] THENC
+  (*REWRITE_CONV [Once (simplerewrite_thm)] THENC*) (* TODO: was this a good thing for composition when there are many unused/unchanged symbols around? *)
 
   (RAND_CONV (
    aux_setLib.DIFF_CONV EVAL

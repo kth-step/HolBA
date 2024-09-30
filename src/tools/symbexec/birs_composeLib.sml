@@ -27,35 +27,21 @@ open pred_setTheory;
 
 in
 
-(* TODO: *)
-val betterTheorem = prove(``
-!sr.
-!sys_A L_A Pi_A sys_B L_B Pi_B.
-  (symb_symbols_f_sound sr) ==>
-
-  (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
-  (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
-
-  (* can't reintroduce symbols in fragment B that have been lost in A *)
-  (((symb_symbols sr sys_A) (* DIFF (symb_symbols sr sys_B) *))
-       INTER ((symb_symbols_set sr Pi_B) DIFF (symb_symbols sr sys_B))
-   = EMPTY) ==>
-
-  (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
-``,
-  METIS_TAC[symb_rulesTheory.symb_rule_SEQ_thm]
-);
-
 (* first prepare the SEQ rule for prog *)
 fun birs_rule_SEQ_prog_fun bprog_tm =
+    (ISPEC (bprog_tm) birs_rulesTheory.birs_rule_SEQ_gen_thm, bprog_tm);
+    (*
   let
     val prog_type = (hd o snd o dest_type o type_of) bprog_tm;
     val symbols_f_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_symbols_f_sound_thm;
     val birs_symb_symbols_f_sound_prog_thm =
       (SPEC (bprog_tm) symbols_f_sound_thm);
   in
-    (MATCH_MP betterTheorem birs_symb_symbols_f_sound_prog_thm)
+    print_thm (MATCH_MP birs_rule_SEQ_gen_thm birs_symb_symbols_f_sound_prog_thm);
+    raise ERR "" "";
+    (MATCH_MP birs_rule_SEQ_gen_thm birs_symb_symbols_f_sound_prog_thm)
   end;
+  *)
 
 (* symbol freedom helper function *)
 fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
@@ -70,7 +56,7 @@ fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
       (if !speedcheat then cheat else ALL_TAC) >> 
       (case freesymbols_B_thm_o of
           NONE => ALL_TAC
-        | SOME freesymbols_B_thm => REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
+        | SOME freesymbols_B_thm => (print_thm freesymbols_B_thm; raise ERR "" ""; REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY])) >>
 
       FULL_SIMP_TAC (std_ss) [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm, birs_symb_symbols_set_EQ_thm] >>
 
@@ -79,7 +65,7 @@ fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
 
 
 
-      CONV_TAC (bir_vars_ofLib.birs_symb_symbols_MATCH_CONV) >>
+      CONV_TAC (bir_vars_ofLib.birs_symb_symbols_CONV) >>
 (*
       CONV_TAC (
   SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
@@ -273,11 +259,9 @@ val step_A_thm = single_step_A_thm;
 val step_B_thm = single_step_B_thm;
 val freesymbols_B_thm_o = SOME (prove(T, cheat));
 *)
-fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_o =
+fun birs_rule_SEQ_fun (birs_rule_SEQ_thm, bprog_tm) step_A_thm step_B_thm freesymbols_B_thm_o =
   let
-    val get_SEQ_thm_concl_symb_struct_fun = snd o strip_imp o snd o strip_binder (SOME boolSyntax.universal) o concl;
     val symb_struct_get_bprog_fun = snd o dest_comb o hd o snd o strip_comb;
-    val bprog_tm   = (symb_struct_get_bprog_fun o get_SEQ_thm_concl_symb_struct_fun) birs_rule_SEQ_thm;
     val bprog_A_tm = (symb_struct_get_bprog_fun o concl) step_A_thm;
     val bprog_B_tm = (symb_struct_get_bprog_fun o concl) step_B_thm;
     val _ = if identical bprog_tm bprog_A_tm andalso identical bprog_tm bprog_B_tm then () else
@@ -290,8 +274,9 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_
 
     val prep_thm =
       HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
-    val freesymbols_tm = (hd o fst o strip_imp o concl) prep_thm;
 
+    (* has to solve this implication ((birs_symb_symbols bsys_A) INTER (birs_freesymbs bsys_B bPi_B) = EMPTY) *)
+    val freesymbols_tm = (hd o fst o strip_imp o concl) prep_thm;
     val freesymbols_thm = birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o;
     val _ = print "finished to proof free symbols altogether\n";
     (*
@@ -317,10 +302,10 @@ val tm = (snd o dest_comb o snd o dest_comb o snd o dest_comb o concl) bprog_com
     val conv = aux_setLib.birs_state_DIFF_UNION_CONV;
 *)
     fun Pi_CONV conv tm =
-      RAND_CONV (RAND_CONV (conv)) tm;
+      RAND_CONV (RAND_CONV (conv handle e => (print "\n\nPi_CONV failed\n\n"; raise e))) tm;
 
     fun L_CONV conv tm =
-      RAND_CONV (LAND_CONV (conv)) tm;
+      RAND_CONV (LAND_CONV (conv handle e => (print "\n\nL_CONV failed\n\n"; raise e))) tm;
 
     val bprog_Pi_fixed_thm = CONV_RULE (RAND_CONV (Pi_CONV aux_setLib.birs_state_DIFF_UNION_CONV)) bprog_composed_thm;
 
