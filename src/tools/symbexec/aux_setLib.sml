@@ -25,185 +25,180 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 in (* local *)
 
 (* ---------------------------------------------------------------------------------- *)
-(* faster set operations for bir variable sets (for computing freevarset, symbexec composition, merging, etc) *)
-(* also for sets of symbolic BIR states *)
+(* generic fast set operations (conversions)                                          *)
 (* ---------------------------------------------------------------------------------- *)
-(*
-(* !!!!! try computeLib *)
-val string_ss = rewrites (type_rws ``:string``);
-
-val el_EQ_CONV = SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [];
-*)
-val el_EQ_CONV = RAND_CONV EVAL;
-
-fun IN_INSERT_CONV el_EQ_CONV tm =
-(
-  REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY] THENC
-  REPEATC (CHANGED_CONV (
-     (fn xyz => REWRITE_CONV [Once pred_setTheory.IN_INSERT] xyz) THENC
-     (*(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC*)
-     IFC
-       (RATOR_CONV el_EQ_CONV)
-       (REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY])
-       REFL))
-) tm;
-
-fun INTER_INSERT_ONCE_CONV el_EQ_CONV tm =
-(
-  (QCHANGED_CONV (CHANGED_CONV (fn x => REWRITE_CONV [Once pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY] x))) THENC
-  IFC
-    (RATOR_CONV (RATOR_CONV (RAND_CONV (
-(*
-fn tm => (print_term (concl (prove (mk_eq (tm, F), cheat))); prove (mk_eq (tm, F), cheat))
-*)
-(*fn tm => (prove (mk_eq (tm, F), cheat))*)
-(*(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC*)
-IN_INSERT_CONV el_EQ_CONV
-))))
-    (REWRITE_CONV [])
-    (REFL)
-) tm;
-
-fun INTER_INSERT_CONV_norm el_EQ_CONV tm =
-(
-  if pred_setSyntax.is_empty tm then
-    REFL
-  else
-  (fn tm => (if true then print ".\n" else (print_term tm; print "\n\n"); REFL tm)) THENC
-  IFC
-    (INTER_INSERT_ONCE_CONV el_EQ_CONV)
-    (
-(*
-(fn tm => (if false then print ".\n" else print_term tm; print "bb\n\n"; REFL tm)) THENC
-*)
-(fn tm =>
-      (
-      (*(fn tm => (if false then print ".\n" else print_term tm; print "bb\n\n"; REFL tm)) THENC *)
-      (if pred_setSyntax.is_empty tm then
-       (REFL)
-      else if pred_setSyntax.is_inter tm then
-       (INTER_INSERT_CONV_norm el_EQ_CONV)
-      else if pred_setSyntax.is_insert tm then
-       (RAND_CONV (INTER_INSERT_CONV_norm el_EQ_CONV))
-      else
-       (REFL))) tm))
-(* the following causes trouble as "normal exit" if there is nothing to be done at the first call *)
-    (fn tm => (print_term tm; raise Fail "unexpected here: INTER_INSERT_CONV_norm"))
-) tm;
-
-
-(* TODO: fix this *)
-fun bvar_eq_fun_cheat tm1 tm2 = identical tm1 tm2;
-
-fun INTER_INSERT_CONV_cheat tm =
-  let
-    val (s1, s2) = pred_setSyntax.dest_inter tm
-    val s1_l = pred_setSyntax.strip_set s1;
-    val s2_l = pred_setSyntax.strip_set s2;
-    val eq_fun = bvar_eq_fun_cheat;
-    fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
-    val l = List.foldr (fn (x, l) => if in_f s2_l x then x::l else l) [] s1_l;
-    val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
-  in
-    mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
-  end;
-
-
-val speedcheat = ref false;
-val INTER_INSERT_CONV =
-  if !speedcheat then
-    INTER_INSERT_CONV_cheat
-  else
-    INTER_INSERT_CONV_norm el_EQ_CONV;
-
-(*
-fun DIFF_INSERT_CONV_cheat tm =
-  let
-    val (s1, s2) = pred_setSyntax.dest_diff tm
-    val s1_l = pred_setSyntax.strip_set s1;
-    val s2_l = pred_setSyntax.strip_set s2;
-    val eq_fun = bvar_eq_fun_cheat;
-    fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
-    val l = List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
-    val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
-  in
-    mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
-  end;
-
-val DIFF_INSERT_CONV =
-  if !speedcheat then
-    DIFF_INSERT_CONV_cheat
-  else
-    (*SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY, pred_setTheory.IN_DIFF, pred_setTheory.IN_INSERT]*)
-    EVAL;
-*)
-
-
-fun DIFF_CONV_Once el_EQ_CONV tm =
+  (*
+  val el_EQ_CONV = EVAL;
+  *)
+  fun IN_INSERT_CONV el_EQ_CONV tm =
   (
+    REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY] THENC
+    REPEATC (CHANGED_CONV (
+      (fn xyz => REWRITE_CONV [Once pred_setTheory.IN_INSERT] xyz) THENC
+      (*(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC*)
+      IFC
+        (RATOR_CONV el_EQ_CONV)
+        (REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY])
+        REFL))
+  ) tm;
+
+  fun INTER_INSERT_ONCE_CONV el_EQ_CONV tm =
+  (
+    (QCHANGED_CONV (CHANGED_CONV (fn x => REWRITE_CONV [Once pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY] x))) THENC
     IFC
-      (CHANGED_CONV (fn tm => REWRITE_CONV [Once INSERT_DIFF] tm))
-      (RATOR_CONV (RATOR_CONV (RAND_CONV (pred_setLib.IN_CONV el_EQ_CONV))) THENC
-       REWRITE_CONV [])
+      (RATOR_CONV (RATOR_CONV (RAND_CONV (
+  (*
+  fn tm => (print_term (concl (prove (mk_eq (tm, F), cheat))); prove (mk_eq (tm, F), cheat))
+  *)
+  (*fn tm => (prove (mk_eq (tm, F), cheat))*)
+  (*(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC*)
+  IN_INSERT_CONV el_EQ_CONV
+  ))))
+      (REWRITE_CONV [])
       (REFL)
-  )
-  tm;
+  ) tm;
 
-fun DIFF_CONV el_EQ_CONV tm =
-  if pred_setSyntax.is_empty tm then
-    REFL tm
-  else if pred_setSyntax.is_diff tm then
-    if (pred_setSyntax.is_empty o fst o pred_setSyntax.dest_diff) tm then
-       (print_term tm;
-        REWRITE_CONV [EMPTY_DIFF] tm)
-    else if (pred_setSyntax.is_insert o fst o pred_setSyntax.dest_diff) tm then
-       (DIFF_CONV_Once el_EQ_CONV THENC
-        DIFF_CONV el_EQ_CONV) tm
+  fun INTER_INSERT_CONV_norm el_EQ_CONV tm =
+  (
+    if pred_setSyntax.is_empty tm then
+      REFL
     else
-      raise ERR "DIFF_CONV" "unexpected1"
-  else if pred_setSyntax.is_insert tm then
-    RAND_CONV
-      (DIFF_CONV el_EQ_CONV)
-      tm
-  else
-    (print_term tm;
-     raise ERR "DIFF_CONV" "unexpected2");
+    (*(fn tm => (if true then print ".\n" else (print_term tm; print "\n\n"); REFL tm)) THENC*)
+    IFC
+      (INTER_INSERT_ONCE_CONV el_EQ_CONV)
+      (
+  (*
+  (fn tm => (if false then print ".\n" else print_term tm; print "bb\n\n"; REFL tm)) THENC
+  *)
+  (fn tm =>
+        (
+        (*(fn tm => (if false then print ".\n" else print_term tm; print "bb\n\n"; REFL tm)) THENC *)
+        (if pred_setSyntax.is_empty tm then
+        (REFL)
+        else if pred_setSyntax.is_inter tm then
+        (INTER_INSERT_CONV_norm el_EQ_CONV)
+        else if pred_setSyntax.is_insert tm then
+        (RAND_CONV (INTER_INSERT_CONV_norm el_EQ_CONV))
+        else
+        (REFL))) tm))
+  (* the following causes trouble as "normal exit" if there is nothing to be done at the first call *)
+      (fn tm => (print_term tm; raise Fail "unexpected here: INTER_INSERT_CONV_norm"))
+  ) tm;
 
-(*
-val el_EQ_CONV = EVAL;
-DIFF_CONV el_EQ_CONV tm
-*)
+
+  (* TODO: fix this *)
+  fun bvar_eq_fun_cheat tm1 tm2 = identical tm1 tm2;
+
+  fun INTER_INSERT_CONV_cheat tm =
+    let
+      val (s1, s2) = pred_setSyntax.dest_inter tm
+      val s1_l = pred_setSyntax.strip_set s1;
+      val s2_l = pred_setSyntax.strip_set s2;
+      val eq_fun = bvar_eq_fun_cheat;
+      fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
+      val l = List.foldr (fn (x, l) => if in_f s2_l x then x::l else l) [] s1_l;
+      val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
+    in
+      mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
+    end;
+
+  val speedcheat_INTER_INSERT_CONV = ref false;
+  fun INTER_INSERT_CONV el_EQ_CONV =
+    if !speedcheat_INTER_INSERT_CONV then
+      INTER_INSERT_CONV_cheat
+    else
+      INTER_INSERT_CONV_norm el_EQ_CONV;
+
+  (*
+  fun DIFF_INSERT_CONV_cheat tm =
+    let
+      val (s1, s2) = pred_setSyntax.dest_diff tm
+      val s1_l = pred_setSyntax.strip_set s1;
+      val s2_l = pred_setSyntax.strip_set s2;
+      val eq_fun = bvar_eq_fun_cheat;
+      fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
+      val l = List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
+      val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
+    in
+      mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
+    end;
+
+  val DIFF_INSERT_CONV =
+    if !speedcheat then
+      DIFF_INSERT_CONV_cheat
+    else
+      (*SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY, pred_setTheory.IN_DIFF, pred_setTheory.IN_INSERT]*)
+      EVAL;
+  *)
 
 
-(* ---------------------------------------------------------------------------------- *)
-(* ---------------------------------------------------------------------------------- *)
-(* ---------------------------------------------------------------------------------- *)
-(* ---------------------------------------------------------------------------------- *)
+  fun DIFF_CONV_Once el_EQ_CONV tm =
+    (
+      IFC
+        (CHANGED_CONV (fn tm => REWRITE_CONV [Once INSERT_DIFF] tm))
+        (RATOR_CONV (RATOR_CONV (RAND_CONV (pred_setLib.IN_CONV el_EQ_CONV))) THENC
+        REWRITE_CONV [])
+        (REFL)
+    )
+    tm;
+
+  fun DIFF_CONV el_EQ_CONV tm =
+    if pred_setSyntax.is_empty tm then
+      REFL tm
+    else if pred_setSyntax.is_diff tm then
+      if (pred_setSyntax.is_empty o fst o pred_setSyntax.dest_diff) tm then
+        (print_term tm;
+          REWRITE_CONV [EMPTY_DIFF] tm)
+      else if (pred_setSyntax.is_insert o fst o pred_setSyntax.dest_diff) tm then
+        (DIFF_CONV_Once el_EQ_CONV THENC
+          DIFF_CONV el_EQ_CONV) tm
+      else
+        raise ERR "DIFF_CONV" "unexpected1"
+    else if pred_setSyntax.is_insert tm then
+      RAND_CONV
+        (DIFF_CONV el_EQ_CONV)
+        tm
+    else
+      (print_term tm;
+      raise ERR "DIFF_CONV" "unexpected2");
+
+
+(* ================================================================================== *)
+(* ================================================================================== *)
 
 (* ---------------------------------------------------------------------------------- *)
-(*  state equality checker                                                            *)
+(*  bir var set equality checker                                                      *)
 (* ---------------------------------------------------------------------------------- *)
-val birs_state_NEQ_pc_thm = prove(``
-!bsys1 bsys2.
-  (bsys1.bsst_pc <> bsys2.bsst_pc) ==>
-  (bsys1 <> bsys2)
-``,
-  SIMP_TAC (std_ss++birs_state_ss) []
-);
-val birs_state_NEQ_pcond_thm = prove(``
-!bsys1 bsys2.
-  (bsys1.bsst_pcond <> bsys2.bsst_pcond) ==>
-  (bsys1 <> bsys2)
-``,
-  SIMP_TAC (std_ss++birs_state_ss) []
-);
-val birs_state_NEQ_status_thm = prove(``
-!bsys1 bsys2.
-  (bsys1.bsst_status <> bsys2.bsst_status) ==>
-  (bsys1 <> bsys2)
-``,
-  SIMP_TAC (std_ss++birs_state_ss) []
-);
+  (*
+  val string_ss = rewrites (type_rws ``:string``);
+  val varset_EQ_CONV = SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [];
+  *)
+  val varset_EQ_CONV = EVAL;
+
+(* ---------------------------------------------------------------------------------- *)
+(*  birs state equality checker                                                       *)
+(* ---------------------------------------------------------------------------------- *)
+  val birs_state_NEQ_pc_thm = prove(``
+  !bsys1 bsys2.
+    (bsys1.bsst_pc <> bsys2.bsst_pc) ==>
+    (bsys1 <> bsys2)
+  ``,
+    SIMP_TAC (std_ss++birs_state_ss) []
+  );
+  val birs_state_NEQ_pcond_thm = prove(``
+  !bsys1 bsys2.
+    (bsys1.bsst_pcond <> bsys2.bsst_pcond) ==>
+    (bsys1 <> bsys2)
+  ``,
+    SIMP_TAC (std_ss++birs_state_ss) []
+  );
+  val birs_state_NEQ_status_thm = prove(``
+  !bsys1 bsys2.
+    (bsys1.bsst_status <> bsys2.bsst_status) ==>
+    (bsys1 <> bsys2)
+  ``,
+    SIMP_TAC (std_ss++birs_state_ss) []
+  );
 
   fun try_prove_birs_state_try_justify_assumptions t =
     if (is_neg o concl) t orelse
@@ -227,71 +222,111 @@ val birs_state_NEQ_status_thm = prove(``
           (REWRITE_RULE [assmpt_thm] t)
       end;
 
-fun try_prove_birs_state_NEQ bsys1_tm bsys2_tm =
-  let
-    val thms = [birs_state_NEQ_pc_thm, birs_state_NEQ_pcond_thm, birs_state_NEQ_status_thm];
-    val t = hd thms;
-    fun foldfun (t, r_o) =
-      if isSome r_o then
-        r_o
+  fun try_prove_birs_state_NEQ bsys1_tm bsys2_tm =
+    let
+      val thms = [birs_state_NEQ_pc_thm, birs_state_NEQ_pcond_thm, birs_state_NEQ_status_thm];
+      val t = hd thms;
+      fun foldfun (t, r_o) =
+        if isSome r_o then
+          r_o
+        else
+          (*val t = (SPECL [bsys1_tm, bsys2_tm] t);*)
+          SOME (try_prove_birs_state_try_justify_assumptions (SPECL [bsys1_tm, bsys2_tm] t))
+          handle _ => NONE;
+      val neq_t_o = List.foldl foldfun NONE thms;
+    in
+      if isSome neq_t_o then
+        valOf neq_t_o
       else
-        (*val t = (SPECL [bsys1_tm, bsys2_tm] t);*)
-        SOME (try_prove_birs_state_try_justify_assumptions (SPECL [bsys1_tm, bsys2_tm] t))
-        handle _ => NONE;
-    val neq_t_o = List.foldl foldfun NONE thms;
-  in
-    if isSome neq_t_o then
-      valOf neq_t_o
-    else
-      (print "\ncould not show inequality of the states, would need to check the environments\n";
-       raise ERR "try_prove_birs_state_NEQ" "could not show inequality of the states, would need to check the environments")
-  end;
+        (print "\ncould not show inequality of the states, would need to check the environments\n";
+        raise ERR "try_prove_birs_state_NEQ" "could not show inequality of the states, would need to check the environments")
+    end;
 
-fun birs_state_EQ_CONV tm =
-  IFC
-    (CHANGED_CONV (REWRITE_CONV []))
-    (fn tm => (print "syntactically equal, done!\n"; REFL tm))
-    (fn tm =>
-      let
-        val (bsys1_tm, bsys2_tm) = dest_eq tm;
-        val neq_t = try_prove_birs_state_NEQ bsys1_tm bsys2_tm;
-      in
-        REWRITE_CONV [neq_t] tm
-      end)
-  tm;
+  fun birs_state_EQ_CONV tm =
+    IFC
+      (CHANGED_CONV (REWRITE_CONV []))
+      (fn tm => (print "syntactically equal, done!\n"; REFL tm))
+      (fn tm =>
+        let
+          val (bsys1_tm, bsys2_tm) = dest_eq tm;
+          val neq_t = try_prove_birs_state_NEQ bsys1_tm bsys2_tm;
+        in
+          REWRITE_CONV [neq_t] tm
+        end)
+    tm;
+
+(* ---------------------------------------------------------------------------------- *)
+(*  labelset operations                                                    *)
+(* ---------------------------------------------------------------------------------- *)
+  val labelset_UNION_CONV =
+      (* TODO: this has to be fixed as list of address spaces that can be merged and so on...
+         (can we make this only involve the block label part, not the block index?) *)
+      EVAL;
+
+(* ---------------------------------------------------------------------------------- *)
+(* faster set operations for bir variable sets (for example for: computing freevarset, symbexec composition, merging, etc) *)
+(* ---------------------------------------------------------------------------------- *)
+  (* TODO: this should go to auxTheory *)
+  val simplerewrite_thm = prove(``
+    !s t g.
+    g INTER (s DIFF t) =
+    s INTER (g DIFF t)
+  ``,
+    METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
+  );
+
+  (* A INTER (B DIFF C) *)
+  fun varset_INTER_DIFF_CONV tm =
+  (
+    (* TODO: was this a good thing for composition when there are many unused/unchanged symbols around? *)
+    (*REWRITE_CONV [Once (simplerewrite_thm)] THENC*)
+
+    (* first DIFF *) (* DIFF_INSERT_CONV??? *)
+    (RAND_CONV
+      (DIFF_CONV varset_EQ_CONV)) THENC
+
+    (* then INTER *) (* TODO: RAND_CONV should not be needed here. something is wrong *)
+    INTER_INSERT_CONV (RAND_CONV varset_EQ_CONV)
+
+    (*
+    THENC (fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm))
+    *)
+  ) tm;
+
 
 
 (* ---------------------------------------------------------------------------------- *)
 (* set operation for composition, using the state equality checker above              *)
 (* ---------------------------------------------------------------------------------- *)
+  (* TODO: fix this *)
+  fun birs_state_eq_fun_cheat sys1 sys2 = identical sys1 sys2;
 
-    fun DIFF_UNION_CONV_cheat tm =
-      let
-        val pat_tm = ``(Pi_a) DIFF {sys_b} UNION (Pi_b)``;
-        val (tm_match, ty_match) = match_term pat_tm tm;
+  fun DIFF_UNION_CONV_cheat tm =
+    let
+      val pat_tm = ``(Pi_a) DIFF {sys_b} UNION (Pi_b)``;
+      val (tm_match, ty_match) = match_term pat_tm tm;
 
-        val Pi_a  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_a:birs_state_t->bool``));
-        val sys_b = subst tm_match (inst ty_match ``sys_b:birs_state_t``);
-        val Pi_b  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_b:birs_state_t->bool``));
+      val Pi_a  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_a:birs_state_t->bool``));
+      val sys_b = subst tm_match (inst ty_match ``sys_b:birs_state_t``);
+      val Pi_b  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_b:birs_state_t->bool``));
 
-        fun eq_fun sys1 sys2 = identical sys1 sys2; (* TODO: birs_state_eq_fun*)
-        fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
-        val Pi_a_minus_b = List.filter (not o eq_fun sys_b) Pi_a;
-        fun UNION_foldfun (sys,Pi) = if in_f Pi sys then Pi else (sys::Pi);
-        val Pi_c = List.foldr UNION_foldfun Pi_a_minus_b Pi_b;
-        val tm_l_set = if List.null Pi_c then pred_setSyntax.mk_empty (``:birs_state_t``) else pred_setSyntax.mk_set Pi_c;
-      in
-        prove(``^tm = ^tm_l_set``, cheat)
-      end;
+      fun in_f l x = List.foldr (fn (y, b) => b orelse birs_state_eq_fun_cheat x y) false l;
+      val Pi_a_minus_b = List.filter (not o birs_state_eq_fun_cheat sys_b) Pi_a;
+      fun UNION_foldfun (sys,Pi) = if in_f Pi sys then Pi else (sys::Pi);
+      val Pi_c = List.foldr UNION_foldfun Pi_a_minus_b Pi_b;
+      val tm_l_set = if List.null Pi_c then pred_setSyntax.mk_empty (``:birs_state_t``) else pred_setSyntax.mk_set Pi_c;
+    in
+      prove(``^tm = ^tm_l_set``, cheat)
+    end;
 
-    val speedcheat_diffunion = ref false;
-    val birs_state_DIFF_UNION_CONV =
-      if !speedcheat_diffunion then
-        DIFF_UNION_CONV_cheat
-      else
-        REWRITE_CONV [GSYM DELETE_DEF] THENC
-        LAND_CONV (pred_setLib.DELETE_CONV birs_state_EQ_CONV) THENC
-        pred_setLib.UNION_CONV birs_state_EQ_CONV;
+  val speedcheat_stateset_diffunion = ref false;
+  val birs_state_DIFF_UNION_CONV =
+    if !speedcheat_stateset_diffunion then
+      DIFF_UNION_CONV_cheat
+    else
+      REWRITE_CONV [GSYM DELETE_DEF] THENC
+      LAND_CONV (pred_setLib.DELETE_CONV birs_state_EQ_CONV) THENC
+      pred_setLib.UNION_CONV birs_state_EQ_CONV;
 
 end (* local *)
 

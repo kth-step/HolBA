@@ -47,7 +47,7 @@ fun reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, [])) = symbex_A_thm
   | reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, (symbex_B_subtree::symbex_B_subtrees))) =
       let
         val symbex_B_thm = reduce_tree SEQ_fun_spec symbex_B_subtree;
-        val symbex_A_thm_new = SEQ_fun_spec symbex_A_thm symbex_B_thm NONE
+        val symbex_A_thm_new = SEQ_fun_spec symbex_A_thm symbex_B_thm
             handle ex =>
               (print "\n=========================\n\n";
                (print_term o concl) symbex_A_thm;
@@ -105,15 +105,15 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
       birs_is_running st andalso (not (List.exists (identical (birs_get_pc st)) stop_lbls));
 
     val birs_states_mid = symb_sound_struct_Pi_to_birstatelist_fun Pi_A_tm;
-(*
+    (*
     val birs_states_mid_running = List.filter birs_is_running birs_states_mid;
-*)
+    *)
     val birs_states_mid_executable = List.filter is_executable birs_states_mid;
-(*
+    (*
     val _ = print ("- have " ^ (Int.toString (length birs_states_mid)) ^ " states\n");
     val _ = print ("    (" ^ (Int.toString (length birs_states_mid_running)) ^ " running)\n");
     val _ = print ("    (" ^ (Int.toString (length birs_states_mid_executable)) ^ " executable)\n");
-*)
+    *)
 
     fun take_step birs_state_mid =
       let
@@ -138,27 +138,15 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
 
           val _ = print ("START sequential composition with singleton mid_state set\n");
 
-(*
+          (*
           val birs_state_mid = hd birs_states_mid;
-    val timer_exec_step_P1 = holba_miscLib.timer_start 0;
+          val timer_exec_step_P1 = holba_miscLib.timer_start 0;
           val single_step_B_thm = take_step birs_state_mid;
-    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>> executed a whole step in " ^ delta_s ^ "\n")) timer_exec_step_P1;
-*)
-    val timer_exec_step_P2 = holba_miscLib.timer_start 0;
-(*
-          (* TODO: derive freesymbols EMPTY from birs *)
-          val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) single_step_B_thm;
-          val freesymbols_B_thm = prove (T, cheat);
-          (*val freesymbols_B_thm = prove (
-            ``(symb_symbols_set (bir_symb_rec_sbir ^bprog_tm) ^Pi_B_tm DIFF
-                 symb_symbols (bir_symb_rec_sbir ^bprog_tm) ^sys_B_tm)
-               = EMPTY
-            ``, cheat);*)
-          (* compose together *)
-          val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm (SOME freesymbols_B_thm);
-*)
+          val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>> executed a whole step in " ^ delta_s ^ "\n")) timer_exec_step_P1;
+          *)
+          val timer_exec_step_P2 = holba_miscLib.timer_start 0;
           val bprog_composed_thm = STEP_SEQ_fun_spec symbex_A_thm;
-    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>> FINISH took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
+          val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>> FINISH took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
 
         in
           build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) bprog_composed_thm stop_lbls
