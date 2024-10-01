@@ -35,9 +35,8 @@ in (* local *)
     REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY] THENC
     REPEATC (CHANGED_CONV (
       (fn xyz => REWRITE_CONV [Once pred_setTheory.IN_INSERT] xyz) THENC
-      (*(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC*)
       IFC
-        (RATOR_CONV el_EQ_CONV)
+        (LAND_CONV el_EQ_CONV) (* comparison of IN_INSERT (first conjunct) *)
         (REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY])
         REFL))
   ) tm;
@@ -46,14 +45,7 @@ in (* local *)
   (
     (QCHANGED_CONV (CHANGED_CONV (fn x => REWRITE_CONV [Once pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY] x))) THENC
     IFC
-      (RATOR_CONV (RATOR_CONV (RAND_CONV (
-  (*
-  fn tm => (print_term (concl (prove (mk_eq (tm, F), cheat))); prove (mk_eq (tm, F), cheat))
-  *)
-  (*fn tm => (prove (mk_eq (tm, F), cheat))*)
-  (*(fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC*)
-  IN_INSERT_CONV el_EQ_CONV
-  ))))
+      (RATOR_CONV (RATOR_CONV (RAND_CONV (IN_INSERT_CONV el_EQ_CONV))))
       (REWRITE_CONV [])
       (REFL)
   ) tm;
@@ -63,16 +55,10 @@ in (* local *)
     if pred_setSyntax.is_empty tm then
       REFL
     else
-    (*(fn tm => (if true then print ".\n" else (print_term tm; print "\n\n"); REFL tm)) THENC*)
     IFC
       (INTER_INSERT_ONCE_CONV el_EQ_CONV)
-      (
-  (*
-  (fn tm => (if false then print ".\n" else print_term tm; print "bb\n\n"; REFL tm)) THENC
-  *)
-  (fn tm =>
+      (fn tm =>
         (
-        (*(fn tm => (if false then print ".\n" else print_term tm; print "bb\n\n"; REFL tm)) THENC *)
         (if pred_setSyntax.is_empty tm then
         (REFL)
         else if pred_setSyntax.is_inter tm then
@@ -80,8 +66,8 @@ in (* local *)
         else if pred_setSyntax.is_insert tm then
         (RAND_CONV (INTER_INSERT_CONV_norm el_EQ_CONV))
         else
-        (REFL))) tm))
-  (* the following causes trouble as "normal exit" if there is nothing to be done at the first call *)
+        (REFL))) tm)
+      (* the following causes trouble as "normal exit" if there is nothing to be done at the first call *)
       (fn tm => (print_term tm; raise Fail "unexpected here: INTER_INSERT_CONV_norm"))
   ) tm;
 
@@ -162,9 +148,28 @@ in (* local *)
       (print_term tm;
       raise ERR "DIFF_CONV" "unexpected2");
 
+  fun UNIONs_LEFT_CONV eq_EQ_CONV tm =
+    (if not (pred_setSyntax.is_union tm) then 
+      REFL
+     else
+      LAND_CONV (UNIONs_LEFT_CONV eq_EQ_CONV) THENC
+      pred_setLib.UNION_CONV eq_EQ_CONV) tm;
+
+  fun BIGUNION_CONV eq_EQ_CONV =
+    REWRITE_CONV [
+        BIGUNION_INSERT,
+        BIGUNION_EMPTY,
+        UNION_ASSOC,
+        UNION_EMPTY] THENC
+    (UNIONs_LEFT_CONV eq_EQ_CONV);
 
 (* ================================================================================== *)
 (* ================================================================================== *)
+
+(* ---------------------------------------------------------------------------------- *)
+(*  label set equality checker                                                      *)
+(* ---------------------------------------------------------------------------------- *)
+  val labelset_EQ_CONV = EVAL;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  bir var set equality checker                                                      *)
@@ -261,38 +266,26 @@ in (* local *)
   val labelset_UNION_CONV =
       (* TODO: this has to be fixed as list of address spaces that can be merged and so on...
          (can we make this only involve the block label part, not the block index?) *)
-      EVAL;
+      pred_setLib.UNION_CONV labelset_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (* faster set operations for bir variable sets (for example for: computing freevarset, symbexec composition, merging, etc) *)
 (* ---------------------------------------------------------------------------------- *)
-  (* TODO: this should go to auxTheory *)
-  val simplerewrite_thm = prove(``
-    !s t g.
-    g INTER (s DIFF t) =
-    s INTER (g DIFF t)
-  ``,
-    METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
-  );
+  val varset_BIGUNION_CONV =
+    BIGUNION_CONV varset_EQ_CONV;
+
+  val varset_INTER_CONV =
+    INTER_INSERT_CONV varset_EQ_CONV;
+
+  val varset_DIFF_CONV =
+    DIFF_CONV varset_EQ_CONV; (* DIFF_INSERT_CONV??? *)
 
   (* A INTER (B DIFF C) *)
-  fun varset_INTER_DIFF_CONV tm =
-  (
-    (* TODO: was this a good thing for composition when there are many unused/unchanged symbols around? *)
-    (*REWRITE_CONV [Once (simplerewrite_thm)] THENC*)
-
-    (* first DIFF *) (* DIFF_INSERT_CONV??? *)
-    (RAND_CONV
-      (DIFF_CONV varset_EQ_CONV)) THENC
-
-    (* then INTER *) (* TODO: RAND_CONV should not be needed here. something is wrong *)
-    INTER_INSERT_CONV (RAND_CONV varset_EQ_CONV)
-
-    (*
-    THENC (fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm))
-    *)
-  ) tm;
-
+  val varset_INTER_DIFF_CONV =
+    (* first DIFF *) 
+    (RAND_CONV varset_DIFF_CONV) THENC
+    (* then INTER *)
+    varset_INTER_CONV;
 
 
 (* ---------------------------------------------------------------------------------- *)

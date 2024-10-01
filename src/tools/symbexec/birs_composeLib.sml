@@ -30,15 +30,19 @@ in
     val freesymbols_thm = prove(freesymbols_tm,
       (if !speedcheat_SEQ_freesymbcheck then cheat else ALL_TAC) >> 
 
+      (* REMARK: I have seen slightly faster computation when
+             - reducing the formula to operations over ground variable sets in this shape: A INTER (B DIFF C)
+             - then turning around the set operations like this: g INTER (s DIFF t) = s INTER (g DIFF t)
+             - then applying the variable set operations *)
       CONV_TAC (LAND_CONV (LAND_CONV (birs_symb_symbols_DIRECT_CONV))) >>
       CONV_TAC (LAND_CONV (RAND_CONV (birs_freesymbs_DIRECT_CONV))) >>
-      (* now have A INTER (B DIFF C) = EMPTY*)
+      (* now have A INTER B = EMPTY*)
 
       (*
       (fn (al,g) => (print_term g; ([(al,g)], fn ([t]) => t))) >>
       (fn x => (print "starting to compute concrete set of free symbols\n"; ALL_TAC x)) >>
       *)
-      CONV_TAC (LAND_CONV (aux_setLib.varset_INTER_DIFF_CONV)) >>
+      CONV_TAC (LAND_CONV (aux_setLib.varset_INTER_CONV)) >>
 
       REWRITE_TAC [pred_setTheory.EMPTY_SUBSET]
     );

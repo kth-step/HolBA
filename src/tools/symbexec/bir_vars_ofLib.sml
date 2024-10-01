@@ -41,8 +41,10 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (*  symbols of set of symbolic states                                                 *)
 (* ---------------------------------------------------------------------------------- *)
+  (*
   val debug_conv = (fn tm => (print_term tm; raise Fail "abcdE!!!"));
   val debug_conv2 = (fn tm => (if true then print ".\n" else print_term tm; REFL tm));
+  *)
 
   (*
   REPEATC
@@ -162,13 +164,12 @@ in (* local *)
     (
       SIMP_CONV std_ss [birs_gen_env_thm, birs_gen_env_NULL_thm] THENC
       SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
-      debug_conv2 THENC
+
       birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
-      debug_conv2 THENC
+
       REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] THENC
       bir_vars_of_exp_CONV THENC
 
-      debug_conv2 THENC
       RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
 
       REWRITE_CONV [Once pred_setTheory.UNION_COMM] THENC
@@ -188,12 +189,14 @@ in (* local *)
       raise ERR "birs_symb_symbols_set_DIRECT_CONV" "cannot handle term"
     else
     (
-      SIMP_CONV (std_ss) [birs_rulesTheory.birs_symb_symbols_set_def] THENC
-      computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``, ``$BIGUNION``] THENC
+      REWRITE_CONV [
+        birs_rulesTheory.birs_symb_symbols_set_def,
+        pred_setTheory.IMAGE_INSERT,
+        pred_setTheory.IMAGE_EMPTY] THENC
       birs_symb_symbols_CONV THENC
+      (* now have A UNION B UNION C UNION ... *)
 
-      REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY] THENC
-      REWRITE_CONV [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]
+      aux_setLib.varset_BIGUNION_CONV
     ) tm;
   val birs_symb_symbols_set_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_set_DIRECT_CONV;
 
@@ -209,10 +212,10 @@ in (* local *)
       raise ERR "birs_freesymbs_DIRECT_CONV" "cannot handle term"
     else
     (
-      SIMP_CONV (std_ss) [birs_rulesTheory.birs_freesymbs_def] THENC
+      REWRITE_CONV [birs_rulesTheory.birs_freesymbs_def] THENC
       LAND_CONV (birs_symb_symbols_set_DIRECT_CONV) THENC
-      RAND_CONV (birs_symb_symbols_DIRECT_CONV)
-      (* TODO: EVAL (* var set DIFF *) *)
+      RAND_CONV (birs_symb_symbols_DIRECT_CONV) THENC
+      aux_setLib.varset_DIFF_CONV
     ) tm;
   val birs_freesymbs_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_freesymbs_DIRECT_CONV;
 
