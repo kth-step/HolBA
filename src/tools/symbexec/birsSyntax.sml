@@ -46,6 +46,7 @@ local
   val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
 in
   val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
+  val (bir_senv_GEN_list_tm,  mk_bir_senv_GEN_list, dest_bir_senv_GEN_list, is_bir_senv_GEN_list)  = syntax_fns1_env "bir_senv_GEN_list";
   val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
 end;
 
@@ -171,20 +172,31 @@ fun dest_IMAGE_birs_symb_to_symbst Pi =
              (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
              (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>``;
     *)
-    fun birs_state_is_normform tm =
+    fun birs_state_is_normform_gen is_start tm =
       is_birs_state tm andalso
       let
+        fun is_normform_birs_gen_env env =
+          is_birs_gen_env env andalso
+          (can listSyntax.dest_list o dest_birs_gen_env) env;
+        fun is_normform_bir_senv_GEN_list env =
+          is_bir_senv_GEN_list env;
+
         val (_, env, _, _) = dest_birs_state tm;
       in
-        is_birs_gen_env env
+        is_normform_birs_gen_env env orelse
+          if not is_start then false else
+          is_normform_bir_senv_GEN_list env
       end;
+    
+    val birs_state_is_normform = birs_state_is_normform_gen false;
 
     fun is_a_normform_set tm =
       can pred_setSyntax.strip_set tm;
 
     fun birs_states_are_normform tm =
       is_a_normform_set tm andalso
-      (List.all birs_state_is_normform o pred_setSyntax.strip_set) tm;
+      ((List.all birs_state_is_normform o pred_setSyntax.strip_set) tm
+       handle _ => false);
 
 
     fun birs_state_is_normform_CONV sfun bstate_tm =
@@ -207,16 +219,20 @@ fun dest_IMAGE_birs_symb_to_symbst Pi =
 
 (* extract information from a sound structure *)
 (* ----------------------------------------------- *)
+fun mk_sysLPi (sys_tm, L_tm, Pi_tm) =
+  pairSyntax.list_mk_pair [sys_tm, L_tm, Pi_tm];
+fun dest_sysLPi tm =
+      case pairSyntax.strip_pair tm of
+         [sys_tm, L_tm, Pi_tm] => (sys_tm, L_tm, Pi_tm)
+       | _ => raise ERR "dest_sysLPi" "unexpected structure triple";
 fun symb_sound_struct_get_sysLPi_fun tm =
   let
+    val _ = if is_birs_symb_exec tm then () else
+            raise ERR "symb_sound_struct_get_sysLPi_fun" "term must be a birs_symb_exec";
     val sysLPi_tm =
       (snd o dest_birs_symb_exec) tm;
-    val res =
-      case pairSyntax.strip_pair sysLPi_tm of
-         [sys_tm, L_tm, Pi_tm] => (sys_tm, L_tm, Pi_tm)
-       | _ => raise ERR "symb_sound_struct_get_sysLPi_fun" "unexpected structure triple";
   in
-    res
+    dest_sysLPi sysLPi_tm
   end;
   
 (*
@@ -232,15 +248,28 @@ fun symb_sound_struct_is_normform tm =
     val (sys, L, Pi) = symb_sound_struct_get_sysLPi_fun tm
                        handle _ => raise ERR "symb_sound_struct_is_normform" "unexpected term, should be a birs_symb_exec with a triple as structure";
 
-    val sys_ok = birs_state_is_normform sys;
+    val sys_ok = birs_state_is_normform_gen true sys;
     val L_ok = is_a_normform_set L;
     val Pi_ok = birs_states_are_normform Pi;
   in
     sys_ok andalso L_ok andalso Pi_ok
   end;
 
+(* check if two structures are in normform and use the same program *)
+fun birs_symb_exec_check_compatible A_thm B_thm =
+  let
+      val _ = if (symb_sound_struct_is_normform o concl) A_thm then () else
+              raise ERR "birs_symb_exec_compatible" "theorem A is not a standard birs_symb_exec";
+      val _ = if (symb_sound_struct_is_normform o concl) B_thm then () else
+              raise ERR "birs_symb_exec_compatible" "theorem B is not a standard birs_symb_exec";
 
-
+      val (bprog_A_tm,_) = (dest_birs_symb_exec o concl) A_thm;
+      val (bprog_B_tm,_) = (dest_birs_symb_exec o concl) B_thm;
+      val _ = if identical bprog_A_tm bprog_B_tm then () else
+              raise ERR "birs_symb_exec_compatible" "the programs of A and B have to match";
+  in
+    ()
+  end;
 
 end (* local *)
 

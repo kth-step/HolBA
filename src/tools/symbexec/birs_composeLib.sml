@@ -20,7 +20,7 @@ in
 
   (* first prepare the SEQ rule for prog *)
   fun birs_rule_SEQ_prog_fun bprog_tm =
-    (ISPEC (bprog_tm) birs_rulesTheory.birs_rule_SEQ_gen_thm, bprog_tm);
+    ISPEC (bprog_tm) birs_rulesTheory.birs_rule_SEQ_gen_thm;
 
   (* symbol freedom helper function *)
   (* has to solve this ((birs_symb_symbols bsys_A) INTER (birs_freesymbs bsys_B bPi_B) = EMPTY) *)
@@ -50,8 +50,11 @@ in
     freesymbols_thm
    end;
 
-  fun tidyup_birs_symb_exec_CONV stateset_conv labelset_conv =
+  fun tidyup_birs_symb_exec_CONV stateset_conv labelset_conv tm =
     let
+      val _ = if is_birs_symb_exec tm then () else
+              raise ERR "tidyup_birs_symb_exec_CONV" "cannot handle term";
+
       val struct_CONV =
         RAND_CONV;
       fun Pi_CONV conv =
@@ -59,20 +62,17 @@ in
       fun L_CONV conv =
         RAND_CONV (LAND_CONV conv);
     in
-      struct_CONV (Pi_CONV stateset_conv) THENC
-      struct_CONV (L_CONV labelset_conv)
+      (struct_CONV (Pi_CONV stateset_conv) THENC
+       struct_CONV (L_CONV labelset_conv)) tm
     end;
 
   (*
   val step_A_thm = single_step_A_thm;
   val step_B_thm = single_step_B_thm;
   *)
-  fun birs_rule_SEQ_fun (birs_rule_SEQ_thm, bprog_tm) step_A_thm step_B_thm =
+  fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     let
-      val (bprog_A_tm,_) = (dest_birs_symb_exec o concl) step_A_thm;
-      val (bprog_B_tm,_) = (dest_birs_symb_exec o concl) step_B_thm;
-      val _ = if identical bprog_tm bprog_A_tm andalso identical bprog_tm bprog_B_tm then () else
-              raise Fail "birs_rule_SEQ_fun:: the programs have to match";
+      val _ = birs_symb_exec_check_compatible step_A_thm step_B_thm;
 
       val prep_thm =
         HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
