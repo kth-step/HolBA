@@ -152,6 +152,7 @@ terminals :: terminals_ ::=
 | Basic :: :: Basic {{ tex \mathsf{Basic} }}
 | End :: :: End {{ tex \mathsf{End} }}
 | BirProgram :: :: BirProgram {{ tex \mathsf{BirProgram} }}
+| JumpOutside :: :: JumpOutside {{ tex \mathsf{JumpOutside} }}
 
 embed {{ hol
 (* Booleans *)
@@ -1339,12 +1340,17 @@ bir_stmt_t, bir_stmt :: BStmt ::=
 | End ( bir_stmt_end ) :: :: E
 
 embed {{ hol
- (* Block type : a label, basic statements and an end statement *)
+(* Block type : a label, basic statements and an end statement *)
 Datatype:
   bir_block_t = <|
   bb_label          : bir_label_t;
   bb_statements     : bir_stmt_basic_t list;
   bb_last_statement : bir_stmt_end_t |>
+End
+
+(* Program counter : label of the current block and the offset inside the block *)
+Datatype:
+  bir_programcounter_t = <| bpc_label:bir_label_t; bpc_index:num |>
 End
 }}
 
@@ -1352,5 +1358,147 @@ metavar bir_block_t, bir_block ::=
  {{ hol bir_block_t }}
 
 grammar
-bir_program_t, bir_progam :: '' ::=
+bir_program_t, bir_program :: '' ::=
 | BirProgram ( bir_block1 , ... , bir_blockk ) :: :: BirProgram
+
+bir_status_t, bir_status :: BST_ ::=
+{{ com Program state }}
+| Running :: :: Running
+  {{ com still running }}
+| TypeError :: :: TypeError
+  {{ com execution encountered a type error }}
+| Failed :: :: Failed
+  {{ com execution failed }}
+| JumpOutside ( bir_label ) :: :: JumpOutside
+  {{ com execution jumped to unknown label }}
+
+embed {{ hol
+(* Program state *)
+Datatype:
+  bir_state_t = <|
+  bst_pc       : bir_programcounter_t;
+  bst_environ  : bir_var_environment_t;
+  bst_status   : bir_status_t
+|>
+End
+
+(* Increment a program counter *)
+Definition bir_pc_next_def:
+  bir_pc_next pc = pc with bpc_index updated_by SUC
+End
+
+(* Get the index and block at the given label *)
+Definition bir_get_program_block_info_by_label_def:
+  bir_get_program_block_info_by_label
+  (BirProgram p) l = INDEX_FIND 0 (\(x:bir_block_t). x.bb_label = l) p
+End
+
+(* Checks whether a state is still running *)
+Definition bir_state_is_terminated_def:
+  bir_state_is_terminated st =
+  (st.bst_status <> BST_Running)
+End
+
+(* Set the program state to Failed *)
+Definition bir_state_set_failed_def:
+  bir_state_set_failed st =
+  (st with bst_status := BST_Failed)
+End
+
+(* Set the program state to TypeError *)
+Definition bir_state_set_typeerror_def:
+  bir_state_set_typeerror st =
+  (st with bst_status := BST_TypeError)
+End
+
+(* Get the statement of a program at the given program counter *)
+Definition bir_get_current_statement_def:
+  bir_get_current_statement p pc = 
+    case (bir_get_program_block_info_by_label p pc.bpc_label) of 
+      | NONE => NONE
+      | SOME (_, bl) => if (pc.bpc_index < LENGTH bl.bb_statements) 
+                        then SOME (BStmtB (EL (pc.bpc_index) bl.bb_statements)) 
+                        else (if pc.bpc_index = LENGTH bl.bb_statements 
+                              then SOME (BStmtE bl.bb_last_statement) 
+                              else NONE)
+End
+
+(* Get all the labels of a program *)
+Definition bir_labels_of_program_def:
+  bir_labels_of_program (BirProgram p) =
+  MAP (\bl. bl.bb_label) p
+End
+
+Definition bir_stmts_of_block_def:
+  bir_stmts_of_block b = 
+    (BStmtE b.bb_last_statement) :: MAP (\bst. (BStmtB bst)) b.bb_statements
+End
+
+Definition bir_stmts_of_program_def:
+  bir_stmts_of_program (BirProgram blist) = 
+  FLAT (MAP (\bl. bir_stmts_of_block bl) blist)
+End
+
+(* Return the program counter at the start of the block *)
+Definition bir_block_pc_def:
+  bir_block_pc l = <| bpc_label := l; bpc_index := 0 |>
+End
+
+(* Increment pc in a state if necessary *)
+Definition bir_state_next_def:
+  bir_state_next st =
+     if (bir_state_is_terminated st) then st else st with bst_pc updated_by bir_pc_next
+End
+
+(* Jump to a label *)
+Definition bir_jmp_to_label_def:
+  bir_jmp_to_label p
+   (l : bir_label_t) (st : bir_state_t) =
+    if (MEM l (bir_labels_of_program p)) then
+      st with bst_pc := bir_block_pc l
+    else (st with bst_status := (BST_JumpOutside l))
+End
+
+(* Eval a label expression *)
+Definition bir_eval_label_exp_def:
+  (bir_eval_label_exp (BLE_Label l) env l' = (l = l')) /\
+  (bir_eval_label_exp (BLE_Exp e) env (BL_Address i) = bir_eval_exp env e (BVal_Imm i)) /\
+  (bir_eval_label_exp _ _ _ = F)
+End
+
+(* Eval a basic statement *)
+Definition bir_eval_stmtB_def:
+  (bir_eval_stmtB (BStmt_Assign v ex) st st' = 
+    (?va. (bir_eval_exp st.bst_environ ex va) 
+    /\ (st' = (st with bst_environ := (bir_env_update st.bst_environ v va)))))
+End
+
+(* Eval a Jmp statement *)
+Definition bir_eval_stmt_jmp_def:
+  bir_eval_stmt_jmp p le (st : bir_state_t) st' =
+    (?l. bir_eval_label_exp le st.bst_environ l 
+    /\ bir_jmp_to_label p l st = st')
+End
+
+(* Eval a CJmp statement *)
+Definition bir_eval_stmt_cjmp_def:
+  bir_eval_stmt_cjmp p ec l1 l2 (st : bir_state_t) st' =
+    (if bir_eval_exp st.bst_environ ec birT then 
+      bir_eval_stmt_jmp p l1 st st'
+    else if bir_eval_exp st.bst_environ ec birF then
+      bir_eval_stmt_jmp p l2 st st'
+    else F)
+End
+
+(* Eval an end statement *)
+Definition bir_eval_stmtE_def:
+  (bir_eval_stmtE p (BStmt_Jmp le) st st' = bir_eval_stmt_jmp p le st st') /\
+  (bir_eval_stmtE p (BStmt_CJmp e l1 l2) st st' = bir_eval_stmt_cjmp p e l1 l2 st st')
+End
+}}
+
+grammar
+bir_state_t, bir_state :: '' ::=
+ {{ hol bir_state_t }}
+| bir_state_set_failed ( bir_state ) :: M :: bir_state_set_failed
+  {{ hol (bir_state_set_failed [[bir_state]]) }}

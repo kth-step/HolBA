@@ -3,8 +3,8 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
+open birTheory bir_programTheory;
 open bir_cv_basicTheory bir_cv_envTheory;
-open bir_programTheory;
 open bir_cv_computeTheory;
 open listTheory;
 open optionTheory;
