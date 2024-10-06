@@ -151,6 +151,8 @@ in (* local *)
       RAND_CONV (RAND_CONV conv);
     val first_CONV =
       LAND_CONV;
+    fun second_CONV conv =
+      RAND_CONV (first_CONV conv);
 
     val rotate_first_INSERTs_thm = prove(``
       !x1 x2 xs.
@@ -171,6 +173,8 @@ in (* local *)
     (* apply state transformer to first state in Pi *)
     fun birs_Pi_first_CONV conv =
       birs_Pi_CONV (first_CONV conv);
+    fun birs_Pi_second_CONV conv =
+      birs_Pi_CONV (second_CONV conv);
 
     (* swap the first two states in Pi *)
     fun birs_Pi_rotate_RULE thm =
@@ -203,15 +207,18 @@ in (* local *)
       sys_tm
     end;
 
-  (* function to get the first Pi state *)
-  fun get_birs_Pi_first tm =
+  (* function to get the set Pi *)
+  fun get_birs_Pi tm =
     let
       val (_, tri_tm) = dest_birs_symb_exec tm;
       val (_,_,Pi_tm) = dest_sysLPi tri_tm;
-      val (Pi_sys_tm, _) = pred_setSyntax.dest_insert Pi_tm;
     in
-      Pi_sys_tm
+      Pi_tm
     end;
+
+  (* function to get the first Pi state *)
+  val get_birs_Pi_first =
+    (fst o pred_setSyntax.dest_insert o get_birs_Pi);
 
   (* get top env mapping *)
   fun get_env_top_mapping env =
@@ -366,16 +373,10 @@ in (* local *)
   end
 
   (* forget the value/expression/computation of the top env mapping through free symbol and path condition widening *)
-  fun birs_Pi_first_forget_RULE symbname thm =
+  fun birs_Pi_first_forget_RULE_gen symbname exp_tm thm =
     let
-      (*val _ = print "forgetting first mapping in first of Pi\n";*)
-      (* find the expression mapped at the top of env *)
-      val Pi_sys_tm = (get_birs_Pi_first o concl) thm;
-      val (_,env,_,pcond) = dest_birs_state Pi_sys_tm;
-      val (_,exp) = get_env_top_mapping env;
-
       (* "free symbol" the expression *)
-      val free_thm = birs_Pi_first_freesymb_RULE symbname exp thm;
+      val free_thm = birs_Pi_first_freesymb_RULE symbname exp_tm thm;
       val Pi_sys_tm_free = (get_birs_Pi_first o concl) free_thm;
       val (_,_,_,pcond_free) = dest_birs_state Pi_sys_tm_free;
       val pcond_new = (snd o dest_comb o fst o dest_comb) pcond_free;
@@ -393,9 +394,20 @@ in (* local *)
       val forget_thm = birs_Pi_first_pcond_RULE pcond_new free_thm
             handle _ => ((*print_thm thm;
                          print_thm free_thm;*)
-                         raise ERR "birs_Pi_first_forget_RULE" "something uncaught");
+                         raise ERR "birs_Pi_first_forget_RULE_gen" "could not drop the conjunct, this should never happen");
     in
       forget_thm
+    end
+
+  fun birs_Pi_first_forget_RULE symbname thm =
+    let
+      (*val _ = print "forgetting first mapping in first of Pi\n";*)
+      (* find the expression mapped at the top of env *)
+      val Pi_sys_tm = (get_birs_Pi_first o concl) thm;
+      val (_,env,_,pcond) = dest_birs_state Pi_sys_tm;
+      val (_,exp) = get_env_top_mapping env;
+    in
+      birs_Pi_first_forget_RULE_gen symbname exp thm
     end
 
 (* ---------------------------------------------------------------------------------------- *)
@@ -403,7 +415,7 @@ in (* local *)
   (* helper functions for merge, merging of mapped expressions *)
   (* -------------------- *)
 
-  (* TODO:  - initial implementation: just forget. then test this whole thing before moving on *)
+  (* initial implementation: just forget the two mappings, but use the same symbol name *)
   fun birs_Pi_first_env_top_mapping_merge_forget thm =
     let
       val symbname = get_freesymb_name ();
@@ -411,19 +423,107 @@ in (* local *)
       (birs_Pi_first_forget_RULE symbname o birs_Pi_rotate_RULE o birs_Pi_first_forget_RULE symbname) thm
     end;
 
-  (*   - do something special for store operations, cannot just forget the whole thing *)
-  (*     - maybe just unfold them into a list and assume they are all disjunct memory locations, can reuse code from the cheated store-store simplification *)
-  (*   - later need to do something special about countw here too *)
+  fun birs_Pi_first_env_top_mapping_merge_fold ((exp1,exp2), thm) =
+    let
+      val symbname = get_freesymb_name ();
+    in
+      (birs_Pi_rotate_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 o
+       birs_Pi_rotate_RULE o birs_Pi_first_forget_RULE_gen symbname exp1) thm
+    end;
 
-  (* - choose how to deal with the expressions at hand *)
+  local
+    fun unify_stores_foldfun mexp (store, (stores2, stores1_new, stores2_new, forget_exps)) =
+      let
+        fun get_store_v (_, _, expv) = expv;
+        fun is_same_loc_store (expad, endi, _) (expad2, endi2, _) =
+          if not (identical endi endi2) then raise ERR "is_same_loc_store" "should be same endianness everywhere" else
+          (* assuming disjunctness of stores, address can be checked by syntactical identity *)
+          identical expad expad2;
+        fun exp_to_mem_ld_sz expv = (bir_valuesSyntax.dest_BType_Imm o bir_exp_typecheckLib.get_type_of_bexp) expv
+              handle _ => raise ERR "unify_stores_foldfun" "couldn't get type of stored expression";
+        fun mk_empty_store (expad, endi, expv) = (expad, endi, bir_expSyntax.mk_BExp_Load (mexp, expad, endi, exp_to_mem_ld_sz expv));
+
+        val match_store2_o = List.find (is_same_loc_store store) stores2;
+        val store2 = Option.getOpt (match_store2_o, mk_empty_store store);
+      in
+        (List.filter (not o is_same_loc_store store) stores2, store::stores1_new, store2::stores2_new, (get_store_v store, get_store_v store2)::forget_exps)
+      end;
+
+    fun flippair (x,y) = (y,x);
+  in
+    fun unify_stores mexp stores1 stores2 =
+      let
+        val (stores2_0, stores1_new_0, stores2_new_0, forget_exps_0) = List.foldl (unify_stores_foldfun mexp) (stores2, [], [], []) stores1;
+        val (stores1_0, stores2_new_1, stores1_new_1, forget_exps_1) = List.foldl (unify_stores_foldfun mexp) ([], [], [], List.map flippair forget_exps_0) stores2_0;
+        val _ = if List.null stores1_0 then () else raise ERR "unify_stores" "this should never happen";
+      in
+        (List.rev (stores1_new_1@stores1_new_0), List.rev (stores2_new_1@stores2_new_0), List.rev (List.map flippair forget_exps_1))
+      end;
+  end
+
+  (* do something special for store operations, cannot just forget the whole thing *)
+  fun birs_Pi_first_env_top_mapping_merge_store exp1 exp2 thm =
+    (* just unfold them into a list and assume they are all disjunct memory locations (TODO: for now),
+         can reuse code from the cheated store-store simplification *)
+    let
+      (* we know that exp1 and exp2 are BExp_Store operations, when this function is called *)
+      val (mexp1, stores1) = birs_simp_instancesLib.dest_BExp_Store_list exp1 [];
+      val (mexp2, stores2) = birs_simp_instancesLib.dest_BExp_Store_list exp2 [];
+
+      val _ = if identical mexp1 mexp2 then () else
+              raise ERR "birs_Pi_first_env_top_mapping_merge_store" "the bir memory symbols have to be identical";
+
+      (* find shuffled and padded store sequences, use disjunct assumption for this *)
+      (* at the same time, collect a distinct set of expression pairs that should be "freesymboled" to make the states equal *)
+      val (stores1_new, stores2_new, forget_exps) = unify_stores mexp1 stores1 stores2;
+
+      (* apply the shuffling by cheated rewriting (justified by disjunct assumption) *)
+      fun mk_mem_eq_thm mexp stores stores_new = mk_oracle_thm "BIRS_MEM_DISJ_SHUFFLE" ([], mk_eq (birs_simp_instancesLib.mk_BExp_Store_list (mexp, stores), birs_simp_instancesLib.mk_BExp_Store_list (mexp, stores_new)));
+      val bad_cheat_eq_thm_1 = mk_mem_eq_thm mexp1 stores1 stores1_new;
+      val bad_cheat_eq_thm_2 = mk_mem_eq_thm mexp1 stores2 stores2_new;
+      (*val _ = print_thm bad_cheat_eq_thm_1;
+      val _ = print_thm bad_cheat_eq_thm_2;*)
+      val thm_shuffled =
+        CONV_RULE (birs_Pi_first_CONV (REWRITE_CONV [Once bad_cheat_eq_thm_1]) THENC
+                   birs_Pi_second_CONV (REWRITE_CONV [Once bad_cheat_eq_thm_2])) thm;
+      (*val _ = print_thm thm_shuffled;*)
+
+      (* apply the freesymboling as instructed by forget_exps *)
+      val thm_free = List.foldl birs_Pi_first_env_top_mapping_merge_fold thm_shuffled forget_exps;
+      (*val _ = print_thm thm_free;*)
+      val _ = print "\ndone with birs_Pi_first_env_top_mapping_merge_store\n";
+    in
+      thm_free
+    end;
+
+  (* choose how to deal with the expressions at hand *)
   fun birs_Pi_first_env_top_mapping_merge exp1 exp2 thm =
     let
-      (* choose the merging approach: not touch if they are syntactically identical (or semantically, when checked with z3 under the respective path conditions), store operation, interval, others *)
-      (* TODO: store operation and interval *)
+      open bir_expSyntax;
+      val default_op = birs_Pi_first_env_top_mapping_merge_forget;
+      (* choose the merging approach: *)
     in
+      (* do not touch if they are syntactically identical (or semantically, when checked with z3 under the respective path conditions) *)
       if identical exp1 exp2 then thm else
-      birs_Pi_first_env_top_mapping_merge_forget thm
+
+      (* store operation *)
+      if is_BExp_Store exp1 andalso is_BExp_Store exp2 then
+        birs_Pi_first_env_top_mapping_merge_store exp1 exp2 thm else
+
+      (* TODO: interval (specifically countw) *)
+      if false then raise ERR "birs_Pi_first_env_top_mapping_merge" "not implemented yet" else
+
+      (* just unify all others *)
+      default_op thm
     end;
+
+  val INSERT_INSERT_EQ_thm = prove(``
+    !x1 x2 xs.
+    (x1 = x2) ==>
+    (x1 INSERT x2 INSERT xs) = (x1 INSERT xs)
+  ``,
+    cheat (* pred_setTheory.INSERT_INSERT *)
+  );
 
   (* the merge function for the first two Pi states *)
   fun birs_Pi_merge_2_RULE thm =
@@ -479,7 +579,12 @@ in (* local *)
       (* merge the first two states in the HOL4 pred_set *)
       val _ = print "eliminating one from Pi\n";
       (* (TODO: maybe need to prove that they are equal because they are not syntactically identical) *)
-      val thm_merged = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT])) thm_env_pcond;
+      (*
+      val rewrite_thm = ISPECL (((fn x => List.take (x, 2)) o pred_setSyntax.strip_set o get_birs_Pi o concl) thm_env_pcond) INSERT_INSERT_EQ_thm;
+      (*val _ = print_thm rewrite_thm;*)
+      val rewrite_thm_fix = CONV_RULE (CHANGED_CONV (QUANT_CONV (LAND_CONV (*aux_setLib.birs_state_EQ_CONV*)EVAL))) rewrite_thm;
+      val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [rewrite_thm_fix]))) thm_env_pcond;*)
+      val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond;
       val _ = print "eliminated one from Pi\n";
     in
       thm_merged
