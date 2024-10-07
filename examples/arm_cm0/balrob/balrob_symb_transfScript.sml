@@ -42,6 +42,8 @@ val prog_vars_thm = balrob_prog_vars_thm;
 val _ = HOL_Interactive.toggle_quietdec();
 *)
 
+(* TODO: need to instantiate "syp_gen" to true and remove that conjunct in the initial state before being able to transfer *)
+(*
 val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_balrob_prog_def balrob_birenvtyl_def
@@ -58,5 +60,6 @@ Theorem bspec_cont_balrob:
 Proof
  rw [bspec_cont_thm]
 QED
+*)
 
 val _ = export_theory ();
