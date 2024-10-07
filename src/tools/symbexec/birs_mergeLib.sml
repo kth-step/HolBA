@@ -14,6 +14,86 @@ local
 
 in (* local *)
 
+  fun list_distinct _ [] = true
+    | list_distinct eq_fun (x::xs) =
+        if all (fn y => (not o eq_fun) (x, y)) xs then list_distinct eq_fun xs else false;
+
+  (* the following two functions are from test-z3-wrapper.sml *)
+  fun list_inclusion eq_fun l1 l2 =
+    foldl (fn (x, acc) => acc andalso (exists (fn y => eq_fun (x, y)) l2)) true l1;
+
+  local
+    (* better than Portable.list_eq, because not order sensitive *)
+    fun mutual_list_inclusion eq_fun l1 l2 =
+      list_inclusion eq_fun l1 l2 andalso
+      length l1 = length l2;
+  in
+    val list_eq_contents =
+      mutual_list_inclusion;
+  end
+
+  fun list_in eq_fun x l =
+    List.exists (fn y => eq_fun (x,y)) l;
+
+  (* find the common elements of two lists *)
+  fun list_commons eq_fun l1 l2 =
+    List.foldl (fn (x,acc) => if list_in eq_fun x l2 then x::acc else acc) [] l1;
+
+  val gen_eq = (fn (x,y) => x = y);
+  val term_id_eq = (fn (x,y) => identical x y);
+
+(* ---------------------------------------------------------------------------------------- *)
+
+  (* turn bir conjunction into list of conjuncts (care should be taken because this is only meaningful if the type of expression is indeed bit1) *)
+  fun dest_band x =
+    let
+      open bir_exp_immSyntax;
+      open bir_expSyntax;
+      fun is_BExp_And tm = is_BExp_BinExp tm andalso (is_BIExp_And o (fn (x,_,_) => x) o dest_BExp_BinExp) tm;
+      fun dest_BExp_And tm = ((fn (_,x,y) => (x,y)) o dest_BExp_BinExp) tm;
+
+      (* could add a typecheck of x here, to make sure that tm is indeed a Bit1 bir expression *)
+      fun dest_band_r [] acc = acc
+        | dest_band_r (tm::tms) acc =
+        if not (is_BExp_And tm) then dest_band_r tms (tm::acc) else
+        let
+          val (tm1,tm2) = dest_BExp_And tm;
+        in
+          dest_band_r (tm1::tm2::tms) acc
+        end;
+    in
+      dest_band_r [x] []
+    end;
+
+(* ---------------------------------------------------------------------------------------- *)
+
+  val birs_exp_imp_DROP_second_thm = prove(``
+    !be1 be2.
+    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be1
+  ``,
+    (* maybe only true for expressions of type Bit1 *)
+    cheat
+  );
+
+  fun is_DROP_second_imp imp_tm =
+    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_second_thm]) imp_tm)
+            handle _ => NONE);
+
+  fun is_conjunct_inclusion_imp imp_tm =
+    let
+      val (pcond1, pcond2) = dest_birs_exp_imp imp_tm;
+      val pcond1l = dest_band pcond1;
+      val pcond2l = dest_band pcond2;
+
+      (* find the common conjuncts by greedily collecting what is identical in both *)
+      val imp_is_ok = list_inclusion term_id_eq pcond2l pcond1l;
+    in
+      if imp_is_ok then
+        SOME (mk_oracle_thm "BIRS_CONJ_INCL_IMP" ([], imp_tm))
+      else
+        NONE
+    end;
+
   (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
   fun birs_Pi_first_pcond_RULE pcond_new thm =
     let
@@ -29,7 +109,12 @@ in (* local *)
       val Pi_new_tm = pred_setSyntax.mk_insert (Pi_sys_new_tm, Pi_rest_tm);
 
       val imp_tm = mk_birs_exp_imp (pcond_old, pcond_new);
-      val pcond_imp_ok = isSome (birs_simpLib.check_imp_tm imp_tm);
+      (*
+      val _ = print_term imp_tm;
+      *)
+      val pcond_imp_ok = isSome (is_DROP_second_imp imp_tm) orelse
+                         isSome (is_conjunct_inclusion_imp imp_tm) orelse
+                         isSome (birs_simpLib.check_imp_tm imp_tm);
       val _ = if pcond_imp_ok then () else
               (print "widening failed, path condition is not weaker\n";
                raise ERR "birs_Pi_first_pcond_RULE" "the supplied path condition is not weaker");
@@ -59,36 +144,6 @@ in (* local *)
     in
       mk_oracle_thm "BIRS_NARROW_PCOND" ([], mk_birs_symb_exec (p_tm, mk_sysLPi (sys_new_tm,L_tm,Pi_tm)))
     end;
-
-(* ---------------------------------------------------------------------------------------- *)
-
-  fun list_distinct _ [] = true
-    | list_distinct eq_fun (x::xs) =
-        if all (fn y => (not o eq_fun) (x, y)) xs then list_distinct eq_fun xs else false;
-
-  local
-    (* the following two functions are from test-z3-wrapper.sml *)
-    fun list_inclusion eq_fun l1 l2 =
-      foldl (fn (x, acc) => acc andalso (exists (fn y => eq_fun (x, y)) l2)) true l1;
-
-    (* better than Portable.list_eq, because not order sensitive *)
-    fun mutual_list_inclusion eq_fun l1 l2 =
-      list_inclusion eq_fun l1 l2 andalso
-      length l1 = length l2;
-  in
-    val list_eq_contents =
-      mutual_list_inclusion;
-  end
-
-  fun list_in eq_fun x l =
-    List.exists (fn y => eq_fun (x,y)) l;
-
-  (* find the common elements of two lists *)
-  fun list_commons eq_fun l1 l2 =
-    List.foldl (fn (x,acc) => if list_in eq_fun x l2 then x::acc else acc) [] l1;
-
-  val gen_eq = (fn (x,y) => x = y);
-  val term_id_eq = (fn (x,y) => identical x y);
 
 (* ---------------------------------------------------------------------------------------- *)
 
@@ -191,8 +246,10 @@ in (* local *)
         val (x1_tm, x2xs_tm) = pred_setSyntax.dest_insert Pi_tm;
         val (x2_tm, xs_tm) = pred_setSyntax.dest_insert x2xs_tm;
         val inst_thm = ISPECL [x1_tm, x2_tm, xs_tm] rotate_first_INSERTs_thm;
+        val res_thm = CONV_RULE (struct_CONV (Pi_CONV (REWRITE_CONV [Once inst_thm]))) thm;
+        (*val _ = print "finished rotating\n";*)
       in
-        CONV_RULE (struct_CONV (Pi_CONV (REWRITE_CONV [inst_thm]))) thm
+        res_thm
       end;
   end
 
@@ -255,27 +312,6 @@ in (* local *)
       val (_,_,_,pcond) = dest_birs_state sys_tm;
     in
       pcond
-    end;
-
-  (* turn bir conjunction into list of conjuncts (care should be taken because this is only meaningful if the type of expression is indeed bit1) *)
-  fun dest_band x =
-    let
-      open bir_exp_immSyntax;
-      open bir_expSyntax;
-      fun is_BExp_And tm = is_BExp_BinExp tm andalso (is_BIExp_And o (fn (x,_,_) => x) o dest_BExp_BinExp) tm;
-      fun dest_BExp_And tm = ((fn (_,x,y) => (x,y)) o dest_BExp_BinExp) tm;
-
-      (* could add a typecheck of x here, to make sure that tm is indeed a Bit1 bir expression *)
-      fun dest_band_r [] acc = acc
-        | dest_band_r (tm::tms) acc =
-        if not (is_BExp_And tm) then dest_band_r tms (tm::acc) else
-        let
-          val (tm1,tm2) = dest_BExp_And tm;
-        in
-          dest_band_r (tm1::tm2::tms) acc
-        end;
-    in
-      dest_band_r [x] []
     end;
 
   (*
@@ -529,6 +565,7 @@ in (* local *)
   fun birs_Pi_merge_2_RULE thm =
     let
       val _ = print "merging the first two in Pi\n";
+      val timer = holba_miscLib.timer_start 0;
       val _ = if (symb_sound_struct_is_normform o concl) thm then () else
               raise ERR "birs_Pi_merge_2_RULE" "theorem is not a standard birs_symb_exec";
       (* assumes that Pi has at least two states *)
@@ -557,6 +594,8 @@ in (* local *)
 
           val thm4 = birs_Pi_first_env_top_mapping_merge exp2 exp1 thm3;
         in thm4 end) thm varnames;
+      val _ = print "unified envs\n";
+
       (* also unify the two path conditions *)
       val thm_env_pcond =
         let
@@ -576,8 +615,9 @@ in (* local *)
           (* fix the path condition in both states accordingly *)
           val thm2 = (birs_Pi_first_pcond_RULE pcond_common o birs_Pi_rotate_RULE o birs_Pi_first_pcond_RULE pcond_common) thm1;
         in thm2 end;
+      val _ = print "unified pcond\n";
+
       (* merge the first two states in the HOL4 pred_set *)
-      val _ = print "eliminating one from Pi\n";
       (* (TODO: maybe need to prove that they are equal because they are not syntactically identical) *)
       (*
       val rewrite_thm = ISPECL (((fn x => List.take (x, 2)) o pred_setSyntax.strip_set o get_birs_Pi o concl) thm_env_pcond) INSERT_INSERT_EQ_thm;
@@ -586,6 +626,8 @@ in (* local *)
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [rewrite_thm_fix]))) thm_env_pcond;*)
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond;
       val _ = print "eliminated one from Pi\n";
+      val _ = holba_miscLib.timer_stop
+        (fn delta_s => print ("  merging two in Pi took " ^ delta_s ^ "\n")) timer;
     in
       thm_merged
     end;
