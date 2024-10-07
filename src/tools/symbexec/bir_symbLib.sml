@@ -94,7 +94,7 @@ Profile.output_profile_results (iostream) (Profile.results ())
    result
  end (* let *)
 
-fun bir_symb_analysis_thm bir_prog_def
+fun bir_symb_analysis_thm_gen pcond_symb_o bir_prog_def
  init_addr_def end_addr_defs
  bspec_pre_def birenvtyl_def =
  let
@@ -113,9 +113,10 @@ fun bir_symb_analysis_thm bir_prog_def
    val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
    val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 
+   val bsysprecond_tm_f = Option.getOpt (Option.map (fn tm => fn x => ``BExp_BinExp BIExp_And (^x) (BExp_Den (^tm))``) pcond_symb_o, I);
    val bsysprecond_thm =
      (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
-       ``mk_bsysprecond ^bspec_pre_tm ^bprog_envtyl_tm``;
+       (bsysprecond_tm_f ``mk_bsysprecond ^bspec_pre_tm ^bprog_envtyl_tm``);
    val birs_pcond_tm = (snd o dest_eq o concl) bsysprecond_thm;
 
    val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``;
@@ -129,6 +130,8 @@ fun bir_symb_analysis_thm bir_prog_def
  in
    (bsysprecond_thm, symb_analysis_fix_thm)
  end (* let *)
+
+val bir_symb_analysis_thm = bir_symb_analysis_thm_gen NONE;
 
 end (* local *)
 
