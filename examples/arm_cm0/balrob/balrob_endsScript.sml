@@ -68,8 +68,10 @@ End
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
+val pcond_symb_o = SOME ``BVar "syp_gen" (BType_Imm Bit1)``;
 val (bsysprecond_thm, symb_analysis_thm) =
- bir_symb_analysis_thm
+ bir_symb_analysis_thm_gen
+  pcond_symb_o
   bir_balrob_prog_def
   balrob_clzsi2_init_addr_def [balrob_clzsi2_end_addr_def]
   bspec_balrob_clzsi2_pre_def balrob_birenvtyl_def;
