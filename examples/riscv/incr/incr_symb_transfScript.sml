@@ -26,6 +26,17 @@ val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_incr_post_def;
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
 
+(*
+val bir_prog_def  = bir_incr_prog_def;
+val birenvtyl_def = incr_birenvtyl_def;
+val bspec_pre_def = bspec_incr_pre_def;
+val bspec_post_def = bspec_incr_post_def;
+val prog_vars_list_def = incr_prog_vars_list_def;
+val symb_analysis_thm  = incr_symb_analysis_thm;
+val bsysprecond_thm  = incr_bsysprecond_thm;
+val prog_vars_thm = incr_prog_vars_thm;
+*)
+
 val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_incr_prog_def incr_birenvtyl_def
