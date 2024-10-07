@@ -112,8 +112,9 @@ in (* local *)
       (*
       val _ = print_term imp_tm;
       *)
-      val pcond_imp_ok = isSome (is_DROP_second_imp imp_tm) orelse
-                         isSome (is_conjunct_inclusion_imp imp_tm) orelse
+      val pcond_drop_ok = isSome (is_DROP_second_imp imp_tm) orelse
+                         isSome (is_conjunct_inclusion_imp imp_tm);
+      val pcond_imp_ok = pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)
                          isSome (birs_simpLib.check_imp_tm imp_tm);
       val _ = if pcond_imp_ok then () else
               (print "widening failed, path condition is not weaker\n";

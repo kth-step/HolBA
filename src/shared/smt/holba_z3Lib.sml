@@ -36,14 +36,21 @@ val prelude_z3 = read_from_file prelude_z3_path;
 val prelude_z3_n = prelude_z3 ^ "\n";
 val use_stack = true;
 val debug_print = ref false;
+fun kill_z3proc z3p =
+  let
+    val _ = endmeexit z3p;
+    val _ = z3proc_o := NONE;
+    val _ = z3proc_bin_o := NONE;
+  in
+    ()
+  end;
 fun get_z3proc z3bin =
   let
    val z3proc_ = !z3proc_o;
    fun check_and_restart z3p =
      if z3bin = valOf (!z3proc_bin_o) then z3p else
        let
-         val _ = endmeexit z3p;
-         val _ = z3proc_o := NONE;
+         val _ = kill_z3proc z3p;
        in
          get_z3proc z3bin
        end;
@@ -66,6 +73,11 @@ fun get_z3proc z3bin =
   in
     p
   end;
+
+fun reset_z3proc () =
+  case !z3proc_o of
+      SOME z3p => kill_z3proc z3p
+    | NONE => ();
 
 val z3wrapproc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
 fun get_z3wrapproc () =
