@@ -311,6 +311,17 @@ fun to_smtlib_bool (str, sty) =
   fun bexp_to_smtlib is_tl exst exp =
     let
       fun problem exp msg = problem_gen "bexp_to_smtlib" exp msg;
+      
+      (* solves syntactic sugar and constant word expressions in BExp_Const *)
+      fun generic_solution err_msg exp_tm =
+        let
+          val eqexp = (snd o dest_eq o concl o EVAL) exp_tm;
+        in
+          if not (identical exp_tm eqexp) then
+            bexp_to_smtlib is_tl exst eqexp
+          else
+            problem exp_tm err_msg
+        end
 
       val abbr_o = exst_get_abbr exst exp;
     in
@@ -349,20 +360,21 @@ fun to_smtlib_bool (str, sty) =
 	else
         let
           val (sz, wv) = (gen_dest_Imm o dest_BExp_Const) exp;
-          val vstr =
-            if is_word_literal wv then
-              (Arbnum.toString o dest_word_literal) wv
-            else problem exp "can only handle word literals: ";
         in
-          if sz = 1 then
-            if Arbnumcore.mod(((dest_word_literal) wv), Arbnumcore.fromInt 2)
-               = Arbnumcore.fromInt 1 then
-              (exst, ("true", SMTTY_Bool))
-            else
-              (exst, ("false", SMTTY_Bool))
+          if is_word_literal wv then
+            let val vstr = (Arbnum.toString o dest_word_literal) wv in
+              if sz = 1 then
+                if Arbnumcore.mod(((dest_word_literal) wv), Arbnumcore.fromInt 2)
+                  = Arbnumcore.fromInt 1 then
+                  (exst, ("true", SMTTY_Bool))
+                else
+                  (exst, ("false", SMTTY_Bool))
+              else
+                (exst, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
+                  SMTTY_BV sz))
+            end
           else
-            (exst, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
-               SMTTY_BV sz))
+            generic_solution "can only handle word literals: " exp
         end
 
 (*
@@ -583,14 +595,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
       else
         (* TODO: this is a generic solution for BIR syntactic sugar but we actually
                  want to export some specific expressions in a direct way, if possible *)
-        let
-          val eqexp = (snd o dest_eq o concl o EVAL) exp;
-        in
-          if not (identical exp eqexp) then
-            bexp_to_smtlib is_tl exst eqexp
-          else
-            problem exp "don't know BIR expression: "
-        end
+        generic_solution "don't know BIR expression: " exp
     end;
 
   (* preprocess into CNF, into list of conjuncted clauses *)

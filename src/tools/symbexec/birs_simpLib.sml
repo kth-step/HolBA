@@ -264,23 +264,16 @@ birs_simp_try_inst simp_t simp_inst_tm;
 
   fun check_imp_tm imp_tm =
    if not (birsSyntax.is_birs_exp_imp imp_tm) then raise ERR "check_imp_tm" "term needs to be birs_exp_imp" else
-   (let
+   let
       val (pred1_tm, pred2_tm) = birsSyntax.dest_birs_exp_imp imp_tm;
       val imp_bexp_tm = bslSyntax.bor (bslSyntax.bnot pred1_tm, pred2_tm);
-      val imp_is_taut = bir_smt_check_taut false imp_bexp_tm
-             handle e => (print "this should only return bool, not raise exceptions\n"; raise e);
-      val imp_thm =
-            if imp_is_taut then
-              mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm)
-            else (
-	      (*print_term imp_tm;*)
-	      print "implication term is not a tautology\n";
-              raise ERR "check_imp_tm" "implication term is not a tautology"
-	    )
+      val imp_is_taut = bir_smt_check_taut false imp_bexp_tm;
    in
-      SOME imp_thm
-   end
-   handle _ => NONE);
+     if imp_is_taut then
+       SOME (mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm))
+     else
+       NONE
+   end;
    val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
 
 

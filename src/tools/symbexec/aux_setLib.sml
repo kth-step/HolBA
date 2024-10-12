@@ -128,12 +128,13 @@ in (* local *)
     )
     tm;
 
+  val DIFF_CONV_debug = false;
   fun DIFF_CONV el_EQ_CONV tm =
     if pred_setSyntax.is_empty tm then
       REFL tm
     else if pred_setSyntax.is_diff tm then
       if (pred_setSyntax.is_empty o fst o pred_setSyntax.dest_diff) tm then
-        (print_term tm;
+        (if DIFF_CONV_debug then print_term tm else ();
           REWRITE_CONV [EMPTY_DIFF] tm)
       else if (pred_setSyntax.is_insert o fst o pred_setSyntax.dest_diff) tm then
         (DIFF_CONV_Once el_EQ_CONV THENC
@@ -145,7 +146,7 @@ in (* local *)
         (DIFF_CONV el_EQ_CONV)
         tm
     else
-      (print_term tm;
+      (if DIFF_CONV_debug then print_term tm else ();
       raise ERR "DIFF_CONV" "unexpected2");
 
   fun UNIONs_LEFT_CONV eq_EQ_CONV tm =

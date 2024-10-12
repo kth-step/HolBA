@@ -86,7 +86,8 @@ in
       val _ = print "composed\n";
 
       (* tidy up set operations to not accumulate (in both, post state set and label set) *)
-      val bprog_L_fixed_thm = CONV_RULE (tidyup_birs_symb_exec_CONV aux_setLib.birs_state_DIFF_UNION_CONV aux_setLib.labelset_UNION_CONV) bprog_composed_thm;
+      val bprog_L_fixed_thm = CONV_RULE (tidyup_birs_symb_exec_CONV aux_setLib.birs_state_DIFF_UNION_CONV aux_setLib.labelset_UNION_CONV) bprog_composed_thm
+        handle e => (print "\n\n"; print_thm bprog_composed_thm; print "tidy up Pi and labelset failed\n"; raise e);
 
       val _ = if symb_sound_struct_is_normform (concl bprog_L_fixed_thm) then () else
               (print_term (concl bprog_L_fixed_thm);
