@@ -7,17 +7,15 @@ open balrob_endsTheory;
 
 val _ = new_theory "balrob_ends_merge";
 
-val _ = show_tags := true;
-val _ = Portable.pprint Tag.pp_tag (tag balrob_clzsi2_symb_analysis_thm);
-val _ = print_thm balrob_clzsi2_symb_analysis_thm;
+val _ = print_thm balrob_clzsi2_symb_exec_thm;
 val _ = print "\n\n";
 
 (* --------------------------- *)
 (* merging     *)
 (* --------------------------- *)
 val _ = print "starting merging\n\n\n";
-
-val merged_thm = birs_Pi_merge_RULE balrob_clzsi2_symb_analysis_thm;
+(* move this to balrob_endsScript when interval handling is in place (for countw and SP) *)
+val merged_thm = birs_Pi_merge_RULE balrob_clzsi2_symb_exec_thm;
 
 (* get conjuncts as list *)
 (* TODO: this will not be true later when we include countw and stack pointer intervals in the path condition, need to "forward" them into the new path condition and merge them as part of the instantiation *)
@@ -27,13 +25,6 @@ val _ = if list_eq_contents term_id_eq pcond_sysl pcond_Pifl then () else
         raise Fail "path condition changed";
 
 Theorem balrob_clzsi2_symb_merged_thm = merged_thm
-
-val prepared_thm = merged_thm;
-
-val _ = Portable.pprint Tag.pp_tag (tag prepared_thm);
-val _ = print_thm prepared_thm;
-
-Theorem balrob_clzsi2_symb_prepared_thm = prepared_thm
 
 
 val _ = export_theory ();
