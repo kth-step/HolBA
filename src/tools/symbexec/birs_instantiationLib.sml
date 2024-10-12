@@ -62,7 +62,8 @@ in (* local *)
         val A_env_mappings = get_env_mappings A_env;
         val A_env_mappings_wsymbs = List.map (fn (x,y) => (x,get_default_bv(x,y),y)) A_env_mappings;
         val A_symb_mappings = List.map (fn (_,x,y) => (x,y)) A_env_mappings_wsymbs;
-        val symb_exp_map = (bv_syp_gen, A_pcond)::A_symb_mappings;
+        val A_symb_mappings_changed = List.filter (fn (x,y) => not (identical (bslSyntax.bden x) y)) A_symb_mappings; (* do not need to instantiate what does not change *)
+        val symb_exp_map = (bv_syp_gen, A_pcond)::A_symb_mappings_changed;
 
         (* check that initial state of B_thm does map these symbols in the same way (assuming B_sys_tm is in birs_gen_env standard form) *)
         val B_sys_tm = (get_birs_sys o concl) B_thm;
@@ -82,7 +83,7 @@ in (* local *)
           in
             (pred_setSyntax.strip_set o snd o dest_eq o concl) freevars_thm
           end;
-        fun symb_to_map bv_symb =
+        fun symb_to_rename_map bv_symb =
           let
             val rename_vn = get_renamesymb_name ();
             val ty = (snd o bir_envSyntax.dest_BVar) bv_symb;
@@ -90,7 +91,7 @@ in (* local *)
             (bv_symb, bslSyntax.bden (bir_envSyntax.mk_BVar_string (rename_vn, ty)))
           end;
       in
-        (List.map symb_to_map freesymbs_in_B)@symb_exp_map
+        (List.map symb_to_rename_map freesymbs_in_B)@symb_exp_map
       end;
   end
 
@@ -121,22 +122,18 @@ in (* local *)
       val len_of_thm_Pi = get_birs_Pi_length o concl;
 
       open birs_auxTheory;
-      val _ = print "start preparing B env\n";
       (* need to unfold bir_senv_GEN_list of sys in B_thm to get a standard birs_gen_env (needed for constructing the map and also for instantiation) *)
       val B_thm_norm = CONV_RULE (birs_sys_CONV (EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm])) B_thm;
-      val _ = print "prepared B env\n";
 
       (* identify instantiation needed for B, assumes to take the first state in Pi of A,
           - environment mappings
           - the generic path condition symbol bv_syp_gen
           - renaming of all free symbols for good measure *)
       val symb_exp_map = birs_find_symb_exp_map bv_syp_gen A_thm B_thm_norm;
-      val _ = List.map (fn (bv_symb,exp) => (print_term bv_symb; print "|->\n"; print_term exp; print "\n")) symb_exp_map;
-      val _ = print "created mapping\n";
+      (*val _ = List.map (fn (bv_symb,exp) => (print_term bv_symb; print "|->\n"; print_term exp; print "\n")) symb_exp_map;*)
 
       (* instantiate all *)
       val B_thm_inst = birs_sound_symb_inst_RULE symb_exp_map B_thm_norm;
-      val _ = print "all instantiated\n";
 
       (* take care of path conditions (after instantiating bv_syp_gen) *)
       (* ------- *)
@@ -145,7 +142,6 @@ in (* local *)
             NOTE: to be sound and possible, this conjunct must be stronger than what was there already) *)
         (* take first Pi state of A, env and pcond *)
       val B_thm_inst_sys = birs_sys_pcond_RULE A_pcond B_thm_inst;
-      val _ = print "path condition fixed\n";
 
       (* TODO: can only handle one Pi state, for now *)
       val _ = if len_of_thm_Pi B_thm_inst_sys = 1 then () else
@@ -154,11 +150,9 @@ in (* local *)
       (* TODO: later this step will also have to take care of intervals (countw and stack pointer) - into B_Pi_pcond_new *)
       val B_Pi_pcond_new = A_pcond;
       val B_thm_inst_sys_Pi = birs_Pi_first_pcond_RULE B_Pi_pcond_new B_thm_inst_sys;
-      val _ = print "Pi path condition fixed\n";
 
       (* sequential composition of the two theorems *)
       val seq_thm = birs_composeLib.birs_rule_SEQ_fun birs_rule_SEQ_thm A_thm B_thm_inst_sys_Pi;
-      val _ = print "sequentially composed\n";
 
       (* check that the resulting Pi set cardinality is A - 1 + B *)
       val _ = if len_of_thm_Pi A_thm - 1 + len_of_thm_Pi B_thm_inst_sys_Pi = len_of_thm_Pi seq_thm then () else
