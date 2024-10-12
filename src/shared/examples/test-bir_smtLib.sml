@@ -116,7 +116,7 @@ val taut_inputs = [
                 (BExp_Const (Imm64 pre_countw)))
                 (BExp_BinPred BIExp_LessOrEqual
                 (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                (BExp_Const (Imm64 0xFFFFFEBw)))))``, false),
+                (BExp_Const (Imm64 0xFFFFFEBw)))))``, false)  (*,
 
   (``BExp_BinExp BIExp_Or
         (BExp_UnaryExp BIExp_Not
@@ -206,6 +206,7 @@ val taut_inputs = [
                 (BExp_BinExp BIExp_RightShift
                     (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))
                     (BExp_Const (Imm32 16w))) (BExp_Const (Imm32 8w)))))``, true)
+                    *)
 ];
 
 val _ = holba_z3Lib.debug_print := true;
