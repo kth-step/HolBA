@@ -87,12 +87,10 @@ val bv_syp_gen = ``BVar "syp_gen" (BType_Imm Bit1)``;
 val A_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [birs_env_thm]))) symb_analysis_thm;
 val B_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [birs_env_thm]))) balrob_clzsi2_symb_merged_thm;
 val _ = print "start instantiation\n";
-(*
 val cont_thm = birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bv_syp_gen A_thm B_thm;
 val cont_thm_fixed = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) cont_thm;
 
 Theorem balrob_insttest_symb_inst_thm = cont_thm_fixed
-*)
 
 val _ = export_theory ();
 
