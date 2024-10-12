@@ -14,6 +14,8 @@ local
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
+  val debug_mode = false;
+
 in (* local *)
 
   (*
@@ -72,9 +74,11 @@ in (* local *)
 
         (* create updated state (pcond and env), and purge previous environment mapping *)
         val env_mod = mk_birs_update_env (pairSyntax.mk_pair (vn, exp_new), env_old);
+        val _ = print "created update env exp\n";
         val purge_update_env_conv =
           REWRITE_CONV [birs_auxTheory.birs_update_env_thm] THENC
           RAND_CONV EVAL;
+        val _ = print "purged update env exp\n";
         val env_new = (snd o dest_eq o concl o purge_update_env_conv) env_mod;
         val pcond_new = bslSyntax.band (pcond_old, bslSyntax.beq (bslSyntax.bden symb_tm, exp_tm));
         val Pi_sys_new_tm = mk_birs_state (pc, env_new, status, pcond_new);
@@ -93,7 +97,7 @@ in (* local *)
 
         (* check that initial and modified state don't contain the free symbol (i.e., that it really is free) *)
         val symbs = List.map (pred_setSyntax.strip_set o snd o dest_eq o concl o bir_vars_ofLib.birs_symb_symbols_DIRECT_CONV o (fn x => ``birs_symb_symbols ^x``))
-                    [(snd o dest_eq o concl o birs_env_CONV true (EVAL THENC REWRITE_CONV [GSYM birs_auxTheory.birs_gen_env_NULL_thm, GSYM birs_auxTheory.birs_gen_env_thm])) sys_tm, Pi_sys_old_tm];
+                    [sys_tm, Pi_sys_old_tm];
         val _ = if not (List.exists (fn x => identical x symb_tm) (List.concat symbs)) then () else
                 let
                   val _ = print_term symb_tm;
@@ -219,7 +223,7 @@ in (* local *)
       (* apply the freesymboling as instructed by forget_exps *)
       val thm_free = List.foldl birs_Pi_first_env_top_mapping_merge_fold thm_shuffled forget_exps;
       (*val _ = print_thm thm_free;*)
-      val _ = print "\ndone with birs_Pi_first_env_top_mapping_merge_store\n";
+      val _ = if not debug_mode then () else print "\ndone with birs_Pi_first_env_top_mapping_merge_store\n";
     in
       thm_free
     end;
@@ -238,11 +242,12 @@ in (* local *)
       if is_BExp_Store exp1 andalso is_BExp_Store exp2 then
         birs_Pi_first_env_top_mapping_merge_store exp1 exp2 thm else
 
-      (* TODO: interval (specifically countw) *)
+      (* TODO: interval (specifically countw and SP) *)
       if false then raise ERR "birs_Pi_first_env_top_mapping_merge" "not implemented yet" else
 
       (* just unify all others *)
-      default_op thm
+      (if not debug_mode then () else print "applying default_op\n";
+      default_op thm)
     end;
 
   val INSERT_INSERT_EQ_thm = prove(``
@@ -256,7 +261,7 @@ in (* local *)
   (* the merge function for the first two Pi states *)
   fun birs_Pi_merge_2_RULE thm =
     let
-      val _ = print "merging the first two in Pi\n";
+      val _ = if not debug_mode then () else print "merging the first two in Pi\n";
       val timer = holba_miscLib.timer_start 0;
       val _ = if (symb_sound_struct_is_normform o concl) thm then () else
               raise ERR "birs_Pi_merge_2_RULE" "theorem is not a standard birs_symb_exec";
@@ -277,16 +282,19 @@ in (* local *)
       (* for each mapped variable: *)
       val thm_env = List.foldl (fn (vn, thm0) =>
         let
+          val _ = if not debug_mode then () else print ("start a mapping:" ^ vn ^ "\n");
           (* move the mapping to the top *)
           val thm1 = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm0;
           val exp1 = (snd o get_birs_Pi_first_env_top_mapping o concl) thm1;
           val thm2 = birs_Pi_rotate_RULE thm1;
           val thm3 = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm2;
           val exp2 = (snd o get_birs_Pi_first_env_top_mapping o concl) thm3;
+          val _ = if not debug_mode then () else print "got the expressions\n";
 
           val thm4 = birs_Pi_first_env_top_mapping_merge exp2 exp1 thm3;
+          val _ = if not debug_mode then () else print "fixed the mapping\n";
         in thm4 end) thm varnames;
-      val _ = print "unified envs\n";
+      val _ = if not debug_mode then () else print "unified envs\n";
 
       (* also unify the two path conditions *)
       val thm_env_pcond =
@@ -307,7 +315,7 @@ in (* local *)
           (* fix the path condition in both states accordingly *)
           val thm2 = (birs_Pi_first_pcond_RULE pcond_common o birs_Pi_rotate_RULE o birs_Pi_first_pcond_RULE pcond_common) thm1;
         in thm2 end;
-      val _ = print "unified pcond\n";
+      val _ = if not debug_mode then () else print "unified pcond\n";
 
       (* merge the first two states in the HOL4 pred_set *)
       (* (TODO: maybe need to prove that they are equal because they are not syntactically identical) *)
@@ -317,7 +325,7 @@ in (* local *)
       val rewrite_thm_fix = CONV_RULE (CHANGED_CONV (QUANT_CONV (LAND_CONV (*aux_setLib.birs_state_EQ_CONV*)EVAL))) rewrite_thm;
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [rewrite_thm_fix]))) thm_env_pcond;*)
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond;
-      val _ = print "eliminated one from Pi\n";
+      val _ = if not debug_mode then () else print "eliminated one from Pi\n";
       val _ = holba_miscLib.timer_stop
         (fn delta_s => print ("  merging two in Pi took " ^ delta_s ^ "\n")) timer;
     in

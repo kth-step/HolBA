@@ -5,6 +5,8 @@ sig
 
   val birs_simp_select : (term -> thm) ref;
 
+  val pcond_gen_symb : term;
+
   val bir_symb_analysis_init_gen : term option -> term -> term -> thm -> term * thm * thm;
 
   val bir_symb_analysis : term -> term list -> term -> thm;

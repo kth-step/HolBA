@@ -248,7 +248,7 @@ fun symb_sound_struct_is_normform tm =
     val (sys, L, Pi) = symb_sound_struct_get_sysLPi_fun tm
                        handle _ => raise ERR "symb_sound_struct_is_normform" "unexpected term, should be a birs_symb_exec with a triple as structure";
 
-    val sys_ok = birs_state_is_normform_gen true sys;
+    val sys_ok = birs_state_is_normform_gen false sys;
     val L_ok = is_a_normform_set L;
     val Pi_ok = birs_states_are_normform Pi;
   in

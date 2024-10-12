@@ -122,18 +122,16 @@ in (* local *)
       val len_of_thm_Pi = get_birs_Pi_length o concl;
 
       open birs_auxTheory;
-      (* need to unfold bir_senv_GEN_list of sys in B_thm to get a standard birs_gen_env (needed for constructing the map and also for instantiation) *)
-      val B_thm_norm = CONV_RULE (birs_sys_CONV (EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm])) B_thm;
 
       (* identify instantiation needed for B, assumes to take the first state in Pi of A,
           - environment mappings
           - the generic path condition symbol bv_syp_gen
           - renaming of all free symbols for good measure *)
-      val symb_exp_map = birs_find_symb_exp_map bv_syp_gen A_thm B_thm_norm;
+      val symb_exp_map = birs_find_symb_exp_map bv_syp_gen A_thm B_thm;
       (*val _ = List.map (fn (bv_symb,exp) => (print_term bv_symb; print "|->\n"; print_term exp; print "\n")) symb_exp_map;*)
 
       (* instantiate all *)
-      val B_thm_inst = birs_sound_symb_inst_RULE symb_exp_map B_thm_norm;
+      val B_thm_inst = birs_sound_symb_inst_RULE symb_exp_map B_thm;
 
       (* take care of path conditions (after instantiating bv_syp_gen) *)
       (* ------- *)
