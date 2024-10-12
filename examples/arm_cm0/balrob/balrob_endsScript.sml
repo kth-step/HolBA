@@ -36,11 +36,19 @@ fun mk_countw_plus tm v = bslSyntax.bplus (tm, mk_countw_const v);
 
 (* commonBalrobScriptLib.sml *)
 val countw_space_req = 21;
-val bspec_balrob_clzsi2_pre_tm = bslSyntax.bandl [
-  bslSyntax.beq (bir_countw_bvar_tm, bir_countw_hvar_tm),
+val symbexec_init_tm = (* TODO: need SP here too *)
   ``BExp_BinPred BIExp_LessOrEqual
        ^(bir_countw_bvar_tm)
-       ^(mk_countw_const (0x10000000 - countw_space_req))``
+       ^(mk_countw_const (0x10000000 - countw_space_req))``;
+
+Definition bspec_balrob_clzsi2_init_def:
+  bspec_balrob_clzsi2_init : bir_exp_t =
+   ^symbexec_init_tm
+End
+
+val bspec_balrob_clzsi2_pre_tm = bslSyntax.bandl [
+  bslSyntax.beq (bir_countw_bvar_tm, bir_countw_hvar_tm),
+  symbexec_init_tm
 ];
 
 Definition bspec_balrob_clzsi2_pre_def:
@@ -49,6 +57,7 @@ Definition bspec_balrob_clzsi2_pre_def:
 End
 
 (* TODO: move this after the symbolic execution and infer the minimum and the maximum *)
+(* TODO: make this an interval statement *)
 val (countw_min, countw_max) = (21, 21);
 val bspec_balrob_clzsi2_post_tm = bslSyntax.bandl [
  ``BExp_BinPred BIExp_LessOrEqual
@@ -74,7 +83,7 @@ val (bsysprecond_thm, symb_analysis_thm) =
   pcond_symb_o
   bir_balrob_prog_def
   balrob_clzsi2_init_addr_def [balrob_clzsi2_end_addr_def]
-  bspec_balrob_clzsi2_pre_def balrob_birenvtyl_def;
+  bspec_balrob_clzsi2_init_def balrob_birenvtyl_def;
 
 val _ = show_tags := true;
 
