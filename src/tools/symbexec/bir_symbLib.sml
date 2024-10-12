@@ -3,12 +3,14 @@ struct
 
 open Abbrev;
 
+(* error handling *)
+val libname = "bir_symbLib"
+val ERR = Feedback.mk_HOL_ERR libname
+val wrap_exn = Feedback.wrap_exn libname
+
 local
   open HolKernel Parse boolLib bossLib;
   open bitTheory;
-  open birs_execLib;
-  open birs_composeLib;
-  open birs_driveLib;
   open birs_auxTheory;
   open bir_immSyntax;
 
@@ -28,71 +30,58 @@ in
 (* TODO: later make the whole post step function a parameter to the symb_analysis function *)
 val birs_simp_select = ref birs_simp_instancesLib.birs_simp_default_riscv;
 
-fun bir_symb_analysis bprog_tm birs_state_init_lbl
-  birs_end_lbls birs_env birs_pcond =
+val pcond_gen_symb = ``BVar "syp_gen" (BType_Imm Bit1)``;
+
+fun bir_symb_analysis_init_gen pcond_symb_o birs_state_init_lbl bspec_pre_tm birenvtyl_def =
+  let
+    val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
+
+    val bsysprecond_tm_f = Option.getOpt (Option.map (fn tm => fn x => ``BExp_BinExp BIExp_And (^x) (BExp_Den (^tm))``) pcond_symb_o, I);
+    val mk_bsysprecond_pcond_thm =
+      (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
+        (bsysprecond_tm_f ``mk_bsysprecond ^bspec_pre_tm ^bprog_envtyl_tm``);
+    val birs_pcond_tm = (snd o dest_eq o concl) mk_bsysprecond_pcond_thm;
+
+    val senv_GEN_list_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``;
+    val birs_env_tm = (snd o dest_eq o concl) senv_GEN_list_thm;
+
+    val pcond_is_sat = bir_smtLib.bir_smt_check_sat false birs_pcond_tm;
+    val _ = if pcond_is_sat then () else
+      raise ERR "bir_symb_analysis_init_gen" "initial pathcondition is not satisfiable; it seems to contain a contradiction";
+
+    val birs_state_init = ``<|
+      bsst_pc       := ^birs_state_init_lbl;
+      bsst_environ  := ^birs_env_tm;
+      bsst_status   := BST_Running;
+      bsst_pcond    := ^birs_pcond_tm
+    |>``;
+  in
+    (birs_state_init, senv_GEN_list_thm, mk_bsysprecond_pcond_thm)
+  end;
+
+fun bir_symb_analysis bprog_tm birs_end_lbls birs_state =
  let
-   val pcond_is_sat = bir_smtLib.bir_smt_check_sat false birs_pcond;
-   val _ = if pcond_is_sat then () else
-        raise Feedback.mk_HOL_ERR "bir_symbLib" "bir_symb_analysis" "initial pathcondition is not satisfiable; it seems to contain a contradiction";
-   val birs_state_init = ``<|
-     bsst_pc       := ^birs_state_init_lbl;
-     bsst_environ  := ^birs_env;
-     bsst_status   := BST_Running;
-     bsst_pcond    := ^birs_pcond
-   |>``;
    val timer_symbanalysis = holba_miscLib.timer_start 0;
    val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
-   val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
+
+   open birs_execLib;
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
    fun birs_post_step_fun (t, (last_pc, last_stmt)) = (
-     (fn t => (
+      (fn t => (
         holba_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
         holba_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
         timer_symbanalysis_last := holba_miscLib.timer_start 0;
-	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
-	t)) o
-     apply_if_assign last_stmt (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm (!birs_simp_select)) o
-     birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
-     birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
-     birs_rule_tryjustassert_fun true
-   ) t;
-   val birs_rule_STEP_fun_spec =
-     (birs_post_step_fun o
-      birs_rule_STEP_fun birs_rule_STEP_thm);
-   (* now the composition *)
-   val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
-   val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
-   val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init;
-   (*val _ = print_thm single_step_A_thm;*)
-   (* and also the sequential composition *)
-   val birs_rule_STEP_SEQ_thm = MATCH_MP
-    birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
-    (bir_prog_has_no_halt_fun bprog_tm);
-   val birs_rule_STEP_SEQ_fun_spec =
-    (birs_post_step_fun o
-     birs_rule_STEP_SEQ_fun (birs_rule_SUBST_thm, birs_rule_STEP_SEQ_thm));
-
-   val _ = print "now reducing it to one sound structure\n";
-   val timer = holba_miscLib.timer_start 0;
-   val result = exec_until
-     (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec)
-     single_step_A_thm birs_end_lbls
-     handle e => (Profile.print_profile_results (Profile.results ()); raise e);
-   val _ = holba_miscLib.timer_stop
-    (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
-
-(*
-
-Profile.reset_all ()
-
-Profile.print_profile_results (Profile.results ())
-Profile.output_profile_results (iostream) (Profile.results ())
-
-*)
-   val _ = Profile.print_profile_results (Profile.results ());
+        (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
+        t)) o
+      apply_if_assign last_stmt (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm (!birs_simp_select)) o
+      birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
+      birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
+      birs_rule_tryjustassert_fun true
+    ) t;
  in
-   result
+   birs_driveLib.bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state
  end (* let *)
+
 
 fun bir_symb_analysis_thm_gen pcond_symb_o bir_prog_def
  init_addr_def end_addr_defs
@@ -100,6 +89,7 @@ fun bir_symb_analysis_thm_gen pcond_symb_o bir_prog_def
  let
    val _ = print "\n======\n > bir_symb_analysis_thm started\n";
    val timer = holba_miscLib.timer_start 0;
+
    val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
    val birs_state_init_lbl_tm =
@@ -111,22 +101,14 @@ fun bir_symb_analysis_thm_gen pcond_symb_o bir_prog_def
          (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address ^(gen_mk_Imm end_addr_tm))`` 
        end) end_addr_defs;
    val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
-   val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 
-   val bsysprecond_tm_f = Option.getOpt (Option.map (fn tm => fn x => ``BExp_BinExp BIExp_And (^x) (BExp_Den (^tm))``) pcond_symb_o, I);
-   val bsysprecond_thm =
-     (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
-       (bsysprecond_tm_f ``mk_bsysprecond ^bspec_pre_tm ^bprog_envtyl_tm``);
-   val birs_pcond_tm = (snd o dest_eq o concl) bsysprecond_thm;
-
-   val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``;
-   val birs_env_tm = (snd o dest_eq o concl) birs_env_thm;
-
+   val (birs_state_init, birs_env_thm, bsysprecond_thm) =
+     bir_symb_analysis_init_gen pcond_symb_o birs_state_init_lbl_tm bspec_pre_tm birenvtyl_def;
    val symb_analysis_thm = bir_symb_analysis
-    bprog_tm birs_state_init_lbl_tm birs_state_end_tm_lbls
-    birs_env_tm birs_pcond_tm;
-   val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
+    bprog_tm birs_state_end_tm_lbls birs_state_init;
    val symb_analysis_fix_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
+
+   val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_analysis_thm took " ^ delta_s ^ "\n")) timer;
  in
    (bsysprecond_thm, symb_analysis_fix_thm)
  end (* let *)

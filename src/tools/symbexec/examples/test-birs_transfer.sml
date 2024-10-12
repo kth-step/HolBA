@@ -94,6 +94,18 @@ val bprecond_def = Define `
 `;
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
+val (birs_state_init, birs_env_thm, bsysprecond_thm) =
+     bir_symb_analysis_init_gen NONE birs_state_init_lbl bprecond birenvtyl_def;
+val symb_analysis_thm = bir_symb_analysis
+    bprog [birs_state_end_lbl] birs_state_init;
+val exec_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
+
+val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
+
+
+(* ---------------------------------------------------------------------- *)
+
+(* need the following legacy code because mk_bsysprecond (via birs_env_thm) is not incorporated into the rest of the code yet *)
 (* need to translate the precondition to a symbolic pathcondition, it means taking from the environment the corresponding mappings and substitute (that's symbolic evaluation) (then we know that states with matching environments also satisfy the original precondition because it is constructed by symbolic evaluation) *)
 val bsysprecond_def = Define `
     bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
@@ -114,27 +126,6 @@ val bprecond_birs_eval_exp_thm2 = save_thm(
 );
 val bsysprecond = (snd o dest_eq o concl) bsysprecond_thm (*(fst o dest_eq o concl) bsysprecond_def*);
 
-(* ---------------------------------------------------------------------- *)
-
-
-val bprog_tm = (fst o dest_eq o concl) bprog_test_def;
-val birs_state_init_lbl_tm = birs_state_init_lbl;
-val birs_state_end_tm_lbls = [birs_state_end_lbl];
-val birs_pcond_tm = bsysprecond;
-
-val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list birenvtyl``;
-val birs_env_tm = (snd o dest_eq o concl) birs_env_thm;
-
-val symb_analysis_thm =
-  bir_symb_analysis
-    bprog_tm
-    birs_state_init_lbl_tm
-    birs_state_end_tm_lbls
-    birs_env_tm
-    birs_pcond_tm;
-
-val exec_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
-val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
 
 (* ---------------------------------------------------------------------- *)
 (* ---------------------------------------------------------------------- *)

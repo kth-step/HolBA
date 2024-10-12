@@ -66,7 +66,7 @@ val SUBST_thm = birs_rule_SUBST_thm;
 val STEP_SEQ_thm = birs_rule_STEP_SEQ_thm;
 val symbex_A_thm = single_step_A_thm;
 *)
-fun birs_rule_STEP_SEQ_fun (SUBST_thm, STEP_SEQ_thm) symbex_A_thm =
+fun birs_rule_STEP_SEQ_fun STEP_SEQ_thm symbex_A_thm =
   let
     val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
     val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
@@ -177,6 +177,48 @@ fun exec_until (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm sto
     Profile.profile "reduce_tree" (reduce_tree SEQ_fun_spec) tree
   end;
 
+fun bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state =
+  let
+   val _ = if birs_state_is_normform_gen false birs_state then () else
+           raise ERR "bir_symb_exec_to" "state is not in standard form with birs_gen_env";
+
+   open birs_execLib;
+
+   val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
+   val birs_rule_STEP_fun_spec =
+     (birs_post_step_fun o
+      birs_rule_STEP_fun birs_rule_STEP_thm);
+   (* now the composition *)
+   val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
+   val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
+   val single_step_A_thm = birs_rule_STEP_fun_spec birs_state;
+   (*val _ = print_thm single_step_A_thm;*)
+   (* and also the sequential composition *)
+   val birs_rule_STEP_SEQ_thm = MATCH_MP
+    birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
+    (bir_prog_has_no_halt_fun bprog_tm);
+   val birs_rule_STEP_SEQ_fun_spec =
+    (birs_post_step_fun o
+     birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm);
+
+   val _ = print "now reducing it to one sound structure\n";
+   val timer = holba_miscLib.timer_start 0;
+   val result = exec_until
+     (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec)
+     single_step_A_thm birs_end_lbls
+     handle e => (Profile.print_profile_results (Profile.results ()); raise e);
+   val _ = holba_miscLib.timer_stop
+    (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+
+    (*
+    Profile.reset_all ()
+    Profile.print_profile_results (Profile.results ())
+    Profile.output_profile_results (iostream) (Profile.results ())
+    *)
+   val _ = Profile.print_profile_results (Profile.results ());
+  in
+   result
+  end;
 
 end (* local *)
 
