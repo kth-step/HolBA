@@ -241,24 +241,52 @@ in (* local *)
           handle _ => NONE;
       val neq_t_o = List.foldl foldfun NONE thms;
     in
-      if isSome neq_t_o then
-        valOf neq_t_o
-      else
-        (print "\ncould not show inequality of the states, would need to check the environments\n";
-        raise ERR "try_prove_birs_state_NEQ" "could not show inequality of the states, would need to check the environments")
+      neq_t_o
+    end;
+
+  fun birs_gen_env_check_eq env1 env2 =
+    let
+      val mappings1 = birs_utilsLib.get_env_mappings env1;
+      val mappings2 = birs_utilsLib.get_env_mappings env2;
+    in
+      birs_utilsLib.list_eq_contents (fn (x,y) => pair_eq identical identical x y) mappings1 mappings2
     end;
 
   fun birs_state_EQ_CONV tm =
     IFC
       (CHANGED_CONV (REWRITE_CONV []))
       (fn tm => (print "syntactically equal, done!\n"; REFL tm))
-      (fn tm =>
-        let
-          val (bsys1_tm, bsys2_tm) = dest_eq tm;
-          val neq_t = try_prove_birs_state_NEQ bsys1_tm bsys2_tm;
-        in
-          REWRITE_CONV [neq_t] tm
-        end)
+      (IFC
+        (fn tm =>
+          let
+            val (bsys1_tm, bsys2_tm) = dest_eq tm;
+            val neq_t_o = try_prove_birs_state_NEQ bsys1_tm bsys2_tm;
+          in
+            if isSome neq_t_o then
+              (*(print_thm (valOf neq_t_o);*)
+              REWRITE_CONV [valOf neq_t_o] tm
+            else
+              (print "\ncould not show inequality of the states for pc or pcond or status, need to check the environments\n";
+              NO_CONV tm)
+          end)
+        (fn tm => (print "unequal due to something that is not the environment, done!\n"; REFL tm))
+        (fn tm =>
+          let
+            val (bsys1_tm, bsys2_tm) = dest_eq tm;
+            val _ = if birsSyntax.birs_state_is_normform_gen false bsys1_tm andalso
+                       birsSyntax.birs_state_is_normform_gen false bsys2_tm then () else
+                  raise ERR "birs_state_EQ_CONV" "need two states with birs_gen_env environments";
+
+            val get_state_env = (fn (_,env,_,_) => env) o birsSyntax.dest_birs_state;
+            val is_eq = birs_gen_env_check_eq (get_state_env bsys1_tm) (get_state_env bsys2_tm);
+            val _ = print (if is_eq then "states are equal\n" else "states are not equal\n");
+            (* TODO: the false case might be wrong *)
+            val _ = if is_eq then () else
+              raise ERR "birs_state_EQ_CONV" "the states seem to be unequal, but they might be equal";
+            val eq_thm = mk_oracle_thm "BIRS_STATE_EQ" ([], mk_eq (tm, if is_eq then T else F));
+          in
+            REWRITE_CONV [eq_thm] tm
+          end))
     tm;
 
 (* ---------------------------------------------------------------------------------- *)
