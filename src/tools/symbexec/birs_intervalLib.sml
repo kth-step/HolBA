@@ -17,7 +17,7 @@ local
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-  val debug_mode = true;
+  val debug_mode = false;
 
 (* TODO: move to bir_vars_ofLib *)
   fun get_vars_of_bexp tm =
@@ -135,7 +135,7 @@ in (* local *)
 
   (* unifies the representation of the interval for env mapping vn (handles introduction (e.g., after symbolic execution without interval) and also fusion of transitive intervals (e.g., after instantiation)) *)
     (* afterwards: vn is on top, symbolname mapped for interval is ("syi_"^vn), exactly one interval relating to it in the pathcondition *)
-    (* this has to be used after an execution (which in turn is either from an initial state, or from after a merge operation), and before a bounds operation below *)
+    (* this has to be used after an instantiation and after an execution (which in turn is either from an initial state, or from after a merge operation), and before a bounds operation below *)
   fun birs_intervals_Pi_first_unify_RULE vn thm =
     let
       val _ = if (symb_sound_struct_is_normform o concl) thm then () else

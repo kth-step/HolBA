@@ -324,7 +324,8 @@ in (* local *)
       (*val _ = print_thm rewrite_thm;*)
       val rewrite_thm_fix = CONV_RULE (CHANGED_CONV (QUANT_CONV (LAND_CONV (*aux_setLib.birs_state_EQ_CONV*)EVAL))) rewrite_thm;
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [rewrite_thm_fix]))) thm_env_pcond;*)
-      val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond;
+      val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond
+        handle _ => (print_thm thm_env_pcond; raise ERR "birs_Pi_merge_2_RULE" "merging did not work");
       val _ = if not debug_mode then () else print "eliminated one from Pi\n";
       val _ = holba_miscLib.timer_stop
         (fn delta_s => print ("  merging two in Pi took " ^ delta_s ^ "\n")) timer;

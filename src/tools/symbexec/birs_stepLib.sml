@@ -512,6 +512,13 @@ in
    in
      1 + bir_exp_size mem_e + bir_exp_size a_e + bir_exp_size v_e
    end
+  else if is_BExp_IntervalPred t then
+   let
+     val (ref_e, lim_tm) = dest_BExp_IntervalPred t;
+     val (l_e, h_e) = pairSyntax.dest_pair lim_tm;
+   in
+     1 + bir_exp_size ref_e + bir_exp_size l_e + bir_exp_size h_e
+   end
 (*
   else if is_... t then
    let
