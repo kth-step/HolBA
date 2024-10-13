@@ -220,6 +220,10 @@ in (* local *)
     let
       val _ = if (symb_sound_struct_is_normform o concl) thm then () else
               raise ERR "birs_intervals_Pi_bounds_RULE" "theorem is not a standard birs_symb_exec";
+      val Pi_len = (get_birs_Pi_length o concl) thm;
+    in
+     if Pi_len < 2 then thm else
+     let
       val vn_symb = "syi_" ^ vn;
       val init_symb = ("sy_"^vn);
 
@@ -254,8 +258,9 @@ in (* local *)
       val thm_new = List.foldl (birs_Pi_rotate_RULE o (fn (pcond,acc) => birs_Pi_first_pcond_RULE pcond acc)) thm pconds;
 
       val _ = if not debug_mode then () else print "done widening the bounds of the intervals in all Pi states\n";
-    in
+     in
       thm_new
+     end
     end;
 
 

@@ -39,6 +39,9 @@ in (* local *)
   fun list_commons eq_fun l1 l2 =
     List.foldl (fn (x,acc) => if list_in eq_fun x l2 then x::acc else acc) [] l1;
 
+  fun list_minus eq_fun l1 l2 =
+    List.filter (fn x => not (list_in eq_fun x l2)) l1;
+
   val gen_eq = (fn (x,y) => x = y);
   val term_id_eq = (fn (x,y) => identical x y);
 
