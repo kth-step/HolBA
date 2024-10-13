@@ -25,7 +25,7 @@ val bprog_tm = (fst o dest_eq o concl) balrobLib.bir_balrob_prog_def;
 val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
 
 val A_thm = balrob_insttest_symb_exec_thm;
-val B_thm = balrob_clzsi2_symb_merged_thm;
+val B_thm = balrob_clzsi2_symb_exec_thm;
 (*
 val _ = print_thm A_thm;
 val _ = print_thm B_thm;
