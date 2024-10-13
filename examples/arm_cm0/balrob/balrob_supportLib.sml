@@ -18,6 +18,7 @@ in (* local *)
   val bir_sp_bvar_tm = ``BExp_Den (BVar "SP_process" (BType_Imm Bit32))``;
 
   fun bir_const64 v = ``BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(v, 64)))``;
+  fun bir_const32 v = ``BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(v, 32)))``;
   fun mk_countw_plus tm v = bslSyntax.bplus (tm, bir_const64 v);
 
   val bir_countw_hvar_tm = ``BExp_Const (Imm64 pre_countw)``;
@@ -97,12 +98,12 @@ val configs          = [("balrob",
 
   fun pred_sp_space_req stack_space_req =
   ``BExp_BinExp BIExp_And
-            (BExp_BinPred BIExp_LessOrEqual
-               (^bir_sp_bvar_tm)
-               (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_start, 32)))))
             (BExp_BinPred BIExp_LessThan
-               (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_end + stack_space_req, 32))))
-               (^bir_sp_bvar_tm))``;
+               ^(bir_const32 (stack_end + stack_space_req))
+               ^bir_sp_bvar_tm)
+            (BExp_BinPred BIExp_LessOrEqual
+               ^bir_sp_bvar_tm
+               ^(bir_const32 stack_start))``;
 
   fun pred_countw_space_req countw_space_req =
   ``BExp_BinPred BIExp_LessOrEqual
@@ -135,6 +136,7 @@ val configs          = [("balrob",
 
 (* -------------------------------------------------------------------------- *)
 
+  (* TODO: integrate the start and end labels and also all subfragments here as well *)
   fun get_fun_usage entry_name =
     case entry_name of
        "__lesf2"
