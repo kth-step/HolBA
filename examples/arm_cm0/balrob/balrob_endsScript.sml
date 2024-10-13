@@ -1,65 +1,39 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_programSyntax bir_program_labelsTheory;
-open bir_immTheory bir_valuesTheory bir_expTheory bir_exp_immTheory;
-open bir_tsTheory bir_bool_expTheory bir_programTheory;
+(* TODO: for merging, should go into birs_summary_execute later *)
+open birs_mergeLib;
+open birs_utilsLib;
 
-open bir_immSyntax;
-
-open bir_predLib;
-
-open bir_symbLib;
-
-open balrobLib;
+open balrob_supportLib;
 
 val _ = new_theory "balrob_ends";
 
 (* __clzsi2 *)
+val reqs = (0,21);
+val init_addr = ``0x100013b4w : word32``;
+val end_addrs = [``0x100013dcw : word32``];
 
-(* commonBalrobScriptLib.sml *)
-val countw_space_req = 21;
+val symb_exec_thm = birs_summary_execute birs_prog_config reqs (init_addr, end_addrs);
 
-(* ------------------ *)
-(* Program boundaries *)
-(* ------------------ *)
-val clzsi2_init_addr = ``0x100013b4w : word32``;
-val clzsi2_end_addrs = [``0x100013dcw : word32``];
+Theorem balrob_clzsi2_symb_exec_thm = symb_exec_thm
 
-(* -------------- *)
-(* precondition   *)
-(* -------------- *)
-val bir_countw_bvar_tm = ``BExp_Den (BVar "countw" (BType_Imm Bit64))``;
-fun mk_countw_const v = ``BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(v, 64)))``;
-fun mk_countw_plus tm v = bslSyntax.bplus (tm, mk_countw_const v);
+val _ = print_thm balrob_clzsi2_symb_exec_thm;
+val _ = print "\n\n";
 
-val clzsi2_pre = (* TODO: need SP here too *)
-  ``BExp_BinPred BIExp_LessOrEqual
-       ^(bir_countw_bvar_tm)
-       ^(mk_countw_const (0x10000000 - countw_space_req))``;
+(* ----------- *)
+(* merging     *)
+(* ----------- *)
+val _ = print "starting merging\n\n\n";
+(* move this to balrob_endsScript when interval handling is in place (for countw and SP) *)
+val merged_thm = birs_Pi_merge_RULE balrob_clzsi2_symb_exec_thm;
 
+(* get conjuncts as list *)
+(* TODO: this will not be true later when we include countw and stack pointer intervals in the path condition, need to "forward" them into the new path condition and merge them as part of the instantiation *)
+val pcond_sysl = (dest_band o get_birs_sys_pcond o concl) merged_thm;
+val pcond_Pifl = (dest_band o get_birs_Pi_first_pcond o concl) merged_thm;
+val _ = if list_eq_contents term_id_eq pcond_sysl pcond_Pifl then () else
+        raise Fail "path condition changed";
 
-(* --------------------------- *)
-(* Symbolic execution          *)
-(* --------------------------- *)
-val bprog_tm = (fst o dest_eq o concl) bir_balrob_prog_def;
-fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
-val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl;
-val init_lbl = bir_lbl_from_addr clzsi2_init_addr;
-val end_lbls = List.map bir_lbl_from_addr clzsi2_end_addrs;
-
-val (birs_state_init, birs_env_thm, bsysprecond_thm) =
-  bir_symb_analysis_init_gen (SOME pcond_gen_symb) init_lbl clzsi2_pre balrob_birenvtyl_def;
-val symb_exec_thm =
-  bir_symb_analysis bprog_tm end_lbls birs_state_init;
-
-(* TODO: should merge Pi states here *)
-val symb_exec_merged_thm = symb_exec_thm;
-
-Theorem balrob_clzsi2_symb_exec_thm = symb_exec_merged_thm
-
-(* only need the following two theorems for property transfer,
-    then also need to instantiate pcond_gen_symb with the hol free variable constant conditions *)
-Theorem balrob_clzsi2_bsysprecond_thm = bsysprecond_thm
-Theorem balrob_clzsi2_birs_env_thm = birs_env_thm
+Theorem balrob_clzsi2_symb_merged_thm = merged_thm
 
 val _ = export_theory ();
