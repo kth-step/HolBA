@@ -44,10 +44,13 @@ local
   val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 in
   val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
   val (bir_senv_GEN_list_tm,  mk_bir_senv_GEN_list, dest_bir_senv_GEN_list, is_bir_senv_GEN_list)  = syntax_fns1_env "bir_senv_GEN_list";
   val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
+  
+  val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
 end;
 
 local

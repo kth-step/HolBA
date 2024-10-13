@@ -323,12 +323,33 @@ in (* local *)
     fun second_CONV conv =
       RAND_CONV (first_CONV conv);
 
-    val rotate_first_INSERTs_thm = prove(``
-      !x1 x2 xs.
-      (x1 INSERT x2 INSERT xs) = (x2 INSERT x1 INSERT xs)
-    ``,
-      cheat
-    );
+    local
+      open pred_setSyntax;
+      val rotate_first_INSERTs_thm = prove(``
+        !x1 x2 xs.
+        (x1 INSERT x2 INSERT xs) = (x2 INSERT x1 INSERT xs)
+      ``,
+        cheat
+      );
+      fun is_two_INSERTs tm = (is_insert tm) andalso ((is_insert o snd o dest_insert) tm);
+    in
+      fun rotate_two_INSERTs_conv tm =
+        let
+          val _ = if is_two_INSERTs tm then () else
+            raise ERR "rotate_two_INSERTs_conv" "need to be a term made up of two inserts";
+          val (x1_tm, x2xs_tm) = dest_insert tm;
+          val (x2_tm, xs_tm) = dest_insert x2xs_tm;
+          val inst_thm = ISPECL [x1_tm, x2_tm, xs_tm] rotate_first_INSERTs_thm;
+        in
+          (* TODO: the result of this should actually just be inst_thm *)
+          REWRITE_CONV [Once inst_thm] tm
+        end;
+
+      fun rotate_INSERTs_conv tm =
+        (if not (is_two_INSERTs tm) then REFL else
+         (rotate_two_INSERTs_conv THENC
+          RAND_CONV rotate_INSERTs_conv)) tm;
+    end
   in
     (* apply state transformer to sys *)
     fun birs_sys_CONV conv tm =
@@ -355,9 +376,25 @@ in (* local *)
       birs_Pi_CONV (second_CONV conv);
 
     (* swap the first two states in Pi *)
-    fun birs_Pi_rotate_RULE thm =
+    fun birs_Pi_rotate_two_RULE thm =
       let
         (*val _ = print "rotating first two in Pi\n";*)
+        val _ = if (symb_sound_struct_is_normform o concl) thm then () else
+                raise ERR "birs_Pi_rotate_two_RULE" "theorem is not a standard birs_symb_exec";
+        val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
+        val num_Pi_el = (length o pred_setSyntax.strip_set) Pi_tm;
+        val _ = if num_Pi_el > 1 then () else
+                raise ERR "birs_Pi_rotate_two_RULE" "Pi has to have at least two states";
+
+        val res_thm = CONV_RULE (struct_CONV (Pi_CONV (rotate_two_INSERTs_conv))) thm;
+        (*val _ = print "finished rotating\n";*)
+      in
+        res_thm
+      end;
+
+    fun birs_Pi_rotate_RULE thm =
+      let
+        (*val _ = print "rotating elements of Pi\n";*)
         val _ = if (symb_sound_struct_is_normform o concl) thm then () else
                 raise ERR "birs_Pi_rotate_RULE" "theorem is not a standard birs_symb_exec";
         val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
@@ -365,16 +402,28 @@ in (* local *)
         val _ = if num_Pi_el > 1 then () else
                 raise ERR "birs_Pi_rotate_RULE" "Pi has to have at least two states";
 
-        val (_,_,Pi_tm) = (dest_sysLPi o snd o dest_birs_symb_exec o concl) thm;
-        val (x1_tm, x2xs_tm) = pred_setSyntax.dest_insert Pi_tm;
-        val (x2_tm, xs_tm) = pred_setSyntax.dest_insert x2xs_tm;
-        val inst_thm = ISPECL [x1_tm, x2_tm, xs_tm] rotate_first_INSERTs_thm;
-        val res_thm = CONV_RULE (struct_CONV (Pi_CONV (REWRITE_CONV [Once inst_thm]))) thm;
+        val res_thm = CONV_RULE (struct_CONV (Pi_CONV (rotate_INSERTs_conv))) thm;
         (*val _ = print "finished rotating\n";*)
       in
         res_thm
       end;
   end
+
+  (* goes through all Pi states and applies rule *)
+  fun birs_Pi_each_RULE rule thm =
+    let
+      val len = (get_birs_Pi_length o concl) thm;
+      (* iterate through all Pi states (with Pi rotate) and apply rule *)
+      val thm_new =
+        if len = 0 then
+          thm
+        else if len = 1 then
+          rule thm
+        else
+          List.foldl (birs_Pi_rotate_RULE o rule o snd) thm (List.tabulate(len, I));
+    in
+      thm_new
+    end;
 
 (* ---------------------------------------------------------------------------------------- *)
 

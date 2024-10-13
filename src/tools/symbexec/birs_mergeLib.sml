@@ -74,11 +74,11 @@ in (* local *)
 
         (* create updated state (pcond and env), and purge previous environment mapping *)
         val env_mod = mk_birs_update_env (pairSyntax.mk_pair (vn, exp_new), env_old);
-        val _ = print "created update env exp\n";
+        val _ = if not debug_mode then () else print "created update env exp\n";
         val purge_update_env_conv =
           REWRITE_CONV [birs_auxTheory.birs_update_env_thm] THENC
           RAND_CONV EVAL;
-        val _ = print "purged update env exp\n";
+        val _ = if not debug_mode then () else print "purged update env exp\n";
         val env_new = (snd o dest_eq o concl o purge_update_env_conv) env_mod;
         val pcond_new = bslSyntax.band (pcond_old, bslSyntax.beq (bslSyntax.bden symb_tm, exp_tm));
         val Pi_sys_new_tm = mk_birs_state (pc, env_new, status, pcond_new);
@@ -150,15 +150,15 @@ in (* local *)
     let
       val symbname = get_freesymb_name ();
     in
-      (birs_Pi_first_forget_RULE symbname o birs_Pi_rotate_RULE o birs_Pi_first_forget_RULE symbname) thm
+      (birs_Pi_first_forget_RULE symbname o birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE symbname) thm
     end;
 
   fun birs_Pi_first_env_top_mapping_merge_fold ((exp1,exp2), thm) =
     let
       val symbname = get_freesymb_name ();
     in
-      (birs_Pi_rotate_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 o
-       birs_Pi_rotate_RULE o birs_Pi_first_forget_RULE_gen symbname exp1) thm
+      (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 o
+       birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp1) thm
     end;
 
   local
@@ -286,7 +286,7 @@ in (* local *)
           (* move the mapping to the top *)
           val thm1 = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm0;
           val exp1 = (snd o get_birs_Pi_first_env_top_mapping o concl) thm1;
-          val thm2 = birs_Pi_rotate_RULE thm1;
+          val thm2 = birs_Pi_rotate_two_RULE thm1;
           val thm3 = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm2;
           val exp2 = (snd o get_birs_Pi_first_env_top_mapping o concl) thm3;
           val _ = if not debug_mode then () else print "got the expressions\n";
@@ -301,7 +301,7 @@ in (* local *)
         let
           val thm0 = thm_env;
           val pcond1 = (get_birs_Pi_first_pcond o concl) thm0;
-          val thm1 = birs_Pi_rotate_RULE thm0;
+          val thm1 = birs_Pi_rotate_two_RULE thm0;
           val pcond2 = (get_birs_Pi_first_pcond o concl) thm1;
 
           (* get conjuncts as list *)
@@ -313,7 +313,7 @@ in (* local *)
           val pcond_common = bslSyntax.bandl pcond_commonl;
 
           (* fix the path condition in both states accordingly *)
-          val thm2 = (birs_Pi_first_pcond_RULE pcond_common o birs_Pi_rotate_RULE o birs_Pi_first_pcond_RULE pcond_common) thm1;
+          val thm2 = (birs_Pi_first_pcond_RULE pcond_common o birs_Pi_rotate_two_RULE o birs_Pi_first_pcond_RULE pcond_common) thm1;
         in thm2 end;
       val _ = if not debug_mode then () else print "unified pcond\n";
 
