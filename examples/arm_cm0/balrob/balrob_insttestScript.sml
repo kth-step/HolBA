@@ -1,5 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 
+open birs_utilsLib;
 open birs_instantiationLib;
 open birs_composeLib;
 
@@ -33,10 +34,12 @@ val _ = print_thm B_thm;
 
 val _ = print "start instantiation\n";
 val cont_thm = birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bir_symbLib.pcond_gen_symb A_thm B_thm;
+val cont_thm2 = birs_intervalLib.birs_intervals_Pi_RULE "countw" cont_thm;
 
-Theorem balrob_insttest_symb_inst_thm = cont_thm
+Theorem balrob_insttest_symb_inst_thm = cont_thm2
 
-(* now continue execution after that *)
+Theorem balrob_insttest_symb_more_thm = 
+  birs_execute_Pi_first_further birs_prog_config [``0x100012e8w : word32``, ``0x100012f6w : word32``] cont_thm2
 
 val _ = export_theory ();
 
