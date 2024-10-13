@@ -37,30 +37,6 @@ local
     let val minmax_tm = (snd o dest_comb) tm;
     in ``BExp_IntervalPred (BExp_Den ^(ref_symb)) (^minmax_tm, ^minmax_tm)`` end;
 
-  fun fuse_intervals interval1 interval2 =
-    let
-      val _ = if not debug_mode then () else print "starting to fuse two intervals\n";
-      val _ = if not debug_mode then () else print_term interval1;
-      val _ = if not debug_mode then () else print_term interval2;
-      val _ = raise ERR "fuse_intervals" "not implemented";
-    in
-      interval1
-    end;
-
-(*
-val interval1 = ``BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
-  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 21w)),
-   BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 21w)))``;
-
-val interval2 = ``BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
-  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 21w)),
-   BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 21w)))``;
-bplus (bden ``x:bir_var_t``, bconstimm ``y:bir_imm_t``);
-*)
 local
 val intervalpattern64_tm = ``
   BExp_IntervalPred (BExp_Den (BVar x_a (BType_Imm Bit64)))
@@ -89,6 +65,52 @@ fun mk_interval_tm (symb_str, refsymb_str, lc, hc) =
          ``x_d:word64`` |-> wordsSyntax.mk_wordii(hc, 64)
         ] intervalpattern64_tm;
 in
+(*
+val interval1 = ``BExp_IntervalPred (BExp_Den (BVar "syr_7" (BType_Imm Bit64)))
+  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 21w)),
+   BExp_BinExp BIExp_Plus (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 21w)))``;
+
+val interval2 = ``BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 (5w))),
+   BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 (5w))))``;
+*)
+  (* interval1 uses interval2 *)
+  fun fuse_intervals interval1 interval2 =
+    let
+      val _ = if not debug_mode then () else print "starting to fuse two intervals\n";
+      (* quickfix for unfinished word expression in constants *)
+      val interval1 = (snd o dest_eq o concl o RAND_CONV EVAL) interval1;
+      val interval2 = (snd o dest_eq o concl o RAND_CONV EVAL) interval2;
+      val _ = if not debug_mode then () else print_term interval1;
+      val _ = if not debug_mode then () else print_term interval2;
+      val (symb_str1, refsymb_str1, lc1, hc1) = get_interval_parameters interval1;
+      val (symb_str2, refsymb_str2, lc2, hc2) = get_interval_parameters interval2;
+      val _ = if (refsymb_str1 = symb_str2) then () else
+        raise ERR "fuse_intervals" "intervals are not trivially compatible";
+      val lc_min = lc1 + lc2;
+      val hc_max = hc1 + hc2;
+      val interval = mk_interval_tm (symb_str1, refsymb_str2, lc_min, hc_max);
+    in
+      interval
+    end;
+
+(*
+val interval1 = ``BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 21w)),
+   BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 21w)))``;
+
+val interval2 = ``BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 21w)),
+   BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 21w)))``;
+*)
   fun widen_intervals (interval1, interval2) =
     let
       val _ = if not debug_mode then () else print "starting to find the widest limits of two intervals\n";
@@ -176,7 +198,7 @@ in (* local *)
           val _ = print_term (hd refsymbs);
           *)
           val _ = if length refsymbs = 1 then () else
-            raise ERR "get_ref_symb" "unexpected";
+            raise ERR "birs_intervals_Pi_first_unify_RULE::get_ref_symb" "unexpected";
         in
           hd refsymbs
         end;
@@ -192,7 +214,8 @@ in (* local *)
             if length pcond_intervaltms_1 = 1 then
               (fuse_intervals (intervaltm) (hd pcond_intervaltms_1), pcondl_filtd_two)
             else
-              raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected3")
+              (print "\n\n";print_term pcond;print "\n\n";print_term (bslSyntax.bandl pcondl_filtd);print "\n\n";List.map print_term pcond_intervaltms_1;print "\n\n";
+               raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected3"))
           end;
       val _ = if not debug_mode then () else print_term intervalterm_fusion;
 

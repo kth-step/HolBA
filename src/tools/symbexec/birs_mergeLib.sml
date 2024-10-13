@@ -333,10 +333,10 @@ in (* local *)
     end;
 
   (* merging of all states in Pi *)
-  fun birs_Pi_merge_RULE thm =
+  fun birs_Pi_merge_RULE_ thm =
     let
       val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_Pi_merge_RULE" "theorem is not a standard birs_symb_exec";
+              raise ERR "birs_Pi_merge_RULE_" "theorem is not a standard birs_symb_exec";
       val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
       val num_Pi_el = (length o pred_setSyntax.strip_set) Pi_tm;
     in
@@ -344,7 +344,25 @@ in (* local *)
       if num_Pi_el < 2 then
         thm
       else
-        birs_Pi_merge_RULE (birs_Pi_merge_2_RULE thm)
+        birs_Pi_merge_RULE_ (birs_Pi_merge_2_RULE thm)
+    end;
+  
+  fun birs_Pi_merge_RULE thm =
+    let
+      val merged_thm = birs_Pi_merge_RULE_ thm;
+
+      (* check that the path condition has only changed in ways we want *)
+      val pcond_sysl = (dest_band o get_birs_sys_pcond o concl) merged_thm;
+      val pcond_Pifl = (dest_band o get_birs_Pi_first_pcond o concl) merged_thm;
+      val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
+      val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
+      fun check_extra extra =
+        if (length extra = 0) orelse ((length extra = 1) andalso (birsSyntax.is_BExp_IntervalPred (hd extra))) then () else
+        raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (bslSyntax.bandl extra)));
+      val _ = check_extra pcond_sys_extral;
+      val _ = check_extra pcond_Pif_extral;
+    in
+      merged_thm
     end;
 
   (*

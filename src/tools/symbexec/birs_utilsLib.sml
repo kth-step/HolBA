@@ -18,6 +18,13 @@ in (* local *)
     | list_distinct eq_fun (x::xs) =
         if all (fn y => (not o eq_fun) (x, y)) xs then list_distinct eq_fun xs else false;
 
+  fun list_mk_distinct_ _ [] acc = List.rev acc
+    | list_mk_distinct_ eq_fun (x::xs) acc =
+        list_mk_distinct_ eq_fun (List.filter (fn y => not (eq_fun (x, y))) xs) (x::acc);
+
+  fun list_mk_distinct eq_fun l =
+      list_mk_distinct_ eq_fun l [];
+
   (* the following two functions are from test-z3-wrapper.sml *)
   fun list_inclusion eq_fun l1 l2 =
     foldl (fn (x, acc) => acc andalso (exists (fn y => eq_fun (x, y)) l2)) true l1;

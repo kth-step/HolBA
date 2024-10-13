@@ -112,7 +112,6 @@ in (* local *)
 
   (*
   instantiation process (including sequential composition)
-  TODO: set up example like this --- execute with symbol in the path condition from the beginning (to be able to preserve path condition for after instantiation)
   *)
   fun birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bv_syp_gen A_thm B_thm =
     let
@@ -144,9 +143,16 @@ in (* local *)
       (* TODO: can only handle one Pi state, for now *)
       val _ = if len_of_thm_Pi B_thm_inst_sys = 1 then () else
         raise ERR "birs_sound_inst_SEQ_RULE" "summaries can only contain 1 state currently";
-      (* cleanup Pi path conditions (probably only need to consider one for starters) to only preserve non-summary conjunct (as the step before) *)
-      (* TODO: later this step will also have to take care of intervals (countw and stack pointer) - into B_Pi_pcond_new *)
-      val B_Pi_pcond_new = A_pcond;
+      (* cleanup Pi path conditions (probably only need to consider one for starters) to only preserve non-summary conjunct (as the step before), but preserve also the intervals *)
+      val B_Pi_pcond = (get_birs_Pi_first_pcond o concl) B_thm_inst_sys;
+      val B_Pi_pcond_intervals = List.filter (is_BExp_IntervalPred) (dest_band B_Pi_pcond);
+      val B_pcondl_new = B_Pi_pcond_intervals@(list_minus term_id_eq (dest_band A_pcond) B_Pi_pcond_intervals);
+      val B_Pi_pcond_new = bslSyntax.bandl (B_pcondl_new);
+      (*
+      val _ = print_term (bslSyntax.bandl B_Pi_pcond_intervals_);
+      val _ = print_term B_Pi_pcond_new;
+      val _ = print_thm B_thm_inst_sys;
+      *)
       val B_thm_inst_sys_Pi = birs_Pi_first_pcond_RULE B_Pi_pcond_new B_thm_inst_sys;
 
       (* sequential composition of the two theorems *)
