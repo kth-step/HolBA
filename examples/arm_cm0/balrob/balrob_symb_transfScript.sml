@@ -1,56 +1,51 @@
 open HolKernel boolLib Parse bossLib;
 
-open bir_programSyntax bir_program_labelsTheory;
-open bir_immTheory bir_valuesTheory bir_expTheory;
-open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_immSyntax;
 
 open bir_symbLib;
+
 open birs_instantiationLib;
 open birs_utilsLib;
 
 open balrobLib;
+open balrob_supportLib;
+
 open balrob_endsTheory;
 
 val _ = new_theory "balrob_symb_transf";
 
 
 val balrob_exec_thm = balrob_clzsi2_symb_exec_thm;
-(*val bsysprecond_thm = balrob_clzsi2_bsysprecond_thm;*)
-val birs_env_thm = balrob_clzsi2_birs_env_thm;
+
 (**)
 val bprog_envtyl_tm = (fst o dest_eq o concl) balrob_birenvtyl_def;
-(* TODO: the following can be extracted from the theorems above *)
-val init_addr_tm = ``0x100013b4w : word32``;
-val end_addr_tm = ``0x100013dcw : word32``;
-val balrob_pre = ``BExp_BinPred BIExp_LessOrEqual
-             (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-             (BExp_Const (Imm64 0xFFFFFEBw))``;
+val birs_env_thm = gen_senv_GEN_thm balrob_birenvtyl_def;
 
+(* TODO: the following could be extracted from the theorems above *)
 (* TODO: move this after the symbolic execution, and infer the minimum and the maximum *)
 val (countw_min, countw_max) = (21, 21);
+
+val init_addr_tm = ``0x100013b4w : word32``;
+val end_addr_tm = ``0x100013dcw : word32``;
+
+val stack_max_usage = 77;
+val reqs = (stack_max_usage, countw_max);
+val balrob_pre = bslSyntax.bandl (pred_conjs reqs);
+
 
 (* -------------- *)
 (* BSPEC contract *)
 (* -------------- *)
-val bir_countw_bvar_tm = ``BExp_Den (BVar "countw" (BType_Imm Bit64))``;
-val bir_countw_hvar_tm = ``BExp_Const (Imm64 pre_countw)``;
-fun mk_countw_const v = ``BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(v, 64)))``;
-fun mk_countw_plus tm v = bslSyntax.bplus (tm, mk_countw_const v);
-val bir_hvar_cond = bslSyntax.beq (bir_countw_bvar_tm, bir_countw_hvar_tm);
-
 val bspec_balrob_pre_tm =
-  ``BExp_BinExp BIExp_And
-   ^balrob_pre
-   ^bir_hvar_cond``;
+  bslSyntax.band (balrob_pre, bir_hvar_cond);
 
 Definition bspec_balrob_pre_def:
   bspec_balrob_pre (pre_countw:word64) : bir_exp_t =
    ^bspec_balrob_pre_tm
 End
 
-(* TODO: make this an interval statement *)
-val bspec_balrob_post_tm = bslSyntax.bandl [
+val bspec_balrob_post_tm =
+ bslSyntax.bandl [
  ``BExp_BinPred BIExp_LessOrEqual
        ^(mk_countw_plus bir_countw_hvar_tm countw_min)
        ^(bir_countw_bvar_tm)``,
@@ -83,7 +78,7 @@ val bir_hvar_cond_symb = (snd o dest_eq o concl o create_mk_bsysprecond_thm) bir
 (* ------------------------------- *)
 (* prepare for BIR property transfer *)
 (* ------------------------------- *)
-val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(``BVar "syp_gen" (BType_Imm Bit1)``, bir_hvar_cond_symb)] balrob_exec_thm;
+val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(pcond_gen_symb, bir_hvar_cond_symb)] balrob_exec_thm;
 val pcond_symb_analysis_thm = birs_sys_pcond_RULE birs_pcond_tm specd_symb_analysis_thm;
 val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM mk_bsysprecond_pcond_thm, GSYM birs_env_thm])) pcond_symb_analysis_thm;
 
