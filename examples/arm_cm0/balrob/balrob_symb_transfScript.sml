@@ -15,7 +15,7 @@ open balrob_endsTheory;
 val _ = new_theory "balrob_symb_transf";
 
 
-val balrob_exec_thm = balrob_clzsi2_symb_exec_thm;
+val balrob_exec_thm = balrob_clzsi2_symb_merged_thm; (* balrob_clzsi2_symb_exec_thm *)
 
 (**)
 val bprog_envtyl_tm = (fst o dest_eq o concl) balrob_birenvtyl_def;
@@ -80,7 +80,8 @@ val bir_hvar_cond_symb = (snd o dest_eq o concl o create_mk_bsysprecond_thm) bir
 (* ------------------------------- *)
 val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(pcond_gen_symb, bir_hvar_cond_symb)] balrob_exec_thm;
 val pcond_symb_analysis_thm = birs_sys_pcond_RULE birs_pcond_tm specd_symb_analysis_thm;
-val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM mk_bsysprecond_pcond_thm, GSYM birs_env_thm])) pcond_symb_analysis_thm;
+val pcond_symb_analysis_thm2 = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) pcond_symb_analysis_thm;
+val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM mk_bsysprecond_pcond_thm, GSYM birs_env_thm])) pcond_symb_analysis_thm2;
 
 (* ------------------------------- *)
 (* BIR property transfer *)
