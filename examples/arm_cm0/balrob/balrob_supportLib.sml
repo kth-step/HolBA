@@ -214,20 +214,35 @@ fun birs_summary_execute (bprog_tm, prog_birenvtyl_def) reqs (init_addr, end_add
     (* TODO: should merge Pi states here, also handle intervals correctly, in symbolic execution driver (together with the indirectjump handling and previous summaries) and also before merging *)
     val interval_thm = birs_intervals_Pi_RULE "countw" symb_exec_thm;
     val merged_thm = birs_Pi_merge_RULE interval_thm;
-
-    (* get conjuncts as list *)
-    (* check that the path condition has only changed in ways we want *)
-    val pcond_sysl = (dest_band o get_birs_sys_pcond o concl) merged_thm;
-    val pcond_Pifl = (dest_band o get_birs_Pi_first_pcond o concl) merged_thm;
-    val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
-    val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
-    fun check_extra extra =
-      if (length extra = 0) orelse ((length extra = 1) andalso (birsSyntax.is_BExp_IntervalPred (hd extra))) then () else
-      raise Fail ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (bslSyntax.bandl extra)));
-    val _ = check_extra pcond_sys_extral;
-    val _ = check_extra pcond_Pif_extral;
   in
     merged_thm
+  end;
+
+
+
+fun birs_execute_Pi_first_further (bprog_tm, _) end_addrs thm =
+  let
+    open bir_immSyntax;
+    open birs_intervalLib;
+    open birs_composeLib;
+
+    fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
+    val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl;
+
+    val end_lbls = List.map bir_lbl_from_addr end_addrs;
+
+    val birs_state_tm = (get_birs_Pi_first o concl) thm;
+
+    (* execute further *)
+    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
+    val symb_more_thm =
+      bir_symbLib.bir_symb_analysis bprog_tm end_lbls (birs_state_tm);
+    (* cleanup *)
+    val symb_more_interval_thm = birs_intervals_Pi_RULE "countw" symb_more_thm;
+    (* SEQ *)
+    val symb_more_compose_thm = birs_rule_SEQ_fun birs_rule_SEQ_thm thm symb_more_interval_thm;
+  in
+    symb_more_compose_thm
   end;
 
   fun gen_senv_GEN_thm prog_birenvtyl_def =
