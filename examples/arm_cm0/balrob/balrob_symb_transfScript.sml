@@ -15,7 +15,7 @@ open balrob_endsTheory;
 val _ = new_theory "balrob_symb_transf";
 
 
-val balrob_exec_thm = balrob_clzsi2_symb_merged_thm; (* balrob_clzsi2_symb_exec_thm *)
+val balrob_exec_thm = balrob_clzsi2_symb_exec_thm;
 
 (**)
 val bprog_envtyl_tm = (fst o dest_eq o concl) balrob_birenvtyl_def;

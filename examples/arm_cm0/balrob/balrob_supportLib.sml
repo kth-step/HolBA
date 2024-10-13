@@ -7,6 +7,10 @@ local
 
   open birsSyntax;
 
+  open birs_utilsLib;
+  open birs_mergeLib;
+  open birs_intervalLib;
+
   (* error handling *)
   val libname = "balrob_supportLib"
   val ERR = Feedback.mk_HOL_ERR libname
@@ -208,8 +212,22 @@ fun birs_summary_execute (bprog_tm, prog_birenvtyl_def) reqs (init_addr, end_add
       bir_symb_analysis bprog_tm end_lbls birs_state_init;
 
     (* TODO: should merge Pi states here, also handle intervals correctly, in symbolic execution driver (together with the indirectjump handling and previous summaries) and also before merging *)
+    val interval_thm = birs_intervals_Pi_RULE "countw" symb_exec_thm;
+    val merged_thm = birs_Pi_merge_RULE interval_thm;
+
+    (* get conjuncts as list *)
+    (* check that the path condition has only changed in ways we want *)
+    val pcond_sysl = (dest_band o get_birs_sys_pcond o concl) merged_thm;
+    val pcond_Pifl = (dest_band o get_birs_Pi_first_pcond o concl) merged_thm;
+    val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
+    val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
+    fun check_extra extra =
+      if (length extra = 0) orelse ((length extra = 1) andalso (birsSyntax.is_BExp_IntervalPred (hd extra))) then () else
+      raise Fail ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (bslSyntax.bandl extra)));
+    val _ = check_extra pcond_sys_extral;
+    val _ = check_extra pcond_Pif_extral;
   in
-    symb_exec_thm
+    merged_thm
   end;
 
   fun gen_senv_GEN_thm prog_birenvtyl_def =
