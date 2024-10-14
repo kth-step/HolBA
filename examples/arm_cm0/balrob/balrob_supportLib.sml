@@ -8,8 +8,6 @@ local
   open birsSyntax;
 
   open birs_utilsLib;
-  open birs_mergeLib;
-  open birs_intervalLib;
 
   (* error handling *)
   val libname = "balrob_supportLib"
@@ -191,58 +189,67 @@ val configs          = [("balrob",
 
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
 
-(* TODO: add previous summaries and indirectjump theorems as argument here (probably good as function), and the proper handling in the buildtree function *)
-fun birs_summary_execute (bprog_tm, prog_birenvtyl_def) reqs (init_addr, end_addrs) =
-  let
-    open bir_symbLib;
+local
     open bir_immSyntax;
-
-    val precond = bslSyntax.bandl (pred_conjs reqs);
-
     fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
     val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl;
+in
+ fun birs_basic_init_state (bprog_tm, prog_birenvtyl_def) reqs init_addr =
+  let
     val init_lbl = bir_lbl_from_addr init_addr;
-    val end_lbls = List.map bir_lbl_from_addr end_addrs;
-
+    val precond = bslSyntax.bandl (pred_conjs reqs);
     (* TODO: remove birs_env_thm and bsysprecond_thm make it separate things (only needed for transfer) *)
       (* they shouldn't come out of the symbolic exec function, it is only needed for the transfer, and it shouldn't be a problem to compute it repeatedly, see the function gen_senv_GEN_thm below *)
-    val (birs_state_init, _, _) =
-      bir_symb_analysis_init_gen (SOME pcond_gen_symb) init_lbl precond prog_birenvtyl_def;
-    val symb_exec_thm =
-      bir_symb_analysis bprog_tm end_lbls birs_state_init;
-
-    (* TODO: should merge Pi states here, also handle intervals correctly, in symbolic execution driver (together with the indirectjump handling and previous summaries) and also before merging *)
-    val interval_thm = birs_intervals_Pi_RULE "countw" symb_exec_thm;
-    val merged_thm = birs_Pi_merge_RULE interval_thm;
+    val (init_state, _, _) =
+      bir_symbLib.bir_symb_analysis_init_gen (SOME bir_symbLib.pcond_gen_symb) init_lbl precond prog_birenvtyl_def;
   in
-    merged_thm
+    init_state
   end;
 
-
-
-fun birs_execute_Pi_first_further (bprog_tm, _) end_addrs thm =
+ fun birs_basic_execute (bprog_tm, prog_birenvtyl_def) end_addrs init_state =
   let
-    open bir_immSyntax;
     open birs_intervalLib;
-    open birs_composeLib;
-
-    fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
-    val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl;
 
     val end_lbls = List.map bir_lbl_from_addr end_addrs;
-
-    val birs_state_tm = (get_birs_Pi_first o concl) thm;
-
-    (* execute further *)
-    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
-    val symb_more_thm =
-      bir_symbLib.bir_symb_analysis bprog_tm end_lbls (birs_state_tm);
-    (* cleanup *)
-    val symb_more_interval_thm = birs_intervals_Pi_RULE "countw" symb_more_thm;
-    (* SEQ *)
-    val symb_more_compose_thm = birs_rule_SEQ_fun birs_rule_SEQ_thm thm symb_more_interval_thm;
+    val symb_exec_thm =
+      bir_symbLib.bir_symb_analysis bprog_tm end_lbls init_state;
+    val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
   in
-    symb_more_compose_thm
+    interval_thm
+  end;
+end
+
+val birs_basic_merge =
+  let
+    open birs_mergeLib;
+    open birs_intervalLib;
+  in
+    (birs_Pi_merge_RULE o birs_intervals_Pi_bounds_RULE "countw")
+  end;
+
+fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
+  let
+    open birs_composeLib;
+    open birs_instantiationLib;
+    open birs_intervalLib;
+    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
+    val inst_SEQ_fun = birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bir_symbLib.pcond_gen_symb;
+  in
+    fn A_thm => (birs_intervals_Pi_unify_RULE "countw" o inst_SEQ_fun A_thm)
+  end;
+
+(* ========================================================================================== *)
+
+  (* TODO: add previous summaries and indirectjump theorems as argument here, and the proper handling in the buildtree function (probably good as function argument) *)
+     (* handle intervals correctly: in symbolic execution driver (together with the indirectjump handling and previous summaries) and also before merging *)
+  fun birs_summary (bprog_tm, prog_birenvtyl_def) reqs (init_addr, end_addr) =
+    let
+      val init_state = birs_basic_init_state (bprog_tm, prog_birenvtyl_def) reqs init_addr;
+      val symb_exec_thm = birs_basic_execute (bprog_tm, prog_birenvtyl_def) [end_addr] init_state;
+
+      val merged_thm = birs_basic_merge symb_exec_thm;
+    in
+      merged_thm
   end;
 
   fun gen_senv_GEN_thm prog_birenvtyl_def =
