@@ -4,12 +4,13 @@ open balrob_supportLib;
 
 val _ = new_theory "balrob_ends";
 
-(* __clzsi2 *)
-val reqs = (0,21);
-val init_addr = ``0x100013b4w : word32``;
-val end_addr = ``0x100013dcw : word32``;
+val entry_name = "__clzsi2";
+val reqs = get_fun_usage entry_name;
+val locs =
+  (0x100013b4,
+   0x100013dc);
 
-val symb_exec_thm = birs_summary birs_prog_config reqs (init_addr, end_addr);
+val symb_exec_thm = birs_summary birs_prog_config reqs locs;
 
 Theorem balrob_clzsi2_symb_exec_thm = symb_exec_thm
 
