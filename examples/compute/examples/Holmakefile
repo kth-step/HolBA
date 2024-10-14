@@ -6,13 +6,14 @@ INCLUDES = $(HOLBADIR)/examples/compute/examples/increment \
  $(HOLBADIR)/examples/compute/examples/sum_list \
  $(HOLBADIR)/examples/compute/examples/jump_chain
 
-all: $(DEFAULT_TARGETS) test-examples.exe
+all: $(DEFAULT_TARGETS) benchmark-examples.exe
 .PHONY: all
 
-test-examples.exe: test-examples.uo
+benchmark-examples.exe: benchmark-examples.uo
 	$(HOLMOSMLC) -o $@ $<
 
-test: test-examples.exe
-	./test-examples.exe
+benchmark: benchmark-examples.exe
+	./benchmark-examples.exe
+.PHONY: benchmark
 
-EXTRA_CLEANS = test-examples.exe
+EXTRA_CLEANS = benchmark-examples.exe

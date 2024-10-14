@@ -24,5 +24,6 @@ test-compute.exe: test-compute.uo
 
 test: test-compute.exe
 	./test-compute.exe
+.PHONY: test
 
 EXTRA_CLEANS = test-compute.exe
