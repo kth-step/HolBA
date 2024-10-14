@@ -189,11 +189,152 @@ val configs          = [("balrob",
 
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
 
+  val birs_simp_default_core_exp_simp =
+    let
+      val include_64 = true;
+      val include_32 = true;
+      val mem_64 = false;
+      val mem_32 = false;
+      val riscv = false;
+      val cm0 = false;
+    in
+      birs_simp_instancesLib.birs_simp_gen
+        (birs_simp_instancesLib.simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        (birs_simp_instancesLib.load_thms_tuple mem_64 mem_32)
+        false
+    end;
+
+  local
+    open bir_programSyntax;
+    open optionSyntax;
+    fun is_SOME_BStmtB_BStmt_Assign t = is_some t andalso (is_BStmtB o dest_some) t andalso (is_BStmt_Assign o dest_BStmtB o dest_some) t;
+  in
+    fun apply_if_assign tm f =
+      if is_SOME_BStmtB_BStmt_Assign tm then
+        f
+      else
+        I;
+    fun apply_if_branch f t =
+      let
+        val Pi_len = (get_birs_Pi_length o concl) t;
+      in
+        if Pi_len > 1 then
+          f t
+        else
+          t
+      end;
+  end
+
+(* -------------------------------------------------------------------------- *)
+
+fun is_BExp_IntervalPred_normform tm =
+  let
+    open bir_expSyntax;
+    val (x,iv) = dest_BExp_IntervalPred tm;
+    val (l,h) = pairSyntax.dest_pair iv;
+    val is_ok =
+       is_BExp_Den x andalso
+       not (is_BExp_IfThenElse l) andalso
+       not (is_BExp_IfThenElse h);
+  in
+    is_ok
+  end
+  handle _ => false;
+
+fun check_BExp_IntervalPred_normform tm =
+  let
+    val err = ref false;
+    val _ = birs_auxLib.GEN_match_conv
+       is_BExp_IntervalPred
+       (fn t =>
+         (if is_BExp_IntervalPred_normform t
+         then ()
+         else (print_term tm; err := true); REFL t))
+       tm
+       handle UNCHANGED => TRUTH;
+    val _ = if not (!err) then () else
+      raise ERR "check_BExp_IntervalPred_normform" "not ok";
+  in
+    ()
+  end;
+
+fun debug_Pi_fun t =
+  let
+      val _ = if (symb_sound_struct_is_normform o concl) t then () else
+              raise ERR "debug_Pi_fun" "theorem is not a standard birs_symb_exec";
+    open birs_utilsLib;
+    open bir_expSyntax;
+    val Pis = (pred_setSyntax.strip_set o get_birs_Pi o concl) t;
+    fun find_env_exp varname mappings =
+     let
+      val is_m_for_varname = (fn x => x = varname) o stringSyntax.fromHOLstring o fst;
+      fun get_exp_if m =
+        if is_m_for_varname m then SOME m else NONE;
+      val m_o = List.foldl (fn (m, acc) => case acc of SOME x => SOME x | NONE => get_exp_if m) NONE mappings;
+      val m = valOf m_o handle _ => raise ERR "debug_Pi_fun" "variable name not mapped in bir state";
+     in snd m end;
+    fun debug_expression_exception callback cond tm =
+      if cond tm then (
+          callback tm;
+          raise ERR "debug_Pi_fun" "found it"
+        )
+      else ();
+    val _ = List.map (fn state_tm =>
+      let
+        val (pc,env,_,_) = dest_birs_state state_tm;
+        val exp = (find_env_exp "countw" o get_env_mappings) env;
+        val _ = debug_expression_exception (fn tm =>
+          (print_term pc; print_term tm; print_thm t)) is_BExp_IfThenElse exp;
+      in () end) Pis;
+  in
+    t
+  end;
+
+(* -------------------------------------------------------------------------- *)
+
+
 local
     open bir_immSyntax;
     fun mk_word_addr v = wordsSyntax.mk_wordii(v, 32);
     fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
     val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl o mk_word_addr;
+
+   fun bir_local_symb_analysis bprog_tm birs_end_lbls birs_state =
+   let
+      val birs_simp_select = birs_simp_instancesLib.birs_simp_default_armcm0_gen true;
+      val birs_simp_select_ifthenelse = birs_simp_default_core_exp_simp;
+      open holba_miscLib;
+
+      val timer_symbanalysis = timer_start 0;
+      val timer_symbanalysis_last = ref (timer_start 0);
+      fun debug_output_RULE t =
+         (timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
+         timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
+         timer_symbanalysis_last := timer_start 0;
+         (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
+         t);
+
+      open birs_execLib;
+      val birs_simp_RULE_gen = birs_rule_SUBST_trysimp_fun (birs_rule_SUBST_prog_fun bprog_tm);
+      fun birs_simp_RULE last_stmt =
+        ((* the ifthenelse simplification for countw assignments before branches, that gets applied after the branch happens and the condition is available in the branchcondition *)
+         apply_if_branch (birs_simp_RULE_gen (birs_simp_select_ifthenelse)) o
+         (* the simplification after assignments *)
+         apply_if_assign last_stmt (birs_simp_RULE_gen (birs_simp_select)));
+      val birs_prune_RULE =
+        (birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
+         birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
+         birs_rule_tryjustassert_fun true);
+
+      fun birs_post_step_fun (t, (last_pc, last_stmt)) = (
+         debug_output_RULE o
+         (*(apply_if_branch debug_Pi_fun) o*)
+         birs_simp_RULE last_stmt o
+         birs_prune_RULE
+      ) t;
+   in
+      birs_driveLib.bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state
+   end
 in
  fun birs_basic_init_state (bprog_tm, prog_birenvtyl_def) reqs init_addr =
   let
@@ -213,12 +354,73 @@ in
 
     val end_lbls = List.map bir_lbl_from_addr end_addrs;
     val symb_exec_thm =
-      bir_symbLib.bir_symb_analysis bprog_tm end_lbls init_state;
+      bir_local_symb_analysis bprog_tm end_lbls init_state;
     val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
   in
     interval_thm
   end;
 end
+
+(*
+val bexp = ``BExp_IfThenElse
+                (BExp_BinPred BIExp_LessOrEqual
+                   (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm32 1w))
+                      (BExp_Const (Imm32 16w)))
+                   (BExp_Den (BVar "sy_R0" (BType_Imm Bit32))))
+                (BExp_BinExp BIExp_Plus
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 4w))) (BExp_Const (Imm64 1w)))
+                (BExp_BinExp BIExp_Plus
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 4w))) (BExp_Const (Imm64 3w)))``;
+
+val pcond = ``BExp_BinExp BIExp_And
+            (BExp_BinExp BIExp_And
+               (BExp_BinExp BIExp_And
+                  (BExp_UnaryExp BIExp_Not
+                     (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1))))
+                  (BExp_BinExp BIExp_And
+                     (BExp_BinPred BIExp_Equal
+                        (BExp_BinExp BIExp_And
+                           (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                           (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w)))
+                     (BExp_BinExp BIExp_And
+                        (BExp_BinExp BIExp_And
+                           (BExp_BinPred BIExp_LessThan
+                              (BExp_Const (Imm32 0x10001FE0w))
+                              (BExp_Den
+                                 (BVar "sy_SP_process" (BType_Imm Bit32))))
+                           (BExp_BinPred BIExp_LessOrEqual
+                              (BExp_Den
+                                 (BVar "sy_SP_process" (BType_Imm Bit32)))
+                              (BExp_Const (Imm32 0x10001FF0w))))
+                        (BExp_BinPred BIExp_LessOrEqual
+                           (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                           (BExp_Const (Imm64 0xFFFFF38w))))))
+               (BExp_Den (BVar "syp_gen" (BType_Imm Bit1))))
+            (BExp_UnaryExp BIExp_Not
+               (BExp_BinPred BIExp_LessOrEqual
+                  (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm32 1w))
+                     (BExp_Const (Imm32 16w)))
+                  (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))))``;
+open birs_simpLib;
+val simp_tm = birs_simp_gen_term pcond bexp;
+
+val birs_simp_select = birs_simp_instancesLib.birs_simp_default_armcm0_gen true;
+val birs_simp_select = birs_simp_default_core_exp_simp;
+
+val _ = print_thm (birs_simp_select simp_tm);
+*)
+
+(*
+val _ = print "\n\n";
+val _ = raise Fail "done";
+val init_state = birs_basic_init_state birs_prog_config (200, 200) 0x100013b4;
+val thm = birs_basic_execute birs_prog_config [0x100013BE, 0x100013C2] init_state;
+*)
+
 
 val birs_basic_merge =
   let
