@@ -286,9 +286,10 @@ in (* local *)
      end
     end;
 
-
+(*
   (* use this function after an execution (or after merging), and before the next merging *)
   fun birs_intervals_Pi_RULE vn = (birs_intervals_Pi_bounds_RULE vn o birs_intervals_Pi_unify_RULE vn);
+*)
 
 
 end (* local *)
