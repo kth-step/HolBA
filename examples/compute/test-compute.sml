@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open ottTheory birTheory;
+open ottTheory birTheory bir_metaTheory;
 open bir_cv_basicLib;
 open bir_cv_envLib;
 open bir_cv_programLib;
