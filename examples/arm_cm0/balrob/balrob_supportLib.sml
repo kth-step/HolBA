@@ -191,8 +191,9 @@ val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, b
 
 local
     open bir_immSyntax;
+    fun mk_word_addr v = wordsSyntax.mk_wordii(v, 32);
     fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
-    val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl;
+    val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl o mk_word_addr;
 in
  fun birs_basic_init_state (bprog_tm, prog_birenvtyl_def) reqs init_addr =
   let
