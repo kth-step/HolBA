@@ -255,20 +255,21 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
       ``,
         cheat (* TODO: connect this with prep_thm from above *)
       );*)
-    val inst_thm = SIMP_RULE std_ss [] ((SPEC bprog_tm o INST_TYPE [Type.alpha |-> prog_type]) birs_rule_SUBST_spec_thm);
+    val inst_thm1 = SIMP_RULE std_ss [] ((SPEC bprog_tm o INST_TYPE [Type.alpha |-> prog_type]) birs_rule_SUBST_thm);
+    val inst_thm2 = SIMP_RULE std_ss [] ((SPEC bprog_tm o INST_TYPE [Type.alpha |-> prog_type]) birs_rule_SUBST_spec_thm);
     (*val _ = (print_term o concl) inst_thm;*)
   in
-    inst_thm
+    (inst_thm1,inst_thm2)
   end;
 
 
 (*
-val single_step_prog_thm = result;
+val thm = result;
 *)
-fun birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm birs_simp_fun single_step_prog_thm =
+fun birs_rule_SUBST_trysimp_SING_fun (_,birs_rule_SUBST_thm) birs_simp_fun thm =
   let
     val assignment_thm_o =
-      SOME (MATCH_MP birs_rule_SUBST_thm single_step_prog_thm)
+      SOME (MATCH_MP birs_rule_SUBST_thm thm)
       handle _ => NONE;
 
     val simp_t_o = Option.mapPartial (fn assignment_thm =>
@@ -286,9 +287,46 @@ fun birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm birs_simp_fun single_step_pr
   in
     case simp_t_o of
        SOME (simp_t, assignment_thm) => MATCH_MP assignment_thm simp_t
-     | NONE => single_step_prog_thm
+     | NONE => thm
   end;
-val birs_rule_SUBST_trysimp_fun = fn x => Profile.profile "birs_rule_SUBST_trysimp_fun" (birs_rule_SUBST_trysimp_fun x);
+val birs_rule_SUBST_trysimp_SING_fun = fn x => Profile.profile "birs_rule_SUBST_trysimp_SING_fun" (birs_rule_SUBST_trysimp_SING_fun x);
+
+fun birs_rule_SUBST_trysimp_first_fun (birs_rule_SUBST_thm,_) birs_simp_fun thm =
+  let
+    val assignment_thm_o =
+      SOME (MATCH_MP birs_rule_SUBST_thm thm)
+      handle _ => NONE;
+
+    val simp_t_o = Option.mapPartial (fn assignment_thm =>
+      let
+        val simp_tm = (fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
+        (*val _ = print_term simp_tm;*)
+    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
+        val simp_t = birs_simp_fun simp_tm;
+        (* TODO: need to remove the following line later and enable the simp function above *)
+        (*val simp_t_o = NONE;*)
+    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> SUBST in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+      in
+        SOME (simp_t, assignment_thm)
+      end) assignment_thm_o;
+    (* Pi is "bs2' INSERT (Pi DELETE bs2)"*)
+    val cleanup_Pi_conv =
+      let
+        open pred_setLib;
+        open aux_setLib;
+      in
+        RAND_CONV (DELETE_CONV birs_state_EQ_CONV)
+      end;
+    val cleanup_RULE = CONV_RULE (birs_utilsLib.birs_Pi_CONV cleanup_Pi_conv);
+  in
+    case simp_t_o of
+       SOME (simp_t, assignment_thm) => cleanup_RULE (MATCH_MP assignment_thm simp_t)
+     | NONE => thm
+  end;
+val birs_rule_SUBST_trysimp_first_fun = fn x => Profile.profile "birs_rule_SUBST_trysimp_first_fun" (birs_rule_SUBST_trysimp_first_fun x);
+
+(* TODO: check if there is performance difference between this version and the one that applies the single item case, probably don't need special case... *)
+fun birs_rule_SUBST_trysimp_fun x y = birs_utilsLib.birs_Pi_each_RULE (birs_rule_SUBST_trysimp_first_fun x y);
 
 end (* local *)
 

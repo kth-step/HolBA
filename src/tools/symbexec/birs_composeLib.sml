@@ -9,6 +9,10 @@ local
 
   open birsSyntax;
   open birs_auxTheory;
+
+  open aux_setLib;
+  open birs_utilsLib;
+
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
   (* error handling *)
@@ -42,29 +46,13 @@ in
       (fn (al,g) => (print_term g; ([(al,g)], fn ([t]) => t))) >>
       (fn x => (print "starting to compute concrete set of free symbols\n"; ALL_TAC x)) >>
       *)
-      CONV_TAC (LAND_CONV (aux_setLib.varset_INTER_CONV)) >>
+      CONV_TAC (LAND_CONV (varset_INTER_CONV)) >>
 
       REWRITE_TAC [pred_setTheory.EMPTY_SUBSET]
     );
    in
     freesymbols_thm
    end;
-
-  fun tidyup_birs_symb_exec_CONV stateset_conv labelset_conv tm =
-    let
-      val _ = if is_birs_symb_exec tm then () else
-              raise ERR "tidyup_birs_symb_exec_CONV" "cannot handle term";
-
-      val struct_CONV =
-        RAND_CONV;
-      fun Pi_CONV conv =
-        RAND_CONV (RAND_CONV conv);
-      fun L_CONV conv =
-        RAND_CONV (LAND_CONV conv);
-    in
-      (struct_CONV (Pi_CONV stateset_conv) THENC
-       struct_CONV (L_CONV labelset_conv)) tm
-    end;
 
   (*
   val step_A_thm = single_step_A_thm;
@@ -86,14 +74,17 @@ in
       val _ = print "composed\n";
 
       (* tidy up set operations to not accumulate (in both, post state set and label set) *)
-      val bprog_L_fixed_thm = CONV_RULE (tidyup_birs_symb_exec_CONV aux_setLib.birs_state_DIFF_UNION_CONV aux_setLib.labelset_UNION_CONV) bprog_composed_thm
+      val bprog_fixed_thm = CONV_RULE
+         (birs_Pi_CONV birs_state_DIFF_UNION_CONV THENC
+          birs_L_CONV labelset_UNION_CONV)
+         bprog_composed_thm
         handle e => (print "\n\n"; print_thm bprog_composed_thm; print "tidy up Pi and labelset failed\n"; raise e);
 
-      val _ = if symb_sound_struct_is_normform (concl bprog_L_fixed_thm) then () else
-              (print_term (concl bprog_L_fixed_thm);
+      val _ = if symb_sound_struct_is_normform (concl bprog_fixed_thm) then () else
+              (print_term (concl bprog_fixed_thm);
               raise ERR "birs_rule_SEQ_fun" "something is not right, the produced theorem is not evaluated enough");
     in
-      bprog_L_fixed_thm
+      bprog_fixed_thm
     end;
 
 

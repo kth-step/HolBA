@@ -315,6 +315,29 @@ QED
 (* ******************************************************* *)
 (*      SUBST rule                                         *)
 (* ******************************************************* *)
+Theorem symb_rule_SUBST_thm[local]:
+  !sr.
+!sys L sys2 var symbexp symbexp' Pi.
+  (symb_symbols_f_sound sr) ==>
+  (symb_ARB_val_sound sr) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, sys2 INSERT Pi)) ==>
+  ((symb_symbst_store sys2) var = SOME symbexp) ==>
+
+  (symb_simplification sr (symb_symbst_pcond sys2) symbexp symbexp') ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, (symb_symbst_store_update var symbexp' sys2) INSERT (Pi DELETE sys2)))
+Proof
+REPEAT STRIP_TAC >>
+
+`!B.((sys2 INSERT Pi) DIFF {sys2}) UNION {B} = B INSERT (Pi DELETE sys2)` by (
+    fs [] >>
+    METIS_TAC [INSERT_SING_UNION, UNION_COMM, DELETE_DEF]
+  ) >>
+
+  METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
+QED
+
 Theorem symb_rule_SUBST_SING_thm[local]:
   !sr.
 !sys L sys2 var symbexp symbexp'.
@@ -328,13 +351,53 @@ Theorem symb_rule_SUBST_SING_thm[local]:
 
   (symb_hl_step_in_L_sound sr (sys, L, {symb_symbst_store_update var symbexp' sys2}))
 Proof
-REPEAT STRIP_TAC >>
+  REPEAT STRIP_TAC >>
 
-  `({sys2} DIFF {sys2}) UNION {symb_symbst_store_update var symbexp' sys2} = {symb_symbst_store_update var symbexp' sys2}` by (
-    METIS_TAC [pred_setTheory.DIFF_EQ_EMPTY, pred_setTheory.UNION_EMPTY]
-  ) >>
+  METIS_TAC [symb_rule_SUBST_thm, EMPTY_DELETE]
+QED
 
-  METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
+(* TODO: move to bir_symbScript.sml *)
+Theorem birs_symb_to_symbst_IMAGE_DELETE_thm:
+!x s.
+  IMAGE birs_symb_to_symbst s DELETE birs_symb_to_symbst x =
+  IMAGE birs_symb_to_symbst (s DELETE x)
+Proof
+  simp_tac std_ss [EXTENSION, IN_DELETE, IN_IMAGE] >>
+  metis_tac [birs_symb_to_symbst_EXISTS_thm, birs_symb_from_symbst_EXISTS_thm, birs_symb_to_from_symbst_thm]
+QED
+
+Theorem birs_rule_SUBST_thm:
+  !prog bs L bs2 bs2' lbl envl status pcond vn symbexp symbexp' Pi.
+           (bs2 =
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp)::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>) ==>
+           (bs2' =
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp')::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>) ==>
+           birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+           birs_simplification pcond symbexp symbexp' ==>
+           birs_symb_exec prog (bs, L, bs2' INSERT (Pi DELETE bs2))
+Proof
+  REWRITE_TAC [birs_symb_exec_def, IMAGE_INSERT] >>
+  REPEAT STRIP_TAC >>
+  ASSUME_TAC (
+    (Q.SPECL [`birs_symb_to_symbst bs`, `L`, `birs_symb_to_symbst bs2`, `vn`, `symbexp`, `symbexp'`, `IMAGE birs_symb_to_symbst Pi`] o
+     SIMP_RULE std_ss [bir_symb_soundTheory.birs_symb_ARB_val_sound_thm] o
+     MATCH_MP symb_rule_SUBST_thm o
+     Q.SPEC `prog`)
+       bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+
+  FULL_SIMP_TAC std_ss [birs_symb_to_symbst_IMAGE_DELETE_thm] >>
+
+  REV_FULL_SIMP_TAC (std_ss++birs_state_ss)
+    [IMAGE_SING, birs_symb_to_symbst_def, symb_symbst_store_def, symb_symbst_pcond_def,
+     bir_symb_simpTheory.birs_simplification_thm,
+     symb_symbst_store_update_def, birs_auxTheory.birs_gen_env_thm,
+     combinTheory.UPDATE_APPLY]
 QED
 
 Theorem birs_rule_SUBST_spec_thm:
@@ -353,20 +416,7 @@ Theorem birs_rule_SUBST_spec_thm:
            birs_simplification pcond symbexp symbexp' ==>
            birs_symb_exec prog (bs, L, {bs2'})
 Proof
-  REWRITE_TAC [birs_symb_exec_def] >>
-  REPEAT STRIP_TAC >>
-  ASSUME_TAC (
-    (Q.SPECL [`birs_symb_to_symbst bs`, `L`, `birs_symb_to_symbst bs2`, `vn`, `symbexp`, `symbexp'`] o
-     SIMP_RULE std_ss [bir_symb_soundTheory.birs_symb_ARB_val_sound_thm] o
-     MATCH_MP symb_rule_SUBST_SING_thm o
-     Q.SPEC `prog`)
-       bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
-
-  REV_FULL_SIMP_TAC (std_ss++birs_state_ss)
-    [IMAGE_SING, birs_symb_to_symbst_def, symb_symbst_store_def, symb_symbst_pcond_def,
-     bir_symb_simpTheory.birs_simplification_thm,
-     symb_symbst_store_update_def, birs_auxTheory.birs_gen_env_thm,
-     combinTheory.UPDATE_APPLY]
+  metis_tac [birs_rule_SUBST_thm, EMPTY_DELETE]
 QED
 
 

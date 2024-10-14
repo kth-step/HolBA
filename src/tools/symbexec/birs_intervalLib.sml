@@ -198,7 +198,8 @@ in (* local *)
           val _ = print_term (hd refsymbs);
           *)
           val _ = if length refsymbs = 1 then () else
-            raise ERR "birs_intervals_Pi_first_unify_RULE::get_ref_symb" "unexpected";
+            (print "\n\n"; print_term env_symbol; print_term intervaltm_; print "\n\n";
+             raise ERR "birs_intervals_Pi_first_unify_RULE::get_ref_symb" "unexpected");
         in
           hd refsymbs
         end;

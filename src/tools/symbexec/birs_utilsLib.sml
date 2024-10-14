@@ -326,6 +326,8 @@ in (* local *)
       RAND_CONV;
     fun sys_CONV conv =
       LAND_CONV conv;
+    fun L_CONV conv =
+      RAND_CONV (LAND_CONV conv);
     fun Pi_CONV conv =
       RAND_CONV (RAND_CONV conv);
     val first_CONV =
@@ -335,11 +337,13 @@ in (* local *)
 
     local
       open pred_setSyntax;
+      open pred_setTheory;
       val rotate_first_INSERTs_thm = prove(``
         !x1 x2 xs.
         (x1 INSERT x2 INSERT xs) = (x2 INSERT x1 INSERT xs)
       ``,
-        cheat
+        fs [EXTENSION] >>
+        metis_tac []
       );
       fun is_two_INSERTs tm = (is_insert tm) andalso ((is_insert o snd o dest_insert) tm);
     in
@@ -351,8 +355,7 @@ in (* local *)
           val (x2_tm, xs_tm) = dest_insert x2xs_tm;
           val inst_thm = ISPECL [x1_tm, x2_tm, xs_tm] rotate_first_INSERTs_thm;
         in
-          (* TODO: the result of this should actually just be inst_thm *)
-          REWRITE_CONV [Once inst_thm] tm
+          inst_thm
         end;
 
       fun rotate_INSERTs_conv tm =
@@ -364,8 +367,8 @@ in (* local *)
     (* apply state transformer to sys *)
     fun birs_sys_CONV conv tm =
       let
-        val _ = if symb_sound_struct_is_normform tm then () else
-                raise ERR "birs_sys_CONV" "term is not a standard birs_symb_exec";
+        val _ = if is_birs_symb_exec tm then () else
+                raise ERR "birs_sys_CONV" "cannot handle term";
       in
         (struct_CONV (sys_CONV conv)) tm
       end;
@@ -373,10 +376,19 @@ in (* local *)
     (* apply state transformer to Pi *)
     fun birs_Pi_CONV conv tm =
       let
-        val _ = if symb_sound_struct_is_normform tm then () else
-                raise ERR "birs_Pi_CONV" "term is not a standard birs_symb_exec";
+        val _ = if is_birs_symb_exec tm then () else
+                raise ERR "birs_Pi_CONV" "cannot handle term";
       in
         (struct_CONV (Pi_CONV conv)) tm
+      end;
+
+    (* apply state transformer to L *)
+    fun birs_L_CONV conv tm =
+      let
+        val _ = if is_birs_symb_exec tm then () else
+                raise ERR "birs_L_CONV" "cannot handle term";
+      in
+        struct_CONV (L_CONV conv) tm
       end;
 
     (* apply state transformer to first state in Pi *)
