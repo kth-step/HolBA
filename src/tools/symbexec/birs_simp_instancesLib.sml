@@ -277,6 +277,21 @@ fun birs_simp_store_cheater simp_tm =
           []),
        subexp_cast_thms);
 
+  val birs_simp_default_core_exp_simp =
+    let
+      val include_64 = true;
+      val include_32 = true;
+      val mem_64 = false;
+      val mem_32 = false;
+      val riscv = false;
+      val cm0 = false;
+    in
+      birs_simp_gen
+        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        (load_thms_tuple mem_64 mem_32)
+        false
+    end;
+
   fun birs_simp_default_riscv_gen use_store_cheater =
     let
       val include_64 = true;

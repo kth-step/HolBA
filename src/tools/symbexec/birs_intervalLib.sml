@@ -6,7 +6,7 @@ local
   open HolKernel Parse boolLib bossLib;
 
   open stringSyntax;
-  open bir_envSyntax bir_expSyntax;
+  open bir_envSyntax bir_expSyntax bir_exp_immSyntax;
 
   open birsSyntax;
   open birs_utilsLib;
@@ -30,12 +30,94 @@ local
       (strip_set o snd o dest_eq o concl) thm
     end
     handle _ => raise ERR "get_vars_of_bexp" "did not work";
+(**)
 
-  fun is_beq_left ref_symb tm = (is_comb tm) andalso ((identical ``BExp_BinPred BIExp_Equal (BExp_Den ^(ref_symb))`` o fst o dest_comb) tm);
-  fun is_binterval ref_symb tm = (is_comb tm) andalso ((identical ``BExp_IntervalPred (BExp_Den ^(ref_symb))`` o fst o dest_comb) tm);
+  fun vn_symb vn = "syi_" ^ vn;
+  fun init_symb vn = ("sy_"^vn);
+
+  fun dest_BExp_IntervalPred_normform_limit tm =
+    let
+      val (bop, left, right) = dest_BExp_BinExp tm;
+      val refvar = dest_BExp_Den left;
+      val v = dest_BExp_Const right;
+      val _ =
+        if is_BIExp_Plus bop
+        then ()
+        else raise ERR "dest_BExp_IntervalPred_normform_limit" "";
+    in
+      (refvar, v)
+    end
+    handle _ => raise ERR "dest_BExp_IntervalPred_normform_limit" ("not in standard shape" ^ (term_to_string tm));
+
+  fun is_beq_left ref_symb tm = (is_comb tm) andalso ((identical (mk_comb (mk_comb (BExp_BinPred_tm, BIExp_Equal_tm), mk_BExp_Den ref_symb)) o fst o dest_comb) tm);
+  fun is_binterval ref_symb tm = (is_comb tm) andalso ((identical (mk_comb (BExp_IntervalPred_tm, mk_BExp_Den ref_symb)) o fst o dest_comb) tm);
   fun beq_left_to_binterval ref_symb tm =
-    let val minmax_tm = (snd o dest_comb) tm;
-    in ``BExp_IntervalPred (BExp_Den ^(ref_symb)) (^minmax_tm, ^minmax_tm)`` end;
+    let
+      val minmax_tm = (snd o dest_comb) tm;
+      val minmax_fixed_tm =
+        if can dest_BExp_IntervalPred_normform_limit minmax_tm then
+          minmax_tm
+        else if is_BExp_Den minmax_tm then
+          mk_BExp_BinExp (BIExp_Plus_tm, minmax_tm, mk_BExp_Const (``0w:word64``))
+        else
+          raise (print_term tm; ERR "beq_left_to_binterval" "unexpected expression");
+    in mk_BExp_IntervalPred (mk_BExp_Den ref_symb, pairSyntax.mk_pair(minmax_fixed_tm, minmax_fixed_tm)) end;
+
+  fun interval_from_state vn tm =
+    let
+      val (_,env,_,pcond) = dest_birs_state tm;
+      val env_exp = (snd o get_env_top_mapping) env;
+      (* check that env_exp is just a bexp_den and has the name vn_symb *)
+      val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
+        raise ERR "interval_from_state" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
+      val env_symbol = dest_BExp_Den env_exp;
+      val pcondl = dest_band pcond;
+      val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
+      val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
+      val _ = if length pcond_intervaltms = 1 then () else
+        raise ERR "interval_from_state" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
+      val interval = hd pcond_intervaltms;
+    in
+      (interval, fn x => bslSyntax.bandl (x::pcondl_filtd))
+    end;
+
+  fun dest_BExp_IntervalPred_normform tm =
+    let
+      val (x,iv) = dest_BExp_IntervalPred tm;
+      val (l,h) = pairSyntax.dest_pair iv;
+      val xvar = dest_BExp_Den x;
+      val (refvarl, lval) = dest_BExp_IntervalPred_normform_limit l;
+      val (refvarh, hval) = dest_BExp_IntervalPred_normform_limit h;
+      val _ =
+        if identical refvarl refvarh
+        then ()
+        else raise ERR "dest_BExp_IntervalPred_normform" "";
+    in
+      (xvar, refvarl, (lval,hval))
+    end
+    handle _ => raise ERR "dest_BExp_IntervalPred_normform" ("not in standard shape" ^ (term_to_string tm));
+
+  fun is_BExp_IntervalPred_normform vn tm =
+    let
+      val (xvar, refvar, _) = dest_BExp_IntervalPred_normform tm;
+    in
+      ((fst o dest_BVar_string) xvar) = vn_symb vn andalso
+      ((fst o dest_BVar_string) refvar) = init_symb vn
+    end
+    handle _ => false;
+
+  fun check_BExp_IntervalPred_normform_RULE vn thm =
+    let
+      val Pi_tms = (pred_setSyntax.strip_set o get_birs_Pi o concl) thm;
+      val intervaltms = List.map (fst o interval_from_state vn) Pi_tms;
+
+      val is_ok = if List.all (is_BExp_IntervalPred_normform vn) intervaltms then () else (
+        print_thm thm;
+        raise ERR "check_BExp_IntervalPred_normform_RULE" "some interval is not in a standard form"
+      );
+    in
+      thm
+    end;
 
 local
 val intervalpattern64_tm = ``
@@ -140,8 +222,6 @@ in (* local *)
     let
       val _ = if (symb_sound_struct_is_normform o concl) thm then () else
               raise ERR "birs_intervals_Pi_first_unify_RULE" "theorem is not a standard birs_symb_exec";
-      val vn_symb = "syi_" ^ vn;
-      val init_symb = ("sy_"^vn);
 
       val _ = if not debug_mode then () else print "starting to unify interval for one Pi state\n";
 
@@ -153,7 +233,7 @@ in (* local *)
           then remember it (because there should already be an interval for it in the path condition),
           otherwise freesymbol the mapping *)
       val (thm1, env_symbol) =
-        if (is_BExp_Den env_exp) andalso (((fn x => x <> init_symb) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then
+        if (is_BExp_Den env_exp) andalso (((fn x => x <> init_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then
           (thm0, dest_BExp_Den env_exp)
         else
           let
@@ -184,6 +264,7 @@ in (* local *)
         ) else if length pcond_eqtms > 1 then
           raise ERR "birs_intervals_Pi_first_unify_RULE" "unexpected2"
         else
+          (* introduction of interval must already start in standard form, limits have to be plus(den,const) *)
           (beq_left_to_binterval env_symbol (hd pcond_eqtms));
       val _ = if not debug_mode then () else print_term intervaltm;
 
@@ -205,7 +286,7 @@ in (* local *)
         end;
       val refsymb = get_ref_symb intervaltm;
       val (intervalterm_fusion, pcondl_filtd_two) =
-        if (fst o dest_BVar_string) refsymb = init_symb then
+        if (fst o dest_BVar_string) refsymb = init_symb vn then
           (intervaltm, pcondl_filtd)
         else
           let
@@ -228,7 +309,7 @@ in (* local *)
         (* rename so that the symbol used is ("syi_"^vn) for readability *)
       (* TODO: check, at this point no BVar symbol with the name vn_symb should occur in thm *)
       (* TODO: we will need a rename rule for this later, this one just works now because it is not following the theorem checks *)
-      val thm9 = birs_instantiationLib.birs_sound_symb_inst_RULE [(env_symbol, mk_BExp_Den (mk_BVar_string (vn_symb, (snd o dest_BVar) env_symbol)))] thmx;
+      val thm9 = birs_instantiationLib.birs_sound_symb_inst_RULE [(env_symbol, mk_BExp_Den (mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol)))] thmx;
 
       val _ = if not debug_mode then () else print "done unifying interval for one Pi state\n";
     in
@@ -236,6 +317,8 @@ in (* local *)
     end;
 
   fun birs_intervals_Pi_unify_RULE vn = birs_Pi_each_RULE (birs_intervals_Pi_first_unify_RULE vn);
+  val birs_intervals_Pi_unify_RULE = fn vn => check_BExp_IntervalPred_normform_RULE vn o birs_intervals_Pi_unify_RULE vn;
+  val birs_intervals_Pi_unify_RULE = fn x => Profile.profile "birs_intervals_Pi_unify_RULE" (birs_intervals_Pi_unify_RULE x);
 
   (* goes through all Pi states and unifies the interval bounds for env mapping vn (needed prior to merging of states) *)
     (* assumes that the unify rule was running before *)
@@ -248,9 +331,6 @@ in (* local *)
     in
      if Pi_len < 2 then thm else
      let
-      val vn_symb = "syi_" ^ vn;
-      val init_symb = ("sy_"^vn);
-
       val _ = if not debug_mode then () else print "starting to widen the bounds of the intervals in all Pi states\n";
 
       (* collect the intervals from each Pi pathcondition *)
@@ -260,7 +340,7 @@ in (* local *)
           val (_,env,_,pcond) = dest_birs_state tm;
           val env_exp = (snd o get_env_top_mapping) env;
           (* check that env_exp is just a bexp_den and has the name vn_symb *)
-          val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
+          val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
             raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
           val env_symbol = dest_BExp_Den env_exp;
           val pcondl = dest_band pcond;
@@ -286,6 +366,8 @@ in (* local *)
       thm_new
      end
     end;
+  val birs_intervals_Pi_bounds_RULE = fn vn => check_BExp_IntervalPred_normform_RULE vn o birs_intervals_Pi_bounds_RULE vn;
+  val birs_intervals_Pi_bounds_RULE = fn x => Profile.profile "birs_intervals_Pi_bounds_RULE" (birs_intervals_Pi_bounds_RULE x);
 
 (*
   (* use this function after an execution (or after merging), and before the next merging *)
