@@ -189,27 +189,6 @@ val configs          = [("balrob",
 
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
 
-  local
-    open bir_programSyntax;
-    open optionSyntax;
-    fun is_SOME_BStmtB_BStmt_Assign t = is_some t andalso (is_BStmtB o dest_some) t andalso (is_BStmt_Assign o dest_BStmtB o dest_some) t;
-  in
-    fun apply_if_assign tm f =
-      if is_SOME_BStmtB_BStmt_Assign tm then
-        f
-      else
-        I;
-    fun apply_if_branch f t =
-      let
-        val Pi_len = (get_birs_Pi_length o concl) t;
-      in
-        if Pi_len > 1 then
-          f t
-        else
-          t
-      end;
-  end
-
 (* -------------------------------------------------------------------------- *)
 
 (*
@@ -275,9 +254,9 @@ local
       val birs_simp_RULE_gen = birs_rule_SUBST_trysimp_fun (birs_rule_SUBST_prog_fun bprog_tm);
       fun birs_simp_RULE last_stmt =
         ((* the ifthenelse simplification for countw assignments before branches, that gets applied after the branch happens and the condition is available in the branchcondition *)
-         apply_if_branch (birs_simp_RULE_gen (birs_simp_select_ifthenelse)) o
+         birs_if_branch_RULE (birs_simp_RULE_gen (birs_simp_select_ifthenelse)) o
          (* the simplification after assignments *)
-         apply_if_assign last_stmt (birs_simp_RULE_gen (birs_simp_select)));
+         birs_if_assign_RULE last_stmt (birs_simp_RULE_gen (birs_simp_select)));
       val birs_prune_RULE =
         (birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
          birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
