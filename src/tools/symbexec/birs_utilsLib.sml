@@ -184,6 +184,20 @@ in (* local *)
         NONE
     end;
 
+  fun check_imp_tm imp_tm =
+    if not (is_birs_exp_imp imp_tm) then raise ERR "check_imp_tm" "term needs to be birs_exp_imp" else
+    let
+      val (pred1_tm, pred2_tm) = dest_birs_exp_imp imp_tm;
+      val imp_bexp_tm = bslSyntax.bor (bslSyntax.bnot pred1_tm, pred2_tm);
+      val imp_is_taut = bir_smtLib.bir_smt_check_taut false imp_bexp_tm;
+    in
+      if imp_is_taut then
+        SOME (mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm))
+      else
+        NONE
+    end;
+    val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
+
   (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
   fun birs_Pi_first_pcond_RULE pcond_new thm =
     let
@@ -208,7 +222,7 @@ in (* local *)
                           isSome (is_DROP_L_imp imp_tm) orelse
                           isSome (is_conjunct_inclusion_imp imp_tm);
       val pcond_imp_ok = pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)
-                         isSome (birs_simpLib.check_imp_tm imp_tm);
+                         isSome (check_imp_tm imp_tm);
       val _ = if pcond_imp_ok then () else
               (print "widening failed, path condition is not weaker\n";
                raise ERR "birs_Pi_first_pcond_RULE" "the supplied path condition is not weaker");
@@ -258,7 +272,7 @@ in (* local *)
       val _ = holba_z3Lib.debug_print := true;
       val _ = print "sending a z3 query\n";
       *)
-      val pcond_imp_ok = isSome (birs_simpLib.check_imp_tm imp_tm);
+      val pcond_imp_ok = isSome (check_imp_tm imp_tm);
       val _ = if pcond_imp_ok then () else
               (print "narrowing failed, path condition is not stronger\n";
                raise ERR "birs_sys_pcond_RULE" "the supplied path condition is not stronger");
@@ -448,6 +462,19 @@ in (* local *)
     end;
 
 (* ---------------------------------------------------------------------------------------- *)
+  local
+    open bir_programSyntax;
+    open optionSyntax;
+  in
+    fun birs_is_stmt_Assign tm = is_some tm andalso (is_BStmtB o dest_some) tm andalso (is_BStmt_Assign o dest_BStmtB o dest_some) tm;
+    fun birs_is_exec_branch thm = (get_birs_Pi_length o concl) thm > 1;
+
+    fun birs_cond_RULE c f =
+      if c then f else I;
+    
+    fun birs_if_assign_RULE tm = birs_cond_RULE (birs_is_stmt_Assign tm);
+    fun birs_if_branch_RULE f thm = birs_cond_RULE (birs_is_exec_branch thm) f thm;
+  end
 
 end (* local *)
 

@@ -19,19 +19,6 @@ local
 
   val debug_mode = false;
 
-(* TODO: move to bir_vars_ofLib *)
-  fun get_vars_of_bexp tm =
-    let
-      open bir_vars_ofLib;
-      open pred_setSyntax;
-      open bir_typing_expSyntax;
-      val thm = bir_vars_of_exp_DIRECT_CONV (mk_bir_vars_of_exp tm);
-    in
-      (strip_set o snd o dest_eq o concl) thm
-    end
-    handle _ => raise ERR "get_vars_of_bexp" "did not work";
-(**)
-
   fun vn_symb vn = "syi_" ^ vn;
   fun init_symb vn = ("sy_"^vn);
 
@@ -272,7 +259,7 @@ in (* local *)
       (* TODO: the following is a quick solution without much checks *)
       fun get_ref_symb intervaltm_ =
         let
-          val refsymbs = List.filter (fn x => not (identical x env_symbol)) (get_vars_of_bexp intervaltm_);
+          val refsymbs = List.filter (fn x => not (identical x env_symbol)) (bir_vars_ofLib.get_vars_of_bexp intervaltm_);
           (*
           val _ = PolyML.print_depth 10;
           val _ = PolyML.print refsymbs;

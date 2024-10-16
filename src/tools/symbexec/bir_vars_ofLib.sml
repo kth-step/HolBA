@@ -38,6 +38,15 @@ in (* local *)
   val bir_vars_of_exp_CONV =
     birs_auxLib.GEN_match_conv (is_bir_vars_of_exp) bir_vars_of_exp_DIRECT_CONV;
 
+  fun get_vars_of_bexp tm =
+    let
+      open pred_setSyntax;
+      val thm = bir_vars_of_exp_DIRECT_CONV (mk_bir_vars_of_exp tm);
+    in
+      (strip_set o snd o dest_eq o concl) thm
+    end
+    handle _ => raise ERR "get_vars_of_bexp" "did not work";
+
 (* ---------------------------------------------------------------------------------- *)
 (*  symbols of set of symbolic states                                                 *)
 (* ---------------------------------------------------------------------------------- *)

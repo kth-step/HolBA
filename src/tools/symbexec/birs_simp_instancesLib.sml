@@ -5,7 +5,6 @@ local
 
   open HolKernel Parse boolLib bossLib;
   open bir_exp_typecheckLib;
-  open bir_smtLib;
   open birs_simpLib;
   
   open bir_symb_simpTheory;
@@ -75,7 +74,7 @@ in
     val vsz_eq = identical (get_type_of_bexp expv1) (get_type_of_bexp expv2);
     
     val imp_tm = birsSyntax.mk_birs_exp_imp (pcond, bslSyntax.beq (expad1, expad2));
-    val ad_is_eq = isSome (check_imp_tm imp_tm);
+    val ad_is_eq = isSome (birs_utilsLib.check_imp_tm imp_tm);
   in
     endi_eq andalso
     vsz_eq andalso
