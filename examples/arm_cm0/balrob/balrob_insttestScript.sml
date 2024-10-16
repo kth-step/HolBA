@@ -26,6 +26,9 @@ val A_thm = balrob_summary_insttest_thm;
 val B_thm = balrob_summary___clzsi2_thm;
 val inst_thm = birs_basic_instantiate birs_prog_config A_thm B_thm;
 
+val _ = print "\n";
+val _ = Profile.print_profile_results (Profile.results ());
+
 Theorem balrob_insttest_symb_inst_thm = inst_thm
 
 val _ = export_theory ();
