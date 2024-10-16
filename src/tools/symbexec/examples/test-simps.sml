@@ -126,7 +126,7 @@ val test_cases = [
                       (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
                       (BExp_Const (Imm64 4w))) (BExp_Const (Imm64 3w)))``,
   ``(BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-       (BExp_Const (Imm64 (4w + 3w))))``),
+       (BExp_Const (Imm64 (7w))))``),
 
   (riscv_simp,
   ``(BExp_Const (Imm1 1w))``,
@@ -143,7 +143,7 @@ val test_cases = [
                                        (BExp_Cast BIExp_LowCast
                                           (BExp_Const (Imm64 7w)) Bit32)
                                        Bit64)) Bit32) Bit64) Bit32) Bit64``,
-  ``BExp_Const (Imm64 (3w + 7w))``),
+  ``BExp_Const (Imm64 (10w))``),
 
   (riscv_simp,
   ``(BExp_Const (Imm1 1w))``,
@@ -163,7 +163,7 @@ val test_cases = [
                                                             (Imm64 1w))
                                                          Bit32) Bit64))
                                  Bit32) Bit64) Bit32) Bit64``,
-  ``BExp_Const (Imm64 (3w + 1w))``),
+  ``BExp_Const (Imm64 (4w))``),
 
   (riscv_simp,
   ``BExp_BinExp BIExp_And
@@ -354,7 +354,7 @@ val test_cases = [
                          (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
                          (BExp_Const (Imm64 19w))) (BExp_Const (Imm64 1w)))``,
   ``BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-       (BExp_Const (Imm64 (19w + 3w)))``),
+       (BExp_Const (Imm64 (22w)))``),
 
   (default_exp_simp,
   ``(BExp_Const (Imm1 1w))``,
@@ -365,7 +365,7 @@ val test_cases = [
         (BExp_Const (Imm64 22w)))
     (BExp_Const (Imm64 14w))``,
   ``BExp_BinExp BIExp_Plus (BExp_Den (BVar "abcd" (BType_Imm Bit64)))
-       (BExp_Const (Imm64 (22w + 14w)))``),
+       (BExp_Const (Imm64 (36w)))``),
 
   (default_exp_simp,
   ``
@@ -396,7 +396,7 @@ val test_cases = [
       (BExp_Const (Imm64 19w))
       (BExp_Const (Imm64 77w)))
     (BExp_Const (Imm64 2w))``,
-  ``BExp_BinExp BIExp_Minus (BExp_Const (Imm64 77w)) (BExp_Const (Imm64 2w))``)
+  ``BExp_Const (Imm64 75w)``)
 ];
 
 (*

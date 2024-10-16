@@ -253,9 +253,17 @@ birs_simp_try_inst simp_t simp_inst_tm;
     simp_try_inst_gen (get_op, get_op);
 
 
-  fun birs_simp_try_plain h_thm simp_tm =
-    Option.mapPartial birs_simp_try_fix_assumptions (birs_simp_try_inst h_thm simp_tm);
-  val birs_simp_try_plain = fn h_thm => simp_try_make_option_fun (birs_simp_try_plain h_thm);
+  fun birs_simp_try_plain postconv_o h_thm simp_tm =
+    let
+      val thm_o = Option.mapPartial birs_simp_try_fix_assumptions (birs_simp_try_inst h_thm simp_tm);
+      val postfun =
+        case postconv_o of
+            NONE => I
+          | SOME postconv => Option.map (CONV_RULE (RAND_CONV postconv));
+    in
+      postfun thm_o
+    end;
+  val birs_simp_try_plain = fn postconv_o => fn h_thm => simp_try_make_option_fun (birs_simp_try_plain postconv_o h_thm);
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val abc = simp_try_fold_gen birs_simp_try_plain birs_simp_exp_plain_thms (simp_inst_tm, NONE);

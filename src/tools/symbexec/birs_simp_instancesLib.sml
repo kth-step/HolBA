@@ -124,7 +124,7 @@ fun birs_simp_store_cheater simp_tm =
 *)
   fun birs_simp_try_direct (plain_thms, pcond_thms) =
     simp_try_list_gen [
-      simp_try_fold_gen birs_simp_try_plain plain_thms,
+      simp_try_fold_gen (birs_simp_try_plain (SOME EVAL)) plain_thms,
       simp_try_fold_gen birs_simp_try_pcond pcond_thms
     ];
 
@@ -215,6 +215,9 @@ fun birs_simp_store_cheater simp_tm =
      else
        [])@
     [birs_simplification_Plus_Const64_thm,
+     birs_simplification_Minus_Const64_thm,
+     birs_simplification_Plus_Const32_thm,
+     birs_simplification_Minus_Const32_thm,
      birs_simplification_UnsignedCast_LowCast_Twice_thm];
 
   fun pcond_thms mem_64 mem_32 riscv cm0 =
