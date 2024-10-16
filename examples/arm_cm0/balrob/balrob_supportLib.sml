@@ -189,21 +189,6 @@ val configs          = [("balrob",
 
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
 
-  val birs_simp_default_core_exp_simp =
-    let
-      val include_64 = true;
-      val include_32 = true;
-      val mem_64 = false;
-      val mem_32 = false;
-      val riscv = false;
-      val cm0 = false;
-    in
-      birs_simp_instancesLib.birs_simp_gen
-        (birs_simp_instancesLib.simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
-        (birs_simp_instancesLib.load_thms_tuple mem_64 mem_32)
-        false
-    end;
-
   local
     open bir_programSyntax;
     open optionSyntax;
@@ -227,37 +212,7 @@ val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, b
 
 (* -------------------------------------------------------------------------- *)
 
-fun is_BExp_IntervalPred_normform tm =
-  let
-    open bir_expSyntax;
-    val (x,iv) = dest_BExp_IntervalPred tm;
-    val (l,h) = pairSyntax.dest_pair iv;
-    val is_ok =
-       is_BExp_Den x andalso
-       not (is_BExp_IfThenElse l) andalso
-       not (is_BExp_IfThenElse h);
-  in
-    is_ok
-  end
-  handle _ => false;
-
-fun check_BExp_IntervalPred_normform tm =
-  let
-    val err = ref false;
-    val _ = birs_auxLib.GEN_match_conv
-       is_BExp_IntervalPred
-       (fn t =>
-         (if is_BExp_IntervalPred_normform t
-         then ()
-         else (print_term tm; err := true); REFL t))
-       tm
-       handle UNCHANGED => TRUTH;
-    val _ = if not (!err) then () else
-      raise ERR "check_BExp_IntervalPred_normform" "not ok";
-  in
-    ()
-  end;
-
+(*
 fun debug_Pi_fun t =
   let
       val _ = if (symb_sound_struct_is_normform o concl) t then () else
@@ -289,6 +244,7 @@ fun debug_Pi_fun t =
   in
     t
   end;
+  *)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -301,7 +257,8 @@ local
 
    fun bir_local_symb_analysis bprog_tm birs_end_lbls birs_state =
    let
-      val birs_simp_select = birs_simp_instancesLib.birs_simp_default_armcm0_gen true;
+      open birs_simp_instancesLib;
+      val birs_simp_select = birs_simp_default_armcm0_gen true;
       val birs_simp_select_ifthenelse = birs_simp_default_core_exp_simp;
       open holba_miscLib;
 
@@ -359,60 +316,8 @@ in
   in
     interval_thm
   end;
+ val birs_basic_execute = fn x => fn y => Profile.profile "birs_basic_execute" (birs_basic_execute x y);
 end
-
-(*
-val bexp = ``BExp_IfThenElse
-                (BExp_BinPred BIExp_LessOrEqual
-                   (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm32 1w))
-                      (BExp_Const (Imm32 16w)))
-                   (BExp_Den (BVar "sy_R0" (BType_Imm Bit32))))
-                (BExp_BinExp BIExp_Plus
-                   (BExp_BinExp BIExp_Plus
-                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                      (BExp_Const (Imm64 4w))) (BExp_Const (Imm64 1w)))
-                (BExp_BinExp BIExp_Plus
-                   (BExp_BinExp BIExp_Plus
-                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                      (BExp_Const (Imm64 4w))) (BExp_Const (Imm64 3w)))``;
-
-val pcond = ``BExp_BinExp BIExp_And
-            (BExp_BinExp BIExp_And
-               (BExp_BinExp BIExp_And
-                  (BExp_UnaryExp BIExp_Not
-                     (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1))))
-                  (BExp_BinExp BIExp_And
-                     (BExp_BinPred BIExp_Equal
-                        (BExp_BinExp BIExp_And
-                           (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
-                           (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w)))
-                     (BExp_BinExp BIExp_And
-                        (BExp_BinExp BIExp_And
-                           (BExp_BinPred BIExp_LessThan
-                              (BExp_Const (Imm32 0x10001FE0w))
-                              (BExp_Den
-                                 (BVar "sy_SP_process" (BType_Imm Bit32))))
-                           (BExp_BinPred BIExp_LessOrEqual
-                              (BExp_Den
-                                 (BVar "sy_SP_process" (BType_Imm Bit32)))
-                              (BExp_Const (Imm32 0x10001FF0w))))
-                        (BExp_BinPred BIExp_LessOrEqual
-                           (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                           (BExp_Const (Imm64 0xFFFFF38w))))))
-               (BExp_Den (BVar "syp_gen" (BType_Imm Bit1))))
-            (BExp_UnaryExp BIExp_Not
-               (BExp_BinPred BIExp_LessOrEqual
-                  (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm32 1w))
-                     (BExp_Const (Imm32 16w)))
-                  (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))))``;
-open birs_simpLib;
-val simp_tm = birs_simp_gen_term pcond bexp;
-
-val birs_simp_select = birs_simp_instancesLib.birs_simp_default_armcm0_gen true;
-val birs_simp_select = birs_simp_default_core_exp_simp;
-
-val _ = print_thm (birs_simp_select simp_tm);
-*)
 
 (*
 val _ = print "\n\n";
@@ -429,6 +334,7 @@ val birs_basic_merge =
   in
     (birs_Pi_merge_RULE o birs_intervals_Pi_bounds_RULE "countw")
   end;
+val birs_basic_merge = Profile.profile "birs_basic_merge" birs_basic_merge;
 
 fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
   let
@@ -440,6 +346,7 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
   in
     fn A_thm => (birs_intervals_Pi_unify_RULE "countw" o inst_SEQ_fun A_thm)
   end;
+  val birs_basic_instantiate = fn x => fn y => Profile.profile "birs_basic_instantiate" (birs_basic_instantiate x y);
 
 (* ========================================================================================== *)
 
@@ -454,6 +361,7 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
     in
       merged_thm
   end;
+  val birs_summary = fn x => fn y => Profile.profile "birs_summary" (birs_summary x y);
 
   fun gen_senv_GEN_thm prog_birenvtyl_def =
     let
