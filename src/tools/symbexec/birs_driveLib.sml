@@ -3,12 +3,10 @@ struct
 
 local
 
-open HolKernel Parse boolLib bossLib;
+  open HolKernel Parse boolLib bossLib;
 
-open birsSyntax;
-open birs_stepLib;
-open birs_composeLib;
-open birs_auxTheory;
+  open birsSyntax;
+  open birs_composeLib;
 
   (* error handling *)
   val libname = "birs_driveLib"
@@ -17,74 +15,28 @@ open birs_auxTheory;
 
 in (* local *)
 
-(* TODO: move to syntax, move something else from syntax to utils *)
-fun birs_get_pc tm =
-  let
-    val (pc, _, _, _) = dest_birs_state tm;
-  in
-    pc
-  end;
-fun birs_is_running tm =
-  let
-    val (_, _, status, _) = dest_birs_state tm;
-  in
-    identical status bir_programSyntax.BST_Running_tm
-  end;
+  datatype symbexec_tree_t =
+    Symb_Node of (thm  * (symbexec_tree_t list));
 
-datatype symbexec_tree_t =
-  Symb_Node of (thm  * (symbexec_tree_t list));
-
-fun reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, [])) = symbex_A_thm
-  | reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, (symbex_B_subtree::symbex_B_subtrees))) =
-      let
-        val symbex_B_thm = reduce_tree SEQ_fun_spec symbex_B_subtree;
-        val symbex_A_thm_new = SEQ_fun_spec symbex_A_thm symbex_B_thm
-            handle ex =>
-              (print "\n=========================\n\n";
-               (print_term o concl) symbex_A_thm;
-               print "\n\n";
-               (print_term o concl) symbex_B_thm;
-               print "\n\n=========================\n";
-               raise ex);
-      in
-        reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm_new, symbex_B_subtrees))
-      end;
-
-
-(* TODO: move this function somewhere else (stepLib,execLib,composeLib) *)
-(*
-val SUBST_thm = birs_rule_SUBST_thm;
-val STEP_SEQ_thm = birs_rule_STEP_SEQ_thm;
-val symbex_A_thm = single_step_A_thm;
-*)
-fun birs_rule_STEP_SEQ_fun STEP_SEQ_thm symbex_A_thm =
-  let
-    val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
-    val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
-
-    (*
-    val timer_exec_step_p3 = holba_miscLib.timer_start 0;
-    *)
-
-    val (step3_conv_thm, extra_info) = birs_exec_step_CONV_fun (concl step2_thm);
-    val step3_thm = EQ_MP step3_conv_thm step2_thm;
-
-    (*
-    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP_SEQ in " ^ delta_s ^ "\n")) timer_exec_step_p3;
-    *)
-    val step4_thm = (* (birs_rule_SUBST_trysimp_fun SUBST_thm o birs_rule_tryjustassert_fun true) *) step3_thm;
-  in
-    (step4_thm, extra_info)
-  end;
-val birs_rule_STEP_SEQ_fun = fn x => Profile.profile "birs_rule_STEP_SEQ_fun" (birs_rule_STEP_SEQ_fun x);
-
-fun not_stop_lbl stop_lbls st =
-  not (List.exists (identical (birs_get_pc st)) stop_lbls);
-
+  fun reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, [])) = symbex_A_thm
+    | reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, (symbex_B_subtree::symbex_B_subtrees))) =
+        let
+          val symbex_B_thm = reduce_tree SEQ_fun_spec symbex_B_subtree;
+          val symbex_A_thm_new = SEQ_fun_spec symbex_A_thm symbex_B_thm
+              handle ex =>
+                (print "\n=========================\n\n";
+                (print_term o concl) symbex_A_thm;
+                print "\n\n";
+                (print_term o concl) symbex_B_thm;
+                print "\n\n=========================\n";
+                raise ex);
+        in
+          reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm_new, symbex_B_subtrees))
+        end;
 
   fun take_step exec_funs st =
     let
-      (*val _ = print ("Executing one more step @(" ^ (term_to_string (birs_get_pc st)) ^ ")\n");*)
+      (*val _ = print ("Executing one more step @(" ^ (term_to_string (dest_birs_state_pc st)) ^ ")\n");*)
       val (fetch, _, step, _) = exec_funs;
     in
       case fetch st of
@@ -92,6 +44,7 @@ fun not_stop_lbl stop_lbls st =
         | NONE => step st
     end
     handle ex => (print_term st; raise ex);
+
   fun take_step_SING exec_funs contfun (st, thm) =
     let
       (*val _ = print ("START sequential composition with singleton mid_state set\n");*)
@@ -108,119 +61,116 @@ fun not_stop_lbl stop_lbls st =
         | NONE => contfun (step_SING_w thm)
     end;
 
-(*
-val STEP_fun_spec = birs_rule_STEP_fun_spec;
-val SEQ_fun_spec = birs_rule_SEQ_fun_spec;
-val STEP_SEQ_fun_spec = birs_rule_STEP_SEQ_fun_spec;
+  (* PROCESS: give first thm, filter Pi with stop function, first try fetch for all Pi,
+          if something is left and it is the only state in Pi overall just step with SING_Pi,
+          otherwise go over the rest with step from term
+      NOTE: function is not end-recursive (this is to avoid needing to apply the expensive composition right away; and to reiterate the tree)! *)
+  fun build_tree_rec exec_funs thm =
+    let
+      val _ = print ("\n");
+      val (_, _, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
 
-val symbex_A_thm = single_step_A_thm;
-val stop_lbls = birs_stop_lbls;
-*)
-(* PROCESS: give first thm, filter Pi with stop function, first try fetch for all Pi,
-         if something is left and it is the only state in Pi overall just step with SING_Pi,
-         otherwise go over the rest with step from term
-     NOTE: function is not end-recursive (this is to avoid needing to apply the expensive composition right away; and to reiterate the tree)! *)
-fun build_tree_rec exec_funs thm =
-  let
-    val _ = print ("\n");
-    val (_, _, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
+      val (_, _, _, is_continue) = exec_funs;
+      fun is_executable st =
+        birs_state_is_running st andalso
+        is_continue st;
 
-    val (_, _, _, is_continue) = exec_funs;
-    fun is_executable st =
-      birs_is_running st andalso
-      is_continue st;
+      val sts = symb_sound_struct_Pi_to_birstatelist_fun Pi_tm;
+      val sts_exec = List.filter is_executable sts;
+      (*
+      val _ = print ("- have " ^ (Int.toString (length sts)) ^ " states\n");
+      val _ = print ("    (" ^ (Int.toString (length sts_exec)) ^ " executable)\n");
+      *)
 
-    val sts = symb_sound_struct_Pi_to_birstatelist_fun Pi_tm;
-    val sts_exec = List.filter is_executable sts;
-    (*
-    val _ = print ("- have " ^ (Int.toString (length sts)) ^ " states\n");
-    val _ = print ("    (" ^ (Int.toString (length sts_exec)) ^ " executable)\n");
-    *)
-
-  in
-    (* stop condition (no more running states, or reached the stop_lbls) *)
-    if List.null sts_exec then
-      (print "no executable states left, terminating here\n";
-       (Symb_Node (thm,[])))
-    else
-      (* safety check *)
-      if List.null sts then
-        raise ERR "build_tree_rec" "this can't happen"
-      (* carry out a sequential composition with singleton mid_state set *)
-      else if List.length sts = 1 then
-        take_step_SING exec_funs (build_tree_rec exec_funs) (hd sts, thm)
-      (* continue with executing one step on each branch point... *)
+    in
+      (* stop condition (no more running states, or reached the stop_lbls) *)
+      if List.null sts_exec then
+        (print "no executable states left, terminating here\n";
+        (Symb_Node (thm,[])))
       else
-        let
-          val _ = print ("continuing only with the executable states\n");
-          fun buildsubtree st =
-            (print ("starting a branch\n");
-             build_tree_rec exec_funs (take_step exec_funs st));
-        in
-          Symb_Node (thm, List.map buildsubtree sts_exec)
-        end
-  end;
+        (* safety check *)
+        if List.null sts then
+          raise ERR "build_tree_rec" "this can't happen"
+        (* carry out a sequential composition with singleton mid_state set *)
+        else if List.length sts = 1 then
+          take_step_SING exec_funs (build_tree_rec exec_funs) (hd sts, thm)
+        (* continue with executing one step on each branch point... *)
+        else
+          let
+            val _ = print ("continuing only with the executable states\n");
+            fun buildsubtree st =
+              (print ("starting a branch\n");
+              build_tree_rec exec_funs (take_step exec_funs st));
+          in
+            Symb_Node (thm, List.map buildsubtree sts_exec)
+          end
+    end;
 
-fun build_tree exec_funs st =
-  let
-    val _ = if birs_state_is_normform_gen false st then () else
-            raise ERR "build_tree" "state is not in standard form with birs_gen_env";
-  in
-    build_tree_rec exec_funs (take_step exec_funs st)
-  end;
+  fun build_tree exec_funs st =
+    let
+      val _ = if birs_state_is_normform_gen false st then () else
+              raise ERR "build_tree" "state is not in standard form with birs_gen_env";
+    in
+      build_tree_rec exec_funs (take_step exec_funs st)
+    end;
 
-fun exec_until exec_funs comp_fun =
-  (Profile.profile "reduce_tree" (reduce_tree comp_fun)) o
-  (Profile.profile "build_tree" (build_tree exec_funs));
+  fun exec_until exec_funs comp_fun =
+    (Profile.profile "reduce_tree" (reduce_tree comp_fun)) o
+    (Profile.profile "build_tree" (build_tree exec_funs));
 
-fun bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state =
-  let
-   val _ = if birs_state_is_normform_gen false birs_state then () else
-           raise ERR "bir_symb_exec_to" "state is not in standard form with birs_gen_env";
+  (* ----------------------------------------------------------------------------- *)
 
-   open birs_execLib;
+  fun not_stop_lbl stop_lbls st =
+    not (List.exists (identical (dest_birs_state_pc st)) stop_lbls);
 
-   val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (Profile.profile "bir_prog_has_no_halt_fun" bir_prog_has_no_halt_fun bprog_tm);
-   val birs_rule_STEP_fun_spec =
-     (birs_post_step_fun o
-      birs_rule_STEP_fun birs_rule_STEP_thm);
-   (* now the composition *)
-   val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
-   val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
-   (*val _ = print_thm single_step_A_thm;*)
-   (* and also the sequential composition *)
-   val birs_rule_STEP_SEQ_thm = MATCH_MP
-    birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
-    (bir_prog_has_no_halt_fun bprog_tm);
-   val birs_rule_STEP_SEQ_fun_spec =
-    (birs_post_step_fun o
-     birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm);
-  
-   val fetch = fn _ => NONE;
-   (*val fetch = fn _ => SOME TRUTH;*)
-   (*val fetch = fn x => SOME (birs_rule_STEP_fun_spec x);*)
-   val is_continue = not_stop_lbl birs_end_lbls;
+  fun bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state =
+    let
+    val _ = if birs_state_is_normform_gen false birs_state then () else
+            raise ERR "bir_symb_exec_to" "state is not in standard form with birs_gen_env";
 
-   val _ = print "now reducing it to one sound structure\n";
-   val timer = holba_miscLib.timer_start 0;
-   val result = exec_until
-     (fetch, birs_rule_STEP_SEQ_fun_spec, birs_rule_STEP_fun_spec, is_continue)
-     birs_rule_SEQ_fun_spec
-     birs_state
-     handle e => (Profile.print_profile_results (Profile.results ()); raise e);
-   val _ = holba_miscLib.timer_stop
-    (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+    open birs_execLib;
 
-    (*
-    Profile.reset_all ()
-    Profile.print_profile_results (Profile.results ())
-    Profile.output_profile_results (iostream) (Profile.results ())
-    *)
-   val _ = Profile.print_profile_results (Profile.results ());
-  in
-   result
-  end;
-val bir_symb_exec_to = fn x => fn y => Profile.profile "bir_symb_exec_to" (bir_symb_exec_to x y);
+    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (Profile.profile "bir_prog_has_no_halt_fun" bir_prog_has_no_halt_fun bprog_tm);
+    val birs_rule_STEP_fun_spec =
+      (birs_post_step_fun o
+        birs_rule_STEP_fun birs_rule_STEP_thm);
+    (* now the composition *)
+    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
+    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
+    (*val _ = print_thm single_step_A_thm;*)
+    (* and also the sequential composition *)
+    val birs_rule_STEP_SEQ_thm = MATCH_MP
+      birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
+      (bir_prog_has_no_halt_fun bprog_tm);
+    val birs_rule_STEP_SEQ_fun_spec =
+      (birs_post_step_fun o
+      birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm);
+    
+    val fetch = fn _ => NONE;
+    (*val fetch = fn _ => SOME TRUTH;*)
+    (*val fetch = fn x => SOME (birs_rule_STEP_fun_spec x);*)
+    val is_continue = not_stop_lbl birs_end_lbls;
+
+    val _ = print "now reducing it to one sound structure\n";
+    val timer = holba_miscLib.timer_start 0;
+    val result = exec_until
+      (fetch, birs_rule_STEP_SEQ_fun_spec, birs_rule_STEP_fun_spec, is_continue)
+      birs_rule_SEQ_fun_spec
+      birs_state
+      handle e => (Profile.print_profile_results (Profile.results ()); raise e);
+    val _ = holba_miscLib.timer_stop
+      (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+
+      (*
+      Profile.reset_all ()
+      Profile.print_profile_results (Profile.results ())
+      Profile.output_profile_results (iostream) (Profile.results ())
+      *)
+    val _ = Profile.print_profile_results (Profile.results ());
+    in
+    result
+    end;
+  val bir_symb_exec_to = fn x => fn y => Profile.profile "bir_symb_exec_to" (bir_symb_exec_to x y);
 
 end (* local *)
 

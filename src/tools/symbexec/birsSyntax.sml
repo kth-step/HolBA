@@ -56,6 +56,7 @@ end;
 local
   open birs_rulesTheory;
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_rules"
+  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
@@ -63,6 +64,7 @@ in
   val (birs_symb_exec_tm,  mk_birs_symb_exec, dest_birs_symb_exec, is_birs_symb_exec)  = syntax_fns2 "birs_symb_exec";
   val (birs_symb_symbols_set_tm,  mk_birs_symb_symbols_set, dest_birs_symb_symbols_set, is_birs_symb_symbols_set)  = syntax_fns1_set "birs_symb_symbols_set";
   val (birs_freesymbs_tm,  mk_birs_freesymbs, dest_birs_freesymbs, is_birs_freesymbs)  = syntax_fns2_set "birs_freesymbs";
+  val (birs_pcondinf_tm,  mk_birs_pcondinf, dest_birs_pcondinf, is_birs_pcondinf)  = syntax_fns1 "birs_pcondinf";
 end;
 
 local
@@ -113,6 +115,17 @@ in
  in
   TypeBase.mk_record (birs_state_t_ty, l)
  end handle e => raise wrap_exn "mk_birs_state" e;
+
+ val dest_birs_state_pc =
+   ((fn (x,_,_,_) => x) o dest_birs_state);
+ val dest_birs_state_env =
+   ((fn (_,x,_,_) => x) o dest_birs_state);
+ val dest_birs_state_status =
+   ((fn (_,_,x,_) => x) o dest_birs_state);
+ val dest_birs_state_pcond =
+   ((fn (_,_,_,x) => x) o dest_birs_state);
+
+val birs_state_is_running = identical bir_programSyntax.BST_Running_tm o dest_birs_state_status;
 
  (* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
 end
@@ -184,7 +197,7 @@ fun dest_IMAGE_birs_symb_to_symbst Pi =
         fun is_normform_bir_senv_GEN_list env =
           is_bir_senv_GEN_list env;
 
-        val (_, env, _, _) = dest_birs_state tm;
+        val env = dest_birs_state_env tm;
       in
         is_normform_birs_gen_env env orelse
           if not is_start then false else

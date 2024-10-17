@@ -196,7 +196,63 @@ in (* local *)
       else
         NONE
     end;
-    val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
+  val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
+
+  fun check_pcondinf_tm pcondinf_tm =
+    if not (is_birs_pcondinf pcondinf_tm) then raise ERR "check_pcondinf_tm" "term needs to be birs_pcondinf" else
+    let
+      val pcond_tm = dest_birs_pcondinf pcondinf_tm;
+      val pcond_is_contr = bir_smtLib.bir_smt_check_unsat false pcond_tm;
+    in
+      if pcond_is_contr then
+        SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], pcondinf_tm))
+      else
+        NONE
+    end;
+  val check_pcondinf_tm = aux_moveawayLib.wrap_cache_result Term.compare check_pcondinf_tm;
+
+  local
+    fun try_prove_assumption conv assmpt =
+      let
+          val assmpt_thm = conv assmpt;
+
+          val assmpt_new = (snd o dest_eq o concl) assmpt_thm;
+
+          (* raise exception when the assumption turns out to be false *)
+          val _ = if not (identical assmpt_new F) then () else
+                  raise ERR "try_prove_assumption" "assumption does not hold";
+
+          val _ = if identical assmpt_new T then () else
+                  raise ERR "try_prove_assumption" ("failed to fix the assumption: " ^ (term_to_string assmpt));
+      in
+        if identical assmpt_new T then
+          SOME (EQ_MP (GSYM assmpt_thm) TRUTH)
+        else
+          NONE
+      end
+      handle _ => NONE;
+    val try_prove_assumption = fn conv => aux_moveawayLib.wrap_cache_result Term.compare (try_prove_assumption conv);
+
+    fun try_prove_assumptions remove_all conv NONE = NONE
+      | try_prove_assumptions remove_all conv (SOME t) =
+      if (not o is_imp o concl) t then
+        SOME t
+      else
+        let
+          val assmpt = (fst o dest_imp o concl) t;
+          val assmpt_thm_o = try_prove_assumption conv assmpt;
+        in
+          case assmpt_thm_o of
+            NONE => if remove_all then NONE else SOME t
+          | SOME assmpt_thm =>
+              try_prove_assumptions
+                remove_all
+                conv
+                (SOME (MP t assmpt_thm))
+        end;
+  in
+    fun prove_assumptions remove_all conv thm = try_prove_assumptions remove_all conv (SOME thm);
+  end
 
   (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
   fun birs_Pi_first_pcond_RULE pcond_new thm =

@@ -157,49 +157,12 @@ val instd_thm = ASSUME ``
 
 birs_simp_try_fix_assumptions instd_thm;
 *)
-  fun birs_simp_try_justify_assumption assmpt =
-    let
-        val type_ofbirexp_CONV = type_of_bir_exp_CONV;
-        val assmpt_thm = (type_ofbirexp_CONV THENC EVAL) assmpt;
-
-        val assmpt_new = (snd o dest_eq o concl) assmpt_thm;
-
-        (* raise exception when the assumption turns out to be false *)
-        val _ = if not (identical assmpt_new F) then () else
-                raise ERR "birs_simp_try_justify_assumption" "assumption does not hold";
-
-        val _ = if identical assmpt_new T then () else
-                raise ERR "birs_simp_try_justify_assumption" ("failed to fix the assumption: " ^ (term_to_string assmpt));
-    in
-      if identical assmpt_new T then
-        SOME (EQ_MP (GSYM assmpt_thm) TRUTH)
-      else
-        NONE
-    end
-    handle _ => NONE;
-   val birs_simp_try_justify_assumption = aux_moveawayLib.wrap_cache_result Term.compare birs_simp_try_justify_assumption;
-
   (* need to handle typecheck, IS_SOME typecheck *)
-  fun birs_simp_try_justify_assumptions NONE = NONE
-    | birs_simp_try_justify_assumptions (SOME t) =
-    if (not o is_imp o concl) t then
-      SOME t
-    else
-      let
-        val assmpt = (fst o dest_imp o concl) t;
-        val assmpt_thm_o = birs_simp_try_justify_assumption assmpt;
-      in
-        case assmpt_thm_o of
-           NONE => NONE
-         | SOME assmpt_thm =>
-             birs_simp_try_justify_assumptions
-               (SOME (MP t assmpt_thm))
-      end;
-
+  val birs_simp_try_justify_assumptions = birs_utilsLib.prove_assumptions true (type_of_bir_exp_CONV THENC EVAL);
   fun birs_simp_try_fix_assumptions instd_thm =
     let
       (* now try to check the assumptions *)
-      val final_thm_o = birs_simp_try_justify_assumptions (SOME instd_thm);
+      val final_thm_o = birs_simp_try_justify_assumptions instd_thm;
       val _ = if isSome final_thm_o andalso (birsSyntax.is_birs_simplification o concl) (valOf final_thm_o) then () else
         raise ERR "birs_simp_try_fix_assumptions" "this should not happen";
     in
