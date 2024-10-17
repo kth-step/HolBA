@@ -63,10 +63,10 @@ in
       val _ = birs_symb_exec_check_compatible step_A_thm step_B_thm;
 
       val prep_thm =
-        HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
+        Profile.profile "birs_rule_SEQ_fun_1_match" (HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm)) step_B_thm;
 
       val freesymbols_tm = (fst o dest_imp o concl) prep_thm;
-      val freesymbols_thm = birs_rule_SEQ_INTER_freesymbs_fun freesymbols_tm;
+      val freesymbols_thm = Profile.profile "birs_rule_SEQ_fun_2_freesymbols" birs_rule_SEQ_INTER_freesymbs_fun freesymbols_tm;
       val _ = print "finished to proof free symbols altogether\n";
 
       val bprog_composed_thm =
@@ -74,9 +74,10 @@ in
       val _ = print "composed\n";
 
       (* tidy up set operations to not accumulate (in both, post state set and label set) *)
-      val bprog_fixed_thm = CONV_RULE
+      val bprog_fixed_thm =
+        Profile.profile "birs_rule_SEQ_fun_3_tidyupsets" (CONV_RULE
          (birs_Pi_CONV birs_state_DIFF_UNION_CONV THENC
-          birs_L_CONV labelset_UNION_CONV)
+          birs_L_CONV labelset_UNION_CONV))
          bprog_composed_thm
         handle e => (print "\n\n"; print_thm bprog_composed_thm; print "tidy up Pi and labelset failed\n"; raise e);
 
@@ -86,6 +87,7 @@ in
     in
       bprog_fixed_thm
     end;
+  val birs_rule_SEQ_fun = fn x => fn y => Profile.profile "birs_rule_SEQ_fun" (birs_rule_SEQ_fun x y);
 
 
 end (* local *)
