@@ -17,9 +17,6 @@ val _ = new_theory "balrob_symb_transf";
 
 val balrob_exec_thm = balrob_summary___clzsi2_thm;
 
-(**)
-val bprog_envtyl_tm = (fst o dest_eq o concl) balrob_birenvtyl_def;
-val birs_env_thm = gen_senv_GEN_thm balrob_birenvtyl_def;
 
 (* TODO: the following could be extracted from the theorems above *)
 (* TODO: move this after the symbolic execution, and infer the minimum and the maximum *)
@@ -68,12 +65,10 @@ val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_balrob_post_def;
 (* ------------------------------- *)
 (* make theorem for mk_bsysprecond fix *)
 (* ------------------------------- *)
-fun create_mk_bsysprecond_thm t =
-  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
-    (``mk_bsysprecond ^t ^bprog_envtyl_tm``);
-val mk_bsysprecond_pcond_thm = create_mk_bsysprecond_thm bspec_pre_tm;
-val birs_pcond_tm = (snd o dest_eq o concl) mk_bsysprecond_pcond_thm;
-val bir_hvar_cond_symb = (snd o dest_eq o concl o create_mk_bsysprecond_thm) bir_hvar_cond;
+val birs_env_thm = gen_birs_env_thm balrob_birenvtyl_def;
+val mk_bsysprecond_pcond_thm = gen_birs_pcond_thm balrob_birenvtyl_def bspec_pre_tm;
+val birs_pcond_tm = (rhs o concl) mk_bsysprecond_pcond_thm;
+val bir_hvar_cond_symb = gen_birs_pcond bir_hvar_cond;
 
 (* ------------------------------- *)
 (* prepare for BIR property transfer *)
