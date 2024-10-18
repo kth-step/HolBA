@@ -227,73 +227,41 @@ fun debug_Pi_fun t =
 
 
 local
-    open bir_immSyntax;
-    fun mk_word_addr v = wordsSyntax.mk_wordii(v, 32);
-    fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
-    val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl o mk_word_addr;
-
-   fun bir_local_symb_analysis bprog_tm birs_end_lbls birs_state =
-   let
-      open birs_simp_instancesLib;
-      val birs_simp_select = birs_simp_default_armcm0_gen true;
-      val birs_simp_select_ifthenelse = birs_simp_default_core_exp_simp;
-      open holba_miscLib;
-
-      val timer_symbanalysis = timer_start 0;
-      val timer_symbanalysis_last = ref (timer_start 0);
-      fun debug_output_RULE t =
-         (timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
-         timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
-         timer_symbanalysis_last := timer_start 0;
-         (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
-         t);
-
-      open birs_execLib;
-      val birs_simp_RULE_gen = birs_rule_SUBST_trysimp_fun (birs_rule_SUBST_prog_fun bprog_tm);
-      fun birs_simp_RULE last_stmt =
-        ((* the ifthenelse simplification for countw assignments before branches, that gets applied after the branch happens and the condition is available in the branchcondition *)
-         birs_if_branch_RULE (birs_simp_RULE_gen (birs_simp_select_ifthenelse)) o
-         (* the simplification after assignments *)
-         birs_if_assign_RULE last_stmt (birs_simp_RULE_gen (birs_simp_select)));
-      val birs_prune_RULE =
-        (birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
-         birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
-         birs_rule_tryjustassert_fun true);
-
-      fun birs_post_step_fun (t, (last_pc, last_stmt)) = (
-         debug_output_RULE o
-         (*(apply_if_branch debug_Pi_fun) o*)
-         birs_simp_RULE last_stmt o
-         birs_prune_RULE
-      ) t;
-   in
-      birs_driveLib.bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state
-   end
+  open bir_immSyntax;
+  fun mk_word_addr v = wordsSyntax.mk_wordii(v, 32);
+  fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
+  val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl o mk_word_addr;
 in
- fun birs_basic_init_state (bprog_tm, prog_birenvtyl_def) reqs init_addr =
-  let
-    val init_lbl = bir_lbl_from_addr init_addr;
-    val precond = bslSyntax.bandl (pred_conjs reqs);
-    (* TODO: remove birs_env_thm and bsysprecond_thm make it separate things (only needed for transfer) *)
-      (* they shouldn't come out of the symbolic exec function, it is only needed for the transfer, and it shouldn't be a problem to compute it repeatedly, see the function gen_senv_GEN_thm below *)
-    val (init_state, _, _) =
-      bir_symbLib.bir_symb_analysis_init_gen (SOME bir_symbLib.pcond_gen_symb) init_lbl precond prog_birenvtyl_def;
-  in
-    init_state
-  end;
+  fun birs_basic_init_state prog_birenvtyl_def reqs init_addr =
+    let
+      open birs_driveLib;
 
- fun birs_basic_execute (bprog_tm, prog_birenvtyl_def) end_addrs init_state =
-  let
-    open birs_intervalLib;
+      val init_lbl = bir_lbl_from_addr init_addr;
+      val precond = bslSyntax.bandl (pred_conjs reqs);
+      val init_state =
+      birs_analysis_init prog_birenvtyl_def precond init_lbl;
+    in
+      init_state
+    end;
 
-    val end_lbls = List.map bir_lbl_from_addr end_addrs;
-    val symb_exec_thm =
-      bir_local_symb_analysis bprog_tm end_lbls init_state;
-    val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
-  in
-    interval_thm
-  end;
- val birs_basic_execute = fn x => fn y => Profile.profile "birs_basic_execute" (birs_basic_execute x y);
+  fun birs_basic_execute bprog_tm end_addrs init_state =
+    let
+      open birs_intervalLib;
+      open birs_driveLib;
+
+      val end_lbls = List.map bir_lbl_from_addr end_addrs;
+      val symb_exec_thm =
+      birs_exec_to
+        bprog_tm
+        (birs_strategiesLib.birs_post_step_armcm0_default)
+        (fn _ => NONE)
+        (birs_strategiesLib.not_at_lbls end_lbls)
+        init_state;
+      val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
+    in
+      interval_thm
+    end;
+  val birs_basic_execute = fn x => fn y => Profile.profile "birs_basic_execute" (birs_basic_execute x y);
 end
 
 (*
@@ -302,7 +270,6 @@ val _ = raise Fail "done";
 val init_state = birs_basic_init_state birs_prog_config (200, 200) 0x100013b4;
 val thm = birs_basic_execute birs_prog_config [0x100013BE, 0x100013C2] init_state;
 *)
-
 
 val birs_basic_merge =
   let
@@ -319,7 +286,7 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
     open birs_instantiationLib;
     open birs_intervalLib;
     val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
-    val inst_SEQ_fun = birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bir_symbLib.pcond_gen_symb;
+    val inst_SEQ_fun = birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm birs_driveLib.pcond_gen_symb;
   in
     fn A_thm => (birs_intervals_Pi_unify_RULE "countw" o inst_SEQ_fun A_thm)
   end;
@@ -331,22 +298,14 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
      (* handle intervals correctly: in symbolic execution driver (together with the indirectjump handling and previous summaries) and also before merging *)
   fun birs_summary (bprog_tm, prog_birenvtyl_def) reqs (init_addr, end_addr) =
     let
-      val init_state = birs_basic_init_state (bprog_tm, prog_birenvtyl_def) reqs init_addr;
-      val symb_exec_thm = birs_basic_execute (bprog_tm, prog_birenvtyl_def) [end_addr] init_state;
+      val init_state = birs_basic_init_state prog_birenvtyl_def reqs init_addr;
+      val symb_exec_thm = birs_basic_execute bprog_tm [end_addr] init_state;
 
       val merged_thm = birs_basic_merge symb_exec_thm;
     in
       merged_thm
   end;
   val birs_summary = fn x => fn y => Profile.profile "birs_summary" (birs_summary x y);
-
-  fun gen_senv_GEN_thm prog_birenvtyl_def =
-    let
-      open birs_auxTheory;
-      val bprog_envtyl_tm = (fst o dest_eq o concl) prog_birenvtyl_def;
-    in
-      (REWRITE_CONV [prog_birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``
-    end;
 
 
 end (* local *)

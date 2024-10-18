@@ -23,7 +23,7 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* turn on the store-store cheater *)
 val _ = birs_simp_select := birs_simp_instancesLib.birs_simp_default_riscv_gen true;
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_motor_prog_def
   motor_init_addr_def [motor_end_addr_def]
