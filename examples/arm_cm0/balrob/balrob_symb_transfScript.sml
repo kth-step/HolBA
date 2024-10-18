@@ -65,18 +65,26 @@ val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_balrob_post_def;
 (* ------------------------------- *)
 (* make theorem for mk_bsysprecond fix *)
 (* ------------------------------- *)
-val birs_env_thm = gen_birs_env_thm balrob_birenvtyl_def;
-val mk_bsysprecond_pcond_thm = gen_birs_pcond_thm balrob_birenvtyl_def bspec_pre_tm;
+val birs_env_thm = birs_driveLib.gen_birs_env_thm balrob_birenvtyl_def;
+val mk_bsysprecond_pcond_thm = birs_driveLib.gen_birs_pcond_thm balrob_birenvtyl_def bspec_pre_tm;
 val birs_pcond_tm = (rhs o concl) mk_bsysprecond_pcond_thm;
-val bir_hvar_cond_symb = gen_birs_pcond bir_hvar_cond;
+val bir_hvar_cond_symb = birs_driveLib.gen_birs_pcond balrob_birenvtyl_def bir_hvar_cond;
 
 (* ------------------------------- *)
 (* prepare for BIR property transfer *)
 (* ------------------------------- *)
-val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(pcond_gen_symb, bir_hvar_cond_symb)] balrob_exec_thm;
+(*
+val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(birs_driveLib.pcond_gen_symb, bir_hvar_cond_symb)] balrob_exec_thm;
 val pcond_symb_analysis_thm = birs_sys_pcond_RULE birs_pcond_tm specd_symb_analysis_thm;
-val pcond_symb_analysis_thm2 = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) pcond_symb_analysis_thm;
 val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM mk_bsysprecond_pcond_thm, GSYM birs_env_thm])) pcond_symb_analysis_thm2;
+*)
+val (bsysprecond_thm, symb_analysis_thm) =
+     birs_transferLib.prepare_transfer
+       balrob_birenvtyl_def
+       bir_hvar_cond_symb
+       bspec_pre_tm
+       balrob_exec_thm;
+val fixed_symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) symb_analysis_thm;
 
 (* ------------------------------- *)
 (* BIR property transfer *)
@@ -94,16 +102,15 @@ val bspec_pre_def = bspec_balrob_pre_def;
 val bspec_post_def = bspec_balrob_post_def;
 val prog_vars_list_def = balrob_prog_vars_list_def;
 val symb_analysis_thm = fixed_symb_analysis_thm;
-val bsysprecond_thm = mk_bsysprecond_pcond_thm;
 val prog_vars_thm = balrob_prog_vars_thm;
 val _ = HOL_Interactive.toggle_quietdec();
 *)
-
+(*
 val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_balrob_prog_def balrob_birenvtyl_def
   bspec_balrob_pre_def bspec_balrob_post_def balrob_prog_vars_list_def
-  fixed_symb_analysis_thm mk_bsysprecond_pcond_thm balrob_prog_vars_thm;
+  fixed_symb_analysis_thm balrob_prog_vars_thm;
 
 Theorem bspec_cont_balrob:
  bir_cont bir_balrob_prog bir_exp_true
@@ -115,5 +122,6 @@ Theorem bspec_cont_balrob:
 Proof
  rw [bspec_cont_thm]
 QED
+*)
 
 val _ = export_theory ();
