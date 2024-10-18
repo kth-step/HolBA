@@ -194,8 +194,6 @@ val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, b
 (*
 fun debug_Pi_fun t =
   let
-      val _ = if (symb_sound_struct_is_normform o concl) t then () else
-              raise ERR "debug_Pi_fun" "theorem is not a standard birs_symb_exec";
     open birs_utilsLib;
     open bir_expSyntax;
     val Pis = (pred_setSyntax.strip_set o get_birs_Pi o concl) t;
