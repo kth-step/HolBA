@@ -19,8 +19,8 @@ val _ = print "starting merging\n\n\n";
 val merged_thm = birs_Pi_merge_RULE motor_symb_analysis_thm;
 
 (* get conjuncts as list *)
-val pcond_sysl = (dest_band o get_birs_sys_pcond o concl) merged_thm;
-val pcond_Pifl = (dest_band o get_birs_Pi_first_pcond o concl) merged_thm;
+val pcond_sysl = (dest_bandl o get_birs_sys_pcond o concl) merged_thm;
+val pcond_Pifl = (dest_bandl o get_birs_Pi_first_pcond o concl) merged_thm;
 val _ = if list_eq_contents term_id_eq pcond_sysl pcond_Pifl then () else
         raise Fail "path condition changed";
 
