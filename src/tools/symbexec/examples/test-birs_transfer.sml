@@ -100,7 +100,7 @@ val symb_analysis_thm = bir_symb_analysis
     bprog [birs_state_end_lbl] birs_state_init;
 val exec_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
 
-val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
+val (sys_tm, L_tm, Pi_tm) = (get_birs_sysLPi o concl) exec_thm;
 
 
 (* ---------------------------------------------------------------------- *)

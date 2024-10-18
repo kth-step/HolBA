@@ -102,10 +102,9 @@ fun execute_two_steps bprog_tm birs_state_init_tm =
 
   (* first step *)
   val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init_tm;
-  val (_, _, Pi_A_tm) = (symb_sound_struct_get_sysLPi_fun o concl) single_step_A_thm;
 
   (* continue with a second step *)
-  val birs_states_mid = symb_sound_struct_Pi_to_birstatelist_fun Pi_A_tm;
+  val birs_states_mid = (get_birs_Pi_list o concl) single_step_A_thm;
   (* it would be better to find the running one, oh well *)
   val birs_state_mid = List.nth(birs_states_mid,0);
 

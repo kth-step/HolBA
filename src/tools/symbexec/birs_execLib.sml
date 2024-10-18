@@ -43,9 +43,8 @@ in
         val single_step_prog_thm = Profile.profile "birs_rule_STEP_fun_overhead" exec_step_postproc_fun birs_exec_thm;
 
         (*val _ = print_thm single_step_prog_thm;*)
-        val _ = if symb_sound_struct_is_normform (concl single_step_prog_thm) then () else
-                (print_term (concl single_step_prog_thm);
-                raise ERR "birs_rule_STEP_fun" "something is not right, the produced theorem is not evaluated enough");
+        val _ = birs_check_norm_thm ("birs_rule_STEP_fun", "") single_step_prog_thm
+          handle e => (print_term (concl single_step_prog_thm); raise e);
       in
         (single_step_prog_thm, extra_info)
       end;

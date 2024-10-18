@@ -14,6 +14,7 @@ local
 
 in (* local *)
 
+  (* TODO: move the generic list functions somewhere else *)
   fun list_distinct _ [] = true
     | list_distinct eq_fun (x::xs) =
         if all (fn y => (not o eq_fun) (x, y)) xs then list_distinct eq_fun xs else false;
@@ -54,135 +55,54 @@ in (* local *)
 
 (* ---------------------------------------------------------------------------------------- *)
 
-  (* turn bir conjunction into list of conjuncts (care should be taken because this is only meaningful if the type of expression is indeed bit1) *)
-  fun dest_band x =
+  (* get all mapped variable names *)
+  fun birs_env_varnames birs_tm =
     let
-      open bir_exp_immSyntax;
-      open bir_expSyntax;
-      fun is_BExp_And tm = is_BExp_BinExp tm andalso (is_BIExp_And o (fn (x,_,_) => x) o dest_BExp_BinExp) tm;
-      fun dest_BExp_And tm = ((fn (_,x,y) => (x,y)) o dest_BExp_BinExp) tm;
+      val _ = birs_check_state_norm ("birs_env_varnames", "") birs_tm;
 
-      (* could add a typecheck of x here, to make sure that tm is indeed a Bit1 bir expression *)
-      fun dest_band_r [] acc = acc
-        | dest_band_r (tm::tms) acc =
-        if not (is_BExp_And tm) then dest_band_r tms (tm::acc) else
-        let
-          val (tm1,tm2) = dest_BExp_And tm;
-        in
-          dest_band_r (tm1::tm2::tms) acc
-        end;
+      val env = dest_birs_state_env birs_tm;
+      val mappings = get_env_mappings env;
+      val varname_tms = List.map fst mappings;
+      val varnames = List.map stringSyntax.fromHOLstring varname_tms;
+      (* now that we have the mappings, also check that varnames is distinct *)
+      val _ = if list_distinct gen_eq varnames then () else
+              raise ERR "birs_env_varnames" "state has one variable mapped twice";
     in
-      dest_band_r [x] []
+      varnames
     end;
 
 (* ---------------------------------------------------------------------------------------- *)
 
-  (* function to get the initial state *)
-  fun get_birs_sys tm =
-    let
-      val (_, tri_tm) = dest_birs_symb_exec tm;
-      val (sys_tm,_,_) = dest_sysLPi tri_tm;
-    in
-      sys_tm
-    end;
+  local
+    open pred_setSyntax;
+    open pred_setTheory;
+    val rotate_first_INSERTs_thm = prove(``
+      !x1 x2 xs.
+      (x1 INSERT x2 INSERT xs) = (x2 INSERT x1 INSERT xs)
+    ``,
+      fs [EXTENSION] >>
+      metis_tac []
+    );
+    fun is_two_INSERTs tm = (is_insert tm) andalso ((is_insert o snd o dest_insert) tm);
+  in
+    fun rotate_two_INSERTs_conv tm =
+      let
+        val _ = if is_two_INSERTs tm then () else
+          raise ERR "rotate_two_INSERTs_conv" "need to be a term made up of two inserts";
+        val (x1_tm, x2xs_tm) = dest_insert tm;
+        val (x2_tm, xs_tm) = dest_insert x2xs_tm;
+        val inst_thm = ISPECL [x1_tm, x2_tm, xs_tm] rotate_first_INSERTs_thm;
+      in
+        inst_thm
+      end;
 
-  (* function to get the set Pi *)
-  fun get_birs_Pi tm =
-    let
-      val (_, tri_tm) = dest_birs_symb_exec tm;
-      val (_,_,Pi_tm) = dest_sysLPi tri_tm;
-    in
-      Pi_tm
-    end;
-
-  (* function to get the length of Pi *)
-  val get_birs_Pi_length =
-    (length o pred_setSyntax.strip_set o get_birs_Pi);
-
-  (* function to get the first Pi state *)
-  val get_birs_Pi_first =
-    (fst o pred_setSyntax.dest_insert o get_birs_Pi);
-
-  (* get env mappings *)
-  val get_env_mappings =
-    (List.map pairSyntax.dest_pair o fst o listSyntax.dest_list o dest_birs_gen_env);
-
-  (* get top env mapping *)
-  fun get_env_top_mapping env =
-    let
-      val env_mappings = get_env_mappings env;
-      val _ = if not (List.null env_mappings) then () else
-              raise ERR "get_env_top_mapping" "need at least one mapping in the environment";
-    in
-      hd env_mappings
-    end;
-  
-  (* function to get the top env mapping of the first Pi state *)
-  fun get_birs_Pi_first_env_top_mapping tm =
-    let
-      val Pi_sys_tm = get_birs_Pi_first tm;
-      val (_,env,_,_) = dest_birs_state Pi_sys_tm;
-    in
-      get_env_top_mapping env
-    end;
-  
-  (* function to get the pcond of the first Pi state *)
-  fun get_birs_Pi_first_pcond tm =
-    let
-      val Pi_sys_tm = get_birs_Pi_first tm;
-      val (_,_,_,pcond) = dest_birs_state Pi_sys_tm;
-    in
-      pcond
-    end;
-  
-  (* function to get the pcond of the first Pi state *)
-  fun get_birs_sys_pcond tm =
-    let
-      val sys_tm = get_birs_sys tm;
-      val (_,_,_,pcond) = dest_birs_state sys_tm;
-    in
-      pcond
-    end;
+    fun rotate_INSERTs_conv tm =
+      (if not (is_two_INSERTs tm) then REFL else
+        (rotate_two_INSERTs_conv THENC
+        RAND_CONV rotate_INSERTs_conv)) tm;
+  end
 
 (* ---------------------------------------------------------------------------------------- *)
-
-  val birs_exp_imp_DROP_R_thm = prove(``
-    !be1 be2.
-    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be1
-  ``,
-    (* maybe only true for expressions of type Bit1 *)
-    cheat
-  );
-  val birs_exp_imp_DROP_L_thm = prove(``
-    !be1 be2.
-    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be2
-  ``,
-    (* maybe only true for expressions of type Bit1 *)
-    cheat
-  );
-
-  fun is_DROP_R_imp imp_tm =
-    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_R_thm]) imp_tm)
-            handle _ => NONE);
-
-  fun is_DROP_L_imp imp_tm =
-    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_L_thm]) imp_tm)
-            handle _ => NONE);
-
-  fun is_conjunct_inclusion_imp imp_tm =
-    let
-      val (pcond1, pcond2) = dest_birs_exp_imp imp_tm;
-      val pcond1l = dest_band pcond1;
-      val pcond2l = dest_band pcond2;
-
-      (* find the common conjuncts by greedily collecting what is identical in both *)
-      val imp_is_ok = list_inclusion term_id_eq pcond2l pcond1l;
-    in
-      if imp_is_ok then
-        SOME (mk_oracle_thm "BIRS_CONJ_INCL_IMP" ([], imp_tm))
-      else
-        NONE
-    end;
 
   fun check_imp_tm imp_tm =
     if not (is_birs_exp_imp imp_tm) then raise ERR "check_imp_tm" "term needs to be birs_exp_imp" else
@@ -254,11 +174,50 @@ in (* local *)
     fun prove_assumptions remove_all conv thm = try_prove_assumptions remove_all conv (SOME thm);
   end
 
+(* ---------------------------------------------------------------------------------------- *)
+
+  val birs_exp_imp_DROP_R_thm = prove(``
+    !be1 be2.
+    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be1
+  ``,
+    (* maybe only true for expressions of type Bit1 *)
+    cheat
+  );
+  val birs_exp_imp_DROP_L_thm = prove(``
+    !be1 be2.
+    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be2
+  ``,
+    (* maybe only true for expressions of type Bit1 *)
+    cheat
+  );
+
+  fun is_DROP_R_imp imp_tm =
+    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_R_thm]) imp_tm)
+            handle _ => NONE);
+
+  fun is_DROP_L_imp imp_tm =
+    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_L_thm]) imp_tm)
+            handle _ => NONE);
+
+  fun is_conjunct_inclusion_imp imp_tm =
+    let
+      val (pcond1, pcond2) = dest_birs_exp_imp imp_tm;
+      val pcond1l = dest_bandl pcond1;
+      val pcond2l = dest_bandl pcond2;
+
+      (* find the common conjuncts by greedily collecting what is identical in both *)
+      val imp_is_ok = list_inclusion term_id_eq pcond2l pcond1l;
+    in
+      if imp_is_ok then
+        SOME (mk_oracle_thm "BIRS_CONJ_INCL_IMP" ([], imp_tm))
+      else
+        NONE
+    end;
+
   (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
   fun birs_Pi_first_pcond_RULE pcond_new thm =
     let
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_Pi_first_pcond_RULE" "theorem is not a standard birs_symb_exec";
+      val _ = birs_check_norm_thm ("birs_Pi_first_pcond_RULE", "") thm;
 
       val (p_tm, tri_tm) = (dest_birs_symb_exec o concl) thm;
       val (sys_tm,L_tm,Pi_old_tm) = dest_sysLPi tri_tm;
@@ -289,32 +248,28 @@ in (* local *)
 
   fun birs_Pi_first_pcond_drop drop_right thm =
     let
-      val Pi_sys_tm_free = (get_birs_Pi_first o concl) thm;
-      val (_,_,_,pcond_old) = dest_birs_state Pi_sys_tm_free;
-      val sel_fun =
+      open bir_expSyntax;
+      open bir_exp_immSyntax;
+      val Pi_sys_tm = (get_birs_Pi_first o concl) thm;
+      val pcond = dest_birs_state_pcond Pi_sys_tm;
+      val _ = if is_BExp_BinExp pcond then () else
+              raise ERR "birs_Pi_first_pcond_drop" "pcond must be a BinExp";
+      val (bop,be1,be2) = dest_BExp_BinExp pcond;
+      val _ = if is_BIExp_And bop then () else
+              raise ERR "birs_Pi_first_pcond_drop" "pcond must be an And";
+      val pcond_new =
         if drop_right then
-          (snd o dest_comb o fst o dest_comb)
+          be1
         else
-          (snd o dest_comb);
-      val pcond_new = sel_fun pcond_old;
-
-      (* debug printout *)
-      (*val _ = print_thm thm;*)
-      (*
-      val _ = print "\npcond before: \n";
-      val _ = print_term pcond_old;
-      val _ = print "\npcond after: \n";
-      val _ = print_term pcond_new;
-      *)
+          be2;
     in
       birs_Pi_first_pcond_RULE pcond_new thm
     end;
 
-  (* TODO later (instantiate): general path condition strengthening with z3 *)
+  (* general path condition strengthening with z3 *)
   fun birs_sys_pcond_RULE pcond_new thm =
     let
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_sys_pcond_RULE" "theorem is not a standard birs_symb_exec";
+      val _ = birs_check_norm_thm ("birs_sys_pcond_RULE", "") thm;
 
       val (p_tm, tri_tm) = (dest_birs_symb_exec o concl) thm;
       val (sys_old_tm,L_tm,Pi_tm) = dest_sysLPi tri_tm;
@@ -339,41 +294,70 @@ in (* local *)
 
 (* ---------------------------------------------------------------------------------------- *)
 
-  (* get all mapped variable names *)
-  fun birs_env_varnames birs_tm =
-    let
-      val _ = if birs_state_is_normform birs_tm then () else
-              raise ERR "birs_env_varnames" "symbolic bir state is not in standard form";
+  local
+    val struct_CONV =
+      RAND_CONV;
+    fun sys_CONV conv =
+      LAND_CONV conv;
+    fun L_CONV conv =
+      RAND_CONV (LAND_CONV conv);
+    fun Pi_CONV conv =
+      RAND_CONV (RAND_CONV conv);
+    val first_CONV =
+      LAND_CONV;
+    fun second_CONV conv =
+      RAND_CONV (first_CONV conv);
+  in
+    (* apply state transformer to sys *)
+    fun birs_sys_CONV conv tm =
+      let
+        val _ = if is_birs_symb_exec tm then () else
+                raise ERR "birs_sys_CONV" "cannot handle term";
+      in
+        (struct_CONV (sys_CONV conv)) tm
+      end;
 
-      val (_, env, _, _) = dest_birs_state birs_tm;
-      val mappings = (fst o listSyntax.dest_list o dest_birs_gen_env) env;
-      val varname_tms = List.map (fst o pairSyntax.dest_pair) mappings;
-      val varnames = List.map stringSyntax.fromHOLstring varname_tms;
-      (* make sure that varnames is distinct *)
-      val _ = if list_distinct gen_eq varnames then () else
-              raise ERR "birs_env_varnames" "state has one variable mapped twice";
-    in
-      varnames
-    end;
+    (* apply state transformer to L *)
+    fun birs_L_CONV conv tm =
+      let
+        val _ = if is_birs_symb_exec tm then () else
+                raise ERR "birs_L_CONV" "cannot handle term";
+      in
+        struct_CONV (L_CONV conv) tm
+      end;
+
+    (* apply state transformer to Pi *)
+    fun birs_Pi_CONV conv tm =
+      let
+        val _ = if is_birs_symb_exec tm then () else
+                raise ERR "birs_Pi_CONV" "cannot handle term";
+      in
+        (struct_CONV (Pi_CONV conv)) tm
+      end;
+
+    (* apply state transformer to first state in Pi *)
+    (* TODO: should check the number of states in Pi *)
+    fun birs_Pi_first_CONV conv =
+      birs_Pi_CONV (first_CONV conv);
+    fun birs_Pi_second_CONV conv =
+      birs_Pi_CONV (second_CONV conv);
+  end
 
   (* modify the environment *)
-  fun birs_env_CONV is_start conv birs_tm =
+  fun birs_env_CONV conv birs_tm =
     let
-      val _ = if birs_state_is_normform_gen is_start birs_tm then () else
-              raise ERR "birs_env_CONV" "symbolic bir state is not in standard form";
-
-      val (pc, env, status, pcond) = dest_birs_state birs_tm;
-      val env_new_thm = conv env;
+      val _ = birs_check_state_norm ("birs_env_CONV", "") birs_tm;
+      val env_new_thm = conv (dest_birs_state_env birs_tm);
     in
+      (* better use EQ_MP? *)
       REWRITE_CONV [env_new_thm] birs_tm
     end
 
   (* move a certain mapping to the top *)
   fun birs_env_var_top_CONV varname birs_tm =
-    (* TODO: should use birs_env_CONV false *)
+    (* TODO: should use birs_env_CONV *)
     let
-      val _ = if birs_state_is_normform birs_tm then () else
-              raise ERR "birs_env_var_top_CONV" "symbolic bir state is not in standard form";
+      val _ = birs_check_state_norm ("birs_env_var_top_CONV", "") birs_tm;
 
       val (pc, env, status, pcond) = dest_birs_state birs_tm;
       val (mappings, mappings_ty) = (listSyntax.dest_list o dest_birs_gen_env) env;
@@ -391,115 +375,28 @@ in (* local *)
     end
     handle _ => raise ERR "birs_env_var_top_CONV" "something uncaught";
 
-  local
-    val struct_CONV =
-      RAND_CONV;
-    fun sys_CONV conv =
-      LAND_CONV conv;
-    fun L_CONV conv =
-      RAND_CONV (LAND_CONV conv);
-    fun Pi_CONV conv =
-      RAND_CONV (RAND_CONV conv);
-    val first_CONV =
-      LAND_CONV;
-    fun second_CONV conv =
-      RAND_CONV (first_CONV conv);
+(* ---------------------------------------------------------------------------------------- *)
 
-    local
-      open pred_setSyntax;
-      open pred_setTheory;
-      val rotate_first_INSERTs_thm = prove(``
-        !x1 x2 xs.
-        (x1 INSERT x2 INSERT xs) = (x2 INSERT x1 INSERT xs)
-      ``,
-        fs [EXTENSION] >>
-        metis_tac []
-      );
-      fun is_two_INSERTs tm = (is_insert tm) andalso ((is_insert o snd o dest_insert) tm);
+  (* swap the first two states in Pi *)
+  fun birs_Pi_rotate_two_RULE thm =
+    let
+      val _ = birs_check_norm_thm ("birs_Pi_rotate_two_RULE", "") thm;
+      val _ = birs_check_min_Pi_thm 2 "birs_Pi_rotate_two_RULE" thm;
+
+      val res_thm = CONV_RULE (birs_Pi_CONV (rotate_two_INSERTs_conv)) thm;
     in
-      fun rotate_two_INSERTs_conv tm =
-        let
-          val _ = if is_two_INSERTs tm then () else
-            raise ERR "rotate_two_INSERTs_conv" "need to be a term made up of two inserts";
-          val (x1_tm, x2xs_tm) = dest_insert tm;
-          val (x2_tm, xs_tm) = dest_insert x2xs_tm;
-          val inst_thm = ISPECL [x1_tm, x2_tm, xs_tm] rotate_first_INSERTs_thm;
-        in
-          inst_thm
-        end;
+      res_thm
+    end;
 
-      fun rotate_INSERTs_conv tm =
-        (if not (is_two_INSERTs tm) then REFL else
-         (rotate_two_INSERTs_conv THENC
-          RAND_CONV rotate_INSERTs_conv)) tm;
-    end
-  in
-    (* apply state transformer to sys *)
-    fun birs_sys_CONV conv tm =
-      let
-        val _ = if is_birs_symb_exec tm then () else
-                raise ERR "birs_sys_CONV" "cannot handle term";
-      in
-        (struct_CONV (sys_CONV conv)) tm
-      end;
+  fun birs_Pi_rotate_RULE thm =
+    let
+      val _ = birs_check_norm_thm ("birs_Pi_rotate_RULE", "") thm;
+      val _ = birs_check_min_Pi_thm 2 "birs_Pi_rotate_RULE" thm;
 
-    (* apply state transformer to Pi *)
-    fun birs_Pi_CONV conv tm =
-      let
-        val _ = if is_birs_symb_exec tm then () else
-                raise ERR "birs_Pi_CONV" "cannot handle term";
-      in
-        (struct_CONV (Pi_CONV conv)) tm
-      end;
-
-    (* apply state transformer to L *)
-    fun birs_L_CONV conv tm =
-      let
-        val _ = if is_birs_symb_exec tm then () else
-                raise ERR "birs_L_CONV" "cannot handle term";
-      in
-        struct_CONV (L_CONV conv) tm
-      end;
-
-    (* apply state transformer to first state in Pi *)
-    fun birs_Pi_first_CONV conv =
-      birs_Pi_CONV (first_CONV conv);
-    fun birs_Pi_second_CONV conv =
-      birs_Pi_CONV (second_CONV conv);
-
-    (* swap the first two states in Pi *)
-    fun birs_Pi_rotate_two_RULE thm =
-      let
-        (*val _ = print "rotating first two in Pi\n";*)
-        val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-                raise ERR "birs_Pi_rotate_two_RULE" "theorem is not a standard birs_symb_exec";
-        val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
-        val num_Pi_el = (length o pred_setSyntax.strip_set) Pi_tm;
-        val _ = if num_Pi_el > 1 then () else
-                raise ERR "birs_Pi_rotate_two_RULE" "Pi has to have at least two states";
-
-        val res_thm = CONV_RULE (struct_CONV (Pi_CONV (rotate_two_INSERTs_conv))) thm;
-        (*val _ = print "finished rotating\n";*)
-      in
-        res_thm
-      end;
-
-    fun birs_Pi_rotate_RULE thm =
-      let
-        (*val _ = print "rotating elements of Pi\n";*)
-        val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-                raise ERR "birs_Pi_rotate_RULE" "theorem is not a standard birs_symb_exec";
-        val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
-        val num_Pi_el = (length o pred_setSyntax.strip_set) Pi_tm;
-        val _ = if num_Pi_el > 1 then () else
-                raise ERR "birs_Pi_rotate_RULE" "Pi has to have at least two states";
-
-        val res_thm = CONV_RULE (struct_CONV (Pi_CONV (rotate_INSERTs_conv))) thm;
-        (*val _ = print "finished rotating\n";*)
-      in
-        res_thm
-      end;
-  end
+      val res_thm = CONV_RULE (birs_Pi_CONV (rotate_INSERTs_conv)) thm;
+    in
+      res_thm
+    end;
 
   (* goes through all Pi states and applies rule *)
   fun birs_Pi_each_RULE rule thm =
@@ -518,6 +415,7 @@ in (* local *)
     end;
 
 (* ---------------------------------------------------------------------------------------- *)
+
   local
     open bir_programSyntax;
     open optionSyntax;

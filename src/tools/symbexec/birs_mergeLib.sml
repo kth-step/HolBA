@@ -48,8 +48,7 @@ in (* local *)
     (* TODO: this is maybe too crude: just replace the given expression anywhere in the currently mapped expression *)
     fun birs_Pi_first_freesymb_RULE symbname exp_tm thm =
       let
-        val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-                raise ERR "birs_Pi_first_freesymb_RULE" "theorem is not a standard birs_symb_exec";
+        val _ = birs_check_norm_thm ("birs_Pi_first_freesymb_RULE", "") thm;
 
         (* get the previously mapped expression *)
         val (p_tm, tri_tm) = (dest_birs_symb_exec o concl) thm;
@@ -261,13 +260,12 @@ in (* local *)
   (* the merge function for the first two Pi states *)
   fun birs_Pi_merge_2_RULE thm =
     let
+      val _ = birs_check_norm_thm ("birs_Pi_merge_2_RULE", "") thm;
+
       val _ = if not debug_mode then () else print "merging the first two in Pi\n";
       val timer = holba_miscLib.timer_start 0;
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_Pi_merge_2_RULE" "theorem is not a standard birs_symb_exec";
       (* assumes that Pi has at least two states *)
-      val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
-      val Pi_tms = pred_setSyntax.strip_set Pi_tm;
+      val Pi_tms = (get_birs_Pi_list o concl) thm;
       val num_Pi_el = length Pi_tms;
       val _ = if num_Pi_el > 1 then () else
               raise ERR "birs_Pi_merge_2_RULE" "Pi has to have at least two states";
@@ -305,8 +303,8 @@ in (* local *)
           val pcond2 = (get_birs_Pi_first_pcond o concl) thm1;
 
           (* get conjuncts as list *)
-          val pcond1l = dest_band pcond1;
-          val pcond2l = dest_band pcond2;
+          val pcond1l = dest_bandl pcond1;
+          val pcond2l = dest_bandl pcond2;
 
           (* find the common conjuncts by greedily collecting what is identical in both *)
           val pcond_commonl = list_commons term_id_eq pcond1l pcond2l;
@@ -335,26 +333,20 @@ in (* local *)
 
   (* merging of all states in Pi *)
   fun birs_Pi_merge_RULE_ thm =
-    let
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_Pi_merge_RULE_" "theorem is not a standard birs_symb_exec";
-      val (_,_,Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
-      val num_Pi_el = (length o pred_setSyntax.strip_set) Pi_tm;
-    in
-      (* recursion, go over all the Pi states until there is only one left *)
-      if num_Pi_el < 2 then
-        thm
-      else
-        birs_Pi_merge_RULE_ (birs_Pi_merge_2_RULE thm)
-    end;
+    (* recursion, go over all the Pi states until there is only one left *)
+    if (get_birs_Pi_length o concl) thm < 2 then
+      thm
+    else
+      birs_Pi_merge_RULE_ (birs_Pi_merge_2_RULE thm);
   
   fun birs_Pi_merge_RULE thm =
     let
+      val _ = birs_check_norm_thm ("birs_Pi_merge_RULE", "") thm;
       val merged_thm = birs_Pi_merge_RULE_ thm;
 
       (* check that the path condition has only changed in ways we want *)
-      val pcond_sysl = (dest_band o get_birs_sys_pcond o concl) merged_thm;
-      val pcond_Pifl = (dest_band o get_birs_Pi_first_pcond o concl) merged_thm;
+      val pcond_sysl = (dest_bandl o get_birs_sys_pcond o concl) merged_thm;
+      val pcond_Pifl = (dest_bandl o get_birs_Pi_first_pcond o concl) merged_thm;
       val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
       val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
       fun check_extra extra =

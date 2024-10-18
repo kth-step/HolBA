@@ -68,14 +68,13 @@ in (* local *)
   fun build_tree_rec exec_funs thm =
     let
       val _ = print ("\n");
-      val (_, _, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) thm;
 
       val (_, _, _, is_continue) = exec_funs;
       fun is_executable st =
         birs_state_is_running st andalso
         is_continue st;
 
-      val sts = symb_sound_struct_Pi_to_birstatelist_fun Pi_tm;
+      val sts = (get_birs_Pi_list o concl) thm;
       val sts_exec = List.filter is_executable sts;
       (*
       val _ = print ("- have " ^ (Int.toString (length sts)) ^ " states\n");
@@ -107,12 +106,8 @@ in (* local *)
     end;
 
   fun build_tree exec_funs st =
-    let
-      val _ = if birs_state_is_normform_gen false st then () else
-              raise ERR "build_tree" "state is not in standard form with birs_gen_env";
-    in
-      build_tree_rec exec_funs (take_step exec_funs st)
-    end;
+    (birs_check_state_norm ("build_tree", "") st;
+     build_tree_rec exec_funs (take_step exec_funs st));
 
   fun exec_until exec_funs comp_fun =
     (Profile.profile "reduce_tree" (reduce_tree comp_fun)) o
@@ -125,50 +120,49 @@ in (* local *)
 
   fun bir_symb_exec_to (bprog_tm, birs_post_step_fun) birs_end_lbls birs_state =
     let
-    val _ = if birs_state_is_normform_gen false birs_state then () else
-            raise ERR "bir_symb_exec_to" "state is not in standard form with birs_gen_env";
+      val _ = birs_check_state_norm ("bir_symb_exec_to", "") birs_state;
 
-    open birs_execLib;
+      open birs_execLib;
 
-    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (Profile.profile "bir_prog_has_no_halt_fun" bir_prog_has_no_halt_fun bprog_tm);
-    val birs_rule_STEP_fun_spec =
-      (birs_post_step_fun o
-        birs_rule_STEP_fun birs_rule_STEP_thm);
-    (* now the composition *)
-    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
-    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
-    (*val _ = print_thm single_step_A_thm;*)
-    (* and also the sequential composition *)
-    val birs_rule_STEP_SEQ_thm = MATCH_MP
-      birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
-      (bir_prog_has_no_halt_fun bprog_tm);
-    val birs_rule_STEP_SEQ_fun_spec =
-      (birs_post_step_fun o
-      birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm);
-    
-    val fetch = fn _ => NONE;
-    (*val fetch = fn _ => SOME TRUTH;*)
-    (*val fetch = fn x => SOME (birs_rule_STEP_fun_spec x);*)
-    val is_continue = not_stop_lbl birs_end_lbls;
+      val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (Profile.profile "bir_prog_has_no_halt_fun" bir_prog_has_no_halt_fun bprog_tm);
+      val birs_rule_STEP_fun_spec =
+        (birs_post_step_fun o
+          birs_rule_STEP_fun birs_rule_STEP_thm);
+      (* now the composition *)
+      val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
+      val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
+      (*val _ = print_thm single_step_A_thm;*)
+      (* and also the sequential composition *)
+      val birs_rule_STEP_SEQ_thm = MATCH_MP
+        birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
+        (bir_prog_has_no_halt_fun bprog_tm);
+      val birs_rule_STEP_SEQ_fun_spec =
+        (birs_post_step_fun o
+        birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm);
+      
+      val fetch = fn _ => NONE;
+      (*val fetch = fn _ => SOME TRUTH;*)
+      (*val fetch = fn x => SOME (birs_rule_STEP_fun_spec x);*)
+      val is_continue = not_stop_lbl birs_end_lbls;
 
-    val _ = print "now reducing it to one sound structure\n";
-    val timer = holba_miscLib.timer_start 0;
-    val result = exec_until
-      (fetch, birs_rule_STEP_SEQ_fun_spec, birs_rule_STEP_fun_spec, is_continue)
-      birs_rule_SEQ_fun_spec
-      birs_state
-      handle e => (Profile.print_profile_results (Profile.results ()); raise e);
-    val _ = holba_miscLib.timer_stop
-      (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
+      val _ = print "now reducing it to one sound structure\n";
+      val timer = holba_miscLib.timer_start 0;
+      val result = exec_until
+        (fetch, birs_rule_STEP_SEQ_fun_spec, birs_rule_STEP_fun_spec, is_continue)
+        birs_rule_SEQ_fun_spec
+        birs_state
+        handle e => (Profile.print_profile_results (Profile.results ()); raise e);
+      val _ = holba_miscLib.timer_stop
+        (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 
-      (*
-      Profile.reset_all ()
-      Profile.print_profile_results (Profile.results ())
-      Profile.output_profile_results (iostream) (Profile.results ())
-      *)
-    val _ = Profile.print_profile_results (Profile.results ());
+        (*
+        Profile.reset_all ()
+        Profile.print_profile_results (Profile.results ())
+        Profile.output_profile_results (iostream) (Profile.results ())
+        *)
+      val _ = Profile.print_profile_results (Profile.results ());
     in
-    result
+      result
     end;
   val bir_symb_exec_to = fn x => fn y => Profile.profile "bir_symb_exec_to" (bir_symb_exec_to x y);
 

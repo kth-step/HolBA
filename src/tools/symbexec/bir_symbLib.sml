@@ -168,7 +168,7 @@ fun bir_symb_transfer
     ``birs_state_init_pre_GEN ^bir_state_init_lbl_tm ^birenvtyl_tm
       (mk_bsysprecond ^bspec_pre_tm ^birenvtyl_tm)``;
 
-   val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) symb_analysis_thm;
+   val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
 
    val analysis_L_NOTIN_thm = prove (``^birs_state_end_lbl_tm NOTIN ^L_s``, EVAL_TAC);
 
@@ -436,7 +436,7 @@ fun bir_symb_transfer_two
     ``birs_state_init_pre_GEN ^bir_state_init_lbl_tm ^birenvtyl_tm
       (mk_bsysprecond ^bspec_pre_tm ^birenvtyl_tm)``;
    
-   val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) symb_analysis_thm;
+   val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
    
    val analysis_L_NOTIN_thm_1 = prove (``^birs_state_end_lbl_1_tm NOTIN ^L_s``, EVAL_TAC);
    val analysis_L_NOTIN_thm_2 = prove (``^birs_state_end_lbl_2_tm NOTIN ^L_s``, EVAL_TAC);

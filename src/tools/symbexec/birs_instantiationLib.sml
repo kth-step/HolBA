@@ -36,9 +36,6 @@ in (* local *)
     (* TODO later (instantiate): rename all variables *)
     fun birs_sound_rename_all_RULE thm =
       let
-        val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-                raise ERR "birs_sound_rename_all_RULE" "theorem is not a standard birs_symb_exec";
-
         (* collect what to rename from the initial environment mapping, should be all just variables, skip renaming of the pathcondition *)
       in
         ()
@@ -98,8 +95,7 @@ in (* local *)
   (* the instantiation function *)
   fun birs_sound_symb_inst_RULE symb_exp_map thm =
     let
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_sound_symb_inst_RULE" "theorem is not a standard birs_symb_exec";
+      val _ = birs_check_norm_thm ("birs_sound_symb_inst_RULE", "") thm;
 
       (* for now a function that does all at once and cheats, either sml substitution (for simplicity and speed, double-check the documentation to make sure that it is an "all-at-once substitution") or bir expression substitution and EVAL *)
       val s = List.map (fn (bv_symb,exp) => ((bslSyntax.bden bv_symb) |-> exp)) symb_exp_map;
@@ -115,7 +111,7 @@ in (* local *)
   *)
   fun birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bv_syp_gen A_thm B_thm =
     let
-      val _ = birs_symb_exec_check_compatible A_thm B_thm;
+      val _ = birs_check_compatible A_thm B_thm;
       val A_Pi_sys_tm = (get_birs_Pi_first o concl) A_thm;
       val (_,_,_,A_pcond) = dest_birs_state A_Pi_sys_tm;
       val len_of_thm_Pi = get_birs_Pi_length o concl;
@@ -145,8 +141,8 @@ in (* local *)
         raise ERR "birs_sound_inst_SEQ_RULE" "summaries can only contain 1 state currently";
       (* cleanup Pi path conditions (probably only need to consider one for starters) to only preserve non-summary conjunct (as the step before), but preserve also the intervals *)
       val B_Pi_pcond = (get_birs_Pi_first_pcond o concl) B_thm_inst_sys;
-      val B_Pi_pcond_intervals = List.filter (is_BExp_IntervalPred) (dest_band B_Pi_pcond);
-      val B_pcondl_new = B_Pi_pcond_intervals@(list_minus term_id_eq (dest_band A_pcond) B_Pi_pcond_intervals);
+      val B_Pi_pcond_intervals = List.filter (is_BExp_IntervalPred) (dest_bandl B_Pi_pcond);
+      val B_pcondl_new = B_Pi_pcond_intervals@(list_minus term_id_eq (dest_bandl A_pcond) B_Pi_pcond_intervals);
       val B_Pi_pcond_new = bslSyntax.bandl (B_pcondl_new);
       (*
       val _ = print_term (bslSyntax.bandl B_Pi_pcond_intervals_);

@@ -3,24 +3,25 @@ struct
 
 local
 
-open HolKernel Parse boolLib bossLib;
+  open HolKernel Parse boolLib bossLib;
 
-open pred_setTheory;
+  open pred_setTheory;
 
-open bir_symbTheory;
+  open bir_symbTheory;
 
-open birs_auxTheory;
+  open birs_auxTheory;
 
-open HolBACoreSimps;
+  open HolBACoreSimps;
 
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+  open birsSyntax;
+  open birs_utilsLib;
+
+  val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
   (* error handling *)
   val libname = "aux_setLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
-
-
 
 in (* local *)
 
@@ -246,8 +247,8 @@ in (* local *)
 
   fun birs_gen_env_check_eq env1 env2 =
     let
-      val mappings1 = birs_utilsLib.get_env_mappings env1;
-      val mappings2 = birs_utilsLib.get_env_mappings env2;
+      val mappings1 = get_env_mappings env1;
+      val mappings2 = get_env_mappings env2;
     in
       birs_utilsLib.list_eq_contents (fn (x,y) => pair_eq identical identical x y) mappings1 mappings2
     end;
@@ -273,9 +274,9 @@ in (* local *)
         (fn tm =>
           let
             val (bsys1_tm, bsys2_tm) = dest_eq tm;
-            val _ = if birsSyntax.birs_state_is_normform_gen false bsys1_tm andalso
-                       birsSyntax.birs_state_is_normform_gen false bsys2_tm then () else
-                  raise ERR "birs_state_EQ_CONV" "need two states with birs_gen_env environments";
+            (* need two states with birs_gen_env environments *)
+            val _ = birs_check_state_norm ("birs_state_EQ_CONV", ": 1") bsys1_tm;
+            val _ = birs_check_state_norm ("birs_state_EQ_CONV", ": 2") bsys2_tm;
 
             val get_state_env = (fn (_,env,_,_) => env) o birsSyntax.dest_birs_state;
             val is_eq = birs_gen_env_check_eq (get_state_env bsys1_tm) (get_state_env bsys2_tm);

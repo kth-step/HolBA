@@ -60,7 +60,7 @@ in
   *)
   fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     let
-      val _ = birs_symb_exec_check_compatible step_A_thm step_B_thm;
+      val _ = birs_check_compatible step_A_thm step_B_thm;
 
       val prep_thm =
         Profile.profile "birs_rule_SEQ_fun_1_match" (HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm)) step_B_thm;
@@ -81,9 +81,8 @@ in
          bprog_composed_thm
         handle e => (print "\n\n"; print_thm bprog_composed_thm; print "tidy up Pi and labelset failed\n"; raise e);
 
-      val _ = if symb_sound_struct_is_normform (concl bprog_fixed_thm) then () else
-              (print_term (concl bprog_fixed_thm);
-              raise ERR "birs_rule_SEQ_fun" "something is not right, the produced theorem is not evaluated enough");
+      val _ = birs_check_norm_thm ("birs_rule_SEQ_fun", "") bprog_fixed_thm
+        handle e => (print_term (concl bprog_fixed_thm); raise e);
     in
       bprog_fixed_thm
     end;

@@ -7136,7 +7136,7 @@ val state2_simpd_thm = birs_rule_STEP_fun_spec state2;
 val _ = holba_miscLib.timer_stop (fn delta_s => print ("time to simplify large store sequence: " ^ delta_s ^ "\n")) timer;
 val state2_simpd =
  let
-  val (_, _, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) state2_simpd_thm;
+  val (_, _, Pi_tm) = (get_birs_sysLPi o concl) state2_simpd_thm;
  in
   (hd o symb_sound_struct_Pi_to_birstatelist_fun) Pi_tm
  end;
@@ -7149,9 +7149,9 @@ val timer = holba_miscLib.timer_start 0;
 val state3_thm = birs_rule_STEP_fun_spec state2_simpd;
 val state3 =
  let
-  val (_, _, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) state3_thm;
+  val (_, _, Pi_tm) = (get_birs_sysLPi o concl) state3_thm;
  in
-  (hd o symb_sound_struct_Pi_to_birstatelist_fun) Pi_tm
+  (hd o get_birs_Pi_list) Pi_tm
  end;
 val (_, state3_env, _, _) = dest_birs_state state3;
 val _ = holba_miscLib.timer_stop (fn delta_s => print ("time to step with simplifications and pruning: " ^ delta_s ^ "\n")) timer;

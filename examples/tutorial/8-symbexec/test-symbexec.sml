@@ -97,7 +97,7 @@ val _ = print_thm symb_analysis_thm;
 (* ============================================================= *)
 
 (* check leafs *)
-val (sys_i, L_s, Pi_f) = (symb_sound_struct_get_sysLPi_fun o concl) symb_analysis_thm;
+val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
 val leafs = (pred_setSyntax.strip_set o snd o dest_comb) Pi_f;
 val _ = print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
 val _ = print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"

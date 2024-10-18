@@ -1000,29 +1000,29 @@ fun birs_exec_step_CONV_fun tm =
     val last_pc = ref T;
     val last_stmt = ref T;
     val birs_step_thm =
-  GEN_match_conv
-(is_birs_exec_step)
-(fn bstate_tm => (
-  RAND_CONV (birs_state_is_normform_CONV "birs_exec_step_CONV_fun") THENC
+      GEN_match_conv
+      (is_birs_exec_step)
+      (fn exec_tm => (
+        RAND_CONV (check_CONV birs_state_is_norm ("birs_exec_step_CONV_fun", "the state is not as expected")) THENC
 
-  (fn tm_i =>
-    let
-      val (bprog_tm, st_i) = dest_birs_exec_step tm_i;
-      val (pc, _, _, _) = dest_birs_state st_i;
-      val _ = last_pc := pc;
-      val _ = last_stmt := (snd o dest_eq o concl o pc_lookup_fun) (bprog_tm, pc); (* TODO: avoid pc_lookup_fun twice *)
-      val timer_exec_step = holba_miscLib.timer_start 0;
-      (* TODO: optimize *)
-      val birs_exec_thm = birs_exec_step_CONV tm_i;
-      val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
-    in
-      birs_exec_thm
-    end) THENC
+        (fn tm_i =>
+          let
+            val (bprog_tm, st_i) = dest_birs_exec_step tm_i;
+            val (pc, _, _, _) = dest_birs_state st_i;
+            val _ = last_pc := pc;
+            val _ = last_stmt := (snd o dest_eq o concl o pc_lookup_fun) (bprog_tm, pc); (* TODO: avoid pc_lookup_fun twice *)
+            val timer_exec_step = holba_miscLib.timer_start 0;
+            (* TODO: optimize *)
+            val birs_exec_thm = birs_exec_step_CONV tm_i;
+            val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
+          in
+            birs_exec_thm
+          end) THENC
 
-  birs_states_are_normform_CONV_with_start "birs_exec_step_CONV_fun" bstate_tm
-  ) bstate_tm
-)
-tm;
+        (check_CONV birs_states_is_norm ("birs_exec_step_CONV_fun", "the produced theorem is not evaluated enough")
+          handle e => (print "\n[[[[\n"; print_term exec_tm; print "\n]]]]\n"; raise e))
+        ) exec_tm)
+      tm;
   in
     (birs_step_thm, (!last_pc, !last_stmt))
   end;

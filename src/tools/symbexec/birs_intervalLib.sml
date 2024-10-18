@@ -58,7 +58,7 @@ local
       val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
         raise ERR "interval_from_state" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
       val env_symbol = dest_BExp_Den env_exp;
-      val pcondl = dest_band pcond;
+      val pcondl = dest_bandl pcond;
       val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
       val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
       val _ = if length pcond_intervaltms = 1 then () else
@@ -207,8 +207,7 @@ in (* local *)
     (* this has to be used after an instantiation and after an execution (which in turn is either from an initial state, or from after a merge operation), and before a bounds operation below *)
   fun birs_intervals_Pi_first_unify_RULE vn thm =
     let
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_intervals_Pi_first_unify_RULE" "theorem is not a standard birs_symb_exec";
+      val _ = birs_check_norm_thm ("birs_intervals_Pi_first_unify_RULE", "") thm;
 
       val _ = if not debug_mode then () else print "starting to unify interval for one Pi state\n";
 
@@ -234,7 +233,7 @@ in (* local *)
 
       (* need to operate on the path condition *)
       val pcond = (get_birs_Pi_first_pcond o concl) thm1;
-      val pcondl = dest_band pcond;
+      val pcondl = dest_bandl pcond;
 
       (* search for related simple equality, or for an interval *)
       val pcond_eqtms = List.filter (is_beq_left env_symbol) pcondl;
@@ -312,8 +311,7 @@ in (* local *)
     (* this has to be used after a unify operation above, and before the actual merging to be able to keep the interval in the path condition and the symbol reference in the environment mapping *)
   fun birs_intervals_Pi_bounds_RULE vn thm =
     let
-      val _ = if (symb_sound_struct_is_normform o concl) thm then () else
-              raise ERR "birs_intervals_Pi_bounds_RULE" "theorem is not a standard birs_symb_exec";
+      val _ = birs_check_norm_thm ("birs_intervals_Pi_bounds_RULE", "") thm;
       val Pi_len = (get_birs_Pi_length o concl) thm;
     in
      if Pi_len < 2 then thm else
@@ -330,7 +328,7 @@ in (* local *)
           val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
             raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
           val env_symbol = dest_BExp_Den env_exp;
-          val pcondl = dest_band pcond;
+          val pcondl = dest_bandl pcond;
           val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
           val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
           val _ = if length pcond_intervaltms = 1 then () else
