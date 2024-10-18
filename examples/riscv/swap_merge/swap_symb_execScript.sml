@@ -14,7 +14,7 @@ val _ = new_theory "swap_symb_exec";
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_swap_prog_def
   swap_init_addr_def [swap_end_addr_def]
