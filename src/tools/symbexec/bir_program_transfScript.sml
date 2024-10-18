@@ -1229,17 +1229,17 @@ Proof
 METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL]
 QED
 
-Definition birenvtyl_def:
-  birenvtyl = MAP BVarToPair m0_mod_vars
+Definition birenvtyl_armcm0_def:
+  birenvtyl_armcm0 = MAP BVarToPair m0_mod_vars
 End
-(*    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]*)
+(*    birenvtyl_armcm0 = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]*)
 (*
 bir_lifting_machinesTheory.m0_mod_REGS_lifted_imms_LIST_def
 m0_mod_REGS_lifted_imms_LIST
 m0_mod_lifted_mem
 bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL
 *)
-Theorem birenvtyl_EVAL_thm = (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl``
+Theorem birenvtyl_armcm0_EVAL_thm = (REWRITE_CONV [birenvtyl_armcm0_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl_armcm0``
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
@@ -1269,7 +1269,7 @@ Theorem backlift_bir_m0_mod_EXISTS_thm:
 ?bs. (
   (bmr_rel (m0_mod_bmr bmropt) bs ms) /\
   (bs.bst_status = BST_Running) /\
-  (bir_envty_list_b birenvtyl bs.bst_environ)
+  (bir_envty_list_b birenvtyl_armcm0 bs.bst_environ)
 )
 Proof
   REPEAT STRIP_TAC >>
@@ -1369,7 +1369,7 @@ Proof
   Q.UNABBREV_TAC `bs` >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
-  FULL_SIMP_TAC (std_ss) [birenvtyl_EVAL_thm, birs_auxTheory.bir_envty_list_b_thm] >>
+  FULL_SIMP_TAC (std_ss) [birenvtyl_armcm0_EVAL_thm, birs_auxTheory.bir_envty_list_b_thm] >>
 
   FULL_SIMP_TAC (std_ss) [birs_auxTheory.bir_envty_list_def] >>
 
@@ -1419,7 +1419,7 @@ Definition backlift_bir_m0_mod_pre_abstr_def:
         (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
         (pre ms) ==>
         (bs.bst_status = BST_Running) ==>
-        (bir_envty_list_b birenvtyl bs.bst_environ) ==>
+        (bir_envty_list_b birenvtyl_armcm0 bs.bst_environ) ==>
         (pre_bir bs)
 End
 
@@ -1783,11 +1783,11 @@ REPEAT STRIP_TAC >>
       [alpha  |-> Type`:bir_state_t`, beta |-> Type`:bir_label_t`, delta |-> Type`:word32`]
       backlift_contract_GEN_thm) >>
 
-  POP_ASSUM (ASSUME_TAC o Q.SPECL [`\ms bs. bs.bst_status = BST_Running /\ (bir_envty_list_b birenvtyl bs.bst_environ)`, `(\ms. \bs. (bmr_rel (m0_mod_bmr (F,T)) bs ms))`]) >>
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`\ms bs. bs.bst_status = BST_Running /\ (bir_envty_list_b birenvtyl_armcm0 bs.bst_environ)`, `(\ms. \bs. (bmr_rel (m0_mod_bmr (F,T)) bs ms))`]) >>
   FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_EXISTS_thm] >>
 
   `!ms bs.
-       (bs.bst_status = BST_Running /\ bir_envty_list_b birenvtyl bs.bst_environ) ==>
+       (bs.bst_status = BST_Running /\ bir_envty_list_b birenvtyl_armcm0 bs.bst_environ) ==>
        bmr_rel (m0_mod_bmr (F,T)) bs ms ==>
        (bir_ts p).ctrl bs =
        (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.ctrl ms)` by (
@@ -1799,7 +1799,7 @@ REPEAT STRIP_TAC >>
              bmr_rel (m0_mod_bmr (F,T)) bs ms ==>
              pre ms ==>
              bs.bst_status = BST_Running /\
-             bir_envty_list_b birenvtyl bs.bst_environ ==>
+             bir_envty_list_b birenvtyl_armcm0 bs.bst_environ ==>
              pre_bir bs` by (
     METIS_TAC []
   ) >>

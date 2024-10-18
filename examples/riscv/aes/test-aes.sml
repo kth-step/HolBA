@@ -12,7 +12,11 @@ open aes_symb_execTheory;
 (* for now we just have a leightweight check; this is to include aes into the test *)
 val _ = print "checking aes_symb_analysis_thm:\n";
 
-val _ = if term_size (concl aes_symb_analysis_thm) = 23173 then () else
+val term_sz = term_size (concl aes_symb_analysis_thm);
+val _ = print ("\nterm size = " ^ (Int.toString term_sz) ^ "\n\n");
+val expected_term_sz = 25198;
+
+val _ = if term_sz = expected_term_sz then () else
         raise Fail "term size of aes symbolic execution theorem is not as expected";
 
 val triple_tm = ((snd o dest_comb o concl) aes_symb_analysis_thm);

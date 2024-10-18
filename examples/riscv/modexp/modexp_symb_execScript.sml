@@ -13,7 +13,7 @@ val _ = new_theory "modexp_symb_exec";
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_modexp_prog_def
   modexp_init_addr_def [modexp_end_addr_def]

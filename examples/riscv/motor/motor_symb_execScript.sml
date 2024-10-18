@@ -20,7 +20,7 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_motor_prog_def
   motor_init_addr_def [motor_end_addr_def]

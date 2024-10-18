@@ -30,7 +30,7 @@ val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_swap_prog_def swap_birenvtyl_def
   bspec_swap_pre_def bspec_swap_post_def swap_prog_vars_list_def
-  swap_symb_analysis_thm swap_bsysprecond_thm swap_prog_vars_thm;
+  swap_symb_analysis_thm swap_prog_vars_thm;
 
 Theorem bspec_cont_swap:
  bir_cont bir_swap_prog bir_exp_true

@@ -94,11 +94,23 @@ val bprecond_def = Define `
 `;
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
-val (birs_state_init, birs_env_thm, bsysprecond_thm) =
-     bir_symb_analysis_init_gen NONE birs_state_init_lbl bprecond birenvtyl_def;
-val symb_analysis_thm = bir_symb_analysis
-    bprog [birs_state_end_lbl] birs_state_init;
-val exec_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
+   val birs_state_init =
+     birs_driveLib.birs_analysis_init birenvtyl_def bprecond birs_state_init_lbl;
+
+   val symb_analysis_thm =
+     birs_driveLib.birs_exec_to
+       bprog
+       (birs_strategiesLib.birs_post_step_riscv_default)
+       (fn _ => NONE)
+       (birs_strategiesLib.not_at_lbls [birs_state_end_lbl])
+       birs_state_init;
+       
+   val (bsysprecond_thm, exec_thm) =
+     birs_transferLib.prepare_transfer
+       birenvtyl_def
+       ``BExp_Const (Imm1 1w)``
+       ((lhs o snd o strip_forall o concl) bprecond_def)
+       symb_analysis_thm;
 
 val (sys_tm, L_tm, Pi_tm) = (get_birs_sysLPi o concl) exec_thm;
 

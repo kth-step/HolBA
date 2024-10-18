@@ -20,9 +20,9 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* --------------------------- *)
 
 (* turn on the store-store cheater *)
-val _ = birs_simp_select := birs_simp_instancesLib.birs_simp_default_riscv_gen true;
+val _ = birs_strategiesLib.birs_simp_select := birs_simp_instancesLib.birs_simp_default_riscv_gen true;
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_aes_prog_def
   aes_init_addr_def [aes_end_addr_def]
