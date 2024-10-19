@@ -78,13 +78,16 @@ val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(birs_driveLib.pcond_ge
 val pcond_symb_analysis_thm = birs_sys_pcond_RULE birs_pcond_tm specd_symb_analysis_thm;
 val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM mk_bsysprecond_pcond_thm, GSYM birs_env_thm])) pcond_symb_analysis_thm2;
 *)
+(*
 val (bsysprecond_thm, symb_analysis_thm) =
      birs_transferLib.prepare_transfer
        balrob_birenvtyl_def
-       bir_hvar_cond_symb
+       
        bspec_pre_tm
-       balrob_exec_thm;
-val fixed_symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) symb_analysis_thm;
+       ;
+       *)
+(* TODO: do we even need this line? I think I remember it made things faster before somehow *)
+val symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) balrob_exec_thm;
 
 (* ------------------------------- *)
 (* BIR property transfer *)
@@ -93,7 +96,7 @@ val fixed_symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxThe
 
 val balrob_prog_vars_thm = balrobTheory.balrob_prog_vars_thm;
 val balrob_prog_vars_list_def = balrobTheory.balrob_prog_vars_list_def;
-
+val pcond_gen_inst_o = SOME bir_hvar_cond_symb;
 (*
 val _ = HOL_Interactive.toggle_quietdec();
 val bir_prog_def = bir_balrob_prog_def;
@@ -101,16 +104,15 @@ val birenvtyl_def = balrob_birenvtyl_def;
 val bspec_pre_def = bspec_balrob_pre_def;
 val bspec_post_def = bspec_balrob_post_def;
 val prog_vars_list_def = balrob_prog_vars_list_def;
-val symb_analysis_thm = fixed_symb_analysis_thm;
 val prog_vars_thm = balrob_prog_vars_thm;
 val _ = HOL_Interactive.toggle_quietdec();
 *)
-(*
+
 val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_balrob_prog_def balrob_birenvtyl_def
   bspec_balrob_pre_def bspec_balrob_post_def balrob_prog_vars_list_def
-  fixed_symb_analysis_thm balrob_prog_vars_thm;
+  symb_analysis_thm pcond_gen_inst_o balrob_prog_vars_thm;
 
 Theorem bspec_cont_balrob:
  bir_cont bir_balrob_prog bir_exp_true
@@ -122,6 +124,5 @@ Theorem bspec_cont_balrob:
 Proof
  rw [bspec_cont_thm]
 QED
-*)
 
 val _ = export_theory ();
