@@ -33,6 +33,7 @@ val bspec_pre_def = bspec_incr_pre_def;
 val bspec_post_def = bspec_incr_post_def;
 val prog_vars_list_def = incr_prog_vars_list_def;
 val symb_analysis_thm  = incr_symb_analysis_thm;
+val pcond_gen_inst_o = NONE;
 val prog_vars_thm = incr_prog_vars_thm;
 *)
 
@@ -40,7 +41,7 @@ val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_incr_prog_def incr_birenvtyl_def
   bspec_incr_pre_def bspec_incr_post_def incr_prog_vars_list_def
-  incr_symb_analysis_thm incr_prog_vars_thm;
+  incr_symb_analysis_thm NONE incr_prog_vars_thm;
 
 Theorem bspec_cont_incr:
  bir_cont bir_incr_prog bir_exp_true

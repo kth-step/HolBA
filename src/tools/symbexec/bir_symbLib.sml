@@ -87,12 +87,16 @@ fun bir_symb_transfer
  bspec_pre_tm bspec_post_tm
  bir_prog_def birenvtyl_def
  bspec_pre_def bspec_post_def prog_vars_list_def
- symb_analysis_thm prog_vars_thm =
+ symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
  let
+   val pcond_gen_inst =
+     case pcond_gen_inst_o of
+         SOME x => x
+       | NONE => ``BExp_Const (Imm1 1w)``;
    val (bsysprecond_thm, symb_analysis_thm) =
      birs_transferLib.prepare_transfer
        birenvtyl_def
-       ``BExp_Const (Imm1 1w)``
+       pcond_gen_inst
        ((lhs o snd o strip_forall o concl) bspec_pre_def)
        symb_analysis_thm;
 
@@ -310,7 +314,7 @@ fun bir_symb_transfer_thm
  bir_prog_def init_addr_def end_addr_def
  bspec_pre_def bspec_post_def
  birenvtyl_def prog_vars_list_def
- symb_analysis_thm prog_vars_thm =
+ symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
  let
    val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
    val end_addr_tm = (snd o dest_eq o concl) end_addr_def;
@@ -322,7 +326,7 @@ fun bir_symb_transfer_thm
      bspec_pre_tm bspec_post_tm
      bir_prog_def birenvtyl_def
      bspec_pre_def bspec_post_def prog_vars_list_def
-     symb_analysis_thm prog_vars_thm
+     symb_analysis_thm pcond_gen_inst_o prog_vars_thm
  end (* let *)
 
 end (* local *)
@@ -362,12 +366,16 @@ fun bir_symb_transfer_two
  bspec_pre_tm bspec_post_1_tm bspec_post_2_tm
  bir_prog_def birenvtyl_def
  bspec_pre_def bspec_post_1_def bspec_post_2_def prog_vars_list_def
- symb_analysis_thm prog_vars_thm =
+ symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
  let
+   val pcond_gen_inst =
+     case pcond_gen_inst_o of
+         SOME x => x
+       | NONE => ``BExp_Const (Imm1 1w)``;
    val (bsysprecond_thm, symb_analysis_thm) =
      birs_transferLib.prepare_transfer
        birenvtyl_def
-       ``BExp_Const (Imm1 1w)``
+       pcond_gen_inst
        ((lhs o snd o strip_forall o concl) bspec_pre_def)
        symb_analysis_thm;
 
@@ -637,7 +645,7 @@ fun bir_symb_transfer_two_thm
   init_addr_def end_addr_1_def end_addr_2_def  
   bspec_pre_def bspec_post_1_def bspec_post_2_def
   birenvtyl_def prog_vars_list_def
-  symb_analysis_thm prog_vars_thm =
+  symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
   let
     val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
     val end_addr_1_tm = (snd o dest_eq o concl) end_addr_1_def;
@@ -651,7 +659,7 @@ fun bir_symb_transfer_two_thm
      bspec_pre_tm bspec_post_1_tm bspec_post_2_tm
      bir_prog_def birenvtyl_def
      bspec_pre_def bspec_post_1_def bspec_post_2_def prog_vars_list_def
-     symb_analysis_thm prog_vars_thm
+     symb_analysis_thm pcond_gen_inst_o prog_vars_thm
   end (* let *)
 
 end (* local *)

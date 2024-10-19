@@ -10,14 +10,14 @@ sig
     term -> term ->
     thm -> thm ->
     thm -> thm -> thm ->
-    thm -> thm ->
+    thm -> term option -> thm ->
     thm;
 
   val bir_symb_transfer_thm :
     thm -> thm -> thm ->
     thm -> thm ->
     thm -> thm ->
-    thm -> thm ->
+    thm -> term option -> thm ->
     thm;
 
   val bir_symb_transfer_two :
@@ -25,7 +25,7 @@ sig
     term -> term -> term ->
     thm -> thm ->
     thm -> thm -> thm -> thm ->
-    thm -> thm ->
+    thm -> term option -> thm ->
     thm;
 
   val bir_symb_transfer_two_thm :
@@ -33,7 +33,7 @@ sig
     thm -> thm -> thm ->
     thm -> thm -> thm ->
     thm -> thm ->
-    thm -> thm ->
+    thm -> term option -> thm ->
     thm;
 
 end

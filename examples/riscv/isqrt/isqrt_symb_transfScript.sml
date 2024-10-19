@@ -23,7 +23,7 @@ val bspec_cont_1_thm =
   bir_isqrt_prog_def isqrt_init_addr_1_def isqrt_end_addr_1_def
   bspec_isqrt_pre_1_def bspec_isqrt_post_1_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
-  isqrt_symb_analysis_1_thm isqrt_prog_vars_thm;
+  isqrt_symb_analysis_1_thm NONE isqrt_prog_vars_thm;
 
 val init_addr_1_tm = (snd o dest_eq o concl) isqrt_init_addr_1_def;
 val end_addr_1_tm = (snd o dest_eq o concl) isqrt_end_addr_1_def;
@@ -48,7 +48,7 @@ val bspec_cont_2_thm =
   bir_isqrt_prog_def isqrt_init_addr_2_def isqrt_end_addr_2_def
   bspec_isqrt_pre_2_def bspec_isqrt_post_2_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
-  isqrt_symb_analysis_2_thm isqrt_prog_vars_thm;
+  isqrt_symb_analysis_2_thm NONE isqrt_prog_vars_thm;
 
 val init_addr_2_tm = (snd o dest_eq o concl) isqrt_init_addr_2_def;
 val end_addr_2_tm = (snd o dest_eq o concl) isqrt_end_addr_2_def;
@@ -74,7 +74,7 @@ val bspec_cont_3_thm =
   isqrt_init_addr_3_def isqrt_end_addr_3_loop_def isqrt_end_addr_3_ret_def
   bspec_isqrt_pre_3_def bspec_isqrt_post_3_loop_def bspec_isqrt_post_3_ret_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
-  isqrt_symb_analysis_3_thm isqrt_prog_vars_thm;
+  isqrt_symb_analysis_3_thm NONE isqrt_prog_vars_thm;
 
 val init_addr_tm = (snd o dest_eq o concl) isqrt_init_addr_3_def;
 val end_addr_1_tm = (snd o dest_eq o concl) isqrt_end_addr_3_loop_def;
