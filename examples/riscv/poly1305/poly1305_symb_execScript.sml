@@ -18,15 +18,11 @@ val _ = show_tags := true;
 (* U8TO32 *)
 (* ------ *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_poly1305_prog_def
   poly1305_u8to32_init_addr_def [poly1305_u8to32_end_addr_def]
   bspec_poly1305_u8to32_pre_def poly1305_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem poly1305_u8to32_bsysprecond_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 

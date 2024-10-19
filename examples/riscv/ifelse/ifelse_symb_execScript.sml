@@ -14,15 +14,11 @@ val _ = new_theory "ifelse_symb_exec";
 
 val _ = show_tags := true;
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_ifelse_prog_def
   ifelse_init_addr_def [ifelse_end_addr_def]
   bspec_ifelse_pre_def ifelse_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem ifelse_bsysprecond_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
