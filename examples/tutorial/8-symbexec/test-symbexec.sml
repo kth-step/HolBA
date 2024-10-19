@@ -80,7 +80,7 @@ val bspec_tutorial_pre_def = Define `bspec_tutorial_pre : bir_exp_t = ^precond`;
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_tutorial_prog_def
   tutorial_init_addr_def [tutorial_end_addr_def]
@@ -97,8 +97,8 @@ val _ = print_thm symb_analysis_thm;
 (* ============================================================= *)
 
 (* check leafs *)
-val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
-val leafs = (pred_setSyntax.strip_set o snd o dest_comb) Pi_f;
+val (sys_i, L_s, Pi) = (get_birs_sysLPi o concl) symb_analysis_thm;
+val leafs = pred_setSyntax.strip_set Pi;
 val _ = print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
 val _ = print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
 val _ = print ("number of leafs: " ^ (Int.toString (length leafs)) ^ "\n\n");
@@ -123,7 +123,7 @@ fun get_init_vals wtm =
   end;
 
 (* compute concrete states from path conditions using SMT-solver *)
-val wtms = List.map (bir_exp_to_wordsLib.bir2bool o (fn (_,_,_,pcond_tm) => pcond_tm) o dest_birs_state) leafs;
+val wtms = List.map (bir_exp_to_wordsLib.bir2bool o dest_birs_state_pcond) leafs;
 val states = List.map get_init_vals wtms;
 
 
