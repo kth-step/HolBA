@@ -5,7 +5,7 @@ local
 
 open HolKernel Parse boolLib bossLib;
 
-open bir_symbLib;
+(*open bir_symbLib;*)
 
 open balrobTheory;
 
