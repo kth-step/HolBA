@@ -349,31 +349,46 @@ in (* local *)
       val _ = birs_check_state_norm ("birs_env_CONV", "") birs_tm;
       val env_new_thm = conv (dest_birs_state_env birs_tm);
     in
-      (* better use EQ_MP? *)
-      REWRITE_CONV [env_new_thm] birs_tm
+      (* better use some variant of EQ_MP? should exist *)
+      REWRITE_CONV [Once env_new_thm] birs_tm
     end
+
+  (* adjust the order of a mapping according to a given list *)
+  fun birs_env_set_order_CONV varnames tm =
+    let
+      fun is_m_for_varname vn = (fn x => x = vn) o stringSyntax.fromHOLstring o fst o pairSyntax.dest_pair;
+      fun get_exp_if vn m =
+        if is_m_for_varname vn m then SOME m else NONE;
+      fun reorder_mappings [] ms acc = ((List.rev acc)@ms)
+        | reorder_mappings (varname::vns) ms acc =
+            let
+              val m_o = List.foldl (fn (m, acc) => case acc of SOME x => SOME x | NONE => get_exp_if varname m) NONE ms;
+              val m = valOf m_o handle _ => raise ERR "birs_env_set_order_CONV" "variable name not mapped in bir state";
+              val ms_new = List.filter (not o is_m_for_varname varname) ms;
+            in
+              reorder_mappings vns ms_new (m::acc)
+            end;
+
+      fun set_env_order env =
+        let
+          val _ = birs_check_env_norm ("birs_env_set_order_CONV", "") env;
+
+          val (mappings, mappings_ty) = (listSyntax.dest_list o dest_birs_gen_env) env;
+
+          val env_new = (mk_birs_gen_env o listSyntax.mk_list) (reorder_mappings varnames mappings [], mappings_ty);
+        in
+          mk_oracle_thm "BIRS_ENVVARSETORDER" ([], mk_eq (env, env_new))
+        end
+        handle _ => raise ERR "birs_env_set_order_CONV" "something uncaught";
+
+      val env_eq_thm = birs_env_CONV set_env_order tm;
+    in
+      env_eq_thm
+    end;
 
   (* move a certain mapping to the top *)
-  fun birs_env_var_top_CONV varname birs_tm =
-    (* TODO: should use birs_env_CONV *)
-    let
-      val _ = birs_check_state_norm ("birs_env_var_top_CONV", "") birs_tm;
-
-      val (pc, env, status, pcond) = dest_birs_state birs_tm;
-      val (mappings, mappings_ty) = (listSyntax.dest_list o dest_birs_gen_env) env;
-      val is_m_for_varname = (fn x => x = varname) o stringSyntax.fromHOLstring o fst o pairSyntax.dest_pair;
-      fun get_exp_if m =
-        if is_m_for_varname m then SOME m else NONE;
-      val m_o = List.foldl (fn (m, acc) => case acc of SOME x => SOME x | NONE => get_exp_if m) NONE mappings;
-      val m = valOf m_o handle _ => raise ERR "birs_env_var_top_CONV" "variable name not mapped in bir state";
-      val mappings_new = m::(List.filter (not o is_m_for_varname) mappings);
-
-      val env_new = (mk_birs_gen_env o listSyntax.mk_list) (mappings_new, mappings_ty);
-      val birs_new_tm = mk_birs_state (pc, env_new, status, pcond);
-    in
-      mk_oracle_thm "BIRS_ENVVARTOP" ([], mk_eq (birs_tm, birs_new_tm))
-    end
-    handle _ => raise ERR "birs_env_var_top_CONV" "something uncaught";
+  fun birs_env_var_top_CONV varname =
+    birs_env_set_order_CONV [varname];
 
 (* ---------------------------------------------------------------------------------------- *)
 

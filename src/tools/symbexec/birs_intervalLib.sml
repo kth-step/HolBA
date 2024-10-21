@@ -202,6 +202,24 @@ end
 
 in (* local *)
 
+  fun birs_intervals_Pi_first_simplify_limits thm =
+    let
+      (* TODO: simplify the limits of the intervals in the pathcondition *)
+      (* for example:
+             BExp_IntervalPred
+               (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+               (BExp_BinExp BIExp_Plus
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 5w))) (BExp_Const (Imm64 21w)),
+                BExp_BinExp BIExp_Plus
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 5w))) (BExp_Const (Imm64 21w))) *)
+    in
+      thm
+    end;
+
   (* unifies the representation of the interval for env mapping vn (handles introduction (e.g., after symbolic execution without interval) and also fusion of transitive intervals (e.g., after instantiation)) *)
     (* afterwards: vn is on top, symbolname mapped for interval is ("syi_"^vn), exactly one interval relating to it in the pathcondition *)
     (* this has to be used after an instantiation and after an execution (which in turn is either from an initial state, or from after a merge operation), and before a bounds operation below *)
@@ -212,7 +230,8 @@ in (* local *)
       val _ = if not debug_mode then () else print "starting to unify interval for one Pi state\n";
 
       (* bring up mapping vn to the top of env mappings *)
-      val thm0 = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm;
+      val thm_ = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm;
+      val thm0 = birs_intervals_Pi_first_simplify_limits thm_;
       val env_exp = (snd o get_birs_Pi_first_env_top_mapping o concl) thm0;
 
       (* is the mapping just a symbol, which is not the initial symbolic one?

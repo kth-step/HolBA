@@ -81,6 +81,41 @@ in (* local *)
       birs_post_step_fun
     end;
 
+  fun birs_from_summaries postproc sums state =
+    let
+      (* assumtions on summary theorem list, each theorem:
+          - is birs_symb_exec for correct program
+          - initial state:
+              is in running state,
+              environment is generic (from bir_senv_GEN_list, but as birs_gen_env)
+          - otherwise usable for symbolic execution function *)
+      open birs_instantiationLib;
+      fun state_pc_in_sum pc sum =
+        identical (dest_birs_state_pc state) ((dest_birs_state_pc o get_birs_sys o concl) sum);
+      (* filter by pc (should return NONE directly, if there is no match) *)
+      val sums_pc = List.filter (state_pc_in_sum state) sums;
+    in
+      let
+        (* try instantiation from the first (instantiate and justify with pcond strengthening) *)
+        fun foldfun (sum, acc) =
+          if isSome acc then acc else
+          (let
+            val thm = birs_sound_inst_RULE birs_driveLib.pcond_gen_symb state sum;
+            val _ = print "\n====================================================\n"
+            val _ = print "====================================================\n"
+            val _ = print "used a summary\n\n";
+            val _ = print_thm thm;
+          in
+            SOME thm
+          end
+          handle _ => acc);
+      in
+        Option.map postproc (List.foldl foldfun NONE sums_pc)
+      end
+    end;
+  
+  val birs_from_summaries_riscv = birs_from_summaries I;
+
 end (* local *)
 
 end (* struct *)

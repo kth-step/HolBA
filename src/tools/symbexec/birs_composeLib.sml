@@ -83,6 +83,10 @@ in
 
       val _ = birs_check_norm_thm ("birs_rule_SEQ_fun", "") bprog_fixed_thm
         handle e => (print_term (concl bprog_fixed_thm); raise e);
+
+      (* check that the resulting Pi set cardinality is A - 1 + B *)
+      val _ = if len_of_thm_Pi step_A_thm - 1 + len_of_thm_Pi step_B_thm = len_of_thm_Pi bprog_fixed_thm then () else
+        raise ERR "birs_rule_SEQ_fun" "somehow the states did not merge in Pi set";
     in
       bprog_fixed_thm
     end;

@@ -180,7 +180,7 @@ in (* local *)
 
   fun birs_init env pcond init_lbl =
     let
-      (* TODO: check that env is norm *)
+      val _ = birs_check_env_norm ("birs_init", "") env;
 
       val pcond_is_sat = bir_smtLib.bir_smt_check_sat false pcond;
       val _ = if pcond_is_sat then () else
@@ -201,19 +201,26 @@ in (* local *)
   fun gen_birs_env_thm birenvtyl_def =
     let
       open birs_auxTheory;
+
       val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
     in
-      (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list ^bprog_envtyl_tm``
+      (REWRITE_CONV [birenvtyl_def] THENC
+       EVAL THENC
+       REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) (mk_bir_senv_GEN_list bprog_envtyl_tm)
     end;
   val gen_birs_env = (rhs o concl o gen_birs_env_thm);
   
   fun gen_birs_pcond_thm birenvtyl_def bpre =
     let
+      open birs_auxTheory;
       val bprog_envtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
 
       val mk_bsysprecond_pcond_thm =
-        (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV)
-          (``mk_bsysprecond ^bpre ^bprog_envtyl_tm``);
+        (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm] THENC
+         REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+         birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+         EVAL (*FST (THE (...))*))
+        (mk_mk_bsysprecond (bpre, bprog_envtyl_tm));
     in
       mk_bsysprecond_pcond_thm
     end;

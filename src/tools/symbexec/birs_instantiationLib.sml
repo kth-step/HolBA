@@ -43,11 +43,10 @@ in (* local *)
     *)
 
     (* find necessary iunstantiations for birs_sound_symb_inst_RULE *)
-    fun birs_find_symb_exp_map bv_syp_gen A_thm B_thm =
+    fun birs_find_symb_exp_map bv_syp_gen state B_thm =
       let
-        (* take first Pi state of A, env and pcond *)
-        val A_Pi_sys_tm = (get_birs_Pi_first o concl) A_thm;
-        val (_,A_env,_,A_pcond) = dest_birs_state A_Pi_sys_tm;
+        (* take first env and pcond of target state *)
+        val (_,A_env,_,A_pcond) = dest_birs_state state;
 
         (* construct symb_exp_map *)
         fun get_default_bv (vn,exp) =
@@ -107,14 +106,11 @@ in (* local *)
     end;
 
   (*
-  instantiation process (including sequential composition)
+  instantiation for state
   *)
-  fun birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bv_syp_gen A_thm B_thm =
+  fun birs_sound_inst_RULE bv_syp_gen state B_thm =
     let
-      val _ = birs_check_compatible A_thm B_thm;
-      val A_Pi_sys_tm = (get_birs_Pi_first o concl) A_thm;
-      val (_,_,_,A_pcond) = dest_birs_state A_Pi_sys_tm;
-      val len_of_thm_Pi = get_birs_Pi_length o concl;
+      val (_,_,_,A_pcond) = dest_birs_state state;
 
       open birs_auxTheory;
 
@@ -122,7 +118,7 @@ in (* local *)
           - environment mappings
           - the generic path condition symbol bv_syp_gen
           - renaming of all free symbols for good measure *)
-      val symb_exp_map = birs_find_symb_exp_map bv_syp_gen A_thm B_thm;
+      val symb_exp_map = birs_find_symb_exp_map bv_syp_gen state B_thm;
       (*val _ = List.map (fn (bv_symb,exp) => (print_term bv_symb; print "|->\n"; print_term exp; print "\n")) symb_exp_map;*)
 
       (* instantiate all *)
@@ -151,12 +147,29 @@ in (* local *)
       *)
       val B_thm_inst_sys_Pi = birs_Pi_first_pcond_RULE B_Pi_pcond_new B_thm_inst_sys;
 
-      (* sequential composition of the two theorems *)
-      val seq_thm = birs_composeLib.birs_rule_SEQ_fun birs_rule_SEQ_thm A_thm B_thm_inst_sys_Pi;
+      (* fix env mapping order *)
+      val B_thm_inst_fixed = CONV_RULE (birs_sys_CONV (birs_env_set_order_CONV (birs_env_varnames state))) B_thm_inst_sys_Pi;
 
-      (* check that the resulting Pi set cardinality is A - 1 + B *)
-      val _ = if len_of_thm_Pi A_thm - 1 + len_of_thm_Pi B_thm_inst_sys_Pi = len_of_thm_Pi seq_thm then () else
-        raise ERR "birs_sound_inst_SEQ_RULE" "somehow the states did not merge in Pi";
+      (* check that the initial state of B_thm_inst_fixed is indeed what we intended to get *)
+      val _ = if identical state ((get_birs_sys o concl) B_thm_inst_fixed) then () else
+        raise ERR "birs_sound_inst_RULE" "instantiation failed, initial state of instantiated theorem not identical with target state";
+    in
+      B_thm_inst_fixed
+    end;
+
+  (*
+  instantiation process (including sequential composition)
+  *)
+  fun birs_sound_inst_SEQ_RULE birs_rule_SEQ_thm bv_syp_gen A_thm B_thm =
+    let
+      val _ = birs_check_compatible A_thm B_thm;
+
+      val A_Pi_sys_tm = (get_birs_Pi_first o concl) A_thm;
+
+      val B_inst_thm = birs_sound_inst_RULE bv_syp_gen A_Pi_sys_tm B_thm;
+
+      (* sequential composition of the two theorems *)
+      val seq_thm = birs_composeLib.birs_rule_SEQ_fun birs_rule_SEQ_thm A_thm B_inst_thm;
     in
       seq_thm
     end;

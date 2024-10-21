@@ -182,6 +182,15 @@ in
   val (birs_exp_imp_tm,  mk_birs_exp_imp, dest_birs_exp_imp, is_birs_exp_imp)  = syntax_fns2 "birs_exp_imp";
 end
 
+local
+  open distribute_generic_stuffTheory;
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "distribute_generic_stuff";
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+in
+  val (mk_bsysprecond_tm,  mk_mk_bsysprecond, dest_mk_bsysprecond, is_mk_bsysprecond)  = syntax_fns2 "mk_bsysprecond";
+end
+
+
 (* ====================================================================================== *)
 
   (* extract terms from a sound structure *)
@@ -235,6 +244,8 @@ end
   (* function to get the length of Pi *)
   val get_birs_Pi_length =
     (length o get_birs_Pi_list);
+
+  val len_of_thm_Pi = get_birs_Pi_length o concl;
 
   (* function to get the first Pi state *)
   val get_birs_Pi_first =
@@ -347,6 +358,9 @@ end
   
   fun birs_check_min_Pi_thm m (sfun) =
     check_raise ((fn x => x >= m) o get_birs_Pi_length o concl) (sfun, "Pi has to have at least "^(Int.toString m)^" states");
+
+  fun birs_check_env_norm (sfun, smsg) =
+    check_raise (birs_env_is_norm) (sfun, "env is not norm" ^ smsg);
 
   (* check if two structures are in normform and use the same program *)
   fun birs_check_compatible A_thm B_thm =

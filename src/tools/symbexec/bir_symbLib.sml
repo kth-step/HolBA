@@ -41,7 +41,7 @@ fun bir_symb_analysis_thm bir_prog_def
      birs_driveLib.birs_exec_to
        bprog_tm
        (birs_strategiesLib.birs_post_step_riscv_default)
-       (fn _ => NONE)
+       (birs_strategiesLib.birs_from_summaries_riscv [])
        (birs_strategiesLib.not_at_lbls birs_state_end_tm_lbls)
        birs_state_init;
 
@@ -121,7 +121,11 @@ fun bir_symb_transfer
    val birs_state_init_pre_EQ_thm =
     prove (``^(sys_i) = ^birs_state_init_pre_tm``,
      REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
-     CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV));
+     CONV_TAC (
+       computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
+       REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       EVAL));
 
    val analysis_thm =
     REWRITE_RULE [birs_state_init_pre_EQ_thm, GSYM bir_prog_def] symb_analysis_thm;
@@ -401,7 +405,11 @@ fun bir_symb_transfer_two
    val birs_state_init_pre_EQ_thm =
     prove (``^(sys_i) = ^birs_state_init_pre_tm``,
      REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
-     CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV));
+     CONV_TAC (
+       computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
+       REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       EVAL));
    
    val analysis_thm =
     REWRITE_RULE [birs_state_init_pre_EQ_thm, GSYM bir_prog_def] symb_analysis_thm;

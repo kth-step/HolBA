@@ -600,7 +600,8 @@ fun abbr_birs_gen_env i acc consf t =
     fun consf_ thm = consf (CONV_RULE (RAND_CONV (RAND_CONV (K thm))) thm0);
   in
     abbr_birs_gen_env (i+1) (eq_thm::acc) consf_ tl
-  end;
+  end
+  handle _ => raise ERR "abbr_birs_gen_env" "abbreviation failed";
 (*
 val (thm, eq_thms) = abbr_birs_gen_env 0 [] I t;
 *)
@@ -615,11 +616,13 @@ fun rev_birs_gen_env (thm, eq_thms) =
 
 fun birs_eval_exp_CONV_p1 t =
    let
-     val tm = (snd o dest_comb o snd o dest_comb) t;(*dest_birs_eval_exp;*)
+     val tm = (dest_birs_gen_env o snd o dest_birs_eval_exp) t;
      val (thm, eq_thms) = abbr_birs_gen_env 0 [] I tm;
    in
+     (* rewrite the environment list *)
      (RAND_CONV (RAND_CONV (K thm)) t, eq_thms)
-   end;
+   end
+   handle e => (print_term t; raise wrap_exn "birs_eval_exp_CONV_p1" e);
 
 val birs_eval_exp_CONV_p2 =
   REWRITE_CONV [birs_eval_exp_def] THENC
