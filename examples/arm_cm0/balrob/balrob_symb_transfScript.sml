@@ -15,7 +15,7 @@ open balrob_endsTheory;
 val _ = new_theory "balrob_symb_transf";
 
 
-val balrob_exec_thm = balrob_summary___clzsi2_thm;
+val symb_analysis_thm = balrob_summary___clzsi2_thm;
 
 
 (* TODO: the following could be extracted from the theorems above *)
@@ -69,25 +69,6 @@ val birs_env_thm = birs_driveLib.gen_birs_env_thm balrob_birenvtyl_def;
 val mk_bsysprecond_pcond_thm = birs_driveLib.gen_birs_pcond_thm balrob_birenvtyl_def bspec_pre_tm;
 val birs_pcond_tm = (rhs o concl) mk_bsysprecond_pcond_thm;
 val bir_hvar_cond_symb = birs_driveLib.gen_birs_pcond balrob_birenvtyl_def bir_hvar_cond;
-
-(* ------------------------------- *)
-(* prepare for BIR property transfer *)
-(* ------------------------------- *)
-(*
-val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(birs_driveLib.pcond_gen_symb, bir_hvar_cond_symb)] balrob_exec_thm;
-val pcond_symb_analysis_thm = birs_sys_pcond_RULE birs_pcond_tm specd_symb_analysis_thm;
-val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM mk_bsysprecond_pcond_thm, GSYM birs_env_thm])) pcond_symb_analysis_thm2;
-*)
-(*
-val (bsysprecond_thm, symb_analysis_thm) =
-     birs_transferLib.prepare_transfer
-       balrob_birenvtyl_def
-       
-       bspec_pre_tm
-       ;
-       *)
-(* TODO: do we even need this line? I think I remember it made things faster before somehow *)
-val symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) balrob_exec_thm;
 
 (* ------------------------------- *)
 (* BIR property transfer *)

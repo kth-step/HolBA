@@ -225,6 +225,12 @@ fun debug_Pi_fun t =
 
 (* -------------------------------------------------------------------------- *)
 
+val birs_basic_from_sums =
+  let
+    open birs_intervalLib;
+  in
+    birs_strategiesLib.birs_from_summaries (birs_intervals_Pi_unify_RULE "countw")
+  end;
 
 local
   open bir_immSyntax;
@@ -244,7 +250,7 @@ in
       init_state
     end;
 
-  fun birs_basic_execute bprog_tm end_addrs init_state =
+  fun birs_basic_execute bprog_tm sums end_addrs init_state =
     let
       open birs_intervalLib;
       open birs_driveLib;
@@ -254,14 +260,14 @@ in
       birs_exec_to
         bprog_tm
         (birs_strategiesLib.birs_post_step_armcm0_default)
-        (fn _ => NONE)
+        (birs_basic_from_sums sums)
         (birs_strategiesLib.not_at_lbls end_lbls)
         init_state;
       val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
     in
       interval_thm
     end;
-  val birs_basic_execute = fn x => fn y => Profile.profile "birs_basic_execute" (birs_basic_execute x y);
+  val birs_basic_execute = fn x => fn y => fn z => Profile.profile "birs_basic_execute" (birs_basic_execute x y z);
 end
 
 (*
@@ -294,18 +300,18 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
 
 (* ========================================================================================== *)
 
-  (* TODO: add previous summaries and indirectjump theorems as argument here, and the proper handling in the buildtree function (probably good as function argument) *)
-     (* handle intervals correctly: in symbolic execution driver (together with the indirectjump handling and previous summaries) and also before merging *)
-  fun birs_summary (bprog_tm, prog_birenvtyl_def) reqs (init_addr, end_addr) =
+  fun birs_summary (bprog_tm, prog_birenvtyl_def) sums reqs (init_addr, end_addr) =
     let
       val init_state = birs_basic_init_state prog_birenvtyl_def reqs init_addr;
-      val symb_exec_thm = birs_basic_execute bprog_tm [end_addr] init_state;
+      val symb_exec_thm = birs_basic_execute bprog_tm sums [end_addr] init_state;
 
+      (* need to handle intervals correctly: in symbolic execution driver
+           (also need this together with the indirectjump handling and previous summaries) and also before merging *)
       val merged_thm = birs_basic_merge symb_exec_thm;
     in
       merged_thm
   end;
-  val birs_summary = fn x => fn y => Profile.profile "birs_summary" (birs_summary x y);
+  val birs_summary = fn x => fn y => fn z => Profile.profile "birs_summary" (birs_summary x y z);
 
 
 end (* local *)
