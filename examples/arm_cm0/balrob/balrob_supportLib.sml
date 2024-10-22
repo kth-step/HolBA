@@ -300,10 +300,10 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
 
 (* ========================================================================================== *)
 
-  fun birs_summary (bprog_tm, prog_birenvtyl_def) sums reqs (init_addr, end_addr) =
+  fun birs_summary (bprog_tm, prog_birenvtyl_def) sums reqs (init_addr, end_addrs) =
     let
       val init_state = birs_basic_init_state prog_birenvtyl_def reqs init_addr;
-      val symb_exec_thm = birs_basic_execute bprog_tm sums [end_addr] init_state;
+      val symb_exec_thm = birs_basic_execute bprog_tm sums end_addrs init_state;
 
       (* need to handle intervals correctly: in symbolic execution driver
            (also need this together with the indirectjump handling and previous summaries) and also before merging *)
