@@ -113,6 +113,14 @@ val intervalpattern64_tm = ``
      (BExp_Const (Imm64 x_c)),
    BExp_BinExp BIExp_Plus (BExp_Den (BVar x_b (BType_Imm Bit64)))
      (BExp_Const (Imm64 x_d)))``;
+val intervalpattern64_inst_tm = ``
+  BExp_IntervalPred (BExp_Den (BVar x_a (BType_Imm Bit64)))
+    (BExp_BinExp BIExp_Plus (BExp_BinExp BIExp_Plus (BExp_Den (BVar x_b (BType_Imm Bit64)))
+     (BExp_Const (Imm64 x_c1)))
+     (BExp_Const (Imm64 x_c2)),
+   BExp_BinExp BIExp_Plus (BExp_BinExp BIExp_Plus (BExp_Den (BVar x_b (BType_Imm Bit64)))
+     (BExp_Const (Imm64 x_d1)))
+     (BExp_Const (Imm64 x_d2)))``;
 
 fun get_interval_parameters i_tm =
   let
@@ -127,6 +135,23 @@ fun get_interval_parameters i_tm =
      (Arbnum.toInt o wordsSyntax.dest_word_literal) hc)
   end
   handle _ => raise ERR "get_interval_parameters" ("no match? : " ^ (term_to_string i_tm));
+fun get_interval_parameters_inst i_tm =
+  let
+          val (vs, _) = hol88Lib.match intervalpattern64_inst_tm i_tm;
+          val symb_str      = fst (List.nth (vs, 0));
+          val refsymb_str = fst (List.nth (vs, 1));
+          val lc1 = fst (List.nth (vs, 2));
+          val lc2 = fst (List.nth (vs, 3));
+          val hc1 = fst (List.nth (vs, 4));
+          val hc2 = fst (List.nth (vs, 5));
+  in
+    (fromHOLstring symb_str, fromHOLstring refsymb_str,
+     (Arbnum.toInt o wordsSyntax.dest_word_literal) lc1 +
+     (Arbnum.toInt o wordsSyntax.dest_word_literal) lc2,
+     (Arbnum.toInt o wordsSyntax.dest_word_literal) hc1 +
+     (Arbnum.toInt o wordsSyntax.dest_word_literal) hc2)
+  end
+  handle _ => raise ERR "get_interval_parameters_inst" ("no match? : " ^ (term_to_string i_tm));
 fun mk_interval_tm (symb_str, refsymb_str, lc, hc) =
   subst [``x_a:string`` |-> fromMLstring symb_str,
          ``x_b:string`` |-> fromMLstring refsymb_str,
@@ -198,26 +223,38 @@ val interval2 = ``BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit6
     in
       interval
     end;
+
+  (*
+  val interval = ``
+          BExp_IntervalPred
+            (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+            (BExp_BinExp BIExp_Plus
+              (BExp_BinExp BIExp_Plus
+                  (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                  (BExp_Const (Imm64 5w))) (BExp_Const (Imm64 21w)),
+            BExp_BinExp BIExp_Plus
+              (BExp_BinExp BIExp_Plus
+                  (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                  (BExp_Const (Imm64 5w))) (BExp_Const (Imm64 21w)))
+  ``;
+  val i_tm = interval;
+  *)
+  fun simplify_interval tm =
+    (mk_interval_tm o get_interval_parameters_inst) tm
+    handle _ => tm;
 end
 
 in (* local *)
 
   fun birs_intervals_Pi_first_simplify_limits thm =
     let
-      (* TODO: simplify the limits of the intervals in the pathcondition *)
-      (* for example:
-             BExp_IntervalPred
-               (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
-               (BExp_BinExp BIExp_Plus
-                  (BExp_BinExp BIExp_Plus
-                     (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                     (BExp_Const (Imm64 5w))) (BExp_Const (Imm64 21w)),
-                BExp_BinExp BIExp_Plus
-                  (BExp_BinExp BIExp_Plus
-                     (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                     (BExp_Const (Imm64 5w))) (BExp_Const (Imm64 21w))) *)
+      (* simplify the limits of the intervals in the pathcondition *)
+      val pcond = (get_birs_Pi_first_pcond o concl) thm;
+      val pcondl = dest_bandl pcond;
+      val pcondl_fixed = List.map (fn tm => if is_BExp_IntervalPred tm then simplify_interval tm else tm) pcondl;
+      val thm_fixed = birs_Pi_first_pcond_RULE (bslSyntax.bandl pcondl_fixed) thm;
     in
-      thm
+      thm_fixed
     end;
 
   (* unifies the representation of the interval for env mapping vn (handles introduction (e.g., after symbolic execution without interval) and also fusion of transitive intervals (e.g., after instantiation)) *)
