@@ -38,6 +38,30 @@ open bir_program_varsTheory;
 
 val _ = new_theory "chacha_spec";
 
+(* ------------- *)
+(* ChaCha theory *)
+(* ------------- *)
+
+(*
+op line (a:idx) (b:idx) (d:idx) (s:int) (m:state) : state =
+  let m = m.[a <- (m.[a] + m.[b])] in
+  let m = m.[d <- W32.rol (m.[d] +^ m.[a]) s] in m.
+*)
+
+Type chacha_state = ``:word32 # word32 # word32 # word32 #
+                       word32 # word32 # word32 # word32 #
+                       word32 # word32 # word32 # word32 #
+                       word32 # word32 # word32 # word32``
+
+Type chacha_row = ``:word32 # word32 # word32 # word32``
+
+Definition chacha_line:
+ chacha_line ((a0,b0,c0,d0):chacha_row) : chacha_row =
+  let a1 = a0 + b0 in
+  let d1 = d0 ?? a1 in
+  (a1, b0, c0, d1)
+End
+
 (* ---------------- *)
 (* Block boundaries *)
 (* ---------------- *)
@@ -60,6 +84,16 @@ End
 
 Definition chacha_ivsetup_end_addr_def:
  chacha_ivsetup_end_addr : word64 = 0x10778w
+End
+
+(* quarterround *)
+
+Definition chacha_quarterround_init_addr_def:
+  chacha_quarterround_init_addr : word64 = 0x108a0w
+End
+
+Definition chacha_quarterround_end_addr_def:
+ chacha_quarterround_end_addr : word64 = 0x108b4w
 End
 
 (* --------------- *)
@@ -88,6 +122,19 @@ val bspec_chacha_ivsetup_pre_tm = bslSyntax.bandl [
 Definition bspec_chacha_ivsetup_pre_def:
  bspec_chacha_ivsetup_pre : bir_exp_t =
   ^bspec_chacha_ivsetup_pre_tm
+End
+
+(* quarterround *)
+
+val bspec_chacha_quarterround_pre_tm = bslSyntax.bandl [
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12"
+];
+
+Definition bspec_chacha_quarterround_pre_def:
+ bspec_chacha_quarterround_pre : bir_exp_t =
+  ^bspec_chacha_quarterround_pre_tm
 End
 
 val _ = export_theory ();
