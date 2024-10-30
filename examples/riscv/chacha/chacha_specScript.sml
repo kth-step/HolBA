@@ -114,6 +114,20 @@ Definition chacha_double_round:
   chacha_diagonal_round o chacha_column_round
 End
 
+Definition chacha_rounds:
+ chacha_rounds =
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round o
+  chacha_double_round
+End
+
 (* Examples and validation *)
 
 Definition chacha_example_state_row:
@@ -170,6 +184,41 @@ Theorem chacha_example_quarter_round_full[local]:
  chacha_quarter_round 2w 7w 8w 13w chacha_example_state_full 8w = 0xe46bea80w
  /\
  chacha_quarter_round 2w 7w 8w 13w chacha_example_state_full 13w = 0xccc07c79w
+Proof
+ EVAL_TAC
+QED
+
+Definition chacha_example_state_key_setup:
+ chacha_example_state_key_setup : word32 -> word32 =
+  let m = ARB in
+  let m = (0w =+ 0x61707865w) m in
+  let m = (1w =+ 0x3320646ew) m in
+  let m = (2w =+ 0x79622d32w) m in
+  let m = (3w =+ 0x6b206574w) m in
+  let m = (4w =+ 0x03020100w) m in
+  let m = (5w =+ 0x07060504w) m in
+  let m = (6w =+ 0x0b0a0908w) m in
+  let m = (7w =+ 0x0f0e0d0cw) m in
+  let m = (8w =+ 0x13121110w) m in
+  let m = (9w =+ 0x17161514w) m in
+  let m = (10w =+ 0x1b1a1918w) m in
+  let m = (11w =+ 0x1f1e1d1cw) m in
+  let m = (12w =+ 0x00000001w) m in
+  let m = (13w =+ 0x09000000w) m in
+  let m = (14w =+ 0x4a000000w) m in
+  let m = (15w =+ 0x00000000w) m in
+  m
+End
+
+(* RFC7539 2.3.2 example *)
+Theorem chacha_example_state_key_setup[local]:
+ chacha_rounds chacha_example_state_key_setup 0w = 0x837778abw
+ /\
+ chacha_rounds chacha_example_state_key_setup 1w = 0xe238d763w
+ /\
+ chacha_rounds chacha_example_state_key_setup 2w = 0xa67ae21ew
+ /\
+ chacha_rounds chacha_example_state_key_setup 3w = 0x5950bb2fw
 Proof
  EVAL_TAC
 QED
