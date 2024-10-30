@@ -52,7 +52,7 @@ Definition chacha_line:
  chacha_line (a:word32) (b:word32) (d:word32) (s:word32)
   (m:word32 -> word32) =
   let m = (a =+ (m a) + (m b)) m in
-  let m = (d =+ ((m a) ?? (m d)) #<<~ s) m in
+  let m = (d =+ ((m d) ?? (m a)) #<<~ s) m in
   m
 End
 
@@ -66,16 +66,11 @@ op quarter_round a b c d : shuffle =
 
 Definition chacha_quarter_round:
  chacha_quarter_round (a:word32) (b:word32) (c:word32) (d:word32) =
-  chacha_line a b d 16w o 
-  chacha_line c d b 12w o 
+  chacha_line c d b 7w o
   chacha_line a b d 8w o 
-  chacha_line c d b 7w 
+  chacha_line c d b 12w o 
+  chacha_line a b d 16w
 End
-
-(*
-EVAL ``(chacha_quarter_round
- 0x11111111w 0x01020304w 0x9b8d6f43w 0x01234567w) (\x. 0w)``
-*)
 
 (*
 op column_round : shuffle =
@@ -87,10 +82,10 @@ op column_round : shuffle =
         
 Definition chacha_column_round:
  chacha_column_round =
-  chacha_quarter_round 0w 4w 8w 12w o
-  chacha_quarter_round 1w 5w 9w 13w o
+  chacha_quarter_round 3w 7w 11w 15w o
   chacha_quarter_round 2w 6w 10w 14w o
-  chacha_quarter_round 3w 7w 11w 15w
+  chacha_quarter_round 1w 5w 9w 13w o
+  chacha_quarter_round 0w 4w 8w 12w
 End
 
 (*
@@ -103,10 +98,10 @@ op diagonal_round : shuffle =
 
 Definition chacha_diagonal_round:
  chacha_diagonal_round =
-  chacha_quarter_round 0w 5w 10w 15w o
-  chacha_quarter_round 1w 6w 11w 12w o
+  chacha_quarter_round 3w 4w 9w 14w o
   chacha_quarter_round 2w 7w 8w 13w o
-  chacha_quarter_round 3w 4w 9w 14w
+  chacha_quarter_round 1w 6w 11w 12w o
+  chacha_quarter_round 0w 5w 10w 15w
 End
 
 (*
@@ -116,8 +111,68 @@ op double_round: shuffle =
 
 Definition chacha_double_round:
  chacha_double_round =
-  chacha_column_round o chacha_diagonal_round
+  chacha_diagonal_round o chacha_column_round
 End
+
+(* Examples and validation *)
+
+Definition chacha_example_state_row:
+  chacha_example_state_row : word32 -> word32 =
+  let m = ARB in
+  let m = (0w =+ 0x11111111w) m in
+  let m = (1w =+ 0x01020304w) m in
+  let m = (2w =+ 0x9b8d6f43w) m in
+  let m = (3w =+ 0x01234567w) m in
+  m
+End
+
+Definition chacha_example_state_full:
+  chacha_example_state_full : word32 -> word32 =
+  let m = ARB in
+  let m = (0w =+ 0x879531e0w) m in
+  let m = (1w =+ 0xc5ecf37dw) m in
+  let m = (2w =+ 0x516461b1w) m in
+  let m = (3w =+ 0xc9a62f8aw) m in
+  let m = (4w =+ 0x44c20ef3w) m in
+  let m = (5w =+ 0x3390af7fw) m in
+  let m = (6w =+ 0xd9fc690bw) m in
+  let m = (7w =+ 0x2a5f714cw) m in
+  let m = (8w =+ 0x53372767w) m in
+  let m = (9w =+ 0xb00a5631w) m in
+  let m = (10w =+ 0x974c541aw) m in
+  let m = (11w =+ 0x359e9963w) m in
+  let m = (12w =+ 0x5c971061w) m in
+  let m = (13w =+ 0x3d631689w) m in
+  let m = (14w =+ 0x2098d9d6w) m in
+  let m = (15w =+ 0x91dbd320w) m in
+  m
+End
+
+(* RFC7539 2.1.1 example *)
+Theorem chacha_example_quarter_round_row[local]:
+ chacha_quarter_round 0w 1w 2w 3w chacha_example_state_row 0w = 0xea2a92f4w
+ /\
+ chacha_quarter_round 0w 1w 2w 3w chacha_example_state_row 1w = 0xcb1cf8cew
+ /\
+ chacha_quarter_round 0w 1w 2w 3w chacha_example_state_row 2w = 0x4581472ew
+ /\
+ chacha_quarter_round 0w 1w 2w 3w chacha_example_state_row 3w = 0x5881c4bbw
+Proof
+ EVAL_TAC
+QED
+
+(* RFC7539 2.2.1 example *)
+Theorem chacha_example_quarter_round_full[local]:
+ chacha_quarter_round 2w 7w 8w 13w chacha_example_state_full 2w = 0xbdb886dcw
+ /\
+ chacha_quarter_round 2w 7w 8w 13w chacha_example_state_full 7w = 0xcfacafd2w
+ /\
+ chacha_quarter_round 2w 7w 8w 13w chacha_example_state_full 8w = 0xe46bea80w
+ /\
+ chacha_quarter_round 2w 7w 8w 13w chacha_example_state_full 13w = 0xccc07c79w
+Proof
+ EVAL_TAC
+QED
 
 (* ---------------- *)
 (* Block boundaries *)
