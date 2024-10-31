@@ -128,10 +128,62 @@ Definition chacha_rounds:
   chacha_double_round
 End
 
+Definition chacha_add_16:
+ chacha_add_16 (s: word32 -> word32)
+  (s' : word32 -> word32) : word32 -> word32 =
+  let m = s in
+  let m = (0w =+ (s 0w) + (s' 0w)) m in
+  let m = (1w =+ (s 1w) + (s' 1w)) m in
+  let m = (2w =+ (s 2w) + (s' 2w)) m in
+  let m = (3w =+ (s 3w) + (s' 3w)) m in
+  let m = (4w =+ (s 4w) + (s' 4w)) m in
+  let m = (5w =+ (s 5w) + (s' 5w)) m in
+  let m = (6w =+ (s 6w) + (s' 6w)) m in
+  let m = (7w =+ (s 7w) + (s' 7w)) m in
+  let m = (8w =+ (s 8w) + (s' 8w)) m in
+  let m = (9w =+ (s 9w) + (s' 9w)) m in
+  let m = (10w =+ (s 10w) + (s' 10w)) m in
+  let m = (11w =+ (s 11w) + (s' 11w)) m in
+  let m = (12w =+ (s 12w) + (s' 12w)) m in
+  let m = (13w =+ (s 13w) + (s' 13w)) m in
+  let m = (14w =+ (s 14w) + (s' 14w)) m in
+  let m = (15w =+ (s 15w) + (s' 15w)) m in
+  m
+End
+
+Definition chacha_core:
+ chacha_core (s:word32 -> word32) : word32 -> word32 =
+  let s' = chacha_rounds s in
+  chacha_add_16 s' s
+End
+
+Definition chacha_setup:
+ chacha_setup (k : word32 -> word32)
+  (n : word32 -> word32) (c : word32) : word32 -> word32 =
+  let m = ARB in
+  let m = (0w =+ 0x61707865w) m in
+  let m = (1w =+ 0x3320646ew) m in
+  let m = (2w =+ 0x79622d32w) m in
+  let m = (3w =+ 0x6b206574w) m in
+  let m = (4w =+ (k 0w)) m in
+  let m = (5w =+ (k 1w)) m in
+  let m = (6w =+ (k 2w)) m in
+  let m = (7w =+ (k 3w)) m in
+  let m = (8w =+ (k 4w)) m in
+  let m = (9w =+ (k 5w)) m in
+  let m = (10w =+ (k 6w)) m in
+  let m = (11w =+ (k 7w)) m in
+  let m = (12w =+ c) m in
+  let m = (13w =+ (n 0w)) m in
+  let m = (14w =+ (n 1w)) m in
+  let m = (15w =+ (n 2w)) m in
+  m
+End
+
 (* Examples and validation *)
 
 Definition chacha_example_state_row:
-  chacha_example_state_row : word32 -> word32 =
+ chacha_example_state_row : word32 -> word32 =
   let m = ARB in
   let m = (0w =+ 0x11111111w) m in
   let m = (1w =+ 0x01020304w) m in
@@ -141,7 +193,7 @@ Definition chacha_example_state_row:
 End
 
 Definition chacha_example_state_full:
-  chacha_example_state_full : word32 -> word32 =
+ chacha_example_state_full : word32 -> word32 =
   let m = ARB in
   let m = (0w =+ 0x879531e0w) m in
   let m = (1w =+ 0xc5ecf37dw) m in
