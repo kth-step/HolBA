@@ -17,7 +17,7 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_aes_prog_def
   aes_init_addr_def [aes_end_addr_def]
@@ -26,10 +26,6 @@ val (bsysprecond_thm, symb_analysis_thm) =
   bspec_aes_pre_def aes_birenvtyl_def;
 
 val _ = show_tags := true;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem aes_bsysprecond_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 

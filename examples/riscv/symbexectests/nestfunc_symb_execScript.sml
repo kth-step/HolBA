@@ -20,7 +20,7 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_nestfunc_prog_def
   nestfunc_init_addr_def [nestfunc_end_addr_def]

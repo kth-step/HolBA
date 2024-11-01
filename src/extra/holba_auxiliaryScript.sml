@@ -4,6 +4,7 @@ open holba_auxiliaryLib;
 
 open wordsTheory bitstringTheory ASCIInumbersTheory;
 open pred_setTheory;
+open listTheory;
 
 val _ = new_theory "holba_auxiliary";
 
@@ -366,9 +367,43 @@ METIS_TAC [
 ]
 QED
 
+Theorem BIGUNION_IMAGE_BIGUNION_thm:
+  !s.
+  BIGUNION (IMAGE BIGUNION s) = BIGUNION (BIGUNION s)
+Proof
+  gen_tac >>
+  rewrite_tac [BIGUNION_IMAGE] >>
+  fs [BIGUNION, EXTENSION] >>
+  metis_tac []
+QED
 
 (* -------------------------------------------------------------------------- *)
-(* Arithmetic                                                                   *)
+(* lat_setlist (flat to set) computation helper                               *)
+(* -------------------------------------------------------------------------- *)
+
+Definition flat_setlist_def:
+  flat_setlist l <=>
+  FOLDL (\acc x. x UNION acc) EMPTY l
+End
+
+Theorem flat_setlist_thm:
+  !l.
+  flat_setlist l = BIGUNION (set l)
+Proof
+  GEN_TAC >>
+  REWRITE_TAC [flat_setlist_def] >>
+  REWRITE_TAC [(REWRITE_RULE [combinTheory.I_THM] o CONV_RULE (LAND_CONV (REWRITE_CONV [Once UNION_COMM])) o Q.SPECL [‘I’, ‘l’, ‘EMPTY’] o INST_TYPE [alpha |-> ``:'b -> bool``]) FOLDL_UNION_BIGUNION] >>
+  fs []
+QED
+
+Theorem flat_setlist_thm2:
+  flat_setlist = BIGUNION o set
+Proof
+  fs [FUN_EQ_THM, flat_setlist_thm]
+QED
+
+(* -------------------------------------------------------------------------- *)
+(* Arithmetic                                                                 *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem MOD_ADD_EQ_SUB:

@@ -3,16 +3,17 @@ struct
 
 local
 
-open HolKernel Parse boolLib bossLib;
-open computeLib;
+  open HolKernel Parse boolLib bossLib;
+  open computeLib;
 
-open bir_exp_substitutionsTheory;
-open bir_expTheory;
+  open bir_exp_substitutionsTheory;
+  open bir_expTheory;
 
-open bir_symbTheory;
-open birs_auxTheory;
+  open bir_symbTheory;
+  open birs_auxTheory;
 
-open birs_auxLib;
+  open birs_auxLib;
+  open bir_typing_expSyntax;
 
   (* error handling *)
   val libname = "bir_exp_typecheckLib"
@@ -21,15 +22,15 @@ open birs_auxLib;
 
 in (* local *)
 
-(* TODO: we really have to put this in a central place... *)
- fun type_of_bir_exp_CONV term =
+(* TODO: we really have to put this in a central place..., stolen from: bir_exp_to_wordsLib.type_of_bir_exp_CONV (and maybe modified) *)
+ fun type_of_bir_exp_gen_CONV term =
     (* Manual test
     val term = ``
       BExp_BinExp BIExp_Plus
         (BExp_Const (Imm32 20w))
         (BExp_Const (Imm32 22w))
     ``;
-    val thm = type_of_bir_exp_CONV ``type_of_bir_exp ^term``;
+    val thm = type_of_bir_exp_gen_CONV ``type_of_bir_exp ^term``;
     *)
     let
       open bir_immTheory
@@ -70,13 +71,9 @@ in (* local *)
     in
       conv term
     end
-      handle _ => raise ERR "type_of_bir_exp_CONV" "conversion failed";
+      handle _ => raise ERR "type_of_bir_exp_gen_CONV" "conversion failed";
 
- val typecheck_dict = ref ((Redblackmap.mkDict Term.compare) : (term, thm) Redblackmap.dict);
- fun typecheck_add (k_tm, tc_thm) = typecheck_dict := Redblackmap.insert (!typecheck_dict, k_tm, tc_thm);
- fun typecheck_lookup k_tm = 
-      SOME (Redblackmap.find (!typecheck_dict, k_tm))
-      handle NotFound => NONE;
+ val (typecheck_add, typecheck_lookup) = aux_moveawayLib.result_cache Term.compare;
 
 fun check_typeof thm =
   let
@@ -94,7 +91,7 @@ fun check_typeof thm =
 
 fun gettype_CONV term =
   let
-     val thm = type_of_bir_exp_CONV term;
+     val thm = type_of_bir_exp_gen_CONV term;
   in
     thm
   end
@@ -109,8 +106,6 @@ type_of_bir_exp_DIRECT_CONV bexp_term
 *)
  fun type_of_bir_exp_DIRECT_CONV term =
    let
-     open bir_typing_expSyntax;
-
      val _ = if is_type_of_bir_exp term then () else
                raise ERR "type_of_bir_exp_DIRECT_CONV" "cannot handle term";
 
@@ -136,6 +131,17 @@ type_of_bir_exp_DIRECT_CONV bexp_term
 
 val type_of_bir_exp_DIRECT_CONV = Profile.profile "type_of_bir_exp_DIRECT_CONV" type_of_bir_exp_DIRECT_CONV;
 
+val type_of_bir_exp_CONV =
+  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+  
+fun get_type_of_bexp tm =
+  let
+    open optionSyntax;
+    val thm = type_of_bir_exp_DIRECT_CONV (mk_type_of_bir_exp tm);
+  in
+    (dest_some o snd o dest_eq o concl) thm
+  end
+  handle _ => raise ERR "get_type_of_bexp" "not well-typed expression or other issue";
 
 end (* local *)
 

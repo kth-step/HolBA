@@ -94,14 +94,40 @@ val bprecond_def = Define `
 `;
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
+   val birs_state_init =
+     birs_driveLib.birs_analysis_init birenvtyl_def bprecond birs_state_init_lbl;
+
+   val symb_analysis_thm =
+     birs_driveLib.birs_exec_to
+       bprog
+       (birs_strategiesLib.birs_post_step_riscv_default)
+       (fn _ => NONE)
+       (birs_strategiesLib.not_at_lbls [birs_state_end_lbl])
+       birs_state_init;
+       
+   val (bsysprecond_thm, exec_thm) =
+     birs_transferLib.prepare_transfer
+       birenvtyl_def
+       ``BExp_Const (Imm1 1w)``
+       ((lhs o snd o strip_forall o concl) bprecond_def)
+       symb_analysis_thm;
+
+val (sys_tm, L_tm, Pi_tm) = (get_birs_sysLPi o concl) exec_thm;
+
+
+(* ---------------------------------------------------------------------- *)
+
+(* need the following legacy code because mk_bsysprecond (via birs_env_thm) is not incorporated into the rest of the code yet *)
 (* need to translate the precondition to a symbolic pathcondition, it means taking from the environment the corresponding mappings and substitute (that's symbolic evaluation) (then we know that states with matching environments also satisfy the original precondition because it is constructed by symbolic evaluation) *)
 val bsysprecond_def = Define `
     bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
 `;
 val bprecond_birs_eval_exp_thm = save_thm(
    "bprecond_birs_eval_exp_thm",
-  (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC
-   birs_stepLib.birs_eval_exp_CONV)
+  (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
+   REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+   birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+   EVAL)
      ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
 );
 val bsysprecond_thm = save_thm(
@@ -114,27 +140,6 @@ val bprecond_birs_eval_exp_thm2 = save_thm(
 );
 val bsysprecond = (snd o dest_eq o concl) bsysprecond_thm (*(fst o dest_eq o concl) bsysprecond_def*);
 
-(* ---------------------------------------------------------------------- *)
-
-
-val bprog_tm = (fst o dest_eq o concl) bprog_test_def;
-val birs_state_init_lbl_tm = birs_state_init_lbl;
-val birs_state_end_tm_lbls = [birs_state_end_lbl];
-val birs_pcond_tm = bsysprecond;
-
-val birs_env_thm = (REWRITE_CONV [birenvtyl_def] THENC EVAL THENC REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm]) ``bir_senv_GEN_list birenvtyl``;
-val birs_env_tm = (snd o dest_eq o concl) birs_env_thm;
-
-val symb_analysis_thm =
-  bir_symb_analysis
-    bprog_tm
-    birs_state_init_lbl_tm
-    birs_state_end_tm_lbls
-    birs_env_tm
-    birs_pcond_tm;
-
-val exec_thm = CONV_RULE (RAND_CONV (LAND_CONV (REWRITE_CONV [GSYM birs_env_thm]))) symb_analysis_thm;
-val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
 
 (* ---------------------------------------------------------------------- *)
 (* ---------------------------------------------------------------------- *)
@@ -203,7 +208,7 @@ val bprog_Q_thm = store_thm(
 
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
-P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
+P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm)
 ``,
   REWRITE_TAC [GSYM bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
@@ -232,7 +237,7 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
 (* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
-Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm ^Pi_tm bprog_Q
+Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm) (IMAGE birs_symb_to_symbst ^Pi_tm) bprog_Q
 ``,
   SIMP_TAC std_ss [(REWRITE_RULE [EVAL ``birenvtyl``] o EVAL) ``bir_senv_GEN_list birenvtyl``, bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
@@ -419,7 +424,7 @@ val bprog_prop_holds_thm =
          birs_prop_transfer_thm
          bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
-    exec_thm;
+    (REWRITE_RULE [birs_rulesTheory.birs_symb_exec_def] exec_thm);
 
 (* lift to concrete state property *)
 val bprog_concst_prop_thm =

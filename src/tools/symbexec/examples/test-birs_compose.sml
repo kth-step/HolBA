@@ -93,15 +93,18 @@ val bprog_tm = bprog;
 fun execute_two_steps bprog_tm birs_state_init_tm =
  let
   val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
-  val birs_rule_STEP_fun_spec = birs_rule_tryjustassert_fun false o birs_rule_STEP_fun birs_rule_STEP_thm;
+  
+  fun birs_post_step_fun (t, _) = (
+    birs_rule_tryjustassert_fun false
+  ) t;
+  val birs_rule_STEP_fun_spec = birs_post_step_fun o birs_rule_STEP_fun birs_rule_STEP_thm;
   (* ........................... *)
 
   (* first step *)
   val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init_tm;
-  val (_, _, Pi_A_tm) = (symb_sound_struct_get_sysLPi_fun o concl) single_step_A_thm;
 
   (* continue with a second step *)
-  val birs_states_mid = symb_sound_struct_Pi_to_birstatelist_fun Pi_A_tm;
+  val birs_states_mid = (get_birs_Pi_list o concl) single_step_A_thm;
   (* it would be better to find the running one, oh well *)
   val birs_state_mid = List.nth(birs_states_mid,0);
 
@@ -115,7 +118,7 @@ fun execute_two_steps bprog_tm birs_state_init_tm =
 
   (* compose together *)
   val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
-  val bprog_composed_thm = birs_rule_SEQ_fun_spec single_step_A_thm single_step_B_thm NONE;
+  val bprog_composed_thm = birs_rule_SEQ_fun_spec single_step_A_thm single_step_B_thm;
 
   (*
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);

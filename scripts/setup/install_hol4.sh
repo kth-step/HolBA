@@ -21,10 +21,12 @@ if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
   POLY_VERSION=${HOLBA_POLYML_VERSION}
 fi
 
-# make polyml binaries and libraries available
-POLY_DIR=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}
-export PATH=${POLY_DIR}/bin:$PATH
-export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
+if [[ ! "${POLY_VERSION}" == "PREPACKAGED" ]]; then
+  # make polyml binaries and libraries available
+  POLY_DIR=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}
+  export PATH=${POLY_DIR}/bin:$PATH
+  export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
+fi
 
 # use a default hol4 version if it is not specified in the environment
 HOL4_VERSION="trindemossen-1"
@@ -87,6 +89,9 @@ if [[ ! -d "${HOL4_DIR}" ]]; then
   fi
 
   # compile HOL4
+  if [[ "${POLY_VERSION}" == "PREPACKAGED" ]]; then
+    echo "val polymllibdir = \"/usr/lib/x86_64-linux-gnu\";" > tools-poly/poly-includes.ML
+  fi
   poly < tools/smart-configure.sml
   bin/build --nograph
 fi

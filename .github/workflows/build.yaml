@@ -15,19 +15,20 @@ env:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        polyml: [{version: 'v5.7.1'}, {version: 'v5.9.1', heapless: '1'}]
-        z3: ['4.8.4']
+        os: ['ubuntu-22.04']
+        polyml: [{version: 'PREPACKAGED'}, {version: 'v5.9.1', heapless: '1'}]
+        z3: ['4.13.0']
         hol4: ['trindemossen-1']
 
     env:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml.version }}
       HOLBA_POLYML_HEAPLESS: ${{ matrix.polyml.heapless }}
       HOLBA_Z3_VERSION: ${{ matrix.z3 }}
-      HOLBA_Z3_ASSET_SUFFIX: '.d6df51951f4c-x64-debian-8.11.zip'
+      HOLBA_Z3_ASSET_SUFFIX: '-x64-glibc-2.35.zip'
       HOLBA_HOL4_VERSION: ${{ matrix.hol4 }}
 
     steps:
@@ -40,7 +41,7 @@ jobs:
         with:
           path: |
             ${{ env.HOLBA_OPT_DIR }}
-          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}_z3-${{ matrix.z3 }}_hol4-${{ matrix.hol4 }}
+          key: os-${{ matrix.os }}_polyml-${{ matrix.polyml.version }}_z3-${{ matrix.z3 }}_hol4-${{ matrix.hol4 }}
 
       - name: Static analysis
         timeout-minutes: 5
@@ -60,7 +61,7 @@ jobs:
           ./scripts/ci/run_holmake.sh
 
       - name: Run tests
-        timeout-minutes: 40
+        timeout-minutes: 55
         run: |
           ./scripts/ci/run_make.sh tests
 

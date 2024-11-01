@@ -3,6 +3,8 @@ struct
 
 datatype da_isa =
   da_arm8
+| da_cm0
+| da_cm0_mod
 | da_riscv
 
 local
@@ -38,11 +40,15 @@ in
 fun prog_gen_of_isa isa =
   case isa of
     da_arm8 => bmil_arm8.bir_lift_prog_gen
+  | da_cm0 => bmil_m0_LittleEnd_Process.bir_lift_prog_gen
+  | da_cm0_mod => bmil_m0_mod_LittleEnd_Process.bir_lift_prog_gen
   | da_riscv => bmil_riscv.bir_lift_prog_gen
 
 fun string_of_isa isa =
   case isa of
     da_arm8 => "arm8"
+  | da_cm0 => "cm0"
+  | da_cm0_mod => "cm0_mod"
   | da_riscv  => "riscv"
 
 (* Debug values:

@@ -322,7 +322,7 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
       POP_ASSUM (ASSUME_TAC o CONV_RULE (
           REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
           computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-          aux_setLib.birs_symb_symbols_MATCH_CONV)
+          bir_vars_ofLib.birs_symb_symbols_CONV)
         ) >>
 
       FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
@@ -336,7 +336,7 @@ REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
       POP_ASSUM (ASSUME_TAC o CONV_RULE (
           REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
           computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
-          aux_setLib.birs_symb_symbols_MATCH_CONV)
+          bir_vars_ofLib.birs_symb_symbols_CONV)
         ) >>
 
       FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]

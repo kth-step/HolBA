@@ -6,7 +6,7 @@ open bir_symbLib;
 
 open chachaTheory chacha_specTheory;
 
-val _ = new_theory "chacha_symb_exec";
+val _ = new_theory "chacha_symb_exec_ivsetup";
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)
@@ -18,15 +18,11 @@ val _ = show_tags := true;
 (* ivsetup *)
 (* ------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_chacha_prog_def
   chacha_ivsetup_init_addr_def [chacha_ivsetup_end_addr_def]
   bspec_chacha_ivsetup_pre_def chacha_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem chacha_ivsetup_bsysprecond_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 

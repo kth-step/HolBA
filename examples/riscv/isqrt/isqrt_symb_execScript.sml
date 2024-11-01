@@ -18,15 +18,11 @@ val _ = show_tags := true;
 (* before loop *)
 (* ----------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_1_def [isqrt_end_addr_1_def]
   bspec_isqrt_pre_1_def isqrt_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem isqrt_bsysprecond_1_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
@@ -36,15 +32,11 @@ Theorem isqrt_symb_analysis_1_thm = symb_analysis_thm
 (* loop body *)
 (* --------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_2_def [isqrt_end_addr_2_def]
   bspec_isqrt_pre_2_def isqrt_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem isqrt_bsysprecond_2_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
@@ -54,15 +46,11 @@ Theorem isqrt_symb_analysis_2_thm = symb_analysis_thm
 (* loop branch *)
 (* ----------- *)
 
-val (bsysprecond_thm, symb_analysis_thm) =
+val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_3_def [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
   bspec_isqrt_pre_3_def isqrt_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag bsysprecond_thm);
-
-Theorem isqrt_bsysprecond_3_thm = bsysprecond_thm
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 

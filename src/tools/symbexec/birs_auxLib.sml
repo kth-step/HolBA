@@ -16,7 +16,7 @@ in
 
 (* ============================================================================ *)
 
-(* TODO: this is stolen from exec tool *)
+  (* TODO: this is stolen from exec tool, better unify them later: bir_exec_auxLib *)
   fun GEN_match_conv is_tm_fun conv tm =
     if is_tm_fun tm then
       conv tm
@@ -28,7 +28,8 @@ in
     else
       raise UNCHANGED
     ;
-(* TODO: this is stolen from exec tool, and then modified for extraction of the expressions *)
+
+  (* TODO: this is a modified version of the above function, better unify them later *)
   fun GEN_match_extract is_tm_fun acc [] = acc
     | GEN_match_extract is_tm_fun acc (tm::l) =
     if is_tm_fun tm then
@@ -50,11 +51,16 @@ in
 fun gen_prog_vars_set_thm bir_prog_def =
  let
   val prog_tm = (fst o dest_eq o concl) bir_prog_def;
+  val _ = print "\ncollecting program variables";
+  val timer = holba_miscLib.timer_start 0;
+  val var_set_thm = 
+    (REWRITE_CONV [bir_typing_progTheory.bir_vars_of_program_ALT_thm] THENC
+     EVAL)
+    ``bir_vars_of_program ^prog_tm``;
+  val _ = holba_miscLib.timer_stop
+    (fn delta_s => print (" - " ^ delta_s ^ "\n")) timer;
  in
-  (SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
-   [bir_prog_def] THENC
-   EVAL)
-  ``bir_vars_of_program ^prog_tm``
+   var_set_thm
  end;
 
 fun gen_prog_vars_list_def_thm progname prog_vars_set_thm =
@@ -235,10 +241,14 @@ fun gen_lookup_functions (stmt_thms, label_mem_thms) =
 
 fun prepare_program_lookups bir_lift_thm =
 let
+  val _ = print "\npreparing program lookups";
+  val timer = holba_miscLib.timer_start 0;
   val prep_structure = gen_exec_prep_thms_from_lift_thm bir_lift_thm;
   val (stmt_lookup_fun, l_mem_lookup_fun) = gen_lookup_functions prep_structure;
   val _ = cur_stmt_lookup_fun := stmt_lookup_fun;
   val _ = cur_l_mem_lookup_fun := l_mem_lookup_fun;
+  val _ = holba_miscLib.timer_stop
+    (fn delta_s => print (" - " ^ delta_s ^ "\n")) timer;
 in
   ()
 end;

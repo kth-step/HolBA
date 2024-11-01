@@ -512,6 +512,13 @@ in
    in
      1 + bir_exp_size mem_e + bir_exp_size a_e + bir_exp_size v_e
    end
+  else if is_BExp_IntervalPred t then
+   let
+     val (ref_e, lim_tm) = dest_BExp_IntervalPred t;
+     val (l_e, h_e) = pairSyntax.dest_pair lim_tm;
+   in
+     1 + bir_exp_size ref_e + bir_exp_size l_e + bir_exp_size h_e
+   end
 (*
   else if is_... t then
    let
@@ -562,13 +569,13 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (* ---------------------------------------------------------------------------- *)
 
-fun birs_senv_typecheck_CONV_ eq_thms = (
+fun birs_senv_typecheck_CONV eq_thms = (
   RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
   REWRITE_CONV eq_thms THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+  type_of_bir_exp_CONV THENC
   EVAL
 );
-fun birs_senv_typecheck_CONV x = Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV_ x);
+val birs_senv_typecheck_CONV = fn x => Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV x);
 
 
 (*
@@ -593,7 +600,8 @@ fun abbr_birs_gen_env i acc consf t =
     fun consf_ thm = consf (CONV_RULE (RAND_CONV (RAND_CONV (K thm))) thm0);
   in
     abbr_birs_gen_env (i+1) (eq_thm::acc) consf_ tl
-  end;
+  end
+  handle _ => raise ERR "abbr_birs_gen_env" "abbreviation failed";
 (*
 val (thm, eq_thms) = abbr_birs_gen_env 0 [] I t;
 *)
@@ -608,20 +616,24 @@ fun rev_birs_gen_env (thm, eq_thms) =
 
 fun birs_eval_exp_CONV_p1 t =
    let
-     val tm = (snd o dest_comb o snd o dest_comb) t;(*dest_birs_eval_exp;*)
+     val tm = (dest_birs_gen_env o snd o dest_birs_eval_exp) t;
      val (thm, eq_thms) = abbr_birs_gen_env 0 [] I tm;
    in
+     (* rewrite the environment list *)
      (RAND_CONV (RAND_CONV (K thm)) t, eq_thms)
-   end;
+   end
+   handle e => (print_term t; raise wrap_exn "birs_eval_exp_CONV_p1" e);
 
 val birs_eval_exp_CONV_p2 =
   REWRITE_CONV [birs_eval_exp_def] THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+  type_of_bir_exp_CONV;
 
 fun birs_eval_exp_CONV_p3 eq_thms =
   GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
 
-(* TODO: can possibly improve this *)
+(* TODO: can possibly improve this,
+     for example by only taking the environment into the expressions where there are symbol lookups,
+     could even work with a cache of lookup theorems for the present symbols *)
 fun birs_eval_exp_CONV_p4 eq_thms =
   EVAL THENC
   REWRITE_CONV eq_thms THENC
@@ -681,7 +693,7 @@ val birs_symbval_concretizations_oracle_CONV =
    in
     if
       identical tm ((fst o dest_eq o concl) res_thm)
-      handle _ => raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem"
+      handle _ => (print_thm res_thm; raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem")
     then res_thm else
     raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
    end);
@@ -800,7 +812,7 @@ val birs_exec_step_CONV_p4 =
   GEN_match_conv is_birs_eval_exp (birs_eval_exp_CONV) THENC
    REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC
    RESTR_EVAL_CONV [birs_update_env_tm, birs_gen_env_tm, bir_typing_expSyntax.type_of_bir_exp_tm] THENC
-   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+   type_of_bir_exp_CONV THENC
    RESTR_EVAL_CONV [birs_update_env_tm, birs_gen_env_tm];
 val birs_exec_step_CONV_p4 = Profile.profile "exec_step_CONV_p4" birs_exec_step_CONV_p4;
 
@@ -865,7 +877,7 @@ let
     (GEN_match_conv is_OPTION_BIND (
       RATOR_CONV (RAND_CONV (REWRITE_CONV ([birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm]@eq_thms) THENC EVAL (* TODO: this can be improved, I think *))) THENC
       REWRITE_CONV [optionTheory.OPTION_BIND_def] (* OPTION_BIND semantics *) THENC
-      GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV)
+      type_of_bir_exp_CONV
     ))
     ) res_b_eval_exp;
 
@@ -987,25 +999,36 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
 (* bir symbolic execution steps *)
 (* ----------------------------------------------- *)
 fun birs_exec_step_CONV_fun tm =
-  GEN_match_conv
-(is_birs_exec_step)
-(fn bstate_tm => (
-  RAND_CONV (birs_state_is_normform_CONV "birs_exec_step_CONV_fun") THENC
+  let
+    val last_pc = ref T;
+    val last_stmt = ref T;
+    val birs_step_thm =
+      GEN_match_conv
+      (is_birs_exec_step)
+      (fn exec_tm => (
+        RAND_CONV (check_CONV birs_state_is_norm ("birs_exec_step_CONV_fun", "the state is not as expected")) THENC
 
-  (fn tm_i =>
-    let
-      val timer_exec_step = holba_miscLib.timer_start 0;
-      (* TODO: optimize *)
-      val birs_exec_thm = birs_exec_step_CONV tm_i;
-      val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
-    in
-      birs_exec_thm
-    end) THENC
+        (fn tm_i =>
+          let
+            val (bprog_tm, st_i) = dest_birs_exec_step tm_i;
+            val (pc, _, _, _) = dest_birs_state st_i;
+            val _ = last_pc := pc;
+            val _ = last_stmt := (snd o dest_eq o concl o pc_lookup_fun) (bprog_tm, pc); (* TODO: avoid pc_lookup_fun twice *)
+            val timer_exec_step = holba_miscLib.timer_start 0;
+            (* TODO: optimize *)
+            val birs_exec_thm = birs_exec_step_CONV tm_i;
+            val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
+          in
+            birs_exec_thm
+          end) THENC
 
-  birs_states_are_normform_CONV_with_start "birs_exec_step_CONV_fun" bstate_tm
-  ) bstate_tm
-)
-tm;
+        (check_CONV birs_states_is_norm ("birs_exec_step_CONV_fun", "the produced theorem is not evaluated enough")
+          handle e => (print "\n[[[[\n"; print_term exec_tm; print "\n]]]]\n"; raise e))
+        ) exec_tm)
+      tm;
+  in
+    (birs_step_thm, (!last_pc, !last_stmt))
+  end;
 
 
 end (* local *)

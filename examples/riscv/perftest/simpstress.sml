@@ -154,11 +154,7 @@ local
                   <|bpc_label := BL_Address (Imm64 2804w); bpc_index := 0|>;
                 bsst_environ :=
                   birs_gen_env
-                    [("x15",
-                      BExp_BinExp BIExp_Minus
-                        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
-                        (BExp_Const (Imm64 2w)));
-                     ("MEM8",
+                    [("MEM8",
                       BExp_Store
                         (BExp_Store
                            (BExp_Store
@@ -6750,6 +6746,10 @@ local
                                  (BExp_Den
                                     (BVar "sy_x14" (BType_Imm Bit64))))
                               BEnd_LittleEndian Bit32) Bit64));
+                     ("x15",
+                      BExp_BinExp BIExp_Minus
+                        (BExp_Den (BVar "sy_x11" (BType_Imm Bit64)))
+                        (BExp_Const (Imm64 2w)));
                      ("x8",
                       BExp_BinExp BIExp_Minus
                         (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))
@@ -7048,7 +7048,8 @@ local
 ``;
 
 val pc_old = ``<|bpc_label := BL_Address (Imm64 2804w); bpc_index := 0|>``;
-val pc_new = ``<|bpc_label := BL_Address (Imm64 0xAECw); bpc_index := 1|>``;
+val pc_new = ``<|bpc_label := BL_Address (Imm64 0xAECw); bpc_index := 1|>``; (* load *)
+val pc_new = ``<|bpc_label := BL_Address (Imm64 0xAECw); bpc_index := 0|>``; (* assert alignment of x8 *)
 
 (*
 val t = state;
@@ -7069,37 +7070,94 @@ val state2 = replace_subterm state pc_old pc_new;
 
 end;
 
+open birsSyntax;
+
+(* ================================================================================= *)
+open birs_auxLib;
+fun pc_lookup_fallback_fun pc_lookup_t =
+  let
+     val _ = print "falling back to evaluation to get current statement";
+     val pc_lookup_thm = EVAL pc_lookup_t;
+  in
+    pc_lookup_thm
+  end;
+fun pc_lookup_fun (bprog_tm, pc_tm) =
+  let
+     val pc_lookup_t = mk_bir_get_current_statement (bprog_tm, pc_tm);
+  in
+ case (!cur_stmt_lookup_fun) pc_tm of
+     NONE =>  pc_lookup_fallback_fun pc_lookup_t
+   | SOME x => if (identical pc_lookup_t o fst o dest_eq o concl) x then x else pc_lookup_fallback_fun pc_lookup_t
+  end;
 (* ================================================================================= *)
 
 open birs_stepLib;
+open birs_execLib;
 
 val bprog_tm = (fst o dest_eq o concl) bir_aespart_prog_def;
 
    val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
    val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
-   
-   val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
+   val birs_simp_fun = birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm birs_simp_instancesLib.birs_simp_default_riscv;
 
-   val birs_post_step_fun =
+local
+  open bir_programSyntax;
+  open optionSyntax;
+in
+  fun is_SOME_BStmtB_BStmt_Assign t = is_some t andalso (is_BStmtB o dest_some) t andalso (is_BStmt_Assign o dest_BStmtB o dest_some) t;
+end
+
+   fun birs_post_step_fun (t, (last_pc, last_stmt)) = 
+    let
+     val _ = print "starting postprocessing after step\n";
+     val _ = print_term last_pc;
+     val _ = print_term last_stmt;
+     val _ = if is_SOME_BStmtB_BStmt_Assign last_stmt then print "is an assign\n" else print "is no assign\n";
+     val t1 = (
      (fn t => (
-        holba_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
-        timer_symbanalysis_last := holba_miscLib.timer_start 0;
 	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
 	t)) o
-     birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm o
+     birs_simp_fun o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
-     birs_rule_tryjustassert_fun true;
+     birs_rule_tryjustassert_fun true) t;
+    in
+      t1
+    end;
 
    val birs_rule_STEP_fun_spec =
      (birs_post_step_fun o
       birs_rule_STEP_fun birs_rule_STEP_thm);
 
 (* ================================================================================= *)
-(*
-   val timer_symbanalysis_last = ref (holba_miscLib.timer_start 0);
-val _ = birs_rule_STEP_fun_spec state2;
-*)
+val _ = print "assert and simplify large store sequence\n";
+val timer = holba_miscLib.timer_start 0;
+val state2_simpd_thm = birs_rule_STEP_fun_spec state2;
+val _ = holba_miscLib.timer_stop (fn delta_s => print ("time to simplify large store sequence: " ^ delta_s ^ "\n")) timer;
+val state2_simpd =
+ let
+  val (_, _, Pi_tm) = (get_birs_sysLPi o concl) state2_simpd_thm;
+ in
+  (hd o symb_sound_struct_Pi_to_birstatelist_fun) Pi_tm
+ end;
+val (_, state2_env, _, _) = dest_birs_state state2;
+val (_, state2_simpd_env, _, _) = dest_birs_state state2_simpd;
+val _ = if identical state2_simpd_env state2_env then print "unchanged\n" else print "changed\n";
+
+val _ = print "taking step on simplified state\n";
+val timer = holba_miscLib.timer_start 0;
+val state3_thm = birs_rule_STEP_fun_spec state2_simpd;
+val state3 =
+ let
+  val (_, _, Pi_tm) = (get_birs_sysLPi o concl) state3_thm;
+ in
+  (hd o get_birs_Pi_list) Pi_tm
+ end;
+val (_, state3_env, _, _) = dest_birs_state state3;
+val _ = holba_miscLib.timer_stop (fn delta_s => print ("time to step with simplifications and pruning: " ^ delta_s ^ "\n")) timer;
+
+val _ = print "\n";
+val _ = Profile.print_profile_results (Profile.results ());
 
 (*
 
@@ -7110,6 +7168,7 @@ Profile.output_profile_results (iostream) (Profile.results ())
 
 *)
 
+(*
 val smt_check_exp = ``BExp_Den (BVar "abc" (BType_Imm Bit1))``;
 
 val howmanylist = List.tabulate (1000, fn _ => ());
@@ -7118,6 +7177,7 @@ val _ = List.foldr (fn (_,_) => bir_smtLib.bir_smt_check_sat false smt_check_exp
 
 val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
+*)
 
 (*
 val teststring = holba_fileLib.read_from_file "/home/andreas/data/hol/HolBA_symbexec/examples/riscv/perftest/tempdir/smtquery_2024-08-08_11-38-51_253062_nil";

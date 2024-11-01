@@ -30,7 +30,7 @@ val bspec_cont_thm =
  bir_symb_transfer init_addr_tm end_addr_tm bspec_pre_tm bspec_post_tm
   bir_mod2_mem_prog_def mod2_mem_birenvtyl_def
   bspec_mod2_mem_pre_def bspec_mod2_mem_post_def mod2_mem_prog_vars_list_def
-  mod2_mem_symb_analysis_thm mod2_mem_bsysprecond_thm mod2_mem_prog_vars_thm;
+  mod2_mem_symb_analysis_thm NONE mod2_mem_prog_vars_thm;
 
 Theorem bspec_cont_mod2_mem:
  bir_cont bir_mod2_mem_prog bir_exp_true

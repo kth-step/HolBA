@@ -22,6 +22,14 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
 all: $(DEFAULT_TARGETS)
 .PHONY: all
 
+test-aes.exe: test-aes.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-aes.exe
+	./test-aes.exe
+
+EXTRA_CLEANS = test-aes.exe
+
 ifdef POLY
 ifndef HOLBA_POLYML_HEAPLESS
 HOLHEAP = $(HOLBADIR)/src/holba-heap

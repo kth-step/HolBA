@@ -470,6 +470,17 @@ Proof
   birs_simp_const_TAC
 QED
 
+Theorem birs_simplification_Minus_Const64_thm:
+  !pcond w1 w2.
+  (birs_simplification pcond
+    (BExp_BinExp BIExp_Minus
+      (BExp_Const (Imm64 w1))
+      (BExp_Const (Imm64 w2)))
+    (BExp_Const (Imm64 (w1 - w2))))
+Proof
+  birs_simp_const_TAC
+QED
+
 Theorem birs_simplification_Plus_Plus_Const64_thm:
   !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
@@ -530,6 +541,28 @@ Theorem birs_simplification_Plus_Minus_Const64_thm:
     (BExp_BinExp BIExp_Minus
       be
       (BExp_Const (Imm64 (w1 - w2)))))
+Proof
+  birs_simp_const_TAC
+QED
+
+Theorem birs_simplification_Plus_Const32_thm:
+  !pcond w1 w2.
+  (birs_simplification pcond
+    (BExp_BinExp BIExp_Plus
+      (BExp_Const (Imm32 w1))
+      (BExp_Const (Imm32 w2)))
+    (BExp_Const (Imm32 (w1 + w2))))
+Proof
+  birs_simp_const_TAC
+QED
+
+Theorem birs_simplification_Minus_Const32_thm:
+  !pcond w1 w2.
+  (birs_simplification pcond
+    (BExp_BinExp BIExp_Minus
+      (BExp_Const (Imm32 w1))
+      (BExp_Const (Imm32 w2)))
+    (BExp_Const (Imm32 (w1 - w2))))
 Proof
   birs_simp_const_TAC
 QED

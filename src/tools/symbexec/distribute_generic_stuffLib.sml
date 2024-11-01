@@ -13,10 +13,11 @@ local
   open distribute_generic_stuffTheory;
   open bir_symb_sound_coreTheory;
 
+  open birsSyntax;
+
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 in
-
 
 
 (* TODO: MOVE AWAY !!!!! GENERIC DEFINITIONS AND THEOREMS *)
@@ -49,18 +50,30 @@ fun Q_bircont_SOLVE3CONJS_TAC varset_thm = (
       REPEAT (POP_ASSUM (K ALL_TAC)) >>
 
       (* concretize and normalize *)
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
+      (* --- first the variable set *)
+      REWRITE_TAC [GSYM varset_thm] >>
+      CONV_TAC (RAND_CONV (EVAL)) >>
+      (* --- then the symbolic environment *)
       FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_auxTheory.birs_exps_of_senv_COMP_thm] >>
+      (* --- then the symbol set *)
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
+      REPEAT (CHANGED_TAC (fn x => (
+        FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss++pred_setLib.PRED_SET_ss++stringSimps.STRING_ss) [Once birs_auxTheory.birs_exps_of_senv_COMP_thm]
+       ) x)) >>
       CONV_TAC (RATOR_CONV (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_exp``] THENC SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL))) >>
-      (* TODO: improve this *)
-      CONV_TAC (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_program``] THENC SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [] THENC EVAL)) >>
 
       (* finish the proof *)
-      REWRITE_TAC [birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
-      EVAL_TAC >>
-      SIMP_TAC (std_ss++holBACore_ss) [] >>
-      EVAL_TAC
+      REPEAT (CHANGED_TAC (fn x => (
+        REWRITE_TAC [Once birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
+	let
+	  val fix_tac =
+	    EVAL_TAC >>
+            SIMP_TAC (std_ss++holBACore_ss) [bir_valuesTheory.BType_Bool_def] >>
+	    EVAL_TAC;
+	in
+	 (CONJ_TAC >- fix_tac) ORELSE (fix_tac)
+	end
+       ) x))
     )
 );
 
@@ -81,7 +94,11 @@ bsymbstate_bconcpred_bsymbval bsys2 bpost;
 fun bsymbstate_bconcpred_bsymbval bsys bcond =
   let
     val birs_eval_thm = 
-      (computeLib.RESTR_EVAL_CONV [``birs_eval_exp``] THENC birs_stepLib.birs_eval_exp_CONV THENC EVAL) ``FST (THE (birs_eval_exp ^bcond ((^bsys).bsst_environ)))``;
+      (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm] THENC
+       REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       EVAL)
+      ``FST (THE (birs_eval_exp ^bcond ((^bsys).bsst_environ)))``;
     val birs_eval_res = (snd o dest_eq o concl) birs_eval_thm;
     val _ = if not (pairSyntax.is_fst birs_eval_res) then () else raise mk_HOL_ERR "symbexec_transfer_lib" "bsymbstate_bconcpred_bsymbval" "could not finish symbolic evaluation";
   in
@@ -116,18 +133,18 @@ fun gen_birs_smt_implcond bsys1 bpre bsys2 bpost =
 symbs in H' are the query variables here;
 alternative for better performance - use abbreviations for symbols to avoid blowup of symbolic expression;
 *)
+val birs_strongpostcond_impl_pat_tm = ``
+  sys1 = SYS1 ==>
+  sys2 = SYS2 ==>
+  birs_symb_matchstate sys1 H bs1 ==>
+  bir_eval_exp BPRE  bs1.bst_environ = SOME bir_val_true ==>
+  birs_symb_matchstate sys2 H bs2 ==>
+  bir_eval_exp BPOST bs2.bst_environ = SOME bir_val_true``;
 fun birs_strongpostcond_impl_TAC (assum_list, goal) =
   let
     val _ = if List.null assum_list then () else raise mk_HOL_ERR "symbexec_transfer_lib" "birs_strongpostcond_impl_TAC" "assumption list not empty";
-    val pat_tm = ``
-      sys1 = SYS1 ==>
-      sys2 = SYS2 ==>
-      birs_symb_matchstate sys1 H bs1 ==>
-      bir_eval_exp BPRE  bs1.bst_environ = SOME bir_val_true ==>
-      birs_symb_matchstate sys2 H bs2 ==>
-      bir_eval_exp BPOST bs2.bst_environ = SOME bir_val_true``;
     val tm_subst =
-      fst (match_term pat_tm goal)
+      fst (match_term birs_strongpostcond_impl_pat_tm goal)
       handle _ => raise mk_HOL_ERR "symbexec_transfer_lib" "birs_strongpostcond_impl_TAC" "wrong goal shape";
     val bsys1 = subst tm_subst ``SYS1:birs_state_t``;
     val bsys2 = subst tm_subst ``SYS2:birs_state_t``;

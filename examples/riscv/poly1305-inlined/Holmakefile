@@ -1,0 +1,30 @@
+INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
+           $(HOLDIR)/examples/l3-machine-code/arm8/model \
+           $(HOLDIR)/examples/l3-machine-code/arm8/step \
+           $(HOLDIR)/examples/l3-machine-code/m0/model \
+           $(HOLDIR)/examples/l3-machine-code/m0/step \
+           $(HOLDIR)/examples/l3-machine-code/riscv/model \
+           $(HOLDIR)/examples/l3-machine-code/riscv/step \
+           $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/theory/program_logic \
+           $(HOLBADIR)/src/theory/tools/lifter \
+           $(HOLBADIR)/src/theory/tools/backlifter \
+           $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/backlifter \
+           $(HOLBADIR)/src/tools/exec \
+           $(HOLBADIR)/src/tools/comp \
+           $(HOLBADIR)/src/tools/wp \
+           $(HOLBADIR)/src/tools/backlifter \
+           $(HOLBADIR)/src/tools/symbexec \
+           $(HOLBADIR)/src/tools/symbexec/examples/common \
+           $(HOLBADIR)/src
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
+
+ifdef POLY
+ifndef HOLBA_POLYML_HEAPLESS
+HOLHEAP = $(HOLBADIR)/src/holba-heap
+endif
+endif
