@@ -113,10 +113,10 @@ val configs          = [("balrob",
        ^(bir_const64 (0x10000000 - countw_space_req))``;
 
   fun pred_conjs (stack_space_req, countw_space_req) =
-    [pred_not_handlermode]@ (* needed for bx lr statements *)
+    [pred_not_handlermode, (* needed for bx lr statements *)
+     pred_sp_aligned]@
     (if stack_space_req = 0 then [] else
-       [pred_sp_aligned,
-        pred_sp_space_req stack_space_req])@
+       [pred_sp_space_req stack_space_req])@
     [pred_countw_space_req countw_space_req];
 
   val _ = if Arbnum.fromInt 0 = mem_region_const_start then () else raise Fail "memory layout error";
@@ -185,6 +185,64 @@ val configs          = [("balrob",
 
      | _ => raise Fail "get_fun_usage: don't know function";
 
+(* from examples/binaries/binariesCfgLib.sml *)
+  val hack_map_3
+             = [(0x10000bb0, "469F (mov pc, r3)", [ (* mov pc, r3 <0x10000be2, 0x10000be6, 0x10000c3c, 0x10000d0a, 0x10000d14, 0x10000d18, 0x10000d20> *)
+                         "10000c3c",
+                         "10000be6",
+                         "10000be6",
+                         "10000d14",
+                         "10000be2",
+                         "10000be2",
+                         "10000d0a",
+                         "10000d14",
+                         "10000be2",
+                         "10000d0a",
+                         "10000be2",
+                         "10000d14",
+                         "10000d18",
+                         "10000d18",
+                         "10000d18",
+                         "10000d20"
+                       ]),
+                    (0x1000060c, "4697 (mov pc, r2)", [ (* mov pc, r2 <0x10000620, 0x1000065e, 0x10000682, 0x100006fe, 0x1000070a, 0x10000722, 0x10000754> *)
+                         "10000722",
+                         "1000065e",
+                         "10000682",
+                         "10000620",
+                         "10000682",
+                         "100006fe",
+                         "10000682",
+                         "10000620",
+                         "1000065e",
+                         "1000065e",
+                         "100006fe",
+                         "10000620",
+                         "10000754",
+                         "10000754",
+                         "10000754",
+                         "1000070a"
+                       ]),
+                    (0x100006b2, "4697 (mov pc, r2)", [ (* mov pc, r2 <0x1000061e, 0x1000065e, 0x10000682, 0x100006fe, 0x10000708, 0x10000754> *)
+                         "1000065e",
+                         "1000065e",
+                         "10000682",
+                         "1000061e",
+                         "10000682",
+                         "100006fe",
+                         "10000682",
+                         "1000061e",
+                         "1000065e",
+                         "1000065e",
+                         "100006fe",
+                         "1000061e",
+                         "10000754",
+                         "10000754",
+                         "10000754",
+                         "10000708"
+                       ])
+                   ];
+
 (* -------------------------------------------------------------------------- *)
 
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
@@ -224,51 +282,115 @@ fun debug_Pi_fun t =
   *)
 
 (* -------------------------------------------------------------------------- *)
-
-val birs_basic_from_sums =
-  let
-    open birs_intervalLib;
-  in
-    birs_strategiesLib.birs_from_summaries (birs_intervals_Pi_unify_RULE "countw")
-  end;
-
 local
   open bir_immSyntax;
   fun mk_word_addr v = wordsSyntax.mk_wordii(v, 32);
   fun mk_bir_lbl x = ``bir_block_pc (BL_Address ^(gen_mk_Imm x))``;
-  val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl o mk_word_addr;
 in
-  fun birs_basic_init_state prog_birenvtyl_def reqs init_addr =
-    let
-      open birs_driveLib;
-
-      val init_lbl = bir_lbl_from_addr init_addr;
-      val precond = bslSyntax.bandl (pred_conjs reqs);
-      val init_state =
-      birs_analysis_init prog_birenvtyl_def precond init_lbl;
-    in
-      init_state
-    end;
-
-  fun birs_basic_execute bprog_tm sums end_addrs init_state =
-    let
-      open birs_intervalLib;
-      open birs_driveLib;
-
-      val end_lbls = List.map bir_lbl_from_addr end_addrs;
-      val symb_exec_thm =
-      birs_exec_to
-        bprog_tm
-        (birs_strategiesLib.birs_post_step_armcm0_default)
-        (birs_basic_from_sums sums)
-        (birs_strategiesLib.not_at_lbls end_lbls)
-        init_state;
-      val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
-    in
-      interval_thm
-    end;
-  val birs_basic_execute = fn x => fn y => fn z => Profile.profile "birs_basic_execute" (birs_basic_execute x y z);
+  val bir_lbl_from_addr = snd o dest_eq o concl o EVAL o mk_bir_lbl o mk_word_addr;
 end
+
+local
+  val indirjmpresolv_map_raw = (*[(0x100013b8, "", ["100013bc"])]@*)hack_map_3;
+  fun process_hack_map_targets pcl =
+    let
+      fun fromString x =
+        let
+          val v = valOf (StringCvt.scanString (Int.scan StringCvt.HEX) x)
+                  handle _ => raise ERR "process_hack_map_targets" "cannot process target string";
+        in
+          v
+        end;
+    in
+      List.map (fn x => fromString x) (list_mk_distinct gen_eq pcl)
+    end;
+  val indirjmpresolv_map = List.map (fn (pc,c,pcl) => (pc,c, process_hack_map_targets pcl)) indirjmpresolv_map_raw;
+
+  val (add_fun, lookup_fun) = aux_moveawayLib.result_cache Term.compare;
+  val () = List.app (fn (pc,c,pcl) => add_fun (bir_lbl_from_addr pc, (c, List.map bir_lbl_from_addr pcl))) indirjmpresolv_map;
+  fun get_indirjmp_targets lbl_tm = lookup_fun lbl_tm;
+  fun replace_state_lbl st_tm lbl_tm =
+    let
+      val (_, env, status, pcond) = dest_birs_state st_tm;
+    in
+      mk_birs_state (lbl_tm, env, status, pcond)
+    end;
+in
+  fun get_indirjmp_oracle bprog_tm st_tm =
+    let
+      val lbl_tm = dest_birs_state_pc st_tm;
+      val targets_o = get_indirjmp_targets lbl_tm;
+    in
+      if not (isSome targets_o) then NONE else
+      let
+        val (c, targets) = valOf targets_o;
+        (* TODO: add validation with lifter instruction comment c with bprog_tm, use cached lookup for this *)
+        (*
+        val pct = (!birs_auxLib.cur_stmt_lookup_fun) lbl_tm;
+        val _ = print_thm (valOf pct);
+        val _ = raise ERR "" "";
+        *)
+        
+        val st_tms = List.map (replace_state_lbl st_tm) targets;
+        val sts_tm = pred_setSyntax.mk_set st_tms;
+        val exec_tm = mk_birs_symb_exec (bprog_tm, mk_sysLPi (st_tm, pred_setSyntax.mk_set [lbl_tm], sts_tm));
+      in
+        SOME (mk_oracle_thm "BIRS_INDIRJMP" ([], exec_tm))
+      end
+    end;
+end
+
+fun birs_basic_from_sums bprog_tm birs_rule_SUBST_thm sums st_tm =
+  let
+    open birs_intervalLib;
+    val birs_simp_select = birs_simp_instancesLib.birs_simp_default_core_exp_simp;
+    val birs_simp_RULE_gen = birs_execLib.birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm;
+    val simplify_sp =
+      (birs_simp_RULE_gen birs_simp_select) o
+      (birs_Pi_each_RULE (CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV "SP_process"))));
+    val postproc_fun = simplify_sp o birs_intervals_Pi_unify_RULE "countw";
+
+    val jmp_t_o = get_indirjmp_oracle bprog_tm st_tm;
+  in
+    if isSome jmp_t_o then
+      jmp_t_o
+    else
+      birs_strategiesLib.birs_from_summaries postproc_fun sums st_tm
+  end;
+
+
+fun birs_basic_init_state prog_birenvtyl_def reqs init_addr =
+  let
+    open birs_driveLib;
+
+    val init_lbl = bir_lbl_from_addr init_addr;
+    val precond = bslSyntax.bandl (pred_conjs reqs);
+    val init_state =
+    birs_analysis_init prog_birenvtyl_def precond init_lbl;
+  in
+    init_state
+  end;
+
+fun birs_basic_execute bprog_tm sums end_addrs init_state =
+  let
+    open birs_intervalLib;
+    open birs_driveLib;
+    val birs_rule_SUBST_thm = birs_execLib.birs_rule_SUBST_prog_fun bprog_tm;
+
+    val end_lbls = List.map bir_lbl_from_addr end_addrs;
+    val symb_exec_thm =
+    birs_exec_to
+      bprog_tm
+      (birs_strategiesLib.birs_post_step_armcm0_default)
+      (birs_basic_from_sums bprog_tm birs_rule_SUBST_thm sums)
+      (birs_strategiesLib.not_at_lbls end_lbls)
+      init_state;
+    val interval_thm = birs_intervals_Pi_unify_RULE "countw" symb_exec_thm;
+  in
+    interval_thm
+  end;
+val birs_basic_execute = fn x => fn y => fn z => Profile.profile "birs_basic_execute" (birs_basic_execute x y z);
+
 
 (*
 val _ = print "\n\n";
