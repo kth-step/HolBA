@@ -270,9 +270,11 @@ in (* local *)
       val _ = if num_Pi_el > 1 then () else
               raise ERR "birs_Pi_merge_2_RULE" "Pi has to have at least two states";
 
-      (* get the env mapped strings, make sure they have the same ones in each *)
+      (* get the env mapped strings, check that bpc_label is the same for both, make sure they have the same ones in each *)
       val Pi_sys1_tm = List.nth(Pi_tms, 0);
       val Pi_sys2_tm = List.nth(Pi_tms, 1);
+      val _ = if identical (dest_birs_state_pc Pi_sys1_tm) (dest_birs_state_pc Pi_sys2_tm) then () else
+        raise ERR "birs_Pi_merge_2_RULE" "the two states have to agree in their label terms";
       val varnames = birs_env_varnames Pi_sys1_tm;
       val _ = if list_eq_contents gen_eq varnames (birs_env_varnames Pi_sys2_tm) then () else
               raise ERR "birs_Pi_merge_2_RULE" "the two states do not have the same variables mapped in the environment";

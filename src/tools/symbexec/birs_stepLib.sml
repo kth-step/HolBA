@@ -693,7 +693,7 @@ val birs_symbval_concretizations_oracle_CONV =
    in
     if
       identical tm ((fst o dest_eq o concl) res_thm)
-      handle _ => (print_thm res_thm; raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem")
+      handle _ => (print_thm res_thm; print "\n\n"; print_term tm; print "\n\n"; raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem")
     then res_thm else
     raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
    end);

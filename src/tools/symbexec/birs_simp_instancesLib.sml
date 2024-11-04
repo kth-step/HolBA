@@ -253,7 +253,8 @@ fun birs_simp_store_cheater simp_tm =
      birs_simplification_Load_addr_thm,
      birs_simplification_Plus_right_thm,
      birs_simplification_Plus_left_thm,
-     birs_simplification_Minus_left_thm]@
+     birs_simplification_Minus_left_thm,
+     birs_simplification_And_left_thm]@
     subexp_cast_thms;
 
 (* ----------------------------------------------------------------------------------- *)

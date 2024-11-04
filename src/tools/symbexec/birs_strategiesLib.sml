@@ -109,6 +109,7 @@ in (* local *)
             SOME thm
           end
           handle _ => acc);
+        (* val postproc = fn x => let val y = postproc x; in print_thm y; y end; *)
       in
         Option.map postproc (List.foldl foldfun NONE sums_pc)
       end

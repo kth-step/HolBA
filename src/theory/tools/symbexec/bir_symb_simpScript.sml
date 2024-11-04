@@ -294,6 +294,14 @@ Proof
   subexpression_simp_TAC
 QED
 
+Theorem birs_simplification_And_left_thm:
+  !pcond symbexp1 symbexp1' symbexp2.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_BinExp BIExp_And symbexp1 symbexp2) (BExp_BinExp BIExp_And symbexp1' symbexp2))
+Proof
+  subexpression_simp_TAC
+QED
+
 Theorem birs_simplification_Minus_left_thm:
   !pcond symbexp1 symbexp1' symbexp2.
   (birs_simplification pcond symbexp1 symbexp1') ==>
