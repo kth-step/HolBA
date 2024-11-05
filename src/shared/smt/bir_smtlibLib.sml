@@ -436,7 +436,6 @@ BExp_Cast BIExp_LowCast
           val (str, sty) = if not (is_BIExp_Not uop) then (str, sty) else
                          case sty of
                            SMTTY_BV 1 => ("(= " ^ str ^ " (_ bv1 1))", SMTTY_Bool)
-                         | SMTTY_BV _ => problem exp "unsupported argument type: " ()
                          | _ => (str, sty);
 
           val uopval = uop_to_smtlib uop (str, sty);
