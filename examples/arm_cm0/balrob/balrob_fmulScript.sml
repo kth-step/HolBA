@@ -3,6 +3,8 @@ open HolKernel Parse boolLib bossLib;
 open balrob_supportLib;
 
 open balrob_endsTheory;
+open balrob_fsubTheory; (* TODO: remove this line later *)
+open balrob_faddTheory; (* TODO: remove this line later *)
 
 val _ = new_theory "balrob_fmul";
 
@@ -89,7 +91,8 @@ val balrob_summary___aeabi_fmul_c8_thm = save_thm("balrob_summary_" ^ entry_name
 (* ------------------------------------ *)
 
 (*
-(* TODO: uses one jump table encoded in manually extracted cfg! takes 3 times as much time as sub or div *)
+(* TODO: uses one jump table encoded in manually extracted cfg! used to take 3 times as much time as sub or div *)
+(* TODO: loads constants from memory! *)
 val entry_name = "__aeabi_fmul";
 val reqs = get_fun_usage entry_name;
 val locs =
@@ -109,7 +112,6 @@ val symb_exec_thm = birs_summary birs_prog_config
   locs;
 val _ = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
 *)
-
 
 (* ------------------------------------ *)
 
