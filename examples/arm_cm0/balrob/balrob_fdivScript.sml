@@ -111,7 +111,12 @@ val locs =
   ( 0x100005A4,
    [0x10000678]);
 
-val symb_exec_thm = birs_summary birs_prog_config
+val symb_exec_thm = birs_summary_gen
+  (fn x => ((*print "\n\n"; print_term x; print "\n\n";*) birs_simpLib.birs_simp_ID_fun x))
+  (gen_const_load_32_32_cheat_thms [
+    (0x100007bc, 0x100007c8),
+    (0x100007c4, 0x10000808)])
+  birs_prog_config
   [balrob_summary___clzsi2_thm,
    balrob_summary___aeabi_fdiv_loop_thm,
    balrob_summary___aeabi_fdiv_c1_thm,

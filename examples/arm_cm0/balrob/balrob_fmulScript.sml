@@ -3,8 +3,10 @@ open HolKernel Parse boolLib bossLib;
 open balrob_supportLib;
 
 open balrob_endsTheory;
+(*
 open balrob_fsubTheory; (* TODO: remove this line later *)
 open balrob_faddTheory; (* TODO: remove this line later *)
+*)
 
 val _ = new_theory "balrob_fmul";
 
@@ -99,7 +101,10 @@ val locs =
   ( 0x10000B44,
    [0x10000C12]);
 
-val symb_exec_thm = birs_summary birs_prog_config
+val symb_exec_thm = birs_summary_gen
+  (fn x => ((*print "\n\n"; print_term x; print "\n\n";*) birs_simpLib.birs_simp_ID_fun x))
+  (gen_const_load_32_32_cheat_thms [(0x10000DA0, 0x10000DA8)])
+  birs_prog_config
   [balrob_summary___clzsi2_thm,
    balrob_summary___aeabi_fmul_c1_thm,
    balrob_summary___aeabi_fmul_c2_thm,
