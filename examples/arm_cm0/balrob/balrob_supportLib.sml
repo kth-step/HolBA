@@ -245,6 +245,28 @@ val configs          = [("balrob",
 
 (* -------------------------------------------------------------------------- *)
 
+fun gen_const_load_32_32_cheat_thm (a,b) =
+  let
+    fun bir_const32 v = ``BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(v, 32)))``;
+    val load_cheat_thm = prove(``
+    !pcond.
+      birs_simplification
+        pcond
+        (BExp_Load
+          (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+          ^(bir_const32 a)
+          BEnd_LittleEndian
+          Bit32)
+        ^(bir_const32 b)
+    ``,
+    cheat);
+  in
+    load_cheat_thm
+  end;
+val gen_const_load_32_32_cheat_thms = List.map gen_const_load_32_32_cheat_thm;
+
+(* -------------------------------------------------------------------------- *)
+
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
 
 (* -------------------------------------------------------------------------- *)
@@ -371,7 +393,7 @@ fun birs_basic_init_state prog_birenvtyl_def reqs init_addr =
     init_state
   end;
 
-fun birs_basic_execute bprog_tm sums end_addrs init_state =
+fun birs_basic_execute bprog_tm pre_simp extra_thms sums end_addrs init_state =
   let
     open birs_intervalLib;
     open birs_driveLib;
@@ -381,7 +403,7 @@ fun birs_basic_execute bprog_tm sums end_addrs init_state =
     val symb_exec_thm =
     birs_exec_to
       bprog_tm
-      (birs_strategiesLib.birs_post_step_armcm0_default)
+      (birs_strategiesLib.birs_post_step_armcm0_default pre_simp extra_thms)
       (birs_basic_from_sums bprog_tm birs_rule_SUBST_thm sums)
       (birs_strategiesLib.not_at_lbls end_lbls)
       init_state;
@@ -389,7 +411,7 @@ fun birs_basic_execute bprog_tm sums end_addrs init_state =
   in
     interval_thm
   end;
-val birs_basic_execute = fn x => fn y => fn z => Profile.profile "birs_basic_execute" (birs_basic_execute x y z);
+val birs_basic_execute = fn x => fn pre_simp => fn extra_thms => fn y => fn z => Profile.profile "birs_basic_execute" (birs_basic_execute x pre_simp extra_thms y z);
 
 
 (*
@@ -422,10 +444,10 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
 
 (* ========================================================================================== *)
 
-  fun birs_summary (bprog_tm, prog_birenvtyl_def) sums reqs (init_addr, end_addrs) =
+  fun birs_summary_gen pre_simp extra_thms (bprog_tm, prog_birenvtyl_def) sums reqs (init_addr, end_addrs) =
     let
       val init_state = birs_basic_init_state prog_birenvtyl_def reqs init_addr;
-      val symb_exec_thm = birs_basic_execute bprog_tm sums end_addrs init_state;
+      val symb_exec_thm = birs_basic_execute bprog_tm pre_simp extra_thms sums end_addrs init_state;
 
       (* need to handle intervals correctly: in symbolic execution driver
            (also need this together with the indirectjump handling and previous summaries) and also before merging *)
@@ -433,7 +455,9 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
     in
       merged_thm
   end;
-  val birs_summary = fn x => fn y => fn z => Profile.profile "birs_summary" (birs_summary x y z);
+  val birs_summary_gen = fn pre_simp => fn extra_thms => fn x => fn y => fn z => Profile.profile "birs_summary_gen" (birs_summary_gen pre_simp extra_thms x y z);
+
+  val birs_summary = birs_summary_gen birs_simpLib.birs_simp_ID_fun [];
 
 
 end (* local *)
