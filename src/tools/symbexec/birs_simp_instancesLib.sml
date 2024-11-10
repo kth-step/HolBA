@@ -199,9 +199,9 @@ fun birs_simp_store_cheater simp_tm =
         end;
     in
       simp_try_apply_gen (simp_try_list_cont_gen [
+        simp_try_mk_gen simp_apply_fun,
         simp_try_mk_gen pre_simp,
-        simp_try_fold_gen (birs_simp_try_plain (SOME EVAL)) extra_thms,
-        simp_try_mk_gen simp_apply_fun
+        simp_try_fold_gen (birs_simp_try_plain (SOME EVAL)) extra_thms
       ])
     end;
 
