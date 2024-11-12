@@ -3,9 +3,11 @@ open HolKernel Parse boolLib bossLib;
 open balrob_supportLib;
 
 open balrob_endsTheory;
+(*
 open balrob_fsubTheory; (* TODO: remove this line later *)
 open balrob_faddTheory; (* TODO: remove this line later *)
 open balrob_fmulTheory; (* TODO: remove this line later *)
+*)
 
 val _ = new_theory "balrob_fdiv";
 
