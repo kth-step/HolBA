@@ -63,25 +63,15 @@ in (* local *)
   *)
 
   (* ................................................ *)
-
-  fun string_in_set_CONV tm =
-  (
-    REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY] THENC
-    REPEATC (CHANGED_CONV ((fn xyz => REWRITE_CONV [Once pred_setTheory.IN_INSERT] xyz) THENC
-      IFC
-        (RATOR_CONV EVAL)
-        (BETA_CONV THENC REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY])
-        REFL))
-  ) tm;
-
   fun birs_exps_of_senv_COMP_ONCE_CONV tm =
   (
     (QCHANGED_CONV (CHANGED_CONV (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x))) THENC
     IFC
-      (RATOR_CONV (RATOR_CONV (RAND_CONV (string_in_set_CONV))))
+      (RATOR_CONV (RATOR_CONV (RAND_CONV (pred_setLib.IN_CONV stringLib.string_EQ_CONV))))
       (REWRITE_CONV [])
       (REFL)
   ) tm;
+  val birs_exps_of_senv_COMP_ONCE_CONV = Profile.profile "birs_exps_of_senv_COMP_ONCE_CONV" birs_exps_of_senv_COMP_ONCE_CONV;
 
   (* TODO: add proper exceptions/exception messages if the unexpected happens... *)
   fun birs_exps_of_senv_COMP_CONV_cheat tm =
@@ -171,13 +161,13 @@ in (* local *)
       raise ERR "birs_symb_symbols_DIRECT_CONV" "cannot handle term"
     else
     (
-      SIMP_CONV std_ss [birs_gen_env_thm, birs_gen_env_NULL_thm] THENC
-      SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
+      Profile.profile "z_symbols_p1" (REWRITE_CONV [birs_gen_env_thm, birs_gen_env_NULL_thm]) THENC
+      Profile.profile "z_symbols_p2" (SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm]) THENC
 
-      birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
+      Profile.profile "z_symbols_p3" (birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV) THENC
 
       REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] THENC
-      bir_vars_of_exp_CONV THENC
+      Profile.profile "z_symbols_p5" (bir_vars_of_exp_CONV) THENC
 
       RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
 
@@ -185,6 +175,7 @@ in (* local *)
       REWRITE_CONV [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]
     ) tm;
   val birs_symb_symbols_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_DIRECT_CONV;
+  val birs_symb_symbols_DIRECT_CONV = Profile.profile "birs_symb_symbols_DIRECT_CONV" birs_symb_symbols_DIRECT_CONV;
 
   val birs_symb_symbols_CONV =
     birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV;
@@ -203,8 +194,8 @@ in (* local *)
         pred_setTheory.IMAGE_INSERT,
         pred_setTheory.IMAGE_EMPTY] THENC
       birs_symb_symbols_CONV THENC
-      (* now have A UNION B UNION C UNION ... *)
 
+      (* now have BIGUNION {A;B;C;..} *)
       aux_setLib.varset_BIGUNION_CONV
     ) tm;
   val birs_symb_symbols_set_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_set_DIRECT_CONV;
