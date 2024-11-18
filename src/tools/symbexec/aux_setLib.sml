@@ -64,13 +64,34 @@ in (* local *)
       mk_oracle_thm "INTER_CONV_cheat" ([], mk_eq (tm, tm_l_set))
     end;
   *)
+  (*
+  (* the functions in pred_setLib have handling for syntactic equality inbuilt, don't need to wrap the EQ_CONVs we define with this *)
+  val id_thm = prove(``!x. x ==> (x = T)``, rewrite_tac[]);
+  fun wrap_EQ_CONV_id conv tm =
+    let
+      val (x,y) = dest_eq tm;
+    in
+      if identical x y then
+        let
+          val a = REFL x;
+          val b = SPEC (concl a) id_thm;
+        in
+          MP b a
+        end
+      else
+        conv tm
+    end;
+  *)
+
+  fun resolve_ite_CONV conv =
+    RATOR_CONV (RATOR_CONV (RAND_CONV conv)) THENC
+    TRY_CONV (REWR_CONV ((CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES)) THENC
+    TRY_CONV (REWR_CONV ((CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES));
 
   fun INTER_CONV el_EQ_CONV tm =
     IFC
       (REWR_CONV pred_setTheory.INSERT_INTER)
-      (RATOR_CONV (RATOR_CONV (RAND_CONV (pred_setLib.IN_CONV el_EQ_CONV))) THENC
-       TRY_CONV (REWR_CONV ((CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES)) THENC
-       TRY_CONV (REWR_CONV ((CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES)) THENC
+      (resolve_ite_CONV (pred_setLib.IN_CONV el_EQ_CONV) THENC
        (fn tm_ =>
          (if pred_setSyntax.is_empty tm_ then
             REFL
@@ -82,7 +103,6 @@ in (* local *)
          tm_))
       (REWR_CONV (CONJUNCT1 pred_setTheory.INTER_EMPTY))
       tm;
-
 
   fun DIFF_CONV_helper el_EQ_CONV tm =
     IFC
@@ -103,33 +123,24 @@ in (* local *)
       DIFF_CONV_helper el_EQ_CONV) tm;
 
 
-  fun BIGUNION_CONV_helper eq_EQ_CONV tm =
+  fun BIGUNION_CONV_helper el_EQ_CONV tm =
     IFC
       (RAND_CONV (REWR_CONV BIGUNION_INSERT))
       (REWR_CONV UNION_ASSOC THENC
-       LAND_CONV (pred_setLib.UNION_CONV eq_EQ_CONV) THENC
-       BIGUNION_CONV_helper eq_EQ_CONV)
+       LAND_CONV (pred_setLib.UNION_CONV el_EQ_CONV) THENC
+       BIGUNION_CONV_helper el_EQ_CONV)
       (RAND_CONV (REWR_CONV BIGUNION_EMPTY) THENC
        REWR_CONV (CONJUNCT2 UNION_EMPTY))
       tm;
 
-  fun BIGUNION_CONV eq_EQ_CONV =
+  fun BIGUNION_CONV el_EQ_CONV =
     IFC
       (REWR_CONV BIGUNION_INSERT)
-      (BIGUNION_CONV_helper eq_EQ_CONV)
+      (BIGUNION_CONV_helper el_EQ_CONV)
       (REWR_CONV BIGUNION_EMPTY);
 
 (* ================================================================================== *)
 (* ================================================================================== *)
-  fun wrap_EQ_CONV_id conv tm =
-    let
-      val (x,y) = dest_eq tm;
-    in
-      if identical x y then
-        MATCH_MP (GEN_ALL (List.nth ((CONJUNCTS o SPEC_ALL) boolTheory.IMP_CLAUSES, 3))) (REFL x)
-      else
-        conv tm
-    end;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  label set equality checker                                                      *)
@@ -141,7 +152,7 @@ in (* local *)
   val word_EQ_CONV =
     wordsLib.word_EQ_CONV;
 
-  val label_EQ_CONV =
+  val bir_label_EQ_CONV =
     (TRY_CONV (LHS_CONV (REWR_CONV bir_program_labelsTheory.BL_Address_HC_def))) THENC
     (TRY_CONV (RHS_CONV (REWR_CONV bir_program_labelsTheory.BL_Address_HC_def))) THENC
     (* this assumes 32 or 63 bit addresses only, no labels, also doesn't take care of the case where Imms don't match (mixed Imms in Addresses) *)
@@ -150,35 +161,54 @@ in (* local *)
     (TRY_CONV (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11))) THENC
     (TRY_CONV (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,4)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11))) THENC
     word_EQ_CONV;
-  (*val label_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare label_EQ_CONV;*)
+  (*val bir_label_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare bir_label_EQ_CONV;*)
 
-  val programcounter_EQ_CONV =
+  val bir_pc_EQ_CONV =
     (REWR_CONV bir_programTheory.bir_programcounter_t_literal_11) THENC
     (RAND_CONV (num_EQ_CONV)) THENC
     IFC
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
       (REFL)
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
-      label_EQ_CONV);
-  (*val programcounter_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare programcounter_EQ_CONV;*)
+      bir_label_EQ_CONV);
+  (*val bir_pc_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare bir_pc_EQ_CONV;*)
 
 (* ---------------------------------------------------------------------------------- *)
 (*  bir var set equality checker                                                      *)
 (* ---------------------------------------------------------------------------------- *)
-  (*
-  val string_ss = rewrites (type_rws ``:string``);
-  val varset_EQ_CONV = SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [];
-  *)
-  val varset_EQ_CONV = EVAL;
-  val varset_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare varset_EQ_CONV;
-  val varset_EQ_CONV = Profile.profile "varsetop_varset_EQ_CONV" varset_EQ_CONV;
+  val bir_var_EQ_thm = prove(``
+    !a0 a1 a0' a1'.
+      BVar a0 a1 = BVar a0' a1' <=>
+      a1 = a1' /\ a0 = a0'
+  ``,
+    METIS_TAC [bir_envTheory.bir_var_t_11]
+  );
+  (* this seems to be well optimized now, maybe need to turn off caching if there are much more variables around so that the dictionary lookups are more expensive *)
+  val bir_var_EQ_CONV =
+    (REWR_CONV bir_var_EQ_thm) THENC
+    (*type*)
+    LAND_CONV (
+      REWRITE_CONV [
+        bir_valuesTheory.bir_type_t_distinct,
+        GSYM bir_valuesTheory.bir_type_t_distinct,
+        bir_valuesTheory.bir_type_t_11,
+        bir_immTheory.bir_immtype_t_distinct,
+        GSYM bir_immTheory.bir_immtype_t_distinct]) THENC
+    IFC
+      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
+      ((*name*)
+       stringLib.string_EQ_CONV)
+      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)));
+  val bir_var_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare bir_var_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  birs state equality checker                                                       *)
 (* ---------------------------------------------------------------------------------- *)
   val bir_status_EQ_CONV =
-    EVAL (*SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) [] THENC EVAL*);
+    (* this seems to be well optimized now *)
+    EVAL;
 
+  (* could speed this up, maybe take inspiration from string or word EQ_CONV functions *)
   val bir_exp_EQ_CONV =
     EVAL (*SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) [] THENC EVAL*);
 
@@ -190,6 +220,7 @@ in (* local *)
       birs_utilsLib.list_eq_contents (fn (x,y) => pair_eq identical identical x y) mappings1 mappings2
     end;
 
+  (* TODO: have to make provide a proof-producing version of this *)
   fun birs_env_EQ_CONV tm =
     let
       val (env1_tm, env2_tm) = dest_eq tm;
@@ -223,7 +254,7 @@ in (* local *)
       (REFL)
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
        (*pc*)
-       LAND_CONV programcounter_EQ_CONV THENC
+       LAND_CONV bir_pc_EQ_CONV THENC
        IFC
          ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
          (REFL)
@@ -246,19 +277,19 @@ in (* local *)
   val programcounter_UNION_CONV =
       (* TODO: this has to be fixed as list of address spaces that can be merged and so on...
          (can we make this only involve the block label part, not the block index?) *)
-      pred_setLib.UNION_CONV programcounter_EQ_CONV;
+      pred_setLib.UNION_CONV bir_pc_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (* faster set operations for bir variable sets (for example for: computing freevarset, symbexec composition, merging, etc) *)
 (* ---------------------------------------------------------------------------------- *)
   val varset_BIGUNION_CONV =
-    BIGUNION_CONV varset_EQ_CONV;
+    BIGUNION_CONV bir_var_EQ_CONV;
 
   val varset_INTER_CONV =
-    INTER_CONV varset_EQ_CONV;
+    INTER_CONV bir_var_EQ_CONV;
 
   val varset_DIFF_CONV =
-    DIFF_CONV varset_EQ_CONV;
+    DIFF_CONV bir_var_EQ_CONV;
 
   (* A INTER (B DIFF C) *)
   val varset_INTER_DIFF_CONV =
