@@ -65,7 +65,7 @@ in (* local *)
     end;
   *)
   (*
-  (* the functions in pred_setLib have handling for syntactic equality inbuilt, don't need to wrap the EQ_CONVs we define with this *)
+  (* the functions in pred_setLib seem to have handling for syntactic equality inbuilt, so it seems we don't need to wrap the EQ_CONVs we define with this *)
   val id_thm = prove(``!x. x ==> (x = T)``, rewrite_tac[]);
   fun wrap_EQ_CONV_id conv tm =
     let
@@ -80,6 +80,23 @@ in (* local *)
         end
       else
         conv tm
+    end;
+  *)
+  (*
+  (* useful function for debugging. pred_setLib change exception so that issues are otherwise masked *)
+  fun wrap_EQ_CONV_check s conv tm =
+    let
+      val t = conv tm
+        handle e => (print_term tm; print ("conversion "^s^" failed\n"); raise e);
+      val r = (rhs o concl) t;
+    in
+      if (identical T r) orelse (identical F r) then
+        t
+      else (
+        print_term tm;
+        print "output wrong\n";
+        raise ERR s "not T or F"
+      )
     end;
   *)
 
@@ -224,14 +241,16 @@ in (* local *)
   fun birs_env_EQ_CONV tm =
     let
       val (env1_tm, env2_tm) = dest_eq tm;
-      (* need two states with birs_gen_env environments *)
+      (* need two symbolic environments with birs_gen_env *)
       val _ = birs_check_env_norm ("birs_env_EQ_CONV", ": 1") env1_tm;
       val _ = birs_check_env_norm ("birs_env_EQ_CONV", ": 2") env2_tm;
       val is_eq = birs_gen_env_check_eq env1_tm env2_tm;
-      val _ = print (if is_eq then "states are equal\n" else "states are not equal\n");
+      val _ = print (if is_eq then "symbolic environments are equal\n" else "symbolic environments are not equal\n");
       (* TODO: the false case might be wrong *)
-      val _ = if is_eq then () else
-        raise ERR "birs_env_EQ_CONV" "the states seem to be unequal, but they might be equal";
+      val _ = if is_eq then () else (
+        print_term tm;
+        print "the symbolic environments seem to be unequal, but they might be equal\n";
+        raise ERR "birs_env_EQ_CONV" "the symbolic environments seem to be unequal, but they might be equal");
       val eq_thm = mk_oracle_thm "BIRS_ENV_EQ" ([], mk_eq (tm, if is_eq then T else F));
     in
       eq_thm
@@ -266,7 +285,7 @@ in (* local *)
            (REFL)
            ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
            (*senv*)
-           LAND_CONV birs_env_EQ_CONV)
+           birs_env_EQ_CONV)
          )
        );
   val birs_state_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare birs_state_EQ_CONV;
