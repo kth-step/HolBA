@@ -351,6 +351,8 @@ x10 <- x26 lsl 16
 x26 <- x26 lsr 16
 x10 <- x10 | x26  // d <<<= 16
 
+x10 <- (((x10 + x22) ^ x26) lsl 16) | (((x10 + x22) ^ x26) lsr 16)
+
 x8 <- x28 + x10   // c += d
 x22 <- x8 ^ x22   // b ^= c
 x15 <- x22 lsl 12
@@ -408,7 +410,33 @@ val bspec_chacha_quarterround_post_tm = bslSyntax.bandl [
      (BExp_BinExp BIExp_Plus
        (BExp_Const (Imm64 pre_x10))
        (BExp_Const (Imm64 pre_x22)))
-     Bit32) Bit64)``
+     Bit32) Bit64)``,
+
+  ``BExp_BinPred
+   BIExp_Equal
+   (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+   (BExp_BinExp BIExp_Or
+  (BExp_Cast BIExp_SignedCast
+    (BExp_BinExp BIExp_LeftShift
+      (BExp_Cast BIExp_LowCast 
+       (BExp_BinExp BIExp_Xor
+        (BExp_BinExp BIExp_Plus
+         (BExp_Const (Imm64 pre_x10))
+         (BExp_Const (Imm64 pre_x22)))
+     (BExp_Const (Imm64 pre_x26)))
+       Bit32)
+      (BExp_Const (Imm32 16w))
+    ) Bit64)
+  (BExp_Cast BIExp_SignedCast
+    (BExp_BinExp BIExp_RightShift
+      (BExp_Cast BIExp_LowCast 
+       (BExp_BinExp BIExp_Xor
+        (BExp_BinExp BIExp_Plus
+         (BExp_Const (Imm64 pre_x10))
+         (BExp_Const (Imm64 pre_x22)))
+     (BExp_Const (Imm64 pre_x26)))
+       Bit32)
+      (BExp_Const (Imm32 16w))) Bit64))``
 ];
 
 Definition bspec_chacha_quarterround_post_def:
