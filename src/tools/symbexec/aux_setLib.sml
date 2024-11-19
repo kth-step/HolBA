@@ -64,7 +64,6 @@ in (* local *)
       mk_oracle_thm "INTER_CONV_cheat" ([], mk_eq (tm, tm_l_set))
     end;
   *)
-  (*
   (* the functions in pred_setLib seem to have handling for syntactic equality inbuilt, so it seems we don't need to wrap the EQ_CONVs we define with this *)
   val id_thm = prove(``!x. x ==> (x = T)``, rewrite_tac[]);
   fun wrap_EQ_CONV_id conv tm =
@@ -81,7 +80,6 @@ in (* local *)
       else
         conv tm
     end;
-  *)
   (*
   (* useful function for debugging. pred_setLib change exception so that issues are otherwise masked *)
   fun wrap_EQ_CONV_check s conv tm =
@@ -301,6 +299,9 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (* faster set operations for bir variable sets (for example for: computing freevarset, symbexec composition, merging, etc) *)
 (* ---------------------------------------------------------------------------------- *)
+  val varset_UNION_CONV =
+    pred_setLib.UNION_CONV bir_var_EQ_CONV;
+
   val varset_BIGUNION_CONV =
     BIGUNION_CONV bir_var_EQ_CONV;
 
