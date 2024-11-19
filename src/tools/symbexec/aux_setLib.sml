@@ -25,27 +25,6 @@ local
 
 in (* local *)
 
-  (* TODO: move to aux_moveawayLib *)
-  fun wrap_cache_result_EQ_BEQ kcomp f =
-    let
-      val (add, lookup) = aux_moveawayLib.result_cache kcomp;
-      fun f_wrapped k =
-        let
-          val v_o = lookup k;
-        in
-          if isSome v_o then valOf v_o else
-          let
-            val v = f k;
-          in
-            add (k, v);
-            add ((*(rhs o concl o SYM_CONV)*)(mk_eq o (fn (x,y) => (y,x)) o dest_eq) k, CONV_RULE (LHS_CONV SYM_CONV) v);
-            v
-          end
-        end;
-    in
-      f_wrapped
-    end;
-
 (* ---------------------------------------------------------------------------------- *)
 (* generic fast set operations (conversions)                                          *)
 (* ---------------------------------------------------------------------------------- *)
@@ -64,7 +43,9 @@ in (* local *)
       mk_oracle_thm "INTER_CONV_cheat" ([], mk_eq (tm, tm_l_set))
     end;
   *)
-  (* the functions in pred_setLib seem to have handling for syntactic equality inbuilt, so it seems we don't need to wrap the EQ_CONVs we define with this *)
+  (* the functions in pred_setLib seem to have handling for syntactic equality inbuilt,
+     so it seems we don't need to wrap the EQ_CONVs we define with this, can even use NO_CONV for UNION for example *)
+  (*
   val id_thm = prove(``!x. x ==> (x = T)``, rewrite_tac[]);
   fun wrap_EQ_CONV_id conv tm =
     let
@@ -80,6 +61,9 @@ in (* local *)
       else
         conv tm
     end;
+  val ID_EQ_CONV = wrap_EQ_CONV_id NO_CONV;
+  val ID_EQ_CONV = Profile.profile "ID_EQ_CONV" ID_EQ_CONV;
+  *)
   (*
   (* useful function for debugging. pred_setLib change exception so that issues are otherwise masked *)
   fun wrap_EQ_CONV_check s conv tm =
@@ -118,6 +102,7 @@ in (* local *)
          tm_))
       (REWR_CONV (CONJUNCT1 pred_setTheory.INTER_EMPTY))
       tm;
+
 
   fun DIFF_CONV_helper el_EQ_CONV tm =
     IFC
@@ -162,7 +147,7 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
   val num_EQ_CONV =
     numLib.REDUCE_CONV; (*could also just use EVAL here*)
-  val num_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare num_EQ_CONV;
+  val num_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare num_EQ_CONV;
 
   val word_EQ_CONV =
     wordsLib.word_EQ_CONV;
@@ -176,7 +161,7 @@ in (* local *)
     (TRY_CONV (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11))) THENC
     (TRY_CONV (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,4)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11))) THENC
     word_EQ_CONV;
-  (*val bir_label_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare bir_label_EQ_CONV;*)
+  (*val bir_label_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_label_EQ_CONV;*)
 
   val bir_pc_EQ_CONV =
     (REWR_CONV bir_programTheory.bir_programcounter_t_literal_11) THENC
@@ -186,7 +171,7 @@ in (* local *)
       (REFL)
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
       bir_label_EQ_CONV);
-  (*val bir_pc_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare bir_pc_EQ_CONV;*)
+  (*val bir_pc_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_pc_EQ_CONV;*)
 
 (* ---------------------------------------------------------------------------------- *)
 (*  bir var set equality checker                                                      *)
@@ -214,7 +199,7 @@ in (* local *)
       ((*name*)
        stringLib.string_EQ_CONV)
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)));
-  val bir_var_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare bir_var_EQ_CONV;
+  val bir_var_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_var_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  birs state equality checker                                                       *)
@@ -286,7 +271,7 @@ in (* local *)
            birs_env_EQ_CONV)
          )
        );
-  val birs_state_EQ_CONV = wrap_cache_result_EQ_BEQ Term.compare birs_state_EQ_CONV;
+  val birs_state_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare birs_state_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  programcounter operations                                                    *)
@@ -299,6 +284,10 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (* faster set operations for bir variable sets (for example for: computing freevarset, symbexec composition, merging, etc) *)
 (* ---------------------------------------------------------------------------------- *)
+  (* for UNION and BIGUNION it should be possible to use ID_EQ_CONV,
+     but current implementation of the library functions does not fully support this use.
+     the problem likely starts from IN_CONV,
+     which does not prove syntactical elements further into the set, only first element works *)
   val varset_UNION_CONV =
     pred_setLib.UNION_CONV bir_var_EQ_CONV;
 

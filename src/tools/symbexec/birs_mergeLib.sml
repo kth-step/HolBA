@@ -95,7 +95,7 @@ in (* local *)
         *)
 
         (* check that initial and modified state don't contain the free symbol (i.e., that it really is free) *)
-        val symbs = List.map (pred_setSyntax.strip_set o snd o dest_eq o concl o bir_vars_ofLib.birs_symb_symbols_DIRECT_CONV o (fn x => ``birs_symb_symbols ^x``))
+        val symbs = List.map (pred_setSyntax.strip_set o rhs o concl o bir_vars_ofLib.birs_symb_symbols_DIRECT_CONV o mk_birs_symb_symbols)
                     [sys_tm, Pi_sys_old_tm];
         val _ = if not (List.exists (fn x => identical x symb_tm) (List.concat symbs)) then () else
                 let
@@ -254,7 +254,7 @@ in (* local *)
     (x1 = x2) ==>
     (x1 INSERT x2 INSERT xs) = (x1 INSERT xs)
   ``,
-    cheat (* pred_setTheory.INSERT_INSERT *)
+    METIS_TAC [pred_setTheory.INSERT_INSERT]
   );
 
   (* the merge function for the first two Pi states *)
