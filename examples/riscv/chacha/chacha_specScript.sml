@@ -299,7 +299,7 @@ Definition chacha_ivsetup_end_addr_def:
  chacha_ivsetup_end_addr : word64 = 0x10778w
 End
 
-(* quarterround *)
+(* first quarterround *)
 
 Definition chacha_quarterround_init_addr_def:
   chacha_quarterround_init_addr : word64 = 0x108a0w
@@ -339,15 +339,83 @@ End
 
 (* quarterround *)
 
+(*
+1.  a += b; d ^= a; d <<<= 16;
+2.  c += d; b ^= c; b <<<= 12;
+3.  a += b; d ^= a; d <<<= 8;
+4.  c += d; b ^= c; b <<<= 7;
+
+x20 <- x10 + x22  // a += b
+x26 <- x20 ^ x26  // d ^= a
+x10 <- x26 lsl 16
+x26 <- x26 lsr 16
+x10 <- x10 | x26  // d <<<= 16
+
+x8 <- x28 + x10   // c += d
+x22 <- x8 ^ x22   // b ^= c
+x15 <- x22 lsl 12
+x22 <- x22 lsr 20
+x15 <- x15 | x22  // b <<<= 12
+
+x20 <- x15 + x20  // a += b
+x10 <- x20 ^ x10  // d ^= a
+x22 <- x10 lsl 8
+x10 <- x10 lsr 24
+x22 <- x10 | x22  // d <<<= 8
+
+x8 <- x8 + x22    // c += d
+x15 <- x15 ^ x8   // b ^= c
+x21 <- x15 lsl 7
+x15 <- x15 lsr 25
+x21 <- x15 | x21  // b <<<= 7
+
+*)
 val bspec_chacha_quarterround_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12"
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x20" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x20))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x22" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x22))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x26" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x26))``
+  
 ];
 
 Definition bspec_chacha_quarterround_pre_def:
- bspec_chacha_quarterround_pre : bir_exp_t =
+ bspec_chacha_quarterround_pre (pre_x10:word64) 
+  (pre_x20:word64) (pre_x22:word64) (pre_x26:word64) : bir_exp_t =
   ^bspec_chacha_quarterround_pre_tm
+End
+
+val bspec_chacha_quarterround_post_tm = bslSyntax.bandl [
+  ``BExp_BinPred
+   BIExp_Equal
+   (BExp_Den (BVar "x20" (BType_Imm Bit64)))
+   (BExp_Cast BIExp_SignedCast
+    (BExp_Cast BIExp_LowCast 
+     (BExp_BinExp BIExp_Plus
+       (BExp_Const (Imm64 pre_x10))
+       (BExp_Const (Imm64 pre_x22)))
+     Bit32) Bit64)``
+];
+
+Definition bspec_chacha_quarterround_post_def:
+ bspec_chacha_quarterround_post (pre_x10:word64) 
+  (pre_x20:word64) (pre_x22:word64) (pre_x26:word64)
+  : bir_exp_t =
+  ^bspec_chacha_quarterround_post_tm
 End
 
 val _ = export_theory ();
