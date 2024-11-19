@@ -55,7 +55,7 @@ jobs:
           ./scripts/setup/install_z3.sh
 
       - name: Configure and compile
-        timeout-minutes: 35
+        timeout-minutes: 45
         run: |
           ./configure.sh
           ./scripts/ci/run_holmake.sh
