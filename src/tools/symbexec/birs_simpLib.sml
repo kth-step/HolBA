@@ -129,6 +129,9 @@ in (* local *)
     in
       Option.getOpt (simp_thm_o, birs_simp_ID_fun simp_tm)
     end;
+  fun simp_try_mk_gen simp_fun (simp_tm, simp_thm_o) =
+    if isSome simp_thm_o then simp_thm_o else
+    SOME (simp_fun simp_tm);
 
 (* ----------------------------------------------------------------------------------- *)
 

@@ -175,31 +175,39 @@ fun birs_simp_store_cheater simp_tm =
     val is_store_tm_fun = is_BExp_Store;
   end
 
-  fun birs_simp_gen simp_thms_tuple load_thms_tuple use_store_cheater simp_tm =
+  fun birs_simp_gen pre_simp extra_thms simp_thms_tuple load_thms_tuple use_store_cheater =
     let
-        val start_exp_tm = get_larg simp_tm;
-
-        val simp_apply_fun =
-          if is_load_tm_fun start_exp_tm then (
-            print "simplifying a load\n";
-            birs_simp_load load_thms_tuple
-          ) else if is_store_tm_fun start_exp_tm then (
-            print "simplifying a store\n";
-            if use_store_cheater then
-              birs_simp_store
-            else
+      fun simp_apply_fun simp_tm =
+        let
+          val start_exp_tm = get_larg simp_tm;
+          val simp_fun =
+            if is_load_tm_fun start_exp_tm then (
+              print "simplifying a load\n";
+              birs_simp_load load_thms_tuple
+            ) else if is_store_tm_fun start_exp_tm then (
+              print "simplifying a store\n";
+              if use_store_cheater then
+                birs_simp_store
+              else
+                birs_simp_regular simp_thms_tuple
+            ) else (
+              print "it is neither a load nor a store\n";
               birs_simp_regular simp_thms_tuple
-          ) else (
-            print "it is neither a load nor a store\n";
-            birs_simp_regular simp_thms_tuple
-          );
+            );
+        in
+          simp_fun simp_tm
+        end;
     in
-      simp_apply_fun simp_tm
+      simp_try_apply_gen (simp_try_list_cont_gen [
+        simp_try_mk_gen simp_apply_fun,
+        simp_try_mk_gen pre_simp,
+        simp_try_fold_gen (birs_simp_try_plain (SOME EVAL)) extra_thms
+      ])
     end;
 
 (* ----------------------------------------------------------------------------------- *)
 
-  fun plain_thms include_64 include_32 =
+  fun plain_thms include_64 include_32 extra_thms =
     (if include_64 then
        [birs_simplification_Plus_Minus_Const64_thm,
         birs_simplification_Minus_Minus_Const64_thm,
@@ -214,6 +222,7 @@ fun birs_simp_store_cheater simp_tm =
         birs_simplification_Plus_Plus_Const32_thm]
      else
        [])@
+    (extra_thms)@
     [birs_simplification_Plus_Const64_thm,
      birs_simplification_Minus_Const64_thm,
      birs_simplification_Plus_Const32_thm,
@@ -259,7 +268,7 @@ fun birs_simp_store_cheater simp_tm =
 
 (* ----------------------------------------------------------------------------------- *)
 
-  fun simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 = (plain_thms include_64 include_32, pcond_thms mem_64 mem_32 riscv cm0, subexp_thms);
+  fun simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 extra_thms = (plain_thms include_64 include_32 extra_thms, pcond_thms mem_64 mem_32 riscv cm0, subexp_thms);
 
   fun load_thms_tuple mem_64 mem_32 =
       ((if mem_64 then
@@ -290,12 +299,14 @@ fun birs_simp_store_cheater simp_tm =
       val cm0 = false;
     in
       birs_simp_gen
-        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        birs_simp_ID_fun
+        []
+        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 [])
         (load_thms_tuple mem_64 mem_32)
         false
     end;
 
-  fun birs_simp_default_riscv_gen use_store_cheater =
+  fun birs_simp_default_riscv_gen use_store_cheater pre_simp extra_thms =
     let
       val include_64 = true;
       val include_32 = false;
@@ -305,12 +316,14 @@ fun birs_simp_store_cheater simp_tm =
       val cm0 = false;
     in
       birs_simp_gen
-        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        pre_simp
+        extra_thms
+        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 [])
         (load_thms_tuple mem_64 mem_32)
         use_store_cheater
     end;
 
-  fun birs_simp_default_armcm0_gen use_store_cheater =
+  fun birs_simp_default_armcm0_gen use_store_cheater pre_simp extra_thms =
     let
       val include_64 = true;
       val include_32 = true;
@@ -320,13 +333,15 @@ fun birs_simp_store_cheater simp_tm =
       val cm0 = true;
     in
       birs_simp_gen
-        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0)
+        pre_simp
+        extra_thms
+        (simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 [])
         (load_thms_tuple mem_64 mem_32)
         use_store_cheater
     end;
   
-  val birs_simp_default_riscv = birs_simp_default_riscv_gen false;
-  val birs_simp_default_armcm0 = birs_simp_default_armcm0_gen false;
+  val birs_simp_default_riscv = birs_simp_default_riscv_gen false birs_simp_ID_fun [];
+  val birs_simp_default_armcm0 = birs_simp_default_armcm0_gen false birs_simp_ID_fun [];
 
 end (* local *)
 

@@ -43,10 +43,10 @@ in (* local *)
       birs_post_step_fun
     end;
 
-  fun birs_post_step_armcm0_default (birs_rule_SUBST_thm) =
+  fun birs_post_step_armcm0_default pre_simp extra_thms (birs_rule_SUBST_thm) =
     let
       open birs_simp_instancesLib;
-      val birs_simp_select = birs_simp_default_armcm0_gen true;
+      val birs_simp_select = birs_simp_default_armcm0_gen true pre_simp extra_thms;
       val birs_simp_select_ifthenelse = birs_simp_default_core_exp_simp;
       open holba_miscLib;
 

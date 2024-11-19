@@ -5,10 +5,24 @@ open birs_simpLib;
 open birs_simp_instancesLib;
 
 val default_exp_simp = birs_simp_default_core_exp_simp;
-val armcm0_simp = birs_simp_default_armcm0_gen false;
-val riscv_simp = birs_simp_default_riscv_gen false;
-val riscv_storestore_simp = birs_simp_default_riscv_gen true;
+val armcm0_simp = birs_simp_default_armcm0_gen false birs_simpLib.birs_simp_ID_fun [];
+val riscv_simp = birs_simp_default_riscv_gen false birs_simpLib.birs_simp_ID_fun [];
+val riscv_storestore_simp = birs_simp_default_riscv_gen true birs_simpLib.birs_simp_ID_fun [];
 
+val load_cheat_thm = prove(``
+   !pcond.
+   birs_simplification
+      pcond
+      (BExp_Load
+         (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+         (BExp_Const (Imm32 0x10000DA0w))
+         BEnd_LittleEndian
+         Bit32)
+      (BExp_Const (Imm32 0x10000DA8w))
+``,
+  cheat
+);
+val armcm0_ldcheat_simp = birs_simp_default_armcm0_gen false birs_simpLib.birs_simp_ID_fun [load_cheat_thm];
 
 val bexp_stores = ``       (BExp_Store
                               (BExp_Store
@@ -396,7 +410,19 @@ val test_cases = [
       (BExp_Const (Imm64 19w))
       (BExp_Const (Imm64 77w)))
     (BExp_Const (Imm64 2w))``,
-  ``BExp_Const (Imm64 75w)``)
+  ``BExp_Const (Imm64 75w)``),
+
+  (armcm0_ldcheat_simp,
+  ``
+  (BExp_Const (Imm1 1w))
+  ``,
+  ``
+  BExp_Load
+      (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+      (BExp_Const (Imm32 0x10000DA0w))
+      BEnd_LittleEndian
+      Bit32``,
+  ``BExp_Const (Imm32 0x10000DA8w)``)
 ];
 
 (*
