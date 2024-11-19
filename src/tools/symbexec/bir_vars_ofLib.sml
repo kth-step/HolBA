@@ -25,45 +25,33 @@ in (* local *)
 (*  variables of bir expressions                                                      *)
 (* ---------------------------------------------------------------------------------- *)
 
-  val (vars_of_add:term * thm -> unit, vars_of_lookup) = aux_moveawayLib.result_cache Term.compare;
-  fun add_vars_of thm =
-    let
-      open pred_setSyntax;
-      
-      val (term,result) = (dest_eq o concl) thm;
-      val k_tm = dest_bir_vars_of_exp term;
-      val _ = if can strip_set result then () else
-                raise ERR "add_vars_of" "didn't reach the result";
-    in (vars_of_add (k_tm, thm); thm) end;
-
   (* here apply only one "unfolding" and get empty or singleton sets, or one or two UNION operations, left-associative *)
-  val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[birs_auxTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
-  fun bir_vars_of_exp_rec_CONV tm =
-   let
-     val k_tm = dest_bir_vars_of_exp tm;
-     val vars_thm_o = vars_of_lookup k_tm;
-   in
-    if isSome vars_thm_o then ((*print "successss!!!!\n";*) valOf vars_thm_o) else
-    let
-      open pred_setSyntax;
-      val t1 = REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm] tm;
-      val t2 = CONV_RULE (RAND_CONV (
-       birs_auxLib.GEN_match_conv is_bir_vars_of_exp (bir_vars_of_exp_rec_CONV))) t1;
-      val union_conv =
-        (aux_setLib.varset_UNION_CONV)
-        (*pred_setLib.UNION_CONV NO_CONV*);
-      val t2_rhs = (rhs o concl) t2;
-      val t3 =
-        if is_union (t2_rhs) then
-          if is_union ((fst o dest_union) t2_rhs) then
-            CONV_RULE (RAND_CONV (LAND_CONV union_conv THENC union_conv)) t2
+  local
+    val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[birs_auxTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
+    fun bir_vars_of_exp_rec_CONV f_rec tm =
+      let
+        open pred_setSyntax;
+        val t1 = REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm] tm;
+        val t2 = CONV_RULE (RAND_CONV (
+        birs_auxLib.GEN_match_conv is_bir_vars_of_exp (f_rec))) t1;
+        val union_conv =
+          (aux_setLib.varset_UNION_CONV)
+          (*pred_setLib.UNION_CONV NO_CONV*);
+        val t2_rhs = (rhs o concl) t2;
+        val t3 =
+          if is_union (t2_rhs) then
+            if is_union ((fst o dest_union) t2_rhs) then
+              CONV_RULE (RAND_CONV (LAND_CONV union_conv THENC union_conv)) t2
+            else
+              CONV_RULE (RAND_CONV union_conv) t2
           else
-            CONV_RULE (RAND_CONV union_conv) t2
-        else
-          t2;
-    in
-      add_vars_of t3
-    end end;
+            t2;
+      in
+        t3
+      end;
+  in
+    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("add_vars_of") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
+  end;
 
   fun bir_vars_of_exp_DIRECT_CONV tm =
     let
@@ -71,7 +59,7 @@ in (* local *)
                raise ERR "bir_vars_of_exp_DIRECT_CONV" "cannot handle term";
     in
       (*(SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL)*)
-      bir_vars_of_exp_rec_CONV tm
+      bir_vars_of_exp_wrapped_CONV tm
       handle e => (print_term tm; print "\n\n"; raise e)
     end;
   (*val bir_vars_of_exp_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare bir_vars_of_exp_DIRECT_CONV;*)

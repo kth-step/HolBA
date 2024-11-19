@@ -3,7 +3,12 @@ struct
 
 local
 
-open HolKernel Parse boolLib bossLib;
+  open HolKernel Parse boolLib bossLib;
+
+  (* error handling *)
+  val libname = "aux_moveawayLib"
+  val ERR = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 in (* local *)
 
@@ -52,6 +57,30 @@ in (* local *)
             add ((*(rhs o concl o SYM_CONV)*)(mk_eq o (fn (x,y) => (y,x)) o dest_eq) k, CONV_RULE (LHS_CONV SYM_CONV) v);
             v
           end
+        end;
+    in
+      f_wrapped
+    end;
+
+  fun wrap_cache_CONV_inter_result funname k_tm_fun check_res_tm_fun f =
+    let
+      val (add:term * thm -> unit, lookup) = result_cache Term.compare;
+      fun add_result thm =
+        let
+          val (term, result) = (dest_eq o concl) thm;
+          val k_tm = k_tm_fun term;
+          val _ =
+            if check_res_tm_fun result then () else
+              (print_thm thm; print "\n\n"; raise ERR funname "didn't reach a result");
+        in (add (k_tm, thm); thm) end;
+
+      fun f_wrapped tm =
+        let
+          val k_tm = k_tm_fun tm;
+          val vars_thm_o = lookup k_tm;
+        in
+          if isSome vars_thm_o then ((*print "successss!!!!\n";*) valOf vars_thm_o) else
+          add_result (f f_wrapped tm)
         end;
     in
       f_wrapped
