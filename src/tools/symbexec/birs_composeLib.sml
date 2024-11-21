@@ -58,6 +58,8 @@ in
   val step_A_thm = single_step_A_thm;
   val step_B_thm = single_step_B_thm;
   *)
+  val cheat_L_set = ``{<|bpc_label := BL_Label "cheated"; bpc_index := 0|>}``;
+  val compose_L_speedcheat = ref false;
   fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     let
       val _ = birs_check_compatible step_A_thm step_B_thm;
@@ -75,7 +77,12 @@ in
       val bprog_fixed_thm =
         (CONV_RULE
          (Profile.profile "birs_rule_SEQ_fun_p3" (birs_Pi_CONV birs_state_DIFF_UNION_CONV) THENC
-          Profile.profile "birs_rule_SEQ_fun_p4" (birs_L_CONV programcounter_UNION_CONV)))
+          Profile.profile "birs_rule_SEQ_fun_p4" (birs_L_CONV (
+            if !compose_L_speedcheat then
+              (fn tm => mk_oracle_thm "BIR_SEQ_L_SPEEDCHEAT" ([], mk_eq(tm, cheat_L_set)))
+            else
+               programcounter_UNION_CONV
+         ))))
          bprog_composed_thm
         handle e => (print "\n\n"; print_thm bprog_composed_thm; print "tidy up Pi and programcounter sets failed\n"; raise e);
 

@@ -5,6 +5,7 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open pred_setSyntax;
   open pred_setTheory;
 
   open bir_symbTheory;
@@ -32,13 +33,13 @@ in (* local *)
   (* speedy, cheating version of INTER_CONV for prototyping *)
   fun INTER_CONV_cheat conv tm =
     let
-      val (s1, s2) = pred_setSyntax.dest_inter tm
-      val s1_l = pred_setSyntax.strip_set s1;
-      val s2_l = pred_setSyntax.strip_set s2;
+      val (s1, s2) = dest_inter tm
+      val s1_l = strip_set s1;
+      val s2_l = strip_set s2;
       val eq_fun = (identical T) o rhs o concl o conv o (fn x => fn y => mk_eq (x,y));
       fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
       val l = List.foldr (fn (x, l) => if in_f s2_l x then x::l else l) [] s1_l;
-      val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype tm) else pred_setSyntax.mk_set l;
+      val tm_l_set = if List.null l then mk_empty(eltype tm) else mk_set l;
     in
       mk_oracle_thm "INTER_CONV_cheat" ([], mk_eq (tm, tm_l_set))
     end;
@@ -62,7 +63,7 @@ in (* local *)
         conv tm
     end;
   val ID_EQ_CONV = wrap_EQ_CONV_id NO_CONV;
-  val ID_EQ_CONV = Profile.profile "ID_EQ_CONV" ID_EQ_CONV;
+  val ID_EQ_CONV = Profile.profile "auxset_ID_EQ_CONV" ID_EQ_CONV;
   *)
   (*
   (* useful function for debugging. pred_setLib change exception so that issues are otherwise masked *)
@@ -81,63 +82,217 @@ in (* local *)
       )
     end;
   *)
-
-  fun resolve_ite_CONV conv =
-    RATOR_CONV (RATOR_CONV (RAND_CONV conv)) THENC
-    TRY_CONV (REWR_CONV ((CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES)) THENC
-    TRY_CONV (REWR_CONV ((CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES));
-
-  fun INTER_CONV el_EQ_CONV tm =
-    IFC
-      (REWR_CONV pred_setTheory.INSERT_INTER)
-      (resolve_ite_CONV (pred_setLib.IN_CONV el_EQ_CONV) THENC
-       (fn tm_ =>
-         (if pred_setSyntax.is_empty tm_ then
-            REFL
-          else if pred_setSyntax.is_insert tm_ then
-            RAND_CONV (INTER_CONV el_EQ_CONV)
-          else if pred_setSyntax.is_inter tm_ then
-            INTER_CONV el_EQ_CONV
-          else raise ERR "INTER_CONV" "unexpected")
-         tm_))
-      (REWR_CONV (CONJUNCT1 pred_setTheory.INTER_EMPTY))
-      tm;
-
-
-  fun DIFF_CONV_helper el_EQ_CONV tm =
-    IFC
-      (REWR_CONV DIFF_INSERT)
-      (LAND_CONV (pred_setLib.DELETE_CONV el_EQ_CONV) THENC
-       DIFF_CONV_helper el_EQ_CONV)
-      (REWR_CONV DIFF_EMPTY)
-      tm;
-
-  fun is_sing tm =
-    pred_setSyntax.is_insert tm andalso
-    ((pred_setSyntax.is_empty o snd o pred_setSyntax.dest_insert) tm);
-  fun DIFF_CONV el_EQ_CONV tm =
-    (if (is_sing o snd o pred_setSyntax.dest_diff) tm then
-      REWR_CONV (GSYM DELETE_DEF) THENC
-      pred_setLib.DELETE_CONV el_EQ_CONV
-    else
-      DIFF_CONV_helper el_EQ_CONV) tm;
+  local
+    datatype res_ex_t = Result of thm | Except of exn;
+    fun capture_res_ex f x =
+      Result(f x)
+      handle e => Except e
+    fun process_res_ex v =
+      case v of
+          Result x => x
+        | Except e => raise e;
+  in
+    fun wrap_res_exn f =
+      let
+        val (add, lookup) = aux_moveawayLib.result_cache Term.compare;
+        fun f_wrapped k =
+          let
+            val v_o = lookup k;
+          in
+            case v_o of
+                SOME v => process_res_ex v
+              | _ =>
+                let
+                  val v = capture_res_ex f k;
+                in
+                  add (k, v);
+                  process_res_ex v
+                end
+          end;
+      in
+        f_wrapped
+      end;
+  end
 
 
-  fun BIGUNION_CONV_helper el_EQ_CONV tm =
-    IFC
-      (RAND_CONV (REWR_CONV BIGUNION_INSERT))
-      (REWR_CONV UNION_ASSOC THENC
-       LAND_CONV (pred_setLib.UNION_CONV el_EQ_CONV) THENC
-       BIGUNION_CONV_helper el_EQ_CONV)
-      (RAND_CONV (REWR_CONV BIGUNION_EMPTY) THENC
-       REWR_CONV (CONJUNCT2 UNION_EMPTY))
-      tm;
+  (* eliminate left conjuncts first *)
+  val CONJL_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (LAND_CONV lconv) THENC
+      (fn tm =>
+        if (identical T o fst o dest_conj) tm then
+          (REWR_CONV thm_T THENC rconv) tm
+        else
+          (REWR_CONV thm_F) tm)
+    end;
+  (* eliminate right conjuncts first *)
+  val CONJR_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (RAND_CONV rconv) THENC
+      (fn tm =>
+        if (identical T o snd o dest_conj) tm then
+          (REWR_CONV thm_T THENC lconv) tm
+        else
+          (REWR_CONV thm_F) tm)
+    end;
 
-  fun BIGUNION_CONV el_EQ_CONV =
-    IFC
-      (REWR_CONV BIGUNION_INSERT)
-      (BIGUNION_CONV_helper el_EQ_CONV)
-      (REWR_CONV BIGUNION_EMPTY);
+  (* eliminate left disjuncts first *)
+  val DISJL_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (LAND_CONV rconv) THENC
+      (fn tm =>
+        if (identical F o fst o dest_disj) tm then
+          (REWR_CONV thm_F THENC lconv) tm
+        else
+          (REWR_CONV thm_T) tm)
+    end;
+  (* eliminate right disjuncts first *)
+  val DISJR_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (RAND_CONV rconv) THENC
+      (fn tm =>
+        if (identical F o snd o dest_disj) tm then
+          (REWR_CONV thm_F THENC lconv) tm
+        else
+          (REWR_CONV thm_T) tm)
+    end;
+  
+  fun NEG_CONV conv =
+    RAND_CONV conv THENC
+    REWRITE_CONV [boolTheory.NOT_CLAUSES];
+
+  local
+    val thm_T = (CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES;
+    val thm_F = (CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES;
+    fun get_cond_c tm =
+      let val (c,_,_) = dest_cond tm;
+      in c end;
+    fun clean_conv tm =
+      if (identical T o get_cond_c) tm then
+        REWR_CONV thm_T tm
+      else
+        REWR_CONV thm_F tm;
+  in
+    fun ITE_CONV conv =
+      RATOR_CONV (RATOR_CONV (RAND_CONV conv)) THENC
+      clean_conv;
+    val ITE_CONV = fn conv => Profile.profile "auxset_ITE_CONV" (ITE_CONV (Profile.profile "auxset_ITE_CONV_conv" conv));
+  end
+
+
+  local
+    val inter_empty_thm = CONJUNCT1 pred_setTheory.INTER_EMPTY;
+    (* this function is not end-recursive *)
+    fun INTER_CONV_helper ite_conv =
+      IFC
+        (REWR_CONV pred_setTheory.INSERT_INTER)
+        (ite_conv THENC
+        (fn tm_ =>
+          (if is_inter tm_ then
+              INTER_CONV_helper ite_conv
+            else if is_insert tm_ then
+              RAND_CONV (INTER_CONV_helper ite_conv)
+            else if is_empty tm_ then
+              ALL_CONV
+            else raise ERR "INTER_CONV" "unexpected")
+          tm_))
+        (REWR_CONV inter_empty_thm);
+  in
+    fun INTER_CONV el_EQ_CONV tm =
+      let
+        val ite_conv = ITE_CONV (pred_setLib.IN_CONV el_EQ_CONV);
+        val ite_conv = Profile.profile "auxset_INTER_CONV_ite" ite_conv;
+      in
+        INTER_CONV_helper ite_conv tm
+        handle e => (print_term tm; raise wrap_exn ("@INTER_CONV") e)
+      end;
+    val INTER_CONV = fn x => Profile.profile "auxset_INTER_CONV" (INTER_CONV x);
+  end
+
+  local
+    fun DIFF_CONV_helper delete_conv thm =
+      if (is_insert o snd o dest_diff o rhs o concl) thm then
+          let
+            val thm0 =
+              CONV_RULE (RHS_CONV (
+                REWR_CONV DIFF_INSERT THENC
+                LAND_CONV delete_conv
+              )) thm;
+          in
+            DIFF_CONV_helper delete_conv thm0
+          end
+      else
+        CONV_RULE (RHS_CONV (REWR_CONV DIFF_EMPTY)) thm;
+
+    val delete_thm = GSYM DELETE_DEF;
+  in
+    fun is_sing tm =
+      is_insert tm andalso
+      ((is_empty o snd o dest_insert) tm);
+
+    fun DIFF_CONV el_EQ_CONV tm =
+      let
+        val delete_conv = pred_setLib.DELETE_CONV el_EQ_CONV;
+        val delete_conv = Profile.profile "auxset_DIFF_CONV_delete" delete_conv;
+      in
+        if (is_sing o snd o dest_diff) tm then
+          (REWR_CONV delete_thm THENC delete_conv) tm
+        else
+          DIFF_CONV_helper delete_conv $ REFL $ tm
+        handle e => (print_term tm; raise wrap_exn ("@DIFF_CONV") e)
+      end;
+    val DIFF_CONV = fn x => Profile.profile "auxset_DIFF_CONV" (DIFF_CONV x);
+  end
+
+  local
+    val union_empty_thm = CONJUNCT2 UNION_EMPTY;
+    fun BIGUNION_CONV_helper union_conv thm =
+      if (is_insert o dest_bigunion o snd o dest_union o rhs o concl) thm then
+        let
+          val thm0 =
+            CONV_RULE (RHS_CONV (
+              RAND_CONV (REWR_CONV BIGUNION_INSERT) THENC
+              REWR_CONV UNION_ASSOC THENC
+              LAND_CONV union_conv
+            )) thm;
+        in
+          BIGUNION_CONV_helper union_conv thm0
+        end
+      else
+        CONV_RULE (RHS_CONV (
+          RAND_CONV (REWR_CONV BIGUNION_EMPTY) THENC
+          REWR_CONV union_empty_thm
+        )) thm;
+  in
+    fun BIGUNION_CONV el_EQ_CONV tm =
+      let
+        val union_conv = pred_setLib.UNION_CONV el_EQ_CONV;
+        val union_conv = Profile.profile "auxset_BIGUNION_CONV_union" union_conv;
+      in
+        if (is_insert o dest_bigunion) tm then
+          BIGUNION_CONV_helper union_conv (REWR_CONV BIGUNION_INSERT tm)
+        else
+          REWR_CONV BIGUNION_EMPTY tm
+        handle e => (print_term tm; raise wrap_exn ("@BIGUNION_CONV") e)
+      end;
+    val BIGUNION_CONV = fn x => Profile.profile "auxset_BIGUNION_CONV" (BIGUNION_CONV x);
+  end
 
 (* ================================================================================== *)
 (* ================================================================================== *)
@@ -151,35 +306,71 @@ in (* local *)
 
   val word_EQ_CONV =
     wordsLib.word_EQ_CONV;
+  
+  val bir_imm_EQ_CONV =
+    let
+      (* this assumes 32 or 63 bit addresses only, also doesn't take care of the case where Imms don't match (mixed Imms in Addresses) *)
+      (*(fn tm => (print "\n"; print_term tm; print "\n"; REFL tm)) THENC*)
+      val Imm32_EQ_CONV =
+        REWR_CONV ((GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11) THENC
+        word_EQ_CONV;
+      val Imm64_EQ_CONV =
+        REWR_CONV ((GEN_ALL o (fn x => List.nth(x,4)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11) THENC
+        word_EQ_CONV;
+      val distinct_thms = [bir_immTheory.bir_imm_t_distinct, GSYM bir_immTheory.bir_imm_t_distinct];
+    in
+      IFC
+        (fn tm =>
+          if (bir_immSyntax.is_Imm32 o lhs) tm then
+            Imm32_EQ_CONV tm
+          else
+            Imm64_EQ_CONV tm)
+        (ALL_CONV)
+        (REWRITE_CONV distinct_thms THENC EVAL)
+    end;
 
   val bir_label_EQ_CONV =
-    (TRY_CONV (LHS_CONV (REWR_CONV bir_program_labelsTheory.BL_Address_HC_def))) THENC
-    (TRY_CONV (RHS_CONV (REWR_CONV bir_program_labelsTheory.BL_Address_HC_def))) THENC
-    (* this assumes 32 or 63 bit addresses only, no labels, also doesn't take care of the case where Imms don't match (mixed Imms in Addresses) *)
-    (*(fn tm => (print "\n"; print_term tm; print "\n"; REFL tm)) THENC*)
-    (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) bir_programTheory.bir_label_t_11)) THENC
-    (TRY_CONV (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11))) THENC
-    (TRY_CONV (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,4)) o CONJUNCTS o SPEC_ALL) bir_immTheory.bir_imm_t_11))) THENC
-    word_EQ_CONV;
+    let
+      fun BL_Address_HC_CONV tm =
+        if bir_program_labelsSyntax.is_BL_Address_HC tm then
+          REWR_CONV bir_program_labelsTheory.BL_Address_HC_def tm
+        else
+          raise UNCHANGED;
+      val BL_Label_EQ_CONV =
+        REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) bir_programTheory.bir_label_t_11) THENC
+        stringLib.string_EQ_CONV;
+      val BL_Address_EQ_CONV =
+        REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) bir_programTheory.bir_label_t_11) THENC
+        bir_imm_EQ_CONV;
+      val distinct_thms = [bir_programTheory.bir_label_t_distinct, GSYM bir_programTheory.bir_label_t_distinct];
+    in
+      (LHS_CONV BL_Address_HC_CONV) THENC
+      (RHS_CONV BL_Address_HC_CONV) THENC
+      IFC
+        (fn tm =>
+          if (bir_programSyntax.is_BL_Address o lhs) tm then
+            BL_Address_EQ_CONV tm
+          else
+            BL_Label_EQ_CONV tm)
+        (ALL_CONV)
+        (REWRITE_CONV distinct_thms)
+    end;
   (*val bir_label_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_label_EQ_CONV;*)
 
   val bir_pc_EQ_CONV =
     (REWR_CONV bir_programTheory.bir_programcounter_t_literal_11) THENC
-    (RAND_CONV (num_EQ_CONV)) THENC
-    IFC
-      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
-      (REFL)
-      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
-      bir_label_EQ_CONV);
+    (CONJR_CONV
+      bir_label_EQ_CONV
+      num_EQ_CONV);
   (*val bir_pc_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_pc_EQ_CONV;*)
-  val bir_pc_EQ_CONV = Profile.profile "bir_pc_EQ_CONV" bir_pc_EQ_CONV;
+  val bir_pc_EQ_CONV = Profile.profile "auxset_bir_pc_EQ_CONV" bir_pc_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  bir var set equality checker                                                      *)
 (* ---------------------------------------------------------------------------------- *)
   val bir_varname_EQ_CONV =
     stringLib.string_EQ_CONV;
-  val bir_varname_EQ_CONV = Profile.profile "bir_varname_EQ_CONV" bir_varname_EQ_CONV;
+  val bir_varname_EQ_CONV = Profile.profile "auxset_bir_varname_EQ_CONV" bir_varname_EQ_CONV;
 
   val bir_var_EQ_thm = prove(``
     !a0 a1 a0' a1'.
@@ -191,21 +382,16 @@ in (* local *)
   (* this seems to be well optimized now, maybe need to turn off caching if there are much more variables around so that the dictionary lookups are more expensive *)
   val bir_var_EQ_CONV =
     (REWR_CONV bir_var_EQ_thm) THENC
-    (*type*)
-    LAND_CONV (
-      REWRITE_CONV [
+    (CONJL_CONV
+      (REWRITE_CONV [(*type*)
         bir_valuesTheory.bir_type_t_distinct,
         GSYM bir_valuesTheory.bir_type_t_distinct,
         bir_valuesTheory.bir_type_t_11,
         bir_immTheory.bir_immtype_t_distinct,
-        GSYM bir_immTheory.bir_immtype_t_distinct]) THENC
-    IFC
-      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
-      ((*name*)
-       bir_varname_EQ_CONV)
-      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)));
+        GSYM bir_immTheory.bir_immtype_t_distinct])
+      bir_varname_EQ_CONV (*name*));
   val bir_var_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_var_EQ_CONV;
-  val bir_var_EQ_CONV = Profile.profile "bir_var_EQ_CONV" bir_var_EQ_CONV;
+  val bir_var_EQ_CONV = Profile.profile "auxset_bir_var_EQ_CONV" bir_var_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  birs state equality checker                                                       *)
@@ -213,6 +399,7 @@ in (* local *)
   val bir_status_EQ_CONV =
     (* this seems to be well optimized now *)
     EVAL;
+  val bir_status_EQ_CONV = Profile.profile "auxset_bir_status_EQ_CONV" bir_status_EQ_CONV;
 
   (* could speed this up, maybe take inspiration from string or word EQ_CONV functions *)
   val bir_exp_EQ_CONV =
@@ -223,6 +410,7 @@ in (* local *)
       EVAL (*SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) [] THENC EVAL*)
     end;
   val bir_exp_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_exp_EQ_CONV;
+  val bir_exp_EQ_CONV = Profile.profile "auxset_bir_exp_EQ_CONV" bir_exp_EQ_CONV;
 
   fun birs_gen_env_check_eq env1 env2 =
     let
@@ -243,13 +431,19 @@ in (* local *)
       val _ = print (if is_eq then "symbolic environments are equal\n" else "symbolic environments are not equal\n");
       (* TODO: the false case might be wrong *)
       val _ = if is_eq then () else (
-        print_term tm;
+        (*print_term tm;*)
         print "the symbolic environments seem to be unequal, but they might be equal\n";
         raise ERR "birs_env_EQ_CONV" "the symbolic environments seem to be unequal, but they might be equal");
       val eq_thm = mk_oracle_thm "BIRS_ENV_EQ" ([], mk_eq (tm, if is_eq then T else F));
     in
       eq_thm
     end;
+  val birs_env_EQ_CONV = Profile.profile "auxset_birs_env_EQ_CONV" birs_env_EQ_CONV;
+  (*
+  val birs_env_EQ_CONV = wrap_res_exn birs_env_EQ_CONV;
+  val birs_env_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare birs_env_EQ_CONV;
+  *)
+
 
   val birs_state_EQ_thm = prove(``
       !b21 f1 b11 b01 b22 f2 b12 b02.
@@ -261,30 +455,14 @@ in (* local *)
     ); (*status, pc, pcond, senv*)
   val birs_state_EQ_CONV =
     (REWR_CONV birs_state_EQ_thm) THENC
-    (*status*)
-    (LAND_CONV bir_status_EQ_CONV) THENC
-    IFC
-      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
-      (REFL)
-      ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
-       (*pc*)
-       LAND_CONV bir_pc_EQ_CONV THENC
-       IFC
-         ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
-         (REFL)
-         ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
-         (*pcond*)
-         LAND_CONV bir_exp_EQ_CONV THENC
-         IFC
-           ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
-           (REFL)
-           ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
-           (*senv*)
-           birs_env_EQ_CONV)
-         )
-       );
-  val birs_state_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare birs_state_EQ_CONV;
-  val birs_state_EQ_CONV = Profile.profile "birs_state_EQ_CONV" birs_state_EQ_CONV;
+    CONJL_CONV
+      (Profile.profile "auxset_birs_state_EQ_CONV_0status" bir_status_EQ_CONV (*status*))
+      (CONJL_CONV
+        (Profile.profile "auxset_birs_state_EQ_CONV_1pc" bir_pc_EQ_CONV (*pc*))
+        (CONJL_CONV
+          (Profile.profile "auxset_birs_state_EQ_CONV_2pcond" bir_exp_EQ_CONV (*pcond*))
+          (Profile.profile "auxset_birs_state_EQ_CONV_3senv" birs_env_EQ_CONV (*senv*))));
+  val birs_state_EQ_CONV = Profile.profile "auxset_birs_state_EQ_CONV" birs_state_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  programcounter operations                                                    *)

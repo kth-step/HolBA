@@ -96,21 +96,21 @@ in (* local *)
     (*
     (* this implementation of birs_exps_of_senv_COMP_ONCE_CONV works fine, but not as speedy as the one below *)
     (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
-    (TRY_CONV (aux_setLib.resolve_ite_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
+    (TRY_CONV (aux_setLib.ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
     *)
     IFC
       (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
-      (aux_setLib.resolve_ite_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
+      (aux_setLib.ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
       (IFC
         (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
-        (REFL)
+        (ALL_CONV)
         (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm)));
 
   fun birs_exps_of_senv_COMP_CONV tm = (
     birs_exps_of_senv_COMP_ONCE_CONV THENC
     (fn tm_ => (
       if pred_setSyntax.is_empty tm_ then
-        REFL
+        ALL_CONV
       else if pred_setSyntax.is_insert tm_ then
         RAND_CONV birs_exps_of_senv_COMP_CONV
       else
