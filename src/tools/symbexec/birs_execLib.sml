@@ -154,9 +154,9 @@ in
           val spec_list = [sys_tm, L_tm, pc, status, pcond, envl, vn, symbexp];
           val spec_thm =
             if is_empty remPi_tm then
-              Profile.profile "assignment_thm_f_inst1" (SPECL spec_list) inst_thm2
+              SPECL spec_list inst_thm2
             else
-              Profile.profile "assignment_thm_f_inst2" (SPECL (spec_list@[remPi_tm])) inst_thm1;
+              SPECL (spec_list@[remPi_tm]) inst_thm1;
           val res = MP spec_thm thm;
         in
           SOME res
@@ -164,10 +164,10 @@ in
         handle _ => NONE;
       fun exp_fun v1 v2 x =
         let
-          val r1 = Profile.profile "birs_rule_SUBST_prog_fun_v1" v1 x;
-          val r2 = Profile.profile "birs_rule_SUBST_prog_fun_v2" v2 x;
+          val r1 = Profile.profile "zzz_SUBST_v1" v1 x;
+          val r2 = Profile.profile "zzz_SUBST_v2" v2 x;
           val _ = if option_eq (fn x => fn y => identical (concl x) (concl y)) r1 r2 then ()
-            else raise (Profile.profile "birs_rule_SUBST_prog_fun_v_mismatch" print "birs_rule_SUBST_prog_fun::results don't match\n"; ERR "birs_rule_SUBST_prog_fun" "results don't match");
+            else raise (Profile.profile "zzz_SUBST_v_mismatch" print "birs_rule_SUBST_trysimp_first_fun::results don't match\n"; ERR "birs_rule_SUBST_trysimp_first_fun" "results don't match");
         in
           r1
         end;

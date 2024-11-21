@@ -725,7 +725,6 @@ let
 in
   bprog_tm
 end;
-val birs_exec_step_CONV_pre = Profile.profile "exec_step_CONV_pre" birs_exec_step_CONV_pre;
 
 local
   val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
@@ -863,23 +862,53 @@ let
   ;
 
   (* lookup type of previous symbolic expression, if is assignment statement *)
-  val res_b_option_bind = Profile.profile "exec_step_CONV_B_2_option_bind" (continue_eq_rule
-    (GEN_match_conv is_OPTION_BIND (
-      RATOR_CONV (RAND_CONV (REWRITE_CONV ([birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm]@eq_thms) THENC EVAL (* TODO: this can be improved, I think *))) THENC
-      REWRITE_CONV [optionTheory.OPTION_BIND_def] (* OPTION_BIND semantics *) THENC
-      type_of_bir_exp_CONV
-    ))
-    ) res_b_eval_exp;
+  val res_b_option_bind =
+    continue_eq_rule
+      (GEN_match_conv is_OPTION_BIND (
+        RATOR_CONV (RAND_CONV (
+          RAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def) THENC
+          RATOR_CONV (REWR_CONV (hd eq_thms)) THENC
+          REPEATC (
+            REWR_CONV birs_gen_env_GET_thm THENC
+            CHANGED_CONV
+              (aux_setLib.ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+          ) THENC
+          TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm)
+        )) THENC
+        (*REWRITE_CONV [optionTheory.OPTION_BIND_def]*)
+        (IFC
+          (TRY_CONV (REWR_CONV (List.nth(CONJUNCTS optionTheory.OPTION_BIND_def, 1))))
+          (ALL_CONV)
+          (TRY_CONV (REWR_CONV (List.nth(CONJUNCTS optionTheory.OPTION_BIND_def, 0))))
+        ) THENC
+        type_of_bir_exp_CONV
+      ))
+      res_b_eval_exp;
 
+  val birs_update_env_P_CONV =
+    BETA_CONV THENC
+    RAND_CONV (
+      LHS_CONV (
+        REWR_CONV pairTheory.FST
+      ) THENC
+      aux_setLib.bir_varname_EQ_CONV
+    ) THENC
+    REWRITE_CONV [boolTheory.NOT_CLAUSES];
+
+  val birs_update_env_CONV =
+    REWR_CONV birs_update_env_thm THENC
+    RAND_CONV (RAND_CONV (listLib.FILTER_CONV birs_update_env_P_CONV));
+    
   (* update symbolic environment, if is assignment statement *)
-  val res_b_update_env = Profile.profile "exec_step_CONV_B_3_update_env" (restr_conv_eq_rule
+  val res_b_update_env =
+   restr_conv_eq_rule
     [birs_update_env_tm]
     (GEN_match_conv is_birs_update_env (
-      (* (fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t)) THENC *)
-      REWRITE_CONV ([birs_update_env_thm]@eq_thms) THENC
-      RESTR_EVAL_CONV [birs_gen_env_tm] (* TODO: this can be improved, I think *)
+      (*(fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t)) THENC*)
+      RAND_CONV (REWR_CONV (hd eq_thms)) THENC
+      birs_update_env_CONV
     ))
-    ) res_b_option_bind;
+    res_b_option_bind;
 
 
   val res = (abbr_rev (res_b_update_env, env_tm, pcond_tm));
