@@ -35,8 +35,7 @@ in (* local *)
         val t2 = CONV_RULE (RAND_CONV (
         birs_auxLib.GEN_match_conv is_bir_vars_of_exp (f_rec))) t1;
         val union_conv =
-          (aux_setLib.varset_UNION_CONV)
-          (*pred_setLib.UNION_CONV NO_CONV*);
+          (aux_setLib.varset_UNION_CONV);
         val t2_rhs = (rhs o concl) t2;
         val t3 =
           if is_union (t2_rhs) then
@@ -97,11 +96,11 @@ in (* local *)
     (*
     (* this implementation of birs_exps_of_senv_COMP_ONCE_CONV works fine, but not as speedy as the one below *)
     (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
-    (TRY_CONV (aux_setLib.resolve_ite_CONV (pred_setLib.IN_CONV stringLib.string_EQ_CONV)))
+    (TRY_CONV (aux_setLib.resolve_ite_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
     *)
     IFC
       (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
-      (aux_setLib.resolve_ite_CONV (pred_setLib.IN_CONV stringLib.string_EQ_CONV))
+      (aux_setLib.resolve_ite_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
       (IFC
         (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
         (REFL)
@@ -141,11 +140,9 @@ in (* local *)
           (pred_setLib.IMAGE_CONV
             bir_vars_of_exp_DIRECT_CONV
             NO_CONV)) THENC
-        (*aux_setLib.varset_BIGUNION_CONV*)
-        (aux_setLib.BIGUNION_CONV NO_CONV)
+        (aux_setLib.varset_BIGUNION_CONV)
       )) THENC
-      (*aux_setLib.varset_UNION_CONV*)
-      (pred_setLib.UNION_CONV NO_CONV)
+      (aux_setLib.varset_UNION_CONV)
       (*
       (* basic solution for flattening the set and avoid comparisons *)
       RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC

@@ -28,12 +28,12 @@ in (* local *)
 
       open birs_execLib;
       fun birs_post_step_fun (t, (last_pc, last_stmt)) = (
-        (fn t => (
+        (*(fn t => (
         holba_miscLib.timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
         holba_miscLib.timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
         timer_symbanalysis_last := holba_miscLib.timer_start 0;
         (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
-        t)) o
+        t)) o*)
         birs_if_assign_RULE last_stmt (birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm (!birs_simp_select)) o
         birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
         birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o
@@ -53,11 +53,14 @@ in (* local *)
       val timer_symbanalysis = timer_start 0;
       val timer_symbanalysis_last = ref (timer_start 0);
       fun debug_output_RULE t =
-         (timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
-         timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
-         timer_symbanalysis_last := timer_start 0;
-         (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
-         t);
+        (*
+        (timer_stop (fn delta_s => print ("running since " ^ delta_s ^ "\n")) timer_symbanalysis;
+        timer_stop (fn delta_s => print ("time since last step " ^ delta_s ^ "\n")) (!timer_symbanalysis_last);
+        timer_symbanalysis_last := timer_start 0;
+        (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
+        t);
+        *)
+        t;
 
       open birs_execLib;
       val birs_simp_RULE_gen = birs_rule_SUBST_trysimp_fun birs_rule_SUBST_thm;
@@ -95,6 +98,7 @@ in (* local *)
       (* filter by pc (should return NONE directly, if there is no match) *)
       val sums_pc = List.filter (state_pc_in_sum state) sums;
     in
+      Profile.profile "birs_from_summaries_inst" (fn sums_pc =>
       let
         (* try instantiation from the first (instantiate and justify with pcond strengthening) *)
         fun foldfun (sum, acc) =
@@ -112,8 +116,9 @@ in (* local *)
         (* val postproc = fn x => let val y = postproc x; in print_thm y; y end; *)
       in
         Option.map postproc (List.foldl foldfun NONE sums_pc)
-      end
+      end) sums_pc
     end;
+  val birs_from_summaries = fn x => fn y => Profile.profile "birs_from_summaries" (birs_from_summaries x y);
   
   val birs_from_summaries_riscv = birs_from_summaries I;
 

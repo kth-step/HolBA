@@ -172,10 +172,15 @@ in (* local *)
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)) THENC
       bir_label_EQ_CONV);
   (*val bir_pc_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_pc_EQ_CONV;*)
+  val bir_pc_EQ_CONV = Profile.profile "bir_pc_EQ_CONV" bir_pc_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  bir var set equality checker                                                      *)
 (* ---------------------------------------------------------------------------------- *)
+  val bir_varname_EQ_CONV =
+    stringLib.string_EQ_CONV;
+  val bir_varname_EQ_CONV = Profile.profile "bir_varname_EQ_CONV" bir_varname_EQ_CONV;
+
   val bir_var_EQ_thm = prove(``
     !a0 a1 a0' a1'.
       BVar a0 a1 = BVar a0' a1' <=>
@@ -197,9 +202,10 @@ in (* local *)
     IFC
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)))
       ((*name*)
-       stringLib.string_EQ_CONV)
+       bir_varname_EQ_CONV)
       ((REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES)));
   val bir_var_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_var_EQ_CONV;
+  val bir_var_EQ_CONV = Profile.profile "bir_var_EQ_CONV" bir_var_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  birs state equality checker                                                       *)
@@ -210,7 +216,13 @@ in (* local *)
 
   (* could speed this up, maybe take inspiration from string or word EQ_CONV functions *)
   val bir_exp_EQ_CONV =
-    EVAL (*SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) [] THENC EVAL*);
+    let
+      val rewrite_thms = (((List.concat o List.map (fn t => [t,GSYM t]) o CONJUNCTS) bir_expTheory.bir_exp_t_distinct)@(CONJUNCTS bir_expTheory.bir_exp_t_11))@[birs_auxTheory.BExp_IntervalPred_def];
+    in
+      REWRITE_CONV rewrite_thms THENC
+      EVAL (*SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) [] THENC EVAL*)
+    end;
+  val bir_exp_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare bir_exp_EQ_CONV;
 
   fun birs_gen_env_check_eq env1 env2 =
     let
@@ -272,6 +284,7 @@ in (* local *)
          )
        );
   val birs_state_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare birs_state_EQ_CONV;
+  val birs_state_EQ_CONV = Profile.profile "birs_state_EQ_CONV" birs_state_EQ_CONV;
 
 (* ---------------------------------------------------------------------------------- *)
 (*  programcounter operations                                                    *)
