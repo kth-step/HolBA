@@ -4,6 +4,8 @@ open balrob_supportLib;
 
 val _ = new_theory "balrob_ends";
 
+val _ = birs_composeLib.compose_L_speedcheat := true;
+
 val entry_name = "__clzsi2";
 val reqs = get_fun_usage entry_name;
 val locs =
