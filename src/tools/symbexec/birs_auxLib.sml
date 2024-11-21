@@ -120,6 +120,7 @@ local
 in
   val cur_stmt_lookup_fun = ref ((K (NONE)) : term -> thm option);
   val cur_l_mem_lookup_fun = ref ((K (NONE)) : term -> thm option);
+  val cur_prog_no_halt_thm = ref NONE;
 
 
 (* ------------------------------------------------------------------------- *)
@@ -149,7 +150,7 @@ fun dest_block_thm block_thm =
     (i_tm, block_tm, l_tm, stmts_tm)
   end;
 
-val bir_get_program_block_info_by_label_tm = “bir_get_program_block_info_by_label”;
+val bir_get_program_block_info_by_label_tm = ``bir_get_program_block_info_by_label``;
 fun gen_stmt_thms bprog_tm prog_length_thm bir_get_block_GEN_thm block_thm =
   let
     val (i_tm, block_tm, l_tm, stmts_tm) = dest_block_thm block_thm;
@@ -173,7 +174,7 @@ fun gen_stmt_thms bprog_tm prog_length_thm bir_get_block_GEN_thm block_thm =
 
 fun gen_exec_prep_thms bprog_tm valid_labels_thm =
 let
-  val bprog_l_tm = “bir_get_blocks ^bprog_tm”;
+  val bprog_l_tm = ``bir_get_blocks ^bprog_tm``;
 
   val (block_thms, prog_length_thm) = get_el_thms bprog_l_tm [bprog_tm];
 
@@ -211,13 +212,16 @@ in
   (stmt_thms, label_mem_thms)
 end;
 
+fun get_bprog_lift_thm bir_lift_thm =
+  (snd o dest_comb o concl) bir_lift_thm;
+
 fun gen_exec_prep_thms_from_lift_thm bir_lift_thm =
 let
-  val bprog_tm = (snd o dest_comb o concl) bir_lift_thm;
-  val bprog_l_tm = “bir_get_blocks ^bprog_tm”;
-  val valid_labels_thm = prove(“
+  val bprog_tm = get_bprog_lift_thm bir_lift_thm;
+  val bprog_l_tm = ``bir_get_blocks ^bprog_tm``;
+  val valid_labels_thm = prove(``
       bir_is_valid_labels (BirProgram ^bprog_l_tm)
-    ”,
+    ``,
       REWRITE_TAC [bir_get_blocks_INV_thm] >>
       REWRITE_TAC [REWRITE_RULE [bir_inst_liftingTheory.bir_is_lifted_prog_def] bir_lift_thm]
     );
@@ -239,6 +243,19 @@ fun gen_lookup_functions (stmt_thms, label_mem_thms) =
     (lookup_fun stmt_map, lookup_fun l_mem_map)
   end;
 
+fun bir_prog_has_no_halt_fun bprog_tm =
+  prove(``bir_prog_has_no_halt ^bprog_tm``, EVAL_TAC);
+
+fun get_prog_no_halt_thm bprog_tm =
+  let val thm_o = !cur_prog_no_halt_thm; in
+  if isSome thm_o then valOf thm_o else
+  let
+    val thm = bir_prog_has_no_halt_fun bprog_tm;
+    val _ = cur_prog_no_halt_thm := SOME thm;
+  in
+    thm
+  end end;
+
 fun prepare_program_lookups bir_lift_thm =
 let
   val _ = print "\npreparing program lookups";
@@ -247,6 +264,7 @@ let
   val (stmt_lookup_fun, l_mem_lookup_fun) = gen_lookup_functions prep_structure;
   val _ = cur_stmt_lookup_fun := stmt_lookup_fun;
   val _ = cur_l_mem_lookup_fun := l_mem_lookup_fun;
+  val _ = get_prog_no_halt_thm (get_bprog_lift_thm bir_lift_thm);
   val _ = holba_miscLib.timer_stop
     (fn delta_s => print (" - " ^ delta_s ^ "\n")) timer;
 in

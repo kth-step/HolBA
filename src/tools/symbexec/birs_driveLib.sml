@@ -128,9 +128,8 @@ in (* local *)
     let
       open birs_execLib;
 
-      (* TODO: make this an input to avoid recomputation *)
       val has_no_halt_thm =
-        Profile.profile "bir_prog_has_no_halt_fun" bir_prog_has_no_halt_fun bprog_tm;
+        birs_auxLib.get_prog_no_halt_thm bprog_tm;
 
       val birs_rule_STEP_thm =
         birs_rule_STEP_prog_fun has_no_halt_thm;

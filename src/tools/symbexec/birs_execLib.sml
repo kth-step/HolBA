@@ -17,9 +17,6 @@ in
 
   (* halt free programs *)
   (* ----------------------------------------------- *)
-  fun bir_prog_has_no_halt_fun bprog_tm =
-    prove(``bir_prog_has_no_halt ^bprog_tm``, EVAL_TAC);
-
   fun birs_rule_STEP_prog_fun no_halt_thm =
     MATCH_MP birs_rulesTheory.birs_rule_STEP_gen2_thm no_halt_thm;
 
