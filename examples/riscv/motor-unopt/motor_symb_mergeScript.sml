@@ -1,6 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
 open birs_mergeLib;
+open birsSyntax;
+open birs_utilsLib;
 
 open motor_symb_execTheory;
 
