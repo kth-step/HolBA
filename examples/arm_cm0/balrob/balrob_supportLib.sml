@@ -379,6 +379,7 @@ fun birs_basic_from_sums bprog_tm birs_rule_SUBST_thm sums st_tm =
     else
       birs_strategiesLib.birs_from_summaries postproc_fun sums st_tm
   end;
+val birs_basic_from_sums = fn x => fn y => fn z => Profile.profile "birs_basic_from_sums" (birs_basic_from_sums x y z);
 
 
 fun birs_basic_init_state prog_birenvtyl_def reqs init_addr =
