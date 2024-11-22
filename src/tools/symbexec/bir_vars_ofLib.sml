@@ -49,7 +49,7 @@ in (* local *)
         t3
       end;
   in
-    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("add_vars_of") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
+    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("bir_vars_of_exp_wrapped_CONV") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
   end;
 
   fun bir_vars_of_exp_DIRECT_CONV tm =
