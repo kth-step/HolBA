@@ -6,6 +6,8 @@ open balrob_endsTheory;
 
 val _ = new_theory "balrob_misc";
 
+val _ = birs_composeLib.compose_L_speedcheat := true;
+
 
 val entry_name = "__aeabi_i2f";
 val reqs = get_fun_usage entry_name;

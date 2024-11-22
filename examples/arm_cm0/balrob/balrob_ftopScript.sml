@@ -13,7 +13,7 @@ val _ = new_theory "balrob_ftop";
 
 (* ------------------------------------ *)
 
-
+(*
 val entry_name = "atan2f_own";
 val reqs = get_fun_usage entry_name;
 val locs =
@@ -36,6 +36,6 @@ val balrob_summary_atan2f_own_thm = save_thm("balrob_summary_" ^ entry_name ^ "_
 
 val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
-
+*)
 
 val _ = export_theory ();

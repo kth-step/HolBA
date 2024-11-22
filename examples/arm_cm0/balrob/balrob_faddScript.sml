@@ -9,6 +9,8 @@ open balrob_fmulTheory; (* TODO: remove this line later *)
 
 val _ = new_theory "balrob_fadd";
 
+val _ = birs_composeLib.compose_L_speedcheat := true;
+
 val fadd_offset = 0x1000030e - 0x257A;
 
 (* ------------------------------------ *)
