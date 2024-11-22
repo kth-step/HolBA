@@ -14,7 +14,7 @@ val _ = new_theory "balrob_top";
 
 (* ------------------------------------ *)
 
-
+(*
 val entry_name = "imu_handler_pid_entry";
 val reqs = get_fun_usage entry_name;
 val locs =
@@ -38,6 +38,6 @@ val _ = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
 
 val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
-
+*)
 
 val _ = export_theory ();
