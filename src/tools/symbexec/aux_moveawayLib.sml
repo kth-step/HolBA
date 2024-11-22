@@ -71,7 +71,7 @@ in (* local *)
           val k_tm = k_tm_fun term;
           val _ =
             if check_res_tm_fun result then () else
-              (print_thm thm; print "\n\n"; raise ERR funname "didn't reach a result");
+              (print "\nunfinished:\n"; print_thm thm; print "\n\n"; raise ERR funname "didn't reach a result");
         in (add (k_tm, thm); thm) end;
 
       fun f_wrapped tm =
