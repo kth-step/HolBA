@@ -439,10 +439,6 @@ in (* local *)
       eq_thm
     end;
   val birs_env_EQ_CONV = Profile.profile "auxset_birs_env_EQ_CONV" birs_env_EQ_CONV;
-  (*
-  val birs_env_EQ_CONV = wrap_res_exn birs_env_EQ_CONV;
-  val birs_env_EQ_CONV = aux_moveawayLib.wrap_cache_result_EQ_BEQ Term.compare birs_env_EQ_CONV;
-  *)
 
 
   val birs_state_EQ_thm = prove(``

@@ -141,45 +141,8 @@ in
       fun assignment_thm_f assignment_thm thm =
         SOME (MATCH_MP assignment_thm thm)
         handle _ => NONE;
-      
-      fun assignment_thm_spec_f thm =
-        let
-          val (sys_tm, L_tm, Pi_tm) = (get_birs_sysLPi o concl) thm;
-          val (sysPi_tm, remPi_tm) = dest_insert Pi_tm;
-          val (pc, env, status, pcond) = dest_birs_state sysPi_tm;
-          val envl = dest_birs_gen_env env;
-          val (mapping, envl) = listSyntax.dest_cons envl;
-          val (vn, symbexp) = pairSyntax.dest_pair mapping;
-
-          val spec_list = [sys_tm, L_tm, pc, status, pcond, envl, vn, symbexp];
-          val spec_thm =
-            if is_empty remPi_tm then
-              SPECL spec_list inst_thm2
-            else
-              SPECL (spec_list@[remPi_tm]) inst_thm1;
-          val res = MP spec_thm thm;
-        in
-          SOME res
-        end
-        handle _ => NONE;
-      fun exp_fun v1 v2 x =
-        let
-          val r1 = Profile.profile "zzz_SUBST_v1" v1 x;
-          val r2 = Profile.profile "zzz_SUBST_v2" v2 x;
-          val _ = if option_eq (fn x => fn y => identical (concl x) (concl y)) r1 r2 then ()
-            else raise (Profile.profile "zzz_SUBST_v_mismatch" print "birs_rule_SUBST_trysimp_first_fun::results don't match\n"; ERR "birs_rule_SUBST_trysimp_first_fun" "results don't match");
-        in
-          r1
-        end;
     in
-      (*assignment_thm_f inst_thm1, assignment_thm_f inst_thm2*)
-      (*assignment_thm_spec_f, assignment_thm_spec_f*)
-      (exp_fun
-        (assignment_thm_f inst_thm1)
-        assignment_thm_spec_f,
-       exp_fun
-        (assignment_thm_f inst_thm2)
-        assignment_thm_spec_f)
+      (assignment_thm_f inst_thm1, assignment_thm_f inst_thm2)
     end;
 
   local
