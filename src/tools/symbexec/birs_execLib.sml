@@ -108,9 +108,9 @@ in
         else
         NONE)
       birs_rulesTheory.assert_spec_thm
-      (aux_setLib.DISJR_CONV
-        (aux_setLib.NEG_CONV aux_setLib.bir_pc_EQ_CONV)
-        (aux_setLib.NEG_CONV aux_setLib.bir_status_EQ_CONV))
+      (DISJR_CONV
+        (NEG_CONV aux_setLib.bir_pc_EQ_CONV)
+        (NEG_CONV aux_setLib.bir_status_EQ_CONV))
       thm;
   val birs_rule_tryjustassert_fun = fn x => Profile.profile "birs_rule_tryjustassert_fun" (birs_rule_tryjustassert_fun x);
 
@@ -119,9 +119,9 @@ in
       "tryprune"
       NONE
       prune_thm
-      (aux_setLib.DISJL_CONV
-        (aux_setLib.NEG_CONV aux_setLib.bir_pc_EQ_CONV)
-        (aux_setLib.NEG_CONV aux_setLib.bir_status_EQ_CONV));
+      (DISJL_CONV
+        (NEG_CONV aux_setLib.bir_pc_EQ_CONV)
+        (NEG_CONV aux_setLib.bir_status_EQ_CONV));
   val birs_rule_tryprune_fun = fn x => Profile.profile "birs_rule_tryprune_fun" (birs_rule_tryprune_fun x);
 
   (* ============================================================================ *)

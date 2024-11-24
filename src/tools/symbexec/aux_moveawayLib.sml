@@ -42,6 +42,37 @@ in (* local *)
       f_wrapped
     end;
 
+  val EQ_flip = mk_eq o (fn (x,y) => (y,x)) o dest_eq;
+  fun wrap_cache_result_EQ_BEQ_gen to_intform to_k to_flip_k kcomp f =
+    let
+      val (add, lookup) = result_cache kcomp;
+      fun f_wrapped x =
+        let
+          val (x1,x2) = dest_eq x;
+          val intform = (to_intform x1, to_intform x2);
+          val k = (to_k intform);
+          val v_o = lookup k;
+        in
+          if isSome v_o then valOf v_o else
+          let
+            val v = f x;
+          in
+            add (k, v);
+            add (to_flip_k intform, CONV_RULE (LHS_CONV SYM_CONV) v);
+            v
+          end
+        end;
+    in
+      f_wrapped
+    end;
+  
+  fun to_eq_string (s1, s2) =
+    s1^"="^s2;
+  fun to_flip_eq_string (s1, s2) =
+    s2^"="^s1;
+  fun wrap_cache_result_EQ_BEQ_string to_string = wrap_cache_result_EQ_BEQ_gen to_string to_eq_string to_flip_eq_string String.compare;
+
+  (*val wrap_cache_result_EQ_BEQ = wrap_cache_result_EQ_BEQ_gen I EQ_flip; *)
   fun wrap_cache_result_EQ_BEQ kcomp f =
     let
       val (add, lookup) = result_cache kcomp;
@@ -54,7 +85,7 @@ in (* local *)
             val v = f k;
           in
             add (k, v);
-            add ((*(rhs o concl o SYM_CONV)*)(mk_eq o (fn (x,y) => (y,x)) o dest_eq) k, CONV_RULE (LHS_CONV SYM_CONV) v);
+            add ((*(rhs o concl o SYM_CONV)*)EQ_flip k, CONV_RULE (LHS_CONV SYM_CONV) v);
             v
           end
         end;
@@ -85,6 +116,38 @@ in (* local *)
     in
       f_wrapped
     end;
+
+  local
+    datatype res_ex_t = Result of thm | Except of exn;
+    fun capture_res_ex f x =
+      Result(f x)
+      handle e => Except e
+    fun process_res_ex v =
+      case v of
+          Result x => x
+        | Except e => raise e;
+  in
+    fun wrap_res_exn f =
+      let
+        val (add, lookup) = result_cache Term.compare;
+        fun f_wrapped k =
+          let
+            val v_o = lookup k;
+          in
+            case v_o of
+                SOME v => process_res_ex v
+              | _ =>
+                let
+                  val v = capture_res_ex f k;
+                in
+                  add (k, v);
+                  process_res_ex v
+                end
+          end;
+      in
+        f_wrapped
+      end;
+  end
 
 fun measure_fun s f v =
   let
