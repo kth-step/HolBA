@@ -15,6 +15,7 @@ open bir_symbTheory;
 open birs_auxTheory;
 
 open birs_auxLib;
+open birs_utilsLib;
 
 open bir_exp_typecheckLib;
 
@@ -560,15 +561,6 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (* ---------------------------------------------------------------------------- *)
 
-fun birs_senv_typecheck_CONV eq_thms = (
-  RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
-  REWRITE_CONV eq_thms THENC
-  type_of_bir_exp_CONV THENC
-  EVAL
-);
-val birs_senv_typecheck_CONV = fn x => Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV x);
-
-
 (*
 val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))]``;
 val t = ``[("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
@@ -604,6 +596,53 @@ fun rev_birs_gen_env (thm, eq_thms) =
     foldl (fn (x,acc) =>  MP ((INST [mk_gen_subst x] o DISCH x) acc) ((REFL o snd o dest_eq) x)) thm eq_tms
   end;
 
+local
+  val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
+  val pcond_abbr_tm = ``temp_pcond_abbr : bir_exp_t``;
+in
+ fun abbr_app (t, env_tm, pcond_tm) =
+  let
+     val env_eq_tm = mk_eq (env_abbr_tm, env_tm);
+     val pcond_eq_tm = mk_eq (pcond_abbr_tm, pcond_tm);
+     val env_eq_thm = ASSUME (env_eq_tm);
+     val pcond_eq_thm = ASSUME (pcond_eq_tm);
+     val abbr_thm = REWRITE_CONV [GSYM (env_eq_thm), GSYM (pcond_eq_thm)] t;
+  in
+    (abbr_thm, [env_eq_thm, pcond_eq_thm])
+  end;
+ fun abbr_rev (res, env_tm, pcond_tm) =
+  MP (MP ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] o DISCH_ALL) res) (REFL env_tm)) (REFL pcond_tm);
+end;
+
+fun deabbr_CONV eq_thms tm =
+  let
+    (* find thm for tm on lhs in eq_thms, return that theorem *)
+    val thms = List.filter (fn t => identical tm ((lhs o concl) t)) eq_thms;
+    val thm =
+      case length thms of
+          1 => hd thms
+        | 0 => raise UNCHANGED
+        | _ => raise ERR "deabbr_CONV" "more than one theorem with same lhs in eq_thms";
+  in
+    thm
+  end;
+
+(* ---------------------------------------------------------------------------- *)
+
+fun birs_senv_typecheck_CONV eq_thms = (
+  (* TODO: this can be optimized: reuse vars_of_exp, and
+       construct EnvTy (maybe good as list as with gen_env, maybe can even reuse gen_env?),
+       then use bir_symbTheory.birs_senv_typecheck_thm and
+       go through the symbol set one by one with bir_envTheory.bir_envty_includes_vs_INSERT
+       also: use deabbr_CONV *)
+  (*(fn x => (print "\n\n"; print_term x; print "\n\n"; REFL x)) THENC*)
+  RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
+  REWRITE_CONV eq_thms THENC
+  type_of_bir_exp_CONV THENC
+  EVAL
+);
+val birs_senv_typecheck_CONV = fn x => Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV x);
+
 
 fun birs_eval_exp_CONV_p1 t =
    let
@@ -615,29 +654,71 @@ fun birs_eval_exp_CONV_p1 t =
    end
    handle e => (print_term t; raise wrap_exn "birs_eval_exp_CONV_p1" e);
 
-val birs_eval_exp_CONV_p2 =
-  REWRITE_CONV [birs_eval_exp_def] THENC
-  type_of_bir_exp_CONV;
-
-fun birs_eval_exp_CONV_p3 eq_thms =
+fun birs_eval_exp_CONV_p2 eq_thms =
+  REWR_CONV birs_eval_exp_def THENC
+  type_of_bir_exp_CONV THENC
   GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV eq_thms);
 
 (* TODO: can possibly improve this,
      for example by only taking the environment into the expressions where there are symbol lookups,
-     could even work with a cache of lookup theorems for the present symbols *)
-fun birs_eval_exp_CONV_p4 eq_thms =
+     could even work with a cache of lookup theorems for the present symbols
+fun birs_eval_exp_subst_CONV eq_thms =
+  (fn x => (print "\nAAAAAAAAAAAAAAA:\n"; print_term x; print "\n\n"; REFL x)) THENC
   EVAL THENC
   REWRITE_CONV eq_thms THENC
-  EVAL;
+  EVAL THENC
+  (fn x => (print "\nBBBBBBBBBBBBBBB:\n"; print_term x; print "\n\n"; REFL x));
+   *)
+
+val birs_eval_exp_subst_var_CONV =
+  let
+    val birs_gen_env_GET_REWR_thms = [birs_auxTheory.birs_gen_env_GET_thm, birs_auxTheory.birs_gen_env_GET_NULL_thm];
+    val option_case_def_thms = CONJUNCTS optionTheory.option_case_def;
+  in
+    fn eq_thms =>
+      REWR_CONV bir_symbTheory.birs_eval_exp_subst_var_def THENC
+      PATH_CONV "llr" (
+        RAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def) THENC
+        REPEATC (CHANGED_CONV (
+          TRY_LIST_REWR_CONV birs_gen_env_GET_REWR_thms THENC
+          TRY_CONV (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+        )) THENC
+        TRY_CONV (RAND_CONV (deabbr_CONV eq_thms))
+      ) THENC
+      TRY_LIST_REWR_CONV option_case_def_thms THENC
+      REWR_CONV combinTheory.I_THM
+  end;
+
+val birs_eval_exp_subst_def_thms = CONJUNCTS bir_symbTheory.birs_eval_exp_subst_def;
+
+fun birs_eval_exp_subst_CONV eq_thms tm =
+(
+  TRY_LIST_REWR_CONV birs_eval_exp_subst_def_thms THENC
+  GEN_match_conv is_birs_eval_exp_subst_var (birs_eval_exp_subst_var_CONV eq_thms) THENC
+  GEN_match_conv is_birs_eval_exp_subst (birs_eval_exp_subst_CONV eq_thms)
+) tm;
+
+val birs_eval_exp_CONV_p4 =
+  let
+    val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+    val thm_is_some_def = CONJUNCT1 optionTheory.IS_SOME_DEF;
+  in
+    fn eq_thms =>
+      REWR_CONV LET_THM THENC
+      LIST_BETA_CONV THENC
+      ITE_CONV (REWR_CONV thm_T THENC REWR_CONV thm_is_some_def) THENC
+      LIST_BETA_CONV THENC
+      LIST_BETA_CONV THENC
+      RAND_CONV (LAND_CONV (birs_eval_exp_subst_CONV eq_thms))
+  end;
 
 fun birs_eval_exp_CONV t = (
   let
-    val (thm_p1, eq_thms) = birs_eval_exp_CONV_p1 t;
+    val (thm_p1, eq_thms) = Profile.profile "eval_exp_CONV_p1" birs_eval_exp_CONV_p1 t;
     (*val _ = print_thm thm_p1;*)
-    val thm_p2 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p2)) thm_p1;
-    val thm_p3 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p3 eq_thms)) thm_p2;
-    val thm_p4 = CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p4 eq_thms)) thm_p3;
-    val thm_p4rev = rev_birs_gen_env (thm_p4, eq_thms);
+    val thm_p2 = Profile.profile "eval_exp_CONV_p2" (CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p2 eq_thms))) thm_p1;
+    val thm_p4 = Profile.profile "eval_exp_CONV_p4" (CONV_RULE (RAND_CONV (birs_eval_exp_CONV_p4 eq_thms))) thm_p2;
+    val thm_p4rev = Profile.profile "eval_exp_CONV_p5" rev_birs_gen_env (thm_p4, eq_thms);
   in
     thm_p4rev
   end
@@ -724,24 +805,6 @@ let
           raise ERR "birs_exec_step_CONV" "program term is not a constant";
 in
   bprog_tm
-end;
-
-local
-  val env_abbr_tm = ``temp_env_abbr : string -> bir_exp_t option``;
-  val pcond_abbr_tm = ``temp_pcond_abbr : bir_exp_t``;
-in
- fun abbr_app (t, env_tm, pcond_tm) =
-  let
-     val env_eq_tm = mk_eq (env_abbr_tm, env_tm);
-     val pcond_eq_tm = mk_eq (pcond_abbr_tm, pcond_tm);
-     val env_eq_thm = ASSUME (env_eq_tm);
-     val pcond_eq_thm = ASSUME (pcond_eq_tm);
-     val abbr_thm = REWRITE_CONV [GSYM (env_eq_thm), GSYM (pcond_eq_thm)] t;
-  in
-    (abbr_thm, [env_eq_thm, pcond_eq_thm])
-  end;
- fun abbr_rev (res, env_tm, pcond_tm) =
-  MP (MP ((INST [env_abbr_tm |-> env_tm, pcond_abbr_tm |-> pcond_tm] o DISCH_ALL) res) (REFL env_tm)) (REFL pcond_tm);
 end;
 
 (*
@@ -867,11 +930,11 @@ let
       (GEN_match_conv is_OPTION_BIND (
         RATOR_CONV (RAND_CONV (
           RAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def) THENC
-          RATOR_CONV (REWR_CONV (hd eq_thms)) THENC
+          RATOR_CONV (deabbr_CONV eq_thms) THENC
           REPEATC (
             REWR_CONV birs_gen_env_GET_thm THENC
             CHANGED_CONV
-              (aux_setLib.ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+              (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
           ) THENC
           TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm)
         )) THENC
@@ -905,7 +968,7 @@ let
     [birs_update_env_tm]
     (GEN_match_conv is_birs_update_env (
       (*(fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t)) THENC*)
-      RAND_CONV (REWR_CONV (hd eq_thms)) THENC
+      RAND_CONV (deabbr_CONV eq_thms) THENC
       birs_update_env_CONV
     ))
     res_b_option_bind;

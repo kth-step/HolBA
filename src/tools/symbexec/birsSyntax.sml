@@ -123,6 +123,8 @@ in
  val (birs_eval_label_exp_tm,  mk_birs_eval_label_exp, dest_birs_eval_label_exp, is_birs_eval_label_exp)  = syntax_fns3 "birs_eval_label_exp";
 
  val (birs_eval_exp_tm,  mk_birs_eval_exp, dest_birs_eval_exp, is_birs_eval_exp)  = syntax_fns2 "birs_eval_exp";
+ val (birs_eval_exp_subst_tm,  mk_birs_eval_exp_subst, dest_birs_eval_exp_subst, is_birs_eval_exp_subst)  = syntax_fns2 "birs_eval_exp_subst";
+ val (birs_eval_exp_subst_var_tm,  mk_birs_eval_exp_subst_var, dest_birs_eval_exp_subst_var, is_birs_eval_exp_subst_var)  = syntax_fns2 "birs_eval_exp_subst_var";
 
  val (birs_exec_stmt_jmp_tm,  mk_birs_exec_stmt_jmp, dest_birs_exec_stmt_jmp, is_birs_exec_stmt_jmp)  = syntax_fns3_set "birs_exec_stmt_jmp";
  val (birs_exec_stmt_tm,  mk_birs_exec_stmt, dest_birs_exec_stmt, is_birs_exec_stmt)  = syntax_fns3_set "birs_exec_stmt";
