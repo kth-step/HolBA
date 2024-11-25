@@ -79,6 +79,21 @@ in (* local *)
         (is_some result andalso
          ((fn x => is_BType_Imm x orelse is_BType_Mem x) o dest_some) result);
 
+    val type_of_bir_exp_finish_CONV =
+      REPEATC (
+        CHANGED_CONV (
+          REWRITE_CONV (distinct_thms@[bir_valuesTheory.bir_type_t_case_def,pairTheory.pair_case_def, boolTheory.COND_CLAUSES, optionTheory.option_case_def]@type_of_bir_exp_thms) THENC
+          TRY_CONV LIST_BETA_CONV
+      ));
+
+    fun type_of_bir_exp_rec_CONV f_rec tm =
+      let
+        val thm_opened = REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def] tm;
+        val thm = CONV_RULE (RHS_CONV (GEN_match_conv is_type_of_bir_exp f_rec THENC type_of_bir_exp_finish_CONV)) thm_opened;
+      in
+        thm
+      end;
+  in
     (* manual test
     val term = ``
       BExp_BinExp BIExp_Plus
@@ -100,21 +115,6 @@ in (* local *)
         res
       end;
 
-    val type_of_bir_exp_finish_CONV =
-      REPEATC (
-        CHANGED_CONV (
-          REWRITE_CONV (distinct_thms@[bir_valuesTheory.bir_type_t_case_def,pairTheory.pair_case_def, boolTheory.COND_CLAUSES, optionTheory.option_case_def]@type_of_bir_exp_thms) THENC
-          TRY_CONV LIST_BETA_CONV
-      ));
-
-    fun type_of_bir_exp_rec_CONV f_rec tm =
-      let
-        val thm_opened = REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def] tm;
-        val thm = CONV_RULE (RHS_CONV (GEN_match_conv is_type_of_bir_exp f_rec THENC type_of_bir_exp_finish_CONV)) thm_opened;
-      in
-        thm
-      end;
-  in
     (* manual test
     val bexp_term = ``type_of_bir_exp (BExp_BinPred BIExp_LessOrEqual
               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
