@@ -464,8 +464,6 @@ Definition bspec_chacha_quarterround_exp_1:
      Bit32) Bit64)
 End
 
-(* (snd o dest_eq o concl) (EVAL ``bspec_chacha_quarterround_exp_1 "x10" pre_x10 pre_x22``) *)
-
 Definition bspec_chacha_quarterround_exp_2:
  bspec_chacha_quarterround_exp_2 varname pre_1 pre_2 pre_3 (s:word32) : bir_exp_t =
   BExp_BinPred
@@ -494,8 +492,6 @@ Definition bspec_chacha_quarterround_exp_2:
       (BExp_Const (Imm32 (32w-s)))) Bit64))
 End
 
-(* (snd o dest_eq o concl) (EVAL ``bspec_chacha_quarterround_exp_2 "x10" pre_x10 pre_x22 pre_x26 (16w:word32)``) *)
-
 val bspec_chacha_quarterround_post_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
    (EVAL ``bspec_chacha_quarterround_exp_1 "x20" pre_x10 pre_x22``),
@@ -510,65 +506,11 @@ Definition bspec_chacha_quarterround_post_def:
   ^bspec_chacha_quarterround_post_tm
 End
 
-(*
-        <|bb_label :=
-            BL_Address_HC (Imm64 0x108B4w) "01C5043B (addw s0,a0,t3)";
-          bb_statements :=
-            [BStmt_Assign (BVar "x8" (BType_Imm Bit64))
-               (BExp_Cast BIExp_SignedCast
-                  (BExp_Cast BIExp_LowCast
-                     (BExp_BinExp BIExp_Plus
-                        (BExp_Den (BVar "x28" (BType_Imm Bit64)))
-                        (BExp_Den (BVar "x10" (BType_Imm Bit64)))) Bit32)
-                  Bit64)];
-          bb_last_statement :=
-            BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x108B8w)))|>;
-        <|bb_label :=
-            BL_Address_HC (Imm64 0x108B8w) "008B4B33 (xor s6,s6,s0)";
-          bb_statements :=
-            [BStmt_Assign (BVar "x22" (BType_Imm Bit64))
-               (BExp_BinExp BIExp_Xor
-                  (BExp_Den (BVar "x8" (BType_Imm Bit64)))
-                  (BExp_Den (BVar "x22" (BType_Imm Bit64))))];
-          bb_last_statement :=
-            BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x108BCw)))|>;
-        <|bb_label :=
-            BL_Address_HC (Imm64 0x108BCw) "00CB179B (slliw a5,s6,0xc)";
-          bb_statements :=
-            [BStmt_Assign (BVar "x15" (BType_Imm Bit64))
-               (BExp_Cast BIExp_SignedCast
-                  (BExp_BinExp BIExp_LeftShift
-                     (BExp_Cast BIExp_LowCast
-                        (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-                     (BExp_Const (Imm32 12w))) Bit64)];
-          bb_last_statement :=
-            BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x108C0w)))|>;
-        <|bb_label :=
-            BL_Address_HC (Imm64 0x108C0w) "014B5B1B (srliw s6,s6,0x14)";
-          bb_statements :=
-            [BStmt_Assign (BVar "x22" (BType_Imm Bit64))
-               (BExp_Cast BIExp_SignedCast
-                  (BExp_BinExp BIExp_RightShift
-                     (BExp_Cast BIExp_LowCast
-                        (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-                     (BExp_Const (Imm32 20w))) Bit64)];
-          bb_last_statement :=
-            BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x108C4w)))|>;
-        <|bb_label := BL_Address_HC (Imm64 0x108C4w) "0167E7B3 (or a5,a5,s6)";
-          bb_statements :=
-            [BStmt_Assign (BVar "x15" (BType_Imm Bit64))
-               (BExp_BinExp BIExp_Or
-                  (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-                  (BExp_Den (BVar "x22" (BType_Imm Bit64))))];
-          bb_last_statement :=
-            BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x108C8w)))|>;
-*)
-
 val bspec_chacha_quarterround_post_other_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
    (EVAL ``bspec_chacha_quarterround_exp_1 "x8" pre_x28 pre_x10``),
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_2 "x15" pre_x15 pre_x10 pre_x22 (12w:word32)``)
+   (EVAL ``bspec_chacha_quarterround_exp_2 "x15" pre_x28 pre_x10 pre_x22 (12w:word32)``)
 ];
 
 Definition bspec_chacha_quarterround_post_other_def:
