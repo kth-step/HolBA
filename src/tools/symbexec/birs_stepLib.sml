@@ -778,32 +778,37 @@ val birs_symbval_concretizations_oracle_CONV =
     raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
    end);
 
+val birs_eval_label_exp_def_Label = CONJUNCT1 birs_eval_label_exp_def;
+val birs_eval_label_exp_def_Exp = CONJUNCT2 birs_eval_label_exp_def;
 val case_to_concretizations =
-  REWRITE_CONV [optionTheory.option_case_def, pairTheory.pair_CASE_def] THENC
+  REWRITE_CONV [optionTheory.option_case_def, pairTheory.pair_CASE_def, optionTheory.THE_DEF] THENC
   LIST_BETA_CONV THENC
   LIST_BETA_CONV THENC
   LIST_BETA_CONV THENC
   REWRITE_CONV [bir_valuesTheory.bir_type_t_case_def] THENC
   LIST_BETA_CONV;
-val birs_eval_label_exp_CONV = (
-  (fn tm => if is_birs_eval_label_exp tm then ALL_CONV tm else
-   raise ERR "birs_eval_label_exp_CONV" "something is not right here, expect a birs_eval_label_exp") THENC
-  REWRITE_CONV [birs_eval_label_exp_def] THENC
-  GEN_match_conv is_birs_eval_exp (birs_eval_exp_CONV) THENC
-  case_to_concretizations THENC
+fun birs_eval_label_exp_CONV tm =
+  if (not o is_birs_eval_label_exp) tm then
+    raise (print_term tm; ERR "birs_eval_label_exp_CONV" "something is not right here, expect a birs_eval_label_exp")
+  else if (bir_programSyntax.is_BLE_Label o (fn (x,_,_) => x) o dest_birs_eval_label_exp) tm then
+    REWR_CONV birs_eval_label_exp_def_Label tm
+  else (
+    REWR_CONV birs_eval_label_exp_def_Exp THENC
+    GEN_match_conv is_birs_eval_exp (birs_eval_exp_CONV) THENC
+    case_to_concretizations THENC
 
-(* here we should have either NONE or SOME and a set that is either trivially singleton of a constant or we have to resolve it into a set of constants *)
-  (fn tm =>
-    if optionSyntax.is_none tm then ALL_CONV tm else
-    if optionSyntax.is_some tm then RAND_CONV (
-      (fn tm => if is_birs_symbval_concretizations tm then birs_symbval_concretizations_oracle_CONV tm else ALL_CONV tm) THENC
-      (* here we should have a simple set of constants *)
-      (fn tm => if is_plain_jumptarget_set tm then ALL_CONV tm else
-        (print_term tm;
-         raise ERR "birs_eval_label_exp_CONV" "could not resolve the jump targets"))
-    ) tm else
-    raise ERR "birs_eval_label_exp_CONV" "something is not right here, should be NONE or SOME")
-);
+    (* here we should have either NONE or SOME and a set that is either trivially singleton of a constant or we have to resolve it into a set of constants *)
+    (fn tm_ =>
+      if optionSyntax.is_none tm_ then ALL_CONV tm_ else
+      if optionSyntax.is_some tm_ then RAND_CONV (
+        (fn tm => if is_birs_symbval_concretizations tm then birs_symbval_concretizations_oracle_CONV tm else ALL_CONV tm) THENC
+        (* here we should have a simple set of constants *)
+        (fn tm => if is_plain_jumptarget_set tm then ALL_CONV tm else
+          (print_term tm;
+          raise ERR "birs_eval_label_exp_CONV" "could not resolve the jump targets"))
+      ) tm_ else
+      raise (print_term tm; print_term tm_; ERR "birs_eval_label_exp_CONV" "something is not right here, should be NONE or SOME"))
+  ) tm;
 
 
 fun birs_exec_step_CONV_pre t =
@@ -966,16 +971,15 @@ in
 
   (* update symbolic environment, if is assignment statement *)
   val res_b_update_env =
-   Profile.profile "exec_step_CONV_B_p3" (
+    CONV_RULE (RHS_CONV
+    (*
    restr_conv_eq_rule
-    [birs_update_env_tm]
-    (Profile.profile "exec_step_CONV_B_p3_updateenv"(
-      GEN_match_conv is_birs_update_env (
-      (*(fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t)) THENC*)
-      RAND_CONV (deabbr_CONV eq_thms) THENC
-      birs_update_env_CONV (*THENC
-      (fn t => (print "UPDATE ENV HERE\n"; print_term t; REFL t))*)
-    ))))
+    [birs_update_env_tm]*)
+    ( GEN_match_conv is_birs_update_env (
+      LAND_CONV (LAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def)) THENC
+      RAND_CONV (unabbrev_conv eq_thms) THENC
+      birs_update_env_CONV
+    )))
     res_b_option_bind;
 
 (*
@@ -994,6 +998,7 @@ in
   res_b_update_env
 end end;
 
+(*
 val birs_state_pc_update_thm = prove(“
   !pc env status pcond f.
   <|bsst_pc := pc;
@@ -1014,12 +1019,6 @@ val birs_state_pcond_update_thm = prove(“
     bsst_pcond := f pcond|>
 ”, rpt GEN_TAC >> EVAL_TAC);
 
-val bir_pc_index_update_thm = prove(“
-  !l i f.
-  <|bpc_label := l; bpc_index := i|> with bpc_index updated_by f =
-  <|bpc_label := l; bpc_index := f i|>
-”, rpt GEN_TAC >> EVAL_TAC);
-
 val K_o_thm = prove(“
   !x y.
   (K x) o (K y) = K x
@@ -1028,6 +1027,36 @@ val K_o_thm = prove(“
   rpt GEN_TAC >>
   EVAL_TAC
 );
+*)
+
+val bir_pc_index_update_thm = prove(“
+  !l i f.
+  <|bpc_label := l; bpc_index := i|> with bpc_index updated_by f =
+  <|bpc_label := l; bpc_index := f i|>
+”, rpt GEN_TAC >> EVAL_TAC);
+
+val birs_state_thms = type_rws ``:birs_state_t``;
+val birs_state_thms_filtd1 = List.take(birs_state_thms, 7);
+val birs_state_thms_filtd = (hd birs_state_thms_filtd1)::(List.drop(birs_state_thms_filtd1, 3));
+val birs_state_thms_filtd1 = List.take(birs_state_thms, 7);
+val birs_state_thms_filtd2 = (hd birs_state_thms_filtd1)::(List.drop(birs_state_thms_filtd1, 3));
+val birs_state_thms_filtd3 = (List.take(birs_state_thms_filtd2, 2))@(List.drop(birs_state_thms_filtd2, 4));
+val birs_state_thms_filtd = [hd birs_state_thms_filtd3, (last) birs_state_thms_filtd3];
+val birs_state_thms_filtd = birs_state_thms_filtd3;
+
+val rewrite_conv_state =
+  REWRITE_CONV ((*[(*bir_symbTheory.birs_state_t_accfupds, *)
+(*birs_state_pc_update_thm, birs_state_pcond_update_thm,*) ](@*)birs_state_thms_filtd);
+val rewrite_conv_pc =
+  REWRITE_CONV [bir_programTheory.bir_pc_next_def, bir_pc_index_update_thm];
+val K_o_THM_conj2 =
+  CONJUNCT2 combinTheory.K_o_THM
+
+fun REWR_MATCH_REC_CONV is_f t tm =
+  GEN_match_conv is_f (
+    REWR_CONV t THENC
+    REWR_MATCH_REC_CONV is_f t
+  ) tm;
 
 (*  RESTR_EVAL_CONV [birs_eval_exp_tm, birs_update_env_tm] *)
 fun birs_exec_step_CONV_B eq_thms =
@@ -1040,12 +1069,27 @@ fun birs_exec_step_CONV_B eq_thms =
       LIST_BETA_CONV THENC
       ITE_CONV (REWR_CONV birs_state_is_terminated_def THENC REWRITE_CONV [
         bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] THENC EVAL) THENC
-        
-        Profile.profile "exec_step_CONV_B_p0_state"
-        (
-REWRITE_CONV [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM, bir_programTheory.bir_pc_next_def, birs_state_pc_update_thm, birs_state_pcond_update_thm, bir_pc_index_update_thm] THENC
+(* cleanup state record assignments *)
+(rewrite_conv_state) THENC
+(*fix pc_next*)
+GEN_match_conv (combinSyntax.is_o) (
+  REWR_CONV K_o_THM_conj2 THENC
+  rewrite_conv_pc) THENC
 GEN_match_conv (numSyntax.is_suc) (numLib.REDUCE_CONV) THENC
-Profile.profile "exec_step_CONV_B_p0_state_simp" (SIMP_CONV (pure_ss++birs_state_ss) [K_o_thm]))
+(* other stuff *)
+(*combinSyntax.is_K “K 1 3”*)
+REWR_MATCH_REC_CONV combinSyntax.is_K combinTheory.K_THM
+(*THENC
+(SIMP_CONV (pure_ss++birs_state_ss) [K_o_thm])
+*)
+(*
+(fn x => (print "\nbefore simp:\n"; print_term x; print "\n\n"; REFL x)) THENC
+REWRITE_CONV ([(*bir_symbTheory.birs_state_t_accfupds, *)combinTheory.K_THM, bir_programTheory.bir_pc_next_def,
+(*birs_state_pc_update_thm, birs_state_pcond_update_thm,*) bir_pc_index_update_thm]@birs_state_thms) THENC
+GEN_match_conv (numSyntax.is_suc) (numLib.REDUCE_CONV) THENC
+Profile.profile "exec_step_CONV_B_p0_state_simp" (SIMP_CONV (pure_ss++birs_state_ss) [K_o_thm])) THENC
+(fn x => (print "\nafter simp:\n"; print_term x; print "\n\n"; REFL x))
+*)
       (*REWRITE_CONV eq_thms THENC*)
       (*Profile.profile "exec_step_CONV_B_p0_eval1" (SIMP_CONV (pure_ss++birs_state_ss) [combinTheory.K_THM, bir_programTheory.bir_pc_next_def]) THENC*)
       (*(fn x => (print_term x; print "\n\n"; REFL x))*)

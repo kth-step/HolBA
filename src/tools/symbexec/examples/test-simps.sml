@@ -422,7 +422,31 @@ val test_cases = [
       (BExp_Const (Imm32 0x10000DA0w))
       BEnd_LittleEndian
       Bit32``,
-  ``BExp_Const (Imm32 0x10000DA8w)``)
+  ``BExp_Const (Imm32 0x10000DA8w)``),
+
+  (armcm0_simp,
+  ``
+  (BExp_Const (Imm1 1w))
+  ``,
+  ``
+  (BExp_BinExp BIExp_Minus
+      (BExp_Const (Imm32 5w))
+      (BExp_Const (Imm32 1w)))``,
+  ``BExp_Const (Imm32 4w)``),
+
+  (armcm0_simp,
+  ``
+  (BExp_Const (Imm1 1w))
+  ``,
+  ``
+  (BExp_BinExp BIExp_Minus
+      (BExp_BinExp BIExp_Minus
+         (BExp_Den (BVar "R1" (BType_Imm Bit32)))
+         (BExp_Const (Imm32 1w)))
+      (BExp_Const (Imm32 1w)))``,
+  ``BExp_BinExp BIExp_Minus
+         (BExp_Den (BVar "R1" (BType_Imm Bit32)))
+         (BExp_Const (Imm32 2w))``)
 ];
 
 (*

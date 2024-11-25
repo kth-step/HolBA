@@ -84,6 +84,7 @@ in (* local *)
       birs_post_step_fun
     end;
 
+  val birs_from_summaries_debug = ref false;
   fun birs_from_summaries postproc sums state =
     let
       (* assumtions on summary theorem list, each theorem:
@@ -108,7 +109,9 @@ in (* local *)
             val _ = print "\n====================================================\n"
             val _ = print "====================================================\n"
             val _ = print "used a summary\n\n";
-            val _ = print_thm thm;
+            val _ =
+              if not (!birs_from_summaries_debug) then () else
+                print_thm thm;
           in
             SOME thm
           end
