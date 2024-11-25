@@ -635,17 +635,62 @@ fun deabbr_CONV eq_thms tm =
 
 (* ---------------------------------------------------------------------------- *)
 
+fun birs_gen_env_exp_CONV eq_thms =
+  REPEATC (
+    REWR_CONV birs_gen_env_GET_thm THENC
+    CHANGED_CONV
+      (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+  ) THENC
+  TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm) THENC
+  RAND_CONV (deabbr_CONV eq_thms);
+val option_bind_def_1 = List.nth(CONJUNCTS optionTheory.OPTION_BIND_def, 1);
+val option_bind_def_0 = List.nth(CONJUNCTS optionTheory.OPTION_BIND_def, 0);
+val OPTION_BIND_CONV =
+  (*REWRITE_CONV [optionTheory.OPTION_BIND_def]*)
+  (IFC
+    (TRY_CONV (REWR_CONV (option_bind_def_1)))
+    (ALL_CONV)
+    (TRY_CONV (REWR_CONV (option_bind_def_0)))
+  );
+val includes_vs_EMPTY_thm = prove(``bir_envty_includes_vs envty EMPTY = T``, fs[bir_symbTheory.bir_envty_includes_vs_EMPTY]);
+fun bir_envty_includes_vs_CONV eq_thms tm = (
+  if (pred_setSyntax.is_insert o rand) tm then
+    REWR_CONV bir_envTheory.bir_envty_includes_vs_INSERT THENC
+    CONJL_CONV
+      (REWR_CONV bir_envty_includes_v_senv_gen_env_thm THENC
+        LHS_CONV (
+          LAND_CONV (
+            RAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def) THENC
+            birs_gen_env_exp_CONV eq_thms
+          ) THENC
+          OPTION_BIND_CONV THENC
+          type_of_bir_exp_CONV
+        ) THENC
+        RHS_CONV (RAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def)) THENC
+        REWRITE_CONV [optionTheory.SOME_11, optionTheory.NOT_SOME_NONE, GSYM optionTheory.NOT_SOME_NONE] THENC
+        aux_setLib.bir_type_EQ_CONV)
+      (bir_envty_includes_vs_CONV eq_thms)
+  else
+    REWR_CONV includes_vs_EMPTY_thm
+  ) tm;
+
 fun birs_senv_typecheck_CONV eq_thms = (
   (* TODO: this can be optimized: reuse vars_of_exp, and
        construct EnvTy (maybe good as list as with gen_env, maybe can even reuse gen_env?),
        then use bir_symbTheory.birs_senv_typecheck_thm and
-       go through the symbol set one by one with bir_envTheory.bir_envty_includes_vs_INSERT
+       go through the symbol set one by one with bir_envTheory.bir_envty_includes_vs_INSERT, bir_symbTheory.bir_envty_includes_vs_EMPTY
+       for each use bir_envty_includes_v_senv_gen_env_thm
        also: use deabbr_CONV *)
   (*(fn x => (print "\n\n"; print_term x; print "\n\n"; REFL x)) THENC*)
+  REWR_CONV bir_symbTheory.birs_senv_typecheck_thm THENC
+  RAND_CONV (bir_vars_ofLib.bir_vars_of_exp_DIRECT_CONV) THENC
+  bir_envty_includes_vs_CONV eq_thms
+  (*
   RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
   REWRITE_CONV eq_thms THENC
   type_of_bir_exp_CONV THENC
   EVAL
+  *)
 );
 val birs_senv_typecheck_CONV = fn x => Profile.profile "senv_typecheck_CONV" (birs_senv_typecheck_CONV x);
 
@@ -914,8 +959,14 @@ val firstcase =
   REWRITE_CONV [pairTheory.SND, optionTheory.THE_DEF, bir_valuesTheory.bir_type_t_case_def] THENC
   LIST_BETA_CONV THENC
   REWRITE_CONV [bir_immTheory.bir_immtype_t_case_def];
-  val option_bind_def_1 = List.nth(CONJUNCTS optionTheory.OPTION_BIND_def, 1);
-  val option_bind_def_0 = List.nth(CONJUNCTS optionTheory.OPTION_BIND_def, 0);
+fun birs_gen_env_CONV eq_thms =
+  RATOR_CONV (deabbr_CONV eq_thms) THENC
+  REPEATC (
+    REWR_CONV birs_gen_env_GET_thm THENC
+    CHANGED_CONV
+      (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+  ) THENC
+  TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm);
 fun birs_exec_stmtB_CONV eq_thms tm =
 let
   (* evaluate to symbolic expression *)
@@ -936,20 +987,9 @@ in
           LAND_CONV (RATOR_CONV (unabbrev_conv eq_thms)) THENC
           RATOR_CONV (RAND_CONV (
             RAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def) THENC
-            RATOR_CONV (deabbr_CONV eq_thms) THENC
-            REPEATC (
-              REWR_CONV birs_gen_env_GET_thm THENC
-              CHANGED_CONV
-                (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
-            ) THENC
-            TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm)
+            birs_gen_env_CONV eq_thms
           )) THENC
-          (*REWRITE_CONV [optionTheory.OPTION_BIND_def]*)
-          (IFC
-            (TRY_CONV (REWR_CONV (option_bind_def_1)))
-            (ALL_CONV)
-            (TRY_CONV (REWR_CONV (option_bind_def_0)))
-          ) THENC
+          OPTION_BIND_CONV THENC
           type_of_bir_exp_CONV
         )) THENC
         EVAL
