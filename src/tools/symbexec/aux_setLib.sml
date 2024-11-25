@@ -84,6 +84,36 @@ in (* local *)
   *)
 
   local
+    open listSyntax;
+    val filter_empty_thm = CONJUNCT1 listTheory.FILTER;
+    val filter_cons_thm = CONJUNCT2 listTheory.FILTER;
+    (* this function is not end-recursive *)
+    fun FILTER_CONV_helper ite_conv tm =
+      (if (is_cons o snd o dest_filter) tm then
+        REWR_CONV filter_cons_thm THENC
+        ite_conv THENC
+        (fn tm_ =>
+          (if is_filter tm_ then
+              FILTER_CONV_helper ite_conv
+            else if is_cons tm_ then
+              RAND_CONV (FILTER_CONV_helper ite_conv)
+            (*else if is_nil tm_ then
+              ALL_CONV*)
+            else raise ERR "FILTER_CONV" "unexpected")
+          tm_)
+      else
+        REWR_CONV filter_empty_thm) tm;
+  in
+    fun FILTER_CONV p_conv tm =
+      let
+        val ite_conv = ITE_CONV p_conv;
+      in
+        FILTER_CONV_helper ite_conv tm
+        handle e => (print_term tm; raise wrap_exn ("@FILTER_CONV") e)
+      end;
+  end
+
+  local
     val inter_empty_thm = CONJUNCT1 pred_setTheory.INTER_EMPTY;
     (* this function is not end-recursive *)
     fun INTER_CONV_helper ite_conv tm =
@@ -95,8 +125,8 @@ in (* local *)
               INTER_CONV_helper ite_conv
             else if is_insert tm_ then
               RAND_CONV (INTER_CONV_helper ite_conv)
-            else if is_empty tm_ then
-              ALL_CONV
+            (*else if is_empty tm_ then
+              ALL_CONV*)
             else raise ERR "INTER_CONV" "unexpected")
           tm_)
       else

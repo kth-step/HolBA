@@ -47,20 +47,20 @@ in (* local *)
 
 (* ---------------------------------------------------------------------------------------- *)
 
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-in
- val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
-end;
+  local
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "option"
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  in
+    val (OPTION_BIND_tm,  mk_OPTION_BIND, dest_OPTION_BIND, is_OPTION_BIND)  = syntax_fns2 "OPTION_BIND";
+  end;
 
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
- open bir_programTheory;
-in
- val (bir_get_current_statement_tm,  mk_bir_get_current_statement, dest_bir_get_current_statement, is_bir_get_current_statement)  = syntax_fns2 "bir_get_current_statement";
-end;
+  local
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    open bir_programTheory;
+  in
+    val (bir_get_current_statement_tm,  mk_bir_get_current_statement, dest_bir_get_current_statement, is_bir_get_current_statement)  = syntax_fns2 "bir_get_current_statement";
+  end;
 
 (*
 local
@@ -72,125 +72,133 @@ in
 end;
 *)
 
-local
-  open birs_auxTheory;
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
-  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-in
-  val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
-  val (bir_senv_GEN_list_tm,  mk_bir_senv_GEN_list, dest_bir_senv_GEN_list, is_bir_senv_GEN_list)  = syntax_fns1_env "bir_senv_GEN_list";
-  val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
-  
-  val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
-end;
+  local
+    open birs_auxTheory;
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_aux"
+    val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  in
+    val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
+    val (bir_senv_GEN_list_tm,  mk_bir_senv_GEN_list, dest_bir_senv_GEN_list, is_bir_senv_GEN_list)  = syntax_fns1_env "bir_senv_GEN_list";
+    val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
+    
+    val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
+  end;
 
-local
-  open birs_rulesTheory;
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_rules"
-  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-  val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
-in
-  val (birs_symb_exec_tm,  mk_birs_symb_exec, dest_birs_symb_exec, is_birs_symb_exec)  = syntax_fns2 "birs_symb_exec";
-  val (birs_symb_symbols_set_tm,  mk_birs_symb_symbols_set, dest_birs_symb_symbols_set, is_birs_symb_symbols_set)  = syntax_fns1_set "birs_symb_symbols_set";
-  val (birs_freesymbs_tm,  mk_birs_freesymbs, dest_birs_freesymbs, is_birs_freesymbs)  = syntax_fns2_set "birs_freesymbs";
-  val (birs_pcondinf_tm,  mk_birs_pcondinf, dest_birs_pcondinf, is_birs_pcondinf)  = syntax_fns1 "birs_pcondinf";
-end;
+  local
+    open birs_rulesTheory;
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "birs_rules"
+    val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+  in
+    val (birs_symb_exec_tm,  mk_birs_symb_exec, dest_birs_symb_exec, is_birs_symb_exec)  = syntax_fns2 "birs_symb_exec";
+    val (birs_symb_symbols_set_tm,  mk_birs_symb_symbols_set, dest_birs_symb_symbols_set, is_birs_symb_symbols_set)  = syntax_fns1_set "birs_symb_symbols_set";
+    val (birs_freesymbs_tm,  mk_birs_freesymbs, dest_birs_freesymbs, is_birs_freesymbs)  = syntax_fns2_set "birs_freesymbs";
+    val (birs_pcondinf_tm,  mk_birs_pcondinf, dest_birs_pcondinf, is_birs_pcondinf)  = syntax_fns1 "birs_pcondinf";
+  end;
 
-local
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb";
-  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-  val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
-  val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
-  val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-  val syntax_fns3_set = syntax_fns 4 HolKernel.dest_triop HolKernel.mk_triop;
-in
- val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
- 
- val (birs_update_env_tm,  mk_birs_update_env, dest_birs_update_env, is_birs_update_env)  = syntax_fns2_env "birs_update_env";
- 
- val (birs_exec_step_tm,  mk_birs_exec_step, dest_birs_exec_step, is_birs_exec_step)  = syntax_fns2_set "birs_exec_step";
- 
- val (birs_symb_to_symbst_tm,  mk_birs_symb_to_symbst, dest_birs_symb_to_symbst, is_birs_symb_to_symbst)  = syntax_fns1 "birs_symb_to_symbst";
- 
- val (birs_symbval_concretizations_tm,  mk_birs_symbval_concretizations, dest_birs_symbval_concretizations, is_birs_symbval_concretizations)  = syntax_fns2_set "birs_symbval_concretizations";
+  local
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb";
+    val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns2_env = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+    val syntax_fns3_set = syntax_fns 4 HolKernel.dest_triop HolKernel.mk_triop;
+  in
+    val (birs_senv_typecheck_tm,  mk_birs_senv_typecheck, dest_birs_senv_typecheck, is_birs_senv_typecheck)  = syntax_fns2 "birs_senv_typecheck";
+    
+    val (birs_update_env_tm,  mk_birs_update_env, dest_birs_update_env, is_birs_update_env)  = syntax_fns2_env "birs_update_env";
+    
+    val (birs_exec_step_tm,  mk_birs_exec_step, dest_birs_exec_step, is_birs_exec_step)  = syntax_fns2_set "birs_exec_step";
+    
+    val (birs_symb_to_symbst_tm,  mk_birs_symb_to_symbst, dest_birs_symb_to_symbst, is_birs_symb_to_symbst)  = syntax_fns1 "birs_symb_to_symbst";
+    
+    val (birs_symbval_concretizations_tm,  mk_birs_symbval_concretizations, dest_birs_symbval_concretizations, is_birs_symbval_concretizations)  = syntax_fns2_set "birs_symbval_concretizations";
 
- val (birs_eval_label_exp_tm,  mk_birs_eval_label_exp, dest_birs_eval_label_exp, is_birs_eval_label_exp)  = syntax_fns3 "birs_eval_label_exp";
+    val (birs_eval_label_exp_tm,  mk_birs_eval_label_exp, dest_birs_eval_label_exp, is_birs_eval_label_exp)  = syntax_fns3 "birs_eval_label_exp";
 
- val (birs_eval_exp_tm,  mk_birs_eval_exp, dest_birs_eval_exp, is_birs_eval_exp)  = syntax_fns2 "birs_eval_exp";
- val (birs_eval_exp_subst_tm,  mk_birs_eval_exp_subst, dest_birs_eval_exp_subst, is_birs_eval_exp_subst)  = syntax_fns2 "birs_eval_exp_subst";
- val (birs_eval_exp_subst_var_tm,  mk_birs_eval_exp_subst_var, dest_birs_eval_exp_subst_var, is_birs_eval_exp_subst_var)  = syntax_fns2 "birs_eval_exp_subst_var";
+    val (birs_eval_exp_tm,  mk_birs_eval_exp, dest_birs_eval_exp, is_birs_eval_exp)  = syntax_fns2 "birs_eval_exp";
+    val (birs_eval_exp_subst_tm,  mk_birs_eval_exp_subst, dest_birs_eval_exp_subst, is_birs_eval_exp_subst)  = syntax_fns2 "birs_eval_exp_subst";
+    val (birs_eval_exp_subst_var_tm,  mk_birs_eval_exp_subst_var, dest_birs_eval_exp_subst_var, is_birs_eval_exp_subst_var)  = syntax_fns2 "birs_eval_exp_subst_var";
 
- val (birs_exec_stmt_jmp_tm,  mk_birs_exec_stmt_jmp, dest_birs_exec_stmt_jmp, is_birs_exec_stmt_jmp)  = syntax_fns3_set "birs_exec_stmt_jmp";
- val (birs_exec_stmt_tm,  mk_birs_exec_stmt, dest_birs_exec_stmt, is_birs_exec_stmt)  = syntax_fns3_set "birs_exec_stmt";
+    val (birs_exec_stmt_jmp_tm,  mk_birs_exec_stmt_jmp, dest_birs_exec_stmt_jmp, is_birs_exec_stmt_jmp)  = syntax_fns3_set "birs_exec_stmt_jmp";
+    val (birs_exec_stmt_tm,  mk_birs_exec_stmt, dest_birs_exec_stmt, is_birs_exec_stmt)  = syntax_fns3_set "birs_exec_stmt";
 
- val birs_state_t_ty = mk_type ("birs_state_t", []);
- fun dest_birs_state tm = let
-  val (ty, l) = TypeBase.dest_record tm
-  val _ = if ty = birs_state_t_ty then () else fail()
-  val pc = Lib.assoc "bsst_pc" l
-  val env = Lib.assoc "bsst_environ" l
-  val status = Lib.assoc "bsst_status" l
-  val pcond = Lib.assoc "bsst_pcond" l
- in
-  (pc, env, status, pcond)
- end handle e => (print_term tm; raise wrap_exn "dest_bir_state" e);
+    val birs_state_t_ty = mk_type ("birs_state_t", []);
+    fun dest_birs_state tm = let
+      val (ty, l) = TypeBase.dest_record tm
+      val _ = if ty = birs_state_t_ty then () else fail()
+      val pc = Lib.assoc "bsst_pc" l
+      val env = Lib.assoc "bsst_environ" l
+      val status = Lib.assoc "bsst_status" l
+      val pcond = Lib.assoc "bsst_pcond" l
+    in
+      (pc, env, status, pcond)
+    end handle e => (print_term tm; raise wrap_exn "dest_bir_state" e);
 
- val is_birs_state = can dest_birs_state;
+    val is_birs_state = can dest_birs_state;
 
- fun mk_birs_state (pc, env, status, pcond) = let
-  val l = [("bsst_pc", pc),
-           ("bsst_environ", env),
-           ("bsst_status", status),
-           ("bsst_pcond", pcond)];
- in
-  TypeBase.mk_record (birs_state_t_ty, l)
- end handle e => raise wrap_exn "mk_birs_state" e;
+    fun mk_birs_state (pc, env, status, pcond) = let
+      val l = [("bsst_pc", pc),
+              ("bsst_environ", env),
+              ("bsst_status", status),
+              ("bsst_pcond", pcond)];
+      in
+          TypeBase.mk_record (birs_state_t_ty, l)
+      end handle e => raise wrap_exn "mk_birs_state" e;
 
- val dest_birs_state_pc =
-   ((fn (x,_,_,_) => x) o dest_birs_state);
- val dest_birs_state_env =
-   ((fn (_,x,_,_) => x) o dest_birs_state);
- val dest_birs_state_status =
-   ((fn (_,_,x,_) => x) o dest_birs_state);
- val dest_birs_state_pcond =
-   ((fn (_,_,_,x) => x) o dest_birs_state);
+    val dest_birs_state_pc =
+      ((fn (x,_,_,_) => x) o dest_birs_state);
+    val dest_birs_state_env =
+      ((fn (_,x,_,_) => x) o dest_birs_state);
+    val dest_birs_state_status =
+      ((fn (_,_,x,_) => x) o dest_birs_state);
+    val dest_birs_state_pcond =
+      ((fn (_,_,_,x) => x) o dest_birs_state);
 
-val birs_state_is_running = identical bir_programSyntax.BST_Running_tm o dest_birs_state_status;
+    val birs_state_is_running = identical bir_programSyntax.BST_Running_tm o dest_birs_state_status;
 
- (* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
-end
+    (* val (_tm,  mk_, dest_, is_)  = syntax_fns2_set "";*)
+  end
 
-local
-  open bir_symb_sound_coreTheory;
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_sound_core";
-  val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
-in
-  val (birs_symb_symbols_tm,  mk_birs_symb_symbols, dest_birs_symb_symbols, is_birs_symb_symbols)  = syntax_fns1_set "birs_symb_symbols";
-end
+  local
+    open bir_symb_soundTheory;
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_sound";
+    val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+  in
+    val (bir_prog_has_no_halt_tm,  mk_bir_prog_has_no_halt, dest_bir_prog_has_no_halt, is_bir_prog_has_no_halt)  = syntax_fns1 "bir_prog_has_no_halt";
+  end
 
-local
-  open bir_symb_simpTheory;
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_simp";
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-  val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-in
-  val (birs_simplification_tm,  mk_birs_simplification, dest_birs_simplification, is_birs_simplification)  = syntax_fns3 "birs_simplification";
-  val (birs_exp_imp_tm,  mk_birs_exp_imp, dest_birs_exp_imp, is_birs_exp_imp)  = syntax_fns2 "birs_exp_imp";
-end
+  local
+    open bir_symb_sound_coreTheory;
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_sound_core";
+    val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
+  in
+    val (birs_symb_symbols_tm,  mk_birs_symb_symbols, dest_birs_symb_symbols, is_birs_symb_symbols)  = syntax_fns1_set "birs_symb_symbols";
+  end
 
-local
-  open distribute_generic_stuffTheory;
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "distribute_generic_stuff";
-  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-in
-  val (mk_bsysprecond_tm,  mk_mk_bsysprecond, dest_mk_bsysprecond, is_mk_bsysprecond)  = syntax_fns2 "mk_bsysprecond";
-end
+  local
+    open bir_symb_simpTheory;
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_simp";
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+  in
+    val (birs_simplification_tm,  mk_birs_simplification, dest_birs_simplification, is_birs_simplification)  = syntax_fns3 "birs_simplification";
+    val (birs_exp_imp_tm,  mk_birs_exp_imp, dest_birs_exp_imp, is_birs_exp_imp)  = syntax_fns2 "birs_exp_imp";
+  end
+
+  local
+    open distribute_generic_stuffTheory;
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "distribute_generic_stuff";
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  in
+    val (mk_bsysprecond_tm,  mk_mk_bsysprecond, dest_mk_bsysprecond, is_mk_bsysprecond)  = syntax_fns2 "mk_bsysprecond";
+  end
 
 
 (* ====================================================================================== *)
