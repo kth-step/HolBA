@@ -8,6 +8,8 @@ open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
 
+open bir_extra_expsTheory;
+
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
 open bir_compositionLib;
@@ -56,6 +58,56 @@ Definition chacha_line:
   m
 End
 
+Theorem word32_le_31_eq:
+ !(w:word32). w <=+ 31w ==> 31w && w = w
+Proof
+ blastLib.BBLAST_TAC
+QED
+
+Theorem replace_word_rol_bv_or_shifts:
+ !x s : word32. s <=+ 31w ==>
+  x #<<~ s = (x <<~ s) || (x >>>~ (32w - s))
+Proof
+ rw [] >>
+ `dimindex (:32) = 2 ** 5` by rw [] >>
+ MP_TAC (Q.SPECL [`5`, `x`, `s`] (INST_TYPE [Type.alpha |-> ``:32``] word_rol_OR_SHIFT)) >>
+ rw [word32_le_31_eq]
+QED
+
+Definition chacha_line_alt:
+ chacha_line_alt (a:word64) (b:word64) (d:word64) (s:word32)
+  (m:word64 -> word64) =
+  let m = (a =+ (sw2sw: word32 -> word64) ((w2w (m a)) + (w2w (m b)))) m in
+  let m = (d =+ 
+   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) <<~ s))
+   ||
+   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) >>>~ (32w - s)))
+  ) m
+  in m
+End
+
+Theorem chacha_line_expand:
+ !a b d s m. s <=+ 31w ==>
+  chacha_line a b d s m = 
+   (let m = (a =+ (m a) + (m b)) m in
+    let m = (d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s))) m
+    in m)  
+Proof
+ rw [chacha_line,replace_word_rol_bv_or_shifts]
+QED
+
+Theorem chacha_line_alt_eq[local]:
+ !a b d s m x.
+  s <=+ 31w ==>
+  (w2w o (chacha_line (w2w a) (w2w b) (w2w d) s (\w. w2w (m (w2w w))) o w2w)) x =
+  chacha_line_alt a b d s m x
+Proof
+ rw [chacha_line_expand,chacha_line_alt] >>
+ rw [combinTheory.APPLY_UPDATE_THM] >>
+ cheat
+ (*rw [sw2sw_w2w]*)
+QED
+
 (*
 op quarter_round a b c d : shuffle =
   line a b d 16 \oo
@@ -66,6 +118,14 @@ op quarter_round a b c d : shuffle =
 
 Definition chacha_quarter_round:
  chacha_quarter_round (a:word32) (b:word32) (c:word32) (d:word32) =
+  chacha_line c d b 7w o
+  chacha_line a b d 8w o 
+  chacha_line c d b 12w o 
+  chacha_line a b d 16w
+End
+
+Definition chacha_quarter_round_alt:
+ chacha_quarter_round_alt (a:word32) (b:word32) (c:word32) (d:word32) =
   chacha_line c d b 7w o
   chacha_line a b d 8w o 
   chacha_line c d b 12w o 
