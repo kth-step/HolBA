@@ -58,6 +58,26 @@ Definition chacha_line:
   m
 End
 
+Definition chacha_line_alt:
+ chacha_line_alt (a:word32) (b:word32) (d:word32) (s:word32)
+  (m:word32 -> word32) =
+ let m = (a =+ (m a) + (m b)) m in
+ let m = (d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s))) m in
+ m
+End
+
+Definition chacha_line_alt_word64:
+ chacha_line_alt_word64 (a:word64) (b:word64) (d:word64) (s:word32)
+  (m:word64 -> word64) =
+  let m = (a =+ (sw2sw: word32 -> word64) ((w2w (m a)) + (w2w (m b)))) m in
+  let m = (d =+ 
+   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) <<~ s))
+   ||
+   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) >>>~ (32w - s)))
+  ) m
+  in m
+End
+
 Theorem word32_le_31_eq:
  !(w:word32). w <=+ 31w ==> 31w && w = w
 Proof
@@ -74,18 +94,6 @@ Proof
  rw [word32_le_31_eq]
 QED
 
-Definition chacha_line_alt:
- chacha_line_alt (a:word64) (b:word64) (d:word64) (s:word32)
-  (m:word64 -> word64) =
-  let m = (a =+ (sw2sw: word32 -> word64) ((w2w (m a)) + (w2w (m b)))) m in
-  let m = (d =+ 
-   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) <<~ s))
-   ||
-   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) >>>~ (32w - s)))
-  ) m
-  in m
-End
-
 Theorem chacha_line_expand:
  !a b d s m. s <=+ 31w ==>
   chacha_line a b d s m = 
@@ -96,7 +104,14 @@ Proof
  rw [chacha_line,replace_word_rol_bv_or_shifts]
 QED
 
-Theorem chacha_line_alt_eq[local]:
+Theorem chacha_line_alt_eq:
+ !a b d s m. s <=+ 31w ==>
+  chacha_line a b d s m = chacha_line_alt a b d s m
+Proof
+ rw [chacha_line_expand,chacha_line_alt]
+QED
+
+Theorem chacha_line_alt_word64_eq[local]:
  !a b d s m x.
   s <=+ 31w ==>
   (w2w o (chacha_line (w2w a) (w2w b) (w2w d) s (\w. w2w (m (w2w w))) o w2w)) x =
@@ -126,11 +141,24 @@ End
 
 Definition chacha_quarter_round_alt:
  chacha_quarter_round_alt (a:word32) (b:word32) (c:word32) (d:word32) =
-  chacha_line c d b 7w o
-  chacha_line a b d 8w o 
-  chacha_line c d b 12w o 
-  chacha_line a b d 16w
+  chacha_line_alt c d b 7w o
+  chacha_line_alt a b d 8w o 
+  chacha_line_alt c d b 12w o 
+  chacha_line_alt a b d 16w
 End
+
+Theorem chacha_quarter_round_alt_eq:
+ !a b c d m.
+ chacha_quarter_round a b c d m = 
+ chacha_quarter_round_alt a b c d m
+Proof
+ rw [chacha_quarter_round,chacha_quarter_round_alt] >>
+ `(7w:word32) <=+ 31w` by rw [] >>
+ `(8w:word32) <=+ 31w` by rw [] >>
+ `(12w:word32) <=+ 31w` by rw [] >>
+ `(16w:word32) <=+ 31w` by rw [] >>
+ rw [chacha_line_alt_eq]
+QED
 
 (*
 op column_round : shuffle =
@@ -415,6 +443,8 @@ End
 3.  a += b; d ^= a; d <<<= 8;
 4.  c += d; b ^= c; b <<<= 7;
 
+----
+
 x20 <- x10 + x22  // a += b
 x26 <- x20 ^ x26  // d ^= a
 x10 <- x26 lsl 16
@@ -424,6 +454,15 @@ x10 <- x10 | x26  // d <<<= 16
 RESULT:
 a: x20 <- x10 + x22
 d: x10 <- (((x10 + x22) ^ x26) lsl 16) | (((x10 + x22) ^ x26) lsr 16)
+
+---
+
+a: x20
+d: x10
+c: x8
+b: x22
+
+---
 
 x8 <- x28 + x10   // c += d
 x22 <- x8 ^ x22   // b ^= c
