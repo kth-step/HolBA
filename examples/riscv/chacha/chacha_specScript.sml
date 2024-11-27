@@ -571,26 +571,25 @@ val bspec_chacha_quarterround_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_x10))``,
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Den (BVar "x20" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x20))``,
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x20" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_x20))``,
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Den (BVar "x22" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x22))``,
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_x22))``,
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Den (BVar "x26" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x26))``
-  
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x26" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_x26))``  
 ];
 
 Definition bspec_chacha_quarterround_pre_def:
- bspec_chacha_quarterround_pre (pre_x10:word64) 
-  (pre_x20:word64) (pre_x22:word64) (pre_x26:word64) : bir_exp_t =
+ bspec_chacha_quarterround_pre (pre_x10:word32) 
+  (pre_x20:word32) (pre_x22:word32) (pre_x26:word32) : bir_exp_t =
   ^bspec_chacha_quarterround_pre_tm
 End
 
@@ -639,6 +638,16 @@ Definition bspec_chacha_quarterround_exp_1:
      Bit32) Bit64)
 End
 
+Definition bspec_chacha_quarterround_exp_1_imm32:
+ bspec_chacha_quarterround_exp_1_imm32 varname pre_1 pre_2 : bir_exp_t =
+ BExp_BinPred
+   BIExp_Equal
+   (BExp_Cast BIExp_LowCast (BExp_Den (BVar varname (BType_Imm Bit64))) Bit32)
+   (BExp_BinExp BIExp_Plus
+     (BExp_Const (Imm32 pre_1))
+     (BExp_Const (Imm32 pre_2)))
+End
+
 Definition bspec_chacha_quarterround_exp_2:
  bspec_chacha_quarterround_exp_2 varname pre_1 pre_2 pre_3 (s:word32) : bir_exp_t =
   BExp_BinPred
@@ -667,16 +676,38 @@ Definition bspec_chacha_quarterround_exp_2:
       (BExp_Const (Imm32 (32w-s)))) Bit64))
 End
 
+Definition bspec_chacha_quarterround_exp_2_imm32:
+ bspec_chacha_quarterround_exp_2_imm32 varname pre_1 pre_2 pre_3 (s:word32) : bir_exp_t =
+  BExp_BinPred
+   BIExp_Equal
+   (BExp_Cast BIExp_LowCast (BExp_Den (BVar varname (BType_Imm Bit64))) Bit32)
+   (BExp_BinExp BIExp_Or
+     (BExp_BinExp BIExp_LeftShift 
+      (BExp_BinExp BIExp_Xor
+        (BExp_BinExp BIExp_Plus
+         (BExp_Const (Imm32 pre_1))
+         (BExp_Const (Imm32 pre_2)))
+        (BExp_Const (Imm32 pre_3)))
+     (BExp_Const (Imm32 s)))
+     (BExp_BinExp BIExp_RightShift
+      (BExp_BinExp BIExp_Xor
+        (BExp_BinExp BIExp_Plus
+         (BExp_Const (Imm32 pre_1))
+         (BExp_Const (Imm32 pre_2)))
+        (BExp_Const (Imm32 pre_3)))
+      (BExp_Const (Imm32 (32w-s)))))
+End
+
 val bspec_chacha_quarterround_post_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_1 "x20" pre_x10 pre_x22``),
+   (EVAL ``bspec_chacha_quarterround_exp_1_imm32 "x20" pre_x10 pre_x22``),
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_2 "x10" pre_x10 pre_x22 pre_x26 (16w:word32)``)
+   (EVAL ``bspec_chacha_quarterround_exp_2_imm32 "x10" pre_x10 pre_x22 pre_x26 (16w:word32)``)
 ];
 
 Definition bspec_chacha_quarterround_post_def:
- bspec_chacha_quarterround_post (pre_x10:word64) 
-  (pre_x20:word64) (pre_x22:word64) (pre_x26:word64)
+ bspec_chacha_quarterround_post (pre_x10:word32) 
+  (pre_x20:word32) (pre_x22:word32) (pre_x26:word32)
   : bir_exp_t =
   ^bspec_chacha_quarterround_post_tm
 End
