@@ -176,6 +176,21 @@ Definition chacha_column_round:
   chacha_quarter_round 0w 4w 8w 12w
 End
 
+Definition chacha_column_round_alt:
+ chacha_column_round_alt =
+  chacha_quarter_round_alt 3w 7w 11w 15w o
+  chacha_quarter_round_alt 2w 6w 10w 14w o
+  chacha_quarter_round_alt 1w 5w 9w 13w o
+  chacha_quarter_round_alt 0w 4w 8w 12w
+End
+
+Theorem chacha_column_round_alt_eq:
+ !m. chacha_column_round m = chacha_column_round_alt m
+Proof
+ rw [chacha_column_round,chacha_column_round_alt] >>
+ rw [chacha_quarter_round_alt_eq]
+QED
+
 (*
 op diagonal_round : shuffle =
   quarter_round 0 5 10 15 \oo
@@ -192,6 +207,21 @@ Definition chacha_diagonal_round:
   chacha_quarter_round 0w 5w 10w 15w
 End
 
+Definition chacha_diagonal_round_alt:
+ chacha_diagonal_round_alt =
+  chacha_quarter_round_alt 3w 4w 9w 14w o
+  chacha_quarter_round_alt 2w 7w 8w 13w o
+  chacha_quarter_round_alt 1w 6w 11w 12w o
+  chacha_quarter_round_alt 0w 5w 10w 15w
+End
+
+Theorem chacha_diagonal_round_alt_eq:
+ !m. chacha_diagonal_round m = chacha_diagonal_round_alt m
+Proof
+ rw [chacha_diagonal_round,chacha_diagonal_round_alt] >>
+ rw [chacha_quarter_round_alt_eq]
+QED
+
 (*
 op double_round: shuffle =
   column_round \oo diagonal_round.
@@ -201,6 +231,18 @@ Definition chacha_double_round:
  chacha_double_round =
   chacha_diagonal_round o chacha_column_round
 End
+
+Definition chacha_double_round_alt:
+ chacha_double_round_alt =
+  chacha_diagonal_round_alt o chacha_column_round_alt
+End
+
+Theorem chacha_double_round_alt_eq:
+ !m. chacha_double_round m = chacha_double_round_alt m
+Proof
+ rw [chacha_double_round,chacha_double_round_alt] >>
+ rw [chacha_diagonal_round_alt_eq,chacha_column_round_alt_eq]
+QED
 
 Definition chacha_rounds:
  chacha_rounds =
@@ -215,6 +257,27 @@ Definition chacha_rounds:
   chacha_double_round o
   chacha_double_round
 End
+
+Definition chacha_rounds_alt:
+ chacha_rounds_alt =
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt o
+  chacha_double_round_alt
+End
+
+Theorem chacha_rounds_alt_eq:
+ !m. chacha_rounds m = chacha_rounds_alt m
+Proof
+ rw [chacha_rounds,chacha_rounds_alt] >>
+ rw [chacha_double_round_alt_eq]
+QED
 
 Definition chacha_add_16:
  chacha_add_16 (s: word32 -> word32)
@@ -245,10 +308,23 @@ Definition chacha_core:
   chacha_add_16 s' s
 End
 
+Definition chacha_core_alt:
+ chacha_core_alt (s:word32 -> word32) : word32 -> word32 =
+  let s' = chacha_rounds_alt s in
+  chacha_add_16 s' s
+End
+
+Theorem chacha_core_alt_eq:
+ !s. chacha_core s = chacha_core_alt s
+Proof
+ rw [chacha_core,chacha_core_alt] >>
+ rw [chacha_rounds_alt_eq]
+QED
+
 Definition chacha_setup:
- chacha_setup (k : word32 -> word32)
-  (n : word32 -> word32) (c : word32) : word32 -> word32 =
-  let m = ARB in
+ chacha_setup (m : word32 -> word32) 
+  (k : word32 -> word32) (n : word32 -> word32) (c : word32) 
+   : word32 -> word32 =
   let m = (0w =+ 0x61707865w) m in
   let m = (1w =+ 0x3320646ew) m in
   let m = (2w =+ 0x79622d32w) m in
