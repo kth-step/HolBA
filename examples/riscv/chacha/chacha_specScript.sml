@@ -575,6 +575,7 @@ Definition bspec_chacha_quarterround_pre_def:
   ^bspec_chacha_quarterround_pre_tm
 End
 
+(* a =+ (m a) + (m b) *)
 Definition bspec_chacha_quarterround_exp_1_imm32:
  bspec_chacha_quarterround_exp_1_imm32 varname pre_a pre_b : bir_exp_t =
  BExp_BinPred
@@ -585,6 +586,7 @@ Definition bspec_chacha_quarterround_exp_1_imm32:
      (BExp_Const (Imm32 pre_b)))
 End
 
+(* d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s)) *)
 Definition bspec_chacha_quarterround_exp_2_imm32:
  bspec_chacha_quarterround_exp_2_imm32 varname pre_a pre_b pre_d (s:word32) : bir_exp_t =
   BExp_BinPred
@@ -617,6 +619,41 @@ val bspec_chacha_quarterround_post_tm = bslSyntax.bandl [
 Definition bspec_chacha_quarterround_post_def:
  bspec_chacha_quarterround_post (pre_a:word32) (pre_b:word32) (pre_d:word32) : bir_exp_t =
   ^bspec_chacha_quarterround_post_tm
+End
+
+val bspec_chacha_quarterround_pre_other_tm = bslSyntax.bandl [
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_b))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_d))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_a))``  
+];
+
+Definition bspec_chacha_quarterround_pre_other_def:
+ bspec_chacha_quarterround_pre_other (pre_a:word32) (pre_b:word32) (pre_d:word32) : bir_exp_t =
+  ^bspec_chacha_quarterround_pre_other_tm
+End
+
+val bspec_chacha_quarterround_post_other_tm = bslSyntax.bandl [
+  (snd o dest_eq o concl)
+   (EVAL ``bspec_chacha_quarterround_exp_1_imm32 "x8" pre_a pre_b``),
+  (snd o dest_eq o concl)
+   (EVAL ``bspec_chacha_quarterround_exp_2_imm32 "x15" pre_a pre_b pre_d (12w:word32)``)
+];
+
+Definition bspec_chacha_quarterround_post_other_def:
+ bspec_chacha_quarterround_post_other (pre_a:word32) (pre_b:word32) (pre_d:word32) : bir_exp_t =
+  ^bspec_chacha_quarterround_post_other_tm
 End
 
 (* ----- *)
@@ -660,52 +697,6 @@ Definition bspec_chacha_quarterround_exp_2:
      (BExp_Const (Imm64 pre_3)))
        Bit32)
       (BExp_Const (Imm32 (32w-s)))) Bit64))
-End
-
-val bspec_chacha_quarterround_pre_other_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x8" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x8))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x22" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x22))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x28" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x28))``  
-];
-
-Definition bspec_chacha_quarterround_pre_other_def:
- bspec_chacha_quarterround_pre_other (pre_x8:word64) (pre_x10:word64) 
-  (pre_x15:word64) (pre_x22:word64) (pre_x28:word64) : bir_exp_t =
-  ^bspec_chacha_quarterround_pre_other_tm
-End
-
-val bspec_chacha_quarterround_post_other_tm = bslSyntax.bandl [
-  (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_1 "x8" pre_x28 pre_x10``),
-  (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_2 "x15" pre_x28 pre_x10 pre_x22 (12w:word32)``)
-];
-
-Definition bspec_chacha_quarterround_post_other_def:
- bspec_chacha_quarterround_post_other (pre_x8:word64)
-  (pre_x10:word64) (pre_x15:word64) (pre_x22:word64) (pre_x28:word64)
-  : bir_exp_t =
-  ^bspec_chacha_quarterround_post_other_tm
 End
 
 val _ = export_theory ();
