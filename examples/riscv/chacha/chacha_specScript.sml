@@ -66,18 +66,6 @@ Definition chacha_line_alt:
  m
 End
 
-Definition chacha_line_alt_word64:
- chacha_line_alt_word64 (a:word64) (b:word64) (d:word64) (s:word32)
-  (m:word64 -> word64) =
-  let m = (a =+ (sw2sw: word32 -> word64) ((w2w (m a)) + (w2w (m b)))) m in
-  let m = (d =+ 
-   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) <<~ s))
-   ||
-   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) >>>~ (32w - s)))
-  ) m
-  in m
-End
-
 Theorem word32_le_31_eq:
  !(w:word32). w <=+ 31w ==> 31w && w = w
 Proof
@@ -109,18 +97,6 @@ Theorem chacha_line_alt_eq:
   chacha_line a b d s m = chacha_line_alt a b d s m
 Proof
  rw [chacha_line_expand,chacha_line_alt]
-QED
-
-Theorem chacha_line_alt_word64_eq[local]:
- !a b d s m x.
-  s <=+ 31w ==>
-  (w2w o (chacha_line (w2w a) (w2w b) (w2w d) s (\w. w2w (m (w2w w))) o w2w)) x =
-  chacha_line_alt a b d s m x
-Proof
- rw [chacha_line_expand,chacha_line_alt] >>
- rw [combinTheory.APPLY_UPDATE_THM] >>
- cheat
- (*rw [sw2sw_w2w]*)
 QED
 
 (*
@@ -657,6 +633,30 @@ Definition bspec_chacha_quarterround_post_other_def:
 End
 
 (* ----- *)
+
+Definition chacha_line_alt_word64:
+ chacha_line_alt_word64 (a:word64) (b:word64) (d:word64) (s:word32)
+  (m:word64 -> word64) =
+  let m = (a =+ (sw2sw: word32 -> word64) ((w2w (m a)) + (w2w (m b)))) m in
+  let m = (d =+ 
+   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) <<~ s))
+   ||
+   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) >>>~ (32w - s)))
+  ) m
+  in m
+End
+
+Theorem chacha_line_alt_word64_eq[local]:
+ !a b d s m x.
+  s <=+ 31w ==>
+  (w2w o (chacha_line (w2w a) (w2w b) (w2w d) s (\w. w2w (m (w2w w))) o w2w)) x =
+  chacha_line_alt a b d s m x
+Proof
+ rw [chacha_line_expand,chacha_line_alt] >>
+ rw [combinTheory.APPLY_UPDATE_THM] >>
+ cheat
+ (*rw [sw2sw_w2w]*)
+QED
 
 Definition bspec_chacha_quarterround_exp_1:
  bspec_chacha_quarterround_exp_1 varname pre_1 pre_2 : bir_exp_t =
