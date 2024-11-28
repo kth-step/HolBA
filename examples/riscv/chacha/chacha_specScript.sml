@@ -459,6 +459,16 @@ Definition chacha_other_line_end_addr_def:
  chacha_other_line_end_addr : word64 = 0x108c8w
 End
 
+(* first quarter round *)
+
+Definition chacha_quarter_round_init_addr_def:
+  chacha_quarter_round_init_addr : word64 = 0x108a0w
+End
+
+Definition chacha_quarter_round_end_addr_def:
+  chacha_quarter_round_end_addr : word64 = 0x108f0w
+End
+
 (* --------------- *)
 (* BSPEC contracts *)
 (* --------------- *)
@@ -487,7 +497,7 @@ Definition bspec_chacha_ivsetup_pre_def:
   ^bspec_chacha_ivsetup_pre_tm
 End
 
-(* quarterround *)
+(* line *)
 
 (*
 1.  a += b; d ^= a; d <<<= 16;
@@ -634,6 +644,34 @@ val bspec_chacha_line_post_other_tm = bslSyntax.bandl [
 Definition bspec_chacha_line_post_other_def:
  bspec_chacha_line_post_other (pre_a:word32) (pre_b:word32) (pre_d:word32) : bir_exp_t =
   ^bspec_chacha_line_post_other_tm
+End
+
+val bspec_chacha_quarter_round_pre_tm = bslSyntax.bandl [
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
+  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_a))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_b))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_c))``,
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x26" (BType_Imm Bit64))) Bit32)
+    (BExp_Const (Imm32 pre_d))``  
+];
+
+Definition bspec_chacha_quarter_round_pre_def:
+ bspec_chacha_quarter_round_pre (pre_a:word32) (pre_b:word32)
+ (pre_c:word32) (pre_d:word32) : bir_exp_t =
+  ^bspec_chacha_quarter_round_pre_tm
 End
 
 (* ----- *)
