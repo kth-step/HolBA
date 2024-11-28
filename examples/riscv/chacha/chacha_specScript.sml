@@ -551,45 +551,45 @@ Definition bspec_chacha_quarterround_pre_def:
   ^bspec_chacha_quarterround_pre_tm
 End
 
-(* a =+ (m a) + (m b) *)
-Definition bspec_chacha_quarterround_exp_1_imm32:
- bspec_chacha_quarterround_exp_1_imm32 varname pre_a pre_b : bir_exp_t =
- BExp_BinPred
+Definition bspec_var_equal_32_lowcast_64_def:
+ bspec_var_equal_32_lowcast_64 var exp =
+  BExp_BinPred
    BIExp_Equal
-   (BExp_Cast BIExp_LowCast (BExp_Den (BVar varname (BType_Imm Bit64))) Bit32)
-   (BExp_BinExp BIExp_Plus
-     (BExp_Const (Imm32 pre_a))
-     (BExp_Const (Imm32 pre_b)))
+   (BExp_Cast BIExp_LowCast (BExp_Den (BVar var (BType_Imm Bit64))) Bit32)
+   exp
+End
+
+(* a =+ (m a) + (m b) *)
+Definition bspec_chacha_line_bir_exp_a_def:
+ bspec_chacha_line_bir_exp_a pre_a_exp pre_b_exp : bir_exp_t =
+  BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp
 End
 
 (* d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s)) *)
-Definition bspec_chacha_quarterround_exp_2_imm32:
- bspec_chacha_quarterround_exp_2_imm32 varname pre_a pre_b pre_d (s:word32) : bir_exp_t =
-  BExp_BinPred
-   BIExp_Equal
-   (BExp_Cast BIExp_LowCast (BExp_Den (BVar varname (BType_Imm Bit64))) Bit32)
-   (BExp_BinExp BIExp_Or
+Definition bspec_chacha_line_bir_exp_d_def:
+ bspec_chacha_line_bir_exp_d pre_a_exp pre_b_exp pre_d_exp (s:word32) : bir_exp_t =
+   BExp_BinExp BIExp_Or
      (BExp_BinExp BIExp_LeftShift 
       (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus
-         (BExp_Const (Imm32 pre_a))
-         (BExp_Const (Imm32 pre_b)))
-        (BExp_Const (Imm32 pre_d)))
+        (BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp)
+        pre_d_exp)
      (BExp_Const (Imm32 s)))
      (BExp_BinExp BIExp_RightShift
       (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus
-         (BExp_Const (Imm32 pre_a))
-         (BExp_Const (Imm32 pre_b)))
-        (BExp_Const (Imm32 pre_d)))
-      (BExp_Const (Imm32 (32w-s)))))
+        (BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp)
+        pre_d_exp)
+      (BExp_Const (Imm32 (32w-s))))
 End
 
 val bspec_chacha_quarterround_post_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_1_imm32 "x20" pre_a pre_b``),
+   (EVAL ``bspec_var_equal_32_lowcast_64 "x20"
+    (bspec_chacha_line_bir_exp_a
+     (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))``),
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_2_imm32 "x10" pre_a pre_b pre_d (16w:word32)``)
+   (EVAL ``bspec_var_equal_32_lowcast_64 "x10"
+    (bspec_chacha_line_bir_exp_d
+    (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)) (BExp_Const (Imm32 pre_d)) 16w)``)
 ];
 
 Definition bspec_chacha_quarterround_post_def:
@@ -622,9 +622,13 @@ End
 
 val bspec_chacha_quarterround_post_other_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_1_imm32 "x8" pre_a pre_b``),
+   (EVAL ``bspec_var_equal_32_lowcast_64 "x8"
+    (bspec_chacha_line_bir_exp_a
+     (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))``),
   (snd o dest_eq o concl)
-   (EVAL ``bspec_chacha_quarterround_exp_2_imm32 "x15" pre_a pre_b pre_d (12w:word32)``)
+   (EVAL ``bspec_var_equal_32_lowcast_64 "x15"
+    (bspec_chacha_line_bir_exp_d
+    (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)) (BExp_Const (Imm32 pre_d)) 12w)``)
 ];
 
 Definition bspec_chacha_quarterround_post_other_def:
@@ -633,6 +637,38 @@ Definition bspec_chacha_quarterround_post_other_def:
 End
 
 (* ----- *)
+
+Definition bspec_chacha_quarterround_exp_1_imm32:
+ bspec_chacha_quarterround_exp_1_imm32 bir_var pre_a pre_b : bir_exp_t =
+ BExp_BinPred
+   BIExp_Equal
+   (BExp_Cast BIExp_LowCast (BExp_Den (BVar bir_var (BType_Imm Bit64))) Bit32)
+   (BExp_BinExp BIExp_Plus
+     (BExp_Const (Imm32 pre_a))
+     (BExp_Const (Imm32 pre_b)))
+End
+
+Definition bspec_chacha_quarterround_exp_2_imm32:
+ bspec_chacha_quarterround_exp_2_imm32 varname pre_a pre_b pre_d (s:word32) : bir_exp_t =
+  BExp_BinPred
+   BIExp_Equal
+   (BExp_Cast BIExp_LowCast (BExp_Den (BVar varname (BType_Imm Bit64))) Bit32)
+   (BExp_BinExp BIExp_Or
+     (BExp_BinExp BIExp_LeftShift 
+      (BExp_BinExp BIExp_Xor
+        (BExp_BinExp BIExp_Plus
+         (BExp_Const (Imm32 pre_a))
+         (BExp_Const (Imm32 pre_b)))
+        (BExp_Const (Imm32 pre_d)))
+     (BExp_Const (Imm32 s)))
+     (BExp_BinExp BIExp_RightShift
+      (BExp_BinExp BIExp_Xor
+        (BExp_BinExp BIExp_Plus
+         (BExp_Const (Imm32 pre_a))
+         (BExp_Const (Imm32 pre_b)))
+        (BExp_Const (Imm32 pre_d)))
+      (BExp_Const (Imm32 (32w-s)))))
+End
 
 Definition chacha_line_alt_word64:
  chacha_line_alt_word64 (a:word64) (b:word64) (d:word64) (s:word32)
