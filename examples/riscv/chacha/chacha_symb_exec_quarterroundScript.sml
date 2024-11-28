@@ -90,21 +90,21 @@ val _ = show_tags := true;
 val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_chacha_prog_def
-  chacha_quarterround_init_addr_def [chacha_quarterround_end_addr_def]
-  bspec_chacha_quarterround_pre_def chacha_birenvtyl_def;
+  chacha_line_init_addr_def [chacha_line_end_addr_def]
+  bspec_chacha_line_pre_def chacha_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
-Theorem chacha_quarterround_symb_analysis_thm = symb_analysis_thm
+Theorem chacha_line_symb_analysis_thm = symb_analysis_thm
 
 val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_chacha_prog_def
-  chacha_other_quarterround_init_addr_def [chacha_other_quarterround_end_addr_def]
-  bspec_chacha_quarterround_pre_other_def chacha_birenvtyl_def;
+  chacha_other_line_init_addr_def [chacha_other_line_end_addr_def]
+  bspec_chacha_line_pre_other_def chacha_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
-Theorem chacha_other_quarterround_symb_analysis_thm = symb_analysis_thm
+Theorem chacha_other_line_symb_analysis_thm = symb_analysis_thm
 
 val _ = export_theory ();
