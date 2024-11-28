@@ -4,6 +4,8 @@ open markerTheory;
 
 open wordsTheory;
 
+open pairTheory;
+
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
@@ -672,6 +674,73 @@ Definition bspec_chacha_quarter_round_pre_def:
  bspec_chacha_quarter_round_pre (pre_a:word32) (pre_b:word32)
  (pre_c:word32) (pre_d:word32) : bir_exp_t =
   ^bspec_chacha_quarter_round_pre_tm
+End
+
+Definition bspec_chacha_line_bir_exp_fst_def:
+ bspec_chacha_line_bir_exp_fst pre_a_exp pre_b_exp : bir_exp_t =
+  BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp
+End
+
+Definition bspec_chacha_line_bir_exp_snd_def:
+ bspec_chacha_line_bir_exp_snd pre_a_exp pre_d_exp (s:word32) : bir_exp_t =
+   BExp_BinExp BIExp_Or
+     (BExp_BinExp BIExp_LeftShift 
+      (BExp_BinExp BIExp_Xor pre_a_exp pre_d_exp)
+     (BExp_Const (Imm32 s)))
+     (BExp_BinExp BIExp_RightShift
+      (BExp_BinExp BIExp_Xor pre_a_exp pre_d_exp)
+      (BExp_Const (Imm32 (32w-s))))
+End
+
+Definition bspec_chacha_quarter_round_bir_exprs_def:
+ bspec_chacha_quarter_round_bir_exprs pre_a_exp pre_b_exp pre_c_exp pre_d_exp
+  : bir_exp_t # bir_exp_t # bir_exp_t # bir_exp_t =
+  let a = pre_a_exp in
+  let b = pre_b_exp in
+  let c = pre_c_exp in
+  let d = pre_d_exp in
+
+  let a = bspec_chacha_line_bir_exp_fst a b in
+  let d = bspec_chacha_line_bir_exp_snd a d 16w in
+
+  let c = bspec_chacha_line_bir_exp_fst c d in
+  let b = bspec_chacha_line_bir_exp_snd c b 12w in
+    
+  let a = bspec_chacha_line_bir_exp_fst a b in
+  let d = bspec_chacha_line_bir_exp_snd a d 8w in
+
+  let c = bspec_chacha_line_bir_exp_fst c d in
+  let b = bspec_chacha_line_bir_exp_snd c b 7w in
+
+  (a,b,c,d)
+End
+
+val bspec_chacha_quarter_round_post_tm =
+ let
+   val bir_exprs = (snd o dest_eq o concl)
+    (EVAL ``bspec_chacha_quarter_round_bir_exprs 
+     (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b))
+     (BExp_Const (Imm32 pre_c)) (BExp_Const (Imm32 pre_d))``);
+   val (a_exp, bir_exprs) = dest_pair bir_exprs;
+   val (b_exp, bir_exprs) = dest_pair bir_exprs;
+   val (c_exp, d_exp) = dest_pair bir_exprs;
+ in
+   bslSyntax.bandl [
+    (snd o dest_eq o concl)
+     (EVAL ``bspec_var_equal_32_lowcast_64 "x20" ^a_exp``),
+    (snd o dest_eq o concl)
+     (EVAL ``bspec_var_equal_32_lowcast_64 "x21" ^b_exp``),
+    (snd o dest_eq o concl)
+     (EVAL ``bspec_var_equal_32_lowcast_64 "x8" ^c_exp``),
+    (snd o dest_eq o concl)
+     (EVAL ``bspec_var_equal_32_lowcast_64 "x22" ^d_exp``)
+   ]
+ end;
+
+Definition bspec_chacha_quarter_round_post_def:
+ bspec_chacha_quarter_round_post (pre_a:word32) (pre_b:word32)
+  (pre_c:word32) (pre_d:word32) : bir_exp_t =
+  ^bspec_chacha_quarter_round_post_tm
 End
 
 (* ----- *)

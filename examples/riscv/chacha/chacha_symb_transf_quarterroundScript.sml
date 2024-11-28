@@ -16,6 +16,8 @@ val _ = new_theory "chacha_symb_transf_quarterround";
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
 
+(* first line *)
+
 val bspec_cont_thm =
  bir_symb_transfer_thm
   bir_chacha_prog_def
@@ -56,6 +58,32 @@ val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_chacha_line_pre_othe
 val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_chacha_line_post_other_def;
 
 Theorem bspec_cont_chacha_other_line:
+ bir_cont bir_chacha_prog bir_exp_true
+  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+  ^bspec_pre_tm
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
+       then ^bspec_post_tm
+       else bir_exp_false)
+Proof
+ rw [bspec_cont_thm]
+QED
+
+(* first quarter round *)
+
+val bspec_cont_thm =
+ bir_symb_transfer_thm
+  bir_chacha_prog_def
+  chacha_quarter_round_init_addr_def chacha_quarter_round_end_addr_def
+  bspec_chacha_quarter_round_pre_def bspec_chacha_quarter_round_post_def
+  chacha_birenvtyl_def chacha_prog_vars_list_def
+  chacha_quarter_round_symb_analysis_thm NONE chacha_prog_vars_thm;
+
+val init_addr_tm = (snd o dest_eq o concl) chacha_quarter_round_init_addr_def;
+val end_addr_tm = (snd o dest_eq o concl) chacha_quarter_round_end_addr_def;
+val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_chacha_quarter_round_pre_def;
+val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_chacha_quarter_round_post_def;
+
+Theorem bspec_cont_chacha_quarter_round:
  bir_cont bir_chacha_prog bir_exp_true
   (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
   ^bspec_pre_tm
