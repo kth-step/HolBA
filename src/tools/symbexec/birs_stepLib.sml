@@ -792,36 +792,48 @@ fun is_plain_jumptarget_set tm =
       bir_immSyntax.gen_is_Imm (dest_BL_Address e_tm)) l
   end handle _ => false;
 
+val birs_symbval_concretizations_oracle_ext_CONV = ref ((K NONE):term -> thm option);
+
 val birs_symbval_concretizations_oracle_CONV =
   (fn tm => if is_birs_symbval_concretizations tm then REFL tm else
    (print_term tm;
     raise ERR "birs_symbval_concretizations_oracle_CONV" "something is not right here, expect a birs_symbval_concretizations")) THENC
-  (fn tm => let
-    val vaex_tm = (rand) tm;
-    val pcond_tm = (rand o rator) tm;
-    val pcond_is_sat = bir_smtLib.bir_smt_check_sat false pcond_tm;
-    val pcond_sat_thm =
-     if pcond_is_sat then
-       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
-     else
-       mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
-    val res_thm =
-     if not pcond_is_sat then
-       SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_empty_thm)
-     else
-     let
-      val vaex_thm = EVAL ``birs_interpret_fun i ^vaex_tm``;
-      val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_singletonconst_thm);
-     in
-      concr_thm
-     end;
-   in
-    if
-      identical tm ((fst o dest_eq o concl) res_thm)
-      handle _ => (print_thm res_thm; print "\n\n"; print_term tm; print "\n\n"; raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem")
-    then res_thm else
-    raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
-   end);
+  IFC
+    (fn tm =>
+    let
+      val vaex_tm = (rand) tm;
+      val pcond_tm = (rand o rator) tm;
+      val pcond_is_sat = bir_smtLib.bir_smt_check_sat false pcond_tm;
+      val pcond_sat_thm =
+        if pcond_is_sat then
+          mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
+        else
+          mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
+      val res_thm =
+        if not pcond_is_sat then
+          SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_empty_thm)
+        else
+          let
+            val vaex_thm = EVAL ``birs_interpret_fun i ^vaex_tm``;
+            val concr_thm = SIMP_RULE (std_ss++HolBACoreSimps.holBACore_ss) [vaex_thm, pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_singletonconst_thm);
+          in
+            concr_thm
+          end;
+    in
+      if
+        identical tm ((fst o dest_eq o concl) res_thm)
+        handle _ => (print_thm res_thm; print "\n\n"; print_term tm; print "\n\n"; raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target, not an equality theorem")
+      then res_thm else
+      raise ERR "birs_symbval_concretizations_oracle_CONV" "failed to resolve single jump target"
+    end)
+    ALL_CONV
+    (fn tm =>
+      let
+        val t_o = (!birs_symbval_concretizations_oracle_ext_CONV) tm;
+      in
+        if isSome t_o then valOf t_o else
+        raise ERR "birs_symbval_concretizations_oracle_CONV" "birs_symbval_concretizations_oracle_ext_CONV couldn't fix the concretization"
+      end);
 
 val birs_eval_label_exp_def_Label = CONJUNCT1 birs_eval_label_exp_def;
 val birs_eval_label_exp_def_Exp = CONJUNCT2 birs_eval_label_exp_def;
@@ -1338,6 +1350,7 @@ fun birs_exec_step_CONV_fun tm =
     (birs_step_thm, (!last_pc, !last_stmt))
   end;
 
+val birs_symbval_concretizations_oracle_ext_CONV = birs_symbval_concretizations_oracle_ext_CONV;
 
 end (* local *)
 
