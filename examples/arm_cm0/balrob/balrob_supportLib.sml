@@ -187,7 +187,9 @@ val configs          = [("balrob",
 
 (* from examples/binaries/binariesCfgLib.sml *)
   val hack_map_3
-             = [(0x10000bb0, "469F (mov pc, r3)", [ (* mov pc, r3 <0x10000be2, 0x10000be6, 0x10000c3c, 0x10000d0a, 0x10000d14, 0x10000d18, 0x10000d20> *)
+             = [(0x10000bb0, "469F (mov pc, r3)",
+                 0x10000da8, (* first address of jump table *)
+                 [ (* mov pc, r3 <0x10000be2, 0x10000be6, 0x10000c3c, 0x10000d0a, 0x10000d14, 0x10000d18, 0x10000d20> *)
                          "10000c3c",
                          "10000be6",
                          "10000be6",
@@ -205,7 +207,9 @@ val configs          = [("balrob",
                          "10000d18",
                          "10000d20"
                        ]),
-                    (0x1000060c, "4697 (mov pc, r2)", [ (* mov pc, r2 <0x10000620, 0x1000065e, 0x10000682, 0x100006fe, 0x1000070a, 0x10000722, 0x10000754> *)
+                (0x1000060c, "4697 (mov pc, r2)",
+                 0x100007c8, (* first address of jump table *)
+                 [ (* mov pc, r2 <0x10000620, 0x1000065e, 0x10000682, 0x100006fe, 0x1000070a, 0x10000722, 0x10000754> *)
                          "10000722",
                          "1000065e",
                          "10000682",
@@ -223,7 +227,9 @@ val configs          = [("balrob",
                          "10000754",
                          "1000070a"
                        ]),
-                    (0x100006b2, "4697 (mov pc, r2)", [ (* mov pc, r2 <0x1000061e, 0x1000065e, 0x10000682, 0x100006fe, 0x10000708, 0x10000754> *)
+                (0x100006b2, "4697 (mov pc, r2)",
+                 0x10000808, (* first address of jump table *)
+                 [ (* mov pc, r2 <0x1000061e, 0x1000065e, 0x10000682, 0x100006fe, 0x10000708, 0x10000754> *)
                          "1000065e",
                          "1000065e",
                          "10000682",
@@ -242,6 +248,8 @@ val configs          = [("balrob",
                          "10000708"
                        ])
                    ];
+
+(* TODO: enrich this into a memory map *)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -326,7 +334,7 @@ local
     in
       List.map (fn x => fromString x) (list_mk_distinct gen_eq pcl)
     end;
-  val indirjmpresolv_map = List.map (fn (pc,c,pcl) => (pc,c, process_hack_map_targets pcl)) indirjmpresolv_map_raw;
+  val indirjmpresolv_map = List.map (fn (pc,c,_,pcl) => (pc,c, process_hack_map_targets pcl)) indirjmpresolv_map_raw;
 
   val (add_fun, lookup_fun) = aux_moveawayLib.result_cache Term.compare;
   val () = List.app (fn (pc,c,pcl) => add_fun (bir_lbl_from_addr pc, (c, List.map bir_lbl_from_addr pcl))) indirjmpresolv_map;
@@ -374,9 +382,10 @@ fun birs_basic_from_sums bprog_tm birs_rule_SUBST_thm sums st_tm =
 
     val jmp_t_o = get_indirjmp_oracle bprog_tm st_tm;
   in
+    (*
     if isSome jmp_t_o then
       jmp_t_o
-    else
+    else*)
       birs_strategiesLib.birs_from_summaries postproc_fun sums st_tm
   end;
 val birs_basic_from_sums = fn x => fn y => fn z => Profile.profile "birs_basic_from_sums" (birs_basic_from_sums x y z);
@@ -394,11 +403,93 @@ fun birs_basic_init_state prog_birenvtyl_def reqs init_addr =
     init_state
   end;
 
+local
+  val indirjmp_mem_map_raw = (*[(0x100013b8, "", ["100013bc"])]@*)hack_map_3;
+  fun fromString x =
+    let
+      val v = valOf (StringCvt.scanString (Int.scan StringCvt.HEX) x)
+              handle _ => raise ERR "process_hack_map_targets" "cannot process target string";
+    in
+      v
+    end;
+  val indirjmp_mem_map = List.map (fn (_,_,ad,pcl) => (ad, List.map fromString pcl)) indirjmp_mem_map_raw;
+in
+  fun get_all_targets addr =
+    let
+      val entries = List.filter ((fn x => x = addr) o fst) indirjmp_mem_map;
+      val _ = if length entries = 1 then () else raise ERR "get_single_target" "must find exactly one entry";
+      val table = (snd o hd) entries;
+    in
+      table
+    end;
+  fun get_single_target addr idx =
+    List.nth(get_all_targets addr, idx);
+end
+
+val pat_tm = ``
+  birs_symbval_concretizations
+    pcond
+    (BExp_BinExp BIExp_And
+      (BExp_Load (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+        (BExp_BinExp BIExp_Plus
+          (BExp_Const (Imm32 addr))
+          (BExp_BinExp BIExp_LeftShift
+            idx
+            (BExp_Const (Imm32 2w))))
+        BEnd_LittleEndian Bit32)
+      (BExp_Const (Imm32 0xFFFFFFFEw)))``;
+val addr_pat_tm = ``addr:word32``;
+val idx_pat_tm = ``idx:bir_exp_t``;
+val idx_eval_tm = ``bir_eval_exp (idx:bir_exp_t) (BEnv (K NONE))``;
+val empty_label_tm = ``EMPTY:bir_label_t->bool``;
+fun concretization_resolver tm =
+  let
+    val _ = print "\n\nattempting to solve indirect jump through table in memory\n\n";
+    val s = match_term pat_tm tm;
+    (*val addr_tm = ((fn x => List.nth(x,1)) o fst) s;*)
+    val addr_tm = subst (fst s) addr_pat_tm;
+    (*val _ = print_term addr_tm;*)
+    val addr = (Arbnum.toInt o wordsSyntax.dest_word_literal) addr_tm;
+    (*val _ = print (Int.toString addr);*)
+  in
+    let
+      (*val idx_exp_tm = subst (fst s) idx_pat_tm;*)
+      val idx_val_thm = (EVAL o subst (fst s)) idx_eval_tm;
+      (*val _ = print_thm idx_val_thm;*)
+      val idx_tm = (snd o bir_valuesSyntax.gen_dest_BVal_Imm o optionSyntax.dest_some o rhs o concl) idx_val_thm;
+      (*val _ = print_term idx_tm;*)
+      val idx = (Arbnum.toInt o wordsSyntax.dest_word_literal) idx_tm;
+      (*val _ = print (Int.toString idx);*)
+      val v = get_single_target addr idx;
+      (*val _ = print (Int.toString v);*)
+      val v_tm = (bir_programSyntax.mk_BL_Address o bir_immSyntax.mk_Imm32) (wordsSyntax.mk_wordii (v, 32));
+      (*val _ = print_term v_tm;*)
+      val thm_tm = mk_eq (tm, pred_setSyntax.mk_insert(v_tm,empty_label_tm));
+    in
+      SOME (mk_oracle_thm "BIRS_INDIRJMP_MEM" ([], thm_tm))
+      (*NONE : thm option*)
+    end
+    handle _ => (
+      let
+        val vs = get_all_targets addr;
+        val v_tms = List.map (fn v => (bir_programSyntax.mk_BL_Address o bir_immSyntax.mk_Imm32) (wordsSyntax.mk_wordii (v, 32))) vs;
+        val vs_set_tm = List.foldl (pred_setSyntax.mk_insert) empty_label_tm v_tms;
+        val thm_tm = mk_eq (tm, vs_set_tm);
+        val _ = print_term thm_tm;
+      in
+        SOME (mk_oracle_thm "BIRS_INDIRJMP_MEM" ([], thm_tm))
+      end
+    )
+  end
+  handle _ => (print "\nconcretization_resolver failed\n"; print_term tm; print "\n\n"; raise ERR "concretization_resolver" "concretization_resolver failed");
+
 fun birs_basic_execute bprog_tm pre_simp extra_thms sums end_addrs init_state =
   let
     open birs_intervalLib;
     open birs_driveLib;
     val birs_rule_SUBST_thm = birs_execLib.birs_rule_SUBST_prog_fun bprog_tm;
+
+    val _ = birs_stepLib.birs_symbval_concretizations_oracle_ext_CONV := concretization_resolver;
 
     val end_lbls = List.map bir_lbl_from_addr end_addrs;
     val symb_exec_thm =

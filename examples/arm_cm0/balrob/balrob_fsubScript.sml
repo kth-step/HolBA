@@ -126,7 +126,6 @@ val symb_exec_thm = birs_summary birs_prog_config
 val _ = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
 
 
-
 (* ------------------------------------ *)
 
 val _ = print "\n";
