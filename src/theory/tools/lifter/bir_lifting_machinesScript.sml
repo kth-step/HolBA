@@ -616,20 +616,21 @@ End
  * TCR: Translation Control Register; for EL1, EL2 and EL3. Determines
  *      Translation Table Base Register. *)
 Definition arm8_state_is_OK_def:
-  (* Explicit data accesses at EL0 MUST be little-endian. *)
-  ~ms.SCTLR_EL1.E0E /\
-  (* Exception level must be 0 (user) *)
-  (ms.PSTATE.EL = 0w) /\
-  (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
-   * UNDEFINED_FAULT and ASSERT).*)
-  (ms.exception = NoException) /\
-  (* Stack Alignment Check MUST NOT be enabled for EL0. *)
-  ~ms.SCTLR_EL1.SA0 /\
-  (* Translation control register for EL1 must not be TBI0 or TBI1,
-   * meaning it must be "tcr_el1'rst", which is a 62-bit field.
-   * TODO: What is TBI0 and TBI1? *)
-  ~ms.TCR_EL1.TBI0 /\
-  ~ms.TCR_EL1.TBI1
+  arm8_state_is_OK (ms:arm8_state) <=> 
+   (* Explicit data accesses at EL0 MUST be little-endian. *)
+   ~ms.SCTLR_EL1.E0E /\
+   (* Exception level must be 0 (user) *)
+   (ms.PSTATE.EL = 0w) /\
+   (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
+    * UNDEFINED_FAULT and ASSERT).*)
+   (ms.exception = NoException) /\
+   (* Stack Alignment Check MUST NOT be enabled for EL0. *)
+   ~ms.SCTLR_EL1.SA0 /\
+   (* Translation control register for EL1 must not be TBI0 or TBI1,
+    * meaning it must be "tcr_el1'rst", which is a 62-bit field.
+    * TODO: What is TBI0 and TBI1? *)
+   ~ms.TCR_EL1.TBI0 /\
+   ~ms.TCR_EL1.TBI1
 End
 
 Definition arm8_bmr_def:

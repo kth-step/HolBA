@@ -408,15 +408,31 @@ Definition default_riscv_bir_env_GPRS_tmp_def:
   env_map)))))))))))))))))))))))))))))))
 End
 
+Definition default_riscv_bir_env_CSRS_def:
+ default_riscv_bir_env_CSRS ms env_map =
+  ("MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
+  (("mscratch"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mscratch  ))))
+  env_map)
+End
+
+Definition default_riscv_bir_env_CSRS_tmp_def:
+ default_riscv_bir_env_CSRS_tmp ms env_map =
+  ("tmp_MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
+  (("tmp_mscratch"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mscratch  ))))
+  env_map)
+End
+
 Definition default_riscv_bir_state_def:
  default_riscv_bir_state ms =
   <| bst_pc := bir_block_pc (BL_Address (Imm64 (ms.c_PC ms.procID))) ;
      bst_environ := BEnv
-       (default_riscv_bir_env_GPRS ms
-        (default_riscv_bir_env_GPRS_tmp ms
-         (default_riscv_bir_env_FPRS ms
-          (default_riscv_bir_env_FPRS_tmp ms
-           (default_riscv_bir_env_basic ms bir_env_map_empty)))));
+       (default_riscv_bir_env_CSRS ms
+        (default_riscv_bir_env_CSRS_tmp ms
+         (default_riscv_bir_env_GPRS ms
+          (default_riscv_bir_env_GPRS_tmp ms
+           (default_riscv_bir_env_FPRS ms
+            (default_riscv_bir_env_FPRS_tmp ms
+             (default_riscv_bir_env_basic ms bir_env_map_empty)))))));
      bst_status := BST_Running
    |>
 End
@@ -489,6 +505,8 @@ Theorem default_riscv_bir_state_GPRS_read[local]:
    SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       bir_envTheory.bir_env_read_UPDATE,
       bir_envTheory.bir_var_name_def,
@@ -567,6 +585,8 @@ Theorem default_riscv_bir_state_GPRS_read_tmp[local]:
    SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       bir_envTheory.bir_env_read_UPDATE,
@@ -646,6 +666,8 @@ Theorem default_riscv_bir_state_GPRS_lookup_type[local]:
    SOME (bir_var_type (BVar "x31" (BType_Imm Bit64)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       bir_env_oldTheory.bir_env_var_is_declared_def,
       bir_envTheory.bir_var_name_def,
@@ -726,6 +748,8 @@ Theorem default_riscv_bir_state_GPRS_lookup_type_tmp[local]:
    SOME (bir_var_type (BVar "tmp_x31" (BType_Imm Bit64)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       bir_env_oldTheory.bir_env_var_is_declared_def,
@@ -807,6 +831,8 @@ Theorem default_riscv_bir_state_FPRS_read[local]:
    SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
@@ -887,6 +913,8 @@ Theorem default_riscv_bir_state_FPRS_read_tmp[local]:
    SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
@@ -968,6 +996,8 @@ Theorem default_riscv_bir_state_FPRS_lookup_type[local]:
    SOME (bir_var_type (BVar "f31" (BType_Imm Bit64)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
@@ -1050,6 +1080,8 @@ Theorem default_riscv_bir_state_FPRS_lookup_type_tmp[local]:
    SOME (bir_var_type (BVar "tmp_f31" (BType_Imm Bit64)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
@@ -1065,12 +1097,85 @@ Proof
      type_of_bir_imm_def]
 QED
 
+Theorem default_riscv_bir_state_MCSRS_read[local]:
+ !ms.
+  bir_env_read (BVar "MPRV" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 (w2w (ms.c_MCSR ms.procID).mstatus.MPRV))) /\
+  bir_env_read (BVar "mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
+Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
+  !ms.
+  bir_env_lookup_type "MPRV" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "MPRV" (BType_Imm Bit8)))  /\
+  bir_env_lookup_type "mscratch" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mscratch" (BType_Imm Bit64)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
+
+Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
+  !ms.
+  bir_env_lookup_type "tmp_MPRV" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_MPRV" (BType_Imm Bit8)))  /\
+  bir_env_lookup_type "tmp_mscratch" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mscratch" (BType_Imm Bit64)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
+
+
 Theorem default_riscv_bir_state_basic_env_read[local]:
  !ms.
  bir_env_read (BVar "MEM8" (BType_Mem Bit64 Bit8)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
@@ -1095,6 +1200,8 @@ Theorem default_riscv_bir_state_basic_lookup_type[local]:
    SOME (bir_var_type (BVar "tmp_COND" (BType_Imm Bit1)))
 Proof
   rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
       default_riscv_bir_env_GPRS_def,
       default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
@@ -1119,6 +1226,9 @@ strip_tac >> strip_tac >>
 FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.riscv_bmr_rel_EVAL,
  bir_env_oldTheory.bir_env_var_is_declared_def,bir_envTheory.bir_var_name_def] >>
 fs [
+  default_riscv_bir_state_MCSRS_read,
+  default_riscv_bir_state_MCSRS_lookup_type,
+  default_riscv_bir_state_MCSRS_lookup_type_tmp,
   default_riscv_bir_state_GPRS_read,
   default_riscv_bir_state_GPRS_read_tmp,
   default_riscv_bir_state_GPRS_lookup_type,
