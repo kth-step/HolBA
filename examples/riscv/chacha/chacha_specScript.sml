@@ -421,32 +421,12 @@ Definition bspec_var_equal_32_lowcast_64_def:
 End
 
 (* a =+ (m a) + (m b) *)
-Definition bspec_chacha_line_bir_exp_a_def:
- bspec_chacha_line_bir_exp_a pre_a_exp pre_b_exp : bir_exp_t =
-  BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp
-End
-
-(* d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s)) *)
-Definition bspec_chacha_line_bir_exp_d_def:
- bspec_chacha_line_bir_exp_d pre_a_exp pre_b_exp pre_d_exp (s:word32) : bir_exp_t =
-   BExp_BinExp BIExp_Or
-     (BExp_BinExp BIExp_LeftShift 
-      (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp)
-        pre_d_exp)
-     (BExp_Const (Imm32 s)))
-     (BExp_BinExp BIExp_RightShift
-      (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp)
-        pre_d_exp)
-      (BExp_Const (Imm32 (32w-s))))
-End
-
 Definition bspec_chacha_line_bir_exp_fst_def:
  bspec_chacha_line_bir_exp_fst pre_a_exp pre_b_exp : bir_exp_t =
   BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp
 End
 
+(* d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s)) *)
 Definition bspec_chacha_line_bir_exp_snd_def:
  bspec_chacha_line_bir_exp_snd pre_a_exp pre_d_exp (s:word32) : bir_exp_t =
    BExp_BinExp BIExp_Or
@@ -504,10 +484,8 @@ Definition bspec_chacha_column_round_bir_exprs_def:
  let (arr_3,arr_7,arr_11,arr_15) =
    bspec_chacha_quarter_round_bir_exprs pre_arr_3 pre_arr_7 pre_arr_11 pre_arr_15
  in
- (arr_0,arr_1,arr_2,arr_3,
-  arr_4,arr_5,arr_6,arr_7,
-  arr_8,arr_9,arr_10,arr_11,
-  arr_12,arr_13,arr_14,arr_15)
+ (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+  arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
 End
 
 Definition bspec_chacha_diagonal_round_bir_exprs_def:
@@ -533,10 +511,8 @@ Definition bspec_chacha_diagonal_round_bir_exprs_def:
  let (arr_3,arr_4,arr_9,arr_14) =
    bspec_chacha_quarter_round_bir_exprs pre_arr_3 pre_arr_4 pre_arr_9 pre_arr_14
  in
- (arr_0,arr_1,arr_2,arr_3,
-  arr_4,arr_5,arr_6,arr_7,
-  arr_8,arr_9,arr_10,arr_11,
-  arr_12,arr_13,arr_14,arr_15)
+ (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+  arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
 End
 
 Definition bspec_chacha_round_bir_exprs_def:
@@ -550,30 +526,24 @@ Definition bspec_chacha_round_bir_exprs_def:
    bir_exp_t # bir_exp_t # bir_exp_t # bir_exp_t #
    bir_exp_t # bir_exp_t # bir_exp_t # bir_exp_t
   =
-  let (arr_0,arr_1,arr_2,arr_3,
-       arr_4,arr_5,arr_6,arr_7,
-       arr_8,arr_9,arr_10,arr_11,
-       arr_12,arr_13,arr_14,arr_15) =
+  let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+       arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15) =
    bspec_chacha_column_round_bir_exprs
     pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3
     pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
     pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11
-    pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15 in
+    pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+  in
 
-  let (arr_0,arr_1,arr_2,arr_3,
-       arr_4,arr_5,arr_6,arr_7,
-       arr_8,arr_9,arr_10,arr_11,
-       arr_12,arr_13,arr_14,arr_15) =
+  let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+       arr_8,arr_9,arr_10,arr_11, arr_12,arr_13,arr_14,arr_15) =
    bspec_chacha_diagonal_round_bir_exprs
-    arr_0 arr_1 arr_2 arr_3
-    arr_4 arr_5 arr_6 arr_7
-    arr_8 arr_9 arr_10 arr_11
-    arr_12 arr_13 arr_14 arr_15 in
+    arr_0 arr_1 arr_2 arr_3 arr_4 arr_5 arr_6 arr_7
+    arr_8 arr_9 arr_10 arr_11 arr_12 arr_13 arr_14 arr_15
+  in
 
-  (arr_0,arr_1,arr_2,arr_3,
-  arr_4,arr_5,arr_6,arr_7,
-  arr_8,arr_9,arr_10,arr_11,
-  arr_12,arr_13,arr_14,arr_15)
+  (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+   arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
 End
 
 (* ---------------- *)
@@ -735,12 +705,13 @@ End
 val bspec_chacha_line_post_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
    (EVAL ``bspec_var_equal_32_lowcast_64 "x20"
-    (bspec_chacha_line_bir_exp_a
+    (bspec_chacha_line_bir_exp_fst
      (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))``),
   (snd o dest_eq o concl)
    (EVAL ``bspec_var_equal_32_lowcast_64 "x10"
-    (bspec_chacha_line_bir_exp_d
-    (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)) (BExp_Const (Imm32 pre_d)) 16w)``)
+    (bspec_chacha_line_bir_exp_snd
+     (bspec_chacha_line_bir_exp_fst (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))
+     (BExp_Const (Imm32 pre_d)) 16w)``)
 ];
 
 Definition bspec_chacha_line_post_def:
@@ -774,12 +745,13 @@ End
 val bspec_chacha_line_post_other_tm = bslSyntax.bandl [
   (snd o dest_eq o concl)
    (EVAL ``bspec_var_equal_32_lowcast_64 "x8"
-    (bspec_chacha_line_bir_exp_a
+    (bspec_chacha_line_bir_exp_fst
      (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))``),
   (snd o dest_eq o concl)
    (EVAL ``bspec_var_equal_32_lowcast_64 "x15"
-    (bspec_chacha_line_bir_exp_d
-    (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)) (BExp_Const (Imm32 pre_d)) 12w)``)
+    (bspec_chacha_line_bir_exp_snd
+     (bspec_chacha_line_bir_exp_fst (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))
+     (BExp_Const (Imm32 pre_d)) 12w)``)
 ];
 
 Definition bspec_chacha_line_post_other_def:
