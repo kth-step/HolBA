@@ -600,14 +600,14 @@ Definition chacha_quarter_round_end_addr_def:
   chacha_quarter_round_end_addr : word64 = 0x108f0w
 End
 
-(* round *)
+(* round loop body *)
 
 Definition chacha_round_init_addr_def:
   chacha_round_init_addr : word64 = 0x108a0w
 End
 
 Definition chacha_round_end_addr_def:
-  chacha_round_end_addr : word64 = 0x10b60w
+  chacha_round_end_addr : word64 = 0x10b64w
 End
 
 (* --------------- *)
@@ -873,15 +873,15 @@ val bspec_chacha_round_pre_tm = bslSyntax.bandl [
     (BExp_Const (Imm32 pre_arr_12))``,
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x15" (BType_Imm Bit64))) Bit32)
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x25" (BType_Imm Bit64))) Bit32)
     (BExp_Const (Imm32 pre_arr_13))``,
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x23" (BType_Imm Bit64))) Bit32)
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x24" (BType_Imm Bit64))) Bit32)
     (BExp_Const (Imm32 pre_arr_14))``,
   ``BExp_BinPred
     BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x21" (BType_Imm Bit64))) Bit32)
+    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x23" (BType_Imm Bit64))) Bit32)
     (BExp_Const (Imm32 pre_arr_15))``
 ];
 
@@ -933,37 +933,7 @@ val bspec_chacha_round_post_tm =
  in
    bslSyntax.bandl [
     (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_0_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_1_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "x15" ^arr_2_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_3_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_4_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_5_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_6_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_7_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_8_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_9_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_10_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "x14" ^arr_11_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_12_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_13_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_14_exp``),
-    (snd o dest_eq o concl)
-     (EVAL ``bspec_var_equal_32_lowcast_64 "xYY" ^arr_15_exp``)
+     (EVAL ``bspec_var_equal_32_lowcast_64 "x10" ^arr_0_exp``)
    ]
  end;
 
