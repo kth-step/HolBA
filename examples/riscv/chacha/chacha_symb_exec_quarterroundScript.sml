@@ -56,18 +56,4 @@ val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
 Theorem chacha_quarter_round_symb_analysis_thm = symb_analysis_thm
 
-(* ----------- *)
-(* first round *)
-(* ----------- *)
-
-val symb_analysis_thm =
- bir_symb_analysis_thm
-  bir_chacha_prog_def
-  chacha_round_init_addr_def [chacha_round_end_addr_def]
-  bspec_chacha_round_pre_def chacha_birenvtyl_def;
-
-val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
-
-Theorem chacha_round_symb_analysis_thm = symb_analysis_thm
-
 val _ = export_theory ();
