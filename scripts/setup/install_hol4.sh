@@ -117,4 +117,3 @@ do
   cd "${HOL4_DIR}/${dir}"
   ${HOL4_DIR}/bin/Holmake
 done
-

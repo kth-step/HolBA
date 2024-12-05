@@ -1,4 +1,4 @@
-INCLUDES = 
+INCLUDES = $(HOLBADIR)/src/tools/lifter
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
