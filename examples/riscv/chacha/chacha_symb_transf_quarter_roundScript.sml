@@ -8,9 +8,9 @@ open bir_symbLib;
 
 open chachaTheory;
 open chacha_specTheory;
-open chacha_symb_exec_quarterroundTheory;
+open chacha_symb_exec_quarter_roundTheory;
 
-val _ = new_theory "chacha_symb_transf_quarterround";
+val _ = new_theory "chacha_symb_transf_quarter_round";
 
 (* ------------------------------- *)
 (* BIR symbolic execution analysis *)

@@ -6,7 +6,7 @@ open bir_symbLib;
 
 open chachaTheory chacha_specTheory;
 
-val _ = new_theory "chacha_symb_exec_quarterround";
+val _ = new_theory "chacha_symb_exec_quarter_round";
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)

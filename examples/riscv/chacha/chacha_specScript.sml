@@ -600,14 +600,28 @@ Definition chacha_quarter_round_end_addr_def:
   chacha_quarter_round_end_addr : word64 = 0x108f0w
 End
 
-(* round loop body *)
+(* double round loop body *)
 
-Definition chacha_round_init_addr_def:
-  chacha_round_init_addr : word64 = 0x108a0w
+Definition chacha_double_round_init_addr_def:
+  chacha_double_round_init_addr : word64 = 0x108a0w
 End
 
-Definition chacha_round_end_addr_def:
-  chacha_round_end_addr : word64 = 0x10b64w
+Definition chacha_double_round_end_addr_def:
+  chacha_double_round_end_addr : word64 = 0x10b64w
+End
+
+(* double round loop branch *)
+
+Definition chacha_double_round_branch_init_addr_def:
+  chacha_double_round_branch_init_addr : word64 = 0x10b64w
+End
+
+Definition chacha_double_round_branch_end_addr_loop_def:
+  chacha_double_round_branch_end_addr_loop : word64 = 0x108a0w
+End
+
+Definition chacha_double_round_branch_end_addr_continue_def:
+  chacha_double_round_branch_end_addr_continue : word64 = 0x10b68w
 End
 
 (* --------------- *)
@@ -679,6 +693,8 @@ x15 <- x15 lsr 25
 x21 <- x15 | x21  // b <<<= 7
 *)
 
+(* first line *)
+
 val bspec_chacha_line_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
@@ -719,6 +735,8 @@ Definition bspec_chacha_line_post_def:
   ^bspec_chacha_line_post_tm
 End
 
+(* second line *)
+
 val bspec_chacha_line_pre_other_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
@@ -758,6 +776,8 @@ Definition bspec_chacha_line_post_other_def:
  bspec_chacha_line_post_other (pre_a:word32) (pre_b:word32) (pre_d:word32) : bir_exp_t =
   ^bspec_chacha_line_post_other_tm
 End
+
+(* first quarter round *)
 
 val bspec_chacha_quarter_round_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
@@ -815,7 +835,9 @@ Definition bspec_chacha_quarter_round_post_def:
   ^bspec_chacha_quarter_round_post_tm
 End
 
-val bspec_chacha_round_pre_tm = bslSyntax.bandl [
+(* double round *)
+
+val bspec_chacha_double_round_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
@@ -885,17 +907,17 @@ val bspec_chacha_round_pre_tm = bslSyntax.bandl [
     (BExp_Const (Imm32 pre_arr_15))``
 ];
 
-Definition bspec_chacha_round_pre_def:
- bspec_chacha_round_pre 
+Definition bspec_chacha_double_round_pre_def:
+ bspec_chacha_double_round_pre 
   (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
   (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32) 
  : bir_exp_t =
-  ^bspec_chacha_round_pre_tm
+  ^bspec_chacha_double_round_pre_tm
 End
 
-val bspec_chacha_round_post_tm =
+val bspec_chacha_double_round_post_tm =
  let
    val bir_exprs = (snd o dest_eq o concl)
     (EVAL ``bspec_chacha_round_bir_exprs 
@@ -937,14 +959,14 @@ val bspec_chacha_round_post_tm =
    ]
  end;
 
-Definition bspec_chacha_round_post_def:
- bspec_chacha_round_post
+Definition bspec_chacha_double_round_post_def:
+ bspec_chacha_double_round_post
   (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
   (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32)
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  : bir_exp_t =
-  ^bspec_chacha_round_post_tm
+  ^bspec_chacha_double_round_post_tm
 End
 
 (* ----- *)
