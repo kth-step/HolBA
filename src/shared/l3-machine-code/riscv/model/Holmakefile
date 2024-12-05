@@ -1,0 +1,7 @@
+INCLUDES = $(HOLDIR)/examples/l3-machine-code/common $(HOLDIR)/examples/l3-machine-code/lib
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
+
+riscv.uo: $(HOLDIR)/examples/l3-machine-code/lib/assemblerLib.uo $(HOLDIR)/examples/l3-machine-code/lib/MutableMap16.uo riscv.sml riscv.ui
+	$(HOLMOSMLC) -c -toplevel assemblerLib.uo MutableMap16.ui riscv.sml
