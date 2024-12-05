@@ -7,6 +7,7 @@ struct
 
 open HolKernel boolLib bossLib
 open blastLib riscvTheory riscv_stepTheory
+open riscv_stepSimps
 
 structure Parse = struct
   open Parse
@@ -193,7 +194,11 @@ val riscv_decodes =
    ("LD",     "_________________FTT_____FFFFFTT"),
    ("LBU",    "_________________TFF_____FFFFFTT"),
    ("LHU",    "_________________TFT_____FFFFFTT"),
-   ("LWU",    "_________________TTF_____FFFFFTT")
+   ("LWU",    "_________________TTF_____FFFFFTT"),
+   (* CSR instructions *)
+   ("CSRRW",    "_________________FFT_____TTTFFTT"),
+   ("CSRRS",    "_________________FTF_____TTTFFTT"),
+   ("CSRRC",    "_________________FTT_____TTTFFTT")
   ]
    in
       l @ List.map make_nop l @
@@ -305,6 +310,19 @@ local
   val MP_Next_c = next riscv_stepTheory.NextRISCV_cond_branch
   val MP_Next_b = next riscv_stepTheory.NextRISCV_branch
   val Run_CONV = utilsLib.Run_CONV ("riscv", s) o utilsLib.rhsc
+  fun tidy_up_system_inst thm =
+    let
+      (* Bit-blast effects of privilege checking *)
+      (* TODO: This could be used to clean up before BBLAST-ing *)
+      (*  val thm = SIMP_RULE (std_ss++wordsLib.WORD_ss++bitstringLib.v2w_n2w_ss) [] thm *)
+      val thm2 = blastLib.BBLAST_RULE thm
+      (* Rewrite effects of CSRMap *)
+      val thm3 = CSRMap_match_rule thm2
+      (* Rewrite effects of writeCSR *)
+      val thm4 = writeCSR_match_rule thm3
+    in
+      thm4
+    end
   fun tidy_up_signalAddressException th =
     let
       val rw = UNDISCH avoid_signalAddressException
@@ -320,14 +338,29 @@ local
 in
   fun riscv_step v =
     let
+(*
+  val v = bitstringSyntax.bitstring_of_hexstring "340110F3" (* CSRRW *)
+  val v = bitstringSyntax.bitstring_of_hexstring "340120F3" (* CSRRS *)
+  val v = bitstringSyntax.bitstring_of_hexstring "340130F3" (* CSRRC *)
+
+  Example of instruction working:
+  val v = bitstringSyntax.bitstring_of_hexstring "00E10423"
+*)
       val thm1 = fetch v
       val thm2 = riscv_decode v |> SIMP_RULE std_ss []
       val new_s = thm1 |> concl |> rand |> rand
       val thm3 = fetch_inst (Drule.SPEC_ALL (Run_CONV thm2)) |> INST [s |-> new_s]
       val tm = utilsLib.rhsc thm3
-      val ethm = run tm
-      val ethm = tidy_up_signalAddressException ethm
-      val thm4 = Conv.RIGHT_CONV_RULE (Conv.REWR_CONV ethm) thm3
+      val ethm1 =
+        let
+          val ethm = run tm
+        in
+	  if (is_System o rhs o concl) thm2
+	  then tidy_up_system_inst ethm
+	  else ethm
+        end
+      val ethm2 = tidy_up_signalAddressException ethm1
+      val thm4 = Conv.RIGHT_CONV_RULE (Conv.REWR_CONV ethm2) thm3
       val thm5 = proj_exception thm4
       val thm6 = proj_NextFetch_procID thm4
       val thm = Drule.LIST_CONJ [thm1, thm2, thm4, thm5, thm6]

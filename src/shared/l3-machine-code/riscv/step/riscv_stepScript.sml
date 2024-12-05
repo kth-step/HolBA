@@ -7,6 +7,7 @@ open HolKernel boolLib bossLib
 open utilsLib
 open wordsLib blastLib alignmentTheory
 open riscvTheory
+open riscv_stepSimps
 
 val () = Theory.new_theory "riscv_step"
 val _ = ParseExtras.temp_loose_equality()
@@ -550,6 +551,7 @@ val s = ``s:riscv_state``
 val rd0 = ``rd = 0w: word5``
 val bare = ``(^s.c_MCSR ^s.procID).mstatus.VM = 0w``
 val archbase = ``(^s.c_MCSR ^s.procID).mcpuid.ArchBase``
+val privilege_level = ``(^s.c_MCSR ^s.procID).mstatus.MPRV``
 val shift = ``~((^archbase = 0w) /\ word_bit 5n (imm: word6))``
 val aligned = ``aligned 2 (^s.c_PC ^s.procID)``
 val aligned_d =
@@ -560,7 +562,7 @@ local
   val cond_updates = utilsLib.mk_cond_update_thms [``:riscv_state``]
   val datatype_rwts =
     utilsLib.datatype_rewrites true "riscv"
-      ["riscv_state", "VM_Mode", "Architecture"]
+      ["riscv_state", "VM_Mode", "Architecture", "accessType", "Privilege"]
   fun riscv_thms thms =
     thms @ cond_updates @ datatype_rwts @
     [wordsTheory.WORD_EXTRACT_ZERO2, wordsTheory.ZERO_SHIFT,
@@ -765,6 +767,56 @@ val thm = Q.prove(
 
 val rawWriteData1 = REWRITE_RULE [thm] rawWriteData1
 
+
+(* ------------------------------------------------------------------------
+   CSR Rewrites
+   ------------------------------------------------------------------------ *)
+
+
+val CSR = EV [CSR_def] [] [] ``CSR n``
+
+val csrRW = EV [csrRW_def] [] [] ``csrRW w``
+
+val csrPR = EV [csrPR_def] [] [] ``csrPR w``
+
+val CSRMap = EV [CSRMap_def] [] [] ``CSRMap n s``
+
+val checkCSROp = EV [checkCSROp_def, is_CSR_defined_def] [] [] ``checkCSROp (csr, rs1, a)``
+
+val check_CSR_access = EV [check_CSR_access_def] [] [] ``check_CSR_access (rw,pr,p,a)``
+
+val riscv_privilege_cases = store_thm("riscv_privilege_cases",
+``!w1 w2 w3 w4 s.
+  (case
+	    if (s.c_MCSR s.procID).mstatus.MPRV = 0w then User
+	    else if (s.c_MCSR s.procID).mstatus.MPRV = 1w then Supervisor
+	    else if (s.c_MCSR s.procID).mstatus.MPRV = 2w then Hypervisor
+	    else if (s.c_MCSR s.procID).mstatus.MPRV = 3w then Machine
+	    else ARB
+	  of
+	    User => w1
+	  | Supervisor => w2
+	  | Hypervisor => w3
+	  | Machine => w4) =
+	    (if (s.c_MCSR s.procID).mstatus.MPRV = 0w then w1
+	    else if (s.c_MCSR s.procID).mstatus.MPRV = 1w then w2
+	    else if (s.c_MCSR s.procID).mstatus.MPRV = 2w then w3
+	    else w4
+)
+``,
+
+REPEAT STRIP_TAC >>
+wordsLib.Cases_on_word_value `(s.c_MCSR s.procID).mstatus.MPRV` >> (
+  FULL_SIMP_TAC (riscv_ss++wordsLib.WORD_ss) []
+)
+);
+
+(* privLevel and curPrivilege baked together *)
+val privLevel = EV [privLevel_def, curPrivilege_def, privilege_def, MCSR_def, riscv_privilege_cases] [] [] ``privLevel (curPrivilege () s)``
+
+val writeCSR = ev [writeCSR_def, write'CSR_def, write'Delta_def, Delta_def] [] [] ``writeCSR (csr, v)`` |> hd
+
+
 (* ------------------------------------------------------------------------
    Instruction Rewrites
    ------------------------------------------------------------------------ *)
@@ -790,7 +842,12 @@ in
           ([write'GPR0], n ^ "_NOP")
         else
           ([write'GPR], n)
-      val thms = DB.fetch "riscv" (name ^ "_def") :: write @ read
+      (* These rewrites should be done for all CSR instructions *)
+      val csr =
+        if Lib.mem n ["CSRRW", "CSRRS", "CSRRC", "CSRRWI", "CSRRSI", "CSRRCI"]
+        then [checkCSROp, check_CSR_access, CSR, privLevel, csrRW, csrPR]
+        else []
+      val thms = DB.fetch "riscv" (name ^ "_def") :: write @ read @ csr
     in
       case ev (thms @ l) avoid [] (Parse.Term ([QUOTE name] @ args)) of
          [th] => utilsLib.save_thms n [hyp_eq_rule th]
@@ -890,6 +947,19 @@ val SD  = store [[``^archbase <> 0w``, aligned_d]] "SD"
 val SW  = store [] "SW"
 val SH  = store [] "SH"
 val SB  = store [] "SB"
+
+val csrinst = class `(rd, rs1, csr)`
+
+(* TODO: How to handle privilege level? Currently, machine mode is always assumed *)
+val CSRRW_M = csrinst [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRW"
+val CSRRS_M = csrinst [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRS"
+val CSRRC_M = csrinst [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRC"
+
+val csrinsti = class `(rd, imm, csr)`
+
+val CSRRWI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRWI"
+val CSRRSI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRSI"
+val CSRRCI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRCI"
 
 (* ------------------------------------------------------------------------ *)
 
