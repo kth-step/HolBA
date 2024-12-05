@@ -410,16 +410,26 @@ End
 
 Definition default_riscv_bir_env_CSRS_def:
  default_riscv_bir_env_CSRS ms env_map =
-  ("MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
+  ("mhartid"   =+ SOME (BVal_Imm (Imm64 ( ((ms.c_MCSR ms.procID).mhartid) ))))
+  (("MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
   (("mscratch"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mscratch  ))))
-  env_map)
+  (("mepc"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mepc  ))))
+  (("mcause"   =+ SOME (BVal_Imm (Imm64 ( reg'mcause $ (ms.c_MCSR ms.procID).mcause  ))))
+  (("mtval"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mtval  ))))
+  (("mip"   =+ SOME (BVal_Imm (Imm64 ( reg'mip $ (ms.c_MCSR ms.procID).mip  ))))
+  env_map))))))
 End
 
 Definition default_riscv_bir_env_CSRS_tmp_def:
  default_riscv_bir_env_CSRS_tmp ms env_map =
-  ("tmp_MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
+  ("tmp_mhartid"   =+ SOME (BVal_Imm (Imm64 ( ((ms.c_MCSR ms.procID).mhartid) ))))
+  (("tmp_MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
   (("tmp_mscratch"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mscratch  ))))
-  env_map)
+  (("tmp_mepc"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mepc  ))))
+  (("tmp_mcause"   =+ SOME (BVal_Imm (Imm64 ( reg'mcause $ (ms.c_MCSR ms.procID).mcause  ))))
+  (("tmp_mtval"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mtval  ))))
+  (("tmp_mip"   =+ SOME (BVal_Imm (Imm64 ( reg'mip $ (ms.c_MCSR ms.procID).mip  ))))
+  env_map))))))
 End
 
 Definition default_riscv_bir_state_def:
@@ -1099,10 +1109,20 @@ QED
 
 Theorem default_riscv_bir_state_MCSRS_read[local]:
  !ms.
+  bir_env_read (BVar "mhartid" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)) /\
   bir_env_read (BVar "MPRV" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm8 (w2w (ms.c_MCSR ms.procID).mstatus.MPRV))) /\
   bir_env_read (BVar "mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch))
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)) /\
+  bir_env_read (BVar "mepc" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)) /\
+  bir_env_read (BVar "mcause" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 $ reg'mcause (ms.c_MCSR ms.procID).mcause)) /\
+  bir_env_read (BVar "mtval" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtval)) /\
+  bir_env_read (BVar "mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 $ reg'mip  (ms.c_MCSR ms.procID).mip))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,
@@ -1121,10 +1141,20 @@ QED
 
 Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
   !ms.
+  bir_env_lookup_type "mhartid" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mhartid" (BType_Imm Bit64))) /\
   bir_env_lookup_type "MPRV" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "MPRV" (BType_Imm Bit8)))  /\
+   SOME (bir_var_type (BVar "MPRV" (BType_Imm Bit8))) /\
   bir_env_lookup_type "mscratch" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "mscratch" (BType_Imm Bit64)))
+   SOME (bir_var_type (BVar "mscratch" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mepc" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mepc" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mcause" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mcause" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mtval" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mtval" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mip" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mip" (BType_Imm Bit64)))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,
@@ -1145,10 +1175,20 @@ QED
 
 Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
   !ms.
+  bir_env_lookup_type "tmp_mhartid" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mhartid" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_MPRV" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "tmp_MPRV" (BType_Imm Bit8)))  /\
+   SOME (bir_var_type (BVar "tmp_MPRV" (BType_Imm Bit8))) /\
   bir_env_lookup_type "tmp_mscratch" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "tmp_mscratch" (BType_Imm Bit64)))
+   SOME (bir_var_type (BVar "tmp_mscratch" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mepc" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mepc" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mcause" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mcause" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mtval" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mtval" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mip" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mip" (BType_Imm Bit64)))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,

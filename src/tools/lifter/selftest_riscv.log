@@ -929,10 +929,10 @@ RV64 Zicsr Standard Extension
 
 CSRRW x1, mscratch(0x340), x2: 340110F3 @ 0x10030 - OK
  []
-|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
-     (65584w,[243w; 16w; 1w; 52w])
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 16w; 1w; 52w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm64 65584w) "340110F3";
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "340110F3";
            bb_statements :=
              [BStmt_Assert
                 (BExp_BinPred BIExp_Equal
@@ -943,14 +943,14 @@ CSRRW x1, mscratch(0x340), x2: 340110F3 @ 0x10030 - OK
               BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
                 (BExp_Den (BVar "x2" (BType_Imm Bit64)))];
            bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 CSRRS x1, mscratch(0x340), x2: 340120F3 @ 0x10030 - OK
  []
-|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
-     (65584w,[243w; 32w; 1w; 52w])
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 32w; 1w; 52w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm64 65584w) "340120F3";
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "340120F3";
            bb_statements :=
              [BStmt_Assert
                 (BExp_BinPred BIExp_Equal
@@ -963,14 +963,14 @@ CSRRS x1, mscratch(0x340), x2: 340120F3 @ 0x10030 - OK
                    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
                    (BExp_Den (BVar "x2" (BType_Imm Bit64))))];
            bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 CSRRC x1, mscratch(0x340), x2: 340130F3 @ 0x10030 - OK
  []
-|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
-     (65584w,[243w; 48w; 1w; 52w])
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 48w; 1w; 52w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm64 65584w) "340130F3";
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "340130F3";
            bb_statements :=
              [BStmt_Assert
                 (BExp_BinPred BIExp_Equal
@@ -983,18 +983,18 @@ CSRRC x1, mscratch(0x340), x2: 340130F3 @ 0x10030 - OK
                    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
                    (BExp_BinExp BIExp_Minus
                       (BExp_BinExp BIExp_Mult
-                         (BExp_Const (Imm64 18446744073709551615w))
+                         (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFFw))
                          (BExp_Den (BVar "x2" (BType_Imm Bit64))))
                       (BExp_Const (Imm64 1w))))];
            bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 CSRRWI x1, mscratch(0x340), 0x1: 3400D0F3 @ 0x10030 - OK
  []
-|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
-     (65584w,[243w; 208w; 0w; 52w])
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 208w; 0w; 52w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm64 65584w) "3400D0F3";
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "3400D0F3";
            bb_statements :=
              [BStmt_Assert
                 (BExp_BinPred BIExp_Equal
@@ -1005,14 +1005,14 @@ CSRRWI x1, mscratch(0x340), 0x1: 3400D0F3 @ 0x10030 - OK
               BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
                 (BExp_Const (Imm64 1w))];
            bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 CSRRSI x1, mscratch(0x340), 0x1: 3400E0F3 @ 0x10030 - OK
  []
-|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
-     (65584w,[243w; 224w; 0w; 52w])
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 224w; 0w; 52w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm64 65584w) "3400E0F3";
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "3400E0F3";
            bb_statements :=
              [BStmt_Assert
                 (BExp_BinPred BIExp_Equal
@@ -1025,14 +1025,14 @@ CSRRSI x1, mscratch(0x340), 0x1: 3400E0F3 @ 0x10030 - OK
                    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
                    (BExp_Const (Imm64 1w)))];
            bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 CSRRCI x1, mscratch(0x340), 0x1: 3400F0F3 @ 0x10030 - OK
  []
-|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
-     (65584w,[243w; 240w; 0w; 52w])
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 240w; 0w; 52w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm64 65584w) "3400F0F3";
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "3400F0F3";
            bb_statements :=
              [BStmt_Assert
                 (BExp_BinPred BIExp_Equal
@@ -1042,10 +1042,90 @@ CSRRCI x1, mscratch(0x340), 0x1: 3400F0F3 @ 0x10030 - OK
                 (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
               BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
                 (BExp_BinExp BIExp_And
-                   (BExp_Const (Imm64 18446744073709551614w))
+                   (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
                    (BExp_Den (BVar "mscratch" (BType_Imm Bit64))))];
            bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRR a2, mhartid(0xF14): F1402673 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[115w; 38w; 64w; 241w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "F1402673";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x12" (BType_Imm Bit64))
+                (BExp_Den (BVar "mhartid" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRR a5, mepc(0x341): 341027F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 39w; 16w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "341027F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x15" (BType_Imm Bit64))
+                (BExp_Den (BVar "mepc" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRR a5, mcause(0x342): 342027F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 39w; 32w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "342027F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x15" (BType_Imm Bit64))
+                (BExp_Den (BVar "mcause" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRR a5, mtval(0x343): 343027F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 39w; 48w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "343027F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x15" (BType_Imm Bit64))
+                (BExp_Den (BVar "mtval" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRR a5, mip(0x344): 344027F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 39w; 64w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "344027F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x15" (BType_Imm Bit64))
+                (BExp_Den (BVar "mip" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 
 RV64M Standard Extension (instructions inherited from RV32M)
@@ -1394,7 +1474,7 @@ REMUW x5, x6, x7: 027372BB @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 4/72
+Instructions FAILED: 4/82
 
    "0881008F" (* bmr_step_hex failed *),
    "00000073" (* bmr_step_hex failed *),

@@ -1029,6 +1029,9 @@ Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
  * be represented as one immediate), we do so here as well. *)
 val riscv_sysregs_lifted_imms_LIST_def = Define `
   riscv_sysregs_lifted_imms_LIST = [
+    (BMLI (BVar "mhartid" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mhartid))
+    );
     (* MPRV (from the mstatus register) is really a 2-bit value,
      * but is represented as an 8-bit immediate *)
     (BMLI (BVar "MPRV" (BType_Imm Bit8))
@@ -1036,6 +1039,18 @@ val riscv_sysregs_lifted_imms_LIST_def = Define `
     );
     (BMLI (BVar "mscratch" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mscratch))
+    );
+    (BMLI (BVar "mepc" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mepc))
+    );
+    (BMLI (BVar "mcause" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 $ reg'mcause ((ms.c_MCSR ms.procID).mcause))
+    );
+    (BMLI (BVar "mtval" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mtval))
+    );
+    (BMLI (BVar "mip" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 $ reg'mip ((ms.c_MCSR ms.procID).mip))
     )
   ]
 `;
