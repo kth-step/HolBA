@@ -35,6 +35,7 @@ open bir_inst_liftingLibTypes
   structure MD = struct val mr = m0_mod_bmr_rec false true end;
   structure MD = struct val mr = riscv_bmr_rec end;
 
+  (* PC and memory regions: *)
   val pc = Arbnum.fromInt 0x10000
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
   val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x1000) (Arbnum.fromInt 0x100000)
@@ -236,7 +237,8 @@ open bir_inst_liftingLibTypes
 (* For debugging RISC-V:
   (* TODO: Make shortcuts for debugging other things than preconds *)
 
-  val hex_code = String.map Char.toUpper "FCE0879B"; (* "addiw x15,x1,-50" *)
+  val hex_code = String.map Char.toUpper "340110F3"; (* CSR *)
+  val hex_code = String.map Char.toUpper "00E13423"; (* Working store *)
 
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
@@ -245,8 +247,9 @@ open bir_inst_liftingLibTypes
   val (preconds, next_tm) = strip_imp_only (concl next_thm0)
   val tm = (* Put term returned by exception here, don't forget type information... *)
 
-val tm = ``Imm64
-                (w2w ((riscv_mem_half ms.MEM8 (ms.c_gpr ms.procID 2w - 50w)):word16))``;
+(* Examples: *)
+val tm = ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w``;
+val tm = ``aligned 3 (ms.c_gpr ms.procID 2w)``;
 
   (* In case of several preconds, continue with the following for 2, 3, 4, ...*)
   (* val tm = el 2 preconds *)
@@ -444,7 +447,9 @@ fun get_patched_step_hex ms_v hex_code =
   in
 (* For debugging RISC-V:
 
-  val hex_code = String.map Char.toUpper "00E13423";
+  val hex_code = String.map Char.toUpper "00E13423"; (* Working store *)
+
+  val hex_code = String.map Char.toUpper "340110F3"; (* Non-working CSR instr *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
@@ -459,7 +464,7 @@ fun get_patched_step_hex ms_v hex_code =
     val ms'_t = rand (rhs (next_tm))
 
     (* lift all preconds *)
-    (* TODO: Should the below be empty list? *)
+    (* TODO: Something goes wrong here... *)
     val lift_thms = map exp_lift_fn preconds
     val assert_ok_thms = map (MATCH_MP bir_assert_desc_OK_via_lifting) lift_thms
     val al_step_l = map (fn thm => (rand (concl thm))) assert_ok_thms
@@ -1157,10 +1162,11 @@ fun get_patched_step_hex ms_v hex_code =
 
      val (lb, ms_case_cond_t, next_thm) = el 1 sub_block_work_list
   *)
-(* For debugging RISC-V:
+(* For debugging RISC-V from scratch:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code = String.map Char.toUpper "340110F3"; (* CSR *)
+  val hex_code = String.map Char.toUpper "00E13423"; (* Working Store *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1204,6 +1210,7 @@ fun get_patched_step_hex ms_v hex_code =
      fun raiseErr s = raise (bir_inst_liftingAuxExn (BILED_msg s));
 
      (* compute ms' and al_step *)
+     (* TODO: CSR: Something goes wrong here... *)
      val (ms'_t, al_step_t, ms'_thm) = compute_al_step_ms' next_thm0
        handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
 
@@ -1365,15 +1372,16 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging RISC-V:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code = String.map Char.toUpper "340110F3";
+  val hex_code_desc = hex_code;
+
+  val hex_code = String.map Char.toUpper "00E13423";
   val hex_code_desc = hex_code;
 
 *)
   fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code hex_code_desc =
   let
      (* call step lib to generate step theorems, compute mm and label *)
-    (* TODO: Does this work correctly for RISC-V? Probably, but usage of "+=" as "assign" is funny.
-     * Also see if it is necessary to use a static procID. *)
      val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
 
      (* instantiate inst theorem *)
@@ -1407,7 +1415,7 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ =>
          raise bir_inst_liftingAuxExn (BILED_msg ("preprocessing next theorems failed"));
 
-     (* TODO: Here, something fails... *)
+     (* TODO: Something goes wrong here... *)
      val sub_block_thms = map (lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 mu_thm) sub_block_work_list
 
      val prog_thm = merge_block_thms sub_block_thms handle HOL_ERR _ =>

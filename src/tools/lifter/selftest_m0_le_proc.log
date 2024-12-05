@@ -2690,8 +2690,8 @@ SUMMARY FAILING HEXCODES M0 LittleEnd, Process SP
 
 Instructions FAILED: 2/111
 
-   "A1BC" (* bmr_step_hex failed *),
-   "DFB8" (* bmr_step_hex failed *)
+   "DFB8" (* bmr_step_hex failed *),
+   "A1BC" (* bmr_step_hex failed *)
 ]
 
 Instructions FIXED: 0

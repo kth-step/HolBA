@@ -67,14 +67,15 @@ val riscv_test_asms = map riscv_test_asm
 (* Tests *)
 (*********)
 val _ = print_msg "\n";
-val _ = print_header "MANUAL TESTS (HEX) - RISC-V\nRV64I Base Instruction Set (instructions inherited from RV32I)\n";
+val _ = print_header "MANUAL TESTS (HEX) - RISC-V";
 val _ = print_msg "\n";
+val _ = print_header "RV64I Base Instruction Set (instructions inherited from RV32I)";
+val _ = print_msg "\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* 75 instructions in initial scope (including M extension) *)
-(* 10 still TODO:
+(* 4 still TODO:
  *  2 fences
- *  environment call and breakpoint
- *  6 CSR instructions *)
+ *  environment call and breakpoint *)
 (* TODO: Instructions from privileged instruction set: MRET (exists in latest L3 version), SRET (S ext., exists in latest L3 version), URET (N ext., exists in latest L3 version) *)
 (* TODO: Most important extensions: A (atomics), C (compressed) *)
 (* TODO: Are NOPs in riscv_stepLib correct? *)
@@ -245,8 +246,8 @@ val _ = fail_with_msg "EBREAK not yet supported by stepLib";
 val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
 
 val _ = print_msg "\n";
-val _ = print_header "RV64I Base Instruction Set (instructions added to RV32I)\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64I Base Instruction Set (instructions added to RV32I)";
+val _ = print_msg "\n\n";
 
 (* I-type load variants *)
   val _ = riscv_test_asms [
@@ -288,8 +289,8 @@ val _ = print_msg "\n";
   ];
 
 val _ = print_msg "\n";
-val _ = print_header "RV64 Zifencei Standard Extension\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64 Zifencei Standard Extension";
+val _ = print_msg "\n\n";
 
 (* FENCE.I x0, x0, 0 :  000000000000   00000  001   00000  0001111
 
@@ -302,58 +303,48 @@ val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
 val _ = riscv_test_hex_print_asm "FENCE.I x0, x0, 0" "0000100F";
 
 val _ = print_msg "\n";
-val _ = print_header "RV64 Zicsr Standard Extension\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64 Zicsr Standard Extension";
+val _ = print_msg "\n\n";
 
 (* CSR instructions (opcode SYSTEM) *)
 (* TODO: Note that machine mode is currently assumed for these instructions
  * (see bottom of riscv_stepScript.sml) *)
-(* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011
-
-  open riscv_stepLib;
-  val _ = riscv_step_hex "340110F3";
-
-*)
+(* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRW x1, mscratch(0x340), x2" "340110F3";
-(* CSRRS x1, mscratch(0x340), x2 : 001101000000    00010 010000011110011
-
-  open riscv_stepLib;
-  val test = riscv_step_hex "340120F3";
-
-*)
+(* CSRRS x1, mscratch(0x340), x2 : 001101000000    00010 010000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRS x1, mscratch(0x340), x2" "340120F3";
-(* CSRRC x1, mscratch(0x340), x2 : 001101000000    00010 011000011110011
-
-  open riscv_stepLib;
-  val test = riscv_step_hex "340130F3";
-
-*)
+(* CSRRC x1, mscratch(0x340), x2 : 001101000000    00010 011000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRC x1, mscratch(0x340), x2" "340130F3";
-(* CSRRWI x1, mscratch(0x340), 0x1 : 001101000000    00001 101 000011110011
-
-  open riscv_stepLib;
-  val _ = riscv_step_hex "3400D0F3";
-
-*)
+(* CSRRWI x1, mscratch(0x340), 0x1 : 001101000000    00001 101 000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRWI x1, mscratch(0x340), 0x1" "3400D0F3";
-(* CSRRSI x1, mscratch(0x340), 0x1 : 001101000000    00001 110 00001 1110011
-
-  open riscv_stepLib;
-  val test = riscv_step_hex "3400E0F3";
-
-*)
+(* CSRRSI x1, mscratch(0x340), 0x1 : 001101000000    00001 110 00001 1110011 *)
 val _ = riscv_test_hex_print_asm "CSRRSI x1, mscratch(0x340), 0x1" "3400E0F3";
-(* CSRRCI x1, mscratch(0x340), 0x1 : 001101000000    00001 111 000011110011
-
-  open riscv_stepLib;
-  val test = riscv_step_hex "3400F0F3";
-
-*)
+(* CSRRCI x1, mscratch(0x340), 0x1 : 001101000000    00001 111 000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRCI x1, mscratch(0x340), 0x1" "3400F0F3";
 
+val _ = riscv_test_hex_print_asm "CSRR a2, mhartid(0xF14)" "F1402673";
+
+val _ = riscv_test_hex_print_asm "CSRR a5, mepc(0x341)" "341027F3";
+
+val _ = riscv_test_hex_print_asm "CSRR a5, mcause(0x342)" "342027F3";
+
+val _ = riscv_test_hex_print_asm "CSRR a5, mtval(0x343)" "343027F3";
+
+val _ = riscv_test_hex_print_asm "CSRR a5, mip(0x344)" "344027F3";
+
+(* TODO: These fail in riscv_stepLib for some reason...
+
+val _ = riscv_test_hex_print_asm "CSRW mie(0x304), 0" "30405073";
+val _ = riscv_test_hex_print_asm "CSRW mstatus(0x300), 0" "30005073";
+
+open riscv_stepLib;
+val _ = riscv_step_hex "30405073";
+
+*)
+
 val _ = print_msg "\n";
-val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)";
+val _ = print_msg "\n\n";
 
 (* R-type variants (opcode OP) *)
   val _ = riscv_test_asms [
@@ -376,8 +367,8 @@ val _ = print_msg "\n";
   ];
 
 val _ = print_msg "\n";
-val _ = print_header "RV64M Standard Extension (instructions added to RV32M)\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64M Standard Extension (instructions added to RV32M)";
+val _ = print_msg "\n\n";
 
 (* R-type variants (opcode OP-32) *)
   val _ = riscv_test_asms [
@@ -401,14 +392,7 @@ val riscv_expected_failed_hexcodes:string list =
    "00000073" (* ECALL *),
    "00100073" (* EBREAK *),
    (* Zifencei *)
-   "0000100F" (* FENCE.I *),
-   (* Zicsr *)
-   "340110F3" (* CSRRW x1, mscratch(0x340), x2 *),
-   "340120F3" (* CSRRS x1, mscratch(0x340), x2 *),
-   "340130F3" (* CSRRC x1, mscratch(0x340), x2 *),
-   "3400D0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
-   "3400E0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
-   "3400F0F3" (* CSRRCI x1, mscratch(0x340), 0x1 *)
+   "0000100F" (* FENCE.I *)
 ];
 
 val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;
