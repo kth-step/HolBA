@@ -9,7 +9,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 val _ = new_theory "kernel";
 
 val _ = lift_da_and_store "kernel" "kernel.da" da_riscv
- ((Arbnum.fromInt 0x800000e0), (Arbnum.fromInt 0x80000194));
+ ((Arbnum.fromInt 0x800000e0), (Arbnum.fromInt 0x80000268));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)
