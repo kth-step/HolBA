@@ -16,13 +16,19 @@ open bitstringTheory numeral_bitTheory;
 
 Type mmap = ``:(num |-> num)`` (* BIR memory map *)
 Type ident = ``:string`` (* Identifier *)
-Type word_one = ``:word1`` (* 1-bit word *)
-Type word_eight = ``:word8`` (* 8-bit word *)
-Type word_sixteen = ``:word16`` (* 16-bit word *)
-Type word_thirtytwo = ``:word32`` (* 32-bit word *)
-Type word_sixtyfour = ``:word64`` (* 64-bit word *)
-Type word_hundredtwentyeight = ``:word128`` (* 128-bit word *)
 Type k = ``:num``
+
+Type word_one = ``:word1``
+
+Type word_eight = ``:word8``
+
+Type word_sixteen = ``:word16``
+
+Type word_thirtytwo = ``:word32``
+
+Type word_sixtyfour = ``:word64``
+
+Type word_hundredtwentyeight = ``:word128``
 val _ = Hol_datatype ` 
 bir_imm_t =  (* immediates *)
    Imm1 of word_one

@@ -8,33 +8,53 @@ metavar mmap ::=
 metavar ident ::=
   {{ hol string }}
   {{ com Identifier }}
-metavar word_one ::=
-  {{ hol word1 }}
-  {{ tex \mathit{word1} }}
-  {{ com 1-bit word }}
-metavar word_eight ::=
-  {{ hol word8 }}
-  {{ tex \mathit{word8} }}
-  {{ com 8-bit word }}
-metavar word_sixteen ::=
-  {{ hol word16 }}
-  {{ tex \mathit{word16} }}
-  {{ com 16-bit word }}
-metavar word_thirtytwo ::=
-  {{ hol word32 }}
-  {{ tex \mathit{word32} }}
-  {{ com 32-bit word }}
-metavar word_sixtyfour ::=
-  {{ hol word64 }}
-  {{ tex \mathit{word64} }}
-  {{ com 64-bit word }}
-metavar word_hundredtwentyeight ::=
-  {{ hol word128 }}
-  {{ tex \mathit{word128} }}
-  {{ com 128-bit word }}
 indexvar k ::=
   {{ hol num }}
 grammar
+word_one :: word_one_ ::=
+ {{ hol word1 }}
+ {{ tex \mathit{word1} }}
+ {{ com 1-bit word }}
+| binexp_op ( binexp , word_one , word_one' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_one]] [[word_one']]) }}
+
+word_eight :: word_eight_ ::=
+  {{ hol word8 }}
+  {{ tex \mathit{word8} }}
+  {{ com 8-bit word }}
+| binexp_op ( binexp , word_eight , word_eight' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_eight]] [[word_eight']]) }}
+| unaryexp_op ( unaryexp , word_eight ) :: M :: unaryexp_op
+  {{ hol ((bir_unaryexp_get_oper [[unaryexp]]) [[word_eight]]) }}
+
+word_sixteen :: word_sixteen_ ::=
+  {{ hol word16 }}
+  {{ tex \mathit{word16} }}
+  {{ com 16-bit word }}
+| binexp_op ( binexp , word_sixteen , word_sixteen' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_sixteen]] [[word_sixteen']]) }}
+
+word_thirtytwo :: word_thirtytwo_ ::=
+  {{ hol word32 }}
+  {{ tex \mathit{word32} }}
+  {{ com 32-bit word }}
+| binexp_op ( binexp , word_thirtytwo , word_thirtytwo' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_thirtytwo]] [[word_thirtytwo']]) }}
+
+word_sixtyfour :: word_sixtyfour_ ::=
+  {{ hol word64 }}
+  {{ tex \mathit{word64} }}
+  {{ com 64-bit word }}
+| binexp_op ( binexp , word_sixtyfour , word_sixtyfour' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_sixtyfour]] [[word_sixtyfour']]) }}
+
+word_hundredtwentyeight :: word_hundredtwentyeight_ ::=
+  {{ hol word128 }}
+  {{ tex \mathit{word128} }}
+  {{ com 128-bit word }}
+| binexp_op ( binexp , word_hundredtwentyeight , word_hundredtwentyeight' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_hundredtwentyeight]] [[word_hundredtwentyeight']]) }}
+
 bir_imm_t, bir_imm :: '' ::=
 {{ com immediates }}
 | Imm_one ( word_one ) :: :: Imm1
