@@ -15,45 +15,45 @@ word_one :: word_one_ ::=
  {{ hol word1 }}
  {{ tex \mathit{word1} }}
  {{ com 1-bit word }}
-| binexp_op ( binexp , word_one , word_one' ) :: M :: binexp_op
-  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_one]] [[word_one']]) }}
+| binexp_op ( bir_binexp , word_one , word_one' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_one]] [[word_one']]) }}
 
 word_eight :: word_eight_ ::=
   {{ hol word8 }}
   {{ tex \mathit{word8} }}
   {{ com 8-bit word }}
-| binexp_op ( binexp , word_eight , word_eight' ) :: M :: binexp_op
-  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_eight]] [[word_eight']]) }}
-| unaryexp_op ( unaryexp , word_eight ) :: M :: unaryexp_op
-  {{ hol ((bir_unaryexp_get_oper [[unaryexp]]) [[word_eight]]) }}
+| binexp_op ( bir_binexp , word_eight , word_eight' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_eight]] [[word_eight']]) }}
+| unaryexp_op ( bir_unaryexp , word_eight ) :: M :: unaryexp_op
+  {{ hol ((bir_unaryexp_get_oper [[bir_unaryexp]]) [[word_eight]]) }}
 
 word_sixteen :: word_sixteen_ ::=
   {{ hol word16 }}
   {{ tex \mathit{word16} }}
   {{ com 16-bit word }}
-| binexp_op ( binexp , word_sixteen , word_sixteen' ) :: M :: binexp_op
-  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_sixteen]] [[word_sixteen']]) }}
+| binexp_op ( bir_binexp , word_sixteen , word_sixteen' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_sixteen]] [[word_sixteen']]) }}
 
 word_thirtytwo :: word_thirtytwo_ ::=
   {{ hol word32 }}
   {{ tex \mathit{word32} }}
   {{ com 32-bit word }}
-| binexp_op ( binexp , word_thirtytwo , word_thirtytwo' ) :: M :: binexp_op
-  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_thirtytwo]] [[word_thirtytwo']]) }}
+| binexp_op ( bir_binexp , word_thirtytwo , word_thirtytwo' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_thirtytwo]] [[word_thirtytwo']]) }}
 
 word_sixtyfour :: word_sixtyfour_ ::=
   {{ hol word64 }}
   {{ tex \mathit{word64} }}
   {{ com 64-bit word }}
-| binexp_op ( binexp , word_sixtyfour , word_sixtyfour' ) :: M :: binexp_op
-  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_sixtyfour]] [[word_sixtyfour']]) }}
+| binexp_op ( bir_binexp , word_sixtyfour , word_sixtyfour' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_sixtyfour]] [[word_sixtyfour']]) }}
 
 word_hundredtwentyeight :: word_hundredtwentyeight_ ::=
   {{ hol word128 }}
   {{ tex \mathit{word128} }}
   {{ com 128-bit word }}
-| binexp_op ( binexp , word_hundredtwentyeight , word_hundredtwentyeight' ) :: M :: binexp_op
-  {{ hol ((bir_binexp_get_oper [[binexp]]) [[word_hundredtwentyeight]] [[word_hundredtwentyeight']]) }}
+| binexp_op ( bir_binexp , word_hundredtwentyeight , word_hundredtwentyeight' ) :: M :: binexp_op
+  {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_hundredtwentyeight]] [[word_hundredtwentyeight']]) }}
 
 bir_imm_t, bir_imm :: '' ::=
 {{ com immediates }}
@@ -159,6 +159,7 @@ terminals :: terminals_ ::=
 | size_of_bir_immtype :: :: size_of_bir_immtype {{ tex \mathit{size\_of\_bir\_immtype} }}
 | type_of_bir_imm :: :: type_of_bir_imm {{ tex \mathit{type\_of\_bir\_imm} }}
 | type_of_bir_val :: :: type_of_bir_val {{ tex \mathit{type\_of\_bir\_val} }}
+| binexp_op :: :: binexp_op {{ tex \mathit{binexp\_op} }}
 | |- :: :: vdash {{ tex \vdash }}
 | ~> :: :: leadsto {{ tex \leadsto }}
 | <= :: :: leq {{ tex \leq }}
@@ -257,6 +258,12 @@ End
 Definition type_of_bir_val_def:
   (type_of_bir_val (BVal_Imm imm) = (BType_Imm (type_of_bir_imm imm))) /\
   (type_of_bir_val (BVal_Mem aty vty mmap) = (BType_Mem aty vty) )
+End
+
+(* Gets the operator for a given binary operation *)
+Definition bir_binexp_get_oper_def:
+  (bir_binexp_get_oper BIExp_And = word_and) /\
+  (bir_binexp_get_oper BIExp_Plus = word_add)
 End
 }}
 
@@ -384,84 +391,33 @@ defn
   size_of_bir_immtype(bir_immtype) DIV size_of_bir_immtype(bir_immtype2) <= 2**size_of_bir_immtype(bir_immtype1)
   ------------------------------------------------------------------------------------------- :: Store_LittleEndian
   env |- Store(bir_exp1,bir_exp2,LittleEndian,bir_exp3) : TypeMem(bir_immtype1,bir_immtype2)
+
+defns
+  bir_eval_binexp_imm :: '' ::=
+
+defn
+  bir_binexp_t bir_imm_t bir_imm_t' ~> bir_imm_t'' :: :: bir_eval_binexp_imm :: Eval_BinExp_Imm_
+  {{ com evaluation of a binary expression of two immediates }} by
+
+  -------------------------------------------------------- :: One
+  bir_binexp Imm_one(word_one) Imm_one(word_one') ~> Imm_one(binexp_op(bir_binexp,word_one,word_one'))
+
+  ------------------------------------------------------------------------------------------------------------------ :: Eight
+  bir_binexp Imm_eight(word_eight) Imm_eight(word_eight') ~> Imm_eight(binexp_op(bir_binexp,word_eight,word_eight'))
+
+  ------------------------------------------------------------------------------------------------------------------ :: Sixteen
+  bir_binexp Imm_sixteen(word_sixteen) Imm_sixteen(word_sixteen') ~> Imm_sixteen(binexp_op(bir_binexp,word_sixteen,word_sixteen'))
+
+  ------------------------------------------------------------------------------------------------------------------ :: Thirtytwo
+  bir_binexp Imm_thirtytwo(word_thirtytwo) Imm_thirtytwo(word_thirtytwo') ~> Imm_thirtytwo(binexp_op(bir_binexp,word_thirtytwo,word_thirtytwo'))
+
+  ------------------------------------------------------------------------------------------------------------------ :: Sixtyfour
+  bir_binexp Imm_sixtyfour(word_sixtyfour) Imm_sixtyfour(word_sixtyfour') ~> Imm_sixtyfour(binexp_op(bir_binexp,word_sixtyfour,word_sixtyfour'))
+
+  ------------------------------------------------------------------------------------------------------------------ :: Hundredtwentyeight
+  bir_binexp Imm_hundredtwentyeight(word_hundredtwentyeight) Imm_hundredtwentyeight(word_hundredtwentyeight') ~> Imm_hundredtwentyeight(binexp_op(bir_binexp,word_hundredtwentyeight,word_hundredtwentyeight'))
   
 embed {{ hol
-
-(* Number to Bitstring *)
-Definition n2bs_def:
-  (n2bs n Bit1   = Imm1   (n2w n)) /\
-  (n2bs n Bit8   = Imm8   (n2w n)) /\
-  (n2bs n Bit16  = Imm16  (n2w n)) /\
-  (n2bs n Bit32  = Imm32  (n2w n)) /\
-  (n2bs n Bit64  = Imm64  (n2w n)) /\
-  (n2bs n Bit128 = Imm128 (n2w n))
-End
-
-(* Boolean list (vector) to bitstring *)
-Definition v2bs_def:
-  v2bs v s = n2bs (v2n v) s
-End
-
-(* Immediate to number *)
-Definition b2n_def:
-  (b2n ( Imm1   w ) = w2n w) /\
-  (b2n ( Imm8   w ) = w2n w) /\
-  (b2n ( Imm16  w ) = w2n w) /\
-  (b2n ( Imm32  w ) = w2n w) /\
-  (b2n ( Imm64  w ) = w2n w) /\
-  (b2n ( Imm128 w ) = w2n w)
-End
-
-(* Immediate to bitstring *)
-Definition b2v_def:
-  (b2v ( Imm1   w ) = w2v w) /\
-  (b2v ( Imm8   w ) = w2v w) /\
-  (b2v ( Imm16  w ) = w2v w) /\
-  (b2v ( Imm32  w ) = w2v w) /\
-  (b2v ( Imm64  w ) = w2v w) /\
-  (b2v ( Imm128 w ) = w2v w)
-End
-
-Definition bitstring_split_aux_def:
-  (bitstring_split_aux 0 acc bs = NONE) /\
-  (bitstring_split_aux n acc [] = SOME $ REVERSE acc) /\
-  (bitstring_split_aux n acc bs =
-    bitstring_split_aux n ((TAKE n bs)::acc) (DROP n bs))
-Termination
-  WF_REL_TAC `measure (\ (_, _, l). LENGTH l)` >>
-  simp_tac list_ss []
-End
-
-(* Splits a bitstring in chunks of n bits *)
-Definition bitstring_split_def:
-  bitstring_split n bs = bitstring_split_aux n [] bs
-End
-
-Definition is_exp_well_typed_def:
-  is_exp_well_typed env exp = ?ty. type_of_bir_exp env exp ty
-End
-
-(* Gets the operator for a given binary operation *)
-Definition bir_binexp_get_oper_def:
-  (bir_binexp_get_oper BIExp_And = word_and) /\
-  (bir_binexp_get_oper BIExp_Plus = word_add)
-End
-
-(* Evaluates a binary expression of two immediates *)
-Inductive bir_eval_binexp_imm:
-  (!binexp w1 w2. 
-    bir_eval_binexp_imm binexp (Imm1 w1) (Imm1 w2) (Imm1 ((bir_binexp_get_oper binexp) w1 w2))) /\
-  (!binexp w1 w2. 
-    bir_eval_binexp_imm binexp (Imm8 w1) (Imm8 w2) (Imm8 ((bir_binexp_get_oper binexp) w1 w2))) /\
-  (!binexp w1 w2. 
-    bir_eval_binexp_imm binexp (Imm16 w1) (Imm16 w2) (Imm16 ((bir_binexp_get_oper binexp) w1 w2))) /\
-  (!binexp w1 w2. 
-    bir_eval_binexp_imm binexp (Imm32 w1) (Imm32 w2) (Imm32 ((bir_binexp_get_oper binexp) w1 w2))) /\
-  (!binexp w1 w2. 
-    bir_eval_binexp_imm binexp (Imm64 w1) (Imm64 w2) (Imm64 ((bir_binexp_get_oper binexp) w1 w2))) /\
-  (!binexp w1 w2. 
-    bir_eval_binexp_imm binexp (Imm128 w1) (Imm128 w2) (Imm128 ((bir_binexp_get_oper binexp) w1 w2)))
-End
 
 (* Evaluates a general binary expression with values as parameters *)
 Definition bir_eval_binexp_def:
@@ -535,6 +491,60 @@ Inductive bir_eval_ifthenelse:
 
 [~BExp_IfThenElseF:]
   bir_eval_ifthenelse birF v1 v2 v2
+End
+
+(* Number to Bitstring *)
+Definition n2bs_def:
+  (n2bs n Bit1   = Imm1   (n2w n)) /\
+  (n2bs n Bit8   = Imm8   (n2w n)) /\
+  (n2bs n Bit16  = Imm16  (n2w n)) /\
+  (n2bs n Bit32  = Imm32  (n2w n)) /\
+  (n2bs n Bit64  = Imm64  (n2w n)) /\
+  (n2bs n Bit128 = Imm128 (n2w n))
+End
+
+(* Boolean list (vector) to bitstring *)
+Definition v2bs_def:
+  v2bs v s = n2bs (v2n v) s
+End
+
+(* Immediate to number *)
+Definition b2n_def:
+  (b2n ( Imm1   w ) = w2n w) /\
+  (b2n ( Imm8   w ) = w2n w) /\
+  (b2n ( Imm16  w ) = w2n w) /\
+  (b2n ( Imm32  w ) = w2n w) /\
+  (b2n ( Imm64  w ) = w2n w) /\
+  (b2n ( Imm128 w ) = w2n w)
+End
+
+(* Immediate to bitstring *)
+Definition b2v_def:
+  (b2v ( Imm1   w ) = w2v w) /\
+  (b2v ( Imm8   w ) = w2v w) /\
+  (b2v ( Imm16  w ) = w2v w) /\
+  (b2v ( Imm32  w ) = w2v w) /\
+  (b2v ( Imm64  w ) = w2v w) /\
+  (b2v ( Imm128 w ) = w2v w)
+End
+
+Definition bitstring_split_aux_def:
+  (bitstring_split_aux 0 acc bs = NONE) /\
+  (bitstring_split_aux n acc [] = SOME $ REVERSE acc) /\
+  (bitstring_split_aux n acc bs =
+    bitstring_split_aux n ((TAKE n bs)::acc) (DROP n bs))
+Termination
+  WF_REL_TAC `measure (\ (_, _, l). LENGTH l)` >>
+  simp_tac list_ss []
+End
+
+(* Splits a bitstring in chunks of n bits *)
+Definition bitstring_split_def:
+  bitstring_split n bs = bitstring_split_aux n [] bs
+End
+
+Definition is_exp_well_typed_def:
+  is_exp_well_typed env exp = ?ty. type_of_bir_exp env exp ty
 End
 
 (* Load a value from the mmap at the given address *)
@@ -653,7 +663,7 @@ defns
 
 defn
   bir_var_environment |- bir_exp ~> bir_val :: :: bir_eval_exp :: Eval_BExp_
-  {{ com typing relation for BIR expressions }} by
+  {{ com evaluation of BIR expressions }} by
 
   ----------- :: Const
   env |- Const(bir_imm) ~> ValImm(bir_imm)
