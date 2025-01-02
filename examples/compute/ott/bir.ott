@@ -35,6 +35,8 @@ word_one :: word_one_ ::=
   {{ hol ((bir_binexp_get_oper [[bir_binexp]]) [[word_one]] [[word_one']]) }}
 | unaryexp_op ( bir_unaryexp , word_one ) :: M :: unaryexp_op
   {{ hol ((bir_unaryexp_get_oper [[bir_unaryexp]]) [[word_one]]) }}
+| b2w ( b ) :: M :: b2w
+  {{ hol (bool2w [[b]]) }}
 
 word_eight :: word_eight_ ::=
   {{ hol word8 }}
@@ -324,8 +326,6 @@ formula :: formula_ ::=
   {{ hol (bir_eval_binexp [[bir_binexp]] [[bir_val1]] [[bir_val2]] [[bir_val]]) }}
 | bir_unaryexp bir_val ~> bir_val' :: M :: bir_eval_unaryexp
   {{ hol (bir_eval_unaryexp [[bir_unaryexp]] [[bir_val]] [[bir_val']]) }}
-| bir_binpred bir_val1 bir_val2 ~> bir_val :: M :: bir_eval_binpred
-  {{ hol (bir_eval_binpred [[bir_binpred]] [[bir_val1]] [[bir_val2]] [[bir_val]]) }}
 | bir_val bir_val1 bir_val2 ~> bir_val' :: M :: bir_eval_ifthenelse
   {{ hol (bir_eval_ifthenelse [[bir_val]] [[bir_val1]] [[bir_val2]] [[bir_val']]) }}
 | bir_val1 bir_val2 bir_endian bir_immtype ~> bir_val3 :: M :: bir_eval_load
@@ -506,8 +506,20 @@ defn
 
   ------------------------------------------------------------------------------------------------------------------ :: Hundredtwentyeight
   bir_binpred Imm_hundredtwentyeight(word_hundredtwentyeight) Imm_hundredtwentyeight(word_hundredtwentyeight') ~> binpred_op(bir_binpred,word_hundredtwentyeight,word_hundredtwentyeight')
-  
-embed {{ hol
+
+defns
+  bir_eval_binpred :: '' ::=
+
+defn
+  bir_binpred_t bir_val_t bir_val_t' ~> bir_val_t'' :: :: bir_eval_binpred :: Eval_BinPred_
+   {{ com evaluation of a binary predicate of two bir values }} by
+
+  bir_binpred bir_imm bir_imm' ~> b
+  ----------------------------------------------------------------------- :: Val
+  bir_binpred ValImm(bir_imm) ValImm(bir_imm') ~> ValImm(Imm_one(b2w(b)))
+
+embed
+{{ hol
 
 (* Evaluates a general binary expression with values as parameters *)
 Definition bir_eval_binexp_def:
@@ -521,13 +533,6 @@ Definition bir_eval_unaryexp_def:
   (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
     (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
   (bir_eval_unaryexp _ _ _ = F)
-End
-
-(* Evaluates a general binary predicate with values as parameters *)
-Inductive bir_eval_binpred:
-  (!binpred imm1 imm2 b. 
-    (bir_eval_binpred_imm binpred imm1 imm2 b) ==>
-    (bir_eval_binpred binpred (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm (bool2b b))))
 End
 
 (* Evaluates a general ifthenelse expression with values as parameters *)
