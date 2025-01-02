@@ -114,6 +114,10 @@ bir_val_t, bir_val :: BVal_ ::=
 | ValImm ( bir_imm ) :: :: Imm
 | ValMem ( bir_immtype , bir_immtype' , mmap ) :: :: Mem
   {{ com address type / value type }}
+| birT :: M :: birT
+  {{ hol birT }}
+| birF :: M :: birF
+  {{ hol birF }}
 
 bir_type_t, bir_type :: BType_ ::=
 {{ com general typing }}
@@ -322,8 +326,6 @@ formula :: formula_ ::=
   {{ hol ([[n]] = [[n']]) }}
 | n '<=' n' :: M :: n_lt
   {{ hol ([[n]] <= [[n']]) }}
-| bir_val bir_val1 bir_val2 ~> bir_val' :: M :: bir_eval_ifthenelse
-  {{ hol (bir_eval_ifthenelse [[bir_val]] [[bir_val1]] [[bir_val2]] [[bir_val']]) }}
 | bir_val1 bir_val2 bir_endian bir_immtype ~> bir_val3 :: M :: bir_eval_load
   {{ hol (bir_eval_load [[bir_val1]] [[bir_val2]] [[bir_endian]] [[bir_immtype]] [[bir_val3]]) }}
 | bir_val1 bir_val2 bir_endian bir_val3 ~> bir_val :: M :: bir_eval_store
@@ -536,17 +538,21 @@ defn
   ------------------------------------------------ :: Val
   bir_unaryexp ValImm(bir_imm1) ~> ValImm(bir_imm)
 
+defns
+  bir_eval_ifthenelse :: '' ::=
+
+defn
+  bir_val bir_val1 bir_val2 ~> bir_val' :: :: bir_eval_ifthenelse :: Eval_IfThenElse_
+   {{ com evaluation of if-then-else expression with values as parameters }} by
+
+  ---------------------------------- :: T
+  birT bir_val1 bir_val2 ~> bir_val1
+
+  ---------------------------------- :: F
+  birF bir_val1 bir_val2 ~> bir_val2
+
 embed
 {{ hol
-
-(* Evaluates a general ifthenelse expression with values as parameters *)
-Inductive bir_eval_ifthenelse:
-[~BExp_IfThenElseT:]
-  bir_eval_ifthenelse birT (v1:bir_val_t) (v2:bir_val_t) v1 
-
-[~BExp_IfThenElseF:]
-  bir_eval_ifthenelse birF v1 v2 v2
-End
 
 (* Number to Bitstring *)
 Definition n2bs_def:

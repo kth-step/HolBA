@@ -454,14 +454,21 @@ Inductive bir_eval_unaryexp:
  ==> 
 ( ( bir_eval_unaryexp bir_unaryexp (BVal_Imm bir_imm1) (BVal_Imm bir_imm) )))
 End
+(** definitions *)
 
-(* Evaluates a general ifthenelse expression with values as parameters *)
+(* defns bir_eval_ifthenelse *)
 Inductive bir_eval_ifthenelse:
-[~BExp_IfThenElseT:]
-  bir_eval_ifthenelse birT (v1:bir_val_t) (v2:bir_val_t) v1 
+(* defn bir_eval_ifthenelse *)
 
-[~BExp_IfThenElseF:]
-  bir_eval_ifthenelse birF v1 v2 v2
+[Eval_IfThenElse_T:] (! (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
+(clause_name "Eval_IfThenElse_T")
+ ==> 
+( ( bir_eval_ifthenelse  birT  bir_val1 bir_val2 bir_val1 )))
+
+[Eval_IfThenElse_F:] (! (bir_val1:bir_val_t) (bir_val2:bir_val_t) .
+(clause_name "Eval_IfThenElse_F")
+ ==> 
+( ( bir_eval_ifthenelse  birF  bir_val1 bir_val2 bir_val2 )))
 End
 
 (* Number to Bitstring *)
@@ -678,7 +685,7 @@ Inductive bir_eval_exp:
 (( ( bir_eval_exp env bir_exp bir_val )) /\
 ( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
-( (bir_eval_ifthenelse  bir_val   bir_val1   bir_val2   bir_val3 ) ))
+( ( bir_eval_ifthenelse bir_val bir_val1 bir_val2 bir_val3 )))
  ==> 
 ( ( bir_eval_exp env (BExp_IfThenElse bir_exp bir_exp1 bir_exp2) bir_val3 )))
 

@@ -240,8 +240,8 @@ Theorem bir_eval_ifthenelse_eq_compute_ifthenelse:
     bir_compute_ifthenelse (SOME v) (SOME v1) (SOME v2) = SOME v3)
 Proof
   Cases_on `v` >> Cases_on `v1` >> Cases_on `v2` >> Cases_on `v3` >>
-  rw [bir_eval_ifthenelse_cases, bir_compute_ifthenelse_def, birT_def, birF_def] >>
-    metis_tac []
+  rw [bir_eval_ifthenelse_cases, bir_compute_ifthenelse_def, birT_def, birF_def,clause_name_def] >>
+  metis_tac []
 QED
 
 (* Eval and compute are similar *)

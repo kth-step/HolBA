@@ -557,7 +557,7 @@ Proof
     Cases_on `bir_compute_exp e'' (BEnv f)` >>
     rw [Once type_of_bir_exp_cases, bir_compute_ifthenelse_def] >>
     metis_tac [well_typed_bir_eval_exp_value, bir_eval_ifthenelse_eq_compute_ifthenelse,
-     bir_eval_exp_correct_type, bir_eval_ifthenelse_cases],
+     bir_eval_exp_correct_type, bir_eval_ifthenelse_cases,clause_name_def],
 
     (* BExp_Load *)
     simp [Once bir_eval_exp_cases, bir_compute_exp_def,clause_name_def] >>
