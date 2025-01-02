@@ -89,6 +89,8 @@ bir_exp_t =  (* BIR expressions *)
  | BExp_Load of bir_exp_t => bir_exp_t => bir_endian_t => bir_immtype_t (* Memory value / Address Value (Imm) / Endian / Type of where to load *)
  | BExp_Store of bir_exp_t => bir_exp_t => bir_endian_t => bir_exp_t (* Memory value / Address Value (Imm) / Endian / Value to store *)
 `;
+
+Type b = ``:bool``
 val _ = Hol_datatype ` 
 bir_type_t =  (* general typing *)
    BType_Imm of bir_immtype_t
@@ -380,6 +382,42 @@ Inductive bir_eval_unaryexp_imm:
  ==> 
 ( ( bir_eval_unaryexp_imm bir_unaryexp (Imm128 word_hundredtwentyeight) (Imm128  ((bir_unaryexp_get_oper  bir_unaryexp )  word_hundredtwentyeight ) ) )))
 End
+(** definitions *)
+
+(* defns bir_eval_binpred_imm *)
+Inductive bir_eval_binpred_imm:
+(* defn bir_eval_binpred_imm *)
+
+[Eval_BinPred_Imm_One:] (! (bir_binpred:bir_binpred_t) (word_one:word_one) (word_one':word_one) .
+(clause_name "Eval_BinPred_Imm_One")
+ ==> 
+( ( bir_eval_binpred_imm bir_binpred (Imm1 word_one) (Imm1 word_one')  ((bir_binpred_get_oper  bir_binpred )  word_one   word_one' )  )))
+
+[Eval_BinPred_Imm_Eight:] (! (bir_binpred:bir_binpred_t) (word_eight:word_eight) (word_eight':word_eight) .
+(clause_name "Eval_BinPred_Imm_Eight")
+ ==> 
+( ( bir_eval_binpred_imm bir_binpred (Imm8 word_eight) (Imm8 word_eight')  ((bir_binpred_get_oper  bir_binpred )  word_eight   word_eight' )  )))
+
+[Eval_BinPred_Imm_Sixteen:] (! (bir_binpred:bir_binpred_t) (word_sixteen:word_sixteen) (word_sixteen':word_sixteen) .
+(clause_name "Eval_BinPred_Imm_Sixteen")
+ ==> 
+( ( bir_eval_binpred_imm bir_binpred (Imm16 word_sixteen) (Imm16 word_sixteen')  ((bir_binpred_get_oper  bir_binpred )  word_sixteen   word_sixteen' )  )))
+
+[Eval_BinPred_Imm_Thirtytwo:] (! (bir_binpred:bir_binpred_t) (word_thirtytwo:word_thirtytwo) (word_thirtytwo':word_thirtytwo) .
+(clause_name "Eval_BinPred_Imm_Thirtytwo")
+ ==> 
+( ( bir_eval_binpred_imm bir_binpred (Imm32 word_thirtytwo) (Imm32 word_thirtytwo')  ((bir_binpred_get_oper  bir_binpred )  word_thirtytwo   word_thirtytwo' )  )))
+
+[Eval_BinPred_Imm_Sixtyfour:] (! (bir_binpred:bir_binpred_t) (word_sixtyfour:word_sixtyfour) (word_sixtyfour':word_sixtyfour) .
+(clause_name "Eval_BinPred_Imm_Sixtyfour")
+ ==> 
+( ( bir_eval_binpred_imm bir_binpred (Imm64 word_sixtyfour) (Imm64 word_sixtyfour')  ((bir_binpred_get_oper  bir_binpred )  word_sixtyfour   word_sixtyfour' )  )))
+
+[Eval_BinPred_Imm_Hundredtwentyeight:] (! (bir_binpred:bir_binpred_t) (word_hundredtwentyeight:word_hundredtwentyeight) (word_hundredtwentyeight':word_hundredtwentyeight) .
+(clause_name "Eval_BinPred_Imm_Hundredtwentyeight")
+ ==> 
+( ( bir_eval_binpred_imm bir_binpred (Imm128 word_hundredtwentyeight) (Imm128 word_hundredtwentyeight')  ((bir_binpred_get_oper  bir_binpred )  word_hundredtwentyeight   word_hundredtwentyeight' )  )))
+End
 
 (* Evaluates a general binary expression with values as parameters *)
 Definition bir_eval_binexp_def:
@@ -393,22 +431,6 @@ Definition bir_eval_unaryexp_def:
   (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
     (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
   (bir_eval_unaryexp _ _ _ = F)
-End
-
-(* Evaluates a binary predicate of two immediates *)
-Inductive bir_eval_binpred_imm:
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm1 w1) (Imm1 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm8 w1) (Imm8 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm16 w1) (Imm16 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm32 w1) (Imm32 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm64 w1) (Imm64 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm128 w1) (Imm128 w2) ((bir_binpred_get_oper binpred) w1 w2))
 End
 
 (* Evaluates a general binary predicate with values as parameters *)

@@ -11,6 +11,22 @@ metavar ident ::=
 indexvar k ::=
   {{ hol num }}
 grammar
+b :: b_ ::=
+  {{ hol bool }}
+  {{ com boolean }}
+| binpred_op ( bir_binpred , word_one , word_one' ) :: M :: binpred_op_word_one
+  {{ hol ((bir_binpred_get_oper [[bir_binpred]]) [[word_one]] [[word_one']]) }}
+| binpred_op ( bir_binpred , word_eight , word_eight' ) :: M :: binpred_op_word_eight
+  {{ hol ((bir_binpred_get_oper [[bir_binpred]]) [[word_eight]] [[word_eight']]) }}
+| binpred_op ( bir_binpred , word_sixteen , word_sixteen' ) :: M :: binpred_op_word_sixteen
+  {{ hol ((bir_binpred_get_oper [[bir_binpred]]) [[word_sixteen]] [[word_sixteen']]) }}
+| binpred_op ( bir_binpred , word_thirtytwo , word_thirtytwo' ) :: M :: binpred_op_word_thirtytwo
+  {{ hol ((bir_binpred_get_oper [[bir_binpred]]) [[word_thirtytwo]] [[word_thirtytwo']]) }}
+| binpred_op ( bir_binpred , word_sixtyfour , word_sixtyfour' ) :: M :: binpred_op_word_sixtyfour
+  {{ hol ((bir_binpred_get_oper [[bir_binpred]]) [[word_sixtyfour]] [[word_sixtyfour']]) }}
+| binpred_op ( bir_binpred , word_hundredtwentyeight , word_hundredtwentyeight' ) :: M :: binpred_op_word_hundredtwentyeight
+  {{ hol ((bir_binpred_get_oper [[bir_binpred]]) [[word_hundredtwentyeight]] [[word_hundredtwentyeight']]) }}
+
 word_one :: word_one_ ::=
  {{ hol word1 }}
  {{ tex \mathit{word1} }}
@@ -171,6 +187,7 @@ terminals :: terminals_ ::=
 | type_of_bir_val :: :: type_of_bir_val {{ tex \mathit{type\_of\_bir\_val} }}
 | binexp_op :: :: binexp_op {{ tex \mathit{binexp\_op} }}
 | unaryexp_op :: :: unaryexp_op {{ tex \mathit{unaryexp\_op} }}
+| binpred_op :: :: binpred_op {{ tex \mathit{binpred\_op} }}
 | |- :: :: vdash {{ tex \vdash }}
 | ~> :: :: leadsto {{ tex \leadsto }}
 | <= :: :: leq {{ tex \leq }}
@@ -464,6 +481,31 @@ defn
 
   --------------------------------------------------------------------------- :: Hundredtwentyeight
   bir_unaryexp Imm_hundredtwentyeight(word_hundredtwentyeight) ~> Imm_hundredtwentyeight(unaryexp_op(bir_unaryexp,word_hundredtwentyeight))
+
+defns
+  bir_eval_binpred_imm :: '' ::=
+
+defn
+  bir_binpred_t bir_imm_t bir_imm_t' ~> b :: :: bir_eval_binpred_imm :: Eval_BinPred_Imm_
+  {{ com evaluation of a binary predicate of two immediates }} by
+
+  -------------------------------------------------------- :: One
+  bir_binpred Imm_one(word_one) Imm_one(word_one') ~> binpred_op(bir_binpred,word_one,word_one')
+
+  ------------------------------------------------------------------------------------------------------------------ :: Eight
+  bir_binpred Imm_eight(word_eight) Imm_eight(word_eight') ~> binpred_op(bir_binpred,word_eight,word_eight')
+
+  ------------------------------------------------------------------------------------------------------------------ :: Sixteen
+  bir_binpred Imm_sixteen(word_sixteen) Imm_sixteen(word_sixteen') ~> binpred_op(bir_binpred,word_sixteen,word_sixteen')
+
+  ------------------------------------------------------------------------------------------------------------------ :: Thirtytwo
+  bir_binpred Imm_thirtytwo(word_thirtytwo) Imm_thirtytwo(word_thirtytwo') ~> binpred_op(bir_binpred,word_thirtytwo,word_thirtytwo')
+
+  ------------------------------------------------------------------------------------------------------------------ :: Sixtyfour
+  bir_binpred Imm_sixtyfour(word_sixtyfour) Imm_sixtyfour(word_sixtyfour') ~> binpred_op(bir_binpred,word_sixtyfour,word_sixtyfour')
+
+  ------------------------------------------------------------------------------------------------------------------ :: Hundredtwentyeight
+  bir_binpred Imm_hundredtwentyeight(word_hundredtwentyeight) Imm_hundredtwentyeight(word_hundredtwentyeight') ~> binpred_op(bir_binpred,word_hundredtwentyeight,word_hundredtwentyeight')
   
 embed {{ hol
 
@@ -479,22 +521,6 @@ Definition bir_eval_unaryexp_def:
   (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
     (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
   (bir_eval_unaryexp _ _ _ = F)
-End
-
-(* Evaluates a binary predicate of two immediates *)
-Inductive bir_eval_binpred_imm:
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm1 w1) (Imm1 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm8 w1) (Imm8 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm16 w1) (Imm16 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm32 w1) (Imm32 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm64 w1) (Imm64 w2) ((bir_binpred_get_oper binpred) w1 w2)) /\
-  (!binpred w1 w2. 
-    bir_eval_binpred_imm binpred (Imm128 w1) (Imm128 w2) ((bir_binpred_get_oper binpred) w1 w2))
 End
 
 (* Evaluates a general binary predicate with values as parameters *)

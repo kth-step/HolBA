@@ -207,12 +207,12 @@ Theorem bir_eval_binpred_imp_compute_binpred:
 Proof
   Cases_on `binpred` >>
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
-    rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
-    rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
-    Cases_on `b` >> Cases_on `b'` >>
-      rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "bir" "bir_imm_t_nchotomy"] >>
-      fs [bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
-      metis_tac []
+  rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
+  rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
+  Cases_on `b` >> Cases_on `b'` >>
+  rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "bir" "bir_imm_t_nchotomy"] >>
+  fs [bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
+  metis_tac []
 QED
 
 (* If the term is well typed, then eval and compute are the same *)
@@ -227,10 +227,10 @@ Proof
   rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
   rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >>
-    rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "bir" "bir_imm_t_nchotomy"] >>
-    fs [bir_eval_binpred_imm_cases, type_of_bir_val_def, type_of_bir_imm_def,
-      bir_binpred_get_oper_def] >>
-    metis_tac []
+  rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "bir" "bir_imm_t_nchotomy"] >>
+  fs [bir_eval_binpred_imm_cases, type_of_bir_val_def,
+      type_of_bir_imm_def, bir_binpred_get_oper_def,clause_name_def] >>
+  metis_tac []
 QED
 
 (* Eval and compute are similar *)
