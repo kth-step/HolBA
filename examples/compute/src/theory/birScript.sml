@@ -442,12 +442,17 @@ Inductive bir_eval_binexp:
  ==> 
 ( ( bir_eval_binexp bir_binexp (BVal_Imm bir_imm1) (BVal_Imm bir_imm2) (BVal_Imm bir_imm) )))
 End
+(** definitions *)
 
-(* Evaluates a general unary expression with values as parameters *)
-Definition bir_eval_unaryexp_def:
-  (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
-    (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
-  (bir_eval_unaryexp _ _ _ = F)
+(* defns bir_eval_unaryexp *)
+Inductive bir_eval_unaryexp:
+(* defn bir_eval_unaryexp *)
+
+[Eval_UnExp_Val:] (! (bir_unaryexp:bir_unaryexp_t) (bir_imm1:bir_imm_t) (bir_imm:bir_imm_t) .
+(clause_name "Eval_UnExp_Val") /\
+(( ( bir_eval_unaryexp_imm bir_unaryexp bir_imm1 bir_imm )))
+ ==> 
+( ( bir_eval_unaryexp bir_unaryexp (BVal_Imm bir_imm1) (BVal_Imm bir_imm) )))
 End
 
 (* Evaluates a general ifthenelse expression with values as parameters *)
@@ -656,7 +661,7 @@ Inductive bir_eval_exp:
 [Eval_BExp_UnaryExp:] (! (env:bir_var_environment_t) (bir_unaryexp:bir_unaryexp_t) (bir_exp:bir_exp_t) (bir_val':bir_val_t) (bir_val:bir_val_t) .
 (clause_name "Eval_BExp_UnaryExp") /\
 (( ( bir_eval_exp env bir_exp bir_val )) /\
-( (bir_eval_unaryexp  bir_unaryexp   bir_val   bir_val' ) ))
+( ( bir_eval_unaryexp bir_unaryexp bir_val bir_val' )))
  ==> 
 ( ( bir_eval_exp env (BExp_UnaryExp bir_unaryexp bir_exp) bir_val' )))
 

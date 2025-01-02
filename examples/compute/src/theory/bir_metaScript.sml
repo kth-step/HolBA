@@ -168,7 +168,7 @@ Theorem bir_eval_unaryexp_keep_type:
 Proof
   Cases_on `v1` >> Cases_on `v2` >>
   Cases_on `b` >> Cases_on `b'` >>
-    rw [type_of_bir_val_def, bir_eval_unaryexp_def, type_of_bir_imm_def, bir_eval_unaryexp_imm_cases]
+  rw [type_of_bir_val_def, bir_eval_unaryexp_cases, type_of_bir_imm_def, bir_eval_unaryexp_imm_cases]
 QED
 
 (* If the operands are typed, then the expression evaluates *)
@@ -409,7 +409,7 @@ Proof
 
     (* BExp_UnaryExp *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>
-    metis_tac [bir_eval_unaryexp_def, bir_eval_unaryexp_keep_type, type_of_bir_val_def],
+    metis_tac [bir_eval_unaryexp_cases, bir_eval_unaryexp_keep_type, type_of_bir_val_def],
 
     (* BExp_BinPred *)
     simp [Once type_of_bir_exp_cases, Once bir_eval_exp_cases, type_of_bir_val_def] >>

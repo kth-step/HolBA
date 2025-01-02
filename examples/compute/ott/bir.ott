@@ -322,8 +322,6 @@ formula :: formula_ ::=
   {{ hol ([[n]] = [[n']]) }}
 | n '<=' n' :: M :: n_lt
   {{ hol ([[n]] <= [[n']]) }}
-| bir_unaryexp bir_val ~> bir_val' :: M :: bir_eval_unaryexp
-  {{ hol (bir_eval_unaryexp [[bir_unaryexp]] [[bir_val]] [[bir_val']]) }}
 | bir_val bir_val1 bir_val2 ~> bir_val' :: M :: bir_eval_ifthenelse
   {{ hol (bir_eval_ifthenelse [[bir_val]] [[bir_val1]] [[bir_val2]] [[bir_val']]) }}
 | bir_val1 bir_val2 bir_endian bir_immtype ~> bir_val3 :: M :: bir_eval_load
@@ -527,15 +525,19 @@ defn
   --------------------------------------------------------------- :: Val
   bir_binexp ValImm(bir_imm1) ValImm(bir_imm2) ~> ValImm(bir_imm)
 
+defns
+  bir_eval_unaryexp :: '' ::=
+
+defn
+  bir_unaryexp_t bir_val_t ~> bir_val_t' :: :: bir_eval_unaryexp :: Eval_UnExp_
+   {{ com evaluation of a unary expression of one bir value }} by
+
+  bir_unaryexp bir_imm1 ~> bir_imm
+  ------------------------------------------------ :: Val
+  bir_unaryexp ValImm(bir_imm1) ~> ValImm(bir_imm)
+
 embed
 {{ hol
-
-(* Evaluates a general unary expression with values as parameters *)
-Definition bir_eval_unaryexp_def:
-  (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
-    (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
-  (bir_eval_unaryexp _ _ _ = F)
-End
 
 (* Evaluates a general ifthenelse expression with values as parameters *)
 Inductive bir_eval_ifthenelse:
