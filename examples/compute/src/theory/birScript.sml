@@ -184,6 +184,18 @@ Definition bir_binexp_get_oper_def:
   (bir_binexp_get_oper BIExp_Plus = word_add)
 End
 
+(* Gets the operator for a given unary operation *)
+Definition bir_unaryexp_get_oper_def:
+  (bir_unaryexp_get_oper BIExp_Not = word_1comp) /\
+  (bir_unaryexp_get_oper BIExp_ChangeSign = word_2comp)
+End
+
+(* Gets the operator for a given binary predicate *)
+Definition bir_binpred_get_oper_def:
+  (bir_binpred_get_oper BIExp_Equal = $=) /\
+  (bir_binpred_get_oper BIExp_LessThan = word_lo)
+End
+
 Type bir_var_environment_t = ``:bir_var_environment_t``
 
 Type n = ``:num``
@@ -332,6 +344,42 @@ Inductive bir_eval_binexp_imm:
  ==> 
 ( ( bir_eval_binexp_imm bir_binexp (Imm128 word_hundredtwentyeight) (Imm128 word_hundredtwentyeight') (Imm128  ((bir_binexp_get_oper  bir_binexp )  word_hundredtwentyeight   word_hundredtwentyeight' ) ) )))
 End
+(** definitions *)
+
+(* defns bir_eval_unaryexp_imm *)
+Inductive bir_eval_unaryexp_imm:
+(* defn bir_eval_unaryexp_imm *)
+
+[Eval_UnaryExp_Imm_One:] (! (bir_unaryexp:bir_unaryexp_t) (word_one:word_one) .
+(clause_name "Eval_UnaryExp_Imm_One")
+ ==> 
+( ( bir_eval_unaryexp_imm bir_unaryexp (Imm1 word_one) (Imm1  ((bir_unaryexp_get_oper  bir_unaryexp )  word_one ) ) )))
+
+[Eval_UnaryExp_Imm_Eight:] (! (bir_unaryexp:bir_unaryexp_t) (word_eight:word_eight) .
+(clause_name "Eval_UnaryExp_Imm_Eight")
+ ==> 
+( ( bir_eval_unaryexp_imm bir_unaryexp (Imm8 word_eight) (Imm8  ((bir_unaryexp_get_oper  bir_unaryexp )  word_eight ) ) )))
+
+[Eval_UnaryExp_Imm_Sixteen:] (! (bir_unaryexp:bir_unaryexp_t) (word_sixteen:word_sixteen) .
+(clause_name "Eval_UnaryExp_Imm_Sixteen")
+ ==> 
+( ( bir_eval_unaryexp_imm bir_unaryexp (Imm16 word_sixteen) (Imm16  ((bir_unaryexp_get_oper  bir_unaryexp )  word_sixteen ) ) )))
+
+[Eval_UnaryExp_Imm_Thirtytwo:] (! (bir_unaryexp:bir_unaryexp_t) (word_thirtytwo:word_thirtytwo) .
+(clause_name "Eval_UnaryExp_Imm_Thirtytwo")
+ ==> 
+( ( bir_eval_unaryexp_imm bir_unaryexp (Imm32 word_thirtytwo) (Imm32  ((bir_unaryexp_get_oper  bir_unaryexp )  word_thirtytwo ) ) )))
+
+[Eval_UnaryExp_Imm_Sixtyfour:] (! (bir_unaryexp:bir_unaryexp_t) (word_sixtyfour:word_sixtyfour) .
+(clause_name "Eval_UnaryExp_Imm_Sixtyfour")
+ ==> 
+( ( bir_eval_unaryexp_imm bir_unaryexp (Imm64 word_sixtyfour) (Imm64  ((bir_unaryexp_get_oper  bir_unaryexp )  word_sixtyfour ) ) )))
+
+[Eval_UnaryExp_Imm_Hundredtwentyeight:] (! (bir_unaryexp:bir_unaryexp_t) (word_hundredtwentyeight:word_hundredtwentyeight) .
+(clause_name "Eval_UnaryExp_Imm_Hundredtwentyeight")
+ ==> 
+( ( bir_eval_unaryexp_imm bir_unaryexp (Imm128 word_hundredtwentyeight) (Imm128  ((bir_unaryexp_get_oper  bir_unaryexp )  word_hundredtwentyeight ) ) )))
+End
 
 (* Evaluates a general binary expression with values as parameters *)
 Definition bir_eval_binexp_def:
@@ -340,39 +388,11 @@ Definition bir_eval_binexp_def:
   (bir_eval_binexp _ _ _ _ = F)
 End
 
-(* Gets the operator for a given unary operation *)
-Definition bir_unaryexp_get_oper_def:
-  (bir_unaryexp_get_oper BIExp_Not = word_1comp) /\
-  (bir_unaryexp_get_oper BIExp_ChangeSign = word_2comp)
-End
-
-(* Evaluates a binary expression of an immediate *)
-Inductive bir_eval_unaryexp_imm:
-  (!unaryexp w1. 
-    bir_eval_unaryexp_imm unaryexp (Imm1 w1) (Imm1 ((bir_unaryexp_get_oper unaryexp) w1))) /\
-  (!unaryexp w1. 
-    bir_eval_unaryexp_imm unaryexp (Imm8 w1) (Imm8 ((bir_unaryexp_get_oper unaryexp) w1))) /\
-  (!unaryexp w1. 
-    bir_eval_unaryexp_imm unaryexp (Imm16 w1) (Imm16 ((bir_unaryexp_get_oper unaryexp) w1))) /\
-  (!unaryexp w1. 
-    bir_eval_unaryexp_imm unaryexp (Imm32 w1) (Imm32 ((bir_unaryexp_get_oper unaryexp) w1))) /\
-  (!unaryexp w1. 
-    bir_eval_unaryexp_imm unaryexp (Imm64 w1) (Imm64 ((bir_unaryexp_get_oper unaryexp) w1))) /\
-  (!unaryexp w1. 
-    bir_eval_unaryexp_imm unaryexp (Imm128 w1) (Imm128 ((bir_unaryexp_get_oper unaryexp) w1)))
-End
-
 (* Evaluates a general unary expression with values as parameters *)
 Definition bir_eval_unaryexp_def:
   (bir_eval_unaryexp unaryexp (BVal_Imm imm1) (BVal_Imm imm) =
     (bir_eval_unaryexp_imm unaryexp imm1 imm)) /\
   (bir_eval_unaryexp _ _ _ = F)
-End
-
-(* Gets the operator for a given binary predicate *)
-Definition bir_binpred_get_oper_def:
-  (bir_binpred_get_oper BIExp_Equal = $=) /\
-  (bir_binpred_get_oper BIExp_LessThan = word_lo)
 End
 
 (* Evaluates a binary predicate of two immediates *)
