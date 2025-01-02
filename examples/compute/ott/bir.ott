@@ -322,8 +322,6 @@ formula :: formula_ ::=
   {{ hol ([[n]] = [[n']]) }}
 | n '<=' n' :: M :: n_lt
   {{ hol ([[n]] <= [[n']]) }}
-| bir_binexp bir_val1 bir_val2 ~> bir_val :: M :: bir_eval_binexp
-  {{ hol (bir_eval_binexp [[bir_binexp]] [[bir_val1]] [[bir_val2]] [[bir_val]]) }}
 | bir_unaryexp bir_val ~> bir_val' :: M :: bir_eval_unaryexp
   {{ hol (bir_eval_unaryexp [[bir_unaryexp]] [[bir_val]] [[bir_val']]) }}
 | bir_val bir_val1 bir_val2 ~> bir_val' :: M :: bir_eval_ifthenelse
@@ -518,15 +516,19 @@ defn
   ----------------------------------------------------------------------- :: Val
   bir_binpred ValImm(bir_imm) ValImm(bir_imm') ~> ValImm(Imm_one(b2w(b)))
 
+defns
+  bir_eval_binexp :: '' ::=
+
+defn
+  bir_binexp_t bir_val_t bir_val_t' ~> bir_val_t'' :: :: bir_eval_binexp :: Eval_BinExp_
+   {{ com evaluation of a binary expression of two bir values }} by
+
+  bir_binexp bir_imm1 bir_imm2 ~> bir_imm
+  --------------------------------------------------------------- :: Val
+  bir_binexp ValImm(bir_imm1) ValImm(bir_imm2) ~> ValImm(bir_imm)
+
 embed
 {{ hol
-
-(* Evaluates a general binary expression with values as parameters *)
-Definition bir_eval_binexp_def:
-  (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
-    (bir_eval_binexp_imm binexp imm1 imm2 imm)) /\
-  (bir_eval_binexp _ _ _ _ = F)
-End
 
 (* Evaluates a general unary expression with values as parameters *)
 Definition bir_eval_unaryexp_def:

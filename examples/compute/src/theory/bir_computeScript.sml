@@ -178,7 +178,7 @@ Theorem bir_eval_binexp_eq_compute_binexp:
 Proof
   Cases_on `binexp` >>
   Cases_on `v1` >> Cases_on `v2` >> Cases_on `v` >>
-  rw [bir_eval_binexp_def, bir_compute_binexp_def] >>
+  rw [bir_eval_binexp_cases, bir_compute_binexp_def] >>
   rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
   rw [bir_compute_binexp_imm_def, fetch "bir" "bir_imm_t_nchotomy", bir_binexp_get_oper_def] >>

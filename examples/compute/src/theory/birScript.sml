@@ -430,12 +430,17 @@ Inductive bir_eval_binpred:
  ==> 
 ( ( bir_eval_binpred bir_binpred (BVal_Imm bir_imm) (BVal_Imm bir_imm') (BVal_Imm (Imm1  (bool2w  b ) )) )))
 End
+(** definitions *)
 
-(* Evaluates a general binary expression with values as parameters *)
-Definition bir_eval_binexp_def:
-  (bir_eval_binexp binexp (BVal_Imm imm1) (BVal_Imm imm2) (BVal_Imm imm) =
-    (bir_eval_binexp_imm binexp imm1 imm2 imm)) /\
-  (bir_eval_binexp _ _ _ _ = F)
+(* defns bir_eval_binexp *)
+Inductive bir_eval_binexp:
+(* defn bir_eval_binexp *)
+
+[Eval_BinExp_Val:] (! (bir_binexp:bir_binexp_t) (bir_imm1:bir_imm_t) (bir_imm2:bir_imm_t) (bir_imm:bir_imm_t) .
+(clause_name "Eval_BinExp_Val") /\
+(( ( bir_eval_binexp_imm bir_binexp bir_imm1 bir_imm2 bir_imm )))
+ ==> 
+( ( bir_eval_binexp bir_binexp (BVal_Imm bir_imm1) (BVal_Imm bir_imm2) (BVal_Imm bir_imm) )))
 End
 
 (* Evaluates a general unary expression with values as parameters *)
@@ -644,7 +649,7 @@ Inductive bir_eval_exp:
 (clause_name "Eval_BExp_BinExp") /\
 (( ( bir_eval_exp env bir_exp1 bir_val1 )) /\
 ( ( bir_eval_exp env bir_exp2 bir_val2 )) /\
-( (bir_eval_binexp  bir_binexp   bir_val1   bir_val2   bir_val ) ))
+( ( bir_eval_binexp bir_binexp bir_val1 bir_val2 bir_val )))
  ==> 
 ( ( bir_eval_exp env (BExp_BinExp bir_binexp bir_exp1 bir_exp2) bir_val )))
 
