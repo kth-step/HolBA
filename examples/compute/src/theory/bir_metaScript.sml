@@ -11,16 +11,16 @@ open ottTheory;
 val _ = new_theory "bir_meta";
 
 (* Correction Theorems of boolean functions *)
-Theorem bool2b_T_eq_birT:
-  BVal_Imm (bool2b T) = birT
+Theorem bool2w_T_eq_birT:
+  BVal_Imm (Imm1 (bool2w T)) = birT
 Proof
-  rw [bool2b_def, bool2w_def, birT_def]
+  rw [bool2w_def, birT_def]
 QED
 
-Theorem bool2b_F_eq_birF:
-  BVal_Imm (bool2b F) = birF
+Theorem bool2w_F_eq_birF:
+  BVal_Imm (Imm1 (bool2w F)) = birF
 Proof
-  rw [bool2b_def, bool2w_def, birF_def]
+  rw [bool2w_def, birF_def]
 QED
 
 (* 1 bit values are booleans *)
