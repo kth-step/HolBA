@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open ottTheory birTheory;
+open ottTheory birTheory bir_metaTheory;
 open bir_cv_basicLib;
 open bir_cv_envLib;
 open bir_cv_programLib;
@@ -64,8 +64,8 @@ val _ = prove (``
     (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 imm1)) (BExp_Const (Imm64 imm2)))
     (BVal_Imm (Imm64 (imm1 + imm2)))``,
 
-  rw [Ntimes bir_eval_exp_cases 3, bir_eval_binexp_def, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def] >>
-  rw [Once bir_eval_exp_cases, bir_eval_binexp_def, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def,clause_name_def]);
+  rw [Ntimes bir_eval_exp_cases 3, bir_eval_binexp_cases, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def] >>
+  rw [Once bir_eval_exp_cases, bir_eval_binexp_cases, bir_eval_binexp_imm_cases, bir_binexp_get_oper_def,clause_name_def]);
 
 
 (* ------------------------------------------------- *)
@@ -77,8 +77,8 @@ val _ = prove (``
   !env v. bir_eval_binpred BIExp_Equal (BVal_Imm v) (BVal_Imm v) birT``, 
 
   Cases_on `v` >>
-    rw [Once bir_eval_binpred_cases, bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
-    rw [bool2b_T_eq_birT, bool2b_F_eq_birF]);
+  rw [Once bir_eval_binpred_cases, bir_eval_binpred_imm_cases, bir_binpred_get_oper_def,clause_name_def] >>
+  rw [bool2w_T_eq_birT, bool2w_F_eq_birF]);
 
 
 (* ------------------------------------------------- *)
