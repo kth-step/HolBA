@@ -835,6 +835,7 @@ in
   val () = utilsLib.reset_thms()
   fun class args avoid n =
     let
+      val is_csr = Lib.mem n ["CSRRW", "CSRRS", "CSRRC", "CSRRWI", "CSRRSI", "CSRRCI"]
       val name = "dfn'" ^ n
       val read = if Lib.mem n ["LD"] then [address_aligned3] else []
       val (write, n) =
@@ -844,7 +845,7 @@ in
           ([write'GPR], n)
       (* These rewrites should be done for all CSR instructions *)
       val csr =
-        if Lib.mem n ["CSRRW", "CSRRS", "CSRRC", "CSRRWI", "CSRRSI", "CSRRCI"]
+        if is_csr
         then [checkCSROp, check_CSR_access, CSR, privLevel, csrRW, csrPR]
         else []
       val thms = DB.fetch "riscv" (name ^ "_def") :: write @ read @ csr
@@ -948,14 +949,14 @@ val SW  = store [] "SW"
 val SH  = store [] "SH"
 val SB  = store [] "SB"
 
-val csrinst = class `(rd, rs1, csr)`
+val csrinst = class_rd0 `(rd, rs1, csr)`
 
 (* TODO: How to handle privilege level? Currently, machine mode is always assumed *)
 val CSRRW_M = csrinst [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRW"
 val CSRRS_M = csrinst [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRS"
 val CSRRC_M = csrinst [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRC"
 
-val csrinsti = class `(rd, imm, csr)`
+val csrinsti = class_rd0 `(rd, imm, csr)`
 
 val CSRRWI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRWI"
 val CSRRSI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRSI"

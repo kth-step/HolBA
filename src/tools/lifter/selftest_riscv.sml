@@ -311,6 +311,9 @@ val _ = print_msg "\n\n";
  * (see bottom of riscv_stepScript.sml) *)
 (* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRW x1, mscratch(0x340), x2" "340110F3";
+val _ = riscv_test_hex_print_asm "CSRW mie(0x304), 0" "30405073";
+val _ = riscv_test_hex_print_asm "CSRW mstatus(0x300), 0" "30005073";
+
 (* CSRRS x1, mscratch(0x340), x2 : 001101000000    00010 010000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRS x1, mscratch(0x340), x2" "340120F3";
 (* CSRRC x1, mscratch(0x340), x2 : 001101000000    00010 011000011110011 *)
@@ -332,15 +335,6 @@ val _ = riscv_test_hex_print_asm "CSRR a5, mtval(0x343)" "343027F3";
 
 val _ = riscv_test_hex_print_asm "CSRR a5, mip(0x344)" "344027F3";
 
-(* TODO: These fail in riscv_stepLib for some reason...
-
-val _ = riscv_test_hex_print_asm "CSRW mie(0x304), 0" "30405073";
-val _ = riscv_test_hex_print_asm "CSRW mstatus(0x300), 0" "30005073";
-
-open riscv_stepLib;
-val _ = riscv_step_hex "30405073";
-
-*)
 
 val _ = print_msg "\n";
 val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)";
