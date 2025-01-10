@@ -454,6 +454,7 @@ fun concretization_resolver tm =
   in
     let
       (*val idx_exp_tm = subst (fst s) idx_pat_tm;*)
+      (* TODO: better take pathcondition into account here somehow, maybe with smt solver? to avoid unnecessary overapproximation *)
       val idx_val_thm = (EVAL o subst (fst s)) idx_eval_tm;
       (*val _ = print_thm idx_val_thm;*)
       val idx_tm = (snd o bir_valuesSyntax.gen_dest_BVal_Imm o optionSyntax.dest_some o rhs o concl) idx_val_thm;
@@ -472,10 +473,11 @@ fun concretization_resolver tm =
     handle _ => (
       let
         val vs = get_all_targets addr;
+        val vs = list_mk_distinct gen_eq vs;
         val v_tms = List.map (fn v => (bir_programSyntax.mk_BL_Address o bir_immSyntax.mk_Imm32) (wordsSyntax.mk_wordii (v, 32))) vs;
         val vs_set_tm = List.foldl (pred_setSyntax.mk_insert) empty_label_tm v_tms;
         val thm_tm = mk_eq (tm, vs_set_tm);
-        val _ = print_term thm_tm;
+        val _ = (print "possible overapproximation in concretization: "; print_term thm_tm);
       in
         SOME (mk_oracle_thm "BIRS_INDIRJMP_MEM" ([], thm_tm))
       end
