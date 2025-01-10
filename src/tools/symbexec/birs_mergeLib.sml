@@ -170,6 +170,11 @@ in (* local *)
         (*identical a1 a2*)
         ad_is_eq
       end;
+    
+    fun values_are_equal v1 v2 =
+      (* TODO: could be not identical but still equal, would need smt solver to check,
+                also this way we do not need to manage theorems to argue value equivalence when merging *)
+      identical v1 v2;
 
     fun unify_stores_foldfun mexp (store, (stores2, stores1_new, stores2_new, forget_exps)) =
       (* TODO: better reuse stores_match in birs_simp_instancesLib,
@@ -193,8 +198,12 @@ in (* local *)
             SOME (last match_store2s)
           );
         val store2 = Option.getOpt (match_store2_o, mk_empty_store store);
+        val forget_exps_add =
+          if values_are_equal (get_store_v store) (get_store_v store2) then [] else
+          [(get_store_v store, get_store_v store2)];
+        (*val forget_exps_add = [(get_store_v store, get_store_v store2)];*)
       in
-        (List.filter (not o is_same_loc_store store) stores2, store::stores1_new, store2::stores2_new, (get_store_v store, get_store_v store2)::forget_exps)
+        (List.filter (not o is_same_loc_store store) stores2, store::stores1_new, store2::stores2_new, forget_exps_add@forget_exps)
       end;
 
     fun flippair (x,y) = (y,x);
