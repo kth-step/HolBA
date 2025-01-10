@@ -161,18 +161,37 @@ in (* local *)
     end;
 
   local
+    val bir_exp_t_tm = ``BExp_Const (Imm1 1w)``;
+    fun addresses_are_equal a1 a2 =
+      let
+        val imp_tm = birsSyntax.mk_birs_exp_imp (bir_exp_t_tm, bslSyntax.beq (a1, a2));
+        val ad_is_eq = isSome (birs_utilsLib.check_imp_tm imp_tm);
+      in
+        (*identical a1 a2*)
+        ad_is_eq
+      end;
+
     fun unify_stores_foldfun mexp (store, (stores2, stores1_new, stores2_new, forget_exps)) =
+      (* TODO: better reuse stores_match in birs_simp_instancesLib,
+           for example, here is no type-check that would be required for soundness *)
       let
         fun get_store_v (_, _, expv) = expv;
         fun is_same_loc_store (expad, endi, _) (expad2, endi2, _) =
           if not (identical endi endi2) then raise ERR "is_same_loc_store" "should be same endianness everywhere" else
-          (* assuming disjunctness of stores, address can be checked by syntactical identity *)
-          identical expad expad2;
+          addresses_are_equal expad expad2;
         fun exp_to_mem_ld_sz expv = (bir_valuesSyntax.dest_BType_Imm o bir_exp_typecheckLib.get_type_of_bexp) expv
               handle _ => raise ERR "unify_stores_foldfun" "couldn't get type of stored expression";
         fun mk_empty_store (expad, endi, expv) = (expad, endi, bir_expSyntax.mk_BExp_Load (mexp, expad, endi, exp_to_mem_ld_sz expv));
 
-        val match_store2_o = List.find (is_same_loc_store store) stores2;
+        val match_store2s = List.filter (is_same_loc_store store) stores2;
+        val match_store2_o =
+          if length match_store2s = 0 then NONE
+          else if length match_store2s = 1 then SOME (hd match_store2s)
+          else (
+            (*raise ERR "unify_stores_foldfun" "multiple stores with the same address"*)
+            print "\nwarning: multiple stores with the same address\n";
+            SOME (last match_store2s)
+          );
         val store2 = Option.getOpt (match_store2_o, mk_empty_store store);
       in
         (List.filter (not o is_same_loc_store store) stores2, store::stores1_new, store2::stores2_new, (get_store_v store, get_store_v store2)::forget_exps)
@@ -190,6 +209,23 @@ in (* local *)
       end;
   end
 
+
+fun print_mem_exp mem_exp =
+  let
+    (*val _ = print_term mem_exp;*)
+    val (mexp, stores) = birs_simp_instancesLib.dest_BExp_Store_list mem_exp [];
+    val _ = print ("MEM " ^ (term_to_string mexp) ^ " [\n");
+    fun print_store (expad, _, expv) =
+      let
+        val expad_s = term_to_string expad;
+        val expv_s = term_to_string expv;
+        val expv_s = if String.size expv_s > 100 then "(...)" else expv_s;
+        val _ = print ("  " ^ expad_s ^ "\n    -> " ^ expv_s ^ "\n");
+      in () end;
+    val _ = map (print_store) stores;
+    val _ = print ("]\n");
+  in () end;
+
   (* do something special for store operations, cannot just forget the whole thing *)
   fun birs_Pi_first_env_top_mapping_merge_store exp1 exp2 thm =
     (* just unfold them into a list and assume they are all disjunct memory locations
@@ -200,18 +236,42 @@ in (* local *)
       (* we know that exp1 and exp2 are BExp_Store operations, when this function is called *)
       val (mexp1, stores1) = birs_simp_instancesLib.dest_BExp_Store_list exp1 [];
       val (mexp2, stores2) = birs_simp_instancesLib.dest_BExp_Store_list exp2 [];
+      (*
+      val _ = print "\n\n\nmemory1:\n";
+      val _ = print_mem_exp exp1;
+      val _ = print "\nmemory2:\n";
+      val _ = print_mem_exp exp2;
+      *)
 
       val _ = if identical mexp1 mexp2 then () else
               raise ERR "birs_Pi_first_env_top_mapping_merge_store" "the bir memory symbols have to be identical";
 
       (* find shuffled and padded store sequences, use disjunct assumption for this *)
       (* at the same time, collect a distinct set of expression pairs that should be "freesymboled" to make the states equal *)
-      val (stores1_new, stores2_new, forget_exps) = unify_stores mexp1 stores1 stores2;
+      val (stores1_new, stores2_new, forget_exps) = unify_stores mexp1 stores1 stores2
+        handle e => (print "\nstore unification issue:\n"; print_term exp1; print "\n"; print_term exp2; print "\n"; raise e);
+      (*val forget_exps = List.filter (fn (x,y) => not (identical x y)) forget_exps;*)
 
       (* apply the shuffling by cheated rewriting (justified by disjunct assumption) *)
       fun mk_mem_eq_thm mexp stores stores_new = mk_oracle_thm "BIRS_MEM_DISJ_SHUFFLE" ([], mk_eq (birs_simp_instancesLib.mk_BExp_Store_list (mexp, stores), birs_simp_instancesLib.mk_BExp_Store_list (mexp, stores_new)));
       val bad_cheat_eq_thm_1 = mk_mem_eq_thm mexp1 stores1 stores1_new;
       val bad_cheat_eq_thm_2 = mk_mem_eq_thm mexp1 stores2 stores2_new;
+      val _ = print "\n\n";(*
+      val _ = print "\n\nmerging stores1:\n";
+      val _ = print_thm bad_cheat_eq_thm_1;
+      val _ = print "\n\nmerging stores2:\n";
+      val _ = print_thm bad_cheat_eq_thm_2;*)
+      val _ = print "\n\nforgetting:\n";
+      val _ = List.map (fn (x,y) =>
+        let
+          val x_s = term_to_string x;
+          val x_s = if String.size x_s > 100 then "(...)" else x_s;
+          val y_s = term_to_string y;
+          val y_s = if String.size y_s > 100 then "(...)" else y_s;
+          val _ = print ("{"^x_s^";"^y_s^"}");
+          val _ = print "\n";
+        in () end) forget_exps;
+      val _ = print "\n\n";
       (*val _ = print_thm bad_cheat_eq_thm_1;
       val _ = print_thm bad_cheat_eq_thm_2;*)
       val thm_shuffled =
@@ -230,16 +290,17 @@ in (* local *)
   (* choose how to deal with the expressions at hand *)
   fun birs_Pi_first_env_top_mapping_merge exp1 exp2 thm =
     let
+      (* TODO: remove extra rotations, they are there to keep the parity for clearer debug outputs *)
       open bir_expSyntax;
       val default_op = birs_Pi_first_env_top_mapping_merge_forget;
       (* choose the merging approach: *)
     in
       (* do not touch if they are syntactically identical (or semantically, when checked with z3 under the respective path conditions) *)
-      if identical exp1 exp2 then thm else
+      if identical exp1 exp2 then birs_Pi_rotate_two_RULE thm else
 
       (* store operation *)
-      if is_BExp_Store exp1 andalso is_BExp_Store exp2 then
-        birs_Pi_first_env_top_mapping_merge_store exp1 exp2 thm else
+      if is_BExp_Store exp1 orelse is_BExp_Store exp2 then
+        birs_Pi_first_env_top_mapping_merge_store exp2 exp1 (birs_Pi_rotate_two_RULE thm) else
 
       (* TODO: interval (specifically countw and SP) *)
       if false then raise ERR "birs_Pi_first_env_top_mapping_merge" "not implemented yet" else
@@ -297,6 +358,7 @@ in (* local *)
       val _ = if not debug_mode then () else print "unified envs\n";
 
       (* also unify the two path conditions *)
+      (* TODO: probably better to unify the path conditions first, then we can use the common path condition to massage both environments together *)
       val thm_env_pcond =
         let
           val thm0 = thm_env;
@@ -326,6 +388,10 @@ in (* local *)
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [rewrite_thm_fix]))) thm_env_pcond;*)
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond
         handle _ => (print_thm thm_env_pcond; raise ERR "birs_Pi_merge_2_RULE" "merging did not work");
+      (*
+      val _ = print "\n\nmerged:\n";
+      val _ = print_thm thm_merged;
+      *)
       val _ = if not debug_mode then () else print "eliminated one from Pi\n";
       val _ = holba_miscLib.timer_stop
         (fn delta_s => print ("  merging two in Pi took " ^ delta_s ^ "\n")) timer;
