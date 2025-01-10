@@ -106,7 +106,7 @@ val balrob_summary___aeabi_fdiv_c7_thm = save_thm("balrob_summary_" ^ entry_name
 
 (* ------------------------------------ *)
 
-
+(*
 (* TODO: uses two jump table encoded in manually extracted cfg! *)
 (* TODO: loads constants from memory! *)
 val entry_name = "__aeabi_fdiv";
@@ -132,7 +132,7 @@ val symb_exec_thm = birs_summary_gen
   reqs
   locs;
 val _ = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
-
+*)
 
 (* ------------------------------------ *)
 

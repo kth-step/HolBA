@@ -543,6 +543,11 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
 
       (* need to handle intervals correctly: in symbolic execution driver
            (also need this together with the indirectjump handling and previous summaries) and also before merging *)
+      (*
+      val _ = print "\n=============== before merging ========\n";
+      val _ = print_thm symb_exec_thm;
+      val _ = print "\n=============== end ========\n";
+      *)
       val merged_thm = birs_basic_merge symb_exec_thm;
     in
       merged_thm

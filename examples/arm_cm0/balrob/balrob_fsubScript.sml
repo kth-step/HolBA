@@ -104,7 +104,7 @@ val balrob_summary___aeabi_fsub_c8_thm = save_thm("balrob_summary_" ^ entry_name
 
 (* ------------------------------------ *)
 
-
+(*
 val entry_name = "__aeabi_fsub";
 val reqs = get_fun_usage entry_name;
 val locs =
@@ -124,7 +124,7 @@ val symb_exec_thm = birs_summary birs_prog_config
   reqs
   locs;
 val _ = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
-
+*)
 
 (* ------------------------------------ *)
 
