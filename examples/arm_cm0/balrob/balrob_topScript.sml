@@ -4,10 +4,16 @@ open balrob_supportLib;
 
 open balrob_endsTheory;
 open balrob_miscTheory;
+(*
 open balrob_fadd_fakeTheory;
 open balrob_fsub_fakeTheory;
 open balrob_fmul_fakeTheory;
 open balrob_fdiv_fakeTheory;
+*)
+open balrob_faddTheory;
+open balrob_fsubTheory;
+open balrob_fmulTheory;
+open balrob_fdivTheory;
 open balrob_ftopTheory;
 
 val _ = new_theory "balrob_top";
@@ -23,12 +29,6 @@ val reqs = get_fun_usage entry_name;
 val locs =
   ( 0x10001504,
    [0x100016e0]);
-
-(*
-val locs =
-  ( 0x10001504,
-   [0x1000151a]);
-*)
 
 val symb_exec_thm = birs_summary_gen
   (fn x => ((*print "\n\n"; print_term x; print "\n\n";*) birs_simpLib.birs_simp_ID_fun x))

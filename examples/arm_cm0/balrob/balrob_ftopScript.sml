@@ -4,16 +4,16 @@ open balrob_supportLib;
 
 open balrob_endsTheory;
 open balrob_miscTheory;
+(*
 open balrob_fadd_fakeTheory;
 open balrob_fsub_fakeTheory;
 open balrob_fmul_fakeTheory;
 open balrob_fdiv_fakeTheory;
-(*
+*)
 open balrob_faddTheory;
 open balrob_fsubTheory;
 open balrob_fmulTheory;
 open balrob_fdivTheory;
-*)
 
 val _ = new_theory "balrob_ftop";
 

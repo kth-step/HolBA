@@ -94,7 +94,7 @@ val balrob_summary___aeabi_fmul_c8_thm = save_thm("balrob_summary_" ^ entry_name
 
 (* ------------------------------------ *)
 
-(*
+
 (* TODO: uses one jump table encoded in manually extracted cfg! used to take 3 times as much time as sub or div *)
 (* TODO: loads constants from memory! is the constant loading part of the lifting? better add some code to check this *)
 val entry_name = "__aeabi_fmul";
@@ -118,7 +118,7 @@ val symb_exec_thm = birs_summary_gen
   reqs
   locs;
 val _ = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
-*)
+
 
 (* ------------------------------------ *)
 
