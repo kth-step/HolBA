@@ -30,23 +30,12 @@ in (* local *)
       in
         v
       end;
-    (* replace subexp in exp by subexp' *)
-    fun substexp subexp' subexp exp =
-      if identical exp subexp then subexp' else
-      if (not o is_comb) exp then exp else
-      let
-        val (f, x) = dest_comb exp;
-      in
-        mk_comb
-          (substexp subexp' subexp f,
-           substexp subexp' subexp x)
-      end;
   in
     fun set_freesymb_counter i = freesymb_counter := i;
     fun get_freesymb_name () = "syf_" ^ (Int.toString (get_inc_freesymb_counter ()));
 
     (* TODO: this is maybe too crude: just replace the given expression anywhere in the currently mapped expression *)
-    fun birs_Pi_first_freesymb_RULE symbname exp_tm thm =
+    fun birs_Pi_first_freesymb_RULE symbname exp_tm replacefun thm =
       let
         val _ = birs_check_norm_thm ("birs_Pi_first_freesymb_RULE", "") thm;
 
@@ -59,7 +48,7 @@ in (* local *)
 
         (* create new expression: check which part of the expression is supposed to be substituted *)
         val symb_tm = bir_envSyntax.mk_BVar (stringSyntax.fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
-        val exp_new = substexp (bslSyntax.bden symb_tm) exp_tm exp_old;
+        val exp_new = replacefun (bslSyntax.bden symb_tm) exp_tm exp_old;
 
         (* debug printout *)
         (*
@@ -114,10 +103,10 @@ in (* local *)
   end
 
   (* forget the value/expression/computation of the top env mapping through free symbol and path condition widening *)
-  fun birs_Pi_first_forget_RULE_gen symbname exp_tm thm =
+  fun birs_Pi_first_forget_RULE_gen symbname exp_tm replacefun thm =
     let
       (* "free symbol" the expression *)
-      val free_thm = birs_Pi_first_freesymb_RULE symbname exp_tm thm;
+      val free_thm = birs_Pi_first_freesymb_RULE symbname exp_tm replacefun thm;
 
       (* drop the pathcondition conjunct introduced by free-symboling, relies on how freesymb_RULE changes the path condition *)
       val forget_thm = birs_Pi_first_pcond_drop true free_thm
@@ -128,6 +117,23 @@ in (* local *)
       forget_thm
     end
 
+  local
+    (* replace subexp in exp by subexp' *)
+    fun substexp subexp' subexp exp =
+      if identical exp subexp then subexp' else
+      if (not o is_comb) exp then exp else
+      let
+        val (f, x) = dest_comb exp;
+      in
+        mk_comb
+          (substexp subexp' subexp f,
+           substexp subexp' subexp x)
+      end;
+  in
+    fun birs_Pi_first_forget_RULE_subst symbname exp_tm =
+      birs_Pi_first_forget_RULE_gen symbname exp_tm substexp;
+  end
+
   fun birs_Pi_first_forget_RULE symbname thm =
     let
       (*val _ = print "forgetting first mapping in first of Pi\n";*)
@@ -136,7 +142,7 @@ in (* local *)
       val (_,env,_,pcond) = dest_birs_state Pi_sys_tm;
       val (_,exp) = get_env_top_mapping env;
     in
-      birs_Pi_first_forget_RULE_gen symbname exp thm
+      birs_Pi_first_forget_RULE_subst symbname exp thm
     end
 
 (* ---------------------------------------------------------------------------------------- *)
@@ -156,8 +162,28 @@ in (* local *)
     let
       val symbname = get_freesymb_name ();
     in
-      (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 o
-       birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp1) thm
+      (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_subst symbname exp2 o
+       birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_subst symbname exp1) thm
+    end;
+
+  fun birs_Pi_first_env_top_mapping_merge_store_fold ((idx,exp1,exp2), thm) =
+    let
+      val symbname = get_freesymb_name ();
+      fun updatestore upd_m upd_v s =
+        let
+          val (expm, expad, endi, expv) = bir_expSyntax.dest_BExp_Store s;
+        in
+          bir_expSyntax.mk_BExp_Store (upd_m expm, expad, endi, upd_v expv)
+        end;
+      fun replacestoreidx i subexp_new =
+        if i = 0 then
+          updatestore I (K subexp_new)
+        else
+          updatestore (replacestoreidx (i-1) subexp_new) I;
+      fun replacefun idx subexp_new _ = replacestoreidx idx subexp_new;
+    in
+      (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 (replacefun idx) o
+       birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp1 (replacefun idx)) thm
     end;
 
   local
@@ -289,14 +315,14 @@ fun print_mem_exp mem_exp =
       (*val _ = print_thm thm_shuffled;*)
 
       val forget_depthidxs = compute_forget_depthidxs stores1_new stores2_new;
-      val forget_exps = List.map (fn idx => (get_bexp_store_bidx ((rhs o concl) bad_cheat_eq_thm_1) idx, get_bexp_store_bidx ((rhs o concl) bad_cheat_eq_thm_2) idx)) forget_depthidxs;
+      val forget_exps = List.map (fn idx => (idx, get_bexp_store_bidx ((rhs o concl) bad_cheat_eq_thm_1) idx, get_bexp_store_bidx ((rhs o concl) bad_cheat_eq_thm_2) idx)) forget_depthidxs;
       val _ = print "\n\n";(*
       val _ = print "\n\nmerging stores1:\n";
       val _ = print_thm bad_cheat_eq_thm_1;
       val _ = print "\n\nmerging stores2:\n";
       val _ = print_thm bad_cheat_eq_thm_2;*)
       val _ = print "\n\nforgetting:\n";
-      val _ = List.map (fn (x,y) =>
+      val _ = List.map (fn (_,x,y) =>
         let
           val x_s = term_to_string x;
           val x_s = if String.size x_s > 100 then "(...)" else x_s;
@@ -308,7 +334,8 @@ fun print_mem_exp mem_exp =
       val _ = print "\n\n";
 
       (* apply the freesymboling as instructed by forget_exps *)
-      val thm_free = List.foldl birs_Pi_first_env_top_mapping_merge_fold thm_shuffled forget_exps;
+      (*val thm_free = List.foldl birs_Pi_first_env_top_mapping_merge_fold thm_shuffled (List.map (fn (_,x,y) => (x,y))forget_exps);*)
+      val thm_free = List.foldl birs_Pi_first_env_top_mapping_merge_store_fold thm_shuffled forget_exps;
       (*val _ = print_thm thm_free;*)
       val _ = if not debug_mode then () else print "\ndone with birs_Pi_first_env_top_mapping_merge_store\n";
     in
