@@ -446,8 +446,89 @@ val test_cases = [
       (BExp_Const (Imm32 1w)))``,
   ``BExp_BinExp BIExp_Minus
          (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-         (BExp_Const (Imm32 2w))``)
+         (BExp_Const (Imm32 2w))``),
+
+  (armcm0_simp,
+  ``BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_Equal
+         (BExp_BinExp BIExp_And
+            (BExp_Den
+               (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 3w)))
+         (BExp_Const (Imm32 0w)))
+      (BExp_BinExp BIExp_And
+         (BExp_BinPred BIExp_LessThan
+            (BExp_Const (Imm32 0x10001FE4w))
+            (BExp_Den
+               (BVar "sy_SP_process" (BType_Imm Bit32))))
+         (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den
+               (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 0x10001FF0w))))``,
+  ``
+      (BExp_Load
+         (BExp_Store
+            (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+            (BExp_BinExp BIExp_Minus
+               (BExp_Den
+                  (BVar "sy_SP_process" (BType_Imm Bit32)))
+               (BExp_Const (Imm32 41w))) BEnd_LittleEndian
+            (BExp_Cast BIExp_LowCast
+               (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))
+               Bit8))
+         (BExp_Const (Imm32 0x10001ED4w))
+         BEnd_LittleEndian
+         Bit16)``,
+  ``
+      (BExp_Load
+         (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+         (BExp_Const (Imm32 0x10001ED4w))
+         BEnd_LittleEndian
+         Bit16)``),
+
+  (armcm0_simp,
+  ``BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_Equal
+         (BExp_BinExp BIExp_And
+            (BExp_Den
+               (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 3w)))
+         (BExp_Const (Imm32 0w)))
+      (BExp_BinExp BIExp_And
+         (BExp_BinPred BIExp_LessThan
+            (BExp_Const (Imm32 0x10001FE4w))
+            (BExp_Den
+               (BVar "sy_SP_process" (BType_Imm Bit32))))
+         (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den
+               (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 0x10001FF0w))))``,
+  ``BExp_Cast BIExp_UnsignedCast
+      (BExp_Load
+         (BExp_Store
+            (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+            (BExp_BinExp BIExp_Minus
+               (BExp_Den
+                  (BVar "sy_SP_process" (BType_Imm Bit32)))
+               (BExp_Const (Imm32 41w))) BEnd_LittleEndian
+            (BExp_Cast BIExp_LowCast
+               (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))
+               Bit8))
+         (BExp_Const (Imm32 0x10001ED4w))
+         BEnd_LittleEndian
+         Bit16)
+      Bit32``,
+  ``BExp_Cast BIExp_UnsignedCast
+      (BExp_Load
+         (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+         (BExp_Const (Imm32 0x10001ED4w))
+         BEnd_LittleEndian
+         Bit16)
+      Bit32``)
 ];
+
+
+
 
 (*
 val (simp_fun, pcond, bexp, expected) = hd test_cases;

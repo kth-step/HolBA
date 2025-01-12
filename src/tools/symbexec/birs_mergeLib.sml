@@ -170,51 +170,68 @@ in (* local *)
         (*identical a1 a2*)
         ad_is_eq
       end;
-    
-    fun values_are_equal v1 v2 =
-      (* TODO: could be not identical but still equal, would need smt solver to check,
-                also this way we do not need to manage theorems to argue value equivalence when merging *)
-      identical v1 v2;
+    fun get_store_v (_, _, expv) = expv;
+    (* TODO: better reuse stores_match in birs_simp_instancesLib,
+          for example, here is no type-check that would be required for soundness *)
+    fun is_same_loc_store (expad, endi, _) (expad2, endi2, _) =
+      if not (identical endi endi2) then raise ERR "is_same_loc_store" "should be same endianness everywhere" else
+      addresses_are_equal expad expad2;
+    fun exp_to_mem_ld_sz expv = (bir_valuesSyntax.dest_BType_Imm o bir_exp_typecheckLib.get_type_of_bexp) expv
+          handle _ => raise ERR "unify_stores_foldfun" "couldn't get type of stored expression";
+    fun mk_empty_store mexp (expad, endi, expv) = (expad, endi, bir_expSyntax.mk_BExp_Load (mexp, expad, endi, exp_to_mem_ld_sz expv));
 
-    fun unify_stores_foldfun mexp (store, (stores2, stores1_new, stores2_new, forget_exps)) =
-      (* TODO: better reuse stores_match in birs_simp_instancesLib,
-           for example, here is no type-check that would be required for soundness *)
+    fun unify_stores_clear stores =
+      if List.null stores then [] else
       let
-        fun get_store_v (_, _, expv) = expv;
-        fun is_same_loc_store (expad, endi, _) (expad2, endi2, _) =
-          if not (identical endi endi2) then raise ERR "is_same_loc_store" "should be same endianness everywhere" else
-          addresses_are_equal expad expad2;
-        fun exp_to_mem_ld_sz expv = (bir_valuesSyntax.dest_BType_Imm o bir_exp_typecheckLib.get_type_of_bexp) expv
-              handle _ => raise ERR "unify_stores_foldfun" "couldn't get type of stored expression";
-        fun mk_empty_store (expad, endi, expv) = (expad, endi, bir_expSyntax.mk_BExp_Load (mexp, expad, endi, exp_to_mem_ld_sz expv));
-
-        val match_store2s = List.filter (is_same_loc_store store) stores2;
-        val match_store2_o =
-          if length match_store2s = 0 then NONE
-          else if length match_store2s = 1 then SOME (hd match_store2s)
-          else (
-            (*raise ERR "unify_stores_foldfun" "multiple stores with the same address"*)
-            print "\nwarning: multiple stores with the same address\n";
-            SOME (last match_store2s)
-          );
-        val store2 = Option.getOpt (match_store2_o, mk_empty_store store);
-        val forget_exps_add =
-          if values_are_equal (get_store_v store) (get_store_v store2) then [] else
-          [(get_store_v store, get_store_v store2)];
-        (*val forget_exps_add = [(get_store_v store, get_store_v store2)];*)
+        val hstore = List.hd stores;
+        val store = List.last (List.filter (is_same_loc_store hstore) stores);
       in
-        (List.filter (not o is_same_loc_store store) stores2, store::stores1_new, store2::stores2_new, forget_exps_add@forget_exps)
+        store::(unify_stores_clear (List.filter (not o is_same_loc_store hstore) stores))
       end;
 
-    fun flippair (x,y) = (y,x);
+    fun unify_stores_foldfun mexp (store, (stores2, stores1_new, stores2_new)) =
+      let
+        val store2 =
+          case List.filter (is_same_loc_store store) stores2 of
+              [] => mk_empty_store mexp store
+            | [x] => x
+            | _ => raise ERR "unify_stores_foldfun" "multiple stores with the same address";
+      in
+        (List.filter (not o is_same_loc_store store) stores2, store::stores1_new, store2::stores2_new)
+      end;
   in
     fun unify_stores mexp stores1 stores2 =
       let
-        val (stores2_0, stores1_new_0, stores2_new_0, forget_exps_0) = List.foldl (unify_stores_foldfun mexp) (stores2, [], [], []) stores1;
-        val (stores1_0, stores2_new_1, stores1_new_1, forget_exps_1) = List.foldl (unify_stores_foldfun mexp) ([], [], [], List.map flippair forget_exps_0) stores2_0;
+        (* first clear stores1 and stores2 respectively (remove immaterial loads) *)
+        val stores1 = unify_stores_clear stores1;
+        val stores2 = unify_stores_clear stores2;
+        (* then compute new stores with introduced loads to match sequences exactly *)
+        val (stores2_0, stores1_new_0, stores2_new_0) = List.foldl (unify_stores_foldfun mexp) (stores2, [], []) stores1;
+        val (stores1_0, stores2_new_1, stores1_new_1) = List.foldl (unify_stores_foldfun mexp) ([], [], []) stores2_0;
         val _ = if List.null stores1_0 then () else raise ERR "unify_stores" "this should never happen";
       in
-        (List.rev (stores1_new_1@stores1_new_0), List.rev (stores2_new_1@stores2_new_0), List.rev (List.map flippair forget_exps_1))
+        (List.rev (stores1_new_1@stores1_new_0), List.rev (stores2_new_1@stores2_new_0))
+      end;
+    
+    (* compute indexes of not-identical store values, indexes here are reversed so that they can be applied to the bir store expression directly *)
+    fun compute_forget_depthidxs_ _ acc [] [] = acc
+      | compute_forget_depthidxs_ idx acc (s1::stores1) (s2::stores2) =
+          compute_forget_depthidxs_ (idx-1) ((if identical (get_store_v s1) (get_store_v s2) then [] else [idx])@acc) (stores1) (stores2)
+      | compute_forget_depthidxs_ _ _ _ _ =
+          raise ERR "compute_forget_depthidxs_" "this should never happen";
+      
+    fun compute_forget_depthidxs stores1 =
+      compute_forget_depthidxs_ ((List.length stores1) - 1) [] stores1;
+
+    fun get_bexp_store_bidx exp idx =
+      let
+        val (expm, _, _, expv) = bir_expSyntax.dest_BExp_Store exp
+          handle _ => raise ERR "get_bexp_store_bidx" "not a BExp_Store";
+      in
+        if idx > 0 then
+          get_bexp_store_bidx expm (idx-1)
+        else
+          expv
       end;
   end
 
@@ -257,14 +274,22 @@ fun print_mem_exp mem_exp =
 
       (* find shuffled and padded store sequences, use disjunct assumption for this *)
       (* at the same time, collect a distinct set of expression pairs that should be "freesymboled" to make the states equal *)
-      val (stores1_new, stores2_new, forget_exps) = unify_stores mexp1 stores1 stores2
+      val (stores1_new, stores2_new) = unify_stores mexp1 stores1 stores2
         handle e => (print "\nstore unification issue:\n"; print_term exp1; print "\n"; print_term exp2; print "\n"; raise e);
-      (*val forget_exps = List.filter (fn (x,y) => not (identical x y)) forget_exps;*)
 
       (* apply the shuffling by cheated rewriting (justified by disjunct assumption) *)
       fun mk_mem_eq_thm mexp stores stores_new = mk_oracle_thm "BIRS_MEM_DISJ_SHUFFLE" ([], mk_eq (birs_simp_instancesLib.mk_BExp_Store_list (mexp, stores), birs_simp_instancesLib.mk_BExp_Store_list (mexp, stores_new)));
       val bad_cheat_eq_thm_1 = mk_mem_eq_thm mexp1 stores1 stores1_new;
       val bad_cheat_eq_thm_2 = mk_mem_eq_thm mexp1 stores2 stores2_new;
+      (*val _ = print_thm bad_cheat_eq_thm_1;
+      val _ = print_thm bad_cheat_eq_thm_2;*)
+      val thm_shuffled =
+        CONV_RULE (birs_Pi_first_CONV (REWRITE_CONV [Once bad_cheat_eq_thm_1]) THENC
+                   birs_Pi_second_CONV (REWRITE_CONV [Once bad_cheat_eq_thm_2])) thm;
+      (*val _ = print_thm thm_shuffled;*)
+
+      val forget_depthidxs = compute_forget_depthidxs stores1_new stores2_new;
+      val forget_exps = List.map (fn idx => (get_bexp_store_bidx ((rhs o concl) bad_cheat_eq_thm_1) idx, get_bexp_store_bidx ((rhs o concl) bad_cheat_eq_thm_2) idx)) forget_depthidxs;
       val _ = print "\n\n";(*
       val _ = print "\n\nmerging stores1:\n";
       val _ = print_thm bad_cheat_eq_thm_1;
@@ -281,12 +306,6 @@ fun print_mem_exp mem_exp =
           val _ = print "\n";
         in () end) forget_exps;
       val _ = print "\n\n";
-      (*val _ = print_thm bad_cheat_eq_thm_1;
-      val _ = print_thm bad_cheat_eq_thm_2;*)
-      val thm_shuffled =
-        CONV_RULE (birs_Pi_first_CONV (REWRITE_CONV [Once bad_cheat_eq_thm_1]) THENC
-                   birs_Pi_second_CONV (REWRITE_CONV [Once bad_cheat_eq_thm_2])) thm;
-      (*val _ = print_thm thm_shuffled;*)
 
       (* apply the freesymboling as instructed by forget_exps *)
       val thm_free = List.foldl birs_Pi_first_env_top_mapping_merge_fold thm_shuffled forget_exps;
