@@ -17,9 +17,12 @@ open balrob_fdivTheory;
 
 val _ = new_theory "balrob_ftop";
 
+val _ = birs_composeLib.compose_L_speedcheat := true;
+val _ = balrob_supportLib.print_theorem_before_merging := true;
+
 (* ------------------------------------ *)
 
-(*
+
 val entry_name = "atan2f_own";
 val reqs = get_fun_usage entry_name;
 val locs =
@@ -36,7 +39,7 @@ val symb_exec_thm = birs_summary birs_prog_config
   reqs
   locs;
 val balrob_summary_atan2f_own_thm = save_thm("balrob_summary_" ^ entry_name ^ "_thm", symb_exec_thm);
-*)
+
 
 (* ------------------------------------ *)
 

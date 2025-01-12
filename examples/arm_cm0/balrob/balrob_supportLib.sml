@@ -273,6 +273,74 @@ fun gen_const_load_32_32_cheat_thm (a,b) =
   end;
 val gen_const_load_32_32_cheat_thms = List.map gen_const_load_32_32_cheat_thm;
 
+val prog_thm = balrobTheory.bir_balrob_progbin_def
+val binaryValues =
+  (List.map
+    ((fn (s,l) => 
+      ((Arbnum.toInt o wordsSyntax.dest_word_literal) s,
+       (List.map (Arbnum.toInt o wordsSyntax.dest_word_literal) o fst o listSyntax.dest_list) l)) o pairSyntax.dest_pair) o
+    fst o listSyntax.dest_list o rhs o concl)
+  prog_thm;
+val int_to_hexstr = (fn s => "0x" ^ s) o Arbnum.toHexString o Arbnum.fromInt;
+
+val _ = List.map (fn (start, mappings) =>
+  let
+    val len = List.length mappings;
+  in
+    print ("[" ^ (int_to_hexstr start) ^ ", " ^ (int_to_hexstr (start + len)) ^ ")\n")
+  end
+) binaryValues;
+
+fun find_binval (start, mappings) ad =
+  let
+    val idx = ad - start;
+  in
+    if 0 <= idx andalso idx < List.length mappings then
+      SOME (List.nth(mappings, idx))
+    else
+      NONE
+  end;
+
+fun get_binval_w8 ad =
+  let
+    fun foldfun (m, acc) =
+      case acc of
+          SOME x => SOME x
+        | NONE => find_binval m ad;
+    val v_o = List.foldl foldfun NONE binaryValues;
+  in
+    case v_o of
+        SOME x => x
+      | NONE => raise Fail (*ERR "get_binval_w8"*) ("couldn't get the binary value @" ^ (int_to_hexstr ad))
+  end;
+
+fun power (x : int) (n : int) : int =
+  if n = 0 then 1
+  else 
+    if (n mod 2) = 0 then 
+      let val r = power x (n div 2) in r * r end
+    else
+      let val r = power x (n div 2) in r * r * x end;
+fun lshift x n =
+  x * (power 2 n);
+fun get_binval_w32_le ad =
+  (* TODO: this is wrong to account for wrong elf import *)
+  (lshift (get_binval_w8 (ad+2)) 0) +
+  (lshift (get_binval_w8 (ad+3)) 8) +
+  (lshift (get_binval_w8 (ad+0)) 16) +
+  (lshift (get_binval_w8 (ad+1)) 24);
+
+(* TODO: the lifter gets wrongly parsed data from the elf import: constants are parsed wrongly *)
+(*gen_const_load_32_32_cheat_thms [(0x10000DA0, 0x10000DA8)]*)
+(*val _ = print ((int_to_hexstr (get_binval_w32_le 0x10000DA0)) ^ "\n");*)
+(*val _ = List.app (fn i => print ((int_to_hexstr (get_binval_w8 (0x10000DA0+i))) ^ "\n")) (List.tabulate (20, fn i => i - 10));*)
+
+fun const_load_32_32_cheat_thms_fromprog (ad_start, n) =
+  gen_const_load_32_32_cheat_thms (List.tabulate (n, fn i => let val ad = ad_start + (4 * i) in (ad, get_binval_w32_le ad) end));
+
+fun const_load_32_32_cheat_thms_fromprog_range (from, to) =
+  const_load_32_32_cheat_thms_fromprog (from, (to-from) div 4);
+
 (* -------------------------------------------------------------------------- *)
 
 val birs_prog_config = ((fst o dest_eq o concl) balrobLib.bir_balrob_prog_def, balrobLib.balrob_birenvtyl_def);
@@ -538,6 +606,7 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
 
 (* ========================================================================================== *)
 
+  val print_theorem_before_merging = ref false;
   fun birs_summary_gen pre_simp extra_thms (bprog_tm, prog_birenvtyl_def) sums reqs (init_addr, end_addrs) =
     let
       val init_state = birs_basic_init_state prog_birenvtyl_def reqs init_addr;
@@ -545,11 +614,13 @@ fun birs_basic_instantiate (bprog_tm, prog_birenvtyl_def) =
 
       (* need to handle intervals correctly: in symbolic execution driver
            (also need this together with the indirectjump handling and previous summaries) and also before merging *)
-      (*
-      val _ = print "\n=============== before merging ========\n";
-      val _ = print_thm symb_exec_thm;
-      val _ = print "\n=============== end ========\n";
-      *)
+      
+      val _ = if not (!print_theorem_before_merging) then () else
+        let
+          val _ = print "\n=============== before merging ========\n";
+          val _ = print_thm symb_exec_thm;
+          val _ = print "\n=============== before merging end ========\n";
+        in () end;
       val merged_thm = birs_basic_merge symb_exec_thm;
     in
       merged_thm
