@@ -324,16 +324,16 @@ fun power (x : int) (n : int) : int =
 fun lshift x n =
   x * (power 2 n);
 fun get_binval_w32_le ad =
-  (* TODO: this is wrong to account for wrong elf import *)
-  (lshift (get_binval_w8 (ad+2)) 0) +
-  (lshift (get_binval_w8 (ad+3)) 8) +
-  (lshift (get_binval_w8 (ad+0)) 16) +
-  (lshift (get_binval_w8 (ad+1)) 24);
+  (lshift (get_binval_w8 (ad+0)) 0) +
+  (lshift (get_binval_w8 (ad+1)) 8) +
+  (lshift (get_binval_w8 (ad+2)) 16) +
+  (lshift (get_binval_w8 (ad+3)) 24);
 
-(* TODO: the lifter gets wrongly parsed data from the elf import: constants are parsed wrongly *)
 (*gen_const_load_32_32_cheat_thms [(0x10000DA0, 0x10000DA8)]*)
-(*val _ = print ((int_to_hexstr (get_binval_w32_le 0x10000DA0)) ^ "\n");*)
-(*val _ = List.app (fn i => print ((int_to_hexstr (get_binval_w8 (0x10000DA0+i))) ^ "\n")) (List.tabulate (20, fn i => i - 10));*)
+(*
+val _ = print ((int_to_hexstr (get_binval_w32_le 0x10000DA0)) ^ "\n");
+val _ = List.app (fn i => print ((int_to_hexstr (get_binval_w8 (0x10000DA0+i))) ^ "\n")) (List.tabulate (20, fn i => i - 10));
+*)
 
 fun const_load_32_32_cheat_thms_fromprog (ad_start, n) =
   gen_const_load_32_32_cheat_thms (List.tabulate (n, fn i => let val ad = ad_start + (4 * i) in (ad, get_binval_w32_le ad) end));
