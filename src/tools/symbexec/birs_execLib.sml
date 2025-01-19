@@ -161,7 +161,7 @@ in
       let
         val is_sing = (aux_setLib.is_sing o get_birs_Pi o concl) thm;
         val assignment_thm_f = if is_sing then SUBST_SING_thm_f else SUBST_thm_f;
-        val postproc = if is_sing then I else cleanup_RULE;
+        (*val postproc = if is_sing then I else cleanup_RULE;*)
 
         val assignment_thm_o = assignment_thm_f thm;
 
@@ -170,7 +170,7 @@ in
             val simp_tm = (fst o dest_imp o snd o dest_forall o concl) assignment_thm;
             val simp_t = birs_simp_fun simp_tm;
           in
-            postproc (combine_simp_t assignment_thm simp_t)
+            (*postproc*) (combine_simp_t assignment_thm simp_t)
           end) assignment_thm_o;
       in
         Option.getOpt(simp_t_o, thm)

@@ -170,8 +170,13 @@ end;
     open bir_symb_soundTheory;
     fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_sound";
     val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns3_env = syntax_fns 4 HolKernel.dest_triop HolKernel.mk_triop;
   in
     val (bir_prog_has_no_halt_tm,  mk_bir_prog_has_no_halt, dest_bir_prog_has_no_halt, is_bir_prog_has_no_halt)  = syntax_fns1 "bir_prog_has_no_halt";
+
+    val (birs_symb_env_subst1_tm,  mk_birs_symb_env_subst1, dest_birs_symb_env_subst1, is_birs_symb_env_subst1)  = syntax_fns3_env "birs_symb_env_subst1";
+    val (birs_symb_subst1_tm,  mk_birs_symb_subst1, dest_birs_symb_subst1, is_birs_symb_subst1)  = syntax_fns2 "birs_symb_subst1";
   end
 
   local

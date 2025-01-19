@@ -12,6 +12,14 @@ local
 
 in (* local *)
 
+  fun mk_oracle_preserve_tags ls tagstr goal =
+    let
+      fun inject_tags (thm_tags, thm) =
+        CONJUNCT2 (CONJ thm_tags thm);
+    in
+      List.foldr inject_tags (mk_oracle_thm tagstr ([], goal)) ls
+    end;
+
   fun result_cache kcomp =
     let
       val d = ref (Redblackmap.mkDict kcomp);

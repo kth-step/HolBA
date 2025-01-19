@@ -16,6 +16,8 @@ local
 
 in (* local *)
 
+  val birs_storeelim_oracle_speed = ref true;
+
 (*
 val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
 val bexp_stores_ = mk_BExp_Store_list (mexp1, stores1);
@@ -96,9 +98,21 @@ fun birs_simp_store_cheater simp_tm =
       val symbexp_1_tm = mk_BExp_Store_list (mexp, filtered_stores@[store_to_check]);
       val num_removed = List.length stores - List.length filtered_stores;
       val _ = if num_removed = 0 then () else print ("removed stores: " ^ (Int.toString num_removed) ^ "\n");
+
+      val simp_tm_goal = mk_birs_simplification (pcond_tm, symbexp_tm, symbexp_1_tm);
+      val simp_thm =
+        if !birs_storeelim_oracle_speed then
+          aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_MEM_STORE_SPEEDCHEAT" simp_tm_goal
+        else
+          let
+            val simp_thm_o = birs_utilsLib.check_simplification_tm simp_tm_goal;
+          in
+            valOf simp_thm_o
+          end;
     in
-      prove(mk_birs_simplification (pcond_tm, symbexp_tm, symbexp_1_tm), cheat)
-    end;
+      simp_thm
+    end
+    handle _ => raise ERR "birs_simp_store_cheater" "store simplification failed";
 (* ----------------------------------------------------------------------------------- *)
 (* ----------------------------------------------------------------------------------- *)
 

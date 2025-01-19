@@ -451,86 +451,6 @@ birs_exec_step_CONV_fun tm
 
 
 (* ----------------------------------------------------------------- *)
-
-local
-  open bir_expSyntax;
-in
- fun is_bir_exp t =
-  type_of t = bir_exp_t_ty;
-
- fun bir_exp_size t =
-  if is_BExp_Const t then
-     1
-  else if is_BExp_MemConst t then
-     1
-  else if is_BExp_Den t then
-     1
-  else if is_BExp_Cast t then
-   let
-     val (_,x,_) = dest_BExp_Cast t;
-   in
-     1 + bir_exp_size x
-   end
-  else if is_BExp_UnaryExp t then
-   let
-     val (_,x) = dest_BExp_UnaryExp t;
-   in
-     1 + bir_exp_size x
-   end
-  else if is_BExp_BinExp t then
-   let
-     val (_,x1,x2) = dest_BExp_BinExp t;
-   in
-     1 + bir_exp_size x1 + bir_exp_size x2
-   end
-  else if is_BExp_BinPred t then
-   let
-     val (_,x1,x2) = dest_BExp_BinPred t;
-   in
-     1 + bir_exp_size x1 + bir_exp_size x2
-   end
-  else if is_BExp_MemEq t then
-   let
-     val (x1,x2) = dest_BExp_MemEq t;
-   in
-     1 + bir_exp_size x1 + bir_exp_size x2
-   end
-  else if is_BExp_IfThenElse t then
-   let
-     val (c,x1,x2) = dest_BExp_IfThenElse t;
-   in
-     1 + bir_exp_size c + bir_exp_size x1 + bir_exp_size x2
-   end
-  else if is_BExp_Load t then
-   let
-     val (mem_e,a_e,_,_) = dest_BExp_Load t;
-   in
-     1 + bir_exp_size mem_e + bir_exp_size a_e
-   end
-  else if is_BExp_Store t then
-   let
-     val (mem_e,a_e,_,v_e) = dest_BExp_Store t;
-   in
-     1 + bir_exp_size mem_e + bir_exp_size a_e + bir_exp_size v_e
-   end
-  else if is_BExp_IntervalPred t then
-   let
-     val (ref_e, lim_tm) = dest_BExp_IntervalPred t;
-     val (l_e, h_e) = pairSyntax.dest_pair lim_tm;
-   in
-     1 + bir_exp_size ref_e + bir_exp_size l_e + bir_exp_size h_e
-   end
-(*
-  else if is_... t then
-   let
-     val (_,x1,...) = dest_... t;
-   in
-     1 + bir_exp_size x1 + ...
-   end
-*)
-  else raise ERR "bir_exp_size" ("unknown BIR expression " ^ (term_to_string t));
-end
-
 fun count_term is_tm_fun count_tm_fun tm =
     if is_tm_fun tm then
       count_tm_fun tm
@@ -803,12 +723,7 @@ val birs_symbval_concretizations_oracle_CONV =
     let
       val vaex_tm = (rand) tm;
       val pcond_tm = (rand o rator) tm;
-      val pcond_is_sat = bir_smtLib.bir_smt_check_sat false pcond_tm;
-      val pcond_sat_thm =
-        if pcond_is_sat then
-          mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
-        else
-          mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
+      val (pcond_is_sat, pcond_sat_thm) = check_pcond_sat pcond_tm;
       val res_thm =
         if not pcond_is_sat then
           SIMP_RULE (std_ss) [pcond_sat_thm] (SPECL [pcond_tm, vaex_tm] birs_rulesTheory.birs_jumptarget_empty_thm)
@@ -979,6 +894,20 @@ fun birs_gen_env_CONV eq_thms =
       (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
   ) THENC
   TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm);
+
+val birs_update_env_P_CONV =
+  BETA_CONV THENC
+  NEG_CONV (
+    LHS_CONV (
+      REWR_CONV pairTheory.FST
+    ) THENC
+    aux_setLib.bir_varname_EQ_CONV
+  );
+
+val birs_update_env_CONV =
+  REWR_CONV birs_update_env_thm THENC
+  RAND_CONV (RAND_CONV (aux_setLib.FILTER_CONV birs_update_env_P_CONV));
+
 fun birs_exec_stmtB_CONV eq_thms tm =
 let
   (* evaluate to symbolic expression *)
@@ -1007,19 +936,6 @@ in
         EVAL
       )
     )) res_b_eval_exp;
-
-  val birs_update_env_P_CONV =
-    BETA_CONV THENC
-    NEG_CONV (
-      LHS_CONV (
-        REWR_CONV pairTheory.FST
-      ) THENC
-      aux_setLib.bir_varname_EQ_CONV
-    );
-
-  val birs_update_env_CONV =
-    REWR_CONV birs_update_env_thm THENC
-    RAND_CONV (RAND_CONV (aux_setLib.FILTER_CONV birs_update_env_P_CONV));
 
   (* update symbolic environment, if is assignment statement *)
   val res_b_update_env =
@@ -1351,6 +1267,8 @@ fun birs_exec_step_CONV_fun tm =
   end;
 
 val birs_symbval_concretizations_oracle_ext_CONV = birs_symbval_concretizations_oracle_ext_CONV;
+
+val birs_update_env_CONV = birs_update_env_CONV;
 
 end (* local *)
 

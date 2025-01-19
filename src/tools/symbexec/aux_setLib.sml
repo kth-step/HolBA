@@ -424,6 +424,16 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (* set operation for composition, using the state equality checker above              *)
 (* ---------------------------------------------------------------------------------- *)
+  val birs_state_DELETE_CONV =
+      pred_setLib.DELETE_CONV birs_state_EQ_CONV;
+
+  val birs_state_INSERT_CONV =
+      pred_setLib.INSERT_CONV birs_state_EQ_CONV;
+
+  val birs_state_INSERT_DELETE_CONV =
+      RAND_CONV birs_state_DELETE_CONV THENC
+      TRY_CONV (birs_state_INSERT_CONV);
+
   val birs_state_DIFF_UNION_CONV =
       LAND_CONV (DIFF_CONV birs_state_EQ_CONV) THENC
       pred_setLib.UNION_CONV birs_state_EQ_CONV;

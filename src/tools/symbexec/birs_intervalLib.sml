@@ -10,6 +10,7 @@ local
 
   open birsSyntax;
   open birs_utilsLib;
+  open birs_conseqLib;
   open birs_mergeLib;
 
   (* error handling *)
@@ -65,7 +66,7 @@ local
         raise ERR "interval_from_state" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
       val interval = hd pcond_intervaltms;
     in
-      (interval, fn x => bslSyntax.bandl (x::pcondl_filtd))
+      (interval, fn x => mk_bandl (x::pcondl_filtd))
     end;
 
   fun dest_BExp_IntervalPred_normform tm =
@@ -252,7 +253,7 @@ in (* local *)
       val pcond = (get_birs_Pi_first_pcond o concl) thm;
       val pcondl = dest_bandl pcond;
       val pcondl_fixed = List.map (fn tm => if is_BExp_IntervalPred tm then simplify_interval tm else tm) pcondl;
-      val thm_fixed = birs_Pi_first_pcond_RULE (bslSyntax.bandl pcondl_fixed) thm;
+      val thm_fixed = birs_Pi_first_pcond_RULE (mk_bandl pcondl_fixed) thm;
     in
       thm_fixed
     end;
@@ -338,12 +339,12 @@ in (* local *)
             if length pcond_intervaltms_1 = 1 then
               (fuse_intervals (intervaltm) (hd pcond_intervaltms_1), pcondl_filtd_two)
             else
-              (print "\n\n";print_term pcond;print "\n\n";print_term (bslSyntax.bandl pcondl_filtd);print "\n\n";List.map print_term pcond_intervaltms_1;print "\n\n";
+              (print "\n\n";print_term pcond;print "\n\n";print_term (mk_bandl pcondl_filtd);print "\n\n";List.map print_term pcond_intervaltms_1;print "\n\n";
                raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected3"))
           end;
       val _ = if not debug_mode then () else print_term intervalterm_fusion;
 
-      val pcond_new = bslSyntax.bandl (intervalterm_fusion::pcondl_filtd_two);
+      val pcond_new = mk_bandl (intervalterm_fusion::pcondl_filtd_two);
       val thm2 = birs_Pi_first_pcond_RULE pcond_new thm1;
       val thmx = thm2;
 
@@ -351,7 +352,7 @@ in (* local *)
         (* rename so that the symbol used is ("syi_"^vn) for readability *)
       (* TODO: check, at this point no BVar symbol with the name vn_symb should occur in thm *)
       (* TODO: we will need a rename rule for this later, this one just works now because it is not following the theorem checks *)
-      val thm9 = birs_instantiationLib.birs_sound_symb_inst_RULE [(env_symbol, mk_BExp_Den (mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol)))] thmx;
+      val thm9 = birs_instantiationLib.birs_sound_symb_rename_RULE [(env_symbol, mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol))] thmx;
 
       val _ = if not debug_mode then () else print "done unifying interval for one Pi state\n";
     in
@@ -391,7 +392,7 @@ in (* local *)
             raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
           val interval = hd pcond_intervaltms;
         in
-          (interval, fn x => bslSyntax.bandl (x::pcondl_filtd))
+          (interval, fn x => mk_bandl (x::pcondl_filtd))
         end;
       val (intervaltms, pcond_new_funs) = unzip (List.map interval_from_state Pi_tms);
 

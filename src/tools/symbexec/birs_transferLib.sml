@@ -40,6 +40,7 @@ fun prepare_transfer birenvtyl_def pcond_inst bpre symb_analysis_thm =
     (* first remove generic path condition symbol *)
     open birs_instantiationLib;
     open birs_utilsLib;
+    open birs_conseqLib;
     val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(birs_driveLib.pcond_gen_symb, pcond_inst)] symb_analysis_thm;
     val pcond_symb_analysis_thm = birs_sys_pcond_RULE pcond_tm specd_symb_analysis_thm;
     val extra_symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) pcond_symb_analysis_thm;

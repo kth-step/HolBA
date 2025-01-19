@@ -79,7 +79,7 @@ in
          (Profile.profile "birs_rule_SEQ_fun_p3" (birs_Pi_CONV birs_state_DIFF_UNION_CONV) THENC
           Profile.profile "birs_rule_SEQ_fun_p4" (birs_L_CONV (
             if !compose_L_speedcheat then
-              (fn tm => mk_oracle_thm "BIR_SEQ_L_SPEEDCHEAT" ([], mk_eq(tm, cheat_L_set)))
+              (fn tm => aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_SEQ_L_SPEEDCHEAT" (mk_eq(tm, cheat_L_set)))
             else
                programcounter_UNION_CONV
          ))))
