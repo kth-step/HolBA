@@ -261,7 +261,7 @@ in (* local *)
   end
 
 (* ---------------------------------------------------------------------------------------- *)
-
+  (*
   val birs_exp_imp_DROP_R_thm = prove(``
     !be1 be2.
     birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be1
@@ -299,6 +299,7 @@ in (* local *)
       else
         NONE
     end;
+  *)
 
   (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
   fun birs_Pi_first_pcond_RULE pcond_new thm =
@@ -319,10 +320,12 @@ in (* local *)
       val _ = holba_z3Lib.debug_print := true;
       val _ = print "sending a z3 query\n";
       *)
+      (*
       val pcond_drop_ok = isSome (is_DROP_R_imp imp_tm) orelse
                           isSome (is_DROP_L_imp imp_tm) orelse
                           isSome (is_conjunct_inclusion_imp imp_tm);
-      val pcond_imp_ok = pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)
+      *)
+      val pcond_imp_ok = (*pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)*)
                          isSome (check_imp_tm imp_tm);
       val _ = if pcond_imp_ok then () else
               (print "widening failed, path condition is not weaker\n";

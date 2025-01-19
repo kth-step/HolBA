@@ -360,6 +360,7 @@ in (* local *)
         print "the symbolic environments seem to be unequal, but they might be equal\n";
         raise ERR "birs_env_EQ_CONV" "the symbolic environments seem to be unequal, but they might be equal");
       val eq_thm = mk_oracle_thm "BIRS_ENV_EQ" ([], mk_eq (tm, if is_eq then T else F));
+      val _ = print "oracle used: BIRS_ENV_EQ\n";
     in
       eq_thm
     end;
