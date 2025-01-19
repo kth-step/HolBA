@@ -8,6 +8,7 @@ open HolKernel Parse boolLib bossLib;
 open bir_typing_expTheory;
 open bir_typing_expSyntax;
 open birsSyntax;
+open birs_utilsLib;
 
 open HolBACoreSimps;
 
@@ -49,7 +50,7 @@ in (* local *)
         t3
       end;
   in
-    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("add_vars_of") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
+    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("bir_vars_of_exp_wrapped_CONV") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
   end;
 
   fun bir_vars_of_exp_DIRECT_CONV tm =
@@ -96,11 +97,11 @@ in (* local *)
     (*
     (* this implementation of birs_exps_of_senv_COMP_ONCE_CONV works fine, but not as speedy as the one below *)
     (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
-    (TRY_CONV (aux_setLib.ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
+    (TRY_CONV (ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
     *)
     IFC
       (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
-      (aux_setLib.ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
+      (ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
       (IFC
         (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
         (ALL_CONV)

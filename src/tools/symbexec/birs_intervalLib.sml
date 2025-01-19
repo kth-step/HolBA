@@ -282,7 +282,7 @@ in (* local *)
             val exp_tm = env_exp;
             val symbname = get_freesymb_name ();
             val symb_tm = mk_BVar (fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
-            val thm1 = birs_Pi_first_freesymb_RULE symbname exp_tm thm0;
+            val thm1 = birs_Pi_first_freesymb_RULE symbname exp_tm (fn x => (K (K x))) thm0;
           in (thm1, symb_tm) end;
       val _ = if not debug_mode then () else print "freesymboling done\n";
       (* now we have only one symbol env_symbol in the mapping and the rest should be in the path condition *)
