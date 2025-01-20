@@ -40,12 +40,20 @@ val _ = new_theory "kernel_trap_spec";
 (* Program boundaries *)
 (* ------------------ *)
 
-Definition trap_entry_init_addr_def:
- trap_entry_init_addr : word64 = 0x800000e0w
+Definition kernel_trap_entry_init_addr_def:
+ kernel_trap_entry_init_addr : word64 = 0x800000e0w
 End
 
-Definition trap_entry_end_addr_def:
- trap_entry_end_addr : word64 = 0x80000190w
+Definition kernel_trap_entry_end_addr_def:
+ kernel_trap_entry_end_addr : word64 = 0x80000190w
+End
+
+Definition kernel_trap_return_init_addr_def:
+ kernel_trap_return_init_addr : word64 = 0x800001dcw
+End
+
+Definition kernel_trap_return_end_addr_def:
+ kernel_trap_return_end_addr : word64 = 0x80000268w
 End
 
 (* --------------- *)
@@ -64,31 +72,22 @@ Definition riscv_kernel_trap_post_def:
 End
 *)
 
-(* -------------- *)
-(* BSPEC contract *)
-(* -------------- *)
+(* --------------- *)
+(* BSPEC contracts *)
+(* --------------- *)
 
-(*
-Definition bspec_kernel_trap_pre_def:
- bspec_kernel_trap_pre (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
+Definition bspec_kernel_trap_entry_pre_def:
+ bspec_kernel_trap_entry_pre (pre_x10:word64) : bir_exp_t =
+  bir_exp_true
 End
 
-Definition bspec_kernel_trap_post_def:
- bspec_kernel_trap_post (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 pre_x10)) (BExp_Const (Imm64 1w)))
+Definition bspec_kernel_trap_return_pre_def:
+ bspec_kernel_trap_return_pre (pre_x10:word64) : bir_exp_t =
+  bir_exp_true
 End
-*)
 
-(* -------------------------------------- *)
+(* ----------------------------------- *)
 (* Connecting RISC-V and BIR contracts *)
-(* -------------------------------------- *)
+(* ----------------------------------- *)
 
 val _ = export_theory ();
