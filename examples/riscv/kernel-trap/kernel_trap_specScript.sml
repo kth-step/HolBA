@@ -15,6 +15,8 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
+open bir_predLib;
+
 open bir_smtLib;
 
 open bir_symbTheory birs_auxTheory;
@@ -76,14 +78,22 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
+val bspec_kernel_trap_entry_pre_tm = bslSyntax.bandl [
+ mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10"
+]
+
 Definition bspec_kernel_trap_entry_pre_def:
- bspec_kernel_trap_entry_pre (pre_x10:word64) : bir_exp_t =
-  bir_exp_true
+ bspec_kernel_trap_entry_pre : bir_exp_t =
+  ^bspec_kernel_trap_entry_pre_tm
 End
 
+val bspec_kernel_trap_return_pre_tm = bslSyntax.bandl [
+ mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10"
+]
+
 Definition bspec_kernel_trap_return_pre_def:
- bspec_kernel_trap_return_pre (pre_x10:word64) : bir_exp_t =
-  bir_exp_true
+ bspec_kernel_trap_return_pre : bir_exp_t =
+  ^bspec_kernel_trap_return_pre_tm
 End
 
 (* ----------------------------------- *)
