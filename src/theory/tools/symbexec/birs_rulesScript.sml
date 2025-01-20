@@ -7,6 +7,7 @@ open symb_recordTheory;
 
 open bir_symbTheory;
 open bir_symb_sound_coreTheory;
+open bir_symb_simpTheory;
 
 open symb_typesLib;
 open HolBACoreSimps;
@@ -15,6 +16,51 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "birs_rules";
 
+val IMAGE_DIFF_ASSOC_thm = prove(``
+!f s1 s2.
+  (!x y. f x = f y <=> x = y) ==>
+  ((IMAGE f s1) DIFF (IMAGE f s2) =
+   IMAGE f (s1 DIFF s2))
+``,
+    fs [IMAGE_DEF, DIFF_DEF, EXTENSION] >>
+    REPEAT STRIP_TAC >>
+    EQ_TAC >> (
+      METIS_TAC []
+    )
+);
+
+val IMAGE_UNION_ASSOC_thm = prove(``
+!f s1 s2.
+  (!x y. f x = f y <=> x = y) ==>
+  ((IMAGE f s1) UNION (IMAGE f s2) =
+   IMAGE f (s1 UNION s2))
+``,
+    fs [IMAGE_DEF, UNION_DEF, EXTENSION] >>
+    REPEAT STRIP_TAC >>
+    EQ_TAC >> (
+      METIS_TAC []
+    )
+);
+
+val bestTheorem = prove(“
+ !A B C.
+  IMAGE birs_symb_to_symbst A DIFF {birs_symb_to_symbst B} UNION IMAGE birs_symb_to_symbst C =
+  IMAGE birs_symb_to_symbst (A DIFF {B} UNION C)
+”,
+  REWRITE_TAC [GSYM IMAGE_SING] >>
+  REWRITE_TAC
+    [MATCH_MP IMAGE_DIFF_ASSOC_thm birs_symb_to_symbst_EQ_thm,
+     MATCH_MP IMAGE_UNION_ASSOC_thm birs_symb_to_symbst_EQ_thm]
+);
+
+
+Theorem INSERT_SING_DIFF_ALT_thm[local]:
+  !A B C.
+     ((A INSERT C) DIFF {A}) UNION {B} = B INSERT (C DELETE A)
+Proof
+    fs [] >>
+    METIS_TAC [INSERT_SING_UNION, UNION_COMM, DELETE_DEF]
+QED
 
 
 Definition birs_pcondinf_def:
@@ -62,6 +108,28 @@ Definition birs_symb_exec_def:
   birs_symb_exec p (bs, L, bP) =
       (symb_hl_step_in_L_sound (bir_symb_rec_sbir p) (birs_symb_to_symbst bs, L, IMAGE birs_symb_to_symbst bP))
 End
+
+Theorem birs_symb_exec_SUBSET_thm:
+  !p bs L Pi Pi'.
+    (birs_symb_exec p (bs, L, Pi)) ==>
+    (Pi SUBSET Pi') ==>
+    (birs_symb_exec p (bs, L, Pi'))
+Proof
+  fs [birs_symb_exec_def] >>
+  metis_tac [IMAGE_SUBSET, symb_recordTheory.symb_hl_step_in_L_sound_SUBSET_thm]
+QED
+
+Theorem birs_symb_exec_INSERT_DELETE_thm:
+  !prog bs L A B C.
+    birs_symb_exec prog (bs, L, A INSERT (B DELETE C)) ==>
+    birs_symb_exec prog (bs, L, A INSERT B)
+Proof
+  rpt strip_tac >>
+  ‘(A INSERT (B DELETE C)) SUBSET (A INSERT B)’ by (
+    fs [INSERT_SUBSET, COMPONENT, SUBSET_INSERT_RIGHT, DELETE_SUBSET]
+  ) >>
+  metis_tac [birs_symb_exec_SUBSET_thm]
+QED
 
 
 (* ******************************************************* *)
@@ -313,6 +381,344 @@ QED
 
 
 (* ******************************************************* *)
+(*      CONSEQUENCE rule                                   *)
+(* ******************************************************* *)
+Definition birs_symb_pcondwiden_sys_def:
+  birs_symb_pcondwiden_sys bs bs' =
+    (
+      bs.bsst_status = bs'.bsst_status /\
+      bs.bsst_pc = bs'.bsst_pc /\
+      bs.bsst_environ = bs'.bsst_environ /\
+      birs_exp_imp bs.bsst_pcond bs'.bsst_pcond
+    )
+End
+
+Theorem birs_symb_pcondwiden_sys_thm:
+  !prog bs bs'.
+    symb_pcondwiden_sys (bir_symb_rec_sbir prog) (birs_symb_to_symbst bs) (birs_symb_to_symbst bs') =
+    birs_symb_pcondwiden_sys bs bs'
+Proof
+  Cases_on `bs` >> Cases_on `bs'` >>
+  fs [birs_symb_pcondwiden_sys_def,
+      symb_rulesTheory.symb_pcondwiden_sys_def,
+      GSYM symb_exp_imp_EQ_pcondwiden_thm,
+      birs_exp_imp_thm, birs_symb_to_symbst_def,
+      symb_symbst_pc_def, symb_symbst_store_def,
+      symb_symbst_pcond_def, symb_symbst_extra_def]
+QED
+
+Theorem birs_rule_WIDEN_thm:
+  !prog L bs bs2 bs2' Pi.
+    birs_symb_pcondwiden_sys bs2 bs2' ==>
+    birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+    birs_symb_exec prog (bs, L, bs2' INSERT Pi)
+Proof
+  rpt strip_tac >>
+  assume_tac (
+    (SIMP_RULE std_ss [
+      GSYM birs_symb_exec_def,
+      GSYM birs_freesymbs_EQ_thm,
+      bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm,
+      birs_symb_pcondwiden_sys_thm,
+      SIMP_RULE std_ss [pred_setTheory.IMAGE_SING] (Q.SPECL [`Pi`, `bs2`, `{bs2'}`] bestTheorem)
+    ] o
+    Q.SPECL [`birs_symb_to_symbst bs`, `L`, `IMAGE birs_symb_to_symbst (bs2 INSERT Pi)`, `birs_symb_to_symbst bs2`, `birs_symb_to_symbst bs2'`] o
+     SIMP_RULE std_ss [
+          bir_symb_soundTheory.birs_symb_ARB_val_sound_thm
+          ] o
+       MATCH_MP symb_rulesTheory.symb_rule_CONS_E_thm o Q.SPEC `prog` (* symb_rulesTheory.symb_rule_CONS_thm *)
+    ) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+  ‘birs_symb_exec prog (bs, L, bs2' INSERT (Pi DELETE bs2))’ by (
+    gvs [INSERT_SING_DIFF_ALT_thm]
+  ) >>
+  metis_tac [birs_symb_exec_INSERT_DELETE_thm]
+QED
+
+Theorem birs_rule_WIDEN_spec_thm:
+  !prog bs L bs2 Pi pcond' bs2'.
+   (bs2' =
+     <|bsst_pc := bs2.bsst_pc;
+       bsst_environ := bs2.bsst_environ;
+       bsst_status := bs2.bsst_status;
+       bsst_pcond := pcond'|>) ==>
+    birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+    birs_exp_imp bs2.bsst_pcond pcond' ==>
+    birs_symb_exec prog (bs, L, bs2' INSERT Pi)
+Proof
+  rpt strip_tac >>
+  `birs_symb_pcondwiden_sys bs2 bs2'` by (
+    fs [birs_symb_pcondwiden_sys_def]
+  ) >>
+  METIS_TAC [birs_rule_WIDEN_thm]
+QED
+
+Theorem birs_rule_WIDEN_spec_thm2 =
+  SIMP_RULE std_ss [] birs_rule_WIDEN_spec_thm;
+
+Theorem birs_rule_NARROW_thm:
+  !prog L bs1 bs1' Pi.
+    birs_symb_pcondwiden_sys bs1 bs1' ==>
+    birs_symb_symbols bs1 INTER birs_freesymbs bs1' Pi = EMPTY ==>
+    birs_symb_exec prog (bs1', L, Pi) ==>
+    birs_symb_exec prog (bs1, L, Pi)
+Proof
+  rpt strip_tac >>
+  assume_tac (
+    (SIMP_RULE std_ss [
+      GSYM birs_symb_exec_def,
+      GSYM symb_recordTheory.symb_freesymbs_def,
+      GSYM birs_freesymbs_EQ_thm,
+      bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm,
+      birs_symb_pcondwiden_sys_thm
+      ] o
+     REWRITE_RULE [(GSYM o Q.ISPEC `IMAGE birs_symb_to_symbst Pi` o ISPEC ``L:bir_programcounter_t->bool`` o Q.ISPECL [`bir_symb_rec_sbir prog`, `birs_symb_to_symbst bs1'`]) symb_freesymbs_def]       o
+    Q.SPECL [`birs_symb_to_symbst bs1'`, `birs_symb_to_symbst bs1`, `L`, `IMAGE birs_symb_to_symbst Pi`] o
+     SIMP_RULE std_ss [
+          bir_symb_soundTheory.birs_symb_ARB_val_sound_thm
+          ] o
+       MATCH_MP symb_rulesTheory.symb_rule_CONS_S_thm o Q.SPEC `prog` (* symb_rulesTheory.symb_rule_CONS_thm *)
+    ) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+  gvs []
+QED
+
+Theorem birs_rule_NARROW_spec_thm:
+  !prog L bs1' Pi pcond' bs1.
+   (bs1 =
+     <|bsst_pc := bs1'.bsst_pc;
+       bsst_environ := bs1'.bsst_environ;
+       bsst_status := bs1'.bsst_status;
+       bsst_pcond := pcond'|>) ==>
+    birs_symb_exec prog (bs1', L, Pi) ==>
+    birs_exp_imp pcond' bs1'.bsst_pcond ==>
+    birs_symb_symbols bs1 INTER birs_freesymbs bs1' Pi = EMPTY ==>
+    birs_symb_exec prog (bs1, L, Pi)
+Proof
+  rpt strip_tac >>
+  `birs_symb_pcondwiden_sys bs1 bs1'` by (
+    fs [birs_symb_pcondwiden_sys_def]
+  ) >>
+  METIS_TAC [birs_rule_NARROW_thm]
+QED
+
+Theorem birs_rule_NARROW_spec_thm2 =
+  SIMP_RULE std_ss [] birs_rule_NARROW_spec_thm;
+
+
+(* ******************************************************* *)
+(*      SRENAME and INST rule                              *)
+(* ******************************************************* *)
+(*
+Theorem birs_rule_RENAME_MANY_thm:
+  !prog L bs Pi rens.
+    FUPDATE_LIST FEMPTY (MAP (\(x,y). (x, BExp_Den y)) rens) = s ==>
+    set (MAP SND rens) INTER (birs_symb_symbols bs UNION birs_symb_symbols_set Pi) = EMPTY ==>
+    birs_symb_exec prog (bs, L, Pi) ==>
+    birs_symb_exec prog (birs_symb_subst s bs, L, IMAGE (birs_symb_subst s) Pi)
+Proof
+  (* TODO: problem with proof when multiple operations all at once, would need to argue with arbitrary choice of symbols that are not present in the states, and that there is always such a choice *)
+  (* symb_rulesTheory.symb_rule_SRENAME_thm *)
+  cheat
+QED
+*)
+
+Theorem birs_rule_RENAME1_thm[local]:
+  !prog L bs Pi alpha alpha'.
+    bir_var_type alpha = bir_var_type alpha' ==>
+    alpha' NOTIN (birs_symb_symbols bs UNION birs_symb_symbols_set Pi) ==>
+    birs_symb_exec prog (bs, L, Pi) ==>
+    birs_symb_exec prog (birs_symb_subst1 (alpha, BExp_Den alpha') bs, L, IMAGE (birs_symb_subst1 (alpha, BExp_Den alpha')) Pi)
+Proof
+  rpt strip_tac >>
+  assume_tac (
+    (CONV_RULE (LAND_CONV (SIMP_CONV (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def])) o
+    SIMP_RULE std_ss [
+      GSYM birs_symb_exec_def,
+      birs_symb_symbols_set_EQ_thm2,
+      bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm
+    ] o
+    Q.SPECL [`birs_symb_to_symbst bs`, `L`, `IMAGE birs_symb_to_symbst Pi`, `alpha`, `alpha'`] o
+     SIMP_RULE std_ss [
+          bir_symb_soundTheory.birs_symb_symbols_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_subst_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_subst_f_sound_NOTIN_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_symb_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_symb_f_sound_typeof_thm
+          ] o
+       MATCH_MP symb_rulesTheory.symb_rule_SRENAME_thm o Q.SPEC `prog`
+      ) bir_symb_soundTheory.birs_symb_typeof_exp_sound_thm) >>
+  gvs [] >>
+
+  fs [symb_recordTheory.symb_subst_set_def, bir_symb_soundTheory.birs_symb_subst1_EQ_thm,
+      bir_symb_soundTheory.birs_symb_subst1_set_EQ_thm, GSYM birs_symb_exec_def] >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def]
+QED
+
+Theorem birs_rule_RENAME1_spec_thm:
+  !prog L bs Pi alpha alpha'.
+    birs_symb_exec prog (bs, L, Pi) ==>
+    bir_var_type alpha = bir_var_type alpha' ==>
+    alpha' NOTIN birs_symb_symbols bs ==>
+    alpha' NOTIN birs_symb_symbols_set Pi ==>
+    birs_symb_exec prog (birs_symb_subst1 (alpha, BExp_Den alpha') bs, L, IMAGE (birs_symb_subst1 (alpha, BExp_Den alpha')) Pi)
+Proof
+  fs [birs_rule_RENAME1_thm]
+QED
+
+Theorem birs_rule_INST1_thm:
+  !prog L bs Pi alpha bexp.
+    birs_symb_exec prog (bs, L, Pi) ==>
+    type_of_bir_exp bexp = SOME (bir_var_type alpha) ==>
+    alpha IN birs_symb_symbols bs ==>
+    bir_vars_of_exp bexp INTER birs_freesymbs bs Pi = EMPTY ==>
+    birs_symb_exec prog (birs_symb_subst1 (alpha, bexp) bs, L, IMAGE (birs_symb_subst1 (alpha, bexp)) Pi)
+Proof
+  rpt strip_tac >>
+  assume_tac (
+    (SIMP_RULE std_ss [
+      GSYM birs_symb_exec_def,
+      GSYM birs_freesymbs_EQ_thm,
+      bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm
+    ] o
+    Q.SPECL [`birs_symb_to_symbst bs`, `L`, `IMAGE birs_symb_to_symbst Pi`, `alpha`, `bexp`] o
+     SIMP_RULE std_ss [
+          bir_symb_soundTheory.birs_symb_subst_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_symbols_f_sound_thm
+          ] o
+       MATCH_MP symb_rulesTheory.symb_rule_INST_thm o Q.SPEC `prog`
+      ) bir_symb_soundTheory.birs_symb_typeof_exp_sound_thm) >>
+
+  fs [symb_recordTheory.symb_subst_set_def, bir_symb_soundTheory.birs_symb_subst1_EQ_thm,
+      bir_symb_soundTheory.birs_symb_subst1_set_EQ_thm, GSYM birs_symb_exec_def] >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def]
+QED
+
+
+(* ******************************************************* *)
+(*      FREESYMB rule                                      *)
+(* ******************************************************* *)
+Theorem birs_rule_FREESYMB_INTRO_thm:
+  !prog L bs bs2 bs2' Pi alpha bexp vn symbexp symbexp' pcond'.
+    bir_type_is_Imm (bir_var_type alpha) ==>
+    bs2.bsst_environ vn = SOME symbexp ==>
+    (BExp_BinExp BIExp_And (BExp_BinPred BIExp_Equal (BExp_Den alpha) bexp)) bs2.bsst_pcond = pcond' ==>
+    alpha NOTIN birs_symb_symbols bs ==>
+    alpha NOTIN birs_symb_symbols bs2 ==>
+    bir_vars_of_exp bexp SUBSET birs_symb_symbols bs2 ==>
+    type_of_bir_exp bexp = SOME (bir_var_type alpha) ==>
+    birs_simplification pcond' symbexp symbexp' ==>
+    ((bs2 with bsst_pcond := pcond') with bsst_environ := birs_update_env (vn,symbexp') bs2.bsst_environ) = bs2' ==>
+    birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+    birs_symb_exec prog (bs, L, bs2' INSERT Pi)
+Proof
+  rpt strip_tac >>
+
+  `symb_symbst_store (birs_symb_to_symbst bs2) vn = bs2.bsst_environ vn` by (
+    Cases_on `bs2` >>
+    fs [birs_symb_to_symbst_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def, symb_symbst_extra_def]    
+  ) >>
+
+  `symb_symbst_pcond_update
+                (symb_expr_conj_eq (bir_symb_rec_sbir prog)
+                   ((bir_symb_rec_sbir prog).sr_mk_exp_symb_f alpha) bexp)
+                (symb_symbst_store_update vn symbexp'
+                   (birs_symb_to_symbst bs2)) = birs_symb_to_symbst bs2' /\
+   symb_symbst_pcond (birs_symb_to_symbst bs2') = pcond'` by (
+    Cases_on `bs2` >> Cases_on `bs2'` >>
+
+(*
+dest_comb “birs_state_t b f b0 b1 with
+        <|bsst_environ :=
+            birs_update_env (vn,symbexp')
+              (birs_state_t b f b0 b1).bsst_environ; bsst_pcond := pcond'|>”
+
+bir_symbTheory.birs_state_t_fupdcanon
+bir_symbTheory.birs_state_t_fupdfupds
+bir_symbTheory.recordtype_birs_state_t_seldef_bsst_environ_fupd_def
+bir_symbTheory.birs_state_t_literal_11
+*)
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM, bir_symbTheory.birs_state_t_fn_updates] >>
+
+    fs [birs_symb_to_symbst_def, symb_symbst_pcond_def, symb_symbst_pcond_update_def, symb_symbst_store_update_def, bir_symb_soundTheory.birs_symb_expr_conj_eq_thm] >>
+    SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def] >>
+
+    fs [birs_update_env_def] >>
+
+    `?bt. type_of_bir_exp (BExp_Den alpha) = SOME (BType_Imm bt)` by (
+      fs [bir_valuesTheory.bir_type_is_Imm_def, bir_typing_expTheory.type_of_bir_exp_def]
+    ) >>
+    fs [bir_symb_soundTheory.birs_symb_expr_conj_eq_thm2]
+  ) >>
+
+  assume_tac (
+    (SIMP_RULE std_ss [
+      GSYM birs_symb_exec_def,
+      birs_simplification_thm,
+      birs_symb_symbols_set_EQ_thm2,
+      bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm
+    ] o
+    Q.SPECL [`birs_symb_to_symbst bs`, `L`, `IMAGE birs_symb_to_symbst (bs2 INSERT Pi)`, `birs_symb_to_symbst bs2`, `vn`, `bexp`, `alpha`, `symbexp`, `symbexp'`] o
+    SIMP_RULE std_ss [
+          bir_symb_soundTheory.birs_symb_typeof_exp_sound_thm,
+          bir_symb_soundTheory.birs_symb_val_eq_sound_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_eq_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_conj_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_symb_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_ARB_val_sound_thm
+          ] o
+       MATCH_MP symb_rulesTheory.symb_rule_FRESH_thm o Q.SPEC `prog`
+    ) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+  rev_full_simp_tac std_ss [] >>
+
+  pop_assum (assume_tac o CONV_RULE (LAND_CONV (SIMP_CONV (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def]))) >>
+  rev_full_simp_tac std_ss [] >>
+  pop_assum (assume_tac o CONV_RULE (LAND_CONV (SIMP_CONV (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def]))) >>
+  rev_full_simp_tac std_ss [] >>
+
+  rev_full_simp_tac std_ss [GSYM birs_symb_exec_def,SIMP_RULE std_ss [pred_setTheory.IMAGE_SING] (Q.SPECL [`bs2 INSERT Pi`, `bs2`, `{bs2'}`] bestTheorem)] >>
+
+  ‘birs_symb_exec prog (bs, L, bs2' INSERT (Pi DELETE bs2))’ by (
+    gvs [INSERT_SING_DIFF_ALT_thm]
+  ) >>
+  metis_tac [birs_symb_exec_INSERT_DELETE_thm]
+QED
+
+Theorem birs_rule_FREESYMB_INTRO_thm2:
+  !prog bs L bs2 Pi bs2' alpha bexp vn symbexp symbexp' pcond'.
+    pcond' = (BExp_BinExp BIExp_And (BExp_BinPred BIExp_Equal (BExp_Den alpha) bexp)) bs2.bsst_pcond ==>
+    (bs2' =
+     <|bsst_pc := bs2.bsst_pc;
+       bsst_environ := birs_update_env (vn,symbexp') bs2.bsst_environ;
+       bsst_status := bs2.bsst_status;
+       bsst_pcond := pcond'|>) ==>
+    birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+    type_of_bir_exp bexp = SOME (bir_var_type alpha) ==>
+    bir_type_is_Imm (bir_var_type alpha) ==>
+    bs2.bsst_environ vn = SOME symbexp ==>
+    alpha NOTIN birs_symb_symbols bs ==>
+    alpha NOTIN birs_symb_symbols bs2 ==>
+    bir_vars_of_exp bexp SUBSET birs_symb_symbols bs2 ==>
+    birs_simplification pcond' symbexp symbexp' ==>
+    birs_symb_exec prog (bs, L, bs2' INSERT Pi)
+Proof
+  rpt strip_tac >>
+  `bs2' = bs2 with
+       <|bsst_environ := birs_update_env (vn,symbexp') bs2.bsst_environ;
+         bsst_pcond := pcond'|>` by (
+    Q.PAT_ASSUM ‘A = bsst_pc_fupd B C’ (fn thm => rpt (pop_assum (K ALL_TAC)) >> assume_tac (thm)) >>
+    fs [] >> pop_assum (K ALL_TAC) >>
+    Cases_on ‘bs2’ >> Cases_on ‘ARB:birs_state_t’ >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [bir_symbTheory.birs_state_t_fn_updates]
+  ) >>
+  metis_tac [birs_rule_FREESYMB_INTRO_thm]
+QED
+
+Theorem birs_rule_FREESYMB_INTRO_spec_thm =
+  SIMP_RULE std_ss [] birs_rule_FREESYMB_INTRO_thm2;
+
+
+(* ******************************************************* *)
 (*      SUBST rule                                         *)
 (* ******************************************************* *)
 Theorem symb_rule_SUBST_thm[local]:
@@ -328,14 +734,8 @@ Theorem symb_rule_SUBST_thm[local]:
 
   (symb_hl_step_in_L_sound sr (sys, L, (symb_symbst_store_update var symbexp' sys2) INSERT (Pi DELETE sys2)))
 Proof
-REPEAT STRIP_TAC >>
-
-`!B.((sys2 INSERT Pi) DIFF {sys2}) UNION {B} = B INSERT (Pi DELETE sys2)` by (
-    fs [] >>
-    METIS_TAC [INSERT_SING_UNION, UNION_COMM, DELETE_DEF]
-  ) >>
-
-  METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
+  REPEAT STRIP_TAC >>
+  METIS_TAC [INSERT_SING_DIFF_ALT_thm, symb_rulesTheory.symb_rule_SUBST_thm]
 QED
 
 Theorem symb_rule_SUBST_SING_thm[local]:
@@ -366,7 +766,7 @@ Proof
   metis_tac [birs_symb_to_symbst_EXISTS_thm, birs_symb_from_symbst_EXISTS_thm, birs_symb_to_from_symbst_thm]
 QED
 
-Theorem birs_rule_SUBST_thm:
+Theorem birs_rule_SUBST_thm1:
   !prog bs2 bs2' bs L lbl status pcond envl vn symbexp Pi symbexp'.
            (bs2 =
              <|bsst_pc := lbl;
@@ -395,9 +795,28 @@ Proof
 
   REV_FULL_SIMP_TAC (std_ss++birs_state_ss)
     [IMAGE_SING, birs_symb_to_symbst_def, symb_symbst_store_def, symb_symbst_pcond_def,
-     bir_symb_simpTheory.birs_simplification_thm,
+     birs_simplification_thm,
      symb_symbst_store_update_def, birs_auxTheory.birs_gen_env_thm,
      combinTheory.UPDATE_APPLY]
+QED
+
+Theorem birs_rule_SUBST_thm:
+  !prog bs2 bs2' bs L lbl status pcond envl vn symbexp Pi symbexp'.
+           (bs2 =
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp)::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>) ==>
+           (bs2' =
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp')::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>) ==>
+           birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+           birs_simplification pcond symbexp symbexp' ==>
+           birs_symb_exec prog (bs, L, bs2' INSERT Pi)
+Proof
+  metis_tac [birs_rule_SUBST_thm1, birs_symb_exec_INSERT_DELETE_thm]
 QED
 
 Theorem birs_rule_SUBST_spec_thm:
@@ -416,7 +835,7 @@ Theorem birs_rule_SUBST_spec_thm:
            birs_simplification pcond symbexp symbexp' ==>
            birs_symb_exec prog (bs, L, {bs2'})
 Proof
-  metis_tac [birs_rule_SUBST_thm, EMPTY_DELETE]
+  metis_tac [birs_rule_SUBST_thm]
 QED
 
 
@@ -479,43 +898,6 @@ val betterTheorem = prove(``
   (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
 ``,
   METIS_TAC[symb_rulesTheory.symb_rule_SEQ_thm]
-);
-
-val IMAGE_DIFF_ASSOC_thm = prove(``
-!f s1 s2.
-  (!x y. f x = f y <=> x = y) ==>
-  ((IMAGE f s1) DIFF (IMAGE f s2) =
-   IMAGE f (s1 DIFF s2))
-``,
-    fs [IMAGE_DEF, DIFF_DEF, EXTENSION] >>
-    REPEAT STRIP_TAC >>
-    EQ_TAC >> (
-      METIS_TAC []
-    )
-);
-
-val IMAGE_UNION_ASSOC_thm = prove(``
-!f s1 s2.
-  (!x y. f x = f y <=> x = y) ==>
-  ((IMAGE f s1) UNION (IMAGE f s2) =
-   IMAGE f (s1 UNION s2))
-``,
-    fs [IMAGE_DEF, UNION_DEF, EXTENSION] >>
-    REPEAT STRIP_TAC >>
-    EQ_TAC >> (
-      METIS_TAC []
-    )
-);
-
-val bestTheorem = prove(“
- !A B C.
-  IMAGE birs_symb_to_symbst A DIFF {birs_symb_to_symbst B} UNION IMAGE birs_symb_to_symbst C =
-  IMAGE birs_symb_to_symbst (A DIFF {B} UNION C)
-”,
-  REWRITE_TAC [GSYM IMAGE_SING] >>
-  REWRITE_TAC
-    [MATCH_MP IMAGE_DIFF_ASSOC_thm birs_symb_to_symbst_EQ_thm,
-     MATCH_MP IMAGE_UNION_ASSOC_thm birs_symb_to_symbst_EQ_thm]
 );
 
 Theorem birs_rule_SEQ_gen_thm:

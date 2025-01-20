@@ -895,6 +895,26 @@ QED
 (REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC EVAL) ``birs_gen_env [("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32))); ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)))] "R0"``
 *)
 
+Theorem birs_symb_env_subst1_gen_env_thm:
+  !v e l.
+    birs_symb_env_subst1 v e (birs_gen_env l) =
+      birs_gen_env (MAP (\x. (FST x, bir_exp_subst1 v e (SND x))) l)
+Proof
+  rewrite_tac [bir_symb_soundTheory.birs_symb_env_subst1_def] >>
+  Induct_on ‘l’ >- (
+    fs [birs_gen_env_NULL_thm]
+  ) >>
+  Cases_on ‘h’ >>
+  rpt strip_tac >>
+  fs [birs_gen_env_thm] >>
+  CONV_TAC FUN_EQ_CONV >>
+  rpt strip_tac >>
+  fs [combinTheory.o_THM] >>
+  Cases_on ‘x = q’ >> (
+    fs [combinTheory.UPDATE_APPLY]
+  ) >>
+  metis_tac [GSYM combinTheory.o_THM]
+QED
 
 
 Definition BExp_IntervalPred_def:

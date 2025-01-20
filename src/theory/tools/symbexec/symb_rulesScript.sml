@@ -60,6 +60,7 @@ REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
 
   METIS_TAC []
 QED
+
 Theorem symb_rule_TRANSF_GEN2_thm:
   !sr.
 !sys L Pi sys2 sys2s.

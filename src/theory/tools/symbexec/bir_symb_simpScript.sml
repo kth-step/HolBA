@@ -207,6 +207,14 @@ Definition birs_exp_imp_def:
     )
 End
 
+Theorem symb_exp_imp_EQ_pcondwiden_thm:
+  !sr pcond pcond'.
+  (symb_exp_imp sr pcond pcond') <=>
+  (symb_pcondwiden sr pcond pcond')
+Proof
+  rw [symb_exp_imp_def, symb_rulesTheory.symb_pcondwiden_def]
+QED
+
 Theorem birs_exp_imp_thm:
   !prog.
 !pcond pcond'.
