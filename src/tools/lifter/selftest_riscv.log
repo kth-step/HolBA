@@ -945,6 +945,34 @@ CSRRW x1, mscratch(0x340), x2: 340110F3 @ 0x10030 - OK
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
+CSRW mie(0x304), 0: 30405073 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[115w; 80w; 64w; 48w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "30405073";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRW mstatus(0x300), 0: 30005073 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[115w; 80w; 0w; 48w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "30005073";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
 CSRRS x1, mscratch(0x340), x2: 340120F3 @ 0x10030 - OK
  []
 |- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
@@ -1474,7 +1502,7 @@ REMUW x5, x6, x7: 027372BB @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 4/82
+Instructions FAILED: 4/84
 
    "0881008F" (* bmr_step_hex failed *),
    "00000073" (* bmr_step_hex failed *),
