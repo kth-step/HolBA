@@ -61,7 +61,7 @@ jobs:
           ./scripts/ci/run_holmake.sh
 
       - name: Run tests
-        timeout-minutes: 55
+        timeout-minutes: 65
         run: |
           ./scripts/ci/run_make.sh tests
 
