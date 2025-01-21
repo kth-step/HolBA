@@ -18,7 +18,6 @@ val _ = show_tags := true;
 (* trap entry *)
 (* ---------- *)
 
-(*
 val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_kernel_trap_prog_def
@@ -28,7 +27,6 @@ val symb_analysis_thm =
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
 Theorem kernel_trap_entry_symb_analysis_thm = symb_analysis_thm
-*)
 
 (* ----------- *)
 (* trap return *)
