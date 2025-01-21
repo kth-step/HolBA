@@ -83,7 +83,7 @@ val bspec_kernel_trap_entry_pre_tm = bslSyntax.bandl [
     (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
     (BExp_Const (Imm8 3w))``,
 
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "mscratch",
+  ``BExp_Aligned Bit64 3 (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))``,
 
  ``BExp_unchanged_mem_interval_distinct Bit64
     (0x800000e0 - 256) 0x80000268
@@ -101,7 +101,7 @@ val bspec_kernel_trap_return_pre_tm = bslSyntax.bandl [
     (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
     (BExp_Const (Imm8 3w))``,
 
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10"
+  ``BExp_Aligned Bit64 3 (BExp_Den (BVar "x10" (BType_Imm Bit64)))``
 ]
 
 Definition bspec_kernel_trap_return_pre_def:
