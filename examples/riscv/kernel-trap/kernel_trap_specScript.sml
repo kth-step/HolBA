@@ -156,7 +156,7 @@ val bspec_kernel_trap_entry_post_tm = bslSyntax.bandl [
     (BExp_Load
      (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
      (BExp_BinExp BIExp_Plus
-      (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+      (BExp_Const (Imm64 pre_mscratch))
       (BExp_Const (Imm64 96w)))
      BEnd_LittleEndian Bit64)
     (BExp_Const (Imm64 pre_x11))``
