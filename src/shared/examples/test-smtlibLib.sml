@@ -73,7 +73,13 @@ val exporting_exp_testcases = [
   (``BExp_UnaryExp BIExp_Not (BExp_Cast BIExp_LowCast
         (BExp_Den (BVar "xyz" (BType_Imm Bit32)))
         Bit1)``,
-   ("(not (= ((_ extract 0 0) birv_xyz) (_ bv1 1)))", SMTTY_Bool))
+   ("(not (= ((_ extract 0 0) birv_xyz) (_ bv1 1)))", SMTTY_Bool)),
+
+
+  (``(BExp_BinPred BIExp_Equal (BExp_Den (BVar "syf_20" (BType_Imm Bit1)))
+        (BExp_Cast BIExp_LowCast (BExp_Den (BVar "sy_R4" (BType_Imm Bit32)))
+           Bit1))``,
+   ("(= birv_syf_20 (= ((_ extract 0 0) birv_sy_R4) (_ bv1 1)))", SMTTY_Bool))
 ];
 
 (*

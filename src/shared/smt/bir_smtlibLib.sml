@@ -300,6 +300,18 @@ fun is_bir_eq_abbrevd e =
 fun smtlib_wrap_to_bool   str = "(= #b1 " ^ str ^ ")";
 fun smtlib_wrap_from_bool str = "(ite " ^ str ^ " #b1 #b0)";
 
+(*
+fun unify_args args =
+  let
+    fun bv2bool (str, bvty) = if bvty = SMTTY_BV 1 then ("(= " ^ str ^ " (_ bv1 1))", SMTTY_Bool) else (str, bvty);
+  in
+    if List.exists (fn (_,ty) => ty = SMTTY_Bool) args then
+      List.map bv2bool args
+    else
+      args
+  end;
+*)
+
 fun to_smtlib_bool (str, sty) =
   if sty = SMTTY_Bool then
     (str, sty)
@@ -424,8 +436,13 @@ BExp_Cast BIExp_LowCast
           val caststr = castt_to_smtlib castt stre exp_szi szi;
 
           val castval = (caststr, sty);
+          val castval_fixed =
+            if sty = SMTTY_BV 1 then
+              ("(= " ^ caststr ^ " (_ bv1 1))", SMTTY_Bool)
+            else
+              castval;
         in
-          (exst1, castval)
+          (exst1, castval_fixed)
         end
 
       else if is_BExp_UnaryExp exp then
@@ -468,7 +485,8 @@ BExp_Cast BIExp_LowCast
           val (exst2, val2) = bexp_to_smtlib false exst1 exp2;
           val args = [val1, val2];
 
-          fun probfun () = problem exp "binary predicate operator needs same type for both sides: ";
+          fun probfun () = problem exp ("binary predicate operator needs same type for both sides: ");
+          (*fun probfun () = problem exp ("binary predicate operator needs same type for both sides: (1," ^ (smt_type_to_smtlib (snd val1)) ^ ": " ^ (fst val1) ^ ")(2," ^ (smt_type_to_smtlib (snd val2)) ^ ": " ^ (fst val2) ^ ")  :  ");*)
 
           val bpredopval = bpredop_to_smtlib probfun bpredop args;
         in
