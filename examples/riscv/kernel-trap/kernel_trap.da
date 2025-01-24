@@ -87,3 +87,4 @@ Disassembly of section .text:
     8000025c:	0f853f03          	ld	t5,248(a0)
     80000260:	10053f83          	ld	t6,256(a0)
     80000264:	34051573          	csrrw	a0,mscratch,a0
+    80000268:	00008067          	ret
