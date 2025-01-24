@@ -217,6 +217,11 @@ val bspec_kernel_trap_return_pre_tm = bslSyntax.bandl [
 
   ``BExp_BinPred
      BIExp_Equal
+     (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 pre_mscratch))``,
+
+  ``BExp_BinPred
+     BIExp_Equal
      (BExp_Den (BVar "x10" (BType_Imm Bit64)))
      (BExp_Const (Imm64 pre_x10))``,
 
@@ -227,12 +232,22 @@ val bspec_kernel_trap_return_pre_tm = bslSyntax.bandl [
        (BExp_Const (Imm64 pre_x10))
        (BExp_Const (Imm64 48w)))
        BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x5))``
+    (BExp_Const (Imm64 pre_x5))``,
+
+  ``BExp_BinPred BIExp_Equal
+    (BExp_Load
+     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+     (BExp_BinExp BIExp_Plus
+       (BExp_Const (Imm64 pre_x10))
+       (BExp_Const (Imm64 56w)))
+       BEnd_LittleEndian Bit64)
+    (BExp_Const (Imm64 pre_x6))``
 ]
 
 Definition bspec_kernel_trap_return_pre_def:
  bspec_kernel_trap_return_pre
- (pre_x5:word64)
+ (pre_mscratch:word64)
+ (pre_x5:word64) (pre_x6:word64)
  (pre_x10:word64)
  : bir_exp_t =
   ^bspec_kernel_trap_return_pre_tm
@@ -241,13 +256,24 @@ End
 val bspec_kernel_trap_return_post_tm = bslSyntax.bandl [
   ``BExp_BinPred
     BIExp_Equal
+    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x10))``,
+
+  ``BExp_BinPred
+    BIExp_Equal
     (BExp_Den (BVar "x5" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x5))``
+    (BExp_Const (Imm64 pre_x5))``,
+
+  ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "x6" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x6))``
 ];
 
 Definition bspec_kernel_trap_return_post_def:
  bspec_kernel_trap_return_post
-  (pre_x5:word64)
+  (pre_mscratch:word64)
+  (pre_x5:word64) (pre_x6:word64)
   (pre_x10:word64)
  : bir_exp_t =
  ^bspec_kernel_trap_return_post_tm
