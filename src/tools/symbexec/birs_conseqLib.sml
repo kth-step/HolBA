@@ -101,13 +101,15 @@ in (* local *)
                             isSome (is_conjunct_inclusion_imp imp_tm);
         *)
         val pcond_imp_ok = (*pcond_drop_ok orelse*)
-                           isSome (check_imp_tm imp_tm);
+                           isSome (check_imp_tm imp_tm
+                           handle e => (print "smt query failed:\n"; print_term imp_tm; print "\n"; raise e));
         val _ = if pcond_imp_ok then () else
                 (print "widening failed, path condition is not weaker\n";
                 raise ERR "birs_Pi_first_pcond_RULE" "the supplied path condition is not weaker");
       in
         aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_WIDEN_PCOND" (mk_birs_symb_exec (p_tm, mk_sysLPi (sys_tm,L_tm,Pi_new_tm)))
       end
+      handle e => (print "birs_Pi_first_pcond_RULE_oracle :: widening failed\n"; raise e)
     else
       let
         val _ = birs_check_norm_thm ("birs_Pi_first_pcond_RULE", "") thm;
@@ -126,7 +128,8 @@ in (* local *)
         val _ = holba_z3Lib.debug_print := true;
         val _ = print "sending a z3 query\n";
         *)
-        val imp_thm_o = check_imp_tm imp_tm;
+        val imp_thm_o = check_imp_tm imp_tm
+                           handle e => (print "smt query failed:\n"; print_term imp_tm; print "\n"; raise e);
         val pcond_imp_ok = isSome (imp_thm_o);
         val _ = if pcond_imp_ok then () else
                 (print "widening failed, path condition is not weaker\n";
@@ -146,7 +149,7 @@ in (* local *)
       in
         thm3
       end
-      handle e => (print "birs_Pi_first_pcond_RULE :: widening failed\n"; raise e);
+      handle e => (print "birs_Pi_first_pcond_RULE_prove :: widening failed\n"; raise e);
   val birs_Pi_first_pcond_RULE = fn x => Profile.profile "rule_CONS_WIDEN" (birs_Pi_first_pcond_RULE x);
 
   fun birs_Pi_first_pcond_drop drop_right thm =
@@ -167,7 +170,8 @@ in (* local *)
           be2;
     in
       birs_Pi_first_pcond_RULE pcond_new thm
-    end;
+    end
+    handle e => (print "birs_Pi_first_pcond_drop failed\n"; raise e);
 
 (* ---------------------------------------------------------------------------------------- *)
 

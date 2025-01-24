@@ -14,30 +14,71 @@ local
   val wrap_exn = Feedback.wrap_exn libname
 
 in
+  val step_L_approximate = ref false;
 
   (* halt free programs *)
   (* ----------------------------------------------- *)
   fun birs_rule_STEP_prog_fun no_halt_thm =
-    MATCH_MP birs_rulesTheory.birs_rule_STEP_gen2_thm no_halt_thm;
+    let
+      val birs_rule_STEP_thms = (
+        MATCH_MP birs_rulesTheory.birs_rule_STEP_gen2_thm no_halt_thm,
+        MATCH_MP birs_rulesTheory.birs_rule_STEP_gen3_thm no_halt_thm
+      );
+      val birs_rule_STEP_SEQ_thms = (
+        MATCH_MP birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm no_halt_thm,
+        MATCH_MP birs_rulesTheory.birs_rule_STEP_SEQ_gen2_thm no_halt_thm
+      );
+    in
+      (birs_rule_STEP_thms, birs_rule_STEP_SEQ_thms)
+    end;
+    ;
 
   (* plugging in the execution of steps to obtain sound structure *)
   (* ----------------------------------------------- *)
   local
     open birs_auxTheory;
 
-    val exec_step_postproc_fun =
-      CONV_RULE (birs_L_CONV (LAND_CONV(
-        REWRITE_CONV
-          [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM]
-      )));
-  in
-    fun birs_rule_STEP_fun birs_rule_STEP_thm bstate_tm =
+    val exec_step_postproc_conv =
+      REWRITE_CONV
+        [bir_symbTheory.birs_state_t_accfupds,
+        bir_programTheory.bir_programcounter_t_accfupds,
+        combinTheory.K_THM];
+    fun exec_step_postproc_fun approximating inserting =
       let
+        val el_conv =
+          if not approximating then
+            aux_setLib.bir_pc_EQ_CONV
+          else
+            aux_setLib.bir_label_EQ_CONV;
+        val insert_L_conv =
+          LAND_CONV exec_step_postproc_conv THENC (
+            if not inserting then
+              ALL_CONV
+            else
+              TRY_CONV (pred_setLib.INSERT_CONV el_conv)
+          );
+        val L_conv =
+          if not approximating then
+            insert_L_conv
+          else
+            RAND_CONV (insert_L_conv);
+      in
+        CONV_RULE (birs_L_CONV L_conv)
+      end;
+  in
+    fun birs_rule_STEP_fun birs_rule_STEP_thms bstate_tm =
+      let
+        val approximating = !step_L_approximate;
+        val birs_rule_STEP_thm =
+          if not approximating then
+            fst birs_rule_STEP_thms
+          else
+            snd birs_rule_STEP_thms;
         val step1_thm = SPEC bstate_tm birs_rule_STEP_thm;
         val (step2_thm, extra_info) = birs_exec_step_CONV_fun (concl step1_thm);
         val birs_exec_thm = EQ_MP step2_thm step1_thm;
 
-        val single_step_prog_thm = exec_step_postproc_fun birs_exec_thm;
+        val single_step_prog_thm = exec_step_postproc_fun approximating false birs_exec_thm;
 
         (*val _ = print_thm single_step_prog_thm;*)
         val _ = birs_check_norm_thm ("birs_rule_STEP_fun", "") single_step_prog_thm
@@ -51,10 +92,16 @@ in
         this way we save to compute free symbols and operate on
         Pi sets over and over for the non-branching sequences *)
     (* ----------------------------------------------- *)
-    fun birs_rule_STEP_SEQ_fun STEP_SEQ_thm symbex_A_thm =
+    fun birs_rule_STEP_SEQ_fun STEP_SEQ_thms symbex_A_thm =
       let
+        val approximating = !step_L_approximate;
+        val STEP_SEQ_thm =
+          if not approximating then
+            fst STEP_SEQ_thms
+          else
+            snd STEP_SEQ_thms;
         val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
-        val step2_thm = exec_step_postproc_fun step1_thm;
+        val step2_thm = exec_step_postproc_fun approximating true step1_thm;
 
         val (step3_conv_thm, extra_info) = birs_exec_step_CONV_fun (concl step2_thm);
         val step3_thm = EQ_MP step3_conv_thm step2_thm;

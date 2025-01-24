@@ -120,6 +120,7 @@ in (* local *)
     in
       thm_z
     end;
+  val birs_sound_symb_freesymbintro_RULE = fn a => fn b => fn x => fn y => fn z => Profile.profile "0_birs_sound_symb_freesymbintro_RULE" (birs_sound_symb_freesymbintro_RULE a b x y z);
 
   (*
   - "free symbol" the top env mapping into the path condition (also need to be able to handle subexpression "free symboling" for the memory)
@@ -142,6 +143,9 @@ in (* local *)
       let
         val _ = birs_check_norm_thm ("birs_Pi_first_freesymb_RULE", "") thm;
 
+        val _ = print ("applying freesymb_RULE\n");
+        val timer = holba_miscLib.timer_start 0;
+
         (* get the previously mapped expression *)
         val (p_tm, tri_tm) = (dest_birs_symb_exec o concl) thm;
         val (sys_tm,L_tm,Pi_old_tm) = dest_sysLPi tri_tm;
@@ -152,62 +156,65 @@ in (* local *)
         (* create new expression: check which part of the expression is supposed to be substituted *)
         val symb_tm = bir_envSyntax.mk_BVar (stringSyntax.fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
         val exp_new = replacefun (bslSyntax.bden symb_tm) exp_tm exp_old;
+        val res =
+          if not (!birs_freesymb_oracle_speed) then
+            birs_sound_symb_freesymbintro_RULE symb_tm exp_tm vn exp_old exp_new thm
+          else
+            let
+              (* debug printout *)
+              (*
+              val _ = print "freesymboling expression: ";
+              val _ = print_term exp_tm;
+              val _ = print "in: ";
+              val _ = print_term exp_old;
+              val _ = print "to: ";
+              val _ = print_term exp_new;
+              *)
+
+              (* create updated state (pcond and env), and purge previous environment mapping *)
+              val env_mod = mk_birs_update_env (pairSyntax.mk_pair (vn, exp_new), env_old);
+              val _ = if not debug_mode then () else print "created update env exp\n";
+              val env_new = (snd o dest_eq o concl o birs_stepLib.birs_update_env_CONV) env_mod;
+              val _ = if not debug_mode then () else print "purged update env exp\n";
+              val pcond_new = bslSyntax.band (bslSyntax.beq (bslSyntax.bden symb_tm, exp_tm), pcond_old);
+              val Pi_sys_new_tm = mk_birs_state (pc, env_new, status, pcond_new);
+
+              (* debug printout *)
+              (*
+              val _ = print "freesymboling expression to pathcondition: ";
+              val _ = print_term exp_tm;
+              val _ = print "symb: ";
+              val _ = print_term symb_tm;
+              val _ = print "pcond before: ";
+              val _ = print_term pcond_old;
+              val _ = print "pcond after: ";
+              val _ = print_term pcond_new;
+              *)
+
+              (* check that initial and modified state don't contain the free symbol (i.e., that it really is free) *)
+              val symbs = List.map (pred_setSyntax.strip_set o rhs o concl o bir_vars_ofLib.birs_symb_symbols_DIRECT_CONV o mk_birs_symb_symbols)
+                          [sys_tm, Pi_sys_old_tm];
+              val _ = if not (List.exists (fn x => identical x symb_tm) (List.concat symbs)) then () else
+                      let
+                        val _ = print_term symb_tm;
+                        val _ = print "\nsymbs0:"
+                        val _ = List.map (fn x => (print_term x)) (List.nth(symbs,0));
+                        val _ = print "\nsymbs1:"
+                        val _ = List.map (fn x => (print_term x)) (List.nth(symbs,1));
+                      in
+                      raise ERR "birs_Pi_first_freesymb_RULE" "symbol is not free in the initial state and/or the first Pi state" end;
+
+              val Pi_new_tm = pred_setSyntax.mk_insert (Pi_sys_new_tm, Pi_rest_tm);
+            in
+              aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_FREESYMB" (mk_birs_symb_exec (p_tm, mk_sysLPi (sys_tm,L_tm,Pi_new_tm)))
+            end;
+
+        val _ = holba_miscLib.timer_stop
+          (fn delta_s => print ("  applying freesymb_RULE took " ^ delta_s ^ "\n")) timer;
       in
-        if not (!birs_freesymb_oracle_speed) then
-          birs_sound_symb_freesymbintro_RULE symb_tm exp_tm vn exp_old exp_new thm
-        else
-          let
-            (* debug printout *)
-            (*
-            val _ = print "freesymboling expression: ";
-            val _ = print_term exp_tm;
-            val _ = print "in: ";
-            val _ = print_term exp_old;
-            val _ = print "to: ";
-            val _ = print_term exp_new;
-            *)
-
-            (* create updated state (pcond and env), and purge previous environment mapping *)
-            val env_mod = mk_birs_update_env (pairSyntax.mk_pair (vn, exp_new), env_old);
-            val _ = if not debug_mode then () else print "created update env exp\n";
-            val purge_update_env_conv =
-              REWRITE_CONV [birs_auxTheory.birs_update_env_thm] THENC
-              RAND_CONV EVAL;
-            val _ = if not debug_mode then () else print "purged update env exp\n";
-            val env_new = (snd o dest_eq o concl o purge_update_env_conv) env_mod;
-            val pcond_new = bslSyntax.band (bslSyntax.beq (bslSyntax.bden symb_tm, exp_tm), pcond_old);
-            val Pi_sys_new_tm = mk_birs_state (pc, env_new, status, pcond_new);
-
-            (* debug printout *)
-            (*
-            val _ = print "freesymboling expression to pathcondition: ";
-            val _ = print_term exp_tm;
-            val _ = print "symb: ";
-            val _ = print_term symb_tm;
-            val _ = print "pcond before: ";
-            val _ = print_term pcond_old;
-            val _ = print "pcond after: ";
-            val _ = print_term pcond_new;
-            *)
-
-            (* check that initial and modified state don't contain the free symbol (i.e., that it really is free) *)
-            val symbs = List.map (pred_setSyntax.strip_set o rhs o concl o bir_vars_ofLib.birs_symb_symbols_DIRECT_CONV o mk_birs_symb_symbols)
-                        [sys_tm, Pi_sys_old_tm];
-            val _ = if not (List.exists (fn x => identical x symb_tm) (List.concat symbs)) then () else
-                    let
-                      val _ = print_term symb_tm;
-                      val _ = print "\nsymbs0:"
-                      val _ = List.map (fn x => (print_term x)) (List.nth(symbs,0));
-                      val _ = print "\nsymbs1:"
-                      val _ = List.map (fn x => (print_term x)) (List.nth(symbs,1));
-                    in
-                    raise ERR "birs_Pi_first_freesymb_RULE" "symbol is not free in the initial state and/or the first Pi state" end;
-
-            val Pi_new_tm = pred_setSyntax.mk_insert (Pi_sys_new_tm, Pi_rest_tm);
-          in
-            aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_FREESYMB" (mk_birs_symb_exec (p_tm, mk_sysLPi (sys_tm,L_tm,Pi_new_tm)))
-          end
+        res
       end;
+    val birs_Pi_first_freesymb_RULE = fn x => fn y => fn z => Profile.profile "birs_Pi_first_freesymb_RULE" (birs_Pi_first_freesymb_RULE x y z);
   end
 
   (* forget the value/expression/computation of the top env mapping through free symbol and path condition widening *)
@@ -454,7 +461,7 @@ fun print_mem_exp mem_exp =
                 let
                   val simp_thm_o = check_simplification_tm simp_tm;
                   val _ = if isSome simp_thm_o then () else
-                    raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound";
+                    raise ERR "birs_simplify_top_mapping" "expression replacement not sound";
                   val thm = valOf simp_thm_o;
                 in
                   MP (SPEC (concl thm) satTheory.EQT_Imp1) thm
@@ -678,6 +685,8 @@ fun print_mem_exp mem_exp =
   fun birs_Pi_merge_RULE thm =
     let
       val _ = birs_check_norm_thm ("birs_Pi_merge_RULE", "") thm;
+      val num_in_Pi = (get_birs_Pi_length o concl) thm;
+      val _ = print ("Number of states to merge: " ^ (Int.toString num_in_Pi) ^ "\n");
       val merged_thm = birs_Pi_merge_RULE_ thm;
 
       (* check that the path condition has only changed in ways we want *)

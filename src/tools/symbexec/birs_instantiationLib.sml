@@ -117,10 +117,10 @@ in (* local *)
       end
     else
       let
-        val subst1_conv = EVAL;
+        val subst1_conv = EVAL; (* TODO big TODO *)
         val env_subst1_conv =
           REWR_CONV birs_auxTheory.birs_symb_env_subst1_gen_env_thm THENC
-          RAND_CONV (listLib.MAP_CONV EVAL);
+          RAND_CONV (listLib.MAP_CONV EVAL); (* TODO: ? *)
 
         val conv =
           REWR_CONV bir_symb_soundTheory.birs_symb_subst1_REWR_thm THENC
@@ -130,6 +130,7 @@ in (* local *)
       in
         thm
       end;
+  val birs_symb_subst1_CONV = Profile.profile "0_birs_symb_subst1_CONV" (birs_symb_subst1_CONV);
 
   val rule_RENAME_oracle_speed = ref true;
   fun birs_sound_symb_rename_RULE symb_symb_map thm =
@@ -144,31 +145,43 @@ in (* local *)
             open bir_vars_ofLib;
             open aux_setLib;
             open birs_utilsLib;
-            fun symb_assump_conv conv =
+            fun symb_assump_conv errstr conv =
               NEG_CONV (
                 RAND_CONV (conv) THENC
                 pred_setLib.IN_CONV bir_var_EQ_CONV
+              ) THENC (
+                fn tm =>
+                  if identical T tm then
+                    ALL_CONV tm
+                  else
+                    (print ("birs_sound_symb_rename1: symbol check failed, "^errstr^", "^(term_to_string alpha1_tm)^", "^(term_to_string alpha2_tm)^"\n"); ALL_CONV tm)
               );
 
-            val type_thm = prove(mk_eq (mk_bir_var_type alpha1_tm, mk_bir_var_type alpha2_tm), EVAL_TAC); (*TODO:fix*)
+            val type_thm = prove(mk_eq (mk_bir_var_type alpha1_tm, mk_bir_var_type alpha2_tm), EVAL_TAC) (*TODO:fix*)
+              handle e => (print "\n\nrule_RENAME type_thm failed:\n"; print_term (mk_eq (mk_bir_var_type alpha1_tm, mk_bir_var_type alpha2_tm)); print "\n\n\n"; raise e);
             (*val _ = print_thm type_thm;*)
-            val thm1 = MATCH_MP (MATCH_MP birs_rulesTheory.birs_rule_RENAME1_spec_thm thm) type_thm;
+            val thm1 = MATCH_MP (MATCH_MP birs_rulesTheory.birs_rule_RENAME1_spec_thm thm) type_thm
+              handle e => (print "\n\nrule_RENAME thm1 failed:\n"; print_thm thm; print "\n\n\n"; raise e);
             (*val _ = print_thm thm1;*)
-            val thm2 = MP (CONV_RULE (LAND_CONV (symb_assump_conv birs_symb_symbols_DIRECT_CONV)) thm1) TRUTH;
+            val thm2 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs" birs_symb_symbols_DIRECT_CONV)) thm1) TRUTH
+              handle e => (print "\n\nrule_RENAME thm2 failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
             (*val _ = print_thm thm2;*)
-            val thm3 = MP (CONV_RULE (LAND_CONV (symb_assump_conv birs_symb_symbols_set_DIRECT_CONV)) thm2) TRUTH;
+            val thm3 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs_set" birs_symb_symbols_set_DIRECT_CONV)) thm2) TRUTH
+              handle e => (print "\n\nrule_RENAME thm3 failed:\n"; print_thm thm2; print "\n\n\n"; raise e);
             (*val _ = print_thm thm3;*)
             val thm4 =
               CONV_RULE (
                 birs_sys_CONV (birs_symb_subst1_CONV) THENC
                 birs_Pi_CONV (pred_setLib.IMAGE_CONV (birs_symb_subst1_CONV) (birs_state_EQ_CONV))
-              ) thm3;
+              ) thm3
+              handle e => (print "\n\nrule_RENAME thm4 failed:\n"; print_thm thm3; print "\n\n\n"; raise e);
           in
             thm4
           end;
       in
         List.foldr (fn (s,t) => birs_sound_symb_rename1 s t) thm symb_symb_map
       end;
+  val birs_sound_symb_rename_RULE = fn x => Profile.profile "1_birs_sound_symb_rename_RULE" (birs_sound_symb_rename_RULE x);
 
   val rule_INST_oracle_speed = ref true;
   fun birs_sound_symb_inst_RULE symb_exp_map thm =
@@ -215,6 +228,7 @@ in (* local *)
         thm_
         (*aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_SYMB_INST_SUBST" thm2_tm*)
       end;
+  val birs_sound_symb_inst_RULE = fn x => Profile.profile "1_birs_sound_symb_inst_RULE" (birs_sound_symb_inst_RULE x);
 
   (*
   instantiation for state
@@ -222,6 +236,9 @@ in (* local *)
   fun birs_sound_inst_RULE bv_syp_gen state B_thm =
     let
       val (_,_,_,A_pcond) = dest_birs_state state;
+
+      val _ = print ("applying instantiation\n");
+      val timer = holba_miscLib.timer_start 0;
 
       open birs_auxTheory;
 
@@ -264,9 +281,13 @@ in (* local *)
       (* check that the initial state of B_thm_inst_fixed is indeed what we intended to get *)
       val _ = if identical state ((get_birs_sys o concl) B_thm_inst_fixed) then () else
         raise ERR "birs_sound_inst_RULE" "instantiation failed, initial state of instantiated theorem not identical with target state";
+
+      val _ = holba_miscLib.timer_stop
+        (fn delta_s => print ("  applying instantiation took " ^ delta_s ^ "\n")) timer;
     in
       B_thm_inst_fixed
     end;
+  val birs_sound_inst_RULE = fn x => fn y => Profile.profile "birs_sound_inst_RULE" (birs_sound_inst_RULE x y);
 
   (*
   instantiation process (including sequential composition)

@@ -85,6 +85,8 @@ end;
     val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
     
     val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
+    
+    val (bir_pc_set_lbls_tm,  mk_bir_pc_set_lbls, dest_bir_pc_set_lbls, is_bir_pc_set_lbls)  = syntax_fns1_set "bir_pc_set_lbls";
   end;
 
   local
@@ -345,6 +347,10 @@ end;
 
   fun pred_set_is_norm tm =
     can pred_setSyntax.strip_set tm;
+  
+  fun birs_exec_L_is_norm tm =
+    (is_bir_pc_set_lbls tm andalso (pred_set_is_norm o dest_bir_pc_set_lbls) tm) orelse
+    pred_set_is_norm tm
 
   fun birs_states_is_norm tm =
     pred_set_is_norm tm andalso
@@ -358,7 +364,7 @@ end;
         handle _ => raise ERR "birs_is_norm" "unexpected term, should be a birs_symb_exec with a triple as structure";
     in
       birs_state_is_norm sys andalso
-      pred_set_is_norm L andalso
+      birs_exec_L_is_norm L andalso
       birs_states_is_norm Pi
     end
     handle _ => false;
