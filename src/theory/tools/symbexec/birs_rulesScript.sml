@@ -109,14 +109,24 @@ Definition birs_symb_exec_def:
       (symb_hl_step_in_L_sound (bir_symb_rec_sbir p) (birs_symb_to_symbst bs, L, IMAGE birs_symb_to_symbst bP))
 End
 
-Theorem birs_symb_exec_SUBSET_thm:
+Theorem birs_symb_exec_SUBSET_Pi_thm:
   !p bs L Pi Pi'.
     (birs_symb_exec p (bs, L, Pi)) ==>
     (Pi SUBSET Pi') ==>
     (birs_symb_exec p (bs, L, Pi'))
 Proof
   fs [birs_symb_exec_def] >>
-  metis_tac [IMAGE_SUBSET, symb_recordTheory.symb_hl_step_in_L_sound_SUBSET_thm]
+  metis_tac [IMAGE_SUBSET, symb_recordTheory.symb_hl_step_in_L_sound_SUBSET_Pi_thm]
+QED
+
+Theorem birs_symb_exec_SUBSET_L_thm:
+  !p bs L Pi L'.
+    (birs_symb_exec p (bs, L, Pi)) ==>
+    (L SUBSET L') ==>
+    (birs_symb_exec p (bs, L', Pi))
+Proof
+  fs [birs_symb_exec_def] >>
+  metis_tac [IMAGE_SUBSET, symb_recordTheory.symb_hl_step_in_L_sound_SUBSET_L_thm]
 QED
 
 Theorem birs_symb_exec_INSERT_DELETE_thm:
@@ -128,7 +138,7 @@ Proof
   ‘(A INSERT (B DELETE C)) SUBSET (A INSERT B)’ by (
     fs [INSERT_SUBSET, COMPONENT, SUBSET_INSERT_RIGHT, DELETE_SUBSET]
   ) >>
-  metis_tac [birs_symb_exec_SUBSET_thm]
+  metis_tac [birs_symb_exec_SUBSET_Pi_thm]
 QED
 
 
@@ -880,6 +890,24 @@ Proof
   FULL_SIMP_TAC std_ss [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_auxTheory.birs_symb_symbst_pc_thm]
 QED
 
+Theorem birs_rule_STEP_gen3_thm:
+  !prog bsys.
+  (bir_prog_has_no_halt prog) ==>
+
+  (birs_symb_exec prog
+    (bsys,
+     bir_pc_set_lbls {bsys.bsst_pc.bpc_label},
+     (birs_exec_step prog bsys)))
+Proof
+  rpt strip_tac >>
+  imp_res_tac birs_rule_STEP_gen2_thm >>
+
+  metis_tac
+  [birs_symb_exec_SUBSET_L_thm,
+   birs_auxTheory.bir_pc_set_lbls_EMPTY_thm,
+   birs_auxTheory.bir_pc_set_lbls_ADD_thm]  
+QED
+
 
 (* ******************************************************* *)
 (*      SEQ rule                                           *)
@@ -916,6 +944,25 @@ Proof
   REPEAT STRIP_TAC >>
   ASSUME_TAC (ISPEC ``prog: 'a bir_program_t`` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
   METIS_TAC [betterTheorem, bestTheorem]
+QED
+
+Theorem birs_rule_SEQ_gen2_thm:
+  !prog bsys_A L_A bPi_A bsys_B L_B bPi_B.
+  (birs_symb_exec prog (bsys_A, L_A, bsys_B INSERT bPi_A)) ==>
+  (birs_symb_exec prog (bsys_B, L_B, bPi_B)) ==>
+
+  ((birs_symb_symbols bsys_A) INTER (birs_freesymbs bsys_B bPi_B) = EMPTY) ==>
+
+  (birs_symb_exec prog (bsys_A, L_A UNION L_B, bPi_A UNION bPi_B))
+Proof
+  rpt strip_tac >>
+  imp_res_tac birs_rule_SEQ_gen_thm >>
+
+  ‘(((bsys_B INSERT bPi_A) DIFF {bsys_B}) UNION bPi_B) SUBSET (bPi_A UNION bPi_B)’ by (
+    fs [INSERT_SUBSET, COMPONENT, SUBSET_INSERT_RIGHT, GSYM DELETE_DEF] >>
+    metis_tac [DELETE_SUBSET, SUBSET_UNION, SUBSET_TRANS]
+  ) >>
+  metis_tac [birs_symb_exec_SUBSET_Pi_thm]
 QED
 
 
@@ -1366,6 +1413,30 @@ Proof
   ) >>
 
   METIS_TAC []
+QED
+
+Theorem birs_rule_STEP_SEQ_gen2_thm:
+  !prog bs1 L bs2.
+  (bir_prog_has_no_halt prog) ==>
+
+  (birs_symb_exec prog
+    (bs1,
+     bir_pc_set_lbls L,
+     {bs2}
+  )) ==>
+
+  (birs_symb_exec prog
+    (bs1,
+     bir_pc_set_lbls ((bs2.bsst_pc.bpc_label) INSERT L),
+     (birs_exec_step prog bs2)
+  ))
+Proof
+  rpt strip_tac >>
+  imp_res_tac birs_rule_STEP_SEQ_gen_thm >>
+
+  metis_tac
+  [birs_symb_exec_SUBSET_L_thm,
+   birs_auxTheory.bir_pc_set_lbls_ADD_thm]  
 QED
 
 (*

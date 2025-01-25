@@ -1041,7 +1041,7 @@ cheat
 QED
 *)
 
-Theorem symb_hl_step_in_L_sound_SUBSET_thm:
+Theorem symb_hl_step_in_L_sound_SUBSET_Pi_thm:
   !sr sys L Pi Pi'.
     (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
     (Pi SUBSET Pi') ==>
@@ -1049,6 +1049,16 @@ Theorem symb_hl_step_in_L_sound_SUBSET_thm:
 Proof
   fs [symb_hl_step_in_L_sound_def, pred_setTheory.SUBSET_DEF] >>
   metis_tac []
+QED
+
+Theorem symb_hl_step_in_L_sound_SUBSET_L_thm:
+  !sr sys L Pi L'.
+    (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+    (L SUBSET L') ==>
+    (symb_hl_step_in_L_sound sr (sys, L', Pi))
+Proof
+  fs [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
+  metis_tac [step_n_in_L_IMP_SUPER_thm]
 QED
 
 

@@ -39,6 +39,78 @@ Proof
   FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
 QED
 
+(*
+Definition bir_lbl_set_gen_def:
+  bir_lbl_set_gen l32s lbl = (* (word32,word32)list -> bir_label_t->bool *)
+    ...
+End
+*)
+
+(*
+Definition bir_pc_set_lbl_def:
+  bir_pc_set_lbl lbl pc = (* bir_label_t -> bir_programcounter_t->bool *)
+    (pc.bpc_label = lbl)
+End
+
+Theorem bir_pc_set_lbl_thm:
+  !pc lbl.
+    (pc IN (bir_pc_set_lbl lbl)) = (pc.bpc_label = lbl)
+Proof
+  fs [bir_pc_set_lbl_def, SPECIFICATION]
+QED
+
+Theorem bir_pc_set_lbl_thm:
+  !lbl.
+    bir_pc_set_lbl lbl =
+    {<| bpc_label:=lbl; bpc_index:=i |> | T}
+Proof
+  fs [EXTENSION, SPECIFICATION, bir_pc_set_lbl_thm] >>
+  cheat
+QED
+*)
+
+(* with this it needs to be easy to do IN, ADD(~INSERT-SUBSET) and UNION *)
+(* TODO: later should be defined in terms of ranges, like list of word32 range etc *)
+Definition bir_pc_set_lbls_def:
+  bir_pc_set_lbls lbls pc = (* (bir_label_t->bool) -> bir_programcounter_t->bool *)
+    (pc.bpc_label IN lbls)
+End
+
+Theorem bir_pc_set_lbls_IN_thm:
+  !pc lbls.
+    (pc IN (bir_pc_set_lbls lbls)) = (pc.bpc_label IN lbls)
+Proof
+  fs [bir_pc_set_lbls_def, SPECIFICATION]
+QED
+
+Theorem bir_pc_set_lbls_EMPTY_thm:
+  !pc lbls.
+    bir_pc_set_lbls EMPTY = EMPTY
+Proof
+  fs [EXTENSION, SPECIFICATION, bir_pc_set_lbls_def]
+QED
+
+(* TODO: create  and insert_CONV (and union_CONV) that only tries to eleminate if an identical one cannot be found/until there is no other one anymore (this might actually be useful also in other places of this codebase)
+    --- this means: the assumption of this function is that not identical means not equal *)
+Theorem bir_pc_set_lbls_ADD_thm:
+  !pc lbls.
+    pc INSERT (bir_pc_set_lbls lbls) SUBSET
+    bir_pc_set_lbls (pc.bpc_label INSERT lbls)
+Proof
+  fs [SUBSET_DEF, IN_INSERT, SPECIFICATION, bir_pc_set_lbls_IN_thm]
+QED
+
+Theorem bir_pc_set_lbls_UNION_thm:
+  !lbls1 lbls2.
+    (bir_pc_set_lbls lbls1) UNION (bir_pc_set_lbls lbls2) =
+    bir_pc_set_lbls (lbls1 UNION lbls2)
+Proof
+  fs [UNION_DEF, EXTENSION, GSPECIFICATION, SPECIFICATION, bir_pc_set_lbls_IN_thm]
+QED
+
+
+(* ........................... *)
+
 Theorem birs_symb_symbst_pc_thm:
   !s.
   symb_symbst_pc (birs_symb_to_symbst s) = s.bsst_pc
