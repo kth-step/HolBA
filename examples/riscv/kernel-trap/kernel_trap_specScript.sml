@@ -38,9 +38,9 @@ open bir_program_varsTheory;
 
 val _ = new_theory "kernel_trap_spec";
 
-(* ------------------ *)
-(* Program boundaries *)
-(* ------------------ *)
+(* ---------------------------------- *)
+(* Program boundaries for trap_entry  *)
+(* ---------------------------------- *)
 
 Definition kernel_trap_entry_init_addr_def:
  kernel_trap_entry_init_addr : word64 = 0x800000e0w
@@ -50,6 +50,10 @@ Definition kernel_trap_entry_end_addr_def:
  kernel_trap_entry_end_addr : word64 = 0x80000190w
 End
 
+(* ---------------------------------- *)
+(* Program boundaries for trap_return *)
+(* ---------------------------------- *)
+
 Definition kernel_trap_return_init_addr_def:
  kernel_trap_return_init_addr : word64 = 0x800001dcw
 End
@@ -58,21 +62,141 @@ Definition kernel_trap_return_end_addr_def:
  kernel_trap_return_end_addr : word64 = 0x80000268w
 End
 
-(* --------------- *)
-(* RISC-V contract *)
-(* --------------- *)
+(* -------------------------- *)
+(* RISC-V trap_entry contract *)
+(* -------------------------- *)
 
-(*
-Definition riscv_kernel_trap_pre_def:
- riscv_kernel_trap_pre (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
+Definition riscv_kernel_trap_entry_pre_def:
+ riscv_kernel_trap_entry_pre
+  (pre_mscratch:word64) (pre_mepc:word64)
+  (pre_mcause:word64) (pre_mhartid:word64)
+  (pre_mtval:word64)
+  (pre_x1:word64) (pre_x2:word64)
+  (pre_x3:word64) (pre_x4:word64)
+  (pre_x5:word64) (pre_x6:word64)
+  (pre_x7:word64) (pre_x8:word64)
+  (pre_x9:word64) (pre_x10:word64)
+  (pre_x11:word64) (pre_x12:word64)
+  (pre_x13:word64) (pre_x14:word64)
+  (pre_x15:word64) (pre_x16:word64)
+  (pre_x17:word64) (pre_x18:word64)
+  (pre_x19:word64) (pre_x20:word64)
+  (pre_x21:word64) (pre_x22:word64)
+  (pre_x23:word64) (pre_x24:word64)
+  (pre_x25:word64) (pre_x26:word64)
+  (pre_x27:word64) (pre_x28:word64)
+  (pre_x29:word64) (pre_x30:word64)
+  (pre_x31:word64)
+  (m:riscv_state)
+ : bool =
+ ((m.c_MCSR m.procID).mstatus.MPRV = 3w /\
+  ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_mscratch") /\
+  (* FIXME *)
+  (m.c_MCSR m.procID).mscratch = pre_mscratch /\
+  (m.c_MCSR m.procID).mepc = pre_mepc /\
+  (reg'mcause $ (m.c_MCSR m.procID).mcause) = pre_mcause /\
+  (m.c_MCSR m.procID).mhartid = pre_mhartid /\
+  (m.c_MCSR m.procID).mtval = pre_mtval /\
+  m.c_gpr m.procID 1w = pre_x1 /\
+  m.c_gpr m.procID 2w = pre_x2 /\
+  m.c_gpr m.procID 3w = pre_x3 /\
+  m.c_gpr m.procID 4w = pre_x4 /\
+  m.c_gpr m.procID 5w = pre_x5 /\
+  m.c_gpr m.procID 6w = pre_x6 /\
+  m.c_gpr m.procID 7w = pre_x7 /\
+  m.c_gpr m.procID 8w = pre_x8 /\
+  m.c_gpr m.procID 9w = pre_x9 /\
+  m.c_gpr m.procID 10w = pre_x10 /\
+  m.c_gpr m.procID 11w = pre_x11 /\
+  m.c_gpr m.procID 12w = pre_x12 /\
+  m.c_gpr m.procID 13w = pre_x13 /\
+  m.c_gpr m.procID 14w = pre_x14 /\
+  m.c_gpr m.procID 15w = pre_x15 /\
+  m.c_gpr m.procID 16w = pre_x16 /\
+  m.c_gpr m.procID 17w = pre_x17 /\
+  m.c_gpr m.procID 18w = pre_x18 /\
+  m.c_gpr m.procID 19w = pre_x19 /\
+  m.c_gpr m.procID 20w = pre_x20 /\
+  m.c_gpr m.procID 21w = pre_x21 /\
+  m.c_gpr m.procID 22w = pre_x22 /\
+  m.c_gpr m.procID 23w = pre_x23 /\
+  m.c_gpr m.procID 24w = pre_x24 /\
+  m.c_gpr m.procID 25w = pre_x25 /\
+  m.c_gpr m.procID 26w = pre_x26 /\
+  m.c_gpr m.procID 27w = pre_x27 /\
+  m.c_gpr m.procID 28w = pre_x28 /\
+  m.c_gpr m.procID 29w = pre_x29 /\
+  m.c_gpr m.procID 30w = pre_x30 /\
+  m.c_gpr m.procID 31w = pre_x31)
 End
 
-Definition riscv_kernel_trap_post_def:
- riscv_kernel_trap_post (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 + 1w)
+Definition riscv_kernel_trap_entry_post_def:
+ riscv_kernel_trap_entry_post
+  (pre_mscratch:word64) (pre_mepc:word64)
+  (pre_mcause:word64) (pre_mhartid:word64)
+  (pre_mtval:word64)
+  (pre_x1:word64) (pre_x2:word64)
+  (pre_x3:word64) (pre_x4:word64)
+  (pre_x5:word64) (pre_x6:word64)
+  (pre_x7:word64) (pre_x8:word64)
+  (pre_x9:word64) (pre_x10:word64)
+  (pre_x11:word64) (pre_x12:word64)
+  (pre_x13:word64) (pre_x14:word64)
+  (pre_x15:word64) (pre_x16:word64)
+  (pre_x17:word64) (pre_x18:word64)
+  (pre_x19:word64) (pre_x20:word64)
+  (pre_x21:word64) (pre_x22:word64)
+  (pre_x23:word64) (pre_x24:word64)
+  (pre_x25:word64) (pre_x26:word64)
+  (pre_x27:word64) (pre_x28:word64)
+  (pre_x29:word64) (pre_x30:word64)
+  (pre_x31:word64)
+  (m:riscv_state)
+ : bool =
+ ((m.c_MCSR m.procID).mscratch = pre_x10 /\
+  m.c_gpr m.procID 2w =
+   (0xFFFFFFFFFFFFFFFFw * (pre_mhartid <<~ 10w)) + 0x80006400w /\
+  m.c_gpr m.procID 3w = 0x80005804w /\
+  m.c_gpr m.procID 10w = pre_mscratch /\
+  m.c_gpr m.procID 11w = pre_mcause /\
+  m.c_gpr m.procID 12w = pre_mtval /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 8w) = pre_mepc /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 16w) = pre_x1 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 24w) = pre_x2 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 32w) = pre_x3 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 40w) = pre_x4 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 48w) = pre_x5 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 56w) = pre_x6 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 64w) = pre_x7 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 72w) = pre_x8 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 80w) = pre_x9 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 88w) = pre_x10 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 96w) = pre_x11 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 104w) = pre_x12 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 112w) = pre_x13 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 120w) = pre_x14 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 128w) = pre_x15 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 136w) = pre_x16 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 144w) = pre_x17 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 152w) = pre_x18 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 160w) = pre_x19 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 168w) = pre_x20 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 176w) = pre_x21 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 184w) = pre_x22 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 192w) = pre_x23 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 200w) = pre_x24 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 208w) = pre_x25 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 216w) = pre_x26 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 224w) = pre_x27 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 232w) = pre_x28 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 240w) = pre_x29 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 248w) = pre_x30 /\
+  riscv_mem_load_dword m.MEM8 (pre_mscratch + 256w) = pre_x31)
 End
-*)
+
+(* --------------------------- *)
+(* RISC-V trap_return contract *)
+(* --------------------------- *)
 
 Definition riscv_kernel_trap_return_pre_def:
  riscv_kernel_trap_return_pre
