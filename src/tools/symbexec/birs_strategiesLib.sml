@@ -85,6 +85,8 @@ in (* local *)
     end;
 
   val birs_from_summaries_debug = ref false;
+  val birs_from_summaries_exceptions = ref false;
+  val birs_from_summaries_fail_inst = ref false;
   fun birs_from_summaries postproc sums state =
     let
       (* assumtions on summary theorem list, each theorem:
@@ -98,6 +100,8 @@ in (* local *)
         identical (dest_birs_state_pc state) ((dest_birs_state_pc o get_birs_sys o concl) sum);
       (* filter by pc (should return NONE directly, if there is no match) *)
       val sums_pc = List.filter (state_pc_in_sum state) sums;
+      val _ = if List.null sums_pc then () else
+        print ("found "^(Int.toString (List.length sums_pc))^" summaries with matching pc\n");
     in
       Profile.profile "birs_from_summaries_inst" (fn sums_pc =>
       let
@@ -105,6 +109,7 @@ in (* local *)
         fun foldfun (sum, acc) =
           if isSome acc then acc else
           (let
+            val _ = print "trying to instantiate a summary\n";
             val thm = birs_sound_inst_RULE birs_driveLib.pcond_gen_symb state sum;
             val _ = print "\n====================================================\n"
             val _ = print "====================================================\n"
@@ -115,10 +120,13 @@ in (* local *)
           in
             SOME thm
           end
-          handle _ => acc);
+          handle e => if !birs_from_summaries_exceptions then raise e else acc);
         (* val postproc = fn x => let val y = postproc x; in print_thm y; y end; *)
+        val thm_o = List.foldl foldfun NONE sums_pc;
+        val _ = if (List.null sums_pc) orelse (isSome thm_o) orelse (not (!birs_from_summaries_fail_inst)) then () else
+          raise ERR "birs_from_summaries" "instantiation from all summaries that match the current pc failed";
       in
-        Option.map postproc (List.foldl foldfun NONE sums_pc)
+        Option.map postproc thm_o
       end) sums_pc
     end;
   val birs_from_summaries = fn x => fn y => Profile.profile "birs_from_summaries" (birs_from_summaries x y);

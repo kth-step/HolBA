@@ -206,6 +206,17 @@ in (* local *)
       end;
   end
 
+  fun SUBSET_CONV el_EQ_CONV tm = (
+    if (is_insert o fst o dest_subset) tm then (
+      REWR_CONV INSERT_SUBSET THENC
+      CONJL_CONV
+        (pred_setLib.IN_CONV el_EQ_CONV)
+        (SUBSET_CONV el_EQ_CONV)
+    ) else (
+      REWRITE_CONV [EMPTY_SUBSET]
+    )
+  ) tm;
+
 (* ================================================================================== *)
 (* ================================================================================== *)
 

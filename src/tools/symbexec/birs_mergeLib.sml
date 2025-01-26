@@ -40,6 +40,17 @@ in (* local *)
           RAND_CONV (conv) THENC
           pred_setLib.IN_CONV bir_var_EQ_CONV
         );
+      val bty_conv =
+        LHS_CONV bir_exp_typecheckLib.type_of_bir_exp_DIRECT_CONV THENC
+        RAND_CONV (RAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def)) THENC
+        REWR_CONV boolTheory.REFL_CLAUSE;
+      val birs_gen_env_CONV =
+        REPEATC (
+          REWR_CONV birs_auxTheory.birs_gen_env_GET_thm THENC
+          CHANGED_CONV
+            (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+        ) THENC
+        TRY_CONV (REWR_CONV birs_auxTheory.birs_gen_env_GET_NULL_thm);
 
       val thm_spec = ISPECL [p_tm, sys_tm, L_tm, (fst o pred_setSyntax.dest_insert) Pi_tm, (snd o pred_setSyntax.dest_insert) Pi_tm, alpha_tm, bexp_tm, vn_tm, symbexp1_tm, symbexp2_tm] birs_rulesTheory.birs_rule_FREESYMB_INTRO_spec_thm;
       val _ = if not debug then () else print "\n0 before MP: \n";
@@ -49,10 +60,7 @@ in (* local *)
       (*val _ = print_thm thm1;*)
 
       (* type_of_bir_exp bexp = SOME (bir_var_type alpha) *)
-      val thm2_1 = solve_assumption (
-        LHS_CONV bir_exp_typecheckLib.type_of_bir_exp_DIRECT_CONV THENC
-        EVAL
-      ) thm1;
+      val thm2_1 = solve_assumption (bty_conv) thm1;
       val _ = if not debug then () else print "\n2_1: \n";
       (*val _ = print_thm thm2_1;*)
 
@@ -65,8 +73,12 @@ in (* local *)
 
       (* bs2.bsst_environ vn = SOME symbexp *)
       val thm2_3 = solve_assumption (
-        birs_state_acc_CONV THENC
-        EVAL
+        LAND_CONV (
+          birs_state_acc_CONV THENC
+          birs_gen_env_CONV
+        ) THENC
+        REWR_CONV boolTheory.REFL_CLAUSE
+        (*REWR_CONV optionTheory.SOME_11 THENC aux_setLib.bir_exp_EQ_CONV*)
       ) thm2_2;
       val _ = if not debug then () else print "\n2_3: \n";
       (*val _ = print_thm thm2_3;*)
@@ -80,10 +92,13 @@ in (* local *)
       (* bir_vars_of_exp bexp ⊆ birs_symb_symbols bs2 *)
       val thm2_5 = solve_assumption (
         LAND_CONV bir_vars_ofLib.bir_vars_of_exp_DIRECT_CONV THENC
-        RAND_CONV birs_symb_symbols_DIRECT_CONV THENC (* could reuse the result from before to get this set *)
+        RAND_CONV birs_symb_symbols_DIRECT_CONV THENC (* could reuse the result from before to get this set, no need, it's cached *)
         (*(fn tm => (print_term tm; REFL tm)) THENC*)
-        EVAL (*THENC
+        (*Profile.profile "FREESYMB_SUBSET_CONV_EVAL" EVAL*)
+        aux_setLib.SUBSET_CONV aux_setLib.bir_var_EQ_CONV
+        (*THENC
         (fn tm => (print_term tm; REFL tm))*)
+        (* TODO: SUBSET_CONV *)
       ) thm2_4;
       val _ = if not debug then () else print "\n2_5: \n";
       (*val _ = print_thm thm2_5;*)
@@ -92,6 +107,7 @@ in (* local *)
             (BExp_BinExp BIExp_And
               (BExp_BinPred BIExp_Equal (BExp_Den alpha) bexp)
               bs2.bsst_pcond) symbexp symbexp' *)
+      (* NOTE: this use of z3 is maybe a problem/expensive *)
       val thm2_6 = solve_assumption (
         RATOR_CONV (LAND_CONV birs_state_acc_CONV) THENC
         (fn simp_tm =>

@@ -51,19 +51,19 @@ local
           raise (print_term tm; ERR "beq_left_to_binterval" "unexpected expression");
     in mk_BExp_IntervalPred (mk_BExp_Den ref_symb, pairSyntax.mk_pair(minmax_fixed_tm, minmax_fixed_tm)) end;
 
-  fun interval_from_state vn tm =
+  fun interval_from_state errstr vn tm =
     let
       val (_,env,_,pcond) = dest_birs_state tm;
       val env_exp = (snd o get_env_top_mapping) env;
       (* check that env_exp is just a bexp_den and has the name vn_symb *)
       val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
-        raise ERR "interval_from_state" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
+        raise ERR (errstr^":interval_from_state") ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
       val env_symbol = dest_BExp_Den env_exp;
       val pcondl = dest_bandl pcond;
       val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
       val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
       val _ = if length pcond_intervaltms = 1 then () else
-        raise ERR "interval_from_state" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
+        (print_term tm; print "\n\n"; raise ERR (errstr^":interval_from_state") ("unexpected, could not find interval for: " ^ (term_to_string env_symbol)));
       val interval = hd pcond_intervaltms;
     in
       (interval, fn x => mk_bandl (x::pcondl_filtd))
@@ -97,7 +97,7 @@ local
   fun check_BExp_IntervalPred_normform_RULE vn thm =
     let
       val Pi_tms = (pred_setSyntax.strip_set o get_birs_Pi o concl) thm;
-      val intervaltms = List.map (fst o interval_from_state vn) Pi_tms;
+      val intervaltms = List.map (fst o interval_from_state "check_BExp_IntervalPred_normform_RULE" vn) Pi_tms;
 
       val is_ok = if List.all (is_BExp_IntervalPred_normform vn) intervaltms then () else (
         print_thm thm;
@@ -355,7 +355,7 @@ in (* local *)
         (* all that is left is to make sure that we use the standardname for the symbol in the envmapping, if not, just rename it *)
           (* rename so that the symbol used is ("syi_"^vn) for readability *)
         val new_symbol = mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol);
-        val thm9 = birs_instantiationLib.birs_sound_symb_rename_RULE [(env_symbol, new_symbol)] thmx
+        val thm9 = birs_instantiationLib.birs_sound_symb_rename_free_RULE [(env_symbol, new_symbol)] thmx
           handle _ => raise ERR "birs_intervals_Pi_first_unify_RULE" ("renaming failed:" ^ (term_to_string env_symbol) ^ " to " ^ (term_to_string new_symbol));
 
         val _ = if not debug_mode then () else print "done unifying interval for one Pi state\n";
@@ -401,24 +401,7 @@ in (* local *)
 
       (* collect the intervals from each Pi pathcondition *)
       val Pi_tms = (pred_setSyntax.strip_set o get_birs_Pi o concl) thm;
-      fun interval_from_state tm =
-        let
-          val (_,env,_,pcond) = dest_birs_state tm;
-          val env_exp = (snd o get_env_top_mapping) env;
-          (* check that env_exp is just a bexp_den and has the name vn_symb *)
-          val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
-            raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
-          val env_symbol = dest_BExp_Den env_exp;
-          val pcondl = dest_bandl pcond;
-          val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
-          val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
-          val _ = if length pcond_intervaltms = 1 then () else
-            raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
-          val interval = hd pcond_intervaltms;
-        in
-          (interval, fn x => mk_bandl (x::pcondl_filtd))
-        end;
-      val (intervaltms, pcond_new_funs) = unzip (List.map interval_from_state Pi_tms);
+      val (intervaltms, pcond_new_funs) = unzip (List.map (interval_from_state "birs_intervals_Pi_bounds_RULE" vn) Pi_tms);
 
       (* compute the new min and max, generate the new interval predicate with it *)
       val interval_largest = List.foldl widen_intervals (hd intervaltms) (tl intervaltms);
