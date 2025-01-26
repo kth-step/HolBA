@@ -575,6 +575,52 @@ Proof
   fs [birs_rule_RENAME1_thm]
 QED
 
+Theorem birs_rule_RENAME1_FREE_thm[local]:
+  !prog L bs bs2 Pi alpha alpha'.
+    bir_var_type alpha = bir_var_type alpha' ==>
+    alpha NOTIN (birs_symb_symbols bs) ==>
+    alpha' NOTIN (birs_symb_symbols bs2) ==>
+    birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+    birs_symb_exec prog (bs, L, (birs_symb_subst1 (alpha, BExp_Den alpha') bs2) INSERT Pi)
+Proof
+  rpt strip_tac >>
+  assume_tac (
+    (CONV_RULE (LAND_CONV (SIMP_CONV (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def])) o
+    SIMP_RULE std_ss [
+      GSYM IMAGE_INSERT,
+      GSYM birs_symb_exec_def,
+      birs_symb_symbols_set_EQ_thm2,
+      bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm
+    ] o
+    Q.SPECL [`birs_symb_to_symbst bs`, `L`, `birs_symb_to_symbst bs2`, `IMAGE birs_symb_to_symbst Pi`, `alpha`, `alpha'`] o
+     SIMP_RULE std_ss [
+          bir_symb_soundTheory.birs_symb_symbols_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_subst_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_subst_f_sound_NOTIN_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_symb_f_sound_thm,
+          bir_symb_soundTheory.birs_symb_mk_exp_symb_f_sound_typeof_thm
+          ] o
+       MATCH_MP symb_rulesTheory.symb_rule_SRENAME_FREE_thm o Q.SPEC `prog`
+      ) bir_symb_soundTheory.birs_symb_typeof_exp_sound_thm) >>
+  gvs [] >>
+
+  fs [bir_symb_soundTheory.birs_symb_subst1_EQ_thm] >>
+  pop_assum (assume_tac o REWRITE_RULE [GSYM IMAGE_INSERT, GSYM birs_symb_exec_def]) >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [bir_symbTheory.bir_symb_rec_sbir_def]
+QED
+
+Theorem birs_rule_RENAME1_FREE_spec_thm:
+  !prog L bs bs2 Pi alpha alpha'.
+    birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
+    bir_var_type alpha = bir_var_type alpha' ==>
+    alpha NOTIN birs_symb_symbols bs ==>
+    alpha' NOTIN birs_symb_symbols bs2 ==>
+    birs_symb_exec prog (bs, L, (birs_symb_subst1 (alpha, BExp_Den alpha') bs2) INSERT Pi)
+Proof
+  fs [birs_rule_RENAME1_FREE_thm]
+QED
+
 Theorem birs_rule_INST1_thm:
   !prog L bs Pi alpha bexp.
     birs_symb_exec prog (bs, L, Pi) ==>

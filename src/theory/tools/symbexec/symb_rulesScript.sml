@@ -1863,6 +1863,51 @@ REPEAT STRIP_TAC >>
   METIS_TAC []
 QED
 
+val oracle_proof_SRENAME_FREE = mk_oracle_thm "I_AM_VERY_CONVINCED" ([], “
+  !sr.
+!sys L sys2 Pi symb symb_new.
+  (* TODO: maybe need more or less of these assumptions *)
+  (symb_typeof_exp_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+  (symb_subst_f_sound_NOTIN sr) ==>
+  (symb_symbols_f_sound sr) ==>
+  (symb_mk_exp_symb_f_sound sr) ==>
+  (symb_mk_exp_symb_f_sound_typeof sr) ==>
+
+  (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
+
+  (* symb is free *)
+  (symb NOTIN (symb_symbols sr sys)) ==>
+  (* and symb_new does not occur in sys2  *)
+  (symb_new NOTIN (symb_symbols sr sys2)) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, sys2 INSERT Pi)) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (symb_subst sr (symb, sr.sr_mk_exp_symb_f symb_new) sys2) INSERT Pi))
+”);
+
+Theorem symb_rule_SRENAME_FREE_thm:
+  !sr.
+!sys L sys2 Pi symb symb_new.
+  (* TODO: maybe need more or less of these assumptions *)
+  (symb_typeof_exp_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+  (symb_subst_f_sound_NOTIN sr) ==>
+  (symb_symbols_f_sound sr) ==>
+  (symb_mk_exp_symb_f_sound sr) ==>
+  (symb_mk_exp_symb_f_sound_typeof sr) ==>
+
+  (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
+
+  (* symb is free *)
+  (symb NOTIN (symb_symbols sr sys)) ==>
+  (* and symb_new does not occur in sys2  *)
+  (symb_new NOTIN (symb_symbols sr sys2)) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, sys2 INSERT Pi)) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (symb_subst sr (symb, sr.sr_mk_exp_symb_f symb_new) sys2) INSERT Pi))
+Proof
+  ACCEPT_TAC oracle_proof_SRENAME_FREE
+QED
 
 (* ************************* *)
 (*        STRENGTHEN         *)
