@@ -244,7 +244,22 @@ Definition riscv_vars_def:
   (BVar "tmp_MEM8" (BType_Mem Bit64 Bit8));
 
   (BVar "tmp_PC" (BType_Imm Bit64));
-  (BVar "tmp_COND" (BType_Imm Bit1))
+  (BVar "tmp_COND" (BType_Imm Bit1));
+
+  (BVar "mhartid" (BType_Imm Bit64));
+  (BVar "tmp_mhartid" (BType_Imm Bit64));
+  (BVar "MPRV" (BType_Imm Bit8));
+  (BVar "tmp_MPRV" (BType_Imm Bit8));
+  (BVar "mscratch" (BType_Imm Bit64));
+  (BVar "tmp_mscratch" (BType_Imm Bit64));
+  (BVar "mepc" (BType_Imm Bit64));
+  (BVar "tmp_mepc" (BType_Imm Bit64));
+  (BVar "mcause" (BType_Imm Bit64));
+  (BVar "tmp_mcause" (BType_Imm Bit64));
+  (BVar "mtval" (BType_Imm Bit64));
+  (BVar "tmp_mtval" (BType_Imm Bit64));
+  (BVar "mip" (BType_Imm Bit64));
+  (BVar "tmp_mip" (BType_Imm Bit64))
  }
 End
 
@@ -1139,6 +1154,38 @@ Proof
       bir_immTheory.type_of_bool2b]
 QED
 
+Theorem default_riscv_bir_state_MCSRS_read_tmp[local]:
+ !ms.
+  bir_env_read (BVar "tmp_mhartid" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)) /\
+  bir_env_read (BVar "tmp_MPRV" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 (w2w (ms.c_MCSR ms.procID).mstatus.MPRV))) /\
+  bir_env_read (BVar "tmp_mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)) /\
+  bir_env_read (BVar "tmp_mepc" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)) /\
+  bir_env_read (BVar "tmp_mcause" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 $ reg'mcause (ms.c_MCSR ms.procID).mcause)) /\
+  bir_env_read (BVar "tmp_mtval" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtval)) /\
+  bir_env_read (BVar "tmp_mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 $ reg'mip  (ms.c_MCSR ms.procID).mip))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_CSRS_def,
+      default_riscv_bir_env_CSRS_tmp_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
 Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
   !ms.
   bir_env_lookup_type "mhartid" (default_riscv_bir_state ms).bst_environ =
@@ -1267,6 +1314,7 @@ FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.riscv_bmr_rel_EVAL,
  bir_env_oldTheory.bir_env_var_is_declared_def,bir_envTheory.bir_var_name_def] >>
 fs [
   default_riscv_bir_state_MCSRS_read,
+  default_riscv_bir_state_MCSRS_read_tmp,
   default_riscv_bir_state_MCSRS_lookup_type,
   default_riscv_bir_state_MCSRS_lookup_type_tmp,
   default_riscv_bir_state_GPRS_read,
