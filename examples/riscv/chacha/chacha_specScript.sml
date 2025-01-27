@@ -1,5 +1,5 @@
 open HolKernel boolLib Parse bossLib;
-open pairTheory pred_setTheory markerTheory wordsTheory;
+open pairTheory pred_setTheory markerTheory wordsTheory wordsLib;
 
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
@@ -34,6 +34,29 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 val _ = new_theory "chacha_spec";
+
+Theorem w2w_32_64:
+ !(b1:word32). w2w ((w2w b1):word64) = b1
+Proof
+  REPEAT Cases_word >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11] >>
+  IMP_RES_TAC (DECIDE ``n < 4294967296 ==> n < 18446744073709551616:num``) >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) []
+QED
+
+Theorem n2w_w2n_w2w_32_64:
+ !(b1:word32). n2w ((w2n b1)) = (w2w:word32 -> word64) b1
+Proof
+  REPEAT Cases_word >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
+QED
+
+Theorem w2w_n2w_w2n_64_32:
+ !(b1:word64). (w2w:word64 -> word32) b1 = n2w ((w2n b1))
+Proof
+  REPEAT Cases_word >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
+QED
 
 (* ------------- *)
 (* ChaCha theory *)
