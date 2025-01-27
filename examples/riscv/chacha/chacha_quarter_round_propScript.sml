@@ -38,32 +38,6 @@ open chacha_symb_transf_quarter_roundTheory;
 
 val _ = new_theory "chacha_quarter_round_prop";
 
-Definition riscv_chacha_line_pre_def:
- riscv_chacha_line_pre (pre_a:word32)
-  (pre_b:word32) (pre_d:word32)
-  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
-End
-
-Definition riscv_chacha_line_exp_fst_def:
- riscv_chacha_line_exp_fst (pre_a:word32) (pre_b:word32) : word32 =
-  pre_a + pre_b
-End
-
-Definition riscv_chacha_line_exp_snd_def:
- riscv_chacha_line_exp_snd pre_a pre_d (s:word32) : word32 =
-  ((pre_a ?? pre_d) <<~ s) || ((pre_a ?? pre_d) >>>~ (32w - s))
-End
-
-Definition riscv_chacha_line_post_def:
- riscv_chacha_line_post (pre_a:word32) (pre_b:word32) (pre_d:word32)
-  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 20w)) = riscv_chacha_line_exp_fst pre_a pre_b /\
-  n2w (w2n (m.c_gpr m.procID 10w)) = riscv_chacha_line_exp_snd (riscv_chacha_line_exp_fst pre_a pre_b) pre_d 16w)
-End
-
 (* ------------------------------------- *)
 (* Connecting RISC-V and BSPEC contracts *)
 (* ------------------------------------- *)

@@ -433,7 +433,35 @@ Proof
  EVAL_TAC
 QED
 
-(* BIR Spec *)
+(* RISC-V spec *)
+
+Definition riscv_chacha_line_exp_fst_def:
+ riscv_chacha_line_exp_fst (pre_a:word32) (pre_b:word32) : word32 =
+  pre_a + pre_b
+End
+
+Definition riscv_chacha_line_exp_snd_def:
+ riscv_chacha_line_exp_snd pre_a pre_d (s:word32) : word32 =
+  ((pre_a ?? pre_d) <<~ s) || ((pre_a ?? pre_d) >>>~ (32w - s))
+End
+
+Definition riscv_chacha_line_pre_def:
+ riscv_chacha_line_pre (pre_a:word32)
+  (pre_b:word32) (pre_d:word32)
+  (m:riscv_state) : bool =
+ (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
+  n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
+  n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
+End
+
+Definition riscv_chacha_line_post_def:
+ riscv_chacha_line_post (pre_a:word32) (pre_b:word32) (pre_d:word32)
+  (m:riscv_state) : bool =
+ (n2w (w2n (m.c_gpr m.procID 20w)) = riscv_chacha_line_exp_fst pre_a pre_b /\
+  n2w (w2n (m.c_gpr m.procID 10w)) = riscv_chacha_line_exp_snd (riscv_chacha_line_exp_fst pre_a pre_b) pre_d 16w)
+End
+
+(* BIR spec *)
 
 Definition bspec_var_equal_32_lowcast_64_def:
  bspec_var_equal_32_lowcast_64 var exp =
@@ -820,9 +848,6 @@ End
 (* first quarter round *)
 
 val bspec_chacha_quarter_round_pre_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -878,9 +903,6 @@ End
 (* column round *)
 
 val bspec_chacha_column_round_pre_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -1042,9 +1064,6 @@ End
 (* diagonal round *)
 
 val bspec_chacha_diagonal_round_pre_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x20" (BType_Imm Bit64))) Bit32)
@@ -1206,9 +1225,6 @@ End
 (* double round *)
 
 val bspec_chacha_double_round_pre_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -1335,105 +1351,6 @@ Definition bspec_chacha_double_round_post_def:
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  : bir_exp_t =
   ^bspec_chacha_double_round_post_tm
-End
-
-(* ----- *)
-
-Definition bspec_chacha_line_exp_1_imm32:
- bspec_chacha_line_exp_1_imm32 bir_var pre_a pre_b : bir_exp_t =
- BExp_BinPred
-   BIExp_Equal
-   (BExp_Cast BIExp_LowCast (BExp_Den (BVar bir_var (BType_Imm Bit64))) Bit32)
-   (BExp_BinExp BIExp_Plus
-     (BExp_Const (Imm32 pre_a))
-     (BExp_Const (Imm32 pre_b)))
-End
-
-Definition bspec_chacha_line_exp_2_imm32:
- bspec_chacha_quarterround_exp_2_imm32 varname pre_a pre_b pre_d (s:word32) : bir_exp_t =
-  BExp_BinPred
-   BIExp_Equal
-   (BExp_Cast BIExp_LowCast (BExp_Den (BVar varname (BType_Imm Bit64))) Bit32)
-   (BExp_BinExp BIExp_Or
-     (BExp_BinExp BIExp_LeftShift 
-      (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus
-         (BExp_Const (Imm32 pre_a))
-         (BExp_Const (Imm32 pre_b)))
-        (BExp_Const (Imm32 pre_d)))
-     (BExp_Const (Imm32 s)))
-     (BExp_BinExp BIExp_RightShift
-      (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus
-         (BExp_Const (Imm32 pre_a))
-         (BExp_Const (Imm32 pre_b)))
-        (BExp_Const (Imm32 pre_d)))
-      (BExp_Const (Imm32 (32w-s)))))
-End
-
-Definition chacha_line_alt_word64:
- chacha_line_alt_word64 (a:word64) (b:word64) (d:word64) (s:word32)
-  (m:word64 -> word64) =
-  let m = (a =+ (sw2sw: word32 -> word64) ((w2w (m a)) + (w2w (m b)))) m in
-  let m = (d =+ 
-   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) <<~ s))
-   ||
-   ((sw2sw: word32 -> word64) ((w2w ((m a) ?? (m d))) >>>~ (32w - s)))
-  ) m
-  in m
-End
-
-Theorem chacha_line_alt_word64_eq[local]:
- !a b d s m x.
-  s <=+ 31w ==>
-  (w2w o (chacha_line (w2w a) (w2w b) (w2w d) s (\w. w2w (m (w2w w))) o w2w)) x =
-  chacha_line_alt a b d s m x
-Proof
- rw [chacha_line_expand,chacha_line_alt] >>
- rw [combinTheory.APPLY_UPDATE_THM] >>
- cheat
- (*rw [sw2sw_w2w]*)
-QED
-
-Definition bspec_chacha_quarterround_exp_1:
- bspec_chacha_quarterround_exp_1 varname pre_1 pre_2 : bir_exp_t =
- BExp_BinPred
-   BIExp_Equal
-   (BExp_Den (BVar varname (BType_Imm Bit64)))
-   (BExp_Cast BIExp_SignedCast
-    (BExp_Cast BIExp_LowCast 
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_1))
-       (BExp_Const (Imm64 pre_2)))
-     Bit32) Bit64)
-End
-
-Definition bspec_chacha_quarterround_exp_2:
- bspec_chacha_quarterround_exp_2 varname pre_1 pre_2 pre_3 (s:word32) : bir_exp_t =
-  BExp_BinPred
-   BIExp_Equal
-   (BExp_Den (BVar varname (BType_Imm Bit64)))
-   (BExp_BinExp BIExp_Or
-  (BExp_Cast BIExp_SignedCast
-    (BExp_BinExp BIExp_LeftShift
-      (BExp_Cast BIExp_LowCast 
-       (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus
-         (BExp_Const (Imm64 pre_1))
-         (BExp_Const (Imm64 pre_2)))
-     (BExp_Const (Imm64 pre_3)))
-       Bit32)
-      (BExp_Const (Imm32 s))) Bit64)
-  (BExp_Cast BIExp_SignedCast
-    (BExp_BinExp BIExp_RightShift
-      (BExp_Cast BIExp_LowCast 
-       (BExp_BinExp BIExp_Xor
-        (BExp_BinExp BIExp_Plus
-         (BExp_Const (Imm64 pre_1))
-         (BExp_Const (Imm64 pre_2)))
-     (BExp_Const (Imm64 pre_3)))
-       Bit32)
-      (BExp_Const (Imm32 (32w-s)))) Bit64))
 End
 
 val _ = export_theory ();
