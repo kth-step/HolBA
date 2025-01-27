@@ -716,9 +716,6 @@ x21 <- x15 | x21  // b <<<= 7
 (* first line *)
 
 val bspec_chacha_line_pre_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
