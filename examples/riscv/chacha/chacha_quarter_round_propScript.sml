@@ -18,6 +18,8 @@ open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
 
+open birs_auxTheory;
+
 open total_program_logicTheory;
 open total_ext_program_logicTheory;
 
