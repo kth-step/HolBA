@@ -723,47 +723,6 @@ Definition bspec_chacha_ivsetup_pre_def:
   ^bspec_chacha_ivsetup_pre_tm
 End
 
-(* line *)
-
-(*
-1.  a += b; d ^= a; d <<<= 16;
-2.  c += d; b ^= c; b <<<= 12;
-3.  a += b; d ^= a; d <<<= 8;
-4.  c += d; b ^= c; b <<<= 7;
-
-x20 <- x10 + x22  // a += b
-x26 <- x20 ^ x26  // d ^= a
-x10 <- x26 lsl 16
-x26 <- x26 lsr 16
-x10 <- x10 | x26  // d <<<= 16
-
-RESULT:
-a: x20 <- x10 + x22
-d: x10 <- (((x10 + x22) ^ x26) lsl 16) | (((x10 + x22) ^ x26) lsr 16)
-
-x8 <- x28 + x10   // c += d
-x22 <- x8 ^ x22   // b ^= c
-x15 <- x22 lsl 12
-x22 <- x22 lsr 20
-x15 <- x15 | x22  // b <<<= 12
-
-RESULT:
-c: x8 <- x28 + x10
-b: x15 <- (((x28 + x10) ^ x22) lsl 12) | (((x28 + x10) ^ x22) lsr 20)
-
-x20 <- x15 + x20  // a += b
-x10 <- x20 ^ x10  // d ^= a
-x22 <- x10 lsl 8
-x10 <- x10 lsr 24
-x22 <- x10 | x22  // d <<<= 8
-
-x8 <- x8 + x22    // c += d
-x15 <- x15 ^ x8   // b ^= c
-x21 <- x15 lsl 7
-x15 <- x15 lsr 25
-x21 <- x15 | x21  // b <<<= 7
-*)
-
 (* first line *)
 
 val bspec_chacha_line_pre_tm = bslSyntax.bandl [
@@ -806,9 +765,6 @@ End
 (* second line *)
 
 val bspec_chacha_line_pre_other_tm = bslSyntax.bandl [
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
-  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x12",
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
