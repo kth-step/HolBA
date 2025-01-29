@@ -488,6 +488,33 @@ Definition riscv_chacha_column_round_exprs_def:
   arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
 End
 
+Definition riscv_chacha_diagonal_round_exprs_def:
+ riscv_chacha_diagonal_round_exprs 
+  pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3
+  pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+  pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11
+  pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+ : word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32
+  =
+ let (arr_0,arr_5,arr_10,arr_15) =
+   riscv_chacha_quarter_round_exprs pre_arr_0 pre_arr_5 pre_arr_10 pre_arr_15
+ in
+ let (arr_1,arr_6,arr_11,arr_12) =
+   riscv_chacha_quarter_round_exprs pre_arr_1 pre_arr_6 pre_arr_11 pre_arr_12
+ in
+ let (arr_2,arr_7,arr_8,arr_13) =
+   riscv_chacha_quarter_round_exprs pre_arr_2 pre_arr_7 pre_arr_8 pre_arr_13
+ in
+ let (arr_3,arr_4,arr_9,arr_14) =
+   riscv_chacha_quarter_round_exprs pre_arr_3 pre_arr_4 pre_arr_9 pre_arr_14
+ in
+ (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+  arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
+End
+
 Definition riscv_chacha_column_round_pre_def:
  riscv_chacha_column_round_pre 
   (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
@@ -511,6 +538,31 @@ Definition riscv_chacha_column_round_pre_def:
   n2w (w2n (m.c_gpr m.procID 25w)) = pre_arr_13 /\
   n2w (w2n (m.c_gpr m.procID 24w)) = pre_arr_14 /\
   n2w (w2n (m.c_gpr m.procID 23w)) = pre_arr_15)
+End
+
+Definition riscv_chacha_diagonal_round_pre_def:
+ riscv_chacha_diagonal_round_pre 
+  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
+  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
+  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
+  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
+ (m:riscv_state) : bool =
+  (n2w (w2n (m.c_gpr m.procID 20w)) = pre_arr_0 /\
+  n2w (w2n (m.c_gpr m.procID 19w)) = pre_arr_1 /\
+  n2w (w2n (m.c_gpr m.procID 18w)) = pre_arr_2 /\
+  n2w (w2n (m.c_gpr m.procID 9w)) = pre_arr_3 /\
+  n2w (w2n (m.c_gpr m.procID 21w)) = pre_arr_4 /\
+  n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_5 /\
+  n2w (w2n (m.c_gpr m.procID 13w)) = pre_arr_6 /\
+  n2w (w2n (m.c_gpr m.procID 14w)) = pre_arr_7 /\
+  n2w (w2n (m.c_gpr m.procID 8w)) = pre_arr_8 /\
+  n2w (w2n (m.c_gpr m.procID 7w)) = pre_arr_9 /\
+  n2w (w2n (m.c_gpr m.procID 5w)) = pre_arr_10 /\
+  n2w (w2n (m.c_gpr m.procID 15w)) = pre_arr_11 /\
+  n2w (w2n (m.c_gpr m.procID 22w)) = pre_arr_12 /\
+  n2w (w2n (m.c_gpr m.procID 28w)) = pre_arr_13 /\
+  n2w (w2n (m.c_gpr m.procID 29w)) = pre_arr_14 /\
+  n2w (w2n (m.c_gpr m.procID 16w)) = pre_arr_15)
 End
 
 Definition riscv_chacha_column_round_post_def:
@@ -542,6 +594,37 @@ Definition riscv_chacha_column_round_post_def:
   n2w (w2n (m.c_gpr m.procID 28w)) = arr_13 /\
   n2w (w2n (m.c_gpr m.procID 29w)) = arr_14 /\
   n2w (w2n (m.c_gpr m.procID 16w)) = arr_15)
+End
+
+Definition riscv_chacha_diagonal_round_post_def:
+ riscv_chacha_diagonal_round_post
+  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
+  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
+  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
+  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
+ (m:riscv_state) : bool =
+ (let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,arr_8,
+       arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15) =
+   riscv_chacha_diagonal_round_exprs
+     pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+     pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+  in
+  n2w (w2n (m.c_gpr m.procID 10w)) = arr_0 /\
+  n2w (w2n (m.c_gpr m.procID 16w)) = arr_1 /\
+  n2w (w2n (m.c_gpr m.procID 17w)) = arr_2 /\
+  n2w (w2n (m.c_gpr m.procID 6w)) = arr_3 /\
+  n2w (w2n (m.c_gpr m.procID 22w)) = arr_4 /\
+  n2w (w2n (m.c_gpr m.procID 11w)) = arr_5 /\
+  n2w (w2n (m.c_gpr m.procID 13w)) = arr_6 /\
+  n2w (w2n (m.c_gpr m.procID 14w)) = arr_7 /\
+  n2w (w2n (m.c_gpr m.procID 28w)) = arr_8 /\
+  n2w (w2n (m.c_gpr m.procID 29w)) = arr_9 /\
+  n2w (w2n (m.c_gpr m.procID 30w)) = arr_10 /\
+  n2w (w2n (m.c_gpr m.procID 31w)) = arr_11 /\
+  n2w (w2n (m.c_gpr m.procID 26w)) = arr_12 /\
+  n2w (w2n (m.c_gpr m.procID 25w)) = arr_13 /\
+  n2w (w2n (m.c_gpr m.procID 24w)) = arr_14 /\
+  n2w (w2n (m.c_gpr m.procID 23w)) = arr_15)
 End
 
 (* BIR spec *)
