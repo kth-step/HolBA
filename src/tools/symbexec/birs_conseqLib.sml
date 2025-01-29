@@ -175,6 +175,7 @@ in (* local *)
 
 (* ---------------------------------------------------------------------------------------- *)
 
+  val birs_sys_pcond_RULE_debug_fun = ref (NONE:(term->term->unit)option)
   (* general path condition strengthening with z3 *)
   fun birs_sys_pcond_RULE pcond_new thm =
     if !rule_CONSEQ_oracle_speed then
@@ -196,6 +197,17 @@ in (* local *)
         val pcond_imp_ok = isSome (check_imp_tm imp_tm);
         val _ = if pcond_imp_ok then () else
                 (print "narrowing failed, path condition is not stronger\n";
+                 let
+                   val debug_fun_o = !birs_sys_pcond_RULE_debug_fun;
+                 in
+                   if isSome debug_fun_o then
+                     (valOf debug_fun_o) pcond_new pcond_old
+                   else
+                     ()
+                 end;
+                 (*bir_smtLib.birsmt_check_unsat_write_query_to_disk := true;
+                 check_imp_tm (mk_birs_exp_imp (bslSyntax.band(bslSyntax.bconst1 1,pcond_new), pcond_old));
+                 bir_smtLib.birsmt_check_unsat_write_query_to_disk := false;*)
                 raise ERR "birs_sys_pcond_RULE" "the supplied path condition is not stronger");
       in
         aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_NARROW_PCOND" (mk_birs_symb_exec (p_tm, mk_sysLPi (sys_new_tm,L_tm,Pi_tm)))

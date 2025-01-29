@@ -87,6 +87,7 @@ in (* local *)
   val birs_from_summaries_debug = ref false;
   val birs_from_summaries_exceptions = ref false;
   val birs_from_summaries_fail_inst = ref false;
+  val birs_from_summaries_debug_fun = ref (NONE:(term->unit) option);
   fun birs_from_summaries postproc sums state =
     let
       (* assumtions on summary theorem list, each theorem:
@@ -105,6 +106,8 @@ in (* local *)
     in
       Profile.profile "birs_from_summaries_inst" (fn sums_pc =>
       let
+        val debug_fun_o = !birs_from_summaries_debug_fun;
+        val _ = if (not (List.null sums_pc)) andalso (isSome debug_fun_o) then (valOf debug_fun_o) state else ();
         (* try instantiation from the first (instantiate and justify with pcond strengthening) *)
         fun foldfun (sum, acc) =
           if isSome acc then acc else

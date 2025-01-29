@@ -297,27 +297,43 @@ in (* local *)
        birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_subst symbname exp1) thm
     end;
 
-  fun birs_Pi_first_env_top_mapping_merge_store_fold ((idx,exp1,exp2), thm) =
-    let
-      val symbname = get_freesymb_name ();
-      fun updatestore upd_m upd_v s =
-        let
-          val (expm, expad, endi, expv) = bir_expSyntax.dest_BExp_Store s;
-        in
-          bir_expSyntax.mk_BExp_Store (upd_m expm, expad, endi, upd_v expv)
-        end;
-      fun replacestoreidx i subexp_new =
-        if i = 0 then
-          updatestore I (K subexp_new)
-        else
-          updatestore (replacestoreidx (i-1) subexp_new) I;
-      fun replacefun idx subexp_new _ = replacestoreidx idx subexp_new;
-      val r_thm =
-        (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 (replacefun idx) o
-        birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp1 (replacefun idx)) thm;
-    in
-      r_thm
-    end;
+  local
+    fun updatestore upd_m upd_v s =
+      let
+        val (expm, expad, endi, expv) = bir_expSyntax.dest_BExp_Store s;
+      in
+        bir_expSyntax.mk_BExp_Store (upd_m expm, expad, endi, upd_v expv)
+      end;
+    fun replacestoreidx i subexp_new =
+      if i = 0 then
+        updatestore I (K subexp_new)
+      else
+        updatestore (replacestoreidx (i-1) subexp_new) I;
+    fun replacefun idx subexp_new _ = replacestoreidx idx subexp_new;
+  in
+    fun birs_Pi_first_env_top_mapping_merge_store_fold ((idx,exp1,exp2), thm) =
+      let
+        val symbname = get_freesymb_name ();
+        val r_thm =
+          (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp2 (replacefun idx) o
+          birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_gen symbname exp1 (replacefun idx)) thm;
+      in
+        r_thm
+      end;
+
+    fun birs_Pi_first_env_top_mapping_forget_storeidx idx thm =
+      let
+        val symbname = get_freesymb_name ();
+        val (_,mapped_exp) = (get_birs_Pi_first_env_top_mapping o concl) thm;
+        val (_, stores) = birs_simp_instancesLib.dest_BExp_Store_list mapped_exp [];
+        val exp_tm = (fn (_,_,expv) => expv) (List.nth(stores,idx));
+      in
+        birs_Pi_first_forget_RULE_gen symbname exp_tm (replacefun idx) thm
+      end;
+    
+    fun birs_Pi_first_env_top_mapping_forget_storeidxs idxs thm =
+      List.foldl (fn (idx,thm) => birs_Pi_first_env_top_mapping_forget_storeidx idx thm) thm idxs;
+  end
 
   local
     val bir_exp_t_tm = ``BExp_Const (Imm1 1w)``;
@@ -413,7 +429,7 @@ fun print_mem_exp mem_exp =
       let
         val expad_s = term_to_string expad;
         val expv_s = term_to_string expv;
-        val expv_s = if String.size expv_s > 100 then "(...)" else expv_s;
+        val expv_s = if String.size expv_s > 100 then "(...)["^Int.toString(String.size expv_s)^"]" else expv_s;
         val _ = print ("  " ^ expad_s ^ "\n    -> " ^ expv_s ^ "\n");
       in () end;
     val _ = map (print_store) stores;
@@ -703,20 +719,24 @@ fun print_mem_exp mem_exp =
       val _ = birs_check_norm_thm ("birs_Pi_merge_RULE", "") thm;
       val num_in_Pi = (get_birs_Pi_length o concl) thm;
       val _ = print ("Number of states to merge: " ^ (Int.toString num_in_Pi) ^ "\n");
-      val merged_thm = birs_Pi_merge_RULE_ thm;
-
-      (* check that the path condition has only changed in ways we want *)
-      val pcond_sysl = (dest_bandl o get_birs_sys_pcond o concl) merged_thm;
-      val pcond_Pifl = (dest_bandl o get_birs_Pi_first_pcond o concl) merged_thm;
-      val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
-      val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
-      fun check_extra extra =
-        if (length extra = 0) orelse ((length extra = 1) andalso (birsSyntax.is_BExp_IntervalPred (hd extra))) then () else
-        raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (mk_bandl extra)));
-      val _ = check_extra pcond_sys_extral;
-      val _ = check_extra pcond_Pif_extral;
     in
-      merged_thm
+      if num_in_Pi < 2 then thm else
+      let
+        val merged_thm = birs_Pi_merge_RULE_ thm;
+
+        (* check that the path condition has only changed in ways we want *)
+        val pcond_sysl = (dest_bandl o get_birs_sys_pcond o concl) merged_thm;
+        val pcond_Pifl = (dest_bandl o get_birs_Pi_first_pcond o concl) merged_thm;
+        val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
+        val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
+        fun check_extra extra =
+          if (length extra = 0) orelse ((length extra = 1) andalso (birsSyntax.is_BExp_IntervalPred (hd extra))) then () else
+          raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (mk_bandl extra)));
+        val _ = check_extra pcond_sys_extral;
+        val _ = check_extra pcond_Pif_extral;
+      in
+        merged_thm
+      end
     end;
 
   (*
