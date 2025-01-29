@@ -91,7 +91,9 @@ Definition riscv_kernel_trap_entry_pre_def:
  : bool =
  ((m.c_MCSR m.procID).mstatus.MPRV = 3w /\
   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_mscratch") /\
-  (* FIXME *)
+  (pre_mscratch ≤₊ 0xFFFFFFFFFFFFFFF7w /\
+    ((0x7FFFFFE0w <₊ pre_mscratch \/ 8w + pre_mscratch ≤₊ 0x7FFFFFE0w) /\
+     (pre_mscratch <₊ 0x7FFFFFE0w \/ 0x80000268w ≤₊ pre_mscratch))) /\
   (m.c_MCSR m.procID).mscratch = pre_mscratch /\
   (m.c_MCSR m.procID).mepc = pre_mepc /\
   (reg'mcause $ (m.c_MCSR m.procID).mcause) = pre_mcause /\

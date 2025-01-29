@@ -12,6 +12,8 @@ open bir_backlifterLib;
 open bir_riscv_extrasTheory;
 open bir_compositionLib;
 
+open bir_interval_expTheory;
+
 open bir_lifting_machinesTheory;
 open bir_typing_expTheory;
 open bir_htTheory;
@@ -398,7 +400,31 @@ Theorem kernel_trap_entry_riscv_pre_imp_bspec_pre_thm:
     pre_x15 pre_x16 pre_x17 pre_x18 pre_x19 pre_x20 pre_x21 pre_x22
     pre_x23 pre_x24 pre_x25 pre_x26 pre_x27 pre_x28 pre_x29 pre_x30 pre_x31)
 Proof
- cheat
+  rw [bir_pre_riscv_to_bir_def] >-
+   (rw [bspec_kernel_trap_entry_pre_def] >>
+    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_extra_expsTheory.BExp_Aligned_def] >>
+    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_immTheory.n2bs_def,BExp_unchanged_mem_interval_distinct_def]) >>
+
+  Q.PAT_X_ASSUM `bir_env_vars_are_initialised x y` (fn thm => ALL_TAC) >>
+
+  Cases_on `bs` >> Cases_on `b0` >>
+  
+  FULL_SIMP_TAC (std_ss) [riscv_kernel_trap_entry_pre_def, bspec_kernel_trap_entry_pre_def,bir_extra_expsTheory.BExp_Aligned_def] >>
+  
+  fs [GSYM bir_and_equiv] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+   bir_eval_bin_pred_def,
+   riscv_bmr_rel_EVAL,
+   bir_immTheory.bool2b_def,
+   bir_immTheory.bool2w_def,
+   bir_envTheory.bir_env_read_def,bir_envTheory.bir_env_lookup_def,
+   BExp_unchanged_mem_interval_distinct_def
+ ] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,bir_immTheory.bool2b_def,bir_immTheory.bool2w_def] >>
+
+ rw []
 QED
 
 Theorem kernel_trap_entry_riscv_post_imp_bspec_post_thm:
