@@ -9,9 +9,11 @@ open holba_auxiliaryTheory;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory bir_exp_immTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+open bir_exp_equivTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
+open bir_riscv_extrasTheory;
 open bir_compositionLib;
 
 open bir_lifting_machinesTheory;
@@ -33,12 +35,38 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 open HolBACoreSimps;
+open bir_extra_expsTheory;
 
 open chachaTheory;
 open chacha_specTheory;
 open chacha_symb_transf_quarter_roundTheory;
 
 val _ = new_theory "chacha_quarter_round_prop";
+
+Theorem if_bool_1w[local]:
+ !b. ((if b then 1w else 0w) = 1w) = b
+Proof
+ rw []
+QED
+
+Theorem bir_eval_bin_pred_eq[local]:
+ !f w.
+ (bir_eval_bin_pred BIExp_Equal
+  (if (∃z. f reg = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z)
+  then f reg else NONE) (SOME (BVal_Imm (Imm64 w))) = SOME bir_val_true) <=>
+ (f reg = SOME (BVal_Imm (Imm64 w)))
+Proof
+ REPEAT STRIP_TAC >>
+ Q.ABBREV_TAC `g = ?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
+ Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+ fs [Abbrev_def] >-
+  (Cases_on `z` >> fs [type_of_bir_val_def] >>
+   Cases_on `b` >> fs [type_of_bir_imm_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def] >>
+   Cases_on `c = w` >> fs [bir_val_true_def]) >>
+ STRIP_TAC >>
+ fs [type_of_bir_val_def,type_of_bir_imm_def]
+QED
 
 (* ------------------------------------- *)
 (* Connecting RISC-V and BSPEC contracts *)
@@ -61,51 +89,104 @@ Proof
  EVAL_TAC
 QED
 
+Theorem chacha_quarter_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha_quarter_round_pre pre_a pre_b pre_c pre_d)
+  (bspec_chacha_quarter_round_pre pre_a pre_b pre_c pre_d)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha_quarter_round_pre_def,bspec_chacha_quarter_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
 Theorem chacha_line_riscv_post_imp_bspec_post_thm:
  !ls. bir_post_bir_to_riscv
    (riscv_chacha_line_post pre_a pre_b pre_d)
    (\l. (bspec_chacha_line_post pre_a pre_b pre_d))
    ls
 Proof
- rw [bir_post_bir_to_riscv_def,riscv_chacha_line_post_def,bspec_chacha_line_post_def] >>
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha_line_post_def] >>
+ once_rewrite_tac [bspec_chacha_line_post_def] >>
+ once_rewrite_tac [bspec_chacha_line_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
  Cases_on `bs` >>
  Cases_on `b0` >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
   bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
- ] >> 
- Q.ABBREV_TAC `g = ?z. f "x20" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
- fs [Abbrev_def] >>
- fs [] >>
- Cases_on `z` >> fs [type_of_bir_val_def] >>
+ ] >>
 
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ type_of_bir_val z = BType_Imm Bit64` >>
- Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
- fs [Abbrev_def] >>
- fs [] >>
- Cases_on `z` >> fs [type_of_bir_val_def] >>
+ rw [bir_eval_bin_pred_eq] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+ Cases_on `z` >> Cases_on `z'` >> fs [type_of_bir_val_def] >>
+
+ Cases_on `b'` >> Cases_on `b''` >> fs [type_of_bir_imm_def] >>
+
+ rw [riscv_chacha_line_post_def,riscv_chacha_line_exp_fst_def,riscv_chacha_line_exp_snd_def,GSYM w2w_n2w_w2n_64_32] >>
  
- FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_cast_def,bir_cast_def,bool2b_def,bool2w_def,b2n_def] >>
-
- Cases_on `b'` >> fs [type_of_bir_imm_def] >>
- 
- Cases_on `b''` >> fs [type_of_bir_imm_def] >>
- 
- fs [bir_val_true_def,b2n_def] >>
-
- Cases_on `n2w (w2n c) = pre_a + pre_b` >> fs [] >>
-
- Cases_on `n2w (w2n c') =
-           pre_a ≪ 16 + pre_b ≪ 16 ⊕ pre_d ≪ 16 ‖
-           pre_d ⋙ 16 ⊕ (pre_a + pre_b) ⋙ 16` >> fs [] >>
-
- rw [riscv_chacha_line_exp_fst_def,riscv_chacha_line_exp_snd_def] >>
-
- FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
   bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
- rw []
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
+
+Theorem chacha_quarter_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha_quarter_round_post pre_a pre_b pre_c pre_d)
+   (\l. (bspec_chacha_quarter_round_post pre_a pre_b pre_c pre_d))
+   ls
+Proof
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha_quarter_round_post_def] >>
+ once_rewrite_tac [bspec_chacha_quarter_round_post_def] >>
+ once_rewrite_tac [bspec_chacha_quarter_round_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
+ Cases_on `bs` >>
+ Cases_on `b0` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_eq] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+ Cases_on `z` >> Cases_on `z'` >>
+ Cases_on `z''` >> Cases_on `z'''` >>
+ fs [type_of_bir_val_def] >>
+
+ Cases_on `b'` >> Cases_on `b''` >>
+ Cases_on `b'''` >> Cases_on `b''''` >>
+ fs [type_of_bir_imm_def] >>
+
+ rw [riscv_chacha_quarter_round_post_def,riscv_chacha_quarter_round_exprs_def,
+  riscv_chacha_line_exp_fst_def,riscv_chacha_line_exp_snd_def,GSYM w2w_n2w_w2n_64_32] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
 QED
 
 (* --------------------- *)
