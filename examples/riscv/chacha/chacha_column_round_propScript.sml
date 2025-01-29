@@ -49,25 +49,6 @@ Proof
  rw []
 QED
 
-Theorem bir_eval_bin_pred_eq[local]:
- !f w reg.
- (bir_eval_bin_pred BIExp_Equal
-  (if (∃z. f reg = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z)
-  then f reg else NONE) (SOME (BVal_Imm (Imm64 w))) = SOME bir_val_true) <=>
- (f reg = SOME (BVal_Imm (Imm64 w)))
-Proof
- REPEAT STRIP_TAC >>
- Q.ABBREV_TAC `g = ?z. f reg' = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
- fs [Abbrev_def] >-
-  (Cases_on `z` >> fs [type_of_bir_val_def] >>
-   Cases_on `b` >> fs [type_of_bir_imm_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def] >>
-   Cases_on `c = w` >> fs [bir_val_true_def]) >>
- STRIP_TAC >>
- fs [type_of_bir_val_def,type_of_bir_imm_def]
-QED
-
 Theorem bir_eval_bin_pred_lowcast_eq[local]:
 !f w reg.
 (bir_eval_bin_pred BIExp_Equal
