@@ -417,10 +417,26 @@ Definition riscv_chacha_line_exp_fst_def:
   pre_a + pre_b
 End
 
+Definition riscv_chacha_line_exp_snd_spec_def:
+ riscv_chacha_line_exp_snd_spec pre_a pre_d (s:word32) : word32 =
+  (pre_a ?? pre_d) #<<~ s
+End
+
 Definition riscv_chacha_line_exp_snd_def:
  riscv_chacha_line_exp_snd pre_a pre_d (s:word32) : word32 =
   ((pre_a ?? pre_d) <<~ s) || ((pre_a ?? pre_d) >>>~ (32w - s))
 End
+
+Theorem riscv_chacha_line_exp_snd_spec_eq:
+!(a:word32) (d:word32) (s:word32). s <=+ 31w ==>
+ riscv_chacha_line_exp_snd_spec a d s = riscv_chacha_line_exp_snd a d s
+Proof
+ rw [
+  riscv_chacha_line_exp_snd_spec_def,
+  riscv_chacha_line_exp_snd_def,
+  replace_word_rol_bv_or_shifts  
+ ]
+QED
 
 Definition riscv_chacha_quarter_round_exprs_def:
  riscv_chacha_quarter_round_exprs pre_a pre_b pre_c pre_d
