@@ -57,9 +57,20 @@ in
    end;
 
   (* TODO: improve UNION operation to not compare all *)
-  val cheat_L_set = ``{<|bpc_label := BL_Label "cheated"; bpc_index := 0|>}``;
+  val cheat_L_lbl_set = ``{<|bpc_label := BL_Label "cheated"; bpc_index := 0|>}``;
+  val cheat_L_approx_set = ``bir_pc_set_lbls {BL_Label "cheated"}``;
   fun L_UNION_CONV tm =
-    if is_bir_pc_set_lbls (rand tm) then
+    if !compose_L_speedcheat then
+      let
+        val cheat_L_set =
+          if !birs_execLib.step_L_approximate then
+            cheat_L_approx_set
+          else
+            cheat_L_lbl_set;
+      in
+        aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_SEQ_L_SPEEDCHEAT" (mk_eq(tm, cheat_L_set))
+      end
+    else if is_bir_pc_set_lbls (rand tm) then
       if is_bir_pc_set_lbls ((rand o rator) tm) then
         ((*Profile.profile "zz_L_UNION_CONV_p1"*) (REWR_CONV birs_auxTheory.bir_pc_set_lbls_UNION_thm) THENC
          (*Profile.profile "zz_L_UNION_CONV_p2"*) (RAND_CONV (pred_setLib.UNION_CONV bir_label_EQ_CONV))) tm
@@ -67,8 +78,6 @@ in
         raise ERR "L_UNION_CONV" "either both or none of the label sets have to be bir_pc_set_lbls"
     else if is_bir_pc_set_lbls ((rand o rator) tm) then
       raise ERR "L_UNION_CONV" "either both or none of the label sets have to be bir_pc_set_lbls"
-    else if !compose_L_speedcheat then
-      aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_SEQ_L_SPEEDCHEAT" (mk_eq(tm, cheat_L_set))
     else
       pred_setLib.UNION_CONV bir_pc_EQ_CONV tm;
 
