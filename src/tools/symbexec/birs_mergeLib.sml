@@ -274,7 +274,14 @@ in (* local *)
       val (_,exp) = get_env_top_mapping env;
     in
       birs_Pi_first_forget_RULE_subst symbname exp thm
-    end
+    end;
+
+  fun birs_Pi_first_env_top_mapping_forget thm =
+    let
+      val symbname = get_freesymb_name ();
+    in
+      birs_Pi_first_forget_RULE symbname thm
+    end;
 
 (* ---------------------------------------------------------------------------------------- *)
 
