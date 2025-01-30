@@ -8,6 +8,7 @@ open HolKernel Parse boolLib bossLib;
 open bir_typing_expTheory;
 open bir_typing_expSyntax;
 open birsSyntax;
+open birs_utilsLib;
 
 open HolBACoreSimps;
 
@@ -24,16 +25,45 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (*  variables of bir expressions                                                      *)
 (* ---------------------------------------------------------------------------------- *)
-  (* TODO: can probably speed this up by extending the caching into the evaluation of variables subexpressions, like in the function type_of_bir_exp_DIRECT_CONV,
-       but only relevant for handling of bigger expressions *)
+
+  (* here apply only one "unfolding" and get empty or singleton sets, or one or two UNION operations, left-associative *)
+  local
+    val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[birs_auxTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
+    fun bir_vars_of_exp_rec_CONV f_rec tm =
+      let
+        open pred_setSyntax;
+        val t1 = REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm] tm;
+        val t2 = CONV_RULE (RAND_CONV (
+        birs_auxLib.GEN_match_conv is_bir_vars_of_exp (f_rec))) t1;
+        val union_conv =
+          (aux_setLib.varset_UNION_CONV);
+        val t2_rhs = (rhs o concl) t2;
+        val t3 =
+          if is_union (t2_rhs) then
+            if is_union ((fst o dest_union) t2_rhs) then
+              CONV_RULE (RAND_CONV (LAND_CONV union_conv THENC union_conv)) t2
+            else
+              CONV_RULE (RAND_CONV union_conv) t2
+          else
+            t2;
+      in
+        t3
+      end;
+  in
+    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("bir_vars_of_exp_wrapped_CONV") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
+  end;
+
   fun bir_vars_of_exp_DIRECT_CONV tm =
     let
      val _ = if is_bir_vars_of_exp tm then () else
                raise ERR "bir_vars_of_exp_DIRECT_CONV" "cannot handle term";
     in
-      (SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL) tm
+      (*(SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL)*)
+      bir_vars_of_exp_wrapped_CONV tm
+      handle e => (print_term tm; print "\n\n"; raise e)
     end;
-  val bir_vars_of_exp_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare bir_vars_of_exp_DIRECT_CONV;
+  (*val bir_vars_of_exp_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare bir_vars_of_exp_DIRECT_CONV;*)
+  val bir_vars_of_exp_DIRECT_CONV = Profile.profile "bir_vars_of_exp_DIRECT_CONV" bir_vars_of_exp_DIRECT_CONV;
 
   val bir_vars_of_exp_CONV =
     birs_auxLib.GEN_match_conv (is_bir_vars_of_exp) bir_vars_of_exp_DIRECT_CONV;
@@ -45,7 +75,7 @@ in (* local *)
     in
       (strip_set o snd o dest_eq o concl) thm
     end
-    handle _ => raise ERR "get_vars_of_bexp" "did not work";
+    handle _ => (print_term tm; print "\n\n"; raise ERR "get_vars_of_bexp" "did not work");
 
 (* ---------------------------------------------------------------------------------- *)
 (*  symbols of set of symbolic states                                                 *)
@@ -63,128 +93,69 @@ in (* local *)
   *)
 
   (* ................................................ *)
-
-  fun string_in_set_CONV tm =
-  (
-    REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY] THENC
-    REPEATC (CHANGED_CONV ((fn xyz => REWRITE_CONV [Once pred_setTheory.IN_INSERT] xyz) THENC
-      IFC
-        (RATOR_CONV EVAL)
-        (BETA_CONV THENC REWRITE_CONV [pred_setTheory.NOT_IN_EMPTY])
-        REFL))
-  ) tm;
-
-  fun birs_exps_of_senv_COMP_ONCE_CONV tm =
-  (
-    (QCHANGED_CONV (CHANGED_CONV (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x))) THENC
+  val birs_exps_of_senv_COMP_ONCE_CONV =
+    (*
+    (* this implementation of birs_exps_of_senv_COMP_ONCE_CONV works fine, but not as speedy as the one below *)
+    (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
+    (TRY_CONV (ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
+    *)
     IFC
-      (RATOR_CONV (RATOR_CONV (RAND_CONV (string_in_set_CONV))))
-      (REWRITE_CONV [])
-      (REFL)
+      (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
+      (ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
+      (IFC
+        (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
+        (ALL_CONV)
+        (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm)));
+
+  fun birs_exps_of_senv_COMP_CONV tm = (
+    birs_exps_of_senv_COMP_ONCE_CONV THENC
+    (fn tm_ => (
+      if pred_setSyntax.is_empty tm_ then
+        ALL_CONV
+      else if pred_setSyntax.is_insert tm_ then
+        RAND_CONV birs_exps_of_senv_COMP_CONV
+      else
+        birs_exps_of_senv_COMP_CONV
+    ) tm_)
   ) tm;
 
-  (* TODO: add proper exceptions/exception messages if the unexpected happens... *)
-  fun birs_exps_of_senv_COMP_CONV_cheat tm =
-    let
-      val (s1, s2_l) = strip_comb tm;
-      val _ = if ((fst o dest_const) s1) = "birs_exps_of_senv_COMP" then () else
-              raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "constant not found";
-      val _ = if length s2_l = 2 then () else
-              raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "application not right";
-      val initvarset = List.nth(s2_l, 0);
-      val _ = if pred_setSyntax.is_empty initvarset then () else
-              raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "must start with empty set";
+  val birs_exps_of_senv_CONV =
+    REWRITE_CONV [birs_gen_env_thm, birs_gen_env_NULL_thm] THENC
+    REWR_CONV birs_exps_of_senv_thm THENC
+    birs_exps_of_senv_COMP_CONV;
 
-      val tm_map = List.nth(s2_l, 1);
-
-      fun eq_fun tm1 tm2 = tm1 = tm2;
-      fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
-
-      val base_term = ``(K NONE):string -> bir_exp_t option``;
-      fun collectfun excl acc tm_map =
-        if identical tm_map base_term then acc else
-        if not (combinSyntax.is_update_comb tm_map) then raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "should not happen" else
-        let
-          val ((mem_upd_k, mem_upd_v), tm_map_sub) = combinSyntax.dest_update_comb tm_map;
-          val mem_upd_v_v = optionSyntax.dest_some mem_upd_v;
-          val mem_upd_k_s = stringSyntax.fromHOLstring mem_upd_k;
-          val k_s_is_excl = in_f excl mem_upd_k_s;
-          val new_acc  = if k_s_is_excl then (acc)  else ([mem_upd_v_v]@acc);
-          val new_excl = if k_s_is_excl then (excl) else ([mem_upd_k_s]@excl);
-        in
-          collectfun new_excl new_acc tm_map_sub
-        end;
-
-  (*
-      val s1_l = pred_setSyntax.strip_set s1;
-      val s2_l = pred_setSyntax.strip_set s2;
-  List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
-  *)
-
-      val l = collectfun [] [] tm_map;
-      val tm_l_set = if List.null l then pred_setSyntax.mk_empty(``:bir_exp_t``) else pred_setSyntax.mk_set l;
-    in
-      mk_oracle_thm "FISHY_BIRS_BIR_SENV_VARSET" ([], mk_eq (tm, tm_l_set))
-    end;
-
-  fun birs_exps_of_senv_COMP_CONV_norm tm =
-  (
-  (*(fn tm => (if false then print ".\n" else print_term tm; REFL tm)) THENC*)
-  (* (fn tm => (if true then print ".\n" else print_term tm; REFL tm)) THENC *)
-  (*
-    if pred_setSyntax.is_empty tm then
-      REFL
-    else
-  *)
-    IFC
-      (birs_exps_of_senv_COMP_ONCE_CONV)
-      (TRY_CONV (fn tm => (
-        if pred_setSyntax.is_empty tm then
-          REFL
-        else if pred_setSyntax.is_insert tm then
-          RAND_CONV birs_exps_of_senv_COMP_CONV_norm
-        else
-          birs_exps_of_senv_COMP_CONV_norm
-      ) tm))
-      (fn tm => (print_term tm; raise Fail "unexpected here: birs_exps_of_senv_COMP_CONV_norm"))
-  ) tm;
-
-  val speedcheat_expsofenv = ref false;
-  val birs_exps_of_senv_COMP_CONV =
-    if !speedcheat_expsofenv then
-      birs_exps_of_senv_COMP_CONV_cheat
-    else
-      birs_exps_of_senv_COMP_CONV_norm;
-
-
-  fun birs_exps_of_senv_CONV tm =
-  (
-  (*
-  (fn tm => (if false then print ".\n" else print_term tm; REFL tm)) THENC
-  *)
-    REWRITE_CONV [birs_exps_of_senv_thm] THENC
-    ((*TRY_CONV*) birs_exps_of_senv_COMP_CONV)
-  ) tm;
-
-  fun birs_symb_symbols_DIRECT_CONV tm =
-    if not (is_birs_symb_symbols tm) then
-      raise ERR "birs_symb_symbols_DIRECT_CONV" "cannot handle term"
-    else
+  val birs_symb_symbols_DIRECT_CONV =
     (
-      SIMP_CONV std_ss [birs_gen_env_thm, birs_gen_env_NULL_thm] THENC
-      SIMP_CONV (std_ss++birs_state_ss) [birs_symb_symbols_thm] THENC
+      REWR_CONV birs_symb_symbols_thm THENC
 
-      birs_auxLib.GEN_match_conv is_birs_exps_of_senv birs_exps_of_senv_CONV THENC
-
-      REWRITE_CONV [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] THENC
-      bir_vars_of_exp_CONV THENC
-
+      (RAND_CONV (
+        REWRITE_CONV [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] THENC
+        bir_vars_of_exp_DIRECT_CONV
+      )) THENC
+      RATOR_CONV (RAND_CONV (
+        RAND_CONV (
+          RAND_CONV (
+            REWRITE_CONV [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] THENC
+            birs_exps_of_senv_CONV
+          ) THENC
+          (pred_setLib.IMAGE_CONV
+            bir_vars_of_exp_DIRECT_CONV
+            NO_CONV)) THENC
+        (aux_setLib.varset_BIGUNION_CONV)
+      )) THENC
+      (aux_setLib.varset_UNION_CONV)
+      (*
+      (* basic solution for flattening the set and avoid comparisons *)
       RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
-
       REWRITE_CONV [Once pred_setTheory.UNION_COMM] THENC
       REWRITE_CONV [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]
-    ) tm;
+      *)
+    ) o (fn tm =>
+      if is_birs_symb_symbols tm then tm else
+        raise ERR "birs_symb_symbols_DIRECT_CONV" "cannot handle term"
+    );
   val birs_symb_symbols_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_DIRECT_CONV;
+  val birs_symb_symbols_DIRECT_CONV = Profile.profile "birs_symb_symbols_DIRECT_CONV" birs_symb_symbols_DIRECT_CONV;
 
   val birs_symb_symbols_CONV =
     birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV;
@@ -193,21 +164,21 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (*  symbols of set of symbolic bir states                                             *)
 (* ---------------------------------------------------------------------------------- *)
-  fun birs_symb_symbols_set_DIRECT_CONV tm =
-    if not (is_birs_symb_symbols_set tm) then
-      raise ERR "birs_symb_symbols_set_DIRECT_CONV" "cannot handle term"
-    else
+  val birs_symb_symbols_set_DIRECT_CONV =
     (
-      REWRITE_CONV [
-        birs_rulesTheory.birs_symb_symbols_set_def,
-        pred_setTheory.IMAGE_INSERT,
-        pred_setTheory.IMAGE_EMPTY] THENC
-      birs_symb_symbols_CONV THENC
-      (* now have A UNION B UNION C UNION ... *)
-
+      REWR_CONV birs_rulesTheory.birs_symb_symbols_set_def THENC
+      RAND_CONV (
+        pred_setLib.IMAGE_CONV
+          birs_symb_symbols_DIRECT_CONV
+          NO_CONV) THENC
+      (* now have BIGUNION {setA;setB;setC;...} *)
       aux_setLib.varset_BIGUNION_CONV
-    ) tm;
+    ) o (fn tm =>
+      if is_birs_symb_symbols_set tm then tm else
+        raise ERR "birs_symb_symbols_set_DIRECT_CONV" "cannot handle term"
+    );
   val birs_symb_symbols_set_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_set_DIRECT_CONV;
+  val birs_symb_symbols_set_DIRECT_CONV = Profile.profile "birs_symb_symbols_set_DIRECT_CONV" birs_symb_symbols_set_DIRECT_CONV;
 
   val birs_symb_symbols_set_CONV =
     birs_auxLib.GEN_match_conv is_birs_symb_symbols_set birs_symb_symbols_set_DIRECT_CONV;
@@ -216,17 +187,18 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 (*  free symbols of execution structure (sys, L, Pi)                                  *)
 (* ---------------------------------------------------------------------------------- *)
-  fun birs_freesymbs_DIRECT_CONV tm =
-    if not (is_birs_freesymbs tm) then
-      raise ERR "birs_freesymbs_DIRECT_CONV" "cannot handle term"
-    else
+  val birs_freesymbs_DIRECT_CONV =
     (
-      REWRITE_CONV [birs_rulesTheory.birs_freesymbs_def] THENC
+      REWR_CONV birs_rulesTheory.birs_freesymbs_def THENC
       LAND_CONV (birs_symb_symbols_set_DIRECT_CONV) THENC
       RAND_CONV (birs_symb_symbols_DIRECT_CONV) THENC
       aux_setLib.varset_DIFF_CONV
-    ) tm;
+    ) o (fn tm =>
+      if is_birs_freesymbs tm then tm else
+        raise ERR "birs_freesymbs_DIRECT_CONV" "cannot handle term"
+    );
   val birs_freesymbs_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_freesymbs_DIRECT_CONV;
+  val birs_freesymbs_DIRECT_CONV = Profile.profile "birs_freesymbs_DIRECT_CONV" birs_freesymbs_DIRECT_CONV;
 
   val birs_freesymbs_CONV =
     birs_auxLib.GEN_match_conv is_birs_freesymbs birs_freesymbs_DIRECT_CONV;

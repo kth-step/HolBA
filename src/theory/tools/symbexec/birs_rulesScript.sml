@@ -367,7 +367,7 @@ Proof
 QED
 
 Theorem birs_rule_SUBST_thm:
-  !prog bs L bs2 bs2' lbl envl status pcond vn symbexp symbexp' Pi.
+  !prog bs2 bs2' bs L lbl status pcond envl vn symbexp Pi symbexp'.
            (bs2 =
              <|bsst_pc := lbl;
                bsst_environ := birs_gen_env ((vn, symbexp)::envl);
@@ -401,7 +401,7 @@ Proof
 QED
 
 Theorem birs_rule_SUBST_spec_thm:
-  !prog bs L bs2 bs2' lbl envl status pcond vn symbexp symbexp'.
+  !prog bs2 bs2' bs L lbl status pcond envl vn symbexp symbexp'.
            (bs2 =
              <|bsst_pc := lbl;
                bsst_environ := birs_gen_env ((vn, symbexp)::envl);

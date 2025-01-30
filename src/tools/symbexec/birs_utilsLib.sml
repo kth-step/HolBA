@@ -55,6 +55,92 @@ in (* local *)
 
 (* ---------------------------------------------------------------------------------------- *)
 
+  fun TRY_LIST_REWR_CONV [] _ = raise UNCHANGED
+    | TRY_LIST_REWR_CONV (rw_thm::rw_thms) tm =
+        REWR_CONV rw_thm tm
+        handle _ => TRY_LIST_REWR_CONV rw_thms tm;
+
+  (* eliminate left conjuncts first *)
+  val CONJL_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (LAND_CONV lconv) THENC
+      (fn tm =>
+        if (identical T o fst o dest_conj) tm then
+          (REWR_CONV thm_T THENC rconv) tm
+        else
+          (REWR_CONV thm_F) tm)
+    end;
+  (* eliminate right conjuncts first *)
+  val CONJR_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (RAND_CONV rconv) THENC
+      (fn tm =>
+        if (identical T o snd o dest_conj) tm then
+          (REWR_CONV thm_T THENC lconv) tm
+        else
+          (REWR_CONV thm_F) tm)
+    end;
+
+  (* eliminate left disjuncts first *)
+  val DISJL_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (LAND_CONV rconv) THENC
+      (fn tm =>
+        if (identical F o fst o dest_disj) tm then
+          (REWR_CONV thm_F THENC lconv) tm
+        else
+          (REWR_CONV thm_T) tm)
+    end;
+  (* eliminate right disjuncts first *)
+  val DISJR_CONV =
+    let
+      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
+    in
+      fn lconv => fn rconv =>
+      (RAND_CONV rconv) THENC
+      (fn tm =>
+        if (identical F o snd o dest_disj) tm then
+          (REWR_CONV thm_F THENC lconv) tm
+        else
+          (REWR_CONV thm_T) tm)
+    end;
+  
+  fun NEG_CONV conv =
+    RAND_CONV conv THENC
+    REWRITE_CONV [boolTheory.NOT_CLAUSES];
+
+  local
+    val thm_T = (CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES;
+    val thm_F = (CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES;
+    fun get_cond_c tm =
+      let val (c,_,_) = dest_cond tm;
+      in c end;
+    fun clean_conv tm =
+      if (identical T o get_cond_c) tm then
+        REWR_CONV thm_T tm
+      else
+        REWR_CONV thm_F tm;
+  in
+    fun ITE_CONV conv =
+      RATOR_CONV (RATOR_CONV (RAND_CONV conv)) THENC
+      clean_conv;
+  end
+
+(* ---------------------------------------------------------------------------------------- *)
+
   (* get all mapped variable names *)
   fun birs_env_varnames birs_tm =
     let
@@ -175,7 +261,7 @@ in (* local *)
   end
 
 (* ---------------------------------------------------------------------------------------- *)
-
+  (*
   val birs_exp_imp_DROP_R_thm = prove(``
     !be1 be2.
     birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be1
@@ -213,6 +299,7 @@ in (* local *)
       else
         NONE
     end;
+  *)
 
   (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
   fun birs_Pi_first_pcond_RULE pcond_new thm =
@@ -233,10 +320,12 @@ in (* local *)
       val _ = holba_z3Lib.debug_print := true;
       val _ = print "sending a z3 query\n";
       *)
+      (*
       val pcond_drop_ok = isSome (is_DROP_R_imp imp_tm) orelse
                           isSome (is_DROP_L_imp imp_tm) orelse
                           isSome (is_conjunct_inclusion_imp imp_tm);
-      val pcond_imp_ok = pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)
+      *)
+      val pcond_imp_ok = (*pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)*)
                          isSome (check_imp_tm imp_tm);
       val _ = if pcond_imp_ok then () else
               (print "widening failed, path condition is not weaker\n";

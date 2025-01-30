@@ -1,0 +1,4 @@
+INCLUDES = $(HOLBADIR)/src/shared/l3-machine-code/riscv/model
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

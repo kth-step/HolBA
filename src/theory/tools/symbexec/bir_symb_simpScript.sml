@@ -294,6 +294,14 @@ Proof
   subexpression_simp_TAC
 QED
 
+Theorem birs_simplification_And_left_thm:
+  !pcond symbexp1 symbexp1' symbexp2.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_BinExp BIExp_And symbexp1 symbexp2) (BExp_BinExp BIExp_And symbexp1' symbexp2))
+Proof
+  subexpression_simp_TAC
+QED
+
 Theorem birs_simplification_Minus_left_thm:
   !pcond symbexp1 symbexp1' symbexp2.
   (birs_simplification pcond symbexp1 symbexp1') ==>
@@ -926,11 +934,14 @@ end;
 
 Theorem birs_simplification_Mem_Match_32_8_thm = LIST_CONJ [
   gen_birs_simplification_Mem_Match_prove 32 8 8,
+  gen_birs_simplification_Mem_Match_prove 32 8 16,
   gen_birs_simplification_Mem_Match_prove 32 8 32
+  (* TODO: should probably add 64 bit values here too *)
 ];
 
 Theorem birs_simplification_Mem_Match_64_8_thm = LIST_CONJ [
   gen_birs_simplification_Mem_Match_prove 64 8 8,
+  gen_birs_simplification_Mem_Match_prove 64 8 16,
   gen_birs_simplification_Mem_Match_prove 64 8 32,
   gen_birs_simplification_Mem_Match_prove 64 8 64
 ];
@@ -1423,22 +1434,35 @@ fun gen_simp_mem_bypass_thm memadsz memvalsz ldsz stsz =
 
 
 Theorem birs_simplification_Mem_Bypass_32_8_thm = LIST_CONJ [
+  gen_simp_mem_bypass_thm 32 8 8  8,
+  gen_simp_mem_bypass_thm 32 8 8  16,
+  gen_simp_mem_bypass_thm 32 8 8  32,
+  gen_simp_mem_bypass_thm 32 8 16 8,
+  gen_simp_mem_bypass_thm 32 8 16 16,
+  gen_simp_mem_bypass_thm 32 8 16 32,
   gen_simp_mem_bypass_thm 32 8 32 8,
-  gen_simp_mem_bypass_thm 32 8 32 32,
-  gen_simp_mem_bypass_thm 32 8 8 8,
-  gen_simp_mem_bypass_thm 32 8 8 32
+  gen_simp_mem_bypass_thm 32 8 32 16,
+  gen_simp_mem_bypass_thm 32 8 32 32
+  (* TODO: should probably add 64 bit values here too *)
 ];
 
 Theorem birs_simplification_Mem_Bypass_64_8_thm = LIST_CONJ [
-  gen_simp_mem_bypass_thm 64 8 64 8,
-  gen_simp_mem_bypass_thm 64 8 64 64,
-  gen_simp_mem_bypass_thm 64 8 8 8,
-  gen_simp_mem_bypass_thm 64 8 8 64,
-  gen_simp_mem_bypass_thm 64 8 8 32,
-  gen_simp_mem_bypass_thm 64 8 32 32,
+  gen_simp_mem_bypass_thm 64 8 8  8,
+  gen_simp_mem_bypass_thm 64 8 8  16,
+  gen_simp_mem_bypass_thm 64 8 8  32,
+  gen_simp_mem_bypass_thm 64 8 8  64,
+  gen_simp_mem_bypass_thm 64 8 16 8,
+  gen_simp_mem_bypass_thm 64 8 16 16,
+  gen_simp_mem_bypass_thm 64 8 16 32,
+  gen_simp_mem_bypass_thm 64 8 16 64,
   gen_simp_mem_bypass_thm 64 8 32 8,
+  gen_simp_mem_bypass_thm 64 8 32 16,
+  gen_simp_mem_bypass_thm 64 8 32 32,
+  gen_simp_mem_bypass_thm 64 8 32 64,
+  gen_simp_mem_bypass_thm 64 8 64 8,
+  gen_simp_mem_bypass_thm 64 8 64 16,
   gen_simp_mem_bypass_thm 64 8 64 32,
-  gen_simp_mem_bypass_thm 64 8 32 64
+  gen_simp_mem_bypass_thm 64 8 64 64
 ];
 
 val _ = export_theory();

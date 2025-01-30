@@ -374,7 +374,7 @@ Theorem bir_vars_of_exp_LIST_thm:
   !e x.
   MEM x (bir_vars_of_exp_LIST e) <=> x IN (bir_vars_of_exp e)
 Proof
-Induct_on `e` >> (
+  Induct_on `e` >> (
     FULL_SIMP_TAC (std_ss++LIST_ss++PRED_SET_ss)
       [bir_vars_of_exp_def, bir_vars_of_exp_LIST_def, APPEND_distinct_thm]
   )
@@ -393,10 +393,25 @@ Theorem birs_senv_typecheck_thm:
   !e senv.
   birs_senv_typecheck e senv <=> bir_envty_includes_vs (birs_envty_of_senv senv) (bir_vars_of_exp e)
 Proof
-REWRITE_TAC
+  REWRITE_TAC
     [birs_senv_typecheck_def, bir_envty_includes_vs_def,
      birs_envty_of_senv_def, bir_envty_includes_v_def, EVERY_MEM, bir_vars_of_exp_LIST_thm] >>
   METIS_TAC []
+QED
+
+Theorem bir_envty_includes_v_senv_gen_env_thm:
+  !v l.
+  bir_envty_includes_v (birs_envty_of_senv (birs_gen_env l)) v =
+    (OPTION_BIND (birs_gen_env l (bir_var_name v)) type_of_bir_exp = SOME (bir_var_type v))
+Proof
+  fs[birs_envty_of_senv_def, bir_envty_includes_v_def]
+QED
+
+Theorem bir_envty_includes_vs_EMPTY:
+  !envty.
+  bir_envty_includes_vs envty EMPTY
+Proof
+  fs[bir_envty_includes_vs_def]
 QED
 
 Theorem birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm:
@@ -404,7 +419,7 @@ Theorem birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm:
   (birs_senv_typecheck e senv) ==>
   (type_of_bir_exp (birs_eval_exp_subst e senv) = type_of_bir_exp e)
 Proof
-SIMP_TAC std_ss [birs_eval_exp_subst_ALT_thm, birs_eval_exp_subst_ALT_def] >>
+  SIMP_TAC std_ss [birs_eval_exp_subst_ALT_thm, birs_eval_exp_subst_ALT_def] >>
 
   REPEAT STRIP_TAC >>
   `FEVERY

@@ -275,6 +275,7 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
 fun m0_reorder_bytes false (b1::b2::bs) =
       b2::b1::(m0_reorder_bytes false bs)
   | m0_reorder_bytes _ l = l
+fun m0_reorder_bytes_data ef = if ef then I else List.rev;
 
 local
   val addr_ty = fcpLib.index_type (Arbnum.fromInt 32);
@@ -285,7 +286,7 @@ fun m0_mk_data_mm ef mem_loc hex_code =
   let
     val ml_tm =
       wordsSyntax.mk_n2w (numSyntax.mk_numeral mem_loc, addr_ty)
-    val bytes = m0_reorder_bytes ef (bytes_of_hex_code hex_code)
+    val bytes = m0_reorder_bytes_data ef (bytes_of_hex_code hex_code)
     val _ = if (length bytes = 2) orelse (length bytes = 4)
             then ()
             else failwith "invalid hex-code";
@@ -449,6 +450,7 @@ val _ = assert bmr_rec_sanity_check (m0_bmr_rec_LittleEnd_Main)
 fun m0_mod_reorder_bytes false (b1::b2::bs) =
     b2::b1::(m0_mod_reorder_bytes false bs)
   | m0_mod_reorder_bytes _ l = l
+fun m0_mod_reorder_bytes_data ef = if ef then I else List.rev;
 
 local
   val addr_ty = fcpLib.index_type (Arbnum.fromInt 32);
@@ -458,7 +460,7 @@ in
 
 fun m0_mod_mk_data_mm ef mem_loc hex_code = let
   val ml_tm = wordsSyntax.mk_n2w (numSyntax.mk_numeral mem_loc, addr_ty)
-  val bytes = m0_mod_reorder_bytes ef (bytes_of_hex_code hex_code)
+  val bytes = m0_mod_reorder_bytes_data ef (bytes_of_hex_code hex_code)
   val _ = if (length bytes = 2) orelse (length bytes = 4) then () else failwith "invalid hex-code";
   val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
 in
@@ -619,7 +621,8 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
 (* Type rewrites as a list of theorems (ARM8 also had rewrites
  * for ``:ProcState``)... *)
 val riscv_REWRS = (
-  (type_rws ``:riscv_state``)
+  (type_rws ``:riscv_state``)@
+  (type_rws ``:MachineCSR``)
 );
 
 (* ... and as a simplification set. *)

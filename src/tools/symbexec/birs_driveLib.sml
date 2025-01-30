@@ -108,6 +108,15 @@ in (* local *)
   fun build_tree exec_funs st =
     (birs_check_state_norm ("build_tree", "") st;
      build_tree_rec exec_funs (take_step exec_funs st));
+  (*
+  val build_tree = fn (fetch, step_SING, step, is_continue) =>
+    build_tree
+      (Profile.profile "build_tree_fetch" fetch,
+       Profile.profile "build_tree_step_SING" step_SING,
+       Profile.profile "build_tree_step" step,
+       is_continue);
+  *)
+    
 
   fun exec_until (exec_funs, comp_fun) =
     (Profile.profile "reduce_tree" (reduce_tree comp_fun)) o
@@ -119,12 +128,13 @@ in (* local *)
     let
       open birs_execLib;
 
+      val has_no_halt_thm =
+        birs_auxLib.get_prog_no_halt_thm bprog_tm;
+
       val birs_rule_STEP_thm =
-        birs_rule_STEP_prog_fun
-          (Profile.profile "bir_prog_has_no_halt_fun" bir_prog_has_no_halt_fun bprog_tm);
+        birs_rule_STEP_prog_fun has_no_halt_thm;
       val birs_rule_STEP_SEQ_thm = MATCH_MP
-        birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm
-        (bir_prog_has_no_halt_fun bprog_tm);
+        birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm has_no_halt_thm;
       val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
       val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
 
