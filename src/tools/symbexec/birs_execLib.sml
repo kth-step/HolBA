@@ -215,7 +215,7 @@ in
         val simp_t_o = Option.map (fn assignment_thm =>
           let
             val simp_tm = (fst o dest_imp o snd o dest_forall o concl) assignment_thm;
-            val simp_t = birs_simp_fun simp_tm;
+            val simp_t = birs_simpLib.simp_try_apply_gen birs_simp_fun simp_tm;
           in
             (*postproc*) (combine_simp_t assignment_thm simp_t)
           end) assignment_thm_o;

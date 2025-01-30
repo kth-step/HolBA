@@ -350,6 +350,22 @@ Proof
   subexpression_simp_TAC
 QED
 
+Theorem birs_simplification_Store_val_thm:
+  !pcond symbexp1 symbexp1' bme bade en.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_Store bme bade en symbexp1) (BExp_Store bme bade en symbexp1'))
+Proof
+  subexpression_simp_TAC
+QED
+
+Theorem birs_simplification_Store_mem_thm:
+  !pcond symbexp1 symbexp1' bme bad en bve.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_Store symbexp1 bad en bve) (BExp_Store symbexp1' bad en bve))
+Proof
+  subexpression_simp_TAC
+QED
+
 
 
 

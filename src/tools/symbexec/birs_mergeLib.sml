@@ -337,39 +337,39 @@ in (* local *)
 
   local
     val bir_exp_t_tm = ``BExp_Const (Imm1 1w)``;
-    fun addresses_are_equal a1 a2 =
+    fun addresses_are_equal pcond a1 a2 =
       let
-        val imp_tm = birsSyntax.mk_birs_exp_imp (bir_exp_t_tm, bslSyntax.beq (a1, a2));
+        val imp_tm = birsSyntax.mk_birs_exp_imp (pcond, bslSyntax.beq (a1, a2));
         val ad_is_eq = isSome (birs_utilsLib.check_imp_tm imp_tm);
       in
         (*identical a1 a2*)
         ad_is_eq
       end;
-    fun get_store_v (_, _, expv) = expv;
-    fun get_store_ad (expad,_,_) = expad;
-    fun update_store_ad expad (_, endi, expv) = (expad, endi, expv);
     (* TODO: better reuse stores_match in birs_simp_instancesLib,
           for example, here is no type-check that would be required for soundness *)
-    fun is_same_loc_store (expad, endi, _) (expad2, endi2, _) =
+    fun is_same_loc_store pcond (expad, endi, _) (expad2, endi2, _) =
       if not (identical endi endi2) then raise ERR "is_same_loc_store" "should be same endianness everywhere" else
-      addresses_are_equal expad expad2;
+      addresses_are_equal pcond expad expad2;
     fun exp_to_mem_ld_sz expv = (bir_valuesSyntax.dest_BType_Imm o bir_exp_typecheckLib.get_type_of_bexp) expv
           handle _ => raise ERR "unify_stores_foldfun" "couldn't get type of stored expression";
     fun mk_empty_store mexp (expad, endi, expv) = (expad, endi, bir_expSyntax.mk_BExp_Load (mexp, expad, endi, exp_to_mem_ld_sz expv));
+    fun get_store_v (_, _, expv) = expv;
+    fun get_store_ad (expad,_,_) = expad;
+    fun update_store_ad expad (_, endi, expv) = (expad, endi, expv);
 
     fun unify_stores_clear stores =
       if List.null stores then [] else
       let
         val hstore = List.hd stores;
-        val store = List.last (List.filter (is_same_loc_store hstore) stores);
+        val store = List.last (List.filter (is_same_loc_store bir_exp_t_tm hstore) stores);
       in
-        store::(unify_stores_clear (List.filter (not o is_same_loc_store hstore) stores))
+        store::(unify_stores_clear (List.filter (not o is_same_loc_store bir_exp_t_tm hstore) stores))
       end;
 
     fun unify_stores_foldfun mexp (store, (stores2, stores1_new, stores2_new)) =
       let
         val store2 =
-          case List.filter (is_same_loc_store store) stores2 of
+          case List.filter (is_same_loc_store bir_exp_t_tm store) stores2 of
               [] => mk_empty_store mexp store
             | [x] => x
             | _ => raise ERR "unify_stores_foldfun" "multiple stores with the same address";
@@ -381,7 +381,7 @@ in (* local *)
         val store_ = update_store_ad store_ad store;
         val store2_ = update_store_ad store_ad store2;
       in
-        (List.filter (not o is_same_loc_store store) stores2, store_::stores1_new, store2_::stores2_new)
+        (List.filter (not o is_same_loc_store bir_exp_t_tm store) stores2, store_::stores1_new, store2_::stores2_new)
       end;
   in
     fun unify_stores mexp stores1 stores2 =
@@ -420,7 +420,7 @@ in (* local *)
   end
 
 
-fun print_mem_exp mem_exp =
+fun print_mem_exp cutoff_size mem_exp =
   let
     (*val _ = print_term mem_exp;*)
     val (mexp, stores) = birs_simp_instancesLib.dest_BExp_Store_list mem_exp [];
@@ -429,11 +429,11 @@ fun print_mem_exp mem_exp =
       let
         val expad_s = term_to_string expad;
         val expv_s = term_to_string expv;
-        val expv_s = if String.size expv_s > 100 then "(...)["^Int.toString(String.size expv_s)^"]" else expv_s;
-        val _ = print ("  " ^ expad_s ^ "\n    -> " ^ expv_s ^ "\n");
+        val expv_s = if String.size expv_s > cutoff_size then "(...)" else expv_s;
+        val _ = print ("@" ^ expad_s ^ "\n---------->\n["^Int.toString(String.size expv_s)^"]" ^ expv_s ^ "\n...................................\n");
       in () end;
     val _ = map (print_store) stores;
-    val _ = print ("]\n");
+    val _ = print ("\n]\n");
   in () end;
 
   fun birs_simplify_top_mapping exp exp_new thm =
