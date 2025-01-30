@@ -248,6 +248,7 @@ in (* local *)
       forget_thm
     end
 
+  (*
   local
     (* replace subexp in exp by subexp' *)
     fun substexp subexp' subexp exp =
@@ -261,9 +262,11 @@ in (* local *)
            substexp subexp' subexp x)
       end;
   in
+    (* NOTE: this one is quite crude, might cause problems if used *)
     fun birs_Pi_first_forget_RULE_subst symbname exp_tm =
       birs_Pi_first_forget_RULE_gen symbname exp_tm substexp;
   end
+  *)
 
   fun birs_Pi_first_forget_RULE symbname thm =
     let
@@ -272,8 +275,10 @@ in (* local *)
       val Pi_sys_tm = (get_birs_Pi_first o concl) thm;
       val (_,env,_,pcond) = dest_birs_state Pi_sys_tm;
       val (_,exp) = get_env_top_mapping env;
+      (* replacefun subexp_new subexp_old exp_old = exp_new *)
+      fun replacefun symb_den_exp _ _ = symb_den_exp;
     in
-      birs_Pi_first_forget_RULE_subst symbname exp thm
+      birs_Pi_first_forget_RULE_gen symbname exp replacefun thm
     end;
 
   fun birs_Pi_first_env_top_mapping_forget thm =
@@ -296,6 +301,7 @@ in (* local *)
       (birs_Pi_first_forget_RULE symbname o birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE symbname) thm
     end;
 
+  (*
   fun birs_Pi_first_env_top_mapping_merge_fold ((exp1,exp2), thm) =
     let
       val symbname = get_freesymb_name ();
@@ -303,6 +309,7 @@ in (* local *)
       (birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_subst symbname exp2 o
        birs_Pi_rotate_two_RULE o birs_Pi_first_forget_RULE_subst symbname exp1) thm
     end;
+  *)
 
   local
     fun updatestore upd_m upd_v s =
