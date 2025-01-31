@@ -38,9 +38,9 @@ val use_stack = true;
 val debug_print = ref false;
 fun kill_z3proc z3p =
   let
-    val _ = endmeexit z3p;
     val _ = z3proc_o := NONE;
     val _ = z3proc_bin_o := NONE;
+    val _ = endmeexit z3p;
   in
     ()
   end;
@@ -59,24 +59,26 @@ fun get_z3proc z3bin =
         val _ = if not (!debug_print) then () else
 	        print ("starting: " ^ z3bin ^ "\n");
         val p = openz3 z3bin;
-	val _ = z3proc_bin_o := SOME z3bin;
-	val _ = if not use_stack then () else
-	 let
-          val (_,s_out) = get_streams p;
-          (* prepare prelude and push *)
-          val () = TextIO.output (s_out, prelude_z3 ^ "\n");
-          val () = TextIO.output (s_out, "(push)\n");
-	 in
-	  ()
-	 end;
-      in (z3proc_o := SOME p; p) end;
+    val _ = z3proc_bin_o := SOME z3bin;
+    val _ = if not use_stack then () else
+    let
+            val (_,s_out) = get_streams p;
+            (* prepare prelude and push *)
+            val () = TextIO.output (s_out, prelude_z3 ^ "\n");
+            val () = TextIO.output (s_out, "(push)\n");
+    in
+      ()
+    end;
+        in (z3proc_o := SOME p; p) end;
   in
     p
   end;
 
 fun reset_z3proc () =
   case !z3proc_o of
-      SOME z3p => kill_z3proc z3p
+      SOME z3p =>
+        (kill_z3proc z3p
+        handle _ => ())
     | NONE => ();
 
 val z3wrapproc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
@@ -113,6 +115,7 @@ fun inputLines_until m ins acc =
       inputLines_until m ins (line::acc)
   end
 
+exception Z3EXN of exn;
 fun sendreceive_query z3bin q =
  let
    val _ = if not (!debug_print) then () else
@@ -140,7 +143,8 @@ fun sendreceive_query z3bin q =
 	     TextIO.output (s_out, "(push)\n"));
  in
    out_lines
- end;
+ end
+ handle e => raise Z3EXN e;
 
 fun sendreceive_wrap_query q =
  let
@@ -183,23 +187,61 @@ fun sendreceive_wrap_query q =
       raise ERR "get_default_z3"
         "Z3 not configured: set the HOL4_Z3_EXECUTABLE environment variable to point to the Z3 executable file.";
 
+  fun querysmt_raw_retry retries is_nok do_if_nok sendrec_qf q =
+    let
+      val timer = holba_miscLib.timer_raw_start ();
+      val out_lines = sendrec_qf q;
+      val time = Int.fromLarge (holba_miscLib.timer_raw_stop_ms timer);
+      val is_nok_res = is_nok out_lines;
+      (*val _ = List.app print out_lines;*)
+    in
+      if is_nok_res andalso retries > 0 then (
+        do_if_nok ();
+        querysmt_raw_retry (retries-1) is_nok do_if_nok sendrec_qf q
+      ) else
+        (time, out_lines, not is_nok_res)
+    end;
+
+  val querysmt_raw_timeout_override = ref (NONE: int option);
+  val querysmt_raw_retries = ref 0;
+  val querysmt_raw_query_times = ref (NONE: int list option);
+  val querysmt_raw_unknown_as_timeout = ref false;
+  exception Z3TIMEOUT of int * string; (* time of query, query string *)
+  fun is_timeout out_lines = out_lines = ["unknown\n"];
   fun querysmt_raw z3bin_o timeout_o q =
-      let
-        val z3bin = case z3bin_o of
-	     NONE => get_default_z3 ()
-	   | SOME x => x;
-	val (timeout_s_before, timeout_s_after) =
-	  case timeout_o of
-             NONE => ("", "")
-           | SOME timeout => ("(set-option :timeout " ^ (Int.toString timeout) ^ ")\n\n", "(set-option :timeout 4294967295)\n");
-	val q_wto =
-	  (timeout_s_before ^
-           q ^
-	   timeout_s_after)
-        val out_lines = sendreceive_query z3bin q_wto;
-      in
-        out_lines
-      end;
+    let
+      val z3bin = case z3bin_o of
+          NONE => get_default_z3 ()
+        | SOME x => x;
+      val timeout_o =
+        case !querysmt_raw_timeout_override of
+            NONE => timeout_o
+          | SOME x => SOME x;
+      val (timeout_s_before, timeout_s_after) =
+        case timeout_o of
+                NONE => ("", "")
+              | SOME timeout => ("(set-option :timeout " ^ (Int.toString timeout) ^ ")\n\n", "(set-option :timeout 4294967295)\n");
+      val q_wto =
+        (timeout_s_before ^
+              q ^
+        timeout_s_after);
+
+      val retries = (!querysmt_raw_retries);
+      val (time, out_lines) =
+        case querysmt_raw_retry retries is_timeout reset_z3proc (sendreceive_query z3bin) q_wto of
+            (time, x, is_ok) =>
+              if is_ok orelse (not (!querysmt_raw_unknown_as_timeout)) then
+                (time, x)
+              else
+                raise Z3TIMEOUT (time, q);
+
+      val querysmt_raw_query_times_o = !querysmt_raw_query_times;
+      val _ = case querysmt_raw_query_times_o of
+          NONE => ()
+        | SOME x => querysmt_raw_query_times := SOME (time::x);
+    in
+      out_lines
+    end;
 
   fun querysmt_prepare_getmodel z3bin_o =
     querysmt_raw z3bin_o NONE "(set-option :model.compact false)\n";

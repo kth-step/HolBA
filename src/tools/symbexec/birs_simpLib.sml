@@ -71,12 +71,19 @@ in (* local *)
 (* ----------------------------------------------------------------------------------- *)
 
   (* try simplifying with the theorems of the list in order and return NONE or SOME simplification theorem *)
+  val simp_try_fold_gen_debug_mode = ref false;
   fun simp_try_fold_gen simp_try_fun [] (_, simp_thm_o) = simp_thm_o
     | simp_try_fold_gen simp_try_fun (h_thm::h_thms) (simp_tm, simp_thm_o) =
         if isSome simp_thm_o then
           simp_thm_o
         else
           let
+            val _ = if not (!simp_try_fold_gen_debug_mode) then () else (
+              print "simp_try_fold_gen::\n";
+              (*print_term simp_tm;*)
+              print "try::\n";
+              print_thm h_thm
+            );
             val simp_thm_o1 = simp_try_fun h_thm (simp_tm, NONE);
           in
             simp_try_fold_gen simp_try_fun h_thms (simp_tm, simp_thm_o1)
@@ -98,6 +105,19 @@ in (* local *)
       simp_thm_o
     else
       basic_fun simp_tm;
+
+  fun simp_try_apply_match [] _ = NONE
+    | simp_try_apply_match ((mf,simp_fun)::ml) (simp_tm, simp_thm_o) =
+        if isSome simp_thm_o then simp_thm_o else
+        let
+          val (_, symbexp_tm, _) = birsSyntax.dest_birs_simplification simp_tm;
+        in
+          if mf symbexp_tm then simp_fun (simp_tm, NONE) else
+          simp_try_apply_match ml (simp_tm, simp_thm_o)
+        end;
+
+(* ----------------------------------------------------------------------------------- *)
+(* ----------------------------------------------------------------------------------- *)
 
   fun simp_try_list_cont_gen_1 [] pre_simp_thm = pre_simp_thm
     | simp_try_list_cont_gen_1 (fh::fl) pre_simp_thm =
@@ -123,12 +143,16 @@ in (* local *)
     simp_try_repeat_gen_1 simp_fun (birs_simp_ID_fun simp_tm);
   fun simp_try_repeat_gen simp_fun = simp_try_make_option_fun (birs_simp_check_ID_opt_fun (simp_try_repeat_gen_2 simp_fun));
 
+(* ----------------------------------------------------------------------------------- *)
+(* ----------------------------------------------------------------------------------- *)
+
   fun simp_try_apply_gen simp_fun simp_tm =
     let
       val simp_thm_o = simp_fun (simp_tm, NONE);
     in
       Option.getOpt (simp_thm_o, birs_simp_ID_fun simp_tm)
     end;
+
   fun simp_try_mk_gen simp_fun (simp_tm, simp_thm_o) =
     if isSome simp_thm_o then simp_thm_o else
     SOME (simp_fun simp_tm);
@@ -305,6 +329,42 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val abc = simp_try_fold_gen birs_simp_try_subexp birs_simp_exp_subexp_thms (simp_inst_tm, NONE);
 *)
+
+  (* iterate through expression top-down using subexp_thms, try to apply sub_simp_fun after each step deeper into the expression *)
+  val birs_simp_try_recurse_debug_mode = ref false;
+  fun birs_simp_try_recurse do_sub_simp_first depth_limit_o subexp_thms sub_simp_fun (simp_tm, simp_thm_o1) =
+    if isSome simp_thm_o1 then simp_thm_o1 else
+    if isSome depth_limit_o andalso (valOf depth_limit_o) < 1 then
+      (if not (!birs_simp_try_recurse_debug_mode) then () else print "\n!reached simplification depth limit!\n"; NONE) else
+    let
+      val depth_limit_o_new =
+        case depth_limit_o of
+           SOME x => (if not (!birs_simp_try_recurse_debug_mode) then () else
+                      print ("simplification depth: "^Int.toString x^"\n"); SOME (x-1))
+         | NONE => NONE;
+      (* try repeatedly until no changes:
+          - try sub_simp_fun first
+          - if this didn't change anything, try to go deeper
+          - if going deeper does not work, done *)
+      fun simp_subexp_fun subf =
+        simp_try_fold_gen (birs_simp_try_subexp subf) subexp_thms;
+      fun subf_ID (s_tm, s_thm_o) =
+        if isSome s_thm_o then s_thm_o else
+        SOME (birs_simp_ID_fun s_tm);
+      val can_recurse = isSome (Profile.profile "birs_simp_try_recurse_overhead" (simp_subexp_fun subf_ID) (simp_tm, simp_thm_o1));
+
+      val simp_fun =
+        simp_try_list_gen (
+          (if do_sub_simp_first then [sub_simp_fun] else [])@
+          (if can_recurse then
+            [simp_subexp_fun
+              (birs_simp_try_recurse true depth_limit_o_new subexp_thms sub_simp_fun)]
+           else [])
+        );
+    in
+      simp_try_repeat_gen simp_fun (simp_tm, simp_thm_o1)
+    end;
+  val birs_simp_try_recurse = fn x => fn y => fn z => Profile.profile "birs_simp_try_recurse" (birs_simp_try_recurse x y z);
 
 
 end (* local *)

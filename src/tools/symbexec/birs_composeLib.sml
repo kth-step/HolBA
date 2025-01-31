@@ -22,6 +22,8 @@ local
 
 in
 
+  val compose_L_speedcheat = ref false;
+
   (* first prepare the SEQ rule for prog *)
   fun birs_rule_SEQ_prog_fun bprog_tm =
     ISPEC (bprog_tm) birs_rulesTheory.birs_rule_SEQ_gen_thm;
@@ -54,16 +56,40 @@ in
     freesymbols_thm
    end;
 
+  (* TODO: improve UNION operation to not compare all *)
+  val cheat_L_lbl_set = ``{<|bpc_label := BL_Label "cheated"; bpc_index := 0|>}``;
+  val cheat_L_approx_set = ``bir_pc_set_lbls {BL_Label "cheated"}``;
+  fun L_UNION_CONV tm =
+    if !compose_L_speedcheat then
+      let
+        val cheat_L_set =
+          if !birs_execLib.step_L_approximate then
+            cheat_L_approx_set
+          else
+            cheat_L_lbl_set;
+      in
+        aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_SEQ_L_SPEEDCHEAT" (mk_eq(tm, cheat_L_set))
+      end
+    else if is_bir_pc_set_lbls (rand tm) then
+      if is_bir_pc_set_lbls ((rand o rator) tm) then
+        ((*Profile.profile "zz_L_UNION_CONV_p1"*) (REWR_CONV birs_auxTheory.bir_pc_set_lbls_UNION_thm) THENC
+         (*Profile.profile "zz_L_UNION_CONV_p2"*) (RAND_CONV (pred_setLib.UNION_CONV bir_label_EQ_CONV))) tm
+      else
+        raise ERR "L_UNION_CONV" "either both or none of the label sets have to be bir_pc_set_lbls"
+    else if is_bir_pc_set_lbls ((rand o rator) tm) then
+      raise ERR "L_UNION_CONV" "either both or none of the label sets have to be bir_pc_set_lbls"
+    else
+      pred_setLib.UNION_CONV bir_pc_EQ_CONV tm;
+
   (*
   val step_A_thm = single_step_A_thm;
   val step_B_thm = single_step_B_thm;
   *)
-  val cheat_L_set = ``{<|bpc_label := BL_Label "cheated"; bpc_index := 0|>}``;
-  val compose_L_speedcheat = ref false;
   fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     let
       val _ = birs_check_compatible step_A_thm step_B_thm;
 
+      (* TODO: could use birs_rule_SEQ_gen2_thm to avoid DIFF in birs_state_DIFF_UNION_CONV *)
       val prep_thm =
         (HO_MATCH_MP (HO_MATCH_MP birs_rule_SEQ_thm step_A_thm)) step_B_thm;
 
@@ -77,12 +103,7 @@ in
       val bprog_fixed_thm =
         (CONV_RULE
          (Profile.profile "birs_rule_SEQ_fun_p3" (birs_Pi_CONV birs_state_DIFF_UNION_CONV) THENC
-          Profile.profile "birs_rule_SEQ_fun_p4" (birs_L_CONV (
-            if !compose_L_speedcheat then
-              (fn tm => mk_oracle_thm "BIR_SEQ_L_SPEEDCHEAT" ([], mk_eq(tm, cheat_L_set)))
-            else
-               programcounter_UNION_CONV
-         ))))
+          Profile.profile "birs_rule_SEQ_fun_p4" (birs_L_CONV L_UNION_CONV)))
          bprog_composed_thm
         handle e => (print "\n\n"; print_thm bprog_composed_thm; print "tidy up Pi and programcounter sets failed\n"; raise e);
 

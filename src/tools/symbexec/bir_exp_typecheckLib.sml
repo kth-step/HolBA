@@ -56,7 +56,8 @@ in (* local *)
       BExp_ADD_WITH_CARRY_type_of,
       BExp_word_reverse_type_of,
       BExp_ror_exp_type_of,
-      bir_immtype_of_size_def
+      bir_immtype_of_size_def,
+      birs_auxTheory.type_of_bir_exp_BExp_IntervalPred_thm
     ];
     val distinct_thms = [
       bir_immTheory.bir_immtype_t_distinct,
@@ -88,7 +89,9 @@ in (* local *)
 
     fun type_of_bir_exp_rec_CONV f_rec tm =
       let
-        val thm_opened = REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def] tm;
+        val thm_opened =
+          (REWRITE_CONV [birs_auxTheory.type_of_bir_exp_BExp_IntervalPred_thm] THENC
+           REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def]) tm;
         val thm = CONV_RULE (RHS_CONV (GEN_match_conv is_type_of_bir_exp f_rec THENC type_of_bir_exp_finish_CONV)) thm_opened;
       in
         thm
@@ -137,6 +140,111 @@ in (* local *)
       (dest_some o snd o dest_eq o concl) thm
     end
     handle _ => raise ERR "get_type_of_bexp" "not well-typed expression or other issue";
+
+(*
+val tm = ``type_of_bir_exp
+    (BExp_BinExp BIExp_And
+       (BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+          (BExp_BinExp BIExp_Plus
+             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+             (BExp_Const (Imm64 31w)),
+           BExp_BinExp BIExp_Plus
+             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+             (BExp_Const (Imm64 34w))))
+       (BExp_BinExp BIExp_And
+          (BExp_UnaryExp BIExp_Not
+             (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1))))
+          (BExp_BinExp BIExp_And
+             (BExp_BinPred BIExp_Equal
+                (BExp_BinExp BIExp_And
+                   (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                   (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w)))
+             (BExp_BinExp BIExp_And
+                (BExp_BinPred BIExp_LessOrEqual
+                   (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 0xFFFFFA8w)))
+                (BExp_BinExp BIExp_And
+                   (BExp_Den (BVar "syp_gen" (BType_Imm Bit1)))
+                   (BExp_BinExp BIExp_And
+                      (BExp_BinPred BIExp_Equal
+                         (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)))
+                         (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1))))
+                      (BExp_BinExp BIExp_And
+                         (BExp_UnaryExp BIExp_Not
+                            (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1))))
+                         (BExp_BinExp BIExp_And
+                            (BExp_BinPred BIExp_Equal
+                               (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))
+                               (BExp_Const (Imm32 0w)))
+                            (BExp_BinExp BIExp_And
+                               (BExp_UnaryExp BIExp_Not
+                                  (BExp_BinPred BIExp_Equal
+                                     (BExp_Den
+                                        (BVar "sy_R3" (BType_Imm Bit32)))
+                                     (BExp_Const (Imm32 0w))))
+                               (BExp_BinExp BIExp_And
+                                  (BExp_UnaryExp BIExp_Not
+                                     (BExp_BinPred BIExp_Equal
+                                        (BExp_BinExp BIExp_Minus
+                                           (BExp_Den
+                                              (BVar "sy_R7" (BType_Imm Bit32)))
+                                           (BExp_Const (Imm32 1w)))
+                                        (BExp_Const (Imm32 0w))))
+                                  (BExp_UnaryExp BIExp_Not
+                                     (BExp_BinPred BIExp_Equal
+                                        (BExp_Den
+                                           (BVar "sy_R4" (BType_Imm Bit32)))
+                                        (BExp_Const (Imm32 255w))))))))))))))``;
+val tm = ``type_of_bir_exp
+       (BExp_BinExp BIExp_And
+          (BExp_UnaryExp BIExp_Not
+             (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1))))
+          (BExp_BinExp BIExp_And
+             (BExp_BinPred BIExp_Equal
+                (BExp_BinExp BIExp_And
+                   (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                   (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w)))
+             (BExp_BinExp BIExp_And
+                (BExp_BinPred BIExp_LessOrEqual
+                   (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 0xFFFFFA8w)))
+                (BExp_BinExp BIExp_And
+                   (BExp_Den (BVar "syp_gen" (BType_Imm Bit1)))
+                   (BExp_BinExp BIExp_And
+                      (BExp_BinPred BIExp_Equal
+                         (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)))
+                         (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1))))
+                      (BExp_BinExp BIExp_And
+                         (BExp_UnaryExp BIExp_Not
+                            (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1))))
+                         (BExp_BinExp BIExp_And
+                            (BExp_BinPred BIExp_Equal
+                               (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))
+                               (BExp_Const (Imm32 0w)))
+                            (BExp_BinExp BIExp_And
+                               (BExp_UnaryExp BIExp_Not
+                                  (BExp_BinPred BIExp_Equal
+                                     (BExp_Den
+                                        (BVar "sy_R3" (BType_Imm Bit32)))
+                                     (BExp_Const (Imm32 0w))))
+                               (BExp_BinExp BIExp_And
+                                  (BExp_UnaryExp BIExp_Not
+                                     (BExp_BinPred BIExp_Equal
+                                        (BExp_BinExp BIExp_Minus
+                                           (BExp_Den
+                                              (BVar "sy_R7" (BType_Imm Bit32)))
+                                           (BExp_Const (Imm32 1w)))
+                                        (BExp_Const (Imm32 0w))))
+                                  (BExp_UnaryExp BIExp_Not
+                                     (BExp_BinPred BIExp_Equal
+                                        (BExp_Den
+                                           (BVar "sy_R4" (BType_Imm Bit32)))
+                                        (BExp_Const (Imm32 255w)))))))))))))``;
+val _ = print_thm (type_of_bir_exp_DIRECT_CONV tm);
+val _ = print_thm (type_of_bir_exp_gen_CONV tm);
+val _ = raise Fail "";
+*)
+
 
 end (* local *)
 

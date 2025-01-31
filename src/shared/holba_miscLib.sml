@@ -38,10 +38,14 @@ val s = ""
     end;
 
 (* timers *)
-  fun timer_start level = if (1 >= level) then SOME (Time.now()) else NONE;
+  fun timer_raw_start () = Time.now();
+  fun timer_raw_stop tm = Time.- (Time.now(), tm);
+  fun timer_raw_stop_ms tm = Time.toMilliseconds (timer_raw_stop tm);
+
+  fun timer_start level = if (1 >= level) then SOME (timer_raw_start()) else NONE;
   fun timer_stop f NONE = ()
     | timer_stop f (SOME tm) = let
-       val d_time = Time.- (Time.now(), tm);
+       val d_time = timer_raw_stop tm;
        in f ((Time.toString d_time) ^ "s") end;
 
 end (* local *)

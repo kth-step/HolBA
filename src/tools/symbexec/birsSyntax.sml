@@ -85,6 +85,8 @@ end;
     val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
     
     val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
+    
+    val (bir_pc_set_lbls_tm,  mk_bir_pc_set_lbls, dest_bir_pc_set_lbls, is_bir_pc_set_lbls)  = syntax_fns1_set "bir_pc_set_lbls";
   end;
 
   local
@@ -170,8 +172,13 @@ end;
     open bir_symb_soundTheory;
     fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_symb_sound";
     val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns3_env = syntax_fns 4 HolKernel.dest_triop HolKernel.mk_triop;
   in
     val (bir_prog_has_no_halt_tm,  mk_bir_prog_has_no_halt, dest_bir_prog_has_no_halt, is_bir_prog_has_no_halt)  = syntax_fns1 "bir_prog_has_no_halt";
+
+    val (birs_symb_env_subst1_tm,  mk_birs_symb_env_subst1, dest_birs_symb_env_subst1, is_birs_symb_env_subst1)  = syntax_fns3_env "birs_symb_env_subst1";
+    val (birs_symb_subst1_tm,  mk_birs_symb_subst1, dest_birs_symb_subst1, is_birs_symb_subst1)  = syntax_fns2 "birs_symb_subst1";
   end
 
   local
@@ -340,6 +347,10 @@ end;
 
   fun pred_set_is_norm tm =
     can pred_setSyntax.strip_set tm;
+  
+  fun birs_exec_L_is_norm tm =
+    (is_bir_pc_set_lbls tm andalso (pred_set_is_norm o dest_bir_pc_set_lbls) tm) orelse
+    pred_set_is_norm tm
 
   fun birs_states_is_norm tm =
     pred_set_is_norm tm andalso
@@ -353,7 +364,7 @@ end;
         handle _ => raise ERR "birs_is_norm" "unexpected term, should be a birs_symb_exec with a triple as structure";
     in
       birs_state_is_norm sys andalso
-      pred_set_is_norm L andalso
+      birs_exec_L_is_norm L andalso
       birs_states_is_norm Pi
     end
     handle _ => false;

@@ -116,7 +116,8 @@ fun bir_symb_transfer
 
    val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
 
-   val analysis_L_NOTIN_thm = prove (``^birs_state_end_lbl_tm NOTIN ^L_s``, EVAL_TAC);
+   val analysis_L_NOTIN_thm = prove (``^birs_state_end_lbl_tm NOTIN ^L_s``,
+     REWRITE_TAC [birs_auxTheory.bir_pc_set_lbls_IN_thm] >> EVAL_TAC);
 
    val birs_state_init_pre_EQ_thm =
     prove (``^(sys_i) = ^birs_state_init_pre_tm``,
@@ -399,8 +400,10 @@ fun bir_symb_transfer_two
    
    val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
    
-   val analysis_L_NOTIN_thm_1 = prove (``^birs_state_end_lbl_1_tm NOTIN ^L_s``, EVAL_TAC);
-   val analysis_L_NOTIN_thm_2 = prove (``^birs_state_end_lbl_2_tm NOTIN ^L_s``, EVAL_TAC);
+   val analysis_L_NOTIN_thm_1 = prove (``^birs_state_end_lbl_1_tm NOTIN ^L_s``,
+     REWRITE_TAC [birs_auxTheory.bir_pc_set_lbls_IN_thm] >> EVAL_TAC);
+   val analysis_L_NOTIN_thm_2 = prove (``^birs_state_end_lbl_2_tm NOTIN ^L_s``,
+     REWRITE_TAC [birs_auxTheory.bir_pc_set_lbls_IN_thm] >> EVAL_TAC);
    
    val birs_state_init_pre_EQ_thm =
     prove (``^(sys_i) = ^birs_state_init_pre_tm``,
