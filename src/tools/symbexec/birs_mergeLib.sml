@@ -112,7 +112,15 @@ in (* local *)
         RATOR_CONV (LAND_CONV birs_state_acc_CONV) THENC
         (fn simp_tm =>
           let
-            val simp_thm_o = check_simplification_tm simp_tm;
+            val simp_thm_o = check_simplification_tm simp_tm
+              handle holba_z3Lib.Z3TIMEOUT (t, q) =>
+                let
+                  val filename = holba_fileLib.get_tempfile "z3_query_timeout" ".txt";
+                  val _ = holba_fileLib.write_to_file filename q;
+                  val _ = print ("wrote birsmt query to disk: "^filename^"\n");
+                in
+                  SOME (aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_FREESYMB_Z3TIMEOUT" simp_tm)
+                end;
             val _ = if isSome simp_thm_o then () else
               raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound";
             val thm = valOf simp_thm_o;

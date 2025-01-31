@@ -14,7 +14,7 @@ local
   val wrap_exn = Feedback.wrap_exn libname
 
 in
-  val step_L_approximate = ref false;
+  val step_L_approximate = ref true;
 
   (* halt free programs *)
   (* ----------------------------------------------- *)

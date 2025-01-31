@@ -16,7 +16,7 @@ local
 
 in (* local *)
 
-  val birs_storeelim_oracle_speed = ref true;
+  val birs_storeelim_oracle_speed = ref false;
 
 (*
 val (mexp1, stores1) = dest_BExp_Store_list bexp_stores [];
@@ -417,8 +417,8 @@ birs_simp_load simp_tm;
         (if use_store_cheater then SOME false else NONE)
     end;
   
-  val birs_simp_default_riscv = birs_simp_default_riscv_gen false birs_simp_ID_fun [];
-  val birs_simp_default_armcm0 = birs_simp_default_armcm0_gen false birs_simp_ID_fun [];
+  val birs_simp_default_riscv = birs_simp_default_riscv_gen true birs_simp_ID_fun [];
+  val birs_simp_default_armcm0 = birs_simp_default_armcm0_gen true birs_simp_ID_fun [];
 
 end (* local *)
 
