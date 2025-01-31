@@ -14,7 +14,7 @@ val _ = print "checking aes_symb_analysis_thm:\n";
 
 val term_sz = term_size (concl aes_symb_analysis_thm);
 val _ = print ("\nterm size = " ^ (Int.toString term_sz) ^ "\n\n");
-val expected_term_sz = 25198;
+val expected_term_sz = 21001;
 
 val _ = if term_sz = expected_term_sz then () else
         raise Fail "term size of aes symbolic execution theorem is not as expected";
