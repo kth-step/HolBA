@@ -174,10 +174,14 @@ in (* local *)
   fun bir_exp_normalizer_1_CONV tm = (
       if bir_extra_expsSyntax.is_BExp_Aligned tm then
         REWR_CONV bir_extra_expsTheory.BExp_Aligned_def
+      else if bir_interval_expSyntax.is_BExp_unchanged_mem_interval_distinct tm then
+        REWR_CONV bir_interval_expTheory.BExp_unchanged_mem_interval_distinct_def
       else
         ALL_CONV
     ) tm;
 
+  
+  exception bir_vars_of_exp_exception of string * term;
   (* here apply only one "unfolding" and get empty or singleton sets, or one or two UNION operations, left-associative *)
   local
     val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[bir_extra_expsTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
@@ -189,8 +193,9 @@ in (* local *)
            REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm]) tm;
         val t2 = CONV_RULE (RAND_CONV (
         GEN_match_conv is_bir_vars_of_exp (f_rec))) t1;
-        val union_conv =
-          (varset_UNION_CONV);
+        fun union_conv tm_ =
+          varset_UNION_CONV tm_
+          handle _ => raise bir_vars_of_exp_exception ("could not apply UNION", tm);
         val t2_rhs = (rhs o concl) t2;
         val t3 =
           if is_union (t2_rhs) then
