@@ -869,37 +869,6 @@ Definition birs_gen_env_def:
   birs_gen_env l = FOLDR birs_gen_env_fun (K NONE) l
 End
 
-Definition birs_env_var_is_initialised_def:
-  birs_env_var_is_initialised senv symbs var <=>
-  (?se. (senv (bir_var_name var) = SOME se) /\
-       (type_of_bir_exp se = SOME (bir_var_type var)) /\
-       (bir_vars_of_exp se SUBSET symbs))
-End
-Definition birs_env_vars_are_initialised_def:
-  birs_env_vars_are_initialised senv symbs vs <=>
-  (!v. v IN vs ==> birs_env_var_is_initialised senv symbs v)
-End
-
-Theorem birs_env_vars_are_initialised_EMPTY_thm:
-  !senv symbs.
-    (birs_env_vars_are_initialised senv symbs EMPTY)
-Proof
-  METIS_TAC [birs_env_vars_are_initialised_def, pred_setTheory.NOT_IN_EMPTY]
-QED
-
-Theorem birs_env_vars_are_initialised_INSERT_thm:
-  !v vs senv symbs.
-   birs_env_vars_are_initialised senv symbs (v INSERT vs) <=>
-     birs_env_var_is_initialised senv symbs v /\
-     birs_env_vars_are_initialised senv symbs vs
-Proof
-  REWRITE_TAC [birs_env_vars_are_initialised_def] >>
-  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
-  REPEAT STRIP_TAC >> (
-    METIS_TAC [pred_setTheory.IN_INSERT, pred_setTheory.COMPONENT]
-  )
-QED
-
 Theorem birs_gen_env_NULL_thm:
   !n sv l.
     birs_gen_env ([]) = (K NONE)
@@ -912,6 +881,39 @@ Theorem birs_gen_env_thm:
 Proof
 SIMP_TAC std_ss [birs_gen_env_def, listTheory.FOLDR, birs_gen_env_fun_def]
 QED
+Theorem birs_gen_env_FILTER_EQ_thm:
+  !vn l.
+    birs_gen_env (FILTER (\x. FST x <> vn) l) vn = NONE
+Proof
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.FILTER, birs_gen_env_NULL_thm, combinTheory.UPDATE_APPLY]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on ‘h’ >>
+  fs [] >>
+  Cases_on ‘q = vn’ >>
+  fs [birs_gen_env_thm, combinTheory.UPDATE_APPLY]
+QED
+Theorem birs_gen_env_FILTER_NEQ_thm:
+  !vn vn' l.
+    (vn <> vn') ==>
+    (birs_gen_env (FILTER (\x. FST x <> vn') l) vn = birs_gen_env l vn)
+Proof
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.FILTER, birs_gen_env_NULL_thm, combinTheory.UPDATE_APPLY]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on ‘h’ >>
+  fs [] >>
+  Cases_on ‘q = vn'’ >>
+  fs [birs_gen_env_thm, combinTheory.UPDATE_APPLY] >>
+  Cases_on ‘q = vn’ >>
+  fs [birs_gen_env_thm, combinTheory.UPDATE_APPLY]
+QED
+
+        
 
 (*
 EVAL ``birs_gen_env [("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32))); ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)))]``
@@ -922,7 +924,7 @@ Theorem birs_update_env_thm:
   !n sv l.
     birs_update_env (n, sv) (birs_gen_env l) = birs_gen_env((n, sv)::(FILTER (\x. (FST x) <> n) l))
 Proof
-SIMP_TAC std_ss [birs_update_env_def, birs_gen_env_thm] >>
+  SIMP_TAC std_ss [birs_update_env_def, birs_gen_env_thm] >>
   REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
 
   REPEAT STRIP_TAC >>
@@ -961,6 +963,111 @@ Theorem birs_gen_env_GET_thm:
     birs_gen_env ((n, sv)::l) m = if n = m then SOME sv else birs_gen_env l m
 Proof
 SIMP_TAC std_ss [birs_gen_env_thm, combinTheory.APPLY_UPDATE_THM]
+QED
+
+Definition birs_env_var_is_initialised_def:
+  birs_env_var_is_initialised senv symbs var <=>
+  (?se. (senv (bir_var_name var) = SOME se) /\
+       (type_of_bir_exp se = SOME (bir_var_type var)) /\
+       (bir_vars_of_exp se SUBSET symbs))
+End
+Definition birs_env_vars_are_initialised_def:
+  birs_env_vars_are_initialised senv symbs vs <=>
+  (!v. v IN vs ==> birs_env_var_is_initialised senv symbs v)
+End
+
+Theorem birs_env_vars_are_initialised_SUBSET_thm:
+  !senv symbs vs.
+    birs_env_vars_are_initialised senv symbs vs <=>
+    (vs SUBSET (birs_env_var_is_initialised senv symbs))
+Proof
+  rewrite_tac [birs_env_vars_are_initialised_def, SUBSET_DEF, IN_APP]
+QED
+
+Theorem birs_env_vars_are_initialised_EMPTY_thm:
+  !senv symbs.
+    (birs_env_vars_are_initialised senv symbs EMPTY)
+Proof
+  METIS_TAC [birs_env_vars_are_initialised_def, pred_setTheory.NOT_IN_EMPTY]
+QED
+
+Theorem birs_env_vars_are_initialised_INSERT_thm:
+  !v vs senv symbs.
+   birs_env_vars_are_initialised senv symbs (v INSERT vs) <=>
+     birs_env_var_is_initialised senv symbs v /\
+     birs_env_vars_are_initialised senv symbs vs
+Proof
+  REWRITE_TAC [birs_env_vars_are_initialised_def] >>
+  SIMP_TAC std_ss [boolTheory.EQ_IMP_THM] >>
+  REPEAT STRIP_TAC >> (
+    METIS_TAC [pred_setTheory.IN_INSERT, pred_setTheory.COMPONENT]
+  )
+QED
+
+Theorem birs_env_var_is_initialised_gen_env_EMPTY_thm:
+  !symbs.
+    birs_env_var_is_initialised (birs_gen_env ([])) symbs = EMPTY
+Proof
+  rewrite_tac [EXTENSION, NOT_IN_EMPTY, IN_APP] >>
+  fs [birs_env_var_is_initialised_def, birs_gen_env_GET_NULL_thm]
+QED
+Theorem birs_env_var_is_initialised_gen_env_INSERT_thm0:
+  !l symbs var.
+    birs_env_var_is_initialised (birs_gen_env (l)) symbs var =
+    if l = [] then F else
+    if FST (HD l) = bir_var_name var then
+      IS_SOME (type_of_bir_exp (SND (HD l))) /\
+      (type_of_bir_exp (SND (HD l)) = SOME (bir_var_type var)) /\
+      bir_vars_of_exp (SND (HD l)) SUBSET symbs
+    else
+      (birs_env_var_is_initialised (birs_gen_env (*(FILTER (\x. (FST x) <> FST (HD l)) (TL l))*) (TL l)) symbs var)
+Proof
+  Induct_on ‘l’ >- (
+    fs [birs_env_var_is_initialised_gen_env_EMPTY_thm]
+  ) >>
+  rpt strip_tac >>
+  Cases_on ‘h’ >> Cases_on ‘var’ >>
+  rewrite_tac [listTheory.HD, listTheory.TL, pairTheory.FST, pairTheory.SND, listTheory.NOT_CONS_NIL] >>
+  rewrite_tac [birs_env_var_is_initialised_def, bir_envTheory.bir_var_name_def, bir_envTheory.bir_var_type_def, birs_gen_env_thm] >>
+
+  Cases_on ‘s = q’ >> (
+    ASM_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY]    
+  ) >>
+
+  Cases_on ‘type_of_bir_exp r’ >> fs []
+QED
+
+Theorem birs_env_var_is_initialised_gen_env_INSERT_thm:
+  !vn se l symbs.
+    birs_env_var_is_initialised (birs_gen_env ((vn,se)::l)) symbs =
+    (option_CASE (type_of_bir_exp se)
+       EMPTY
+       (\ty. (if bir_vars_of_exp se SUBSET symbs then
+             {BVar vn ty} else {}))) UNION
+     (birs_env_var_is_initialised (birs_gen_env (FILTER (\x. (FST x) <> vn) l)) symbs)
+Proof
+  rewrite_tac [boolTheory.FUN_EQ_THM] >>
+  rewrite_tac [listTheory.HD, listTheory.TL, pairTheory.FST, pairTheory.SND, listTheory.NOT_CONS_NIL] >>
+
+  Cases_on ‘x’ >>
+  ASM_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY, bir_envTheory.bir_var_name_def, bir_envTheory.bir_var_type_def] >>
+  rpt strip_tac >>
+
+  Cases_on ‘vn = s’ >- (
+    ASM_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY, Once birs_env_var_is_initialised_gen_env_INSERT_thm0] >>
+    Cases_on ‘type_of_bir_exp se’ >> fs [IN_APP, birs_env_var_is_initialised_def, birs_gen_env_FILTER_EQ_thm, bir_envTheory.bir_var_name_def, bir_envTheory.bir_var_type_def] >>
+    Cases_on ‘bir_vars_of_exp se SUBSET symbs’ >> fs [] >>
+    metis_tac []
+  ) >>
+
+  ASM_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY, Once birs_env_var_is_initialised_gen_env_INSERT_thm0] >>
+  fs [combinTheory.UPDATE_APPLY, bir_envTheory.bir_var_name_def, bir_envTheory.bir_var_type_def] >>
+
+  Cases_on ‘type_of_bir_exp se’ >> (
+    Cases_on ‘bir_vars_of_exp se SUBSET symbs’ >> (
+      fs [IN_APP, birs_env_var_is_initialised_def, birs_gen_env_FILTER_NEQ_thm, bir_envTheory.bir_var_name_def]
+    )
+  )
 QED
 
 (*

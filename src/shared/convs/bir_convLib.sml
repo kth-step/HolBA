@@ -171,13 +171,22 @@ in (* local *)
 (*  variables of bir expressions                                                      *)
 (* ---------------------------------------------------------------------------------- *)
 
+  fun bir_exp_normalizer_1_CONV tm = (
+      if bir_extra_expsSyntax.is_BExp_Aligned tm then
+        REWR_CONV bir_extra_expsTheory.BExp_Aligned_def
+      else
+        ALL_CONV
+    ) tm;
+
   (* here apply only one "unfolding" and get empty or singleton sets, or one or two UNION operations, left-associative *)
   local
     val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[bir_extra_expsTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
     fun bir_vars_of_exp_rec_CONV f_rec tm =
       let
         open pred_setSyntax;
-        val t1 = REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm] tm;
+        val t1 =
+          (RAND_CONV bir_exp_normalizer_1_CONV THENC
+           REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm]) tm;
         val t2 = CONV_RULE (RAND_CONV (
         GEN_match_conv is_bir_vars_of_exp (f_rec))) t1;
         val union_conv =
@@ -208,10 +217,10 @@ in (* local *)
       handle e => (print_term tm; print "\n\n"; raise e)
     end;
   (*val bir_vars_of_exp_DIRECT_CONV = wrap_cache_result Term.compare bir_vars_of_exp_DIRECT_CONV;*)
-  val bir_vars_of_exp_DIRECT_CONV = Profile.profile "bir_vars_of_exp_DIRECT_CONV" bir_vars_of_exp_DIRECT_CONV;
+  val bir_vars_of_exp_DIRECT_CONV =
+    Profile.profile "bir_vars_of_exp_DIRECT_CONV" bir_vars_of_exp_DIRECT_CONV;
 
   val bir_vars_of_exp_CONV =
-    REWRITE_CONV [bir_extra_expsTheory.BExp_Aligned_def] THENC
     GEN_match_conv (is_bir_vars_of_exp) bir_vars_of_exp_DIRECT_CONV;
 
   fun get_vars_of_bexp tm =
@@ -222,51 +231,6 @@ in (* local *)
       (strip_set o snd o dest_eq o concl) thm
     end
     handle _ => (print_term tm; print "\n\n"; raise ERR "get_vars_of_bexp" "did not work");
-
-(*
-val tm = ``bir_vars_of_exp
-     (BExp_BinExp BIExp_And
-        (BExp_BinExp BIExp_And
-           (BExp_Aligned Bit64 3 (BExp_Den (BVar "x10" (BType_Imm Bit64))))
-           (BExp_BinExp BIExp_And
-              (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0x20000w))
-                 (BExp_Den (BVar "x10" (BType_Imm Bit64))))
-              (BExp_BinPred BIExp_LessThan
-                 (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 0x100000000w)))))
-        (BExp_BinExp BIExp_And
-           (BExp_BinExp BIExp_And
-              (BExp_Aligned Bit64 3 (BExp_Den (BVar "x11" (BType_Imm Bit64))))
-              (BExp_BinExp BIExp_And
-                 (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0x20000w))
-                    (BExp_Den (BVar "x11" (BType_Imm Bit64))))
-                 (BExp_BinPred BIExp_LessThan
-                    (BExp_Den (BVar "x11" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 0x100000000w)))))
-           (BExp_BinExp BIExp_And
-              (BExp_BinPred BIExp_Equal
-                 (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 pre_x10)))
-              (BExp_BinExp BIExp_And
-                 (BExp_BinPred BIExp_Equal
-                    (BExp_Load
-                       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-                       (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-                       BEnd_LittleEndian Bit64)
-                    (BExp_Const (Imm64 pre_x10_deref)))
-                 (BExp_BinExp BIExp_And
-                    (BExp_BinPred BIExp_Equal
-                       (BExp_Den (BVar "x11" (BType_Imm Bit64)))
-                       (BExp_Const (Imm64 pre_x11)))
-                    (BExp_BinPred BIExp_Equal
-                       (BExp_Load
-                          (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-                          (BExp_Den (BVar "x11" (BType_Imm Bit64)))
-                          BEnd_LittleEndian Bit64)
-                       (BExp_Const (Imm64 pre_x11_deref))))))))``;
-bir_convLib.bir_vars_of_exp_CONV tm;                       
-*)
 
 
 
