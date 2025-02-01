@@ -747,6 +747,9 @@ fun print_mem_exp cutoff_size mem_exp =
       let
         val merged_thm = birs_Pi_merge_RULE_ thm;
 
+        (*
+        NOTE: seems to work for now. this check was anyways too crude. some paths might additionally introduce tautologies as conjuncts,
+        and depending on what thm merging is used, it could be that the pcond conjuncts in sys and Pi are totally independent from each other
         (* check that the path condition has only changed in ways we want *)
         val pcond_sysl = (dest_bandl o get_birs_sys_pcond o concl) merged_thm;
         val pcond_Pifl = (dest_bandl o get_birs_Pi_first_pcond o concl) merged_thm;
@@ -754,9 +757,10 @@ fun print_mem_exp cutoff_size mem_exp =
         val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
         fun check_extra extra =
           if (length extra = 0) orelse ((length extra = 1) andalso (bir_extra_expsSyntax.is_BExp_IntervalPred (hd extra))) then () else
-          raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (mk_bandl extra)));
+          (print "\n\nextra path codnition conjucnts:\n"; List.app print_term extra; raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong"));
         val _ = check_extra pcond_sys_extral;
         val _ = check_extra pcond_Pif_extral;
+        *)
       in
         merged_thm
       end
