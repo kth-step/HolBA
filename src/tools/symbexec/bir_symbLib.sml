@@ -91,6 +91,9 @@ fun bir_symb_transfer
  bspec_pre_def bspec_post_def prog_vars_list_def
  symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
  let
+   val _ = print "\n======\n > bir_symb_transfer started\n";
+   val timer = holba_miscLib.timer_start 0;
+
    val pcond_gen_inst =
      case pcond_gen_inst_o of
          SOME x => x
@@ -189,7 +192,7 @@ fun bir_symb_transfer
 
    val _ = print "\nproving strong postcondition implications for each symbolic execution leaf with the smt solver";
    val strongpostcond_thms = List.map (fn goal =>
-    prove(``^goal``, birs_strongpostcond_impl_TAC)) strongpostcond_goals;
+    Profile.profile "bir_symbLib.strongpost" prove (``^goal``, birs_strongpostcond_impl_TAC)) strongpostcond_goals;
    val _ = print " - done\n";
 
    val Pi_thms_idx = ref 0;
@@ -201,7 +204,7 @@ fun bir_symb_transfer
       *)
       val _ = print ("proving leaf #" ^ (Int.toString idx) ^ "\n");
       val _ = Pi_thms_idx := idx + 1;
-    in
+    in Profile.profile "bir_symbLib.Pi"
     prove(``
      sys1 = ^sys1 ==>
      sys2 = ^sys2 ==>
@@ -213,7 +216,9 @@ fun bir_symb_transfer
       (birs_symb_to_concst bs) (birs_symb_to_concst bs')``,
 
     REPEAT STRIP_TAC >>
-    Q_bircont_SOLVE3CONJS_TAC prog_vars_thm >> (* val varset_thm = prog_vars_thm; *)
+    (* TODO: this proof is overall not very suited as automation, quite slow *)
+    Profile.profile "bir_symbLib.Pi.3CONJS" (Q_bircont_SOLVE3CONJS_TAC prog_vars_thm) >> (* val varset_thm = prog_vars_thm; *)
+    (*TODO: the following two metis_tac are a bit slow for larger expressions*)
     `birs_symb_matchstate sys1 H' bs` by
      METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm] >>
     FULL_SIMP_TAC std_ss [P_bircont_thm] >>
@@ -313,6 +318,8 @@ fun bir_symb_transfer
     abstract_jgmt_rel_bir_cont) >>
     rw [] >>
     METIS_TAC [abstract_jgmt_rel_thm]);
+
+   val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_transfer took " ^ delta_s ^ "\n")) timer;
  in
    bspec_cont_thm
  end (* let *)
@@ -375,6 +382,9 @@ fun bir_symb_transfer_two
  bspec_pre_def bspec_post_1_def bspec_post_2_def prog_vars_list_def
  symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
  let
+   val _ = print "\n======\n > bir_symb_transfer_two started\n";
+   val timer = holba_miscLib.timer_start 0;
+
    val pcond_gen_inst =
      case pcond_gen_inst_o of
          SOME x => x
@@ -479,11 +489,11 @@ fun bir_symb_transfer_two
   sys2ps;
 
   val strongpostcond_thms = List.map (fn goal =>
-   prove(``^goal``, birs_strongpostcond_impl_TAC))
+   Profile.profile "bir_symbLib.strongpost" prove(``^goal``, birs_strongpostcond_impl_TAC))
   strongpostcond_goals;
 
   val Pi_thms = List.map (fn (sys2,post_tm,birs_state_end_lbl_tm) =>
-   prove(``
+   Profile.profile "bir_symbLib.Pi" prove(``
     sys1 = ^sys1 ==>
     sys2 = ^sys2 ==>
     birs_symb_matchstate sys1 H bs ==>
@@ -649,6 +659,7 @@ fun bir_symb_transfer_two
   rw [] >>
   METIS_TAC [abstract_jgmt_rel_thm]);
 
+   val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_transfer_two took " ^ delta_s ^ "\n")) timer;
  in
    bspec_cont_thm
  end (* let *)
