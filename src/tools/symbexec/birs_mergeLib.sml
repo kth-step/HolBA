@@ -7,6 +7,9 @@ local
 
   open birsSyntax;
 
+  open holba_convLib;
+  open bir_convLib;
+
   open birs_utilsLib;
   open birs_conseqLib;
 
@@ -32,7 +35,6 @@ in (* local *)
       (*open bir_envSyntax;
       open birs_utilsLib;*)
       open bir_vars_ofLib;
-      open aux_setLib;
 
       fun solve_assumption conv thm = MP (CONV_RULE (LAND_CONV (conv)) thm) TRUTH;
       fun symb_assump_conv conv =
@@ -48,7 +50,7 @@ in (* local *)
         REPEATC (
           REWR_CONV birs_auxTheory.birs_gen_env_GET_thm THENC
           CHANGED_CONV
-            (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+            (ITE_CONV bir_varname_EQ_CONV)
         ) THENC
         TRY_CONV (REWR_CONV birs_auxTheory.birs_gen_env_GET_NULL_thm);
 
@@ -78,7 +80,7 @@ in (* local *)
           birs_gen_env_CONV
         ) THENC
         REWR_CONV boolTheory.REFL_CLAUSE
-        (*REWR_CONV optionTheory.SOME_11 THENC aux_setLib.bir_exp_EQ_CONV*)
+        (*REWR_CONV optionTheory.SOME_11 THENC bir_exp_EQ_CONV*)
       ) thm2_2;
       val _ = if not debug then () else print "\n2_3: \n";
       (*val _ = print_thm thm2_3;*)
@@ -91,11 +93,11 @@ in (* local *)
 
       (* bir_vars_of_exp bexp ⊆ birs_symb_symbols bs2 *)
       val thm2_5 = solve_assumption (
-        LAND_CONV bir_vars_ofLib.bir_vars_of_exp_DIRECT_CONV THENC
+        LAND_CONV bir_vars_of_exp_DIRECT_CONV THENC
         RAND_CONV birs_symb_symbols_DIRECT_CONV THENC (* could reuse the result from before to get this set, no need, it's cached *)
         (*(fn tm => (print_term tm; REFL tm)) THENC*)
         (*Profile.profile "FREESYMB_SUBSET_CONV_EVAL" EVAL*)
-        aux_setLib.SUBSET_CONV aux_setLib.bir_var_EQ_CONV
+        SUBSET_CONV bir_var_EQ_CONV
         (*THENC
         (fn tm => (print_term tm; REFL tm))*)
         (* TODO: SUBSET_CONV *)
@@ -135,7 +137,7 @@ in (* local *)
 
       val thm_z = Profile.profile "zzz_5_stateacc" (CONV_RULE (birs_Pi_CONV (LAND_CONV (
           birs_state_acc_CONV THENC
-          birs_auxLib.GEN_match_conv is_birs_update_env (
+          GEN_match_conv is_birs_update_env (
             birs_stepLib.birs_update_env_CONV
           )
         )))) thm3;
@@ -479,8 +481,7 @@ fun print_mem_exp cutoff_size mem_exp =
 
             (*open bir_envSyntax;
             open birs_utilsLib;*)
-            (*open bir_vars_ofLib;
-            open aux_setLib;*)
+            (*open bir_vars_ofLib;*)
             fun solve_assumption conv thm = MP (CONV_RULE (LAND_CONV (conv)) thm) TRUTH;
             (*
             fun symb_assump_conv conv =
@@ -713,7 +714,7 @@ fun print_mem_exp cutoff_size mem_exp =
       (*
       val rewrite_thm = ISPECL (((fn x => List.take (x, 2)) o pred_setSyntax.strip_set o get_birs_Pi o concl) thm_env_pcond) INSERT_INSERT_EQ_thm;
       (*val _ = print_thm rewrite_thm;*)
-      val rewrite_thm_fix = CONV_RULE (CHANGED_CONV (QUANT_CONV (LAND_CONV (*aux_setLib.birs_state_EQ_CONV*)EVAL))) rewrite_thm;
+      val rewrite_thm_fix = CONV_RULE (CHANGED_CONV (QUANT_CONV (LAND_CONV (*birs_state_EQ_CONV*)EVAL))) rewrite_thm;
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [rewrite_thm_fix]))) thm_env_pcond;*)
       val thm_merged = CONV_RULE (CHANGED_CONV (birs_Pi_CONV (REWRITE_CONV [ISPEC ((get_birs_Pi_first o concl) thm_env_pcond) pred_setTheory.INSERT_INSERT]))) thm_env_pcond
         handle _ => (print_thm thm_env_pcond; raise ERR "birs_Pi_merge_2_RULE" "merging did not work");
@@ -752,7 +753,7 @@ fun print_mem_exp cutoff_size mem_exp =
         val pcond_sys_extral = list_minus term_id_eq pcond_sysl pcond_Pifl;
         val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
         fun check_extra extra =
-          if (length extra = 0) orelse ((length extra = 1) andalso (birsSyntax.is_BExp_IntervalPred (hd extra))) then () else
+          if (length extra = 0) orelse ((length extra = 1) andalso (bir_extra_expsSyntax.is_BExp_IntervalPred (hd extra))) then () else
           raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (mk_bandl extra)));
         val _ = check_extra pcond_sys_extral;
         val _ = check_extra pcond_Pif_extral;

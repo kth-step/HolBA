@@ -126,7 +126,7 @@ val bprecond_birs_eval_exp_thm = save_thm(
    "bprecond_birs_eval_exp_thm",
   (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
    REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-   birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+   holba_convLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
    EVAL)
      ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
 );
