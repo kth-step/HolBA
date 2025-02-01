@@ -138,7 +138,7 @@ in (* local *)
       val thm_z = Profile.profile "zzz_5_stateacc" (CONV_RULE (birs_Pi_CONV (LAND_CONV (
           birs_state_acc_CONV THENC
           GEN_match_conv is_birs_update_env (
-            birs_stepLib.birs_update_env_CONV
+            bir_vars_ofLib.birs_update_env_CONV
           )
         )))) thm3;
       val _ = if not debug then () else print "\nz: \n";
@@ -200,7 +200,7 @@ in (* local *)
               (* create updated state (pcond and env), and purge previous environment mapping *)
               val env_mod = mk_birs_update_env (pairSyntax.mk_pair (vn, exp_new), env_old);
               val _ = if not debug_mode then () else print "created update env exp\n";
-              val env_new = (snd o dest_eq o concl o birs_stepLib.birs_update_env_CONV) env_mod;
+              val env_new = (snd o dest_eq o concl o bir_vars_ofLib.birs_update_env_CONV) env_mod;
               val _ = if not debug_mode then () else print "purged update env exp\n";
               val pcond_new = bslSyntax.band (bslSyntax.beq (bslSyntax.bden symb_tm, exp_tm), pcond_old);
               val Pi_sys_new_tm = mk_birs_state (pc, env_new, status, pcond_new);

@@ -138,6 +138,21 @@ in (* local *)
       clean_conv;
   end
 
+  local
+    val optcase_none_thm = CONJUNCT1 optionTheory.option_case_def;
+    val optcase_some_thm = CONJUNCT2 optionTheory.option_case_def;
+  in
+    fun option_CASE_CONV opt_conv app_conv =
+      RATOR_CONV (LAND_CONV opt_conv) THENC
+      (fn tm => (
+        if optionSyntax.is_none tm then
+          REWR_CONV optcase_none_thm
+        else
+          REWR_CONV optcase_some_thm THENC
+          app_conv
+      ) tm);
+  end
+
   
 (* ---------------------------------------------------------------------------------- *)
 (* generic fast set operations (conversions)                                          *)

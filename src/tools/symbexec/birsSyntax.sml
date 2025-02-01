@@ -79,12 +79,18 @@ end;
     val syntax_fns1_env = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
     val syntax_fns1_set = syntax_fns 2 HolKernel.dest_monop HolKernel.mk_monop;
     val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns2_set = syntax_fns 3 HolKernel.dest_binop HolKernel.mk_binop;
+    val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
   in
     val (birs_gen_env_tm,  mk_birs_gen_env, dest_birs_gen_env, is_birs_gen_env)  = syntax_fns1_env "birs_gen_env";
     val (bir_senv_GEN_list_tm,  mk_bir_senv_GEN_list, dest_bir_senv_GEN_list, is_bir_senv_GEN_list)  = syntax_fns1_env "bir_senv_GEN_list";
     val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
     
     val (bir_pc_set_lbls_tm,  mk_bir_pc_set_lbls, dest_bir_pc_set_lbls, is_bir_pc_set_lbls)  = syntax_fns1_set "bir_pc_set_lbls";
+
+    val (birs_env_var_is_initialised_tm,  mk_birs_env_var_is_initialised, dest_birs_env_var_is_initialised, is_birs_env_var_is_initialised)  = syntax_fns3 "birs_env_var_is_initialised";
+    val (birs_env_var_is_initialised_set_tm,  mk_birs_env_var_is_initialised_set, dest_birs_env_var_is_initialised_set, is_birs_env_var_is_initialised_set)  = syntax_fns2_set "birs_env_var_is_initialised";
+    val (birs_env_vars_are_initialised_tm,  mk_birs_env_vars_are_initialised, dest_birs_env_vars_are_initialised, is_birs_env_vars_are_initialised)  = syntax_fns3 "birs_env_vars_are_initialised";
   end;
 
   local

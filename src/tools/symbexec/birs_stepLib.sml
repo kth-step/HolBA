@@ -898,19 +898,6 @@ fun birs_gen_env_CONV eq_thms =
   ) THENC
   TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm);
 
-val birs_update_env_P_CONV =
-  BETA_CONV THENC
-  NEG_CONV (
-    LHS_CONV (
-      REWR_CONV pairTheory.FST
-    ) THENC
-    bir_varname_EQ_CONV
-  );
-
-val birs_update_env_CONV =
-  REWR_CONV birs_update_env_thm THENC
-  RAND_CONV (RAND_CONV (FILTER_CONV birs_update_env_P_CONV));
-
 fun birs_exec_stmtB_CONV eq_thms tm =
 let
   (* evaluate to symbolic expression *)
@@ -949,7 +936,7 @@ in
     ( GEN_match_conv is_birs_update_env (
       LAND_CONV (LAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def)) THENC
       RAND_CONV (unabbrev_conv eq_thms) THENC
-      birs_update_env_CONV
+      bir_vars_ofLib.birs_update_env_CONV
     )))
     res_b_option_bind;
 
@@ -1270,8 +1257,6 @@ fun birs_exec_step_CONV_fun tm =
   end;
 
 val birs_symbval_concretizations_oracle_ext_CONV = birs_symbval_concretizations_oracle_ext_CONV;
-
-val birs_update_env_CONV = birs_update_env_CONV;
 
 end (* local *)
 

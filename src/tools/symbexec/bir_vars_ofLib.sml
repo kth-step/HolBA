@@ -152,6 +152,70 @@ in (* local *)
   val birs_freesymbs_CONV =
     GEN_match_conv is_birs_freesymbs birs_freesymbs_DIRECT_CONV;
 
+
+(* ---------------------------------------------------------------------------------- *)
+(* birs_env_vars_are_initialised, birs_env_var_is_initialised              *)
+(* ---------------------------------------------------------------------------------- *)
+
+  local
+    val birs_update_env_P_CONV =
+      BETA_CONV THENC
+      NEG_CONV (
+        LHS_CONV (
+          REWR_CONV pairTheory.FST
+        ) THENC
+        bir_varname_EQ_CONV
+      );
+  in
+    val birs_gen_env_list_purge_CONV =
+      listLib.FILTER_CONV birs_update_env_P_CONV;
+  end
+
+  val birs_update_env_CONV =
+    REWR_CONV birs_update_env_thm THENC
+    RAND_CONV (RAND_CONV birs_gen_env_list_purge_CONV);
+
+  local
+    fun birs_env_var_is_initialised_set_CONV_helper tm = (
+      if (listSyntax.is_cons o rand o rand o rator) tm then
+        REWR_CONV birs_env_var_is_initialised_gen_env_INSERT_thm THENC
+        LAND_CONV (
+          option_CASE_CONV
+            (bir_exp_typecheckLib.type_of_bir_exp_DIRECT_CONV)
+            (
+              BETA_CONV THENC
+              ITE_CONV (
+                LAND_CONV bir_vars_of_exp_DIRECT_CONV THENC
+                SUBSET_CONV bir_var_EQ_CONV
+              )
+            )
+        ) THENC
+        RAND_CONV (
+          LAND_CONV (RAND_CONV (birs_gen_env_list_purge_CONV)) THENC
+          birs_env_var_is_initialised_set_CONV_helper
+        ) THENC
+        pred_setLib.UNION_CONV bir_var_EQ_CONV
+      else
+        REWR_CONV birs_env_var_is_initialised_gen_env_EMPTY_thm
+    ) tm;
+  in
+    val birs_env_var_is_initialised_set_CONV = (
+      birs_env_var_is_initialised_set_CONV_helper
+    ) o (fn tm =>
+      if is_birs_env_var_is_initialised_set tm then tm else
+          raise ERR "birs_env_var_is_initialised_set_CONV" "cannot handle term"
+    );
+  end
+
+  val birs_env_vars_are_initialised_CONV = (
+    REWR_CONV birs_env_vars_are_initialised_SUBSET_thm THENC
+    RAND_CONV birs_env_var_is_initialised_set_CONV THENC
+    SUBSET_CONV bir_var_EQ_CONV
+  ) o (fn tm =>
+    if is_birs_env_vars_are_initialised tm then tm else
+        raise ERR "birs_env_vars_are_initialised_CONV" "cannot handle term"
+  );
+
 end (* local *)
 
 end (* struct *)
