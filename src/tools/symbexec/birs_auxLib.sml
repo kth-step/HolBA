@@ -24,7 +24,7 @@ in
       val _ = print "\ncollecting program variables";
       val timer = holba_miscLib.timer_start 0;
       val var_set_thm = 
-        (bir_vars_of_program_CONV)
+        (bir_vars_of_program_DIRECT_CONV)
         ``bir_vars_of_program ^prog_tm``;
       val _ = holba_miscLib.timer_stop
         (fn delta_s => print (" - " ^ delta_s ^ "\n")) timer;

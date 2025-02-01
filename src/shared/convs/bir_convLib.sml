@@ -228,9 +228,12 @@ in (* local *)
 (* ---------------------------------------------------------------------------------- *)
 
 (* NOTE: this can be done much better, but already much better than before *)
-val bir_vars_of_program_CONV =
-  REWRITE_CONV [bir_typing_progTheory.bir_vars_of_program_ALT_thm] THENC
-  EVAL;
+  val bir_vars_of_program_DIRECT_CONV =
+    REWRITE_CONV [bir_typing_progTheory.bir_vars_of_program_ALT_thm] THENC
+    EVAL;
+
+  val bir_vars_of_program_CONV =
+    GEN_match_conv (bir_typing_progSyntax.is_bir_vars_of_program) bir_vars_of_program_DIRECT_CONV;
 
 end (* local *)
 
