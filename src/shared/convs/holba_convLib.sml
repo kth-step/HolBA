@@ -197,6 +197,19 @@ in (* local *)
   *)
 
   local
+    val lts_nil_thm = CONJUNCT1 listTheory.LIST_TO_SET_THM;
+    val lts_cons_thm = CONJUNCT2 listTheory.LIST_TO_SET_THM;
+  in
+    fun LIST_TO_SET_CONV tm = (
+      (if (listSyntax.is_cons o listSyntax.dest_list_to_set) tm then
+        REWR_CONV lts_cons_thm THENC
+        RAND_CONV LIST_TO_SET_CONV
+       else
+        REWR_CONV lts_nil_thm) tm)
+      handle e => (print_term tm; raise wrap_exn ("@LIST_TO_SET_CONV") e);
+  end
+
+  local
     val filter_empty_thm = CONJUNCT1 listTheory.FILTER;
     val filter_cons_thm = CONJUNCT2 listTheory.FILTER;
     (* this function is not end-recursive *)

@@ -211,6 +211,7 @@ in (* local *)
   val bir_vars_of_exp_DIRECT_CONV = Profile.profile "bir_vars_of_exp_DIRECT_CONV" bir_vars_of_exp_DIRECT_CONV;
 
   val bir_vars_of_exp_CONV =
+    REWRITE_CONV [bir_extra_expsTheory.BExp_Aligned_def] THENC
     GEN_match_conv (is_bir_vars_of_exp) bir_vars_of_exp_DIRECT_CONV;
 
   fun get_vars_of_bexp tm =
@@ -221,6 +222,52 @@ in (* local *)
       (strip_set o snd o dest_eq o concl) thm
     end
     handle _ => (print_term tm; print "\n\n"; raise ERR "get_vars_of_bexp" "did not work");
+
+(*
+val tm = ``bir_vars_of_exp
+     (BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_And
+           (BExp_Aligned Bit64 3 (BExp_Den (BVar "x10" (BType_Imm Bit64))))
+           (BExp_BinExp BIExp_And
+              (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0x20000w))
+                 (BExp_Den (BVar "x10" (BType_Imm Bit64))))
+              (BExp_BinPred BIExp_LessThan
+                 (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+                 (BExp_Const (Imm64 0x100000000w)))))
+        (BExp_BinExp BIExp_And
+           (BExp_BinExp BIExp_And
+              (BExp_Aligned Bit64 3 (BExp_Den (BVar "x11" (BType_Imm Bit64))))
+              (BExp_BinExp BIExp_And
+                 (BExp_BinPred BIExp_LessOrEqual
+                    (BExp_Const (Imm64 0x20000w))
+                    (BExp_Den (BVar "x11" (BType_Imm Bit64))))
+                 (BExp_BinPred BIExp_LessThan
+                    (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                    (BExp_Const (Imm64 0x100000000w)))))
+           (BExp_BinExp BIExp_And
+              (BExp_BinPred BIExp_Equal
+                 (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+                 (BExp_Const (Imm64 pre_x10)))
+              (BExp_BinExp BIExp_And
+                 (BExp_BinPred BIExp_Equal
+                    (BExp_Load
+                       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                       (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+                       BEnd_LittleEndian Bit64)
+                    (BExp_Const (Imm64 pre_x10_deref)))
+                 (BExp_BinExp BIExp_And
+                    (BExp_BinPred BIExp_Equal
+                       (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                       (BExp_Const (Imm64 pre_x11)))
+                    (BExp_BinPred BIExp_Equal
+                       (BExp_Load
+                          (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                          (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                          BEnd_LittleEndian Bit64)
+                       (BExp_Const (Imm64 pre_x11_deref))))))))``;
+bir_convLib.bir_vars_of_exp_CONV tm;                       
+*)
+
 
 
 (* ---------------------------------------------------------------------------------- *)
@@ -234,6 +281,16 @@ in (* local *)
 
   val bir_vars_of_program_CONV =
     GEN_match_conv (bir_typing_progSyntax.is_bir_vars_of_program) bir_vars_of_program_DIRECT_CONV;
+
+
+  val bir_labels_of_program_DIRECT_CONV =
+    (*RESTR_EVAL_CONV [bir_programSyntax.bir_labels_of_program_tm] THENC*)
+    REWR_CONV bir_programTheory.bir_labels_of_program_def THENC
+    listLib.MAP_CONV (SIMP_CONV (std_ss++HolBACoreSimps.bir_TYPES_ss) []);
+
+  val bir_labels_of_program_CONV =
+    GEN_match_conv (bir_programSyntax.is_bir_labels_of_program) bir_labels_of_program_DIRECT_CONV;
+
 
 end (* local *)
 
