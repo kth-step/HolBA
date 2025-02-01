@@ -5,6 +5,9 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open holba_convLib;
+  open bir_convLib;
+
   open birsSyntax;
 
   open birs_utilsLib;
@@ -118,15 +121,15 @@ in (* local *)
     else
       let
         (* TODO: when fixing this, better implement for multisubst and have subst1 as special case *)
-        val subst1_conv = EVAL THENC REWRITE_CONV [GSYM birs_auxTheory.BExp_IntervalPred_def]; (* TODO big TODO, also: reverting BExp_IntervalPred_def only needed for pcond *)
+        val subst1_conv = EVAL THENC REWRITE_CONV [GSYM bir_extra_expsTheory.BExp_IntervalPred_def]; (* TODO big TODO, also: reverting BExp_IntervalPred_def only needed for pcond *)
         val env_subst1_conv =
           REWR_CONV birs_auxTheory.birs_symb_env_subst1_gen_env_thm THENC
           RAND_CONV (listLib.MAP_CONV EVAL); (* TODO: ? *)
 
         val conv =
           REWR_CONV bir_symb_soundTheory.birs_symb_subst1_REWR_thm THENC
-          birs_auxLib.GEN_match_conv birsSyntax.is_birs_symb_env_subst1 env_subst1_conv THENC
-          birs_auxLib.GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 subst1_conv;
+          GEN_match_conv birsSyntax.is_birs_symb_env_subst1 env_subst1_conv THENC
+          GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 subst1_conv;
         val thm = conv tm;
       in
         thm
@@ -280,7 +283,7 @@ in (* local *)
             val thm2 = MP (CONV_RULE (LAND_CONV (symb_assump_conv birs_symb_symbols_DIRECT_CONV)) thm1) TRUTH
               handle e => (print "\n\nrule_INST thm2 failed:\n"; print_term alpha_tm;(* print_thm thm1;*) print "\n\n\n"; raise e);
             (*val _ = print_thm thm2;*)
-            val thm3 = MP (CONV_RULE (LAND_CONV (birs_freesymbs_gen_CONV bir_vars_ofLib.bir_vars_of_exp_DIRECT_CONV)) thm2) TRUTH
+            val thm3 = MP (CONV_RULE (LAND_CONV (birs_freesymbs_gen_CONV bir_vars_of_exp_DIRECT_CONV)) thm2) TRUTH
               handle e => (print "\n\nrule_INST thm3 failed:\n"; print_term alpha_tm;(* print_thm thm2;*) print "\n\n\n"; raise e);
             (*val _ = print_thm thm3;*)
             val thm4 =
@@ -348,7 +351,7 @@ in (* local *)
         raise ERR "birs_sound_inst_RULE" "summaries can only contain 1 state currently";
       (* cleanup Pi path conditions (probably only need to consider one for starters) to only preserve non-summary conjunct (as the step before), but preserve also the intervals *)
       val B_Pi_pcond = (get_birs_Pi_first_pcond o concl) B_thm_inst_sys;
-      val B_Pi_pcond_intervals = List.filter (is_BExp_IntervalPred) (dest_bandl B_Pi_pcond);
+      val B_Pi_pcond_intervals = List.filter (bir_extra_expsSyntax.is_BExp_IntervalPred) (dest_bandl B_Pi_pcond);
       val B_pcondl_new = B_Pi_pcond_intervals@(list_minus term_id_eq (dest_bandl A_pcond) B_Pi_pcond_intervals);
       val B_Pi_pcond_new = mk_bandl (B_pcondl_new);
       (*

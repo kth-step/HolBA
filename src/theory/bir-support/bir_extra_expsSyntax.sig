@@ -29,6 +29,7 @@ sig
    val BExp_rol_exp_tm                  : term
    val BExp_rol_tm                      : term
    val BExp_extr_tm                     : term
+   val BExp_IntervalPred_tm             : term
 
    val is_BExp_Align                    : term -> bool
    val is_BExp_Aligned                  : term -> bool
@@ -56,6 +57,7 @@ sig
    val is_BExp_rol_exp                  : term -> bool
    val is_BExp_rol                      : term -> bool
    val is_BExp_extr                     : term -> bool
+   val is_BExp_IntervalPred             : term -> bool
 
    val mk_BExp_Align                    : (term * term * term) -> term
    val mk_BExp_Aligned                  : (term * term * term) -> term
@@ -83,6 +85,7 @@ sig
    val mk_BExp_rol_exp                  : (term * term * term) -> term
    val mk_BExp_rol                      : (term * term * term) -> term
    val mk_BExp_extr                     : (term * term * term * term) -> term
+   val mk_BExp_IntervalPred             : (term * term) -> term
 
    val dest_BExp_Align                  : term -> (term * term * term)
    val dest_BExp_Aligned                : term -> (term * term * term)
@@ -110,5 +113,6 @@ sig
    val dest_BExp_rol_exp                : term -> (term * term * term)
    val dest_BExp_rol                    : term -> (term * term * term)
    val dest_BExp_extr                   : term -> (term * term * term * term)
+   val dest_BExp_IntervalPred           : term -> (term * term)
 
 end

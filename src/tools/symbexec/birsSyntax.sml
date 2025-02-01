@@ -84,8 +84,6 @@ end;
     val (bir_senv_GEN_list_tm,  mk_bir_senv_GEN_list, dest_bir_senv_GEN_list, is_bir_senv_GEN_list)  = syntax_fns1_env "bir_senv_GEN_list";
     val (birs_exps_of_senv_tm,  mk_birs_exps_of_senv, dest_birs_exps_of_senv, is_birs_exps_of_senv)  = syntax_fns1_set "birs_exps_of_senv";
     
-    val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
-    
     val (bir_pc_set_lbls_tm,  mk_bir_pc_set_lbls, dest_bir_pc_set_lbls, is_bir_pc_set_lbls)  = syntax_fns1_set "bir_pc_set_lbls";
   end;
 

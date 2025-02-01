@@ -5,6 +5,8 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open bir_convLib;
+
   open birsSyntax;
   open birs_utilsLib;
   open aux_setLib;

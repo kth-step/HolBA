@@ -6,6 +6,8 @@ open Abbrev;
 local 
   open HolKernel Parse boolLib bossLib;
   
+  open holba_convLib;
+
   open HolBACoreSimps;
   open bir_env_oldTheory;
   open bir_envTheory;
@@ -96,7 +98,7 @@ fun bsymbstate_bconcpred_bsymbval bsys bcond =
     val birs_eval_thm = 
       (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm] THENC
        REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
        EVAL)
       ``FST (THE (birs_eval_exp ^bcond ((^bsys).bsst_environ)))``;
     val birs_eval_res = (snd o dest_eq o concl) birs_eval_thm;

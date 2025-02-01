@@ -5,6 +5,12 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open holba_cacheLib;
+
+  open aux_moveawayLib;
+
+  open bir_extra_expsSyntax;
+
   open birsSyntax;
 
   (* error handling *)
@@ -56,92 +62,6 @@ in (* local *)
 (* ---------------------------------------------------------------------------------------- *)
 
   val mk_bandl = bslSyntax.bandl;
-
-(* ---------------------------------------------------------------------------------------- *)
-
-  fun TRY_LIST_REWR_CONV [] _ = raise UNCHANGED
-    | TRY_LIST_REWR_CONV (rw_thm::rw_thms) tm =
-        REWR_CONV rw_thm tm
-        handle _ => TRY_LIST_REWR_CONV rw_thms tm;
-
-  (* eliminate left conjuncts first *)
-  val CONJL_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (LAND_CONV lconv) THENC
-      (fn tm =>
-        if (identical T o fst o dest_conj) tm then
-          (REWR_CONV thm_T THENC rconv) tm
-        else
-          (REWR_CONV thm_F) tm)
-    end;
-  (* eliminate right conjuncts first *)
-  val CONJR_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (RAND_CONV rconv) THENC
-      (fn tm =>
-        if (identical T o snd o dest_conj) tm then
-          (REWR_CONV thm_T THENC lconv) tm
-        else
-          (REWR_CONV thm_F) tm)
-    end;
-
-  (* eliminate left disjuncts first *)
-  val DISJL_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (LAND_CONV rconv) THENC
-      (fn tm =>
-        if (identical F o fst o dest_disj) tm then
-          (REWR_CONV thm_F THENC lconv) tm
-        else
-          (REWR_CONV thm_T) tm)
-    end;
-  (* eliminate right disjuncts first *)
-  val DISJR_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (RAND_CONV rconv) THENC
-      (fn tm =>
-        if (identical F o snd o dest_disj) tm then
-          (REWR_CONV thm_F THENC lconv) tm
-        else
-          (REWR_CONV thm_T) tm)
-    end;
-  
-  fun NEG_CONV conv =
-    RAND_CONV conv THENC
-    REWRITE_CONV [boolTheory.NOT_CLAUSES];
-
-  local
-    val thm_T = (CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES;
-    val thm_F = (CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES;
-    fun get_cond_c tm =
-      let val (c,_,_) = dest_cond tm;
-      in c end;
-    fun clean_conv tm =
-      if (identical T o get_cond_c) tm then
-        REWR_CONV thm_T tm
-      else
-        REWR_CONV thm_F tm;
-  in
-    fun ITE_CONV conv =
-      RATOR_CONV (RATOR_CONV (RAND_CONV conv)) THENC
-      clean_conv;
-  end
 
 (* ---------------------------------------------------------------------------------------- *)
 
@@ -206,7 +126,7 @@ in (* local *)
       else
         NONE
     end;
-  val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
+  val check_imp_tm = wrap_cache_result Term.compare check_imp_tm;
 
   fun check_pcondinf_tm pcondinf_tm =
     if not (is_birs_pcondinf pcondinf_tm) then raise ERR "check_pcondinf_tm" "term needs to be birs_pcondinf" else
@@ -219,7 +139,7 @@ in (* local *)
       else
         NONE
     end;
-  val check_pcondinf_tm = aux_moveawayLib.wrap_cache_result Term.compare check_pcondinf_tm;
+  val check_pcondinf_tm = wrap_cache_result Term.compare check_pcondinf_tm;
 
   fun check_simplification_tm simp_tm =
     if not (is_birs_simplification simp_tm) then raise ERR "check_simplification_tm" "term needs to be birs_simplification" else
@@ -233,7 +153,7 @@ in (* local *)
       else
         NONE
     end;
-  val check_simplification_tm = aux_moveawayLib.wrap_cache_result Term.compare check_simplification_tm;
+  val check_simplification_tm = wrap_cache_result Term.compare check_simplification_tm;
   
   fun check_pcond_sat pcond_tm =
     let
@@ -268,7 +188,7 @@ in (* local *)
           NONE
       end
       handle _ => NONE;
-    val try_prove_assumption = fn conv => aux_moveawayLib.wrap_cache_result Term.compare (try_prove_assumption conv);
+    val try_prove_assumption = fn conv => wrap_cache_result Term.compare (try_prove_assumption conv);
 
     fun try_prove_assumptions remove_all conv NONE = NONE
       | try_prove_assumptions remove_all conv (SOME t) =
@@ -376,7 +296,7 @@ in (* local *)
 
           val env_new = (mk_birs_gen_env o listSyntax.mk_list) (reorder_mappings varnames mappings [], mappings_ty);
         in
-          aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_ENVVARSETORDER" (mk_eq (env, env_new))
+          mk_oracle_preserve_tags [] "BIRS_ENVVARSETORDER" (mk_eq (env, env_new))
         end
         handle _ => raise ERR "birs_env_set_order_CONV" "something uncaught";
 

@@ -54,6 +54,8 @@ struct
   val (BExp_rol_exp_tm, mk_BExp_rol_exp, dest_BExp_rol_exp, is_BExp_rol_exp) = syntax_fns3 "BExp_rol_exp"
 
   val (BExp_extr_tm, mk_BExp_extr, dest_BExp_extr, is_BExp_extr) = syntax_fns4 "BExp_extr"
+    
+  val (BExp_IntervalPred_tm,  mk_BExp_IntervalPred, dest_BExp_IntervalPred, is_BExp_IntervalPred)  = syntax_fns2 "BExp_IntervalPred";
 
   end (* local *)
 

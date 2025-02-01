@@ -6,13 +6,13 @@ local
   open HolKernel Parse boolLib bossLib;
   open computeLib;
 
+  open holba_convLib;
+
   open bir_exp_substitutionsTheory;
   open bir_expTheory;
 
   open bir_symbTheory;
-  open birs_auxTheory;
 
-  open birs_auxLib;
   open bir_typing_expSyntax;
 
   (* error handling *)
@@ -57,7 +57,7 @@ in (* local *)
       BExp_word_reverse_type_of,
       BExp_ror_exp_type_of,
       bir_immtype_of_size_def,
-      birs_auxTheory.type_of_bir_exp_BExp_IntervalPred_thm
+      type_of_bir_exp_BExp_IntervalPred_thm
     ];
     val distinct_thms = [
       bir_immTheory.bir_immtype_t_distinct,
@@ -74,7 +74,6 @@ in (* local *)
 
     open optionSyntax;
     open bir_valuesSyntax;
-    open bir_typing_expSyntax;
     fun is_type_of_bir_exp_val result =
       is_none result orelse
         (is_some result andalso
@@ -90,7 +89,7 @@ in (* local *)
     fun type_of_bir_exp_rec_CONV f_rec tm =
       let
         val thm_opened =
-          (REWRITE_CONV [birs_auxTheory.type_of_bir_exp_BExp_IntervalPred_thm] THENC
+          (REWRITE_CONV [type_of_bir_exp_BExp_IntervalPred_thm] THENC
            REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def]) tm;
         val thm = CONV_RULE (RHS_CONV (GEN_match_conv is_type_of_bir_exp f_rec THENC type_of_bir_exp_finish_CONV)) thm_opened;
       in
@@ -125,12 +124,12 @@ in (* local *)
     val term = bexp_term;
     type_of_bir_exp_DIRECT_CONV bexp_term
     *)
-    val type_of_bir_exp_DIRECT_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("type_of_bir_exp_DIRECT_CONV") (dest_type_of_bir_exp) (is_type_of_bir_exp_val) type_of_bir_exp_rec_CONV;
+    val type_of_bir_exp_DIRECT_CONV = holba_cacheLib.wrap_cache_CONV_inter_result ("type_of_bir_exp_DIRECT_CONV") (dest_type_of_bir_exp) (is_type_of_bir_exp_val) type_of_bir_exp_rec_CONV;
   end;
   val type_of_bir_exp_DIRECT_CONV = Profile.profile "type_of_bir_exp_DIRECT_CONV" type_of_bir_exp_DIRECT_CONV;
 
   val type_of_bir_exp_CONV =
-    GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
+    GEN_match_conv (is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
     
   fun get_type_of_bexp tm =
     let

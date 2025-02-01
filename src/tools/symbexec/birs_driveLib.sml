@@ -5,6 +5,8 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open holba_convLib;
+
   open birsSyntax;
   open birs_composeLib;
 
@@ -226,7 +228,7 @@ in (* local *)
       val mk_bsysprecond_pcond_thm =
         (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm] THENC
          REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-         birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+         GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
          EVAL (*FST (THE (...))*))
         (mk_mk_bsysprecond (bpre, bprog_envtyl_tm));
     in

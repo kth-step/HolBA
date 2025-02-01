@@ -6,6 +6,9 @@ local
 open HolKernel Parse boolLib bossLib;
 open computeLib;
 
+open holba_convLib;
+open bir_convLib;
+
 open birsSyntax;
 
 open bir_exp_substitutionsTheory;
@@ -559,7 +562,7 @@ fun birs_gen_env_exp_CONV eq_thms =
   REPEATC (
     REWR_CONV birs_gen_env_GET_thm THENC
     CHANGED_CONV
-      (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+      (ITE_CONV bir_varname_EQ_CONV)
   ) THENC
   TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm) THENC
   RAND_CONV (deabbr_CONV eq_thms);
@@ -588,7 +591,7 @@ fun bir_envty_includes_vs_CONV eq_thms tm = (
         ) THENC
         RHS_CONV (RAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def)) THENC
         REWRITE_CONV [optionTheory.SOME_11, optionTheory.NOT_SOME_NONE, GSYM optionTheory.NOT_SOME_NONE] THENC
-        aux_setLib.bir_type_EQ_CONV)
+        bir_type_EQ_CONV)
       (bir_envty_includes_vs_CONV eq_thms)
   else
     REWR_CONV includes_vs_EMPTY_thm
@@ -603,7 +606,7 @@ fun birs_senv_typecheck_CONV eq_thms = (
        also: use deabbr_CONV *)
   (*(fn x => (print "\n\n"; print_term x; print "\n\n"; REFL x)) THENC*)
   REWR_CONV bir_symbTheory.birs_senv_typecheck_thm THENC
-  RAND_CONV (bir_vars_ofLib.bir_vars_of_exp_DIRECT_CONV) THENC
+  RAND_CONV (bir_vars_of_exp_DIRECT_CONV) THENC
   bir_envty_includes_vs_CONV eq_thms
   (*
   RESTR_EVAL_CONV [bir_typing_expSyntax.type_of_bir_exp_tm] THENC
@@ -652,7 +655,7 @@ val birs_eval_exp_subst_var_CONV =
         RAND_CONV (REWR_CONV bir_envTheory.bir_var_name_def) THENC
         REPEATC (CHANGED_CONV (
           TRY_LIST_REWR_CONV birs_gen_env_GET_REWR_thms THENC
-          TRY_CONV (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+          TRY_CONV (ITE_CONV bir_varname_EQ_CONV)
         )) THENC
         TRY_CONV (RAND_CONV (deabbr_CONV eq_thms))
       ) THENC
@@ -891,7 +894,7 @@ fun birs_gen_env_CONV eq_thms =
   REPEATC (
     REWR_CONV birs_gen_env_GET_thm THENC
     CHANGED_CONV
-      (ITE_CONV aux_setLib.bir_varname_EQ_CONV)
+      (ITE_CONV bir_varname_EQ_CONV)
   ) THENC
   TRY_CONV (REWR_CONV birs_gen_env_GET_NULL_thm);
 
@@ -901,12 +904,12 @@ val birs_update_env_P_CONV =
     LHS_CONV (
       REWR_CONV pairTheory.FST
     ) THENC
-    aux_setLib.bir_varname_EQ_CONV
+    bir_varname_EQ_CONV
   );
 
 val birs_update_env_CONV =
   REWR_CONV birs_update_env_thm THENC
-  RAND_CONV (RAND_CONV (aux_setLib.FILTER_CONV birs_update_env_P_CONV));
+  RAND_CONV (RAND_CONV (FILTER_CONV birs_update_env_P_CONV));
 
 fun birs_exec_stmtB_CONV eq_thms tm =
 let

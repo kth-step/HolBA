@@ -19,7 +19,6 @@ open pred_setTheory;
 
 open bir_exp_substitutionsTheory;
 open birs_composeLib;
-open birs_auxTheory;
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 *)
@@ -43,7 +42,7 @@ fun prepare_transfer birenvtyl_def pcond_inst bpre symb_analysis_thm =
     open birs_conseqLib;
     val specd_symb_analysis_thm = birs_sound_symb_inst_RULE [(birs_driveLib.pcond_gen_symb, pcond_inst)] symb_analysis_thm;
     val pcond_symb_analysis_thm = birs_sys_pcond_RULE pcond_tm specd_symb_analysis_thm;
-    val extra_symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [birs_auxTheory.BExp_IntervalPred_def])) pcond_symb_analysis_thm;
+    val extra_symb_analysis_thm = CONV_RULE (birs_Pi_CONV (REWRITE_CONV [bir_extra_expsTheory.BExp_IntervalPred_def])) pcond_symb_analysis_thm;
 
     (* then fix the initial state *)
     val fixed_symb_analysis_thm = CONV_RULE (birs_sys_CONV (REWRITE_CONV [GSYM prog_env_thm])) extra_symb_analysis_thm;

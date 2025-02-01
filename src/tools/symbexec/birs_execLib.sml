@@ -4,6 +4,9 @@ struct
 local
   open HolKernel Parse boolLib bossLib;
 
+  open holba_convLib;
+  open bir_convLib;
+
   open birsSyntax;
   open birs_utilsLib;
   open birs_stepLib;
@@ -47,9 +50,9 @@ in
       let
         val el_conv =
           if not approximating then
-            aux_setLib.bir_pc_EQ_CONV
+            bir_pc_EQ_CONV
           else
-            aux_setLib.bir_label_EQ_CONV;
+            bir_label_EQ_CONV;
         val insert_L_conv =
           LAND_CONV exec_step_postproc_conv THENC (
             if not inserting then
@@ -156,8 +159,8 @@ in
         NONE)
       birs_rulesTheory.assert_spec_thm
       (DISJR_CONV
-        (NEG_CONV aux_setLib.bir_pc_EQ_CONV)
-        (NEG_CONV aux_setLib.bir_status_EQ_CONV))
+        (NEG_CONV bir_pc_EQ_CONV)
+        (NEG_CONV bir_status_EQ_CONV))
       thm;
   val birs_rule_tryjustassert_fun = fn x => Profile.profile "birs_rule_tryjustassert_fun" (birs_rule_tryjustassert_fun x);
 
@@ -167,8 +170,8 @@ in
       NONE
       prune_thm
       (DISJL_CONV
-        (NEG_CONV aux_setLib.bir_pc_EQ_CONV)
-        (NEG_CONV aux_setLib.bir_status_EQ_CONV));
+        (NEG_CONV bir_pc_EQ_CONV)
+        (NEG_CONV bir_status_EQ_CONV));
   val birs_rule_tryprune_fun = fn x => Profile.profile "birs_rule_tryprune_fun" (birs_rule_tryprune_fun x);
 
   (* ============================================================================ *)
@@ -206,7 +209,7 @@ in
       MP (SPEC ((snd o dest_comb o concl) simp_t) assignment_thm) simp_t;
     fun birs_rule_SUBST_trysimp_first_fun (*assignment_thm_f*)(SUBST_thm_f, SUBST_SING_thm_f) birs_simp_fun thm =
       let
-        val is_sing = (aux_setLib.is_sing o get_birs_Pi o concl) thm;
+        val is_sing = (is_sing o get_birs_Pi o concl) thm;
         val assignment_thm_f = if is_sing then SUBST_SING_thm_f else SUBST_thm_f;
         (*val postproc = if is_sing then I else cleanup_RULE;*)
 

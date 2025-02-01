@@ -3,6 +3,8 @@ struct
 
 open Abbrev;
 
+open holba_convLib;
+
 (* error handling *)
 val libname = "bir_symbLib"
 val ERR = Feedback.mk_HOL_ERR libname
@@ -125,7 +127,7 @@ fun bir_symb_transfer
      CONV_TAC (
        computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
        REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
        EVAL));
 
    val analysis_thm =
@@ -411,7 +413,7 @@ fun bir_symb_transfer_two
      CONV_TAC (
        computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
        REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
        EVAL));
    
    val analysis_thm =
