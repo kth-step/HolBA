@@ -7,6 +7,7 @@ local
 
   open stringSyntax;
   open bir_envSyntax bir_expSyntax bir_exp_immSyntax;
+  open bir_extra_expsSyntax;
 
   open birsSyntax;
   open birs_utilsLib;
@@ -319,7 +320,7 @@ in (* local *)
         (* TODO: the following is a quick solution without much checks *)
         fun get_ref_symb intervaltm_ =
           let
-            val refsymbs = List.filter (fn x => not (identical x env_symbol)) (bir_vars_ofLib.get_vars_of_bexp intervaltm_);
+            val refsymbs = List.filter (fn x => not (identical x env_symbol)) (bir_convLib.get_vars_of_bexp intervaltm_);
             (*
             val _ = PolyML.print_depth 10;
             val _ = PolyML.print refsymbs;
