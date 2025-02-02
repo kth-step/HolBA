@@ -2,7 +2,8 @@ open HolKernel Parse boolLib bossLib;
 
 open holba_auxiliaryLib;
 
-open wordsTheory bitstringTheory ASCIInumbersTheory;
+open wordsTheory wordsLib;
+open bitstringTheory ASCIInumbersTheory;
 open pred_setTheory;
 open listTheory;
 
@@ -1149,6 +1150,34 @@ Cases_on `i < LENGTH v` >> (
 )
 QED
 
+Theorem w2w_32_64:
+ !(b1:word32). w2w ((w2w b1):word64) = b1
+Proof
+  REPEAT Cases_word >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11] >>
+  IMP_RES_TAC (DECIDE ``n < 4294967296 ==> n < 18446744073709551616:num``) >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) []
+QED
+
+Theorem n2w_w2n_w2w_32_64:
+ !(b1:word32). n2w ((w2n b1)) = (w2w:word32 -> word64) b1
+Proof
+  REPEAT Cases_word >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
+QED
+
+Theorem w2w_n2w_w2n_64_32:
+ !(b1:word64). (w2w:word64 -> word32) b1 = n2w ((w2n b1))
+Proof
+  REPEAT Cases_word >>
+  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
+QED
+
+Theorem if_bool_1w:
+ !b. ((if b then 1w else 0w) = 1w) = b
+Proof
+ rw []
+QED
 
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)

@@ -2,7 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 open pred_setTheory;
 
-open wordsTheory wordsLib;
+open wordsTheory;
 
 open symb_interpretTheory;
 open symb_recordTheory;
@@ -15,29 +15,6 @@ open HolBACoreSimps;
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "birs_aux";
-
-Theorem w2w_32_64:
- !(b1:word32). w2w ((w2w b1):word64) = b1
-Proof
-  REPEAT Cases_word >>
-  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11] >>
-  IMP_RES_TAC (DECIDE ``n < 4294967296 ==> n < 18446744073709551616:num``) >>
-  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) []
-QED
-
-Theorem n2w_w2n_w2w_32_64:
- !(b1:word32). n2w ((w2n b1)) = (w2w:word32 -> word64) b1
-Proof
-  REPEAT Cases_word >>
-  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
-QED
-
-Theorem w2w_n2w_w2n_64_32:
- !(b1:word64). (w2w:word64 -> word32) b1 = n2w ((w2n b1))
-Proof
-  REPEAT Cases_word >>
-  FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [w2w_def,n2w_w2n,w2n_n2w,n2w_11]
-QED
 
 (*
 Definition bir_lbl_set_gen_def:

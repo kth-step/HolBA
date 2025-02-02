@@ -43,34 +43,6 @@ open chacha_symb_transf_diagonal_roundTheory;
 
 val _ = new_theory "chacha_diagonal_round_prop";
 
-Theorem if_bool_1w[local]:
- !b. ((if b then 1w else 0w) = 1w) = b
-Proof
- rw []
-QED
-
-Theorem bir_eval_bin_pred_lowcast_eq[local]:
-!f w reg.
-(bir_eval_bin_pred BIExp_Equal
- (bir_eval_cast BIExp_LowCast
-   (if (?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z)
-    then f reg else NONE) Bit32) (SOME (BVal_Imm (Imm32 w))) =
- SOME bir_val_true) 
- <=>
- (?(z:word64). f reg = SOME (BVal_Imm (Imm64 z)) /\ n2w (w2n z) = w)
-Proof
- REPEAT STRIP_TAC >>
- Q.ABBREV_TAC `g = ?z. f reg' = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
- fs [Abbrev_def] >-
-  (Cases_on `z` >> fs [type_of_bir_val_def] >>
-   Cases_on `b` >> fs [type_of_bir_imm_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def,w2w_n2w_w2n_64_32] >>
-   rw [if_bool_1w,bir_val_true_def]) >>
- rw [] >>
- fs [type_of_bir_val_def,type_of_bir_imm_def]
-QED
-
 (* ------------------------------------- *)
 (* Connecting RISC-V and BSPEC contracts *)
 (* ------------------------------------- *)
@@ -108,23 +80,32 @@ Proof
 
  fs [GSYM bir_and_equiv] >>
 
- Cases_on `bs` >>
- Cases_on `b0` >>
+ Cases_on `bs` >> Cases_on `b0` >>
+
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_lowcast_eq] >>
-
- rw [riscv_chacha_diagonal_round_post_def,riscv_chacha_quarter_round_exprs_def,
-  riscv_chacha_line_exp_fst_def,riscv_chacha_line_exp_snd_def,riscv_chacha_diagonal_round_exprs_def] >>
+ rw [bir_eval_bin_pred_64_lowcast_32_eq] >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
-  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+  riscv_chacha_diagonal_round_post_def,
+  riscv_chacha_quarter_round_exprs_def,
+  riscv_chacha_line_exp_fst_def,
+  riscv_chacha_line_exp_snd_def,
+  riscv_chacha_diagonal_round_exprs_def,
+
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def
  ] >>
  
  rw [] >> fs [if_bool_1w]
