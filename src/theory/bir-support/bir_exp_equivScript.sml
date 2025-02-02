@@ -477,6 +477,51 @@ REPEAT STRIP_TAC >> Cases_on `it` >| [
 )
 QED
 
+Theorem bir_eval_bin_pred_64_eq:
+ !f w reg.
+ (bir_eval_bin_pred BIExp_Equal
+  (if (?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z)
+  then f reg else NONE) (SOME (BVal_Imm (Imm64 w))) = SOME bir_val_true)
+ <=>
+ (f reg = SOME (BVal_Imm (Imm64 w)))
+Proof
+ REPEAT STRIP_TAC >>
+ Q.ABBREV_TAC `g = ?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
+ Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+ fs [Abbrev_def] >-
+  (Cases_on `z` >> fs [type_of_bir_val_def] >>
+   Cases_on `b` >> fs [type_of_bir_imm_def] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def] >>
+   Cases_on `c = w` >> fs [bir_val_true_def]) >>
+ STRIP_TAC >>
+ fs [type_of_bir_val_def,type_of_bir_imm_def]
+QED
+
+Theorem bir_eval_bin_pred_64_mem_eq:
+ !f mm w_ref w_deref.
+ (bir_eval_bin_pred BIExp_Equal
+  (bir_eval_load
+   (if (?z. f mm = SOME z /\ BType_Mem Bit64 Bit8 = type_of_bir_val z)
+    then f mm else NONE) (SOME (BVal_Imm (Imm64 w_ref))) BEnd_LittleEndian Bit64)
+ (SOME (BVal_Imm (Imm64 w_deref))) = SOME bir_val_true) 
+   <=>
+ (?map. f mm = SOME (BVal_Mem Bit64 Bit8 map) /\
+  bir_load_from_mem Bit8 Bit64 Bit64 map BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref))
+Proof
+ STRIP_TAC >> STRIP_TAC >> STRIP_TAC >> STRIP_TAC >>
+ Q.ABBREV_TAC `g = ?z. f mm = SOME z /\ BType_Mem Bit64 Bit8 = type_of_bir_val z` >>
+ Cases_on `g` >> fs [Abbrev_def] >-
+  (Cases_on `z` >> fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
+   Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 f' BEnd_LittleEndian (b2n (Imm64 w_ref))` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_REWRS] >>
+   Cases_on `x` >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def,bool2w_def] >>
+   Cases_on `c = w_deref` >>
+   fs [bir_val_true_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+ METIS_TAC [type_of_bir_val_def]
+QED
+
 Theorem bir_eval_bin_pred_64_lowcast_32_eq:
 !f w reg.
 (bir_eval_bin_pred BIExp_Equal
