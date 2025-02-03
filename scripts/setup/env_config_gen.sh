@@ -131,13 +131,13 @@ echo
 ####### HOLBA_Z3_DIR
 
 if [[ ( -z "${HOLBA_Z3_DIR}" ) || ( ! -z "${OPT_DIR_PARAM}" ) ]]; then
-  Z3_DIR="${HOLBA_OPT_DIR}/z3-4.13.0"
+  Z3_DIR="${HOLBA_OPT_DIR}/z3-4.13.4"
   if [[ -d "${Z3_DIR}/bin/python" ]]; then
     print_export_msg "HOLBA_Z3_DIR"
     export HOLBA_Z3_DIR="${Z3_DIR}"
   else
     # try the folder name for the version compiled from source
-    Z3_DIR="${HOLBA_OPT_DIR}/z3_4.13.0"
+    Z3_DIR="${HOLBA_OPT_DIR}/z3_4.13.4"
     if [[ -d "${Z3_DIR}/bin/python" ]]; then
       print_export_msg "HOLBA_Z3_DIR"
       export HOLBA_Z3_DIR=${Z3_DIR}
