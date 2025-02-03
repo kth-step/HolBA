@@ -49,7 +49,7 @@ jobs:
           ./scripts/ci/static-analysis.sh || echo "Static-analysis failed with status $?."
 
       - name: Prepare cached dependencies
-        timeout-minutes: 35
+        timeout-minutes: 45
         run: |
           ./scripts/setup/install_base.sh
           ./scripts/setup/install_z3.sh
