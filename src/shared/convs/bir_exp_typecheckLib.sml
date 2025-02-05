@@ -11,8 +11,6 @@ local
   open bir_exp_substitutionsTheory;
   open bir_expTheory;
 
-  open bir_symbTheory;
-
   open bir_typing_expSyntax;
 
   (* error handling *)
