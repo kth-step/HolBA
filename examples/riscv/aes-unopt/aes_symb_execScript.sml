@@ -19,9 +19,6 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
-(* turn on the store-store cheater *)
-val _ = birs_strategiesLib.birs_simp_select := birs_simp_instancesLib.birs_simp_default_riscv_gen true birs_simpLib.birs_simp_ID_fun [];
-
 val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_aes_prog_def

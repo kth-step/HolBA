@@ -39,50 +39,6 @@ open kernel_trap_entry_symb_transfTheory;
 
 val _ = new_theory "kernel_trap_entry_prop";
 
-Theorem bir_eval_bin_pred_eq[local]:
- !f w.
- (bir_eval_bin_pred BIExp_Equal
-  (if (?z. f reg = SOME z ∧ BType_Imm Bit64 = type_of_bir_val z)
-  then f reg else NONE) (SOME (BVal_Imm (Imm64 w))) = SOME bir_val_true) <=>
- (f reg = SOME (BVal_Imm (Imm64 w)))
-Proof
- REPEAT STRIP_TAC >>
- Q.ABBREV_TAC `g = ?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
- fs [Abbrev_def] >-
-  (Cases_on `z` >> fs [type_of_bir_val_def] >>
-   Cases_on `b` >> fs [type_of_bir_imm_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def] >>
-   Cases_on `c = w` >> fs [bir_val_true_def]) >>
- STRIP_TAC >>
- fs [type_of_bir_val_def,type_of_bir_imm_def]
-QED
-
-Theorem bir_eval_bin_pred_mem_eq[local]:
- !f mm w_ref w_deref.
- (bir_eval_bin_pred BIExp_Equal
-  (bir_eval_load
-   (if (?z. f mm = SOME z /\ BType_Mem Bit64 Bit8 = type_of_bir_val z)
-    then f mm else NONE) (SOME (BVal_Imm (Imm64 w_ref))) BEnd_LittleEndian Bit64)
- (SOME (BVal_Imm (Imm64 w_deref))) = SOME bir_val_true) 
-   <=>
- (?map. f mm = SOME (BVal_Mem Bit64 Bit8 map) /\
-  bir_load_from_mem Bit8 Bit64 Bit64 map BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref))
-Proof
- STRIP_TAC >> STRIP_TAC >> STRIP_TAC >> STRIP_TAC >>
- Q.ABBREV_TAC `g = ?z. f mm = SOME z /\ BType_Mem Bit64 Bit8 = type_of_bir_val z` >>
- Cases_on `g` >> fs [Abbrev_def] >-
-  (Cases_on `z` >> fs [type_of_bir_val_def,bir_eval_load_BASIC_REWR,type_of_bir_imm_def] >>
-   Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 f' BEnd_LittleEndian (b2n (Imm64 w_ref))` >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_REWRS] >>
-   Cases_on `x` >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def,bool2w_def] >>
-   Cases_on `c = w_deref` >>
-   fs [bir_val_true_def]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
- METIS_TAC [type_of_bir_val_def]
-QED
-
 Theorem bir_load_from_mem_riscv_load_dword[local]:
 !b f b1 ms map w_ref w_deref.
  bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
@@ -401,30 +357,35 @@ Theorem kernel_trap_entry_riscv_pre_imp_bspec_pre_thm:
     pre_x23 pre_x24 pre_x25 pre_x26 pre_x27 pre_x28 pre_x29 pre_x30 pre_x31)
 Proof
   rw [bir_pre_riscv_to_bir_def] >-
-   (rw [bspec_kernel_trap_entry_pre_def] >>
-    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_extra_expsTheory.BExp_Aligned_def] >>
-    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_immTheory.n2bs_def,BExp_unchanged_mem_interval_distinct_def]) >>
-
+   (rw [bspec_kernel_trap_entry_pre_def] >>    
+    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [
+     bir_extra_expsTheory.BExp_Aligned_def,
+     bir_immTheory.n2bs_def,
+     BExp_unchanged_mem_interval_distinct_def
+    ]) >>
   Q.PAT_X_ASSUM `bir_env_vars_are_initialised x y` (fn thm => ALL_TAC) >>
 
   Cases_on `bs` >> Cases_on `b0` >>
   
-  FULL_SIMP_TAC (std_ss) [riscv_kernel_trap_entry_pre_def, bspec_kernel_trap_entry_pre_def,bir_extra_expsTheory.BExp_Aligned_def] >>
+  FULL_SIMP_TAC (std_ss) [
+   riscv_kernel_trap_entry_pre_def,
+   bspec_kernel_trap_entry_pre_def,
+   bir_extra_expsTheory.BExp_Aligned_def
+  ] >>
   
   fs [GSYM bir_and_equiv] >>
 
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [
    bir_eval_bin_pred_def,
    riscv_bmr_rel_EVAL,
    bir_immTheory.bool2b_def,
    bir_immTheory.bool2w_def,
    bir_envTheory.bir_env_read_def,bir_envTheory.bir_env_lookup_def,
-   BExp_unchanged_mem_interval_distinct_def
- ] >>
+   BExp_unchanged_mem_interval_distinct_def,
+   bir_val_TF_bool2b_DEF
+  ] >>
 
- FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,bir_immTheory.bool2b_def,bir_immTheory.bool2w_def] >>
-
- rw []
+  rw []
 QED
 
 Theorem kernel_trap_entry_riscv_post_imp_bspec_post_thm:
@@ -443,15 +404,14 @@ Theorem kernel_trap_entry_riscv_post_imp_bspec_post_thm:
 Proof
  fs [bir_post_bir_to_riscv_def,bspec_kernel_trap_entry_post_def,GSYM bir_and_equiv] >>
 
- Cases_on `bs` >>
- Cases_on `b0` >>
+ Cases_on `bs` >> Cases_on `b0` >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
   bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,
   bir_eval_bin_pred_def,
-  bir_eval_bin_pred_mem_eq,
-  bir_eval_bin_pred_eq
+  bir_eval_bin_pred_64_mem_eq,
+  bir_eval_bin_pred_64_eq
  ] >>
 
  rw [riscv_kernel_trap_entry_post_def] >>

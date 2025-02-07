@@ -10,6 +10,13 @@ open incr_specTheory;
 val _ = new_theory "incr_symb_exec";
 
 (* --------------------------- *)
+(* prepare program lookups     *)
+(* --------------------------- *)
+
+val bir_lift_thm = bir_incr_riscv_lift_THM;
+val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
+
+(* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 

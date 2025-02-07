@@ -1,6 +1,9 @@
-# HolBA - Binary analysis in HOL 
+# HolBA - Binary analysis in HOL
 
-[![Build Status](https://github.com/kth-step/HolBA/workflows/CI%20Build/badge.svg?branch=master)](https://github.com/kth-step/HolBA/actions?query=workflow%3A%22CI+Build%22)
+[![Build Status][workflow-badge]][workflow-link] 
+
+[workflow-badge]: https://github.com/kth-step/HolBA/actions/workflows/build.yaml/badge.svg?branch=master
+[workflow-link]: https://github.com/kth-step/HolBA/actions/workflows/build.yaml
 
 HolBA is a library based on the HOL4 theorem prover that provides
 tools for analysis and formal proofs of properties of programs in binary
@@ -14,8 +17,8 @@ HolBA is built using the `Holmake` tool bundled with HOL4.
 
 - [HOL4](https://github.com/HOL-Theorem-Prover/HOL), tag `trindemossen-1`.
 - [Poly/ML](https://github.com/polyml/polyml), 5.9.1
-  - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
-- [Z3](https://github.com/Z3Prover/z3), 4.8.4
+  - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 24.04)
+- [Z3](https://github.com/Z3Prover/z3), 4.13.4
 
 ### Build using existing HOL4 installation
 

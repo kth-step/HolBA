@@ -294,6 +294,31 @@ QED
 symb_mk_exp_conj_f_sound sr
 =========================================================================
  *)
+Definition birs_symb_expr_conj_eq_def:
+  birs_symb_expr_conj_eq e1 e2 conj1 =
+      BExp_BinExp BIExp_And
+        (if option_CASE (type_of_bir_exp e1) F bir_type_is_Mem then BExp_MemEq e1 e2 else BExp_BinPred BIExp_Equal e1 e2)
+        conj1
+End
+
+Theorem birs_symb_expr_conj_eq_thm:
+  !prog e1 e2 conj1.
+    (symb_expr_conj_eq (bir_symb_rec_sbir prog) e1 e2 conj1 =
+     birs_symb_expr_conj_eq e1 e2 conj1)
+Proof
+  SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, birs_symb_expr_conj_eq_def, symb_record_soundTheory.symb_expr_conj_eq_def] >>
+  METIS_TAC []
+QED
+
+Theorem birs_symb_expr_conj_eq_thm2:
+  !e1 e2 conj1.
+    (?bt. type_of_bir_exp e1 = SOME (BType_Imm bt)) ==>
+    (birs_symb_expr_conj_eq e1 e2 conj1 =
+     BExp_BinExp BIExp_And (BExp_BinPred BIExp_Equal e1 e2) conj1)
+Proof
+  rpt strip_tac >>
+  gvs [birs_symb_expr_conj_eq_def, bir_valuesTheory.bir_type_is_Mem_def]
+QED
 
 Theorem birs_symb_mk_exp_conj_f_sound_thm:
   !prog.
@@ -427,6 +452,78 @@ SIMP_TAC (std_ss++symb_TYPES_ss) [symb_subst_f_sound_def, bir_symb_rec_sbir_def]
 
   (* variable set *)
   METIS_TAC [bir_exp_subst1_USED_VARS]
+QED
+
+Definition birs_symb_env_subst_def:
+  birs_symb_env_subst s env =
+    OPTION_MAP (bir_exp_subst s) o env
+End
+
+Definition birs_symb_subst_def:
+  birs_symb_subst s bs =
+    (bs
+      with bsst_pcond := bir_exp_subst s bs.bsst_pcond)
+      with bsst_environ := birs_symb_env_subst s bs.bsst_environ
+End
+
+Definition birs_symb_env_subst1_def:
+  birs_symb_env_subst1 v e env =
+    OPTION_MAP (bir_exp_subst1 v e) o env
+End
+
+Definition birs_symb_subst1_def:
+  birs_symb_subst1 (v,e) bs =
+    (bs
+      with bsst_pcond := bir_exp_subst1 v e bs.bsst_pcond)
+    with bsst_environ := birs_symb_env_subst1 v e bs.bsst_environ
+End
+
+Theorem birs_symb_subst1_REWR_thm:
+  !v e pc env status pcond.
+  birs_symb_subst1 (v,e)
+    <|bsst_pc := pc;
+      bsst_environ := env;
+      bsst_status := status;
+      bsst_pcond := pcond|> =
+  <|bsst_pc := pc;
+    bsst_environ := birs_symb_env_subst1 v e env;
+    bsst_status := status;
+    bsst_pcond := bir_exp_subst1 v e pcond|>
+Proof
+  rpt strip_tac >>
+  rw [birs_symb_subst1_def]
+QED
+
+Theorem birs_symb_subst1_thm:
+  !s.
+  birs_symb_subst1 s =
+    birs_symb_subst (FEMPTY |+ s)
+Proof
+  Cases_on `s` >>
+  CONV_TAC FUN_EQ_CONV >>
+  rpt gen_tac >>
+  rw [birs_symb_subst_def, birs_symb_subst1_def] >>
+  rw [birs_symb_env_subst1_def, birs_symb_env_subst_def, bir_exp_substitutionsTheory.bir_exp_subst1_def]
+QED
+
+Theorem birs_symb_subst1_EQ_thm:
+  !prog s bs.
+    symb_subst (bir_symb_rec_sbir prog) s (birs_symb_to_symbst bs) =
+    birs_symb_to_symbst (birs_symb_subst1 s bs)
+Proof
+  Cases_on `bs` >>
+  Cases_on `s` >>
+  fs [symb_subst_def, birs_symb_to_symbst_def, birs_symb_subst1_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def, symb_symbst_extra_def, symb_subst_store_def] >>
+  fs [bir_symb_rec_sbir_def, combinTheory.o_DEF, birs_symb_env_subst1_def]
+QED
+
+Theorem birs_symb_subst1_set_EQ_thm:
+  !prog s Pi.
+    symb_subst_set (bir_symb_rec_sbir prog) s (IMAGE birs_symb_to_symbst Pi) =
+    IMAGE birs_symb_to_symbst (IMAGE (birs_symb_subst1 s) Pi)
+Proof
+  fs [symb_subst_set_def, pred_setTheory.IMAGE_IMAGE, combinTheory.o_DEF] >>
+  fs [birs_symb_subst1_EQ_thm]
 QED
 
 

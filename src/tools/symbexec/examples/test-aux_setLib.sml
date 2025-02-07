@@ -1,6 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
 open aux_setLib;
+open bir_convLib;
+open holba_convLib;
 
 val _ = print "start parsing\n";
 

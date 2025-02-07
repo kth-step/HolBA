@@ -10,6 +10,7 @@ local
 
   open birsSyntax;
   open birs_utilsLib;
+  open birs_conseqLib;
   open birs_mergeLib;
 
   (* error handling *)
@@ -50,22 +51,22 @@ local
           raise (print_term tm; ERR "beq_left_to_binterval" "unexpected expression");
     in mk_BExp_IntervalPred (mk_BExp_Den ref_symb, pairSyntax.mk_pair(minmax_fixed_tm, minmax_fixed_tm)) end;
 
-  fun interval_from_state vn tm =
+  fun interval_from_state errstr vn tm =
     let
       val (_,env,_,pcond) = dest_birs_state tm;
       val env_exp = (snd o get_env_top_mapping) env;
       (* check that env_exp is just a bexp_den and has the name vn_symb *)
       val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
-        raise ERR "interval_from_state" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
+        raise ERR (errstr^":interval_from_state") ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
       val env_symbol = dest_BExp_Den env_exp;
       val pcondl = dest_bandl pcond;
       val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
       val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
       val _ = if length pcond_intervaltms = 1 then () else
-        raise ERR "interval_from_state" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
+        (print_term tm; print "\n\n"; raise ERR (errstr^":interval_from_state") ("unexpected, could not find interval for: " ^ (term_to_string env_symbol)));
       val interval = hd pcond_intervaltms;
     in
-      (interval, fn x => bslSyntax.bandl (x::pcondl_filtd))
+      (interval, fn x => mk_bandl (x::pcondl_filtd))
     end;
 
   fun dest_BExp_IntervalPred_normform tm =
@@ -96,7 +97,7 @@ local
   fun check_BExp_IntervalPred_normform_RULE vn thm =
     let
       val Pi_tms = (pred_setSyntax.strip_set o get_birs_Pi o concl) thm;
-      val intervaltms = List.map (fst o interval_from_state vn) Pi_tms;
+      val intervaltms = List.map (fst o interval_from_state "check_BExp_IntervalPred_normform_RULE" vn) Pi_tms;
 
       val is_ok = if List.all (is_BExp_IntervalPred_normform vn) intervaltms then () else (
         print_thm thm;
@@ -252,7 +253,7 @@ in (* local *)
       val pcond = (get_birs_Pi_first_pcond o concl) thm;
       val pcondl = dest_bandl pcond;
       val pcondl_fixed = List.map (fn tm => if is_BExp_IntervalPred tm then simplify_interval tm else tm) pcondl;
-      val thm_fixed = birs_Pi_first_pcond_RULE (bslSyntax.bandl pcondl_fixed) thm;
+      val thm_fixed = birs_Pi_first_pcond_RULE (mk_bandl pcondl_fixed) thm;
     in
       thm_fixed
     end;
@@ -260,107 +261,128 @@ in (* local *)
   (* unifies the representation of the interval for env mapping vn (handles introduction (e.g., after symbolic execution without interval) and also fusion of transitive intervals (e.g., after instantiation)) *)
     (* afterwards: vn is on top, symbolname mapped for interval is ("syi_"^vn), exactly one interval relating to it in the pathcondition *)
     (* this has to be used after an instantiation and after an execution (which in turn is either from an initial state, or from after a merge operation), and before a bounds operation below *)
-  fun birs_intervals_Pi_first_unify_RULE vn thm =
-    let
-      val _ = birs_check_norm_thm ("birs_intervals_Pi_first_unify_RULE", "") thm;
+  local
+    fun birs_intervals_Pi_first_unify_RULE vn thm =
+      let
+        val _ = birs_check_norm_thm ("birs_intervals_Pi_first_unify_RULE", "") thm;
 
-      val _ = if not debug_mode then () else print "starting to unify interval for one Pi state\n";
+        val _ = if not debug_mode then () else print "starting to unify interval for one Pi state\n";
 
-      (* bring up mapping vn to the top of env mappings *)
-      val thm_ = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm;
-      val thm0 = birs_intervals_Pi_first_simplify_limits thm_;
-      val env_exp = (snd o get_birs_Pi_first_env_top_mapping o concl) thm0;
+        val _ = print ("unifying interval representation of state\n");
+        val timer = holba_miscLib.timer_start 0;
 
-      (* is the mapping just a symbol, which is not the initial symbolic one?
-          then remember it (because there should already be an interval for it in the path condition),
-          otherwise freesymbol the mapping *)
-      val (thm1, env_symbol) =
-        if (is_BExp_Den env_exp) andalso (((fn x => x <> init_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then
-          (thm0, dest_BExp_Den env_exp)
-        else
-          let
-            val exp_tm = env_exp;
-            val symbname = get_freesymb_name ();
-            val symb_tm = mk_BVar (fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
-            val thm1 = birs_Pi_first_freesymb_RULE symbname exp_tm (fn x => (K (K x))) thm0;
-          in (thm1, symb_tm) end;
-      val _ = if not debug_mode then () else print "freesymboling done\n";
-      (* now we have only one symbol env_symbol in the mapping and the rest should be in the path condition *)
+        (* bring up mapping vn to the top of env mappings *)
+        val thm_ = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm;
+        val thm0 = birs_intervals_Pi_first_simplify_limits thm_;
+        val env_exp = (snd o get_birs_Pi_first_env_top_mapping o concl) thm0;
 
-      (* need to operate on the path condition *)
-      val pcond = (get_birs_Pi_first_pcond o concl) thm1;
-      val pcondl = dest_bandl pcond;
-
-      (* search for related simple equality, or for an interval *)
-      val pcond_eqtms = List.filter (is_beq_left env_symbol) pcondl;
-      val pcond_intervaltms_0 = List.filter (is_binterval env_symbol) pcondl;
-      val pcondl_filtd = (List.filter (not o is_binterval env_symbol) o List.filter (not o is_beq_left env_symbol)) pcondl;
-      val intervaltm =
-        if length pcond_eqtms = 0 then (
-          if length pcond_intervaltms_0 = 0 then
-            raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected, seems like " ^ vn ^ "is a free symbol or not managed by birs_intervalLib")
-          else if length pcond_intervaltms_0 > 1 then
-            raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected1")
+        (* is the mapping just a symbol, which is not the initial symbolic one?
+            then remember it (because there should already be an interval for it in the path condition),
+            otherwise freesymbol the mapping *)
+        val (thm1, env_symbol) =
+          if (is_BExp_Den env_exp) andalso (((fn x => x <> init_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then
+            (thm0, dest_BExp_Den env_exp)
           else
-            hd pcond_intervaltms_0
-        ) else if length pcond_eqtms > 1 then
-          raise ERR "birs_intervals_Pi_first_unify_RULE" "unexpected2"
-        else
-          (* introduction of interval must already start in standard form, limits have to be plus(den,const) *)
-          (beq_left_to_binterval env_symbol (hd pcond_eqtms));
-      val _ = if not debug_mode then () else print_term intervaltm;
+            let
+              val exp_tm = env_exp;
+              val symbname = get_freesymb_name ();
+              val symb_tm = mk_BVar (fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
+              val thm1 = birs_Pi_first_freesymb_RULE symbname exp_tm (fn x => (K (K x))) thm0;
+            in (thm1, symb_tm) end;
+        val _ = if not debug_mode then () else print "freesymboling done\n";
+        (* now we have only one symbol env_symbol in the mapping and the rest should be in the path condition *)
 
-      (* TODO: this interval should relate to the original symbol, or maybe another interval that it relates to *)
-      (* TODO: the following is a quick solution without much checks *)
-      fun get_ref_symb intervaltm_ =
-        let
-          val refsymbs = List.filter (fn x => not (identical x env_symbol)) (bir_vars_ofLib.get_vars_of_bexp intervaltm_);
-          (*
-          val _ = PolyML.print_depth 10;
-          val _ = PolyML.print refsymbs;
-          val _ = print_term (hd refsymbs);
-          *)
-          val _ = if length refsymbs = 1 then () else
-            (print "\n\n"; print_term env_symbol; print_term intervaltm_; print "\n\n";
-             raise ERR "birs_intervals_Pi_first_unify_RULE::get_ref_symb" "unexpected");
-        in
-          hd refsymbs
-        end;
-      val refsymb = get_ref_symb intervaltm;
-      val (intervalterm_fusion, pcondl_filtd_two) =
-        if (fst o dest_BVar_string) refsymb = init_symb vn then
-          (intervaltm, pcondl_filtd)
-        else
-          let
-            val pcond_intervaltms_1 = List.filter (is_binterval refsymb) pcondl_filtd;
-            val pcondl_filtd_two = List.filter (not o is_binterval refsymb) pcondl_filtd;
-          in
-            if length pcond_intervaltms_1 = 1 then
-              (fuse_intervals (intervaltm) (hd pcond_intervaltms_1), pcondl_filtd_two)
+        (* need to operate on the path condition *)
+        val pcond = (get_birs_Pi_first_pcond o concl) thm1;
+        val pcondl = dest_bandl pcond;
+
+        (* search for related simple equality, or for an interval *)
+        val pcond_eqtms = List.filter (is_beq_left env_symbol) pcondl;
+        val pcond_intervaltms_0 = List.filter (is_binterval env_symbol) pcondl;
+        val pcondl_filtd = (List.filter (not o is_binterval env_symbol) o List.filter (not o is_beq_left env_symbol)) pcondl;
+        val intervaltm =
+          if length pcond_eqtms = 0 then (
+            if length pcond_intervaltms_0 = 0 then
+              raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected, seems like " ^ vn ^ "is a free symbol or not managed by birs_intervalLib")
+            else if length pcond_intervaltms_0 > 1 then
+              raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected1")
             else
-              (print "\n\n";print_term pcond;print "\n\n";print_term (bslSyntax.bandl pcondl_filtd);print "\n\n";List.map print_term pcond_intervaltms_1;print "\n\n";
-               raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected3"))
+              hd pcond_intervaltms_0
+          ) else if length pcond_eqtms > 1 then
+            raise ERR "birs_intervals_Pi_first_unify_RULE" "unexpected2"
+          else
+            (* introduction of interval must already start in standard form, limits have to be plus(den,const) *)
+            (beq_left_to_binterval env_symbol (hd pcond_eqtms));
+        val _ = if not debug_mode then () else print_term intervaltm;
+
+        (* TODO: this interval should relate to the original symbol, or maybe another interval that it relates to *)
+        (* TODO: the following is a quick solution without much checks *)
+        fun get_ref_symb intervaltm_ =
+          let
+            val refsymbs = List.filter (fn x => not (identical x env_symbol)) (bir_vars_ofLib.get_vars_of_bexp intervaltm_);
+            (*
+            val _ = PolyML.print_depth 10;
+            val _ = PolyML.print refsymbs;
+            val _ = print_term (hd refsymbs);
+            *)
+            val _ = if length refsymbs = 1 then () else
+              (print "\n\n"; print_term env_symbol; print_term intervaltm_; print "\n\n";
+              raise ERR "birs_intervals_Pi_first_unify_RULE::get_ref_symb" "unexpected");
+          in
+            hd refsymbs
           end;
-      val _ = if not debug_mode then () else print_term intervalterm_fusion;
+        val refsymb = get_ref_symb intervaltm;
+        val (intervalterm_fusion, pcondl_filtd_two) =
+          if (fst o dest_BVar_string) refsymb = init_symb vn then
+            (intervaltm, pcondl_filtd)
+          else
+            let
+              val pcond_intervaltms_1 = List.filter (is_binterval refsymb) pcondl_filtd;
+              val pcondl_filtd_two = List.filter (not o is_binterval refsymb) pcondl_filtd;
+            in
+              if length pcond_intervaltms_1 = 1 then
+                (fuse_intervals (intervaltm) (hd pcond_intervaltms_1), pcondl_filtd_two)
+              else
+                (print "\n\n";print_term pcond;print "\n\n";print_term (mk_bandl pcondl_filtd);print "\n\n";List.map print_term pcond_intervaltms_1;print "\n\n";
+                raise ERR "birs_intervals_Pi_first_unify_RULE" ("unexpected3"))
+            end;
+        val _ = if not debug_mode then () else print_term intervalterm_fusion;
 
-      val pcond_new = bslSyntax.bandl (intervalterm_fusion::pcondl_filtd_two);
-      val thm2 = birs_Pi_first_pcond_RULE pcond_new thm1;
-      val thmx = thm2;
+        val pcond_new = mk_bandl (intervalterm_fusion::pcondl_filtd_two);
+        val thm2 = birs_Pi_first_pcond_RULE pcond_new thm1;
+        val thmx = thm2;
 
-      (* all that is left is to make sure that we use the standardname for the symbol in the envmapping, if not, just rename it *)
-        (* rename so that the symbol used is ("syi_"^vn) for readability *)
-      (* TODO: check, at this point no BVar symbol with the name vn_symb should occur in thm *)
-      (* TODO: we will need a rename rule for this later, this one just works now because it is not following the theorem checks *)
-      val thm9 = birs_instantiationLib.birs_sound_symb_inst_RULE [(env_symbol, mk_BExp_Den (mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol)))] thmx;
+        (* all that is left is to make sure that we use the standardname for the symbol in the envmapping, if not, just rename it *)
+          (* rename so that the symbol used is ("syi_"^vn) for readability *)
+        val new_symbol = mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol);
+        val thm9 = birs_instantiationLib.birs_sound_symb_rename_free_RULE [(env_symbol, new_symbol)] thmx
+          handle _ => raise ERR "birs_intervals_Pi_first_unify_RULE" ("renaming failed:" ^ (term_to_string env_symbol) ^ " to " ^ (term_to_string new_symbol));
 
-      val _ = if not debug_mode then () else print "done unifying interval for one Pi state\n";
-    in
-      thm9
-    end;
+        val _ = if not debug_mode then () else print "done unifying interval for one Pi state\n";
 
-  fun birs_intervals_Pi_unify_RULE vn = birs_Pi_each_RULE (birs_intervals_Pi_first_unify_RULE vn);
-  val birs_intervals_Pi_unify_RULE = fn vn => check_BExp_IntervalPred_normform_RULE vn o birs_intervals_Pi_unify_RULE vn;
-  val birs_intervals_Pi_unify_RULE = fn x => Profile.profile "birs_intervals_Pi_unify_RULE" (birs_intervals_Pi_unify_RULE x);
+        val _ = holba_miscLib.timer_stop
+          (fn delta_s => print ("  unifying interval representation of state took " ^ delta_s ^ "\n")) timer;
+      in
+        thm9
+      end;
+  in
+    fun birs_intervals_Pi_unify_RULE vn thm =
+      let
+        (*
+        (* make sure that no BVar symbol with the name vn_symb occurs in thm *)
+        val env_exp = (snd o get_birs_Pi_first_env_top_mapping o concl) thm;
+        val var_type = bir_exp_typecheckLib.get_type_of_bexp env_exp;
+        val interval_symbol = mk_BVar_string (vn_symb vn, var_type);
+        (* TODO: it would be smart to check first if renaming needs to be done: check if interval_symbol appears in sys or Pi *)
+        val new_symbol = mk_BVar_string (get_freesymb_name (), var_type);
+        val thmx = birs_instantiationLib.birs_sound_symb_rename_RULE [(interval_symbol, new_symbol)] thm;
+        *)
+      in
+        birs_Pi_each_RULE (birs_intervals_Pi_first_unify_RULE vn) thm
+      end;
+    val birs_intervals_Pi_unify_RULE = fn vn => check_BExp_IntervalPred_normform_RULE vn o birs_intervals_Pi_unify_RULE vn;
+    val birs_intervals_Pi_unify_RULE = fn x => Profile.profile "birs_intervals_Pi_unify_RULE" (birs_intervals_Pi_unify_RULE x);
+  end
 
   (* goes through all Pi states and unifies the interval bounds for env mapping vn (needed prior to merging of states) *)
     (* assumes that the unify rule was running before *)
@@ -374,26 +396,12 @@ in (* local *)
      let
       val _ = if not debug_mode then () else print "starting to widen the bounds of the intervals in all Pi states\n";
 
+      val _ = print ("widening of interval bounds\n");
+      val timer = holba_miscLib.timer_start 0;
+
       (* collect the intervals from each Pi pathcondition *)
       val Pi_tms = (pred_setSyntax.strip_set o get_birs_Pi o concl) thm;
-      fun interval_from_state tm =
-        let
-          val (_,env,_,pcond) = dest_birs_state tm;
-          val env_exp = (snd o get_env_top_mapping) env;
-          (* check that env_exp is just a bexp_den and has the name vn_symb *)
-          val _ = if (is_BExp_Den env_exp) andalso (((fn x => x = vn_symb vn) o fst o dest_BVar_string o dest_BExp_Den) env_exp) then () else
-            raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, the expression should be just the syi_ symbol: " ^ (term_to_string env_exp));
-          val env_symbol = dest_BExp_Den env_exp;
-          val pcondl = dest_bandl pcond;
-          val pcond_intervaltms = List.filter (is_binterval env_symbol) pcondl;
-          val pcondl_filtd = List.filter (not o is_binterval env_symbol) pcondl;
-          val _ = if length pcond_intervaltms = 1 then () else
-            raise ERR "birs_intervals_Pi_bounds_RULE" ("unexpected, could not find interval for: " ^ (term_to_string env_symbol));
-          val interval = hd pcond_intervaltms;
-        in
-          (interval, fn x => bslSyntax.bandl (x::pcondl_filtd))
-        end;
-      val (intervaltms, pcond_new_funs) = unzip (List.map interval_from_state Pi_tms);
+      val (intervaltms, pcond_new_funs) = unzip (List.map (interval_from_state "birs_intervals_Pi_bounds_RULE" vn) Pi_tms);
 
       (* compute the new min and max, generate the new interval predicate with it *)
       val interval_largest = List.foldl widen_intervals (hd intervaltms) (tl intervaltms);
@@ -403,6 +411,9 @@ in (* local *)
       val thm_new = List.foldl (birs_Pi_rotate_RULE o (fn (pcond,acc) => birs_Pi_first_pcond_RULE pcond acc)) thm pconds;
 
       val _ = if not debug_mode then () else print "done widening the bounds of the intervals in all Pi states\n";
+
+      val _ = holba_miscLib.timer_stop
+        (fn delta_s => print ("  widening of interval bounds took " ^ delta_s ^ "\n")) timer;
      in
       thm_new
      end

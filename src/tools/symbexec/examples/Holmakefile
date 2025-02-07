@@ -1,4 +1,5 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/shared/convs \
            $(HOLBADIR)/src/tools/symbexec \
            $(HOLBADIR)/src/tools/symbexec/examples/binaries \
            $(HOLBADIR)/src

@@ -207,6 +207,14 @@ Definition birs_exp_imp_def:
     )
 End
 
+Theorem symb_exp_imp_EQ_pcondwiden_thm:
+  !sr pcond pcond'.
+  (symb_exp_imp sr pcond pcond') <=>
+  (symb_pcondwiden sr pcond pcond')
+Proof
+  rw [symb_exp_imp_def, symb_rulesTheory.symb_pcondwiden_def]
+QED
+
 Theorem birs_exp_imp_thm:
   !prog.
 !pcond pcond'.
@@ -338,6 +346,22 @@ Theorem birs_simplification_Store_addr_thm:
   !pcond symbexp1 symbexp1' bme en bve.
   (birs_simplification pcond symbexp1 symbexp1') ==>
   (birs_simplification pcond (BExp_Store bme symbexp1 en bve) (BExp_Store bme symbexp1' en bve))
+Proof
+  subexpression_simp_TAC
+QED
+
+Theorem birs_simplification_Store_val_thm:
+  !pcond symbexp1 symbexp1' bme bade en.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_Store bme bade en symbexp1) (BExp_Store bme bade en symbexp1'))
+Proof
+  subexpression_simp_TAC
+QED
+
+Theorem birs_simplification_Store_mem_thm:
+  !pcond symbexp1 symbexp1' bme bad en bve.
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_Store symbexp1 bad en bve) (BExp_Store symbexp1' bad en bve))
 Proof
   subexpression_simp_TAC
 QED

@@ -5,6 +5,8 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open holba_convLib;
+
   open birsSyntax;
   open birs_composeLib;
 
@@ -131,20 +133,18 @@ in (* local *)
       val has_no_halt_thm =
         birs_auxLib.get_prog_no_halt_thm bprog_tm;
 
-      val birs_rule_STEP_thm =
+      val (birs_rule_STEP_thms, birs_rule_STEP_SEQ_thms) =
         birs_rule_STEP_prog_fun has_no_halt_thm;
-      val birs_rule_STEP_SEQ_thm = MATCH_MP
-        birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm has_no_halt_thm;
       val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
       val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
 
       val step =
         (post_step_fun (birs_rule_SUBST_thm) o
-          birs_rule_STEP_fun birs_rule_STEP_thm);
+          birs_rule_STEP_fun birs_rule_STEP_thms);
       val comp_fun = birs_rule_SEQ_fun birs_rule_SEQ_thm;
       val step_SING =
         (post_step_fun (birs_rule_SUBST_thm) o
-        birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm);
+        birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thms);
       (*
       val fetch = fn _ => NONE;
       (*val fetch = fn x => SOME (step x);*)
@@ -172,7 +172,7 @@ in (* local *)
         Profile.print_profile_results (Profile.results ())
         Profile.output_profile_results (iostream) (Profile.results ())
         *)
-      val _ = Profile.print_profile_results (Profile.results ());
+      (*val _ = Profile.print_profile_results (Profile.results ());*)
     in
       result
     end;
@@ -228,7 +228,7 @@ in (* local *)
       val mk_bsysprecond_pcond_thm =
         (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm] THENC
          REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-         birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+         GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
          EVAL (*FST (THE (...))*))
         (mk_mk_bsysprecond (bpre, bprog_envtyl_tm));
     in

@@ -9,6 +9,13 @@ open mod2_memTheory mod2_mem_specTheory;
 val _ = new_theory "mod2_mem_symb_exec";
 
 (* --------------------------- *)
+(* prepare program lookups     *)
+(* --------------------------- *)
+
+val bir_lift_thm = bir_mod2_mem_riscv_lift_THM;
+val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
+
+(* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 

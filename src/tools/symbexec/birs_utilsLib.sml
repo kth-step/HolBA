@@ -5,6 +5,12 @@ local
 
   open HolKernel Parse boolLib bossLib;
 
+  open holba_cacheLib;
+
+  open aux_moveawayLib;
+
+  open bir_extra_expsSyntax;
+
   open birsSyntax;
 
   (* error handling *)
@@ -55,89 +61,7 @@ in (* local *)
 
 (* ---------------------------------------------------------------------------------------- *)
 
-  fun TRY_LIST_REWR_CONV [] _ = raise UNCHANGED
-    | TRY_LIST_REWR_CONV (rw_thm::rw_thms) tm =
-        REWR_CONV rw_thm tm
-        handle _ => TRY_LIST_REWR_CONV rw_thms tm;
-
-  (* eliminate left conjuncts first *)
-  val CONJL_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (LAND_CONV lconv) THENC
-      (fn tm =>
-        if (identical T o fst o dest_conj) tm then
-          (REWR_CONV thm_T THENC rconv) tm
-        else
-          (REWR_CONV thm_F) tm)
-    end;
-  (* eliminate right conjuncts first *)
-  val CONJR_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.AND_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (RAND_CONV rconv) THENC
-      (fn tm =>
-        if (identical T o snd o dest_conj) tm then
-          (REWR_CONV thm_T THENC lconv) tm
-        else
-          (REWR_CONV thm_F) tm)
-    end;
-
-  (* eliminate left disjuncts first *)
-  val DISJL_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,2)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (LAND_CONV rconv) THENC
-      (fn tm =>
-        if (identical F o fst o dest_disj) tm then
-          (REWR_CONV thm_F THENC lconv) tm
-        else
-          (REWR_CONV thm_T) tm)
-    end;
-  (* eliminate right disjuncts first *)
-  val DISJR_CONV =
-    let
-      val thm_T = (GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-      val thm_F = (GEN_ALL o (fn x => List.nth(x,3)) o CONJUNCTS o SPEC_ALL) boolTheory.OR_CLAUSES;
-    in
-      fn lconv => fn rconv =>
-      (RAND_CONV rconv) THENC
-      (fn tm =>
-        if (identical F o snd o dest_disj) tm then
-          (REWR_CONV thm_F THENC lconv) tm
-        else
-          (REWR_CONV thm_T) tm)
-    end;
-  
-  fun NEG_CONV conv =
-    RAND_CONV conv THENC
-    REWRITE_CONV [boolTheory.NOT_CLAUSES];
-
-  local
-    val thm_T = (CONJUNCT1 o SPEC_ALL) boolTheory.COND_CLAUSES;
-    val thm_F = (CONJUNCT2 o SPEC_ALL) boolTheory.COND_CLAUSES;
-    fun get_cond_c tm =
-      let val (c,_,_) = dest_cond tm;
-      in c end;
-    fun clean_conv tm =
-      if (identical T o get_cond_c) tm then
-        REWR_CONV thm_T tm
-      else
-        REWR_CONV thm_F tm;
-  in
-    fun ITE_CONV conv =
-      RATOR_CONV (RATOR_CONV (RAND_CONV conv)) THENC
-      clean_conv;
-  end
+  val mk_bandl = bslSyntax.bandl;
 
 (* ---------------------------------------------------------------------------------------- *)
 
@@ -198,11 +122,11 @@ in (* local *)
       val imp_is_taut = bir_smtLib.bir_smt_check_taut false imp_bexp_tm;
     in
       if imp_is_taut then
-        SOME (mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm))
+        SOME (mk_oracle_thm "BIRS_IMP_Z3" ([], imp_tm))
       else
         NONE
     end;
-  val check_imp_tm = aux_moveawayLib.wrap_cache_result Term.compare check_imp_tm;
+  val check_imp_tm = wrap_cache_result Term.compare check_imp_tm;
 
   fun check_pcondinf_tm pcondinf_tm =
     if not (is_birs_pcondinf pcondinf_tm) then raise ERR "check_pcondinf_tm" "term needs to be birs_pcondinf" else
@@ -215,7 +139,34 @@ in (* local *)
       else
         NONE
     end;
-  val check_pcondinf_tm = aux_moveawayLib.wrap_cache_result Term.compare check_pcondinf_tm;
+  val check_pcondinf_tm = wrap_cache_result Term.compare check_pcondinf_tm;
+
+  fun check_simplification_tm simp_tm =
+    if not (is_birs_simplification simp_tm) then raise ERR "check_simplification_tm" "term needs to be birs_simplification" else
+    let
+      val (pred_tm, bexp1_tm, bexp2_tm) = dest_birs_simplification simp_tm;
+      val simp_bexp_tm = bslSyntax.bor (bslSyntax.bnot pred_tm, bslSyntax.beq (bexp1_tm, bexp2_tm));
+      val simp_is_taut = bir_smtLib.bir_smt_check_taut false simp_bexp_tm;
+    in
+      if simp_is_taut then
+        SOME (mk_oracle_thm "BIRS_SIMP_Z3" ([], simp_tm))
+      else
+        NONE
+    end;
+  val check_simplification_tm = wrap_cache_result Term.compare check_simplification_tm;
+  
+  fun check_pcond_sat pcond_tm =
+    let
+      val pcond_is_sat = bir_smtLib.bir_smt_check_sat false pcond_tm;
+      val pcond_sat_thm =
+        if pcond_is_sat then
+          mk_oracle_thm "BIRS_PCOND_SAT_Z3" ([], ``?i. birs_interpret_fun i ^pcond_tm = SOME bir_val_true``)
+        else
+          mk_oracle_thm "BIRS_PCOND_SAT_Z3" ([], ``!i. birs_interpret_fun i ^pcond_tm = SOME bir_val_false``);
+    in
+      (pcond_is_sat, pcond_sat_thm)
+    end;
+
 
   local
     fun try_prove_assumption conv assmpt =
@@ -237,7 +188,7 @@ in (* local *)
           NONE
       end
       handle _ => NONE;
-    val try_prove_assumption = fn conv => aux_moveawayLib.wrap_cache_result Term.compare (try_prove_assumption conv);
+    val try_prove_assumption = fn conv => wrap_cache_result Term.compare (try_prove_assumption conv);
 
     fun try_prove_assumptions remove_all conv NONE = NONE
       | try_prove_assumptions remove_all conv (SOME t) =
@@ -259,127 +210,6 @@ in (* local *)
   in
     fun prove_assumptions remove_all conv thm = try_prove_assumptions remove_all conv (SOME thm);
   end
-
-(* ---------------------------------------------------------------------------------------- *)
-  (*
-  val birs_exp_imp_DROP_R_thm = prove(``
-    !be1 be2.
-    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be1
-  ``,
-    (* maybe only true for expressions of type Bit1 *)
-    cheat
-  );
-  val birs_exp_imp_DROP_L_thm = prove(``
-    !be1 be2.
-    birs_exp_imp (BExp_BinExp BIExp_And be1 be2) be2
-  ``,
-    (* maybe only true for expressions of type Bit1 *)
-    cheat
-  );
-
-  fun is_DROP_R_imp imp_tm =
-    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_R_thm]) imp_tm)
-            handle _ => NONE);
-
-  fun is_DROP_L_imp imp_tm =
-    (SOME (UNCHANGED_CONV (REWRITE_CONV [birs_exp_imp_DROP_L_thm]) imp_tm)
-            handle _ => NONE);
-
-  fun is_conjunct_inclusion_imp imp_tm =
-    let
-      val (pcond1, pcond2) = dest_birs_exp_imp imp_tm;
-      val pcond1l = dest_bandl pcond1;
-      val pcond2l = dest_bandl pcond2;
-
-      (* find the common conjuncts by greedily collecting what is identical in both *)
-      val imp_is_ok = list_inclusion term_id_eq pcond2l pcond1l;
-    in
-      if imp_is_ok then
-        SOME (mk_oracle_thm "BIRS_CONJ_INCL_IMP" ([], imp_tm))
-      else
-        NONE
-    end;
-  *)
-
-  (* general path condition weakening with z3 (to throw away path condition conjuncts (to remove branch path condition conjuncts)) *)
-  fun birs_Pi_first_pcond_RULE pcond_new thm =
-    let
-      val _ = birs_check_norm_thm ("birs_Pi_first_pcond_RULE", "") thm;
-
-      val (p_tm, tri_tm) = (dest_birs_symb_exec o concl) thm;
-      val (sys_tm,L_tm,Pi_old_tm) = dest_sysLPi tri_tm;
-      val (Pi_sys_old_tm, Pi_rest_tm) = pred_setSyntax.dest_insert Pi_old_tm;
-
-      val (pc, env, status, pcond_old) = dest_birs_state Pi_sys_old_tm;
-      val Pi_sys_new_tm = mk_birs_state (pc, env, status, pcond_new);
-      val Pi_new_tm = pred_setSyntax.mk_insert (Pi_sys_new_tm, Pi_rest_tm);
-
-      val imp_tm = mk_birs_exp_imp (pcond_old, pcond_new);
-      (*
-      val _ = print_term imp_tm;
-      val _ = holba_z3Lib.debug_print := true;
-      val _ = print "sending a z3 query\n";
-      *)
-      (*
-      val pcond_drop_ok = isSome (is_DROP_R_imp imp_tm) orelse
-                          isSome (is_DROP_L_imp imp_tm) orelse
-                          isSome (is_conjunct_inclusion_imp imp_tm);
-      *)
-      val pcond_imp_ok = (*pcond_drop_ok orelse (* TODO: something might be wrong in expression simplification before smtlib-z3 exporter *)*)
-                         isSome (check_imp_tm imp_tm);
-      val _ = if pcond_imp_ok then () else
-              (print "widening failed, path condition is not weaker\n";
-               raise ERR "birs_Pi_first_pcond_RULE" "the supplied path condition is not weaker");
-      (* TODO: use the bir implication theorem to justify the new theorem *)
-    in
-      mk_oracle_thm "BIRS_WIDEN_PCOND" ([], mk_birs_symb_exec (p_tm, mk_sysLPi (sys_tm,L_tm,Pi_new_tm)))
-    end;
-
-  fun birs_Pi_first_pcond_drop drop_right thm =
-    let
-      open bir_expSyntax;
-      open bir_exp_immSyntax;
-      val Pi_sys_tm = (get_birs_Pi_first o concl) thm;
-      val pcond = dest_birs_state_pcond Pi_sys_tm;
-      val _ = if is_BExp_BinExp pcond then () else
-              raise ERR "birs_Pi_first_pcond_drop" "pcond must be a BinExp";
-      val (bop,be1,be2) = dest_BExp_BinExp pcond;
-      val _ = if is_BIExp_And bop then () else
-              raise ERR "birs_Pi_first_pcond_drop" "pcond must be an And";
-      val pcond_new =
-        if drop_right then
-          be1
-        else
-          be2;
-    in
-      birs_Pi_first_pcond_RULE pcond_new thm
-    end;
-
-  (* general path condition strengthening with z3 *)
-  fun birs_sys_pcond_RULE pcond_new thm =
-    let
-      val _ = birs_check_norm_thm ("birs_sys_pcond_RULE", "") thm;
-
-      val (p_tm, tri_tm) = (dest_birs_symb_exec o concl) thm;
-      val (sys_old_tm,L_tm,Pi_tm) = dest_sysLPi tri_tm;
-
-      val (pc, env, status, pcond_old) = dest_birs_state sys_old_tm;
-      val sys_new_tm = mk_birs_state (pc, env, status, pcond_new);
-
-      val imp_tm = mk_birs_exp_imp (pcond_new, pcond_old);
-      (*
-      val _ = print_term imp_tm;
-      val _ = holba_z3Lib.debug_print := true;
-      val _ = print "sending a z3 query\n";
-      *)
-      val pcond_imp_ok = isSome (check_imp_tm imp_tm);
-      val _ = if pcond_imp_ok then () else
-              (print "narrowing failed, path condition is not stronger\n";
-               raise ERR "birs_sys_pcond_RULE" "the supplied path condition is not stronger");
-      (* TODO: use the bir implication theorem to justify the new theorem *)
-    in
-      mk_oracle_thm "BIRS_NARROW_PCOND" ([], mk_birs_symb_exec (p_tm, mk_sysLPi (sys_new_tm,L_tm,Pi_tm)))
-    end;
 
 (* ---------------------------------------------------------------------------------------- *)
 
@@ -443,7 +273,7 @@ in (* local *)
     end
 
   (* adjust the order of a mapping according to a given list *)
-  fun birs_env_set_order_CONV varnames tm =
+  fun birs_env_set_order_CONV varnames tm (* tm is birs_state_t record *) =
     let
       fun is_m_for_varname vn = (fn x => x = vn) o stringSyntax.fromHOLstring o fst o pairSyntax.dest_pair;
       fun get_exp_if vn m =
@@ -466,7 +296,7 @@ in (* local *)
 
           val env_new = (mk_birs_gen_env o listSyntax.mk_list) (reorder_mappings varnames mappings [], mappings_ty);
         in
-          mk_oracle_thm "BIRS_ENVVARSETORDER" ([], mk_eq (env, env_new))
+          mk_oracle_preserve_tags [] "BIRS_ENVVARSETORDER" (mk_eq (env, env_new))
         end
         handle _ => raise ERR "birs_env_set_order_CONV" "something uncaught";
 
@@ -490,7 +320,8 @@ in (* local *)
       val res_thm = CONV_RULE (birs_Pi_CONV (rotate_two_INSERTs_conv)) thm;
     in
       res_thm
-    end;
+    end
+    handle e => (print "\nerror in birs_Pi_rotate_two_RULE\n"; raise e);
 
   fun birs_Pi_rotate_RULE thm =
     let
@@ -532,6 +363,87 @@ in (* local *)
     
     fun birs_if_assign_RULE tm = birs_cond_RULE (birs_is_stmt_Assign tm);
     fun birs_if_branch_RULE f thm = birs_cond_RULE (birs_is_exec_branch thm) f thm;
+  end
+
+(* ---------------------------------------------------------------------------------------- *)
+
+  local
+    open bir_expSyntax;
+  in
+  fun is_bir_exp t =
+    type_of t = bir_exp_t_ty;
+
+  fun bir_exp_size t =
+    if is_BExp_Const t then
+      1
+    else if is_BExp_MemConst t then
+      1
+    else if is_BExp_Den t then
+      1
+    else if is_BExp_Cast t then
+    let
+      val (_,x,_) = dest_BExp_Cast t;
+    in
+      1 + bir_exp_size x
+    end
+    else if is_BExp_UnaryExp t then
+    let
+      val (_,x) = dest_BExp_UnaryExp t;
+    in
+      1 + bir_exp_size x
+    end
+    else if is_BExp_BinExp t then
+    let
+      val (_,x1,x2) = dest_BExp_BinExp t;
+    in
+      1 + bir_exp_size x1 + bir_exp_size x2
+    end
+    else if is_BExp_BinPred t then
+    let
+      val (_,x1,x2) = dest_BExp_BinPred t;
+    in
+      1 + bir_exp_size x1 + bir_exp_size x2
+    end
+    else if is_BExp_MemEq t then
+    let
+      val (x1,x2) = dest_BExp_MemEq t;
+    in
+      1 + bir_exp_size x1 + bir_exp_size x2
+    end
+    else if is_BExp_IfThenElse t then
+    let
+      val (c,x1,x2) = dest_BExp_IfThenElse t;
+    in
+      1 + bir_exp_size c + bir_exp_size x1 + bir_exp_size x2
+    end
+    else if is_BExp_Load t then
+    let
+      val (mem_e,a_e,_,_) = dest_BExp_Load t;
+    in
+      1 + bir_exp_size mem_e + bir_exp_size a_e
+    end
+    else if is_BExp_Store t then
+    let
+      val (mem_e,a_e,_,v_e) = dest_BExp_Store t;
+    in
+      1 + bir_exp_size mem_e + bir_exp_size a_e + bir_exp_size v_e
+    end
+    else if is_BExp_IntervalPred t then
+    let
+      val (ref_e, lim_tm) = dest_BExp_IntervalPred t;
+      val (l_e, h_e) = pairSyntax.dest_pair lim_tm;
+    in
+      1 + bir_exp_size ref_e + bir_exp_size l_e + bir_exp_size h_e
+    end
+  (*
+    else if is_... t then
+    let
+      val (_,x1,...) = dest_... t;
+    in
+      1 + bir_exp_size x1 + ...
+    end
+  *)
+    else raise ERR "bir_exp_size" ("unknown BIR expression " ^ (term_to_string t));
   end
 
 end (* local *)

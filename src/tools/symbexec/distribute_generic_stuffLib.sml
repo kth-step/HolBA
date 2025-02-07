@@ -6,6 +6,8 @@ open Abbrev;
 local 
   open HolKernel Parse boolLib bossLib;
   
+  open holba_convLib;
+
   open HolBACoreSimps;
   open bir_env_oldTheory;
   open bir_envTheory;
@@ -49,31 +51,14 @@ fun Q_bircont_SOLVE3CONJS_TAC varset_thm = (
       (* cleanup proof state *)
       REPEAT (POP_ASSUM (K ALL_TAC)) >>
 
-      (* concretize and normalize *)
+      (* goal is now a birs_env_vars_are_initialised predicate *)
       (* --- first the variable set *)
       REWRITE_TAC [GSYM varset_thm] >>
-      CONV_TAC (RAND_CONV (EVAL)) >>
-      (* --- then the symbolic environment *)
-      FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
-      (* --- then the symbol set *)
-      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
-      REPEAT (CHANGED_TAC (fn x => (
-        FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss++pred_setLib.PRED_SET_ss++stringSimps.STRING_ss) [Once birs_auxTheory.birs_exps_of_senv_COMP_thm]
-       ) x)) >>
-      CONV_TAC (RATOR_CONV (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_exp``] THENC SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL))) >>
-
-      (* finish the proof *)
-      REPEAT (CHANGED_TAC (fn x => (
-        REWRITE_TAC [Once birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
-	let
-	  val fix_tac =
-	    EVAL_TAC >>
-            SIMP_TAC (std_ss++holBACore_ss) [bir_valuesTheory.BType_Bool_def] >>
-	    EVAL_TAC;
-	in
-	 (CONJ_TAC >- fix_tac) ORELSE (fix_tac)
-	end
-       ) x))
+      CONV_TAC (RAND_CONV (EVAL THENC holba_convLib.LIST_TO_SET_CONV)) >>
+      (* --- then the symbols of the symbolic state *)
+      CONV_TAC (LAND_CONV (bir_vars_ofLib.birs_symb_symbols_DIRECT_CONV)) >>
+      (* --- symbolic environment is already in standard form and now combine the whole thing *)
+      CONV_TAC (bir_vars_ofLib.birs_env_vars_are_initialised_CONV)
     )
 );
 
@@ -96,7 +81,7 @@ fun bsymbstate_bconcpred_bsymbval bsys bcond =
     val birs_eval_thm = 
       (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm, birs_gen_env_tm] THENC
        REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
-       birs_auxLib.GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
        EVAL)
       ``FST (THE (birs_eval_exp ^bcond ((^bsys).bsst_environ)))``;
     val birs_eval_res = (snd o dest_eq o concl) birs_eval_thm;

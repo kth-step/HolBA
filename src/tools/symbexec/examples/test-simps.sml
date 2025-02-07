@@ -24,6 +24,32 @@ val load_cheat_thm = prove(``
 );
 val armcm0_ldcheat_simp = birs_simp_default_armcm0_gen false birs_simpLib.birs_simp_ID_fun [load_cheat_thm];
 
+
+  val _ = birs_simp_instancesLib.simp_thms_tuple_subexp_extra :=
+    [bir_symb_simpTheory.birs_simplification_Store_mem_thm,
+    bir_symb_simpTheory.birs_simplification_Store_val_thm,
+    bir_symb_simpTheory.birs_simplification_Store_addr_thm];
+  val birs_simp_default_core_exp_store_plus_cm0_simp =
+    let
+      val include_64 = true;
+      val include_32 = true;
+      val mem_64 = false;
+      val mem_32 = true;
+      val riscv = false;
+      val cm0 = true;
+    in
+      birs_simp_instancesLib.birs_simp_gen
+        birs_simpLib.birs_simp_ID_fun
+        []
+        (birs_simp_instancesLib.simp_thms_tuple include_64 include_32 mem_64 mem_32 riscv cm0 [])
+        (birs_simp_instancesLib.load_thms_tuple mem_64 mem_32)
+        NONE
+    end;
+  (*val armcm0_simp=birs_simp_default_core_exp_store_plus_cm0_simp;*)
+
+  val _ = birs_simp_regular_recurse_mode := false;
+  val _ = birs_simp_regular_recurse_depth := 10;
+
 val bexp_stores = ``       (BExp_Store
                               (BExp_Store
                                  (BExp_Store
@@ -340,8 +366,8 @@ val test_cases = [
                                  (BExp_Const (Imm64 32w)))
                               (BExp_Const (Imm64 28w))) BEnd_LittleEndian
                            Bit32) Bit64``,
-  ``BExp_Cast BIExp_SignedCast
-       (BExp_Cast BIExp_LowCast (BExp_Const (Imm64 7w)) Bit32) Bit64``),
+  ``BExp_Const (Imm64 7w)(*BExp_Cast BIExp_SignedCast
+       (BExp_Cast BIExp_LowCast (BExp_Const (Imm64 7w)) Bit32) Bit64*)``),
 
   (armcm0_simp,
   ``(BExp_BinPred BIExp_Equal
@@ -524,26 +550,116 @@ val test_cases = [
          (BExp_Const (Imm32 0x10001ED4w))
          BEnd_LittleEndian
          Bit16)
-      Bit32``)
+      Bit32``),
+
+  (armcm0_simp,
+  ``(BExp_Const (Imm1 1w))``,
+  ``(BExp_BinExp BIExp_Plus
+              ((BExp_BinExp BIExp_Minus
+                (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                (BExp_Const (Imm32 104w))))
+              (BExp_Const (Imm32 12w)))``,
+  ``(BExp_BinExp BIExp_Minus
+       (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+       (BExp_Const (Imm32 92w)))``),
+
+  (birs_simp_default_core_exp_store_plus_cm0_simp,
+  ``BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_Equal
+        (BExp_BinExp BIExp_And
+          (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 2w))) (BExp_Const (Imm32 0w)))
+      (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            (BExp_Const (Imm32 0x10001FE0w))
+            (BExp_Den
+                (BVar "sy_SP_process" (BType_Imm Bit32))))
+          (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den
+                (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 0x10001FF0w))))``,
+  ``BExp_BinExp BIExp_Plus
+      (BExp_Load
+        (BExp_Store
+          (BExp_Store
+            (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+            (BExp_BinExp BIExp_Minus
+              (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+              (BExp_Const (Imm32 92w)))
+            BEnd_LittleEndian
+            (BExp_Const (Imm32 5w)))
+          (BExp_BinExp BIExp_Minus
+            (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 52w)))
+          BEnd_LittleEndian
+          (BExp_Const (Imm32 7w)))
+        (BExp_BinExp BIExp_Minus
+          (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 52w)))
+        BEnd_LittleEndian Bit32)
+      (BExp_Const (Imm32 16w))``,
+  ``(BExp_Const (Imm32 23w))``),
+
+  (birs_simp_default_core_exp_store_plus_cm0_simp,
+  ``BExp_BinExp BIExp_And
+      (BExp_BinPred BIExp_Equal
+        (BExp_BinExp BIExp_And
+          (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 2w))) (BExp_Const (Imm32 0w)))
+      (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            (BExp_Const (Imm32 0x10001FE0w))
+            (BExp_Den
+                (BVar "sy_SP_process" (BType_Imm Bit32))))
+          (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den
+                (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 0x10001FF0w))))``,
+  ``BExp_BinExp BIExp_Plus
+      (BExp_Load
+        (BExp_Store
+          (BExp_Store
+            (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+            (BExp_BinExp BIExp_Minus
+              (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+              (BExp_Const (Imm32 92w)))
+            BEnd_LittleEndian
+            (BExp_Const (Imm32 5w)))
+          (BExp_BinExp BIExp_Minus
+            (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+            (BExp_Const (Imm32 52w)))
+          BEnd_LittleEndian
+          (BExp_Const (Imm32 7w)))
+        (BExp_BinExp BIExp_Minus
+          (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 92w)))
+        BEnd_LittleEndian Bit32)
+      (BExp_Const (Imm32 16w))``,
+  ``(BExp_Const (Imm32 21w))``)
 ];
 
 
-
+  val skip_num_tests = 0;
 
 (*
 val (simp_fun, pcond, bexp, expected) = hd test_cases;
 *)
 
+val idx_r = ref skip_num_tests;
 fun test (simp_fun, pcond, bexp, expected) =
   let
+    val _ = print ("\n\n\ntest "^Int.toString (!idx_r)^" starts:\n");
+    val _ = idx_r := (!idx_r) + 1;
+
+    (* TODO: better first check that pcond is sat *)
     val simp_tm = birs_simp_gen_term pcond bexp;
     (*val _ = print_term simp_tm;*)
-    val res_thm = simp_fun simp_tm;
+    val res_thm = birs_simpLib.simp_try_apply_gen simp_fun simp_tm;
     (*val _ = print_thm res_thm;*)
     val expected_thm_concl = subst [``symbexp':bir_exp_t`` |-> expected] simp_tm;
     val is_expected = identical expected_thm_concl (concl res_thm);
 
-    val _ = if is_expected then () else (
+    val _ = if is_expected then print "success\n" else (
         print "\nexpected:\n";
         print_term expected_thm_concl;
         print "\nwe have\n";
@@ -552,4 +668,4 @@ fun test (simp_fun, pcond, bexp, expected) =
     );
   in () end;
 
-val _ = List.app test test_cases;
+val _ = List.app test (List.drop(test_cases, !idx_r));

@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: ['ubuntu-22.04']
         polyml: [{version: 'PREPACKAGED'}, {version: 'v5.9.1', heapless: '1'}]
-        z3: ['4.13.0']
+        z3: ['4.13.4']
         hol4: ['trindemossen-1']
 
     env:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Cache dependencies
         id: cache-deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ${{ env.HOLBA_OPT_DIR }}
@@ -49,7 +49,7 @@ jobs:
           ./scripts/ci/static-analysis.sh || echo "Static-analysis failed with status $?."
 
       - name: Prepare cached dependencies
-        timeout-minutes: 35
+        timeout-minutes: 45
         run: |
           ./scripts/setup/install_base.sh
           ./scripts/setup/install_z3.sh

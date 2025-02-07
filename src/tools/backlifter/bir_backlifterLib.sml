@@ -74,15 +74,22 @@ fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_de
     REPEAT STRIP_TAC >| [
       (* 1. Prove that the union of variables in the program and precondition are a well-founded variable
        *    set *)
-      (* TODO: This subset computation is slooow... *)
-      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++HolBASimps.VARS_OF_PROG_ss
-			   ++pred_setLib.PRED_SET_ss)
-	([bir_prog_def, arm8_wf_varset_def, arm8_vars_def]@bir_pre_defs),
+      rewrite_tac [bir_prog_def] >>
+      CONV_TAC (bir_convLib.bir_vars_of_program_CONV) >>
+      rewrite_tac ([arm8_wf_varset_def, arm8_vars_def]@bir_pre_defs) >>
+      CONV_TAC (bir_convLib.bir_vars_of_exp_CONV) >>
+      CONV_TAC (
+        LAND_CONV (pred_setLib.UNION_CONV bir_convLib.bir_var_EQ_CONV) THENC
+        holba_convLib.SUBSET_CONV bir_convLib.bir_var_EQ_CONV
+      ),
 
       (* 2. Starting address exists in program *)
-      FULL_SIMP_TAC std_ss
-	[EVAL ``MEM (^(get_bir_cont_start_label bir_ct))
-		    (bir_labels_of_program ^(bir_prog))``],
+      rewrite_tac [bir_prog_def] >>
+      CONV_TAC (
+        bir_convLib.bir_labels_of_program_CONV THENC
+        RAND_CONV holba_convLib.LIST_TO_SET_CONV THENC
+        pred_setLib.IN_CONV bir_convLib.bir_label_EQ_CONV
+      ),
 
       (* 3. Provide translation of the ARM8 precondition to the BIR precondition *)
       FULL_SIMP_TAC std_ss [bir_pre1_def, arm8_pre_imp_bir_pre_thm],
@@ -138,15 +145,21 @@ fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_de
     REPEAT STRIP_TAC >| [
       (* 1. Prove that the union of variables in the program and precondition are a well-founded variable
        *    set *)
-      (* TODO: This subset computation is slooow... *)
-      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++HolBASimps.VARS_OF_PROG_ss
-			   ++pred_setLib.PRED_SET_ss)
-	([bir_prog_def, riscv_wf_varset_def, riscv_vars_def]@bir_pre_defs),
-
+      rewrite_tac [bir_prog_def] >>
+      CONV_TAC (bir_convLib.bir_vars_of_program_CONV) >>
+      rewrite_tac ([riscv_wf_varset_def, riscv_vars_def]@bir_pre_defs) >>
+      CONV_TAC (bir_convLib.bir_vars_of_exp_CONV) >>
+      CONV_TAC (
+        LAND_CONV (pred_setLib.UNION_CONV bir_convLib.bir_var_EQ_CONV) THENC
+        holba_convLib.SUBSET_CONV bir_convLib.bir_var_EQ_CONV
+      ),
       (* 2. Starting address exists in program *)
-      FULL_SIMP_TAC std_ss
-	[EVAL ``MEM (^(get_bir_cont_start_label bir_ct))
-		    (bir_labels_of_program ^(bir_prog))``],
+      rewrite_tac [bir_prog_def] >>
+      CONV_TAC (
+        bir_convLib.bir_labels_of_program_CONV THENC
+        RAND_CONV holba_convLib.LIST_TO_SET_CONV THENC
+        pred_setLib.IN_CONV bir_convLib.bir_label_EQ_CONV
+      ),
 
       (* 3. Provide translation of the RISC-V precondition to the BIR precondition *)
       FULL_SIMP_TAC std_ss [bir_pre1_def, riscv_pre_imp_bir_pre_thm],

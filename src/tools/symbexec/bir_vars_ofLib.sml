@@ -3,17 +3,21 @@ struct
 
 local
 
-open HolKernel Parse boolLib bossLib;
+  open HolKernel Parse boolLib bossLib;
 
-open bir_typing_expTheory;
-open bir_typing_expSyntax;
-open birsSyntax;
-open birs_utilsLib;
+  open bir_typing_expTheory;
+  open bir_typing_expSyntax;
+  open birsSyntax;
+  open birs_utilsLib;
 
-open HolBACoreSimps;
+  open bir_convLib;
+  open holba_convLib;
+  open holba_cacheLib;
 
-open birs_auxTheory;
-val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+  open HolBACoreSimps;
+
+  open birs_auxTheory;
+  val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
   (* error handling *)
   val libname = "bir_vars_ofLib"
@@ -21,61 +25,6 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
   val wrap_exn = Feedback.wrap_exn libname
 
 in (* local *)
-
-(* ---------------------------------------------------------------------------------- *)
-(*  variables of bir expressions                                                      *)
-(* ---------------------------------------------------------------------------------- *)
-
-  (* here apply only one "unfolding" and get empty or singleton sets, or one or two UNION operations, left-associative *)
-  local
-    val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[birs_auxTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
-    fun bir_vars_of_exp_rec_CONV f_rec tm =
-      let
-        open pred_setSyntax;
-        val t1 = REWRITE_CONV [Once bir_vars_of_exp_rec_rewr_thm] tm;
-        val t2 = CONV_RULE (RAND_CONV (
-        birs_auxLib.GEN_match_conv is_bir_vars_of_exp (f_rec))) t1;
-        val union_conv =
-          (aux_setLib.varset_UNION_CONV);
-        val t2_rhs = (rhs o concl) t2;
-        val t3 =
-          if is_union (t2_rhs) then
-            if is_union ((fst o dest_union) t2_rhs) then
-              CONV_RULE (RAND_CONV (LAND_CONV union_conv THENC union_conv)) t2
-            else
-              CONV_RULE (RAND_CONV union_conv) t2
-          else
-            t2;
-      in
-        t3
-      end;
-  in
-    val bir_vars_of_exp_wrapped_CONV = aux_moveawayLib.wrap_cache_CONV_inter_result ("bir_vars_of_exp_wrapped_CONV") (dest_bir_vars_of_exp) (can pred_setSyntax.strip_set) bir_vars_of_exp_rec_CONV;
-  end;
-
-  fun bir_vars_of_exp_DIRECT_CONV tm =
-    let
-     val _ = if is_bir_vars_of_exp tm then () else
-               raise ERR "bir_vars_of_exp_DIRECT_CONV" "cannot handle term";
-    in
-      (*(SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL)*)
-      bir_vars_of_exp_wrapped_CONV tm
-      handle e => (print_term tm; print "\n\n"; raise e)
-    end;
-  (*val bir_vars_of_exp_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare bir_vars_of_exp_DIRECT_CONV;*)
-  val bir_vars_of_exp_DIRECT_CONV = Profile.profile "bir_vars_of_exp_DIRECT_CONV" bir_vars_of_exp_DIRECT_CONV;
-
-  val bir_vars_of_exp_CONV =
-    birs_auxLib.GEN_match_conv (is_bir_vars_of_exp) bir_vars_of_exp_DIRECT_CONV;
-
-  fun get_vars_of_bexp tm =
-    let
-      open pred_setSyntax;
-      val thm = bir_vars_of_exp_DIRECT_CONV (mk_bir_vars_of_exp tm);
-    in
-      (strip_set o snd o dest_eq o concl) thm
-    end
-    handle _ => (print_term tm; print "\n\n"; raise ERR "get_vars_of_bexp" "did not work");
 
 (* ---------------------------------------------------------------------------------- *)
 (*  symbols of set of symbolic states                                                 *)
@@ -97,11 +46,11 @@ in (* local *)
     (*
     (* this implementation of birs_exps_of_senv_COMP_ONCE_CONV works fine, but not as speedy as the one below *)
     (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
-    (TRY_CONV (ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV)))
+    (TRY_CONV (ITE_CONV (pred_setLib.IN_CONV bir_varname_EQ_CONV)))
     *)
     IFC
       (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,1)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
-      (ITE_CONV (pred_setLib.IN_CONV aux_setLib.bir_varname_EQ_CONV))
+      (ITE_CONV (pred_setLib.IN_CONV bir_varname_EQ_CONV))
       (IFC
         (REWR_CONV ((GEN_ALL o (fn x => List.nth(x,0)) o CONJUNCTS o SPEC_ALL) birs_exps_of_senv_COMP_thm))
         (ALL_CONV)
@@ -141,9 +90,9 @@ in (* local *)
           (pred_setLib.IMAGE_CONV
             bir_vars_of_exp_DIRECT_CONV
             NO_CONV)) THENC
-        (aux_setLib.varset_BIGUNION_CONV)
+        (varset_BIGUNION_CONV)
       )) THENC
-      (aux_setLib.varset_UNION_CONV)
+      (varset_UNION_CONV)
       (*
       (* basic solution for flattening the set and avoid comparisons *)
       RATOR_CONV (RAND_CONV (REWRITE_CONV [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY])) THENC
@@ -154,11 +103,11 @@ in (* local *)
       if is_birs_symb_symbols tm then tm else
         raise ERR "birs_symb_symbols_DIRECT_CONV" "cannot handle term"
     );
-  val birs_symb_symbols_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_DIRECT_CONV;
+  val birs_symb_symbols_DIRECT_CONV = wrap_cache_result Term.compare birs_symb_symbols_DIRECT_CONV;
   val birs_symb_symbols_DIRECT_CONV = Profile.profile "birs_symb_symbols_DIRECT_CONV" birs_symb_symbols_DIRECT_CONV;
 
   val birs_symb_symbols_CONV =
-    birs_auxLib.GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV;
+    GEN_match_conv is_birs_symb_symbols birs_symb_symbols_DIRECT_CONV;
 
 
 (* ---------------------------------------------------------------------------------- *)
@@ -172,16 +121,16 @@ in (* local *)
           birs_symb_symbols_DIRECT_CONV
           NO_CONV) THENC
       (* now have BIGUNION {setA;setB;setC;...} *)
-      aux_setLib.varset_BIGUNION_CONV
+      varset_BIGUNION_CONV
     ) o (fn tm =>
       if is_birs_symb_symbols_set tm then tm else
         raise ERR "birs_symb_symbols_set_DIRECT_CONV" "cannot handle term"
     );
-  val birs_symb_symbols_set_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_symb_symbols_set_DIRECT_CONV;
+  val birs_symb_symbols_set_DIRECT_CONV = wrap_cache_result Term.compare birs_symb_symbols_set_DIRECT_CONV;
   val birs_symb_symbols_set_DIRECT_CONV = Profile.profile "birs_symb_symbols_set_DIRECT_CONV" birs_symb_symbols_set_DIRECT_CONV;
 
   val birs_symb_symbols_set_CONV =
-    birs_auxLib.GEN_match_conv is_birs_symb_symbols_set birs_symb_symbols_set_DIRECT_CONV;
+    GEN_match_conv is_birs_symb_symbols_set birs_symb_symbols_set_DIRECT_CONV;
 
 
 (* ---------------------------------------------------------------------------------- *)
@@ -192,16 +141,80 @@ in (* local *)
       REWR_CONV birs_rulesTheory.birs_freesymbs_def THENC
       LAND_CONV (birs_symb_symbols_set_DIRECT_CONV) THENC
       RAND_CONV (birs_symb_symbols_DIRECT_CONV) THENC
-      aux_setLib.varset_DIFF_CONV
+      varset_DIFF_CONV
     ) o (fn tm =>
       if is_birs_freesymbs tm then tm else
         raise ERR "birs_freesymbs_DIRECT_CONV" "cannot handle term"
     );
-  val birs_freesymbs_DIRECT_CONV = aux_moveawayLib.wrap_cache_result Term.compare birs_freesymbs_DIRECT_CONV;
+  val birs_freesymbs_DIRECT_CONV = wrap_cache_result Term.compare birs_freesymbs_DIRECT_CONV;
   val birs_freesymbs_DIRECT_CONV = Profile.profile "birs_freesymbs_DIRECT_CONV" birs_freesymbs_DIRECT_CONV;
 
   val birs_freesymbs_CONV =
-    birs_auxLib.GEN_match_conv is_birs_freesymbs birs_freesymbs_DIRECT_CONV;
+    GEN_match_conv is_birs_freesymbs birs_freesymbs_DIRECT_CONV;
+
+
+(* ---------------------------------------------------------------------------------- *)
+(* birs_env_vars_are_initialised, birs_env_var_is_initialised              *)
+(* ---------------------------------------------------------------------------------- *)
+
+  local
+    val birs_update_env_P_CONV =
+      BETA_CONV THENC
+      NEG_CONV (
+        LHS_CONV (
+          REWR_CONV pairTheory.FST
+        ) THENC
+        bir_varname_EQ_CONV
+      );
+  in
+    val birs_gen_env_list_purge_CONV =
+      listLib.FILTER_CONV birs_update_env_P_CONV;
+  end
+
+  val birs_update_env_CONV =
+    REWR_CONV birs_update_env_thm THENC
+    RAND_CONV (RAND_CONV birs_gen_env_list_purge_CONV);
+
+  local
+    fun birs_env_var_is_initialised_set_CONV_helper tm = (
+      if (listSyntax.is_cons o rand o rand o rator) tm then
+        REWR_CONV birs_env_var_is_initialised_gen_env_INSERT_thm THENC
+        LAND_CONV (
+          option_CASE_CONV
+            (bir_exp_typecheckLib.type_of_bir_exp_DIRECT_CONV)
+            (
+              BETA_CONV THENC
+              ITE_CONV (
+                LAND_CONV bir_vars_of_exp_DIRECT_CONV THENC
+                SUBSET_CONV bir_var_EQ_CONV
+              )
+            )
+        ) THENC
+        RAND_CONV (
+          LAND_CONV (RAND_CONV (birs_gen_env_list_purge_CONV)) THENC
+          birs_env_var_is_initialised_set_CONV_helper
+        ) THENC
+        pred_setLib.UNION_CONV bir_var_EQ_CONV
+      else
+        REWR_CONV birs_env_var_is_initialised_gen_env_EMPTY_thm
+    ) tm;
+  in
+    val birs_env_var_is_initialised_set_CONV = (
+      birs_env_var_is_initialised_set_CONV_helper
+    ) o (fn tm =>
+      if is_birs_env_var_is_initialised_set tm then tm else
+          raise ERR "birs_env_var_is_initialised_set_CONV" "cannot handle term"
+    );
+  end
+
+  val birs_env_vars_are_initialised_CONV = (
+    REWR_CONV birs_env_vars_are_initialised_SUBSET_thm THENC
+    RAND_CONV birs_env_var_is_initialised_set_CONV THENC
+    SUBSET_CONV bir_var_EQ_CONV
+  ) o (fn tm =>
+    if is_birs_env_vars_are_initialised tm then tm else
+        raise ERR "birs_env_vars_are_initialised_CONV" "cannot handle term"
+  );
 
 end (* local *)
 

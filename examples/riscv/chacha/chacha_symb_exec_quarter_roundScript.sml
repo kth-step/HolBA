@@ -9,6 +9,13 @@ open chachaTheory chacha_specTheory;
 val _ = new_theory "chacha_symb_exec_quarter_round";
 
 (* --------------------------- *)
+(* prepare program lookups     *)
+(* --------------------------- *)
+
+val bir_lift_thm = bir_chacha_riscv_lift_THM;
+val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
+
+(* --------------------------- *)
 (* Symbolic analysis execution *)
 (* --------------------------- *)
 
