@@ -37,6 +37,7 @@ open bir_program_varsTheory;
 open HolBACoreSimps;
 open bir_extra_expsTheory;
 
+open chachaTheory;
 open chacha20Theory;
 open chacha20_specTheory;
 open chacha20_column_round_symb_transfTheory;

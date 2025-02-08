@@ -381,4 +381,140 @@ Proof
  EVAL_TAC
 QED
 
+(* ChaCha implementation spec *)
+
+Definition chacha_line_exp_fst_def:
+ chacha_line_exp_fst (pre_a:word32) (pre_b:word32) : word32 =
+  pre_a + pre_b
+End
+
+Definition chacha_line_exp_snd_orig_def:
+ chacha_line_exp_snd_orig pre_a pre_d (s:word32) : word32 =
+  (pre_a ?? pre_d) #<<~ s
+End
+
+Definition chacha_line_exp_snd_def:
+ chacha_line_exp_snd pre_a pre_d (s:word32) : word32 =
+  ((pre_a ?? pre_d) <<~ s) || ((pre_a ?? pre_d) >>>~ (32w - s))
+End
+
+Theorem chacha_line_exp_snd_orig_eq:
+ !(a:word32) (d:word32) (s:word32). s <=+ 31w ==>
+  chacha_line_exp_snd_orig a d s = chacha_line_exp_snd a d s
+Proof
+ rw [
+  chacha_line_exp_snd_orig_def,
+  chacha_line_exp_snd_def,
+  replace_word_rol_bv_or_shifts  
+ ]
+QED
+
+Definition chacha_quarter_round_exprs_def:
+ chacha_quarter_round_exprs pre_a pre_b pre_c pre_d
+  : word32 # word32 # word32 # word32 =
+  let a = pre_a in
+  let b = pre_b in
+  let c = pre_c in
+  let d = pre_d in
+
+  let a = chacha_line_exp_fst a b in
+  let d = chacha_line_exp_snd a d 16w in
+
+  let c = chacha_line_exp_fst c d in
+  let b = chacha_line_exp_snd c b 12w in
+
+  let a = chacha_line_exp_fst a b in
+  let d = chacha_line_exp_snd a d 8w in
+
+  let c = chacha_line_exp_fst c d in
+  let b = chacha_line_exp_snd c b 7w in
+
+  (a,b,c,d)
+End
+
+Definition chacha_column_round_exprs_def:
+ chacha_column_round_exprs 
+  pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3
+  pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+  pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11
+  pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+ : word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32
+  =
+ let (arr_0,arr_4,arr_8,arr_12) =
+   chacha_quarter_round_exprs pre_arr_0 pre_arr_4 pre_arr_8 pre_arr_12
+ in
+ let (arr_1,arr_5,arr_9,arr_13) =
+   chacha_quarter_round_exprs pre_arr_1 pre_arr_5 pre_arr_9 pre_arr_13
+ in
+ let (arr_2,arr_6,arr_10,arr_14) =
+   chacha_quarter_round_exprs pre_arr_2 pre_arr_6 pre_arr_10 pre_arr_14
+ in
+ let (arr_3,arr_7,arr_11,arr_15) =
+   chacha_quarter_round_exprs pre_arr_3 pre_arr_7 pre_arr_11 pre_arr_15
+ in
+ (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+  arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
+End
+
+Definition chacha_diagonal_round_exprs_def:
+ chacha_diagonal_round_exprs 
+  pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3
+  pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+  pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11
+  pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+ : word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32
+  =
+ let (arr_0,arr_5,arr_10,arr_15) =
+   chacha_quarter_round_exprs pre_arr_0 pre_arr_5 pre_arr_10 pre_arr_15
+ in
+ let (arr_1,arr_6,arr_11,arr_12) =
+   chacha_quarter_round_exprs pre_arr_1 pre_arr_6 pre_arr_11 pre_arr_12
+ in
+ let (arr_2,arr_7,arr_8,arr_13) =
+   chacha_quarter_round_exprs pre_arr_2 pre_arr_7 pre_arr_8 pre_arr_13
+ in
+ let (arr_3,arr_4,arr_9,arr_14) =
+   chacha_quarter_round_exprs pre_arr_3 pre_arr_4 pre_arr_9 pre_arr_14
+ in
+ (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+  arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
+End
+
+Definition chacha_double_round_exprs_def:
+ chacha_double_round_exprs 
+  pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3
+  pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+  pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11
+  pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+ : word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32 #
+   word32 # word32 # word32 # word32
+  =
+  let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+       arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15) =
+   chacha_column_round_exprs
+    pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3
+    pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+    pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11
+    pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+  in
+
+  let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+       arr_8,arr_9,arr_10,arr_11, arr_12,arr_13,arr_14,arr_15) =
+   chacha_diagonal_round_exprs
+    arr_0 arr_1 arr_2 arr_3 arr_4 arr_5 arr_6 arr_7
+    arr_8 arr_9 arr_10 arr_11 arr_12 arr_13 arr_14 arr_15
+  in
+
+  (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
+   arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
+End
+
 val _ = export_theory ();
