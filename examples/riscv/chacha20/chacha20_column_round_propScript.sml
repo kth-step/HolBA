@@ -37,24 +37,24 @@ open bir_program_varsTheory;
 open HolBACoreSimps;
 open bir_extra_expsTheory;
 
-open chachaTheory;
-open chacha_specTheory;
-open chacha_symb_transf_column_roundTheory;
+open chacha20Theory;
+open chacha20_specTheory;
+open chacha20_column_round_symb_transfTheory;
 
-val _ = new_theory "chacha_column_round_prop";
+val _ = new_theory "chacha20_column_round_prop";
 
 (* ------------------------------------- *)
 (* Connecting RISC-V and BSPEC contracts *)
 (* ------------------------------------- *)
 
-Theorem chacha_column_round_riscv_pre_imp_bspec_pre_thm:
+Theorem chacha20_column_round_riscv_pre_imp_bspec_pre_thm:
  bir_pre_riscv_to_bir
-  (riscv_chacha_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+  (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
-  (bspec_chacha_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+  (bspec_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha_column_round_pre_def,bspec_chacha_column_round_pre_def] >-
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def,bspec_chacha20_column_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -66,17 +66,17 @@ Proof
  EVAL_TAC
 QED
 
-Theorem chacha_column_round_riscv_post_imp_bspec_post_thm:
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
  !ls. bir_post_bir_to_riscv
-   (riscv_chacha_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
      pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
-   (\l. (bspec_chacha_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+   (\l. (bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
           pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
    ls
 Proof
- once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha_column_round_post_def] >>
- once_rewrite_tac [bspec_chacha_column_round_post_def] >>
- once_rewrite_tac [bspec_chacha_column_round_post_def] >>
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_column_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_column_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_column_round_post_def] >>
 
  fs [GSYM bir_and_equiv] >>
 
@@ -93,11 +93,11 @@ Proof
  rw [bir_eval_bin_pred_64_lowcast_32_eq] >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  riscv_chacha_column_round_post_def,
-  riscv_chacha_quarter_round_exprs_def,
-  riscv_chacha_line_exp_fst_def,
-  riscv_chacha_line_exp_snd_def,
-  riscv_chacha_column_round_exprs_def,
+  riscv_chacha20_column_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def,
+  chacha_column_round_exprs_def,
 
   riscv_bmr_rel_EVAL,
   bir_envTheory.bir_env_read_def,
@@ -107,7 +107,7 @@ Proof
   bir_eval_bin_pred_def,
   bool2b_def,bool2w_def,b2n_def,bir_val_true_def
  ] >>
- 
+
  rw [] >> fs [if_bool_1w]
 QED
 
@@ -115,40 +115,40 @@ QED
 (* Auxiliary definitions *)
 (* --------------------- *)
 
-val progbin_tm = (fst o dest_eq o concl) bir_chacha_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha_column_round_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha_column_round_post_def;
+val progbin_tm = (fst o dest_eq o concl) bir_chacha20_progbin_def;
+val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_pre_def;
+val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_post_def;
 
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
-val riscv_cont_chacha_column_round_thm =
+val riscv_cont_chacha20_column_round_thm =
  get_riscv_contract
-  bspec_cont_chacha_column_round
+  bspec_cont_chacha20_column_round
   progbin_tm riscv_pre_tm riscv_post_tm
-  bir_chacha_prog_def
-  [bspec_chacha_column_round_pre_def]
-  bspec_chacha_column_round_pre_def chacha_column_round_riscv_pre_imp_bspec_pre_thm
-  [bspec_chacha_column_round_post_def] chacha_column_round_riscv_post_imp_bspec_post_thm
-  bir_chacha_riscv_lift_THM;
+  bir_chacha20_prog_def
+  [bspec_chacha20_column_round_pre_def]
+  bspec_chacha20_column_round_pre_def chacha20_column_round_riscv_pre_imp_bspec_pre_thm
+  [bspec_chacha20_column_round_post_def] chacha20_column_round_riscv_post_imp_bspec_post_thm
+  bir_chacha20_riscv_lift_THM;
 
-Theorem riscv_cont_chacha_column_round:
- riscv_cont bir_chacha_progbin chacha_column_round_init_addr {chacha_column_round_end_addr}
- (riscv_chacha_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+Theorem riscv_cont_chacha20_column_round:
+ riscv_cont bir_chacha20_progbin chacha20_column_round_init_addr {chacha20_column_round_end_addr}
+ (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
- (riscv_chacha_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+ (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof
- rw [chacha_column_round_init_addr_def,chacha_column_round_end_addr_def] >>
- ACCEPT_TAC riscv_cont_chacha_column_round_thm
+ rw [chacha20_column_round_init_addr_def,chacha20_column_round_end_addr_def] >>
+ ACCEPT_TAC riscv_cont_chacha20_column_round_thm
 QED
 
 (* ------------------------ *)
 (* Unfolded RISC-V contract *)
 (* ------------------------ *)
 
-val readable_thm = computeLib.RESTR_EVAL_RULE [``riscv_weak_trs``] riscv_cont_chacha_column_round;
-Theorem riscv_cont_chacha_column_round_full = GEN_ALL readable_thm;
+val readable_thm = computeLib.RESTR_EVAL_RULE [``riscv_weak_trs``] riscv_cont_chacha20_column_round;
+Theorem riscv_cont_chacha20_column_round_full = GEN_ALL readable_thm;
 
 val _ = export_theory ();
