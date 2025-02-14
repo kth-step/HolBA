@@ -85,12 +85,16 @@ ${HOLBA_HOLMAKE}
   - `bsl-wp-smt`: Small BIR example programs to test simplified BIR generation, WP propagation and SMT interface
   - `ijr`: Theory and examples related to indirect jumps
   - `nic`: Network interface controller formalization
-  - `riscv`: Examples of specifying and verifying RISC-V programs
+  - `riscv`: Examples of specifying and verifying RISC-V programs using symbolic execution
   - `tutorial`: End-to-end tutorial of simple ARMv8 example programs
 - `scripts`: CI and installation scripts
 - `src`: Library sources
   - `extra`: General theories and libraries
   - `shared`: Libraries shared between tools
+    - `convs`: conversion tactics
+    - `l3-machine-code`: extensions to L3 models from HOL4 examples
+    - `smt`: custom interfaces to SMT solvers via SMTLIB (currently Z3)
+    - `sml-simplejson`: JSON parser
   - `theory`: Domain-specific theories
     - `bir`: Core BIR language
     - `bir-support`: Extensions and supporting theories for BIR
@@ -106,6 +110,7 @@ ${HOLBA_HOLMAKE}
     - `lifter`: Translation from binary ISA code to BIR
     - `pass`: Passification utility
     - `scamv`: Abstract side channel model validation framework
+    - `symbexec`: Symbolic execution of BIR
     - `wp`: Weakest precondition propagation
 
 ### Tool status
@@ -114,6 +119,8 @@ ${HOLBA_HOLMAKE}
   * Proof-producing
   * Clear interface
   * Experimental implementation
+  * Used in examples
+  * Supports: ARMv8, RISC-V
 - `tools/cfg`:
   * Non-proof-producing
   * No clear interface yet
@@ -138,6 +145,10 @@ ${HOLBA_HOLMAKE}
 - `tools/scamv`:
   * Works for small programs
   * Includes a selection of cache side channel models
+- `tools/symbexec`:
+  * Proof-producing
+  * Interfaces for key library functions
+  * Usable for automated BIR contract proofs
 - `tools/wp`:
   * Proof-producing
   * Interface in progress
@@ -184,6 +195,7 @@ before submitting them.
 
 ## Related publications
 
+- P. Buiras, H. Nemati, A. Lindner, and R. Guanciale, **"Validation of Side-Channel Models via Observation Refinement"**, In International Symposium on Microarchitecture, pp. 578-591, 2021. [Link](https://doi.org/10.1145/3466752.3480130). _(framework to validate abstract side-channel models)_
 - D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, pp. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
 - H. Nemati, P. Buiras, A. Lindner, R. Guanciale and S. Jacobs, **"Validation of Abstract Side-Channel Models for Computer Architectures"**, in International Conference on Computer Aided Verification, pp. 225-248, 2020. [Link](https://doi.org/10.1007/978-3-030-53288-8_12). _(framework to validate abstract side-channel models)_
 - A. Lindner, R. Guanciale and R. Metere, **"TrABin : Trustworthy analyses of binaries"**, Science of Computer Programming, vol. 174, pp. 72-89, 2019. [Link](https://doi.org/10.1016/j.scico.2019.01.001). _(the proof-producing binary analysis framework with weakest preconditions in HOL4)_
