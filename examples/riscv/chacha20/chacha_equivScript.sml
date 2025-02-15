@@ -843,4 +843,316 @@ Proof
  METIS_TAC [chacha_diagonal_round_exprs_imp,chacha_diagonal_round_imp_exprs]
 QED
 
+Theorem chacha_double_round_exprs_imp[local]:
+ !(m : word32 -> word32)
+
+  pre_arr_0_val pre_arr_1_val pre_arr_2_val pre_arr_3_val pre_arr_4_val pre_arr_5_val
+  pre_arr_6_val pre_arr_7_val pre_arr_8_val pre_arr_9_val pre_arr_10_val pre_arr_11_val
+  pre_arr_12_val pre_arr_13_val pre_arr_14_val pre_arr_15_val
+
+  post_arr_0_val post_arr_1_val post_arr_2_val post_arr_3_val post_arr_4_val post_arr_5_val
+  post_arr_6_val post_arr_7_val post_arr_8_val post_arr_9_val post_arr_10_val post_arr_11_val
+  post_arr_12_val post_arr_13_val post_arr_14_val post_arr_15_val.
+
+  m 0w = pre_arr_0_val /\ m 1w = pre_arr_1_val /\ m 2w = pre_arr_2_val /\ m 3w = pre_arr_3_val /\
+  m 4w = pre_arr_4_val /\ m 5w = pre_arr_5_val /\ m 6w = pre_arr_6_val /\ m 7w = pre_arr_7_val /\
+  m 8w = pre_arr_8_val /\ m 9w = pre_arr_9_val /\ m 10w = pre_arr_10_val /\ m 11w = pre_arr_11_val /\
+  m 12w = pre_arr_12_val /\ m 13w = pre_arr_13_val /\ m 14w = pre_arr_14_val /\ m 15w = pre_arr_15_val /\
+
+ (chacha_double_round m 0w = post_arr_0_val /\
+  chacha_double_round m 1w = post_arr_1_val /\
+  chacha_double_round m 2w = post_arr_2_val /\
+  chacha_double_round m 3w = post_arr_3_val /\
+  chacha_double_round m 4w = post_arr_4_val /\
+  chacha_double_round m 5w = post_arr_5_val /\
+  chacha_double_round m 6w = post_arr_6_val /\
+  chacha_double_round m 7w = post_arr_7_val /\
+  chacha_double_round m 8w = post_arr_8_val /\
+  chacha_double_round m 9w = post_arr_9_val /\
+  chacha_double_round m 10w = post_arr_10_val /\
+  chacha_double_round m 11w = post_arr_11_val /\
+  chacha_double_round m 12w = post_arr_12_val /\
+  chacha_double_round m 13w = post_arr_13_val /\
+  chacha_double_round m 14w = post_arr_14_val /\
+  chacha_double_round m 15w = post_arr_15_val) ==>
+
+  (chacha_double_round_exprs pre_arr_0_val pre_arr_1_val pre_arr_2_val pre_arr_3_val pre_arr_4_val pre_arr_5_val
+  pre_arr_6_val pre_arr_7_val pre_arr_8_val pre_arr_9_val pre_arr_10_val pre_arr_11_val
+  pre_arr_12_val pre_arr_13_val pre_arr_14_val pre_arr_15_val =
+   (post_arr_0_val, post_arr_1_val, post_arr_2_val, post_arr_3_val, post_arr_4_val, post_arr_5_val,
+    post_arr_6_val, post_arr_7_val, post_arr_8_val, post_arr_9_val, post_arr_10_val, post_arr_11_val,
+    post_arr_12_val, post_arr_13_val, post_arr_14_val, post_arr_15_val))
+Proof
+ once_rewrite_tac [chacha_double_round,chacha_double_round_exprs_def] >>
+
+ rw [] >> fs [] >>
+
+ Cases_on `chacha_column_round_exprs (m 0w) (m 1w) (m 2w) (m 3w) (m 4w) (m 5w)
+  (m 6w) (m 7w) (m 8w) (m 9w) (m 10w) (m 11w) (m 12w) (m 13w) (m 14w) (m 15w)` >>
+ rename1 `(a0,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15)` >>
+
+ fs [] >>
+
+ Cases_on `chacha_diagonal_round_exprs a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15` >>
+
+ rename1 `chacha_diagonal_round_exprs a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 = (a'0,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,a'12,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,a'12,a'13,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,a'12,a'13,a'14,a'15)` >>
+
+ fs [] >>
+
+ `chacha_column_round m 0w = a0 /\
+  chacha_column_round m 1w = a1 /\
+  chacha_column_round m 2w = a2 /\
+  chacha_column_round m 3w = a3 /\
+  chacha_column_round m 4w = a4 /\
+  chacha_column_round m 5w = a5 /\
+  chacha_column_round m 6w = a6 /\
+  chacha_column_round m 7w = a7 /\
+  chacha_column_round m 8w = a8 /\
+  chacha_column_round m 9w = a9 /\
+  chacha_column_round m 10w = a10 /\
+  chacha_column_round m 11w = a11 /\
+  chacha_column_round m 12w = a12 /\
+  chacha_column_round m 13w = a13 /\
+  chacha_column_round m 14w = a14 /\
+  chacha_column_round m 15w = a15`
+  by METIS_TAC [chacha_column_round_exprs_eq] >>
+
+ METIS_TAC [chacha_diagonal_round_exprs_eq]
+QED
+
+Theorem chacha_double_round_imp_exprs[local]:
+ !(m : word32 -> word32)
+
+  pre_arr_0_val pre_arr_1_val pre_arr_2_val pre_arr_3_val pre_arr_4_val pre_arr_5_val
+  pre_arr_6_val pre_arr_7_val pre_arr_8_val pre_arr_9_val pre_arr_10_val pre_arr_11_val
+  pre_arr_12_val pre_arr_13_val pre_arr_14_val pre_arr_15_val
+
+  post_arr_0_val post_arr_1_val post_arr_2_val post_arr_3_val post_arr_4_val post_arr_5_val
+  post_arr_6_val post_arr_7_val post_arr_8_val post_arr_9_val post_arr_10_val post_arr_11_val
+  post_arr_12_val post_arr_13_val post_arr_14_val post_arr_15_val.
+
+  m 0w = pre_arr_0_val /\ m 1w = pre_arr_1_val /\ m 2w = pre_arr_2_val /\ m 3w = pre_arr_3_val /\
+  m 4w = pre_arr_4_val /\ m 5w = pre_arr_5_val /\ m 6w = pre_arr_6_val /\ m 7w = pre_arr_7_val /\
+  m 8w = pre_arr_8_val /\ m 9w = pre_arr_9_val /\ m 10w = pre_arr_10_val /\ m 11w = pre_arr_11_val /\
+  m 12w = pre_arr_12_val /\ m 13w = pre_arr_13_val /\ m 14w = pre_arr_14_val /\ m 15w = pre_arr_15_val /\
+
+  (chacha_double_round_exprs pre_arr_0_val pre_arr_1_val pre_arr_2_val pre_arr_3_val pre_arr_4_val pre_arr_5_val
+  pre_arr_6_val pre_arr_7_val pre_arr_8_val pre_arr_9_val pre_arr_10_val pre_arr_11_val
+  pre_arr_12_val pre_arr_13_val pre_arr_14_val pre_arr_15_val =
+   (post_arr_0_val, post_arr_1_val, post_arr_2_val, post_arr_3_val, post_arr_4_val, post_arr_5_val,
+    post_arr_6_val, post_arr_7_val, post_arr_8_val, post_arr_9_val, post_arr_10_val, post_arr_11_val,
+    post_arr_12_val, post_arr_13_val, post_arr_14_val, post_arr_15_val)) ==>
+
+ (chacha_double_round m 0w = post_arr_0_val /\
+  chacha_double_round m 1w = post_arr_1_val /\
+  chacha_double_round m 2w = post_arr_2_val /\
+  chacha_double_round m 3w = post_arr_3_val /\
+  chacha_double_round m 4w = post_arr_4_val /\
+  chacha_double_round m 5w = post_arr_5_val /\
+  chacha_double_round m 6w = post_arr_6_val /\
+  chacha_double_round m 7w = post_arr_7_val /\
+  chacha_double_round m 8w = post_arr_8_val /\
+  chacha_double_round m 9w = post_arr_9_val /\
+  chacha_double_round m 10w = post_arr_10_val /\
+  chacha_double_round m 11w = post_arr_11_val /\
+  chacha_double_round m 12w = post_arr_12_val /\
+  chacha_double_round m 13w = post_arr_13_val /\
+  chacha_double_round m 14w = post_arr_14_val /\
+  chacha_double_round m 15w = post_arr_15_val)
+Proof
+ once_rewrite_tac [chacha_double_round,chacha_double_round_exprs_def] >>
+
+ fs [] >>
+
+ strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >> 
+ strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >> 
+ strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >> 
+
+ Cases_on `chacha_column_round_exprs (m 0w) (m 1w) (m 2w) (m 3w) (m 4w) (m 5w)
+  (m 6w) (m 7w) (m 8w) (m 9w) (m 10w) (m 11w) (m 12w) (m 13w) (m 14w) (m 15w)` >>
+ rename1 `(a0,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15)` >>
+
+ fs [] >>
+
+ Cases_on `chacha_diagonal_round_exprs a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15` >>
+
+ rename1 `chacha_diagonal_round_exprs a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 = (a'0,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,a'12,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,a'12,a'13,rest)` >>
+ Cases_on `rest` >>
+ rename1 `(a'0,a'1,a'2,a'3,a'4,a'5,a'6,a'7,a'8,a'9,a'10,a'11,a'12,a'13,a'14,a'15)` >>
+
+ fs [] >> 
+
+ `chacha_column_round m 0w = a0 /\
+  chacha_column_round m 1w = a1 /\
+  chacha_column_round m 2w = a2 /\
+  chacha_column_round m 3w = a3 /\
+  chacha_column_round m 4w = a4 /\
+  chacha_column_round m 5w = a5 /\
+  chacha_column_round m 6w = a6 /\
+  chacha_column_round m 7w = a7 /\
+  chacha_column_round m 8w = a8 /\
+  chacha_column_round m 9w = a9 /\
+  chacha_column_round m 10w = a10 /\
+  chacha_column_round m 11w = a11 /\
+  chacha_column_round m 12w = a12 /\
+  chacha_column_round m 13w = a13 /\
+  chacha_column_round m 14w = a14 /\
+  chacha_column_round m 15w = a15`
+  by METIS_TAC [chacha_column_round_exprs_eq] >>
+
+ METIS_TAC [chacha_diagonal_round_exprs_eq]
+QED
+
+Theorem chacha_double_round_exprs_eq:
+  !m
+  pre_arr_0_val pre_arr_1_val pre_arr_2_val pre_arr_3_val pre_arr_4_val pre_arr_5_val
+  pre_arr_6_val pre_arr_7_val pre_arr_8_val pre_arr_9_val pre_arr_10_val pre_arr_11_val
+  pre_arr_12_val pre_arr_13_val pre_arr_14_val pre_arr_15_val
+
+  post_arr_0_val post_arr_1_val post_arr_2_val post_arr_3_val post_arr_4_val post_arr_5_val
+  post_arr_6_val post_arr_7_val post_arr_8_val post_arr_9_val post_arr_10_val post_arr_11_val
+  post_arr_12_val post_arr_13_val post_arr_14_val post_arr_15_val.
+
+  m 0w = pre_arr_0_val /\ m 1w = pre_arr_1_val /\ m 2w = pre_arr_2_val /\ m 3w = pre_arr_3_val /\
+  m 4w = pre_arr_4_val /\ m 5w = pre_arr_5_val /\ m 6w = pre_arr_6_val /\ m 7w = pre_arr_7_val /\
+  m 8w = pre_arr_8_val /\ m 9w = pre_arr_9_val /\ m 10w = pre_arr_10_val /\ m 11w = pre_arr_11_val /\
+  m 12w = pre_arr_12_val /\ m 13w = pre_arr_13_val /\ m 14w = pre_arr_14_val /\ m 15w = pre_arr_15_val ==>
+
+((chacha_double_round m 0w = post_arr_0_val /\
+  chacha_double_round m 1w = post_arr_1_val /\
+  chacha_double_round m 2w = post_arr_2_val /\
+  chacha_double_round m 3w = post_arr_3_val /\
+  chacha_double_round m 4w = post_arr_4_val /\
+  chacha_double_round m 5w = post_arr_5_val /\
+  chacha_double_round m 6w = post_arr_6_val /\
+  chacha_double_round m 7w = post_arr_7_val /\
+  chacha_double_round m 8w = post_arr_8_val /\
+  chacha_double_round m 9w = post_arr_9_val /\
+  chacha_double_round m 10w = post_arr_10_val /\
+  chacha_double_round m 11w = post_arr_11_val /\
+  chacha_double_round m 12w = post_arr_12_val /\
+  chacha_double_round m 13w = post_arr_13_val /\
+  chacha_double_round m 14w = post_arr_14_val /\
+  chacha_double_round m 15w = post_arr_15_val)
+  <=>
+  (chacha_double_round_exprs pre_arr_0_val pre_arr_1_val pre_arr_2_val pre_arr_3_val pre_arr_4_val pre_arr_5_val
+  pre_arr_6_val pre_arr_7_val pre_arr_8_val pre_arr_9_val pre_arr_10_val pre_arr_11_val
+  pre_arr_12_val pre_arr_13_val pre_arr_14_val pre_arr_15_val =
+   (post_arr_0_val, post_arr_1_val, post_arr_2_val, post_arr_3_val, post_arr_4_val, post_arr_5_val,
+    post_arr_6_val, post_arr_7_val, post_arr_8_val, post_arr_9_val, post_arr_10_val, post_arr_11_val,
+    post_arr_12_val, post_arr_13_val, post_arr_14_val, post_arr_15_val)))
+Proof
+ METIS_TAC [chacha_double_round_exprs_imp,chacha_double_round_imp_exprs]
+QED
+
 val _ = export_theory ();
