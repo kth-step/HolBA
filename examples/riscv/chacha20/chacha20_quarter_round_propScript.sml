@@ -87,7 +87,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_64_lowcast_32_eq] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
 
  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
@@ -146,7 +146,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_64_lowcast_32_eq] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
 
  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 

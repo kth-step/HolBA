@@ -477,7 +477,24 @@ REPEAT STRIP_TAC >> Cases_on `it` >| [
 )
 QED
 
-Theorem bir_eval_bin_pred_64_eq:
+Theorem bir_eval_bin_pred_64_mem_eq:
+ !mm w_ref w_deref.
+ (bir_eval_bin_pred BIExp_Equal
+  (bir_eval_load (SOME (BVal_Mem Bit64 Bit8 mm))
+    (SOME (BVal_Imm (Imm64 w_ref))) BEnd_LittleEndian Bit64)
+  (SOME (BVal_Imm (Imm64 w_deref))) = SOME bir_val_true) <=>
+ (bir_load_from_mem Bit8 Bit64 Bit64 mm BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref))
+Proof
+ rw [bir_eval_load_def,b2n_def,type_of_bir_imm_def] >>
+ Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 mm BEnd_LittleEndian (w2n w_ref)` >>
+ rw [bir_eval_load_def,b2n_def,type_of_bir_imm_def,bir_val_true_def] >>
+ Cases_on `bir_load_from_mem Bit8 Bit64 Bit64 mm BEnd_LittleEndian (w2n w_ref)` >> 
+ fs [bir_eval_bin_pred_def] >>
+ Cases_on `x` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) []
+QED
+
+Theorem bir_eval_bin_pred_exists_64_eq:
  !f w reg.
  (bir_eval_bin_pred BIExp_Equal
   (if (?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z)
@@ -497,7 +514,7 @@ Proof
  fs [type_of_bir_val_def,type_of_bir_imm_def]
 QED
 
-Theorem bir_eval_bin_pred_64_mem_eq:
+Theorem bir_eval_bin_pred_exists_64_mem_eq:
  !f mm w_ref w_deref.
  (bir_eval_bin_pred BIExp_Equal
   (bir_eval_load
@@ -522,7 +539,7 @@ Proof
  METIS_TAC [type_of_bir_val_def]
 QED
 
-Theorem bir_eval_bin_pred_64_lowcast_32_eq:
+Theorem bir_eval_bin_pred_exists_64_lowcast_32_eq:
 !f w reg.
 (bir_eval_bin_pred BIExp_Equal
  (bir_eval_cast BIExp_LowCast
