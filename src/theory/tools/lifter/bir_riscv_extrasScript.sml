@@ -1005,4 +1005,22 @@ Proof
  ]
 QED
 
+Theorem bmr_rel_riscv_MEM8_map:
+ !b f b1 ms map.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
+ f "MEM8" = SOME (BVal_Mem Bit64 Bit8 map) ==>
+ ms.MEM8 = (\a. n2w (bir_load_mmap map (w2n a)))
+Proof
+ rw [
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_envTheory.bir_var_name_def
+ ] >>
+ fs []
+QED
+
 val _ = export_theory();
