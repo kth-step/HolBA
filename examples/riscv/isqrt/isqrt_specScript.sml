@@ -7,9 +7,11 @@ open wordsTheory;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+open bir_exp_equivTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
+open bir_riscv_extrasTheory;
 open bir_compositionLib;
 
 open bir_lifting_machinesTheory;
@@ -38,6 +40,62 @@ open bir_program_varsTheory;
 open logrootTheory arithmeticTheory pairTheory combinTheory;
 
 val _ = new_theory "isqrt_spec";
+
+Theorem riscv_bmr_lookup_x10[local]:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
+ f "x10" = SOME (BVal_Imm (Imm64 w)) ==>
+ ms.c_gpr ms.procID 10w = w
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_lookup_x13[local]:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
+ f "x13" = SOME (BVal_Imm (Imm64 w)) ==>
+ ms.c_gpr ms.procID 13w = w
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_lookup_x14[local]:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
+ f "x14" = SOME (BVal_Imm (Imm64 w)) ==>
+ ms.c_gpr ms.procID 14w = w
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_lookup_x15[local]:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
+ f "x15" = SOME (BVal_Imm (Imm64 w)) ==>
+ ms.c_gpr ms.procID 15w = w
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
 
 (* ------ *)
 (* Theory *)
@@ -381,7 +439,29 @@ Theorem isqrt_riscv_post_1_imp_bspec_post_1_thm:
    (\l. bspec_isqrt_post_1 pre_x10)
    ls
 Proof
- cheat
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_isqrt_post_1_def,
+  GSYM bir_and_equiv
+ ] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_eval_bin_pred_exists_64_eq
+ ] >>
+
+ rw [riscv_isqrt_post_1_def] >>
+
+ METIS_TAC [
+  riscv_bmr_lookup_x13,
+  riscv_bmr_lookup_x15
+ ]
 QED
 
 Theorem isqrt_riscv_pre_2_imp_bspec_pre_2_thm:
@@ -398,7 +478,31 @@ Theorem isqrt_riscv_post_2_imp_bspec_post_2_thm:
    (\l. bspec_isqrt_post_2 pre_x13 pre_x15)
    ls
 Proof
- cheat
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_isqrt_post_2_def,
+  GSYM bir_and_equiv
+ ] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_eval_bin_pred_exists_64_eq
+ ] >>
+
+ rw [riscv_isqrt_post_2_def] >>
+
+ METIS_TAC [
+  riscv_bmr_lookup_x10,
+  riscv_bmr_lookup_x13,
+  riscv_bmr_lookup_x14,
+  riscv_bmr_lookup_x15
+ ]
 QED
 
 Theorem isqrt_riscv_pre_3_imp_bspec_pre_3_thm:
