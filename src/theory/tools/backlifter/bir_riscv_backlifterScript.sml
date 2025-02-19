@@ -77,10 +77,10 @@ End
 (* FIXME: generalize for both arm8 and riscv *)
 Definition bir_post_bir_to_riscv_def:
   bir_post_bir_to_riscv post post_bir ls =
-    !ms bs l.
-    l IN ls ==>
+    !ms bs.
+    bs.bst_pc.bpc_label IN ls ==>
     bmr_rel riscv_bmr bs ms ==>
-    (bir_eval_exp (post_bir l) bs.bst_environ = SOME bir_val_true) ==>
+    (bir_eval_exp (post_bir bs.bst_pc.bpc_label) bs.bst_environ = SOME bir_val_true) ==>
     post ms
 End
 
@@ -1545,8 +1545,7 @@ subgoal `riscv_bmr.bmr_extra ms'` >- (
 ) >>
 subgoal `mpost ms'` >- (
   FULL_SIMP_TAC std_ss [bir_post_bir_to_riscv_def] >>
-  QSPECL_X_ASSUM ``!ms. _``
-    [`ms'`, `bs'`, `(bir_block_pc (BL_Address li)).bpc_label`] >>
+  QSPECL_X_ASSUM ``!ms bs._`` [`ms'`, `bs'`] >>
   REV_FULL_SIMP_TAC std_ss []
 ) >>
 FULL_SIMP_TAC std_ss [] >>
