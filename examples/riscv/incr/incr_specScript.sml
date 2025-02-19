@@ -6,6 +6,7 @@ open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+open bir_exp_equivTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
@@ -35,6 +36,20 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 val _ = new_theory "incr_spec";
+
+Theorem riscv_bmr_lookup_x10[local]:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
+ f "x10" = SOME (BVal_Imm (Imm64 w)) ==>
+ ms.c_gpr ms.procID 10w = w
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
 
 (* ------------------ *)
 (* Program boundaries *)
@@ -119,29 +134,24 @@ QED
 Theorem incr_riscv_post_imp_bir_post_thm:
  !ls. bir_post_bir_to_riscv (riscv_incr_post pre_x10) (\l. bir_incr_post pre_x10) ls
 Proof
- rw [bir_post_bir_to_riscv_def,riscv_incr_post_def,bir_incr_post_def] >>
- Cases_on `bs` >>
- Cases_on `b0` >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
-   fs [Abbrev_def] >>
-   `bir_eval_bin_pred BIExp_Equal (SOME z)
-     (SOME (BVal_Imm (Imm64 (pre_x10 + 1w)))) = SOME bir_val_true`
-    by METIS_TAC [] >>
-   Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bool2b_def,bir_val_true_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
-   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b' (Imm64 (pre_x10 + 1w))` >>
-   Cases_on `bb` >> fs [] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >> 
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
-    bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
-    bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) []
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bir_incr_post_def] >>
+ once_rewrite_tac [bir_incr_post_def] >>
+ once_rewrite_tac [bir_incr_post_def] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_eval_bin_pred_exists_64_eq
+ ] >>
+
+ rw [riscv_incr_post_def] >>
+
+ METIS_TAC [riscv_bmr_lookup_x10]
 QED
 
 (* ------------------------------------- *)

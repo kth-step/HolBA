@@ -6,15 +6,16 @@ open birs_auxLib;
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
-val _ = new_theory "chacha";
-
-val _ = lift_da_and_store "chacha" "chacha.da" da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x111C4));
+val _ = new_theory "chacha20";
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)
 (* ----------------------------------------- *)
 
-val bir_prog_def = DB.fetch "chacha" "bir_chacha_prog_def";
-val _ = gen_prog_vars_birenvtyl_defthms "chacha" bir_prog_def;
+val _ = lift_da_and_store "chacha20" "chacha20.da" da_riscv
+ ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x111C4));
+
+val bir_prog_def = DB.fetch "chacha20" "bir_chacha20_prog_def";
+val _ = gen_prog_vars_birenvtyl_defthms "chacha20" bir_prog_def;
 
 val _ = export_theory ();

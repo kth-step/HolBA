@@ -14,5 +14,6 @@ test-riscv.exe: test-riscv.uo
 
 test: test-riscv.exe
 	./test-riscv.exe
+.PHONY: test
 
 EXTRA_CLEANS = test-riscv.exe
