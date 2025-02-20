@@ -97,6 +97,25 @@ Proof
  ]
 QED
 
+Theorem riscv_bmr_bpc_label_c_PC_BST_Running[local]:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) BST_Running) ms /\
+ b.bpc_label = BL_Address (Imm64 w) ==>
+ ms.c_PC ms.procID = w
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_block_pc_def,
+  bir_programcounter_t_component_equality
+ ]
+QED
+
 (* ------ *)
 (* Theory *)
 (* ------ *)
@@ -230,7 +249,7 @@ Definition riscv_isqrt_post_3_loop_def:
   (m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
-   pre_x14 <= pre_x13)
+   pre_x14 <=+ pre_x13)
 End
 
 Definition riscv_isqrt_post_3_ret_def:
@@ -239,7 +258,7 @@ Definition riscv_isqrt_post_3_ret_def:
   (m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
-   pre_x13 < pre_x14)
+   pre_x13 <+ pre_x14)
 End
 
 Definition riscv_isqrt_post_3_def:
@@ -469,7 +488,11 @@ Theorem isqrt_riscv_pre_2_imp_bspec_pre_2_thm:
   (riscv_isqrt_pre_2 pre_x13 pre_x15)
   (bspec_isqrt_pre_2 pre_x13 pre_x15)
 Proof
- cheat
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_2_def,bspec_isqrt_pre_2_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,bool2b_def,bool2w_def] >>
+ rw []
 QED
 
 Theorem isqrt_riscv_post_2_imp_bspec_post_2_thm:
@@ -510,7 +533,11 @@ Theorem isqrt_riscv_pre_3_imp_bspec_pre_3_thm:
   (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
   (bspec_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
 Proof
- cheat
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_3_def,bspec_isqrt_pre_3_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,bool2b_def,bool2w_def] >>
+ rw []
 QED
 
 Theorem isqrt_riscv_post_3_imp_bspec_post_3_thm:
@@ -521,7 +548,71 @@ Theorem isqrt_riscv_post_3_imp_bspec_post_3_thm:
      else bir_exp_false)
    ls
 Proof
- cheat
+ fs [bir_post_bir_to_riscv_def] >>
+ strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >>
+
+ Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x10490w)` >> fs [] >-
+  (fs [bspec_isqrt_post_3_loop_def,GSYM bir_and_equiv] >>
+
+   Cases_on `bs` >> Cases_on `b0` >>
+
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [
+    bir_envTheory.bir_env_read_def,
+    bir_envTheory.bir_env_check_type_def,
+    bir_envTheory.bir_env_lookup_type_def,
+    bir_envTheory.bir_env_lookup_def,
+    bir_eval_bin_pred_def,
+    bir_eval_bin_pred_exists_64_eq,
+    bool2b_def,
+    bool2w_def
+   ] >>
+   
+   rw [bir_val_true_def,riscv_isqrt_post_3_def] >>
+   `ms.c_PC ms.procID = 0x10490w` by METIS_TAC [riscv_bmr_bpc_label_c_PC_BST_Running] >| [
+      rw [riscv_isqrt_post_3_loop_def] >>
+      METIS_TAC [
+       riscv_bmr_lookup_x10,
+       riscv_bmr_lookup_x13,
+       riscv_bmr_lookup_x14,
+       riscv_bmr_lookup_x15
+      ],
+
+     fs [isqrt_end_addr_3_loop_def],
+
+     fs [isqrt_end_addr_3_loop_def]
+   ]) >>
+ Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x104A0w)` >> fs [] >-
+  (fs [bspec_isqrt_post_3_ret_def,GSYM bir_and_equiv] >>
+
+   Cases_on `bs` >> Cases_on `b0` >>
+
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [
+    bir_envTheory.bir_env_read_def,
+    bir_envTheory.bir_env_check_type_def,
+    bir_envTheory.bir_env_lookup_type_def,
+    bir_envTheory.bir_env_lookup_def,
+    bir_eval_bin_pred_def,
+    bir_eval_bin_pred_exists_64_eq,
+    bool2b_def,
+    bool2w_def
+   ] >>
+   
+   rw [bir_val_true_def,riscv_isqrt_post_3_def] >>
+   `ms.c_PC ms.procID = 0x104A0w` by METIS_TAC [riscv_bmr_bpc_label_c_PC_BST_Running] >| [
+     fs [isqrt_end_addr_3_loop_def],
+   
+     fs [isqrt_end_addr_3_ret_def],
+
+     rw [riscv_isqrt_post_3_ret_def] >>
+     METIS_TAC [
+      riscv_bmr_lookup_x10,
+      riscv_bmr_lookup_x13,
+      riscv_bmr_lookup_x14,
+      riscv_bmr_lookup_x15
+     ]
+   ]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_false_def,bir_val_false_def,bir_val_true_def] >>
+ rw []
 QED
 
 val _ = export_theory ();
