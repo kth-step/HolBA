@@ -93,6 +93,7 @@ Definition bir_post_bir_to_arm8_def:
   bir_post_bir_to_arm8 post post_bir ls =
     !ms bs.
     bs.bst_pc.bpc_label IN ls ==>
+    bs.bst_status = BST_Running ==>
     bmr_rel arm8_bmr bs ms ==>
     (bir_eval_exp (post_bir bs.bst_pc.bpc_label) bs.bst_environ = SOME bir_val_true) ==>
     post ms
@@ -610,7 +611,7 @@ subgoal `arm8_bmr.bmr_extra ms'` >- (
 subgoal `mpost ms'` >- (
   FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
   QSPECL_X_ASSUM ``!ms bs. _`` [`ms'`, `bs'`] >>
-  REV_FULL_SIMP_TAC std_ss []
+  REV_FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
 ) >>
 FULL_SIMP_TAC std_ss [] >>
 
