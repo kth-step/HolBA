@@ -79,6 +79,7 @@ Definition bir_post_bir_to_riscv_def:
   bir_post_bir_to_riscv post post_bir ls =
     !ms bs.
     bs.bst_pc.bpc_label IN ls ==>
+    bs.bst_status = BST_Running ==>
     bmr_rel riscv_bmr bs ms ==>
     (bir_eval_exp (post_bir bs.bst_pc.bpc_label) bs.bst_environ = SOME bir_val_true) ==>
     post ms
@@ -1546,7 +1547,7 @@ subgoal `riscv_bmr.bmr_extra ms'` >- (
 subgoal `mpost ms'` >- (
   FULL_SIMP_TAC std_ss [bir_post_bir_to_riscv_def] >>
   QSPECL_X_ASSUM ``!ms bs._`` [`ms'`, `bs'`] >>
-  REV_FULL_SIMP_TAC std_ss []
+  REV_FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
 ) >>
 FULL_SIMP_TAC std_ss [] >>
 SIMP_TAC (std_ss++bir_wm_SS) [riscv_ts_def,
