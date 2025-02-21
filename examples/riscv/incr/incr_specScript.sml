@@ -10,6 +10,7 @@ open bir_exp_equivTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
+open bir_riscv_extrasTheory;
 open bir_compositionLib;
 
 open bir_lifting_machinesTheory;
@@ -36,20 +37,6 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 val _ = new_theory "incr_spec";
-
-Theorem riscv_bmr_lookup_x10[local]:
-!b f b1 ms w.
- bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms /\
- f "x10" = SOME (BVal_Imm (Imm64 w)) ==>
- ms.c_gpr ms.procID 10w = w
-Proof
- rw [] >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
- ]
-QED
 
 (* ------------------ *)
 (* Program boundaries *)
@@ -151,7 +138,7 @@ Proof
 
  rw [riscv_incr_post_def] >>
 
- METIS_TAC [riscv_bmr_lookup_x10]
+ METIS_TAC [riscv_bmr_x10_equiv]
 QED
 
 (* ------------------------------------- *)
