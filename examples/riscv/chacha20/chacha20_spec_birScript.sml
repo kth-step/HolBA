@@ -913,11 +913,11 @@ Theorem chacha20_quarter_round_riscv_post_imp_bspec_post_thm:
    (\l. (bspec_chacha20_quarter_round_post pre_a pre_b pre_c pre_d))
    ls
 Proof
- once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_quarter_round_post_def] >>
- once_rewrite_tac [bspec_chacha20_quarter_round_post_def] >>
- once_rewrite_tac [bspec_chacha20_quarter_round_post_def] >>
-
- fs [GSYM bir_and_equiv] >>
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_chacha20_quarter_round_post_def,
+  GSYM bir_and_equiv
+ ] >>
 
  Cases_on `bs` >> Cases_on `b0` >>
 
@@ -979,11 +979,11 @@ Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
           pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
    ls
 Proof
- once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_column_round_post_def] >>
- once_rewrite_tac [bspec_chacha20_column_round_post_def] >>
- once_rewrite_tac [bspec_chacha20_column_round_post_def] >>
-
- fs [GSYM bir_and_equiv] >>
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_chacha20_column_round_post_def,
+  GSYM bir_and_equiv
+ ] >>
 
  Cases_on `bs` >> Cases_on `b0` >>
 
@@ -1045,11 +1045,11 @@ Theorem chacha20_diagonal_round_riscv_post_imp_bspec_post_thm:
           pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
    ls
 Proof
- once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_diagonal_round_post_def] >>
- once_rewrite_tac [bspec_chacha20_diagonal_round_post_def] >>
- once_rewrite_tac [bspec_chacha20_diagonal_round_post_def] >>
-
- fs [GSYM bir_and_equiv] >>
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_chacha20_diagonal_round_post_def,
+  GSYM bir_and_equiv
+ ] >>
 
  Cases_on `bs` >> Cases_on `b0` >>
 
