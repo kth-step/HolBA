@@ -42,7 +42,8 @@ open program_logicSimps;
 open distribute_generic_stuffTheory;
 
 open mod2Theory;
-open mod2_specTheory;
+open mod2_spec_riscvTheory;
+open mod2_spec_birTheory;
 open mod2_symb_transfTheory;
 
 val _ = new_theory "mod2_prop";
