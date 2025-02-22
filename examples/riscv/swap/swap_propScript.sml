@@ -27,7 +27,8 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 open swapTheory;
-open swap_specTheory;
+open swap_spec_riscvTheory;
+open swap_spec_birTheory;
 open swap_symb_transfTheory;
 
 val _ = new_theory "swap_prop";
