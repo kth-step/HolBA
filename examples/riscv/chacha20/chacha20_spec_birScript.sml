@@ -1,9 +1,12 @@
 open HolKernel boolLib Parse bossLib;
 open pairTheory pred_setTheory markerTheory wordsTheory wordsLib;
 
+open holba_auxiliaryTheory;
+
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+open bir_exp_equivTheory;
 
 open bir_extra_expsTheory;
 
@@ -819,5 +822,264 @@ Definition bspec_chacha20_double_round_post_def:
  : bir_exp_t =
   ^bspec_chacha20_double_round_post_tm
 End
+
+(* ------------------------------------- *)
+(* Connecting RISC-V and BSPEC contracts *)
+(* ------------------------------------- *)
+
+(* line *)
+
+Theorem chacha20_line_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_line_pre pre_a pre_b pre_d)
+  (bspec_chacha20_line_pre pre_a pre_b pre_d)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_line_pre_def,bspec_chacha20_line_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_line_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_line_post pre_a pre_b pre_d)
+   (\l. (bspec_chacha20_line_post pre_a pre_b pre_d))
+   ls
+Proof
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_line_post_def] >>
+ once_rewrite_tac [bspec_chacha20_line_post_def] >>
+ once_rewrite_tac [bspec_chacha20_line_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+ rw [
+  riscv_chacha20_line_post_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def
+ ] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
+
+(* quarter round *)
+
+Theorem chacha20_quarter_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
+  (bspec_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_quarter_round_pre_def,bspec_chacha20_quarter_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_quarter_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_quarter_round_post pre_a pre_b pre_c pre_d)
+   (\l. (bspec_chacha20_quarter_round_post pre_a pre_b pre_c pre_d))
+   ls
+Proof
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_quarter_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_quarter_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_quarter_round_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+ rw [
+  riscv_chacha20_quarter_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def
+ ] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
+
+(* column round *)
+
+Theorem chacha20_column_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+  (bspec_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def,bspec_chacha20_column_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\l. (bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+          pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
+   ls
+Proof
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_column_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_column_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_column_round_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_chacha20_column_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def,
+  chacha_column_round_exprs_def,
+
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def
+ ] >>
+
+ rw [] >> fs [if_bool_1w]
+QED
+
+(* diagonal round *)
+
+Theorem chacha20_diagonal_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+  (bspec_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_diagonal_round_pre_def,bspec_chacha20_diagonal_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_diagonal_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_diagonal_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\l. (bspec_chacha20_diagonal_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+          pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
+   ls
+Proof
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_diagonal_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_diagonal_round_post_def] >>
+ once_rewrite_tac [bspec_chacha20_diagonal_round_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_chacha20_diagonal_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def,
+  chacha_diagonal_round_exprs_def,
+
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
 
 val _ = export_theory ();
