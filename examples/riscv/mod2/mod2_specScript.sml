@@ -7,9 +7,11 @@ open wordsTheory;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+open bir_exp_equivTheory;
 
 open bir_riscv_backlifterTheory;
 open bir_backlifterLib;
+open bir_riscv_extrasTheory;
 open bir_compositionLib;
 
 open bir_lifting_machinesTheory;
@@ -38,6 +40,14 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 val _ = new_theory "mod2_spec";
+
+Theorem mod2_wand_n2w_w2n[local]:
+ !x. 1w && x = n2w ((w2n x) MOD 2)
+Proof
+ STRIP_TAC >>
+ MP_TAC (Q.SPECL [`1`, `w2n x`] WORD_AND_EXP_SUB1) >>
+ rw []
+QED
 
 (* ------------------ *)
 (* Program boundaries *)
@@ -122,40 +132,23 @@ QED
 Theorem mod2_riscv_post_imp_bir_post_thm:
  !ls. bir_post_bir_to_riscv (riscv_mod2_post pre_x10) (\l. bir_mod2_post pre_x10) ls
 Proof
- rw [bir_post_bir_to_riscv_def,riscv_mod2_post_def,bir_mod2_post_def] >>
- Cases_on `bs` >>
- Cases_on `b0` >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
- Q.ABBREV_TAC `g = ?z. f "x10" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
- Cases_on `g` >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
-   fs [Abbrev_def] >>
-   `bir_eval_bin_pred BIExp_Equal (SOME z)
-     (SOME (BVal_Imm (Imm64 (n2w ((w2n pre_x10) MOD 2))))) = SOME bir_val_true`
-    by METIS_TAC [] >>
-   Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
-   Q.ABBREV_TAC `bb = bir_bin_pred BIExp_Equal b' (Imm64 (n2w ((w2n pre_x10) MOD 2)))` >>
-   Cases_on `bb` >> fs [] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-    bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) []
+ fs [bir_post_bir_to_riscv_def,bir_mod2_post_def] >>
+ Cases_on `bs` >> Cases_on `b0` >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_eval_bin_pred_exists_64_eq
+ ] >>
+ rw [riscv_mod2_post_def] >>
+ METIS_TAC [riscv_bmr_x10_equiv]
 QED
 
 (* ------------------------------------- *)
 (* Connecting HL BIR and BSPEC contracts *)
 (* ------------------------------------- *)
-
-Theorem mod2_wand_n2w_w2n[local]:
- !x. 1w && x = n2w ((w2n x) MOD 2)
-Proof
- STRIP_TAC >>
- MP_TAC (Q.SPECL [`1`, `w2n x`] WORD_AND_EXP_SUB1) >>
- rw []
-QED
 
 Theorem mod2_bir_pre_imp_bspec_pre_thm[local]:
  bir_exp_is_taut
