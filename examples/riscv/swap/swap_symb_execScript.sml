@@ -5,7 +5,8 @@ open bir_symbLib;
 open distribute_generic_stuffTheory;
 
 open swapTheory;
-open swap_specTheory;
+open swap_spec_riscvTheory;
+open swap_spec_birTheory;
 
 val _ = new_theory "swap_symb_exec";
 
