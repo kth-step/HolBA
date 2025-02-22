@@ -39,7 +39,8 @@ open bir_extra_expsTheory;
 
 open chachaTheory;
 open chacha20Theory;
-open chacha20_specTheory;
+open chacha20_spec_riscvTheory;
+open chacha20_spec_birTheory;
 open chacha20_quarter_round_symb_transfTheory;
 
 val _ = new_theory "chacha20_quarter_round_prop";

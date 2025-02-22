@@ -4,7 +4,9 @@ open wordsTheory;
 
 open bir_symbLib;
 
-open chacha20Theory chacha20_specTheory;
+open chacha20Theory;
+open chacha20_spec_riscvTheory;
+open chacha20_spec_birTheory;
 
 val _ = new_theory "chacha20_quarter_round_symb_exec";
 
