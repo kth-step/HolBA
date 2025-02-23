@@ -3,14 +3,14 @@
 ifdef HOLBA_HOL_DIR
   HOLBA_HOLMAKE=$(HOLBA_HOL_DIR)/bin/Holmake
 else
-  $(info !!! WARNING)
+  $(info !!! HolBA WARNING)
   $(info !!! - HOLBA_HOL_DIR undefined)
 endif
 
 
 # check whether HOLBA_HOLMAKE is usable
 ifeq ("$(shell which $(HOLBA_HOLMAKE))","")
-  $(info !!! WARNING)
+  $(info !!! HolBA WARNING)
   ifndef HOLBA_HOLMAKE
     $(info !!! - HOLBA_HOLMAKE undefined)
   else

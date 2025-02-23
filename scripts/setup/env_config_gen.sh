@@ -13,7 +13,7 @@ HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
 # script needs to run sourced
 if [[ "$0" == "$BASH_SOURCE" ]]; then
-  echo "ERROR: script is not sourced"
+  echo "ERROR HOLBA: script is not sourced"
   exit 1
 fi
 
@@ -46,7 +46,7 @@ function is_holba {
 }
 
 if ! is_holba "${HOLBA_DIR}"; then
-  echo "ERROR: HOLBA_DIR not found or incorrect (tried: '${HOLBA_DIR}')"
+  echo "ERROR HOLBA: HOLBA_DIR not found or incorrect (tried: '${HOLBA_DIR}')"
   return 2
 fi
 
@@ -68,7 +68,7 @@ function print_export_msg() {
 # the parameter to this script has precedence
 if [[ ! -z "${OPT_DIR_PARAM}" ]]; then
   if [[ ! -d "${OPT_DIR_PARAM}" ]]; then
-    echo "ERROR: not a directory: ${OPT_DIR_PARAM}"
+    echo "ERROR HOLBA: not a directory: ${OPT_DIR_PARAM}"
     return 2
   fi
   print_export_msg "HOLBA_OPT_DIR (parameter)"
@@ -103,7 +103,7 @@ fi
 HOLBA_HOL_BIN_DIR="${HOLBA_HOL_DIR}/bin"
 # warn if directory HOLBA_HOL_BIN_DIR doesn't exist
 if [[ ( ! -d "${HOLBA_HOL_DIR}" ) || ( ! -d "${HOLBA_HOL_BIN_DIR}" ) ]]; then
-  echo "WARNING: hol/bin directory does not exist ('${HOLBA_HOL_BIN_DIR}')"
+  echo "WARNING HOLBA: hol/bin directory does not exist ('${HOLBA_HOL_BIN_DIR}')"
   # note: don't fail because this script is used before install script run
 fi
 if [[ ( ! -d "${HOLBA_HOL_DIR}" ) ]]; then
