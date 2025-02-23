@@ -8,7 +8,7 @@ function find_hol4_bin_dir {
     declare HOLMAKE_NOFLAGS=$(echo $HOLBA_HOLMAKE | awk '{print $1;}')
 
     which $HOLMAKE_NOFLAGS >/dev/null \
-        || (echo "Holmake not found. Please set a HOLBA_HOlMAKE env variable." && exit 1)
+        || (echo "Holmake not found. Please set a HOLBA_HOLMAKE env variable." && exit 1)
 
     dirname $(which $HOLMAKE_NOFLAGS)
 }
