@@ -1,6 +1,0 @@
-INCLUDES = $(HOLBADIR)/src/tools/scamv/persistence \
-           $(HOLBADIR)/src/tools/scamv/proggen \
-           $(HOLBADIR)/src/tools/scamv
-
-all: $(DEFAULT_TARGETS)
-.PHONY: all

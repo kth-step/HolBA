@@ -1,8 +1,0 @@
-
-ldrstr.o:     file format elf64-littleaarch64
-
-0000000000400570 <main>:
-  400570:	b9000fe0 	str	w0, [sp,#12]
-  400574:	b9400fe1 	ldr	w1, [sp,#12]
-  400578:	d503201f 	nop
-  40057c:	d65f03c0 	ret

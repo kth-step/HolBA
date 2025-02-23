@@ -1,2 +1,0 @@
--i 8 -t 1000 --generator qc --generator_param spectre_v1_mod2 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T
-

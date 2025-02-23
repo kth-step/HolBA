@@ -52,5 +52,5 @@ then write `cua-mode` and press <kbd>Enter</kbd>.
 
 ## HolBA-tutorial VM
 
-Using the prepared VM, you don't need to worry about `autoenv.sh` and emacs configurations. The environment is prepared so that you can run `make`, `Holmake`, `rlwrap hol` and `emacs` from a terminal in the HolBA directories as needed. The most relevant HolBA directories are `~/tutorial/HolBA_tutorial/examples/tutorial` and `~/tutorial/HolBA_scamv/src/tools/scamv`.
+Using the prepared VM, you don't need to worry about `autoenv.sh` and emacs configurations. The environment is prepared so that you can run `make`, `Holmake`, `rlwrap hol` and `emacs` from a terminal in the HolBA directories as needed. The most relevant HolBA directory is `~/tutorial/HolBA_tutorial/examples/tutorial`.
 

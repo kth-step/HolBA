@@ -109,7 +109,6 @@ ${HOLBA_HOLMAKE}
     - `exec`: Concrete execution
     - `lifter`: Translation from binary ISA code to BIR
     - `pass`: Passification utility
-    - `scamv`: Abstract side channel model validation framework
     - `symbexec`: Symbolic execution of BIR
     - `wp`: Weakest precondition propagation
 
@@ -142,9 +141,6 @@ ${HOLBA_HOLMAKE}
 - `tools/pass`:
   * Non-proof-producing
   * Experimental passification transformation to SSA
-- `tools/scamv`:
-  * Works for small programs
-  * Includes a selection of cache side channel models
 - `tools/symbexec`:
   * Proof-producing
   * Interfaces for key library functions
@@ -195,9 +191,9 @@ before submitting them.
 
 ## Related publications
 
-- P. Buiras, H. Nemati, A. Lindner, and R. Guanciale, **"Validation of Side-Channel Models via Observation Refinement"**, In International Symposium on Microarchitecture, pp. 578-591, 2021. [Link](https://doi.org/10.1145/3466752.3480130). _(framework to validate abstract side-channel models)_
+- P. Buiras, H. Nemati, A. Lindner, and R. Guanciale, **"Validation of Side-Channel Models via Observation Refinement"**, In International Symposium on Microarchitecture, pp. 578-591, 2021. [Link](https://doi.org/10.1145/3466752.3480130). [Scam-V Repository](https://github.com/kth-step/Scam-V). _(framework to validate abstract side-channel models)_
 - D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, pp. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
-- H. Nemati, P. Buiras, A. Lindner, R. Guanciale and S. Jacobs, **"Validation of Abstract Side-Channel Models for Computer Architectures"**, in International Conference on Computer Aided Verification, pp. 225-248, 2020. [Link](https://doi.org/10.1007/978-3-030-53288-8_12). _(framework to validate abstract side-channel models)_
+- H. Nemati, P. Buiras, A. Lindner, R. Guanciale and S. Jacobs, **"Validation of Abstract Side-Channel Models for Computer Architectures"**, in International Conference on Computer Aided Verification, pp. 225-248, 2020. [Link](https://doi.org/10.1007/978-3-030-53288-8_12). [Scam-V Repository](https://github.com/kth-step/Scam-V). _(framework to validate abstract side-channel models)_
 - A. Lindner, R. Guanciale and R. Metere, **"TrABin : Trustworthy analyses of binaries"**, Science of Computer Programming, vol. 174, pp. 72-89, 2019. [Link](https://doi.org/10.1016/j.scico.2019.01.001). _(the proof-producing binary analysis framework with weakest preconditions in HOL4)_
 - D. Lundberg, **"Provably Sound and Secure Automatic Proving and Generation of Verification Conditions"**, Master Thesis, 2018. [Link](http://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-239441).
 - R. Metere, A. Lindner and R. Guanciale, **"Sound Transpilation from Binary to Machine-Independent Code"**, in 20th Brazilian Symposium on Formal Methods, pp. 197-214, 2017. [Link](https://doi.org/10.1007/978-3-319-70848-5_13). _(formalization of intermediate language and proof-producing lifter in HOL4)_

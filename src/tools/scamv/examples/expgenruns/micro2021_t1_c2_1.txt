@@ -1,1 +1,0 @@
---max_iter 427 --prog_size 5 --max_tests 40 --generator prefetch_strides --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
