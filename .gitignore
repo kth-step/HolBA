@@ -1,6 +1,7 @@
 # Compiled HOL files
 .HOLMK
 .hollogs
+.holobjs
 *Theory.dat
 *Theory.sig
 *Theory.sml
