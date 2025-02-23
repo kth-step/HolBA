@@ -13,7 +13,7 @@ HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
 # script needs to run sourced
 if [[ "$0" == "$BASH_SOURCE" ]]; then
-  echo "ERROR: script is not sourced"
+  echo "ERROR HOLBA: script is not sourced"
   exit 1
 fi
 
@@ -24,7 +24,7 @@ fi
 
 set --
 if [[ ! -f "${HOLBA_DIR}/config.env.sh" ]]; then
-    echo "ERROR: config.env.sh does not exist, run ./configure.sh first"
+    echo "ERROR HOLBA: config.env.sh does not exist, run ./configure.sh first"
     return 2
 fi
 source "${HOLBA_DIR}/config.env.sh"

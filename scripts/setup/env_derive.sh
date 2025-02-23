@@ -13,7 +13,7 @@ export HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
 # script needs to run sourced
 if [[ "$0" == "$BASH_SOURCE" ]]; then
-  echo "ERROR: script is not sourced"
+  echo "ERROR HOLBA: script is not sourced"
   exit 1
 fi
 
@@ -35,7 +35,7 @@ if [[ ! -z "${HOLBA_HOL_DIR}" ]] && [[ -d "${HOLBA_HOL_DIR}" ]]; then
   HOLBA_HOL_BIN_DIR="${HOLBA_HOL_DIR}/bin"
   # fail if directory HOLBA_HOL_BIN_DIR doesn't exist
   if [[ ! -d "${HOLBA_HOL_BIN_DIR}" ]]; then
-    echo "WARNING: hol/bin directory does not exist ('${HOLBA_HOL_BIN_DIR}')"
+    echo "WARNING HOLBA: hol/bin directory does not exist ('${HOLBA_HOL_BIN_DIR}')"
     return 3
   fi
 
