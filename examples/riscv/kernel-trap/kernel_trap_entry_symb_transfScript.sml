@@ -7,7 +7,8 @@ open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_symbLib;
 
 open kernel_trapTheory;
-open kernel_trap_specTheory;
+open kernel_trap_spec_riscvTheory;
+open kernel_trap_spec_birTheory;
 open kernel_trap_symb_execTheory;
 
 val _ = new_theory "kernel_trap_entry_symb_transf";

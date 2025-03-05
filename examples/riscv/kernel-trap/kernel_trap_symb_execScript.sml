@@ -4,7 +4,9 @@ open wordsTheory;
 
 open bir_symbLib;
 
-open kernel_trapTheory kernel_trap_specTheory;
+open kernel_trapTheory;
+open kernel_trap_spec_riscvTheory;
+open kernel_trap_spec_birTheory;
 
 val _ = new_theory "kernel_trap_symb_exec";
 

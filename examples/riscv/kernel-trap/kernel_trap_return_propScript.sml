@@ -32,7 +32,8 @@ open HolBACoreSimps;
 open bir_extra_expsTheory;
 
 open kernel_trapTheory;
-open kernel_trap_specTheory;
+open kernel_trap_spec_riscvTheory;
+open kernel_trap_spec_birTheory;
 open kernel_trap_return_symb_transfTheory;
 
 val _ = new_theory "kernel_trap_return_prop";
