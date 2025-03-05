@@ -5,7 +5,8 @@ open bir_symbLib;
 open distribute_generic_stuffTheory;
 
 open incrTheory;
-open incr_specTheory;
+open incr_spec_riscvTheory;
+open incr_spec_birTheory;
 
 val _ = new_theory "incr_symb_exec";
 

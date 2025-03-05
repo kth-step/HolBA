@@ -36,33 +36,9 @@ open program_logicSimps;
 open bir_env_oldTheory;
 open bir_program_varsTheory;
 
-val _ = new_theory "incr_spec";
+open incr_spec_riscvTheory;
 
-(* ------------------ *)
-(* Program boundaries *)
-(* ------------------ *)
-
-Definition incr_init_addr_def:
- incr_init_addr : word64 = 0x10488w
-End
-
-Definition incr_end_addr_def:
- incr_end_addr : word64 = 0x1048cw
-End
-
-(* --------------- *)
-(* RISC-V contract *)
-(* --------------- *)
-
-Definition riscv_incr_pre_def:
- riscv_incr_pre (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
-End
-
-Definition riscv_incr_post_def:
- riscv_incr_post (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 + 1w)
-End
+val _ = new_theory "incr_spec_bir";
 
 (* --------------- *)
 (* HL BIR contract *)

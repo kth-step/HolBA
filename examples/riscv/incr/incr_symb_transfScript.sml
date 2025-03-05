@@ -7,7 +7,8 @@ open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_symbLib;
 
 open incrTheory;
-open incr_specTheory;
+open incr_spec_riscvTheory;
+open incr_spec_birTheory;
 open incr_symb_execTheory;
 
 val _ = new_theory "incr_symb_transf";
