@@ -114,39 +114,13 @@ Definition riscv_incr_post_def:
   (m.c_gpr m.procID 10w = pre_x10 + 1w)
 End
 ```
+### 3. BIR contract
 
-### 3. High Level BIR contract
-
-- BIR expressions with arbitrary HOL4 terms and free variables
-- not suitable for symbolic execution
-- manually written in HOL4
-
-Example:
-
-```sml
-Definition bir_incr_pre_def:
- bir_incr_pre (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
-End
-
-Definition bir_incr_post_def:
- bir_incr_post (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-   BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 (pre_x10 + 1w)))
-End
-```
-
-### 4. BSPEC contract
-
-- BIR expressions that are closed except for occurrences of free HOL4 variables
+- uses BIR boolean expressions that are closed except for occurrences of free HOL4 variables
 - may require conditions on memory accesses (alignment)
 - used for symbolic execution
 - manually written in HOL4
+- the subset of BIR used is referred to as BSPEC
 
 Example:
 
@@ -169,7 +143,7 @@ Definition bspec_incr_post_def:
 End
 ```
 
-### 5. Connecting RISC-V and High Level BIR contracts
+### 4. Connecting RISC-V and BIR contracts
 
 - RISC-V precondition implies BIR precondition
 - BIR postcondition implies RISC-V postcondition
@@ -178,48 +152,20 @@ End
 Example:
 
 ```sml
-Theorem incr_riscv_pre_imp_bir_pre_thm:
- bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bir_incr_pre pre_x10)
+Theorem incr_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bspec_incr_pre pre_x10)
 Proof
 (* ... *)
 QED
 
-Theorem incr_riscv_post_imp_bir_post_thm:
- !ls. bir_post_bir_to_riscv (riscv_incr_post pre_x10) (\l. bir_incr_post pre_x10) ls
-Proof
-(* ... *)
-QED
-```
-
-### 6. Connecting High Level BIR and BSPEC contracts
-
-- BIR precondition implies BSPEC precondition
-- BSPEC postcondition implies BIR postcondition
-- manually written in HOL4
-
-Example:
-
-```sml
-Theorem incr_bir_pre_imp_bspec_pre:
- bir_exp_is_taut 
-  (BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bir_incr_pre pre_x10))
-   (bspec_incr_pre pre_x10))
-Proof
-(* ... *)
-QED
-
-Theorem incr_bspec_post_imp_bir_post:
- bir_exp_is_taut
-  (BExp_BinExp BIExp_Or
-   (BExp_UnaryExp BIExp_Not (bspec_incr_post pre_x10))
-   (bir_incr_post pre_x10))
+Theorem incr_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv (riscv_incr_post pre_x10) (\l. bspec_incr_post pre_x10) ls
 Proof
 (* ... *)
 QED
 ```
 
-### 7. BIR symbolic execution analysis
+### 5. BIR symbolic execution analysis
 
 - built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848), instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
@@ -236,7 +182,7 @@ Proof
 QED
 ```
 
-### 8. Specifying and proving BSPEC contracts using symbolic analysis results
+### 6. Specifying and proving BIR contract using symbolic analysis results
 
 - requires manual specification of beginning and end program labels for contract
 - **automatic** inside HOL4 if parameters have the right shape 
@@ -254,26 +200,7 @@ Proof
 QED
 ```
 
-### 9. Proving High Level BIR Contract
-
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for BIR
-- requires auxiliary results from above steps
-- **automatic** inside HOL4 if parameters have the right shape
-
-Example:
-
-```sml
-Theorem bir_cont_incr:
- bir_cont bir_incr_prog bir_exp_true (BL_Address (Imm64 incr_init_addr))
-  {BL_Address (Imm64 incr_end_addr)} {} (bir_incr_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 incr_end_addr) then bir_incr_post pre_x10
-       else bir_exp_false)
-Proof
-(* application of Hoare logic automation *)
-QED
-```
-
-### 10. Backlifting High Level BIR contract to RISC-V binary
+### 7. Backlifting BIR contract to RISC-V binary
 
 - built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for RISC-V
 - requires collecting auxiliary results from above steps
