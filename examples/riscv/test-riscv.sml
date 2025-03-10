@@ -8,6 +8,7 @@ open wordsTheory;
 open bir_programSyntax bir_program_labelsTheory bir_immTheory;
 
 open aes_symb_execTheory;
+open aes_unopt_symb_execTheory;
 open incrTheory incr_symb_transfTheory incr_propTheory;
 open mod2Theory mod2_symb_transfTheory mod2_propTheory;
 open swapTheory swap_symb_transfTheory swap_propTheory;
@@ -42,7 +43,27 @@ val [init_st_tm, prog_frag_L_tm, final_sts_tm] = pairSyntax.strip_pair triple_tm
 val final_sts_birs_tm = final_sts_tm;
 
 val _ = if (length o pred_setSyntax.strip_set) final_sts_birs_tm = 1 then () else
-        raise Fail "number of final states is not as expected";
+        raise Fail "number of symbolic final states in aes is not as expected";
+
+(* --------- *)
+(* aes-unopt *)
+(* --------- *)
+
+val _ = print "checking aes_unopt_symb_analysis_thm:\n";
+
+val term_sz = term_size (concl aes_unopt_symb_analysis_thm);
+val _ = print ("\nterm size = " ^ (Int.toString term_sz) ^ "\n\n");
+val expected_term_sz = 38593;
+
+val _ = if term_sz = expected_term_sz then () else
+        raise Fail "term size of aes-unopt symbolic execution theorem is not as expected";
+
+val triple_tm = ((snd o dest_comb o concl) aes_unopt_symb_analysis_thm);
+val [init_st_tm, prog_frag_L_tm, final_sts_tm] = pairSyntax.strip_pair triple_tm;
+val final_sts_birs_tm = final_sts_tm;
+
+val _ = if (length o pred_setSyntax.strip_set) final_sts_birs_tm = 1 then () else
+        raise Fail "number of symbolic final states in aes-unopt is not as expected";
 
 (* ---- *)
 (* swap *)
