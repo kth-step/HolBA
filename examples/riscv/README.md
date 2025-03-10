@@ -1,6 +1,19 @@
 # HolBA RISC-V examples
 
-## Prerequisites
+## RISC-V example programs
+
+- `aes`: implementation of the AES cipher
+- `aes-unopt`: unoptimized implementation of the AES cipher (compiled with `-O0`)
+- `chacha20`: reference implementation of the ChaCha20 cipher
+- `incr`: incrementing an unsigned 64-bit integer
+- `isqrt`: computation of integer square root
+- `kernel-trap`: context switching code in a [separation kernel for embedded RISC-V](https://github.com/kth-step/s3k)
+- `mod2`: compute modulo two for an unsigned 64-bit integer
+- `modexp`: modular exponentiation
+- `motor`: motor control
+- `swap`: swap content of two memory locations
+
+## Prerequisites for RISC-V binary verification
 
 ### Intalling the RISC-V cross-compilation toolchain
 
@@ -29,7 +42,7 @@ make linux
 
 See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md) for information on how to build HolBA.
 
-## Binary verification workflow
+## RISC-V binary verification workflow
 
 ### 0. RISC-V program
 

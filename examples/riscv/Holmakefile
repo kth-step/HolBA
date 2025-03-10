@@ -1,6 +1,13 @@
-INCLUDES = $(HOLBADIR)/examples/riscv/swap \
+INCLUDES = $(HOLBADIR)/examples/riscv/aes \
+           $(HOLBADIR)/examples/riscv/aes-unopt \
+	   $(HOLBADIR)/examples/riscv/chacha20 \
+           $(HOLBADIR)/examples/riscv/incr \
+           $(HOLBADIR)/examples/riscv/isqrt \
+           $(HOLBADIR)/examples/riscv/kernel-trap \
            $(HOLBADIR)/examples/riscv/mod2 \
-           $(HOLBADIR)/examples/riscv/incr
+           $(HOLBADIR)/examples/riscv/modexp \
+           $(HOLBADIR)/examples/riscv/motor \
+           $(HOLBADIR)/examples/riscv/swap
 
 all: $(DEFAULT_TARGETS) test-riscv.exe
 .PHONY: all
