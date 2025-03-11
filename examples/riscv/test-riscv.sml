@@ -1,22 +1,22 @@
 open HolKernel Parse boolLib bossLib;
 
-val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
-val _ = Globals.show_tags := true;
-
 open wordsTheory;
 
 open bir_programSyntax bir_program_labelsTheory bir_immTheory;
 
 open aes_symb_execTheory;
 open aes_unopt_symb_execTheory;
-open chacha20Theory;
+open chacha20Theory chacha20_column_round_propTheory chacha20_diagonal_round_propTheory;
 open isqrtTheory isqrt_propTheory;
-open kernel_trapTheory kernel_trap_entry_propTheory;
+open kernel_trapTheory kernel_trap_entry_propTheory kernel_trap_return_propTheory;
 open incrTheory incr_symb_transfTheory incr_propTheory;
 open mod2Theory mod2_symb_transfTheory mod2_propTheory;
-open modexpTheory;
-open motorTheory;
+open modexpTheory modexp_symb_execTheory;
+open motorTheory motor_symb_execTheory;
 open swapTheory swap_symb_transfTheory swap_propTheory;
+
+val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
+val _ = Globals.show_tags := true;
 
 fun print_and_check_thm name thm t_concl =
   let
@@ -82,6 +82,24 @@ val _ = print_and_check_thm
    bir_chacha20_progbin
    (bir_chacha20_prog : 'observation_type bir_program_t)
   ``;
+
+val _ = print_and_check_thm
+  "chacha20 column round RISC-V backlifted theorem"
+  riscv_cont_chacha20_column_round
+  ``riscv_cont bir_chacha20_progbin chacha20_column_round_init_addr {chacha20_column_round_end_addr}
+     (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+       pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+     (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+       pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)``;
+
+val _ = print_and_check_thm
+  "chacha20 diagonal round RISC-V backlifted theorem"
+  riscv_cont_chacha20_diagonal_round
+  ``riscv_cont bir_chacha20_progbin chacha20_diagonal_round_init_addr {chacha20_diagonal_round_end_addr}
+    (riscv_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+      pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+    (riscv_chacha20_diagonal_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+      pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)``;
 
 (* ---- *)
 (* incr *)
@@ -177,6 +195,23 @@ val _ = print_and_check_thm
         pre_x18 pre_x19 pre_x20 pre_x21 pre_x22 pre_x23 pre_x24 pre_x25 pre_x26
         pre_x27 pre_x28 pre_x29 pre_x30 pre_x31)``;
 
+val _ = print_and_check_thm
+  "kernel_trap return RISC-V backlifted theorem"
+  riscv_cont_kernel_trap_return
+  ``riscv_cont bir_kernel_trap_progbin kernel_trap_return_init_addr {kernel_trap_return_end_addr}
+     (riscv_kernel_trap_return_pre pre_mscratch pre_x10 pre_mepc_mem pre_x1_mem
+       pre_x2_mem pre_x3_mem pre_x4_mem pre_x5_mem pre_x6_mem pre_x7_mem
+       pre_x8_mem pre_x9_mem pre_x10_mem pre_x11_mem pre_x12_mem pre_x13_mem
+       pre_x14_mem pre_x15_mem pre_x16_mem pre_x17_mem pre_x18_mem pre_x19_mem
+       pre_x20_mem pre_x21_mem pre_x22_mem pre_x23_mem pre_x24_mem pre_x25_mem
+       pre_x26_mem pre_x27_mem pre_x28_mem pre_x29_mem pre_x30_mem pre_x31_mem)
+     (riscv_kernel_trap_return_post pre_mscratch pre_x10 pre_mepc_mem pre_x1_mem
+       pre_x2_mem pre_x3_mem pre_x4_mem pre_x5_mem pre_x6_mem pre_x7_mem
+       pre_x8_mem pre_x9_mem pre_x10_mem pre_x11_mem pre_x12_mem pre_x13_mem
+       pre_x14_mem pre_x15_mem pre_x16_mem pre_x17_mem pre_x18_mem pre_x19_mem
+       pre_x20_mem pre_x21_mem pre_x22_mem pre_x23_mem pre_x24_mem pre_x25_mem
+       pre_x26_mem pre_x27_mem pre_x28_mem pre_x29_mem pre_x30_mem pre_x31_mem)``;
+
 (* ---- *)
 (* mod2 *)
 (* ---- *)
@@ -234,6 +269,22 @@ val _ = print_and_check_thm
    (bir_modexp_prog : 'observation_type bir_program_t)
   ``;
 
+val _ = print "checking modexp_symb_analysis_thm:\n";
+
+val term_sz = term_size (concl modexp_symb_analysis_thm);
+val _ = print ("\nterm size = " ^ (Int.toString term_sz) ^ "\n\n");
+val expected_term_sz = 4827;
+
+val _ = if term_sz = expected_term_sz then () else
+        raise Fail "term size of modexp symbolic execution theorem is not as expected";
+
+val triple_tm = ((snd o dest_comb o concl) modexp_symb_analysis_thm);
+val [init_st_tm, prog_frag_L_tm, final_sts_tm] = pairSyntax.strip_pair triple_tm;
+val final_sts_birs_tm = final_sts_tm;
+
+val _ = if (length o pred_setSyntax.strip_set) final_sts_birs_tm = 2 then () else
+        raise Fail "number of symbolic final states in modexp is not as expected";
+
 (* ----- *)
 (* motor *)
 (* ----- *)
@@ -246,6 +297,22 @@ val _ = print_and_check_thm
    bir_motor_progbin
    (bir_motor_prog : 'observation_type bir_program_t)
   ``;
+
+val _ = print "checking motor_symb_analysis_thm:\n";
+
+val term_sz = term_size (concl motor_symb_analysis_thm);
+val _ = print ("\nterm size = " ^ (Int.toString term_sz) ^ "\n\n");
+val expected_term_sz = 25634;
+
+val _ = if term_sz = expected_term_sz then () else
+        raise Fail "term size of motor symbolic execution theorem is not as expected";
+
+val triple_tm = ((snd o dest_comb o concl) motor_symb_analysis_thm);
+val [init_st_tm, prog_frag_L_tm, final_sts_tm] = pairSyntax.strip_pair triple_tm;
+val final_sts_birs_tm = final_sts_tm;
+
+val _ = if (length o pred_setSyntax.strip_set) final_sts_birs_tm = 7 then () else
+        raise Fail "number of symbolic final states in motor is not as expected";
 
 (* ---- *)
 (* swap *)
