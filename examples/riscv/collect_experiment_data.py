@@ -11,13 +11,12 @@ from datetime import datetime
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--testing",        help="run in test mode", action="store_true")
-parser.add_argument("-ch", "--clearholheap",  help="clear the holheap in directory common", action="store_true")
 parser.add_argument("-c", "--clear",          help="clear the example directories before running", action="store_true")
-parser.add_argument("-f", "--fast",           help="exclude long-running examples", action="store_true")
+parser.add_argument("-f", "--full",           help="include long-running examples", action="store_true")
 args = parser.parse_args()
 
 def get_example_dirs():
-	excluded_dirs = ["common", "perftest", "motor-unopt", "chacha"] + (["aes-unopt"] if args.fast else [])
+	excluded_dirs = ["chacha20","kernel-trap"] if not args.full else []
 	filterfun = lambda x: not x.startswith(".")
 	path = os.getcwd()
 	example_dirs = [f.path for f in os.scandir(path) if f.is_dir() and f.name not in excluded_dirs and filterfun(f.name)]
@@ -31,16 +30,11 @@ def backup_file(path):
 
 def holmake_clean_dir(path):
 	print(f"-> running 'Holmake cleanAll' in '{path}'")
-	result = subprocess.run(["${HOLBA_HOL_DIR}/bin/Holmake cleanAll"], shell=True, cwd=path, check=True)
-
-def remove_holheap():
-	path = os.getcwd()
-	holheap_path = os.path.join(path, "common/examples-riscv-common-heap")
-	os.remove(holheap_path)
+	result = subprocess.run(["Holmake cleanAll"], shell=True, cwd=path, check=True)
 
 def holmake_dir(path):
 	print(f"-> running 'Holmake' in '{path}'")
-	result = subprocess.run(["${HOLBA_HOL_DIR}/bin/Holmake"], shell=True, cwd=path, check=True)
+	result = subprocess.run(["Holmake"], shell=True, cwd=path, check=True)
 
 def find_symbexec_logs(path):
 	logfile_paths = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and f.name.endswith("_symb_execTheory")]
@@ -238,9 +232,6 @@ if args.testing:
 	sys.exit()
 
 # --------------------------------------------
-
-if args.clearholheap:
-	remove_holheap()
 
 example_dirs = get_example_dirs()
 #print(example_dirs)
