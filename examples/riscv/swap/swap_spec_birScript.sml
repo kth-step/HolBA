@@ -35,43 +35,9 @@ open program_logicSimps;
 open bir_env_oldTheory;
 open bir_program_varsTheory;
 
-val _ = new_theory "swap_spec";
+open swap_spec_riscvTheory;
 
-(* ------------------ *)
-(* Program boundaries *)
-(* ------------------ *)
-
-Definition swap_init_addr_def:
- swap_init_addr : word64 = 0x10488w
-End
-
-Definition swap_end_addr_def:
- swap_end_addr : word64 = 0x1049cw
-End
-
-(* --------------- *)
-(* RISC-V contract *)
-(* --------------- *)
-
-Definition riscv_swap_pre_def:
- riscv_swap_pre (pre_x10:word64) (pre_x11:word64)
-  (pre_x10_deref:word64) (pre_x11_deref:word64)
-  (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
-   m.c_gpr m.procID 10w = pre_x10 /\
-   riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref /\
-   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x11") /\
-   m.c_gpr m.procID 11w = pre_x11 /\
-   riscv_mem_load_dword m.MEM8 pre_x11 = pre_x11_deref)
-End
-
-Definition riscv_swap_post_def:
- riscv_swap_post (pre_x10:word64) (pre_x11:word64)
-  (pre_x10_deref:word64) (pre_x11_deref:word64)
-  (m:riscv_state) : bool =
-  (riscv_mem_load_dword m.MEM8 pre_x10 = pre_x11_deref /\
-   riscv_mem_load_dword m.MEM8 pre_x11 = pre_x10_deref)
-End
+val _ = new_theory "swap_spec_bir";
 
 (* -------------- *)
 (* BSPEC contract *)
@@ -183,11 +149,11 @@ Theorem swap_riscv_post_imp_bspec_post_thm:
    (\l. (bspec_swap_post pre_x10 pre_x11 pre_x10_deref pre_x11_deref))
    ls
 Proof
- once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_swap_post_def] >>
- once_rewrite_tac [bspec_swap_post_def] >>
- once_rewrite_tac [bspec_swap_post_def] >>
-
- fs [GSYM bir_and_equiv] >>
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_swap_post_def,
+  GSYM bir_and_equiv
+ ] >>
 
  Cases_on `bs` >> Cases_on `b0` >>
 

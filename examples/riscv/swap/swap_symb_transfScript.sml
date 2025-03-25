@@ -7,7 +7,8 @@ open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_symbLib;
 
 open swapTheory;
-open swap_specTheory;
+open swap_spec_riscvTheory;
+open swap_spec_birTheory;
 open swap_symb_execTheory;
 
 val _ = new_theory "swap_symb_transf";

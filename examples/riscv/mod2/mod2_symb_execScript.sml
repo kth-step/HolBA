@@ -4,7 +4,9 @@ open wordsTheory;
 
 open bir_symbLib;
 
-open mod2Theory mod2_specTheory;
+open mod2Theory;
+open mod2_spec_riscvTheory;
+open mod2_spec_birTheory;
 
 val _ = new_theory "mod2_symb_exec";
 

@@ -81,16 +81,6 @@ val _ = print_and_check_thm
        else bir_exp_false)``;
 
 val _ = print_and_check_thm
-  "incr BIR contract theorem"
-  bir_cont_incr
- ``bir_cont (bir_incr_prog : 'a bir_program_t)
-  bir_exp_true (BL_Address (Imm64 incr_init_addr))
-  {BL_Address (Imm64 incr_end_addr)} {} (bir_incr_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 incr_end_addr)
-       then bir_incr_post pre_x10
-       else bir_exp_false)``;
-
-val _ = print_and_check_thm
   "incr RISC-V backlifted theorem"
   riscv_cont_incr
   ``riscv_cont

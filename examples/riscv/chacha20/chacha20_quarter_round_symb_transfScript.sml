@@ -7,7 +7,8 @@ open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_symbLib;
 
 open chacha20Theory;
-open chacha20_specTheory;
+open chacha20_spec_riscvTheory;
+open chacha20_spec_birTheory;
 open chacha20_quarter_round_symb_execTheory;
 
 val _ = new_theory "chacha20_quarter_round_symb_transf";

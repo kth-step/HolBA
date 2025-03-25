@@ -1,9 +1,12 @@
 open HolKernel boolLib Parse bossLib;
 open pairTheory pred_setTheory markerTheory wordsTheory wordsLib;
 
+open holba_auxiliaryTheory;
+
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
+open bir_exp_equivTheory;
 
 open bir_extra_expsTheory;
 
@@ -34,164 +37,13 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 open chachaTheory;
+open chacha20_spec_riscvTheory;
 
-val _ = new_theory "chacha20_spec";
+val _ = new_theory "chacha20_spec_bir";
 
-(* RISC-V single line contract *)
-
-Definition riscv_chacha20_line_pre_def:
- riscv_chacha20_line_pre (pre_a:word32) (pre_b:word32) (pre_d:word32)
-  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
-End
-
-Definition riscv_chacha20_line_post_def:
- riscv_chacha20_line_post (pre_a:word32) (pre_b:word32) (pre_d:word32)
-  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 20w)) = chacha_line_exp_fst pre_a pre_b /\
-  n2w (w2n (m.c_gpr m.procID 10w)) = chacha_line_exp_snd (chacha_line_exp_fst pre_a pre_b) pre_d 16w)
-End
-
-(* RISC-V single quarter round contract *)
-
-Definition riscv_chacha20_quarter_round_pre_def:
- riscv_chacha20_quarter_round_pre (pre_a:word32) (pre_b:word32) (pre_c:word32) (pre_d:word32)
-  (m:riscv_state) : bool =
-  (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
-   n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
-   n2w (w2n (m.c_gpr m.procID 28w)) = pre_c /\
-   n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
-End
-
-Definition riscv_chacha20_quarter_round_post_def:
- riscv_chacha20_quarter_round_post (pre_a:word32) (pre_b:word32) (pre_c:word32) (pre_d:word32)
-  (m:riscv_state) : bool =
-  (let (a,b,c,d) = chacha_quarter_round_exprs pre_a pre_b pre_c pre_d in
-   n2w (w2n (m.c_gpr m.procID 20w)) = a /\
-   n2w (w2n (m.c_gpr m.procID 21w)) = b /\
-   n2w (w2n (m.c_gpr m.procID 8w)) = c /\
-   n2w (w2n (m.c_gpr m.procID 22w)) = d)
-End
-
-(* RISC-V column round contract *)
-
-Definition riscv_chacha20_column_round_pre_def:
- riscv_chacha20_column_round_pre 
-  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
-  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
-  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
-  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
- (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = pre_arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 17w)) = pre_arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 6w))  = pre_arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 11w)) = pre_arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = pre_arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = pre_arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = pre_arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = pre_arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 30w)) = pre_arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 31w)) = pre_arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = pre_arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 25w)) = pre_arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 24w)) = pre_arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 23w)) = pre_arr_15)
-End
-
-Definition riscv_chacha20_column_round_post_def:
- riscv_chacha20_column_round_post
-  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
-  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
-  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
-  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
- (m:riscv_state) : bool =
- (let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,arr_8,
-       arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15) =
-   chacha_column_round_exprs
-     pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
-     pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
-  in
-  n2w (w2n (m.c_gpr m.procID 20w)) = arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 19w)) = arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 18w)) = arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 9w)) = arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 21w)) = arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 10w)) = arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 8w)) = arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 7w)) = arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 5w)) = arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 15w)) = arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = arr_15)
-End
-
-(* RISC-V diagonal round contract *)
-
-Definition riscv_chacha20_diagonal_round_pre_def:
- riscv_chacha20_diagonal_round_pre 
-  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
-  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
-  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
-  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
- (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 20w)) = pre_arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 19w)) = pre_arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 18w)) = pre_arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 9w)) = pre_arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 21w)) = pre_arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = pre_arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = pre_arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 8w)) = pre_arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 7w)) = pre_arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 5w)) = pre_arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 15w)) = pre_arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = pre_arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = pre_arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = pre_arr_15)
-End
-
-Definition riscv_chacha20_diagonal_round_post_def:
- riscv_chacha20_diagonal_round_post
-  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
-  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
-  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
-  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
- (m:riscv_state) : bool =
- (let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,arr_8,
-       arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15) =
-   chacha_diagonal_round_exprs
-     pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
-     pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
-  in
-  n2w (w2n (m.c_gpr m.procID 10w)) = arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 17w)) = arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 6w)) = arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 11w)) = arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 30w)) = arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 31w)) = arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 25w)) = arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 24w)) = arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 23w)) = arr_15)
-End
-
-(* BIR spec *)
+(* ----------------- *)
+(* BIR specification *)
+(* ----------------- *)
 
 Definition bir_var_equal_32_lowcast_64_def:
  bir_var_equal_32_lowcast_64 var exp =
@@ -325,104 +177,6 @@ Definition chacha_double_round_bir_exprs_def:
 
   (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,
    arr_8,arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15)
-End
-
-(* ---------------- *)
-(* Block boundaries *)
-(* ---------------- *)
-
-(* keysetup *)
-
-Definition chacha20_keysetup_init_addr_def:
- chacha20_keysetup_init_addr : word64 = 0x10488w
-End
-
-Definition chacha20_keysetup_end_addr_def:
- chacha20_keysetup_end_addr : word64 = (*0x106a8w*) 0x1053cw
-End
-
-(* ivsetup *)
-
-Definition chacha20_ivsetup_init_addr_def:
- chacha20_ivsetup_init_addr : word64 = 0x106bcw
-End
-
-Definition chacha20_ivsetup_end_addr_def:
- chacha20_ivsetup_end_addr : word64 = 0x10778w
-End
-
-(* first line *)
-
-Definition chacha20_line_init_addr_def:
-  chacha20_line_init_addr : word64 = 0x108a0w
-End
-
-Definition chacha20_line_end_addr_def:
- chacha20_line_end_addr : word64 = 0x108b4w
-End
-
-(* second line *)
-
-Definition chacha20_other_line_init_addr_def:
-  chacha20_other_line_init_addr : word64 = 0x108b4w
-End
-
-Definition chacha20_other_line_end_addr_def:
- chacha20_other_line_end_addr : word64 = 0x108c8w
-End
-
-(* first quarter round *)
-
-Definition chacha20_quarter_round_init_addr_def:
-  chacha20_quarter_round_init_addr : word64 = 0x108a0w
-End
-
-Definition chacha20_quarter_round_end_addr_def:
-  chacha20_quarter_round_end_addr : word64 = 0x108f0w
-End
-
-(* column round *)
-
-Definition chacha20_column_round_init_addr_def:
-  chacha20_column_round_init_addr : word64 = 0x108a0w
-End
-
-Definition chacha20_column_round_end_addr_def:
-  chacha20_column_round_end_addr : word64 = 0x109e0w
-End
-
-(* diagonal round *)
-
-Definition chacha20_diagonal_round_init_addr_def:
-  chacha20_diagonal_round_init_addr : word64 = 0x109e0w
-End
-
-Definition chacha20_diagonal_round_end_addr_def:
-  chacha20_diagonal_round_end_addr : word64 = 0x10b64w
-End
-
-(* double round loop body *)
-
-Definition chacha20_double_round_init_addr_def:
-  chacha20_double_round_init_addr : word64 = 0x108a0w
-End
-
-Definition chacha20_double_round_end_addr_def:
-  chacha20_double_round_end_addr : word64 = 0x10b64w
-End
-
-(* double round loop branch *)
-
-Definition chacha20_double_round_branch_init_addr_def:
-  chacha20_double_round_branch_init_addr : word64 = 0x10b64w
-End
-
-Definition chacha20_double_round_branch_end_addr_loop_def:
-  chacha20_double_round_branch_end_addr_loop : word64 = 0x108a0w
-End
-
-Definition chacha20_double_round_branch_end_addr_continue_def:
-  chacha20_double_round_branch_end_addr_continue : word64 = 0x10b68w
 End
 
 (* --------------- *)
@@ -1068,5 +822,264 @@ Definition bspec_chacha20_double_round_post_def:
  : bir_exp_t =
   ^bspec_chacha20_double_round_post_tm
 End
+
+(* ------------------------------------- *)
+(* Connecting RISC-V and BSPEC contracts *)
+(* ------------------------------------- *)
+
+(* line *)
+
+Theorem chacha20_line_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_line_pre pre_a pre_b pre_d)
+  (bspec_chacha20_line_pre pre_a pre_b pre_d)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_line_pre_def,bspec_chacha20_line_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_line_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_line_post pre_a pre_b pre_d)
+   (\l. (bspec_chacha20_line_post pre_a pre_b pre_d))
+   ls
+Proof
+ once_rewrite_tac [bir_post_bir_to_riscv_def,bspec_chacha20_line_post_def] >>
+ once_rewrite_tac [bspec_chacha20_line_post_def] >>
+ once_rewrite_tac [bspec_chacha20_line_post_def] >>
+
+ fs [GSYM bir_and_equiv] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+ rw [
+  riscv_chacha20_line_post_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def
+ ] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
+
+(* quarter round *)
+
+Theorem chacha20_quarter_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
+  (bspec_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_quarter_round_pre_def,bspec_chacha20_quarter_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_quarter_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_quarter_round_post pre_a pre_b pre_c pre_d)
+   (\l. (bspec_chacha20_quarter_round_post pre_a pre_b pre_c pre_d))
+   ls
+Proof
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_chacha20_quarter_round_post_def,
+  GSYM bir_and_equiv
+ ] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+ rw [
+  riscv_chacha20_quarter_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def
+ ] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def,
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
+
+(* column round *)
+
+Theorem chacha20_column_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+  (bspec_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def,bspec_chacha20_column_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\l. (bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+          pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
+   ls
+Proof
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_chacha20_column_round_post_def,
+  GSYM bir_and_equiv
+ ] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_chacha20_column_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def,
+  chacha_column_round_exprs_def,
+
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def
+ ] >>
+
+ rw [] >> fs [if_bool_1w]
+QED
+
+(* diagonal round *)
+
+Theorem chacha20_diagonal_round_riscv_pre_imp_bspec_pre_thm:
+ bir_pre_riscv_to_bir
+  (riscv_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+  (bspec_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+Proof 
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_diagonal_round_pre_def,bspec_chacha20_diagonal_round_pre_def] >-
+  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
+  bool2b_def,
+  bool2w_def,
+  w2w_n2w_w2n_64_32
+ ] >>
+ EVAL_TAC
+QED
+
+Theorem chacha20_diagonal_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_diagonal_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\l. (bspec_chacha20_diagonal_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+          pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
+   ls
+Proof
+ fs [
+  bir_post_bir_to_riscv_def,
+  bspec_chacha20_diagonal_round_post_def,
+  GSYM bir_and_equiv
+ ] >>
+
+ Cases_on `bs` >> Cases_on `b0` >>
+
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def
+ ] >>
+
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ 
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_chacha20_diagonal_round_post_def,
+  chacha_quarter_round_exprs_def,
+  chacha_line_exp_fst_def,
+  chacha_line_exp_snd_def,
+  chacha_diagonal_round_exprs_def,
+
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bool2b_def,bool2w_def,b2n_def,bir_val_true_def
+ ] >>
+ 
+ rw [] >> fs [if_bool_1w]
+QED
 
 val _ = export_theory ();

@@ -967,6 +967,10 @@ Theorem riscv_extra_FOLDS = LIST_CONJ [GSYM riscv_mem_load_dword_def,
              (* For REM and REMW instructions *)
              word_rem_def]
 
+(********************)
+(* Utility theorems *)
+(********************)
+
 Theorem bir_load_from_mem_riscv_mem_load_dword:
  !b f b1 ms map w_ref w_deref.
   ms.MEM8 = (\a. n2w (bir_load_mmap map (w2n a))) /\
@@ -1021,6 +1025,440 @@ Proof
   bir_envTheory.bir_var_name_def
  ] >>
  fs []
+QED
+
+Theorem riscv_bmr_x1_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x1" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 1w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x2_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x2" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 2w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x3_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x3" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 3w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x4_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x4" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 4w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x5_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x5" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 5w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x6_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x6" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 6w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x7_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x7" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 7w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x8_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x8" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 8w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x9_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x9" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 9w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x10_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x10" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 10w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x11_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x11" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 11w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x12_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x12" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 12w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x13_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x13" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 13w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x14_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x14" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 14w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x15_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x15" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 15w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x16_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x16" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 16w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x17_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x17" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 17w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x18_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x18" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 18w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x19_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x19" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 19w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x20_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x20" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 20w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x21_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x21" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 21w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x22_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x22" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 22w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x23_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x23" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 23w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x24_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x24" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 24w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x25_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x25" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 25w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x26_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x26" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 26w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x27_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x27" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 27w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x28_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x28" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 28w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x29_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x29" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 29w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x30_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x30" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 30w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_x31_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "x31" = SOME (BVal_Imm (Imm64 w)) <=> ms.c_gpr ms.procID 31w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_mscratch_equiv:
+!b f b1 ms w.
+ bmr_rel riscv_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "mscratch" = SOME (BVal_Imm (Imm64 w)) <=> (ms.c_MCSR ms.procID).mscratch = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem riscv_bmr_bpc_label_c_PC_equiv:
+ !b benv ms w.
+  bmr_rel riscv_bmr (bir_state_t b benv BST_Running) ms ==>
+  (b.bpc_label = BL_Address (Imm64 w) <=> ms.c_PC ms.procID = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  riscv_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_programTheory.bir_block_pc_def,
+  bir_programTheory.bir_programcounter_t_component_equality
+ ]
 QED
 
 val _ = export_theory();

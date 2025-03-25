@@ -27,33 +27,11 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 open incrTheory;
-open incr_specTheory;
+open incr_spec_riscvTheory;
+open incr_spec_birTheory;
 open incr_symb_transfTheory;
 
 val _ = new_theory "incr_prop";
-
-(* --------------- *)
-(* HL BIR contract *)
-(* --------------- *)
-
-val end_addr_tm = (snd o dest_eq o concl) incr_end_addr_def;
-
-val bir_cont_incr_thm = use_post_weak_rule_simp
- (use_pre_str_rule_simp bspec_cont_incr incr_bir_pre_imp_bspec_pre)
- ``BL_Address (Imm64 ^end_addr_tm)``
- incr_bspec_post_imp_bir_post;
-
-Theorem bir_cont_incr:
- bir_cont bir_incr_prog bir_exp_true
- (BL_Address (Imm64 incr_init_addr)) {BL_Address (Imm64 incr_end_addr)} {}
- (bir_incr_pre pre_x10)
-  (\l. if l = BL_Address (Imm64 incr_end_addr)
-       then bir_incr_post pre_x10
-       else bir_exp_false)
-Proof
- rw [incr_init_addr_def,incr_end_addr_def] >>
- ACCEPT_TAC bir_cont_incr_thm
-QED
 
 (* --------------------- *)
 (* Auxiliary definitions *)
@@ -69,12 +47,12 @@ val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_i
 
 val riscv_cont_incr_thm =
  get_riscv_contract
-  bir_cont_incr
+  bspec_cont_incr
   progbin_tm
   riscv_pre_tm riscv_post_tm bir_incr_prog_def
-  [bir_incr_pre_def]
-  bir_incr_pre_def incr_riscv_pre_imp_bir_pre_thm
-  [bir_incr_post_def] incr_riscv_post_imp_bir_post_thm
+  [bspec_incr_pre_def]
+  bspec_incr_pre_def incr_riscv_pre_imp_bspec_pre_thm
+  [bspec_incr_post_def] incr_riscv_post_imp_bspec_post_thm
   bir_incr_riscv_lift_THM;
 
 Theorem riscv_cont_incr:
@@ -82,6 +60,7 @@ Theorem riscv_cont_incr:
   (riscv_incr_pre pre_x10)
   (riscv_incr_post pre_x10)
 Proof
+ rw [incr_init_addr_def,incr_end_addr_def] >>
  ACCEPT_TAC riscv_cont_incr_thm
 QED
 
