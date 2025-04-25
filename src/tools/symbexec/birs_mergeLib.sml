@@ -26,6 +26,7 @@ in (* local *)
   val birs_freesymb_oracle_speed = ref true;
   val birs_mem_shuffle_oracle_speed = ref true;
 
+  val birs_sound_symb_freesymbintro_RULE_smt_timeout_handler = ref (NONE: (string -> unit) option);
   fun birs_sound_symb_freesymbintro_RULE alpha_tm bexp_tm vn_tm symbexp1_tm symbexp2_tm thm =
     let
       val debug = false;
@@ -110,19 +111,26 @@ in (* local *)
               (BExp_BinPred BIExp_Equal (BExp_Den alpha) bexp)
               bs2.bsst_pcond) symbexp symbexp' *)
       (* NOTE: this use of z3 is maybe a problem/expensive *)
-      val thm2_6 = solve_assumption (
-        RATOR_CONV (LAND_CONV birs_state_acc_CONV) THENC
-        (fn simp_tm =>
-          let
-            val simp_thm_o = check_simplification_tm simp_tm
+      val check_simplification_tm_fun =
+        case !birs_sound_symb_freesymbintro_RULE_smt_timeout_handler of
+          NONE => check_simplification_tm
+        | SOME f => (fn simp_tm =>
+              check_simplification_tm simp_tm
               handle holba_z3Lib.Z3TIMEOUT (t, q) =>
                 let
                   val filename = holba_fileLib.get_tempfile "z3_query_timeout" ".txt";
                   val _ = holba_fileLib.write_to_file filename q;
                   val _ = print ("wrote birsmt query to disk: "^filename^"\n");
+                  val _ = f filename;
                 in
                   SOME (aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_FREESYMB_Z3TIMEOUT" simp_tm)
-                end;
+                end
+          )
+      val thm2_6 = solve_assumption (
+        RATOR_CONV (LAND_CONV birs_state_acc_CONV) THENC
+        (fn simp_tm =>
+          let
+            val simp_thm_o = check_simplification_tm_fun simp_tm;
             val _ = if isSome simp_thm_o then () else
               raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound";
             val thm = valOf simp_thm_o;
