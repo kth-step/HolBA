@@ -344,7 +344,8 @@ in (* local *)
          (only keep the conjunct corresponding to the original path condition symbol
             NOTE: to be sound and possible, this conjunct must be stronger than what was there already) *)
         (* take first Pi state of A, env and pcond *)
-      val B_thm_inst_sys = birs_sys_pcond_RULE A_pcond B_thm_inst;
+      val B_thm_inst_sys = birs_sys_pcond_RULE A_pcond B_thm_inst
+        handle _ => raise ERR "birs_sound_inst_RULE" "instantiation failed due to pcond in sys of B_thm not covering all of pcond in state";
 
       (* TODO: can only handle one Pi state, for now *)
       val _ = if len_of_thm_Pi B_thm_inst_sys = 1 then () else
