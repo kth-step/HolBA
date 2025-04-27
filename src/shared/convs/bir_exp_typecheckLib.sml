@@ -88,10 +88,17 @@ in (* local *)
 
     fun type_of_bir_exp_rec_CONV f_rec tm =
       let
-        val thm_opened =
-          (REWRITE_CONV [type_of_bir_exp_BExp_IntervalPred_thm] THENC
-           REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def]) tm;
-        val thm = CONV_RULE (RHS_CONV (GEN_match_conv is_type_of_bir_exp f_rec THENC type_of_bir_exp_finish_CONV)) thm_opened;
+        val open_conv =
+          if (bir_extra_expsSyntax.is_BExp_IntervalPred o rand) tm then
+            REWR_CONV type_of_bir_exp_BExp_IntervalPred_thm
+          else
+            REWRITE_CONV [Once bir_typing_expTheory.type_of_bir_exp_def];
+
+        val thm = (
+          open_conv THENC
+          GEN_match_conv is_type_of_bir_exp f_rec THENC
+          type_of_bir_exp_finish_CONV
+        ) tm;
       in
         thm
       end;
@@ -127,6 +134,23 @@ in (* local *)
     val type_of_bir_exp_DIRECT_CONV = holba_cacheLib.wrap_cache_CONV_inter_result ("type_of_bir_exp_DIRECT_CONV") (dest_type_of_bir_exp) (is_type_of_bir_exp_val) type_of_bir_exp_rec_CONV;
   end;
   val type_of_bir_exp_DIRECT_CONV = Profile.profile "type_of_bir_exp_DIRECT_CONV" type_of_bir_exp_DIRECT_CONV;
+
+  (*
+  val type_thm_test = type_of_bir_exp_DIRECT_CONV ``
+type_of_bir_exp
+       (BExp_BinExp BIExp_Plus
+          (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 48w)))``;
+  val _ = print_thm type_thm_test;
+
+  val type_thm_test = type_of_bir_exp_DIRECT_CONV ``type_of_bir_exp
+    (BExp_IntervalPred
+       (BExp_BinExp BIExp_Plus
+          (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 48w)))
+       (BExp_Const (Imm32 0x10001F44w),BExp_Const (Imm32 0x10001FF0w)))``;
+  val _ = print_thm type_thm_test;
+  *)
 
   val type_of_bir_exp_CONV =
     GEN_match_conv (is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV);
