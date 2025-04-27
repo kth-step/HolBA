@@ -881,6 +881,19 @@ Theorem birs_gen_env_thm:
 Proof
 SIMP_TAC std_ss [birs_gen_env_def, listTheory.FOLDR, birs_gen_env_fun_def]
 QED
+Theorem update_swap_thm:
+  !vn1 sv1 vn2 sv2 env.
+        (vn1 =+ sv1) ((vn2 =+ sv2) env) =
+        if vn1 = vn2 then
+          (vn1 =+ sv1) env (* we won't use this case *)
+        else
+          (vn2 =+ sv2) ((vn1 =+ sv1) env)
+Proof
+  REPEAT STRIP_TAC >>
+  Cases_on `vn1 = vn2` >> (
+    gvs [combinTheory.UPDATE_COMMUTES]
+  )
+QED
 Theorem birs_gen_env_FILTER_EQ_thm:
   !vn l.
     birs_gen_env (FILTER (\x. FST x <> vn) l) vn = NONE
