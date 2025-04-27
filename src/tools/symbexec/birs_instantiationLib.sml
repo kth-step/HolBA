@@ -107,6 +107,41 @@ in (* local *)
       aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_SYMB_INST_RENAME_SUBST" thm2_tm
     end;
 
+  local
+    fun bir_exp_subst1_CONV_plain tm =
+      let
+        fun recurse_conv tm2 =
+          if identical tm tm2 then
+            (* error condition "unchanged" (due to unknown/new exp) *)
+            (print_term tm; raise ERR "bir_exp_subst1_CONV_plain" "diverging")
+          else
+            GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 bir_exp_subst1_CONV_plain tm2;
+
+        val conv =
+          if (bir_expSyntax.is_BExp_Den o rand) tm then
+            (*(fn tmx => (print "\nsubst_den 1\n"; print_term tmx; print "\n\n"; REFL tmx)) THENC*)
+            REWR_CONV (((fn x => List.nth (x, 2)) o CONJUNCTS) bir_exp_substitutionsTheory.bir_exp_subst1_REWRS) THENC
+            (*(fn tmx => (print "\nsubst_den 2\n"; print_term tmx; print "\n\n"; REFL tmx)) THENC*)
+            ITE_CONV bir_var_EQ_CONV
+            (*(fn tmx => (print "\nsubst_den 3\n"; print_term tmx; print "\n\n"; REFL tmx))*)
+          else if (bir_extra_expsSyntax.is_BExp_IntervalPred o rand) tm then
+            REWR_CONV bir_extra_expsTheory.bir_exp_subst1_BExp_IntervalPred_thm THENC
+            (*REWR_CONV (bir_extra_expsTheory.BExp_IntervalPred_def) THENC*)
+            recurse_conv
+          else
+            REWRITE_CONV [Once bir_exp_substitutionsTheory.bir_exp_subst1_REWRS] THENC
+            recurse_conv;
+      in
+        conv tm
+      end
+      handle e => (print "\nERROR in bir_exp_subst1_CONV_plain:\n"; print_term tm; print "\n\n"; raise e);
+  in
+    fun bir_exp_subst1_CONV tm =
+      if not (bir_exp_substitutionsSyntax.is_bir_exp_subst1 tm) then (print_term tm; raise ERR "bir_exp_subst1_CONV" "not a bir_exp_subst1") else
+      bir_exp_subst1_CONV_plain tm;
+    val bir_exp_subst1_CONV = Profile.profile "bir_exp_subst1_CONV" bir_exp_subst1_CONV;
+  end
+
   val birs_subst1_oracle_speed = ref true;
   fun birs_symb_subst1_CONV tm =
     if !birs_subst1_oracle_speed then
@@ -120,16 +155,22 @@ in (* local *)
       end
     else
       let
-        (* TODO: when fixing this, better implement for multisubst and have subst1 as special case *)
-        val subst1_conv = EVAL THENC REWRITE_CONV [GSYM bir_extra_expsTheory.BExp_IntervalPred_def]; (* TODO big TODO, also: reverting BExp_IntervalPred_def only needed for pcond *)
         val env_subst1_conv =
           REWR_CONV birs_auxTheory.birs_symb_env_subst1_gen_env_thm THENC
-          RAND_CONV (listLib.MAP_CONV EVAL); (* TODO: ? *)
+          RAND_CONV (listLib.MAP_CONV (
+            REWR_CONV birs_auxTheory.birs_symb_env_subst1_gen_env_EL_thm THENC
+            (RAND_CONV ((*(fn tm => (print "\n\n"; print_term tm; print "\n\n"; raise ERR "stop here" ""; REFL tm)) THENC*) bir_exp_subst1_CONV))
+          ));
 
         val conv =
           REWR_CONV bir_symb_soundTheory.birs_symb_subst1_REWR_thm THENC
-          GEN_match_conv birsSyntax.is_birs_symb_env_subst1 env_subst1_conv THENC
-          GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 subst1_conv;
+          (*(fn tm => (print "\n\n"; print_term tm; print "\n\n"; raise ERR "stop here" ""; REFL tm)) THENC*)
+          (* pcond first *)
+          GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 (
+            bir_exp_subst1_CONV
+          ) THENC
+          (* then env *)
+          GEN_match_conv birsSyntax.is_birs_symb_env_subst1 env_subst1_conv;
         val thm = conv tm;
       in
         thm

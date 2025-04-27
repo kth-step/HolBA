@@ -1095,6 +1095,22 @@ Proof
   metis_tac [GSYM combinTheory.o_THM]
 QED
 
+Theorem map_pair_fun_EL_gen_thm[local]:
+  !f a b.
+    (\x. (FST x, f (SND x))) (a, b)
+    =
+    (a, f b)
+Proof
+  gvs []
+QED
 
+Theorem birs_symb_env_subst1_gen_env_EL_thm:
+  !v e vn ve.
+    (\x. (FST x, bir_exp_subst1 v e (SND x))) (vn, ve)
+    =
+    (vn, bir_exp_subst1 v e ve)
+Proof
+  REWRITE_TAC [map_pair_fun_EL_gen_thm]
+QED
 
 val _ = export_theory();
