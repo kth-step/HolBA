@@ -132,7 +132,7 @@ in (* local *)
           let
             val simp_thm_o = check_simplification_tm_fun simp_tm;
             val _ = if isSome simp_thm_o then () else
-              raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound";
+              (print_term simp_tm; raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound");
             val thm = valOf simp_thm_o;
           in
             MP (SPEC (concl thm) satTheory.EQT_Imp1) thm
@@ -329,6 +329,22 @@ in (* local *)
     end;
   *)
 
+  fun print_mem_exp cutoff_size mem_exp =
+    let
+      (*val _ = print_term mem_exp;*)
+      val (mexp, stores) = birs_simp_instancesLib.dest_BExp_Store_list mem_exp [];
+      val _ = print ("MEM " ^ (term_to_string mexp) ^ " [\n");
+      fun print_store (expad, _, expv) =
+        let
+          val expad_s = term_to_string expad;
+          val expv_s = term_to_string expv;
+          val expv_s = if String.size expv_s > cutoff_size then "(...)" else expv_s;
+          val _ = print ("@" ^ expad_s ^ "\n---------->\n["^Int.toString(String.size expv_s)^"]" ^ expv_s ^ "\n...................................\n");
+        in () end;
+      val _ = map (print_store) stores;
+      val _ = print ("\n]\n");
+    in () end;
+
   local
     fun updatestore upd_m upd_v s =
       let
@@ -358,7 +374,19 @@ in (* local *)
         val symbname = get_freesymb_name ();
         val (_,mapped_exp) = (get_birs_Pi_first_env_top_mapping o concl) thm;
         val (_, stores) = birs_simp_instancesLib.dest_BExp_Store_list mapped_exp [];
-        val exp_tm = (fn (_,_,expv) => expv) (List.nth(stores,idx));
+        val exp_tm = (fn (_,_,expv) => expv) (List.nth(List.rev stores,idx));
+        (*
+        val _ = print ("\n\nidx:"^(Int.toString idx)^"\n");
+        val _ = print "\nvalue:\n";
+        val _ = print_term exp_tm;
+        val _ = print "\nmem before:\n";
+        val _ = print_mem_exp 10000 mapped_exp;
+        val _ = print "\nmem after:\n";
+        val symb_tm = bir_envSyntax.mk_BVar (stringSyntax.fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
+        val _ = print_mem_exp 10000 (replacefun idx (bslSyntax.bden symb_tm) exp_tm mapped_exp); (*(bslSyntax.bden symb_tm) exp_tm exp_old*)
+        val _ = print "\n\n";
+        *)
+        (*val _ = raise ERR "" "";*)
       in
         birs_Pi_first_forget_RULE_gen symbname exp_tm (replacefun idx) thm
       end;
@@ -452,21 +480,6 @@ in (* local *)
   end
 
 
-fun print_mem_exp cutoff_size mem_exp =
-  let
-    (*val _ = print_term mem_exp;*)
-    val (mexp, stores) = birs_simp_instancesLib.dest_BExp_Store_list mem_exp [];
-    val _ = print ("MEM " ^ (term_to_string mexp) ^ " [\n");
-    fun print_store (expad, _, expv) =
-      let
-        val expad_s = term_to_string expad;
-        val expv_s = term_to_string expv;
-        val expv_s = if String.size expv_s > cutoff_size then "(...)" else expv_s;
-        val _ = print ("@" ^ expad_s ^ "\n---------->\n["^Int.toString(String.size expv_s)^"]" ^ expv_s ^ "\n...................................\n");
-      in () end;
-    val _ = map (print_store) stores;
-    val _ = print ("\n]\n");
-  in () end;
 
   fun birs_simplify_top_mapping exp exp_new thm =
     let
