@@ -250,6 +250,7 @@ in (* local *)
             fun symb_assump_conv errstr conv =
               NEG_CONV (
                 RAND_CONV (conv) THENC
+                (*(fn tm => (print_term tm; REFL tm)) THENC*)
                 pred_setLib.IN_CONV bir_var_EQ_CONV
               ) THENC (
                 fn tm =>
@@ -269,7 +270,10 @@ in (* local *)
             val thm2 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs1" birs_symb_symbols_DIRECT_CONV)) thm1) TRUTH
               handle e => (print "\n\nrule_RENAME_FREE thm2 failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
             (*val _ = print_thm thm2;*)
-            val thm3 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs2" birs_symb_symbols_DIRECT_CONV)) thm2) TRUTH
+            val thm2b = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs2" birs_symb_symbols_DIRECT_CONV)) thm2) TRUTH
+              handle e => (print "\n\nrule_RENAME_FREE thm2b failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
+            (*val _ = print_thm thm2b;*)
+            val thm3 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs3" birs_symb_symbols_DIRECT_CONV)) thm2b) TRUTH
               handle e => (print "\n\nrule_RENAME_FREE thm3 failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
             (*val _ = print_thm thm3;*)
             val thm4 =
