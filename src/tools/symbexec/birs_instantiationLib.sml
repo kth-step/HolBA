@@ -142,7 +142,7 @@ in (* local *)
     val bir_exp_subst1_CONV = Profile.profile "bir_exp_subst1_CONV" bir_exp_subst1_CONV;
   end
 
-  val birs_subst1_oracle_speed = ref true;
+  val birs_subst1_oracle_speed = ref false;
   fun birs_symb_subst1_CONV tm =
     if !birs_subst1_oracle_speed then
       let
@@ -181,7 +181,7 @@ in (* local *)
     LAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def) THENC
     RAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def) THENC
     REWR_CONV boolTheory.REFL_CLAUSE (*aux_setLib.bir_type_EQ_CONV*);
-  val rule_RENAME_oracle_speed = ref true; (* TODO: oracle switch unused, remove later *)
+  val rule_RENAME_oracle_speed = ref false; (* TODO: oracle switch unused, remove later *)
   fun birs_sound_symb_rename_RULE symb_symb_map thm =
     (*if !rule_RENAME_oracle_speed then
       birs_sound_symb_basic_subst_oracle (List.map (fn (bv_symb,bv_symb') => (bv_symb, bslSyntax.bden bv_symb')) symb_symb_map) thm
@@ -289,7 +289,7 @@ in (* local *)
       end;
   val birs_sound_symb_rename_free_RULE = fn x => Profile.profile "1_birs_sound_symb_rename_free_RULE" (birs_sound_symb_rename_free_RULE x);
 
-  val rule_INST_oracle_speed = ref true;
+  val rule_INST_oracle_speed = ref false;
   fun birs_sound_symb_inst_RULE symb_exp_map thm =
     (* TODO: remove option here to avoid missing checks *)
     if !rule_INST_oracle_speed then

@@ -321,7 +321,7 @@ in (* local *)
       (*(fn tm => (print "\nbefore::::\n"; print_term tm; print "\n\n"; REFL tm)) THENC*)
       RAND_CONV bird_gen_env_gen_CONV THENC
       REWR_CONV (bird_gen_env_gen_thm1)) tm;
-  val birs_env_order_oracle_speed = ref true;
+  val birs_env_order_oracle_speed = ref false;
   fun birs_env_set_order_CONV varnames tm (* tm is birs_state_t record *) =
     if !birs_env_order_oracle_speed then
       birs_env_set_order_CONV_speedoracle varnames tm

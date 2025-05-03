@@ -23,8 +23,8 @@ local
   val birs_state_acc_CONV = REWRITE_CONV [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM];
 
 in (* local *)
-  val birs_freesymb_oracle_speed = ref true;
-  val birs_mem_shuffle_oracle_speed = ref true;
+  val birs_freesymb_oracle_speed = ref false;
+  val birs_mem_shuffle_oracle_speed = ref false;
 
   val birs_sound_symb_freesymbintro_RULE_smt_timeout_handler = ref (NONE: (string -> unit) option);
   fun birs_sound_symb_freesymbintro_RULE alpha_tm bexp_tm vn_tm symbexp1_tm symbexp2_tm thm =

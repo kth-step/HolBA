@@ -22,7 +22,7 @@ local
 
 in (* local *)
 
-  val rule_CONSEQ_oracle_speed = ref true;
+  val rule_CONSEQ_oracle_speed = ref false;
 
   (* TODO: update the one in composeLib with this *)
   fun birs_freesymbs_gen_CONV conv =
