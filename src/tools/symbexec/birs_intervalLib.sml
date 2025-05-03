@@ -353,18 +353,12 @@ in (* local *)
         val thm2 = birs_Pi_first_pcond_RULE pcond_new thm1;
         val thmx = thm2;
 
-        (* all that is left is to make sure that we use the standardname for the symbol in the envmapping, if not, just rename it *)
-          (* rename so that the symbol used is ("syi_"^vn) for readability *)
-        val new_symbol = mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol);
-        val thm9 = birs_instantiationLib.birs_sound_symb_rename_free_RULE [(env_symbol, new_symbol)] thmx
-          handle _ => raise ERR "birs_intervals_Pi_first_unify_RULE" ("renaming failed:" ^ (term_to_string env_symbol) ^ " to " ^ (term_to_string new_symbol));
-
         val _ = if not debug_mode then () else print "done unifying interval for one Pi state\n";
 
         val _ = holba_miscLib.timer_stop
           (fn delta_s => print ("  unifying interval representation of state took " ^ delta_s ^ "\n")) timer;
       in
-        thm9
+        thmx
       end;
   in
     fun birs_intervals_Pi_unify_RULE vn thm =
@@ -381,8 +375,61 @@ in (* local *)
       in
         birs_Pi_each_RULE (birs_intervals_Pi_first_unify_RULE vn) thm
       end;
-    val birs_intervals_Pi_unify_RULE = fn vn => check_BExp_IntervalPred_normform_RULE vn o birs_intervals_Pi_unify_RULE vn;
+    val birs_intervals_Pi_unify_RULE = fn vn => (*check_BExp_IntervalPred_normform_RULE vn o*) birs_intervals_Pi_unify_RULE vn;
     val birs_intervals_Pi_unify_RULE = fn x => Profile.profile "birs_intervals_Pi_unify_RULE" (birs_intervals_Pi_unify_RULE x);
+  end
+
+  local
+    fun birs_intervals_Pi_first_unify_name_RULE vn thm =
+      let
+        val _ = birs_check_norm_thm ("birs_intervals_Pi_first_unify_name_RULE", "") thm;
+
+        val _ = if not debug_mode then () else print "starting to unify interval for one Pi state\n";
+
+        val _ = print ("unifying name for interval representation of state\n");
+        val timer = holba_miscLib.timer_start 0;
+
+        (*
+        TODO: ideally, first make sure the variable is on top and it is already in unified representation form
+        TODO: however, can assume its representation has been unified before, only renaming to standard name left to do
+        *)
+
+        (* bring up mapping vn to the top of env mappings *)
+        (*val thm_ = CONV_RULE (birs_Pi_first_CONV (birs_env_var_top_CONV vn)) thm;
+        val thm0 = birs_intervals_Pi_first_simplify_limits thm_;*)
+        val thm0 = thm;
+        val (env_vn, env_exp) = (get_birs_Pi_first_env_top_mapping o concl) thm0;
+        val _ = if fromHOLstring env_vn = vn then () else raise ERR "birs_intervals_Pi_first_unify_name_RULE" "something wrong #1, interval representation unification has to run right before";
+        val _ = if is_BExp_Den env_exp then () else raise ERR "birs_intervals_Pi_first_unify_name_RULE" "something wrong #2, interval representation unification has to run right before";
+        val env_symbol = dest_BExp_Den env_exp;
+
+        (*val _ = print "\n\n\naaaaaaaaaaaaaa:\n";
+        val _ = print_term (env_exp);
+        val _ = print "\n\n\n\n";
+        val _ = print_term (env_symbol);
+        val _ = print "\n\n\n\n";*)
+
+        (* all that is left is to make sure that we use the standardname for the symbol in the envmapping, if not, just rename it *)
+          (* rename so that the symbol used is ("syi_"^vn) for readability *)
+        val new_symbol = mk_BVar_string (vn_symb vn, (snd o dest_BVar) env_symbol);
+        val thm9 = birs_instantiationLib.birs_sound_symb_rename_free_RULE [(env_symbol, new_symbol)] thm
+          handle _ => (raise ERR "birs_intervals_Pi_first_unify_name_RULE" ("renaming failed:" ^ (term_to_string env_symbol) ^ " to " ^ (term_to_string new_symbol)));
+
+        val _ = if not debug_mode then () else print "done unifying name for interval for one Pi state\n";
+
+        val _ = holba_miscLib.timer_stop
+          (fn delta_s => print ("  unifying name for interval representation of state took " ^ delta_s ^ "\n")) timer;
+      in
+        thm9
+      end;
+  in
+    fun birs_intervals_Pi_unify_name_RULE vn thm =
+      let
+      in
+        birs_Pi_each_RULE (birs_intervals_Pi_first_unify_name_RULE vn) thm
+      end;
+    val birs_intervals_Pi_unify_name_RULE = fn vn => check_BExp_IntervalPred_normform_RULE vn o birs_intervals_Pi_unify_name_RULE vn;
+    val birs_intervals_Pi_unify_name_RULE = fn x => Profile.profile "birs_intervals_Pi_unify_name_RULE" (birs_intervals_Pi_unify_name_RULE x);
   end
 
   (* goes through all Pi states and unifies the interval bounds for env mapping vn (needed prior to merging of states) *)
