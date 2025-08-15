@@ -29,7 +29,7 @@ if [[ ! "${POLY_VERSION}" == "PREPACKAGED" ]]; then
 fi
 
 # use a default hol4 version if it is not specified in the environment
-HOL4_VERSION="trindemossen-1"
+HOL4_VERSION="trindemossen-2"
 if [[ ! -z "${HOLBA_HOL4_VERSION}" ]]; then
   HOL4_VERSION=${HOLBA_HOL4_VERSION}
 fi

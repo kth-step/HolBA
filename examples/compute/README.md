@@ -32,7 +32,7 @@ Additional `README`s are available in other key directories.
 
 
 ## Building
-With a valid HOL4 `trindemossen-1` installation, you can run `Holmake` in the root directory of the repository.
+With a valid HOL4 `trindemossen-2` installation, you can run `Holmake` in the root directory of the repository.
 Remark : Not all commits can be built as regular merge was used.
 Tags are usually used to indicate “stable” release that can be built without errors
 

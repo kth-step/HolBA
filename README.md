@@ -15,7 +15,7 @@ HolBA is built using the `Holmake` tool bundled with HOL4.
 
 ### Dependencies
 
-- [HOL4](https://github.com/HOL-Theorem-Prover/HOL), tag `trindemossen-1`.
+- [HOL4](https://github.com/HOL-Theorem-Prover/HOL), tag `trindemossen-2`.
 - [Poly/ML](https://github.com/polyml/polyml), 5.9.2
   - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 24.04)
 - [Z3](https://github.com/Z3Prover/z3), 4.13.4
