@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-22.04']
-        polyml: [{version: 'PREPACKAGED'}, {version: 'v5.9.1', heapless: '1'}]
+        polyml: [{version: 'PREPACKAGED'}, {version: 'v5.9.2', heapless: '1'}]
         z3: ['4.13.4']
         hol4: ['trindemossen-1']
 
