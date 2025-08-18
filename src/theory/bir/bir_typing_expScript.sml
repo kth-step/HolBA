@@ -597,7 +597,7 @@ Induct_on `ex` >> (
   Cases_on `bir_number_of_mem_splits b0 b1 b` >> (
     FULL_SIMP_TAC std_ss [LET_DEF, bir_endian_t_case_def]
   ) >>
-  Cases_on ‘b2’ >> (gs[]) >> (
+  Cases_on `b2` >> (gs[]) >> (
    Cases_on `x''' = 1` >> (
      gvs[bir_number_of_mem_splits_EQ_SOME1]
    )
