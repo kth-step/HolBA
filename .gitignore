@@ -9,6 +9,7 @@
 *~
 *.exe
 *-heap
+.hol/
 
 # Makefile related stuff
 Makefile.local
