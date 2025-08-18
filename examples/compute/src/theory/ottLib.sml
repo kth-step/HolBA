@@ -76,7 +76,7 @@ in
   HO_MATCH_MP_TAC list_induction THEN STRIP_TAC THENL 
   [ALL_TAC, STRIP_TAC THEN STRIP_TAC THEN PAIR_CASES_TAC] THEN
   SRW_TAC [] [] THEN 
-  CONV_TAC TotalDefn.TC_SIMP_CONV THEN 
+  TotalDefn.TC_SIMP_TAC std_ss [] THEN 
   SRW_TAC [] [] THEN
   RES_TAC THEN
   DECIDE_TAC THEN NO_TAC
@@ -84,7 +84,7 @@ end;
 
 fun ONE_TERM_TAC measure =
   WF_REL_TAC `^measure` THEN
-  CONV_TAC TotalDefn.TC_SIMP_CONV THEN  
+  TotalDefn.TC_SIMP_TAC std_ss [] THEN  
   SRW_TAC [] [] THEN
   APPLY_FILTER_SIZE THEN 
   TRY (ASSUM_LIST (MAP_FIRST MEM_IND_TAC o List.filter is_mem o List.map concl))
