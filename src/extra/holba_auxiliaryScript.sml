@@ -96,10 +96,9 @@ QED
 
 
 Theorem INDEX_FIND_EQ_NONE:
-  !l i P. (INDEX_FIND i P l = NONE) <=> (~(EXISTS P l))
+  !l i P. INDEX_FIND i P l = NONE <=> ~EXISTS P l
 Proof
-Induct >> SIMP_TAC list_ss [listTheory.INDEX_FIND_def] >>
-REPEAT GEN_TAC >> COND_CASES_TAC >> ASM_SIMP_TAC list_ss []
+Induct >> (gs[listTheory.INDEX_FIND_def])
 QED
 
 

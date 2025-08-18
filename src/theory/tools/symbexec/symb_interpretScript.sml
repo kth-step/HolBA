@@ -412,7 +412,8 @@ Theorem symb_interpr_for_symbs_TO_min_thm:
    (symb_interpr_ext H H'))
 Proof
 FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_thm, symb_interpr_ext_thm,
-     symb_interpr_for_symbs_min_thm, symb_interpr_restr_def, symb_interpr_get_def]
+     symb_interpr_for_symbs_min_thm, symb_interpr_restr_def, symb_interpr_get_def] >>
+metis_tac[]
 QED
 
 Theorem symb_interpr_restr_thm:
