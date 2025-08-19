@@ -38,7 +38,7 @@ fi
 GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
 GIT_IS_TAG=1
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_t1
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_t2
 
 
 ##################################################################

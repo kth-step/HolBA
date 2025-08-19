@@ -23,7 +23,7 @@ val _ = bir_smt_set_trace use_holsmt 0;
 val _ = bir_smt_set_trace use_holsmt 4;
 val _ = Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 2;
 val _ = Feedback.set_trace "easy_noproof_wpLib" logLib.TRACE;
-val _ = Feedback.set_trace "Define.storage_message" 1;
+val _ = Feedback.set_trace "Definition.storage_message" 1;
 *)
 
 (* BIR program *)
