@@ -29,8 +29,7 @@ open bir_inst_liftingHelpersLib;
     open HolBACoreSimps;
   in
 
-    (* These functions obtain the parameters of a
-     * bir_exec_to_labels_triple *)
+    (* These functions obtain the parameters of a bir_exec_to_labels_triple *)
     fun get_contract_prog contract_thm = ((el 1) o snd o strip_comb o concl) contract_thm;
     fun get_contract_l contract_thm = ((el 2) o snd o strip_comb o concl) contract_thm;
     fun get_contract_ls contract_thm = ((el 3) o snd o strip_comb o concl) contract_thm;
