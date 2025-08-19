@@ -37,8 +37,7 @@ open bir_inst_liftingHelpersLib;
     fun get_contract_pre contract_thm = ((el 4) o snd o strip_comb o concl) contract_thm;
     fun get_contract_post contract_thm = ((el 5) o snd o strip_comb o concl) contract_thm;
 
-    (* These functions obtain the parameters of a
-     * bir_cont *)
+    (* These functions obtain the parameters of a bir_cont *)
     fun get_bir_cont_prog bir_cont_thm = ((el 1) o snd o strip_comb o concl) bir_cont_thm;
     fun get_bir_cont_invariant bir_cont_thm = ((el 2) o snd o strip_comb o concl) bir_cont_thm;
     fun get_bir_cont_start_label bir_cont_thm = ((el 3) o snd o strip_comb o concl) bir_cont_thm;
