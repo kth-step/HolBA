@@ -22,7 +22,7 @@ val _ = if !Globals.interactive then (
   Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 1;
   Feedback.set_trace "easy_noproof_wpLib" 2;
   Feedback.set_trace "nic_helpersLib" logLib.INFO;
-  Feedback.set_trace "Define.storage_message" 0;
+  Feedback.set_trace "Definition.storage_message" 0;
   Feedback.emit_WARNING := false;
   ());
 
@@ -41,7 +41,7 @@ val _ = Feedback.set_trace "HolSmtLib" 0;
 val _ = Feedback.set_trace "HolSmtLib" 4;
 val _ = Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 2;
 val _ = Feedback.set_trace "easy_noproof_wpLib" 2;
-val _ = Feedback.set_trace "Define.storage_message" 1;
+val _ = Feedback.set_trace "Definition.storage_message" 1;
 val _ = bir_ppLib.remove_bir_pretty_printers ();
 *)
 

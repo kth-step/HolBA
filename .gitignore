@@ -1,14 +1,8 @@
 # Compiled HOL files
-.HOLMK
-.hollogs
-*Theory.dat
-*Theory.sig
-*Theory.sml
-*.ui
-*.uo
 *~
 *.exe
 *-heap
+.hol/
 
 # Makefile related stuff
 Makefile.local

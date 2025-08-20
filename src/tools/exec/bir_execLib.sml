@@ -223,7 +223,7 @@ val _ = debug_trace := 2;
       val prog_l_def = if (is_const prog_l) then
                          let
                            val def_str = (fst o dest_const) prog_l;
-                           val (_, (def_thm, _)) = hd (DB.find def_str);
+                           val def_thm = #1 o #2 $ hd (DB.find def_str);
                          in
                            def_thm
                          end

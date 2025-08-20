@@ -269,7 +269,7 @@ struct
       pred_setTheory.EMPTY_DEF, pred_setTheory.UNIV_DEF,
       pred_setTheory.UNION_DEF, pred_setTheory.INTER_DEF]
   in
-    simpLib.SIMP_TAC (simpLib.mk_simpset [pred_setTheory.SET_SPEC_ss]) thms
+    simpLib.SIMP_TAC (simpLib.mk_simpset [pred_setSimps.SET_SPEC_ss]) thms
   end
 
   (* A tactic that unfolds LET. *)

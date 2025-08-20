@@ -18,7 +18,7 @@ val _ = if !Globals.interactive then () else (
   bir_smt_set_trace use_holsmt 0;
   Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 0;
   Feedback.set_trace "easy_noproof_wpLib" 2;
-  Feedback.set_trace "Define.storage_message" 0;
+  Feedback.set_trace "Definition.storage_message" 0;
   Feedback.emit_WARNING := false;
   ());
 
@@ -31,7 +31,7 @@ val _ = bir_smt_set_trace use_holsmt 0;
 val _ = bir_smt_set_trace use_holsmt 4;
 val _ = Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 2;
 val _ = Feedback.set_trace "easy_noproof_wpLib" logLib.TRACE;
-val _ = Feedback.set_trace "Define.storage_message" 1;
+val _ = Feedback.set_trace "Definition.storage_message" 1;
 *)
 
 fun timer_start () = Time.now();

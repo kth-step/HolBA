@@ -283,7 +283,7 @@ val bir_load_store_ss =
           convs = [{conv = K (K simp_conv_load_store),
                     key= SOME ([],
                                ``bir_eval_load
-                                   (bir_eval_store (SOME (BVal_Mem at vt mmap))
+                                   (bir_eval_store (SOME (BVal_Mem address_type value_type mmap))
                                      (SOME (BVal_Imm addr))
                                      en
                                      (SOME (BVal_Imm va))

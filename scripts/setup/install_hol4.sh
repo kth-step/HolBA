@@ -16,7 +16,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 ##################################################################
 
 # use a default polyml version if it is not specified in the environment
-POLY_VERSION="v5.9.1"
+POLY_VERSION="v5.9.2"
 if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
   POLY_VERSION=${HOLBA_POLYML_VERSION}
 fi
@@ -29,7 +29,7 @@ if [[ ! "${POLY_VERSION}" == "PREPACKAGED" ]]; then
 fi
 
 # use a default hol4 version if it is not specified in the environment
-HOL4_VERSION="trindemossen-1"
+HOL4_VERSION="trindemossen-2"
 if [[ ! -z "${HOLBA_HOL4_VERSION}" ]]; then
   HOL4_VERSION=${HOLBA_HOL4_VERSION}
 fi
@@ -38,7 +38,7 @@ fi
 GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
 GIT_IS_TAG=1
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_t1
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_t2
 
 
 ##################################################################
