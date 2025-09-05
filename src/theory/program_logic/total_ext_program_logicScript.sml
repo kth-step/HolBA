@@ -24,15 +24,14 @@ Theorem total_ext_emb_rule_thm:
  !TS TS' invariant l ls ls' pre post.
   first_enc TS ==>
   first_enc TS' ==>
-  (!s ls s'. TS.weak s ls s' ==> TS'.weak s ls s') ==>
-  (!s l. TS'.ctrl s = l  ==> TS.ctrl s = l) ==>
+  embedded TS TS' ==>
   t_ext_jgmt TS invariant l ls ls' pre post ==>
   t_ext_jgmt TS' invariant l ls ls' pre post
 Proof
 rpt strip_tac >>
 fs [t_ext_jgmt_def] >>
 irule total_emb_rule_thm >>
-metis_tac []
+metis_tac[transition_systemTheory.embedded_def]
 QED
 
 

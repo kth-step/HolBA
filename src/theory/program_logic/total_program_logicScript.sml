@@ -17,7 +17,6 @@ Definition t_jgmt_def:
    ?s'. TS.weak ls s s' /\ post s'
 End
 
-
 (* TODO: Can this be rephrased better?
  * Antecedents guarantee swapping transition system of ANY contract. *)
 (* Rule for transferring contracts from embedded transition systems:
@@ -26,17 +25,18 @@ Theorem total_emb_rule_thm:
  !TS TS'.
   first_enc TS ==>
   first_enc TS' ==>
-  (!ls s s'. TS.weak ls s s' ==> TS'.weak ls s s') ==>
-  (!s l. (TS'.ctrl s = l)  ==> (TS.ctrl s = l)) ==>
+  embedded TS TS' ==>
   !l ls pre post.
    t_jgmt TS l ls pre post ==>
    t_jgmt TS' l ls pre post
 Proof
 rpt strip_tac >>
-fs [t_jgmt_def] >>
+fs[t_jgmt_def] >>
 rpt strip_tac >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+‘(!s l. (TS'.ctrl s = l)  ==> (TS.ctrl s = l))’ by (metis_tac[embedded_def]) >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+‘(!ls s s'. TS.weak ls s s' ==> TS'.weak ls s s')’ by (metis_tac[embedded_preserves_weak]) >>
 rfs [] >>
 fs [] >>
 QSPECL_X_ASSUM ``!ls s s'. _`` [`ls`, `s`, `s'`] >>

@@ -68,6 +68,77 @@ imp_res_tac weak_superset_thm >>
 metis_tac [pred_setTheory.UNION_COMM, weak_union, weak_unique]
 QED
 
+Theorem partial_emb_rule_thm:
+ !TS TS'.
+  first_enc TS ==>
+  first_enc TS' ==>
+  !dom dom'.
+   trs_dom TS dom ==>
+   trs_dom TS' dom' ==>
+   embedded TS TS' ==>
+  !ls'.
+   (!l'. l' IN ls' <=> l' IN dom' /\ l' NOTIN dom) ==>
+  !l. l NOTIN ls' ==>
+  !ls pre post.
+   p_jgmt TS l ls pre post ==>
+   p_jgmt TS l (ls UNION ls') pre (\s. TS.ctrl s NOTIN ls') ==>
+   p_jgmt TS' l ls pre post
+Proof
+rpt strip_tac >>
+subgoal ‘p_jgmt TS l ls pre (\s. TS.ctrl s NOTIN ls')’ >- (
+ irule partial_subset_rule_thm >>
+ gs[] >>
+ qexists_tac ‘ls'’ >>
+ gs[]
+) >>
+fs [p_jgmt_def] >>
+rpt strip_tac >>
+qpat_x_assum `!s s'. _` irule >>
+qexists_tac ‘s’ >>
+gs[] >- (
+ gs[embedded_def] >>
+ metis_tac[weak_outside_dom]
+) >>
+Cases_on ‘?s'. TS.weak ls s s'’ >- (
+ imp_res_tac embedded_preserves_weak >>
+ gs[] >>
+ subgoal ‘TS'.weak ls s s''’ >- (
+  res_tac
+ ) >>
+ subgoal ‘s' = s''’ >- (
+  metis_tac[weak_unique]
+ ) >>
+ gs[embedded_def]
+) >>
+gs[] >>
+(* There must exist a weak transition from s to the label set
+ * (ls UNION ls'), due to the definition of ls' and the fact that
+ * there is a weak transition to ls in TS' *)
+subgoal ‘?s'. TS.weak (ls UNION ls') s s'’ >- (
+ irule embedded_reachability >>
+ gs[] >>
+ qexistsl_tac [‘TS'’, ‘dom’, ‘dom'’, ‘s'’] >>
+ gs[embedded_def]
+) >>
+(* This exact weak transition must also exist in TS' *)
+subgoal ‘TS'.weak (ls UNION ls') s s''’ >- (
+ metis_tac[embedded_preserves_weak]
+) >>
+(* But if it does, then s'' is not in ls' (by one of the contracts) *)
+subgoal ‘TS'.ctrl s'' NOTIN ls'’ >- (
+ metis_tac[embedded_def]
+) >>
+(* ... which contradicts the premise of the case by weak_union *)
+subgoal ‘TS.weak ls s s''’ >- (
+ irule weak_union >>
+ gs[] >>
+ qexists_tac ‘ls'’ >>
+ gs[pred_setTheory.UNION_COMM, embedded_def]
+) >>
+gs[]
+QED
+
+
 Theorem partial_conj_rule_thm:
  !TS.
  first_enc TS ==>
