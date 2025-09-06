@@ -34,9 +34,9 @@ rpt strip_tac >>
 fs[t_jgmt_def] >>
 rpt strip_tac >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
-‘(!s l. (TS'.ctrl s = l)  ==> (TS.ctrl s = l))’ by (metis_tac[embedded_def]) >>
+`(!s l. (TS'.ctrl s = l)  ==> (TS.ctrl s = l))` by (metis_tac[embedded_def]) >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
-‘(!ls s s'. TS.weak ls s s' ==> TS'.weak ls s s')’ by (metis_tac[embedded_preserves_weak]) >>
+`(!ls s s'. TS.weak ls s s' ==> TS'.weak ls s s')` by (metis_tac[embedded_preserves_weak]) >>
 rfs [] >>
 fs [] >>
 QSPECL_X_ASSUM ``!ls s s'. _`` [`ls`, `s`, `s'`] >>
