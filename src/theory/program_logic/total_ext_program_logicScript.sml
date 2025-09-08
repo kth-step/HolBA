@@ -1,3 +1,6 @@
+(*
+  Extended judgment and rules for the total-correctness program logic asserting postconditions upon the first encounter of the ending label set.
+*)
 open HolKernel Parse boolLib bossLib;
 open total_program_logicTheory;
 open holba_auxiliaryTheory;

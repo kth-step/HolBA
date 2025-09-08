@@ -1,3 +1,6 @@
+(*
+  Transition systems and their properties
+*)
 open HolKernel boolLib bossLib BasicProvers dep_rewrite;
 
 open holba_auxiliaryLib;
@@ -54,6 +57,20 @@ End
 Definition trs_dom_def:
  trs_dom TS ls =
   !s l. (TS.trs s <> NONE /\ TS.ctrl s = l) <=> l IN ls
+End
+
+(* "TS, l, ls and pre enable a jgmt in normal form (all postconditions asserted where TS ends)" *)
+Definition normal_def:
+ normal TS l ls pre =
+  !s s'.
+   TS.ctrl s = l ==>
+   pre s ==>
+   !n.
+    (n > 0 /\
+     FUNPOW_OPT TS.trs n s = SOME s' /\
+     TS.ctrl s' IN ls
+    ) ==>
+    TS.trs s' = NONE
 End
 
 Theorem weak_comp:

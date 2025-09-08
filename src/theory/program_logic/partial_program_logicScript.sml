@@ -1,3 +1,6 @@
+(*
+  Partial-correctness program logic asserting postconditions upon the first encounter of the ending label set.
+*)
 open HolKernel boolLib bossLib BasicProvers dep_rewrite prim_recTheory;
 
 open holba_auxiliaryLib;
@@ -17,16 +20,25 @@ Definition p_jgmt_def:
   post s'
 End
 
-Theorem t_jgmt_imp_partial_triple:
+Theorem total_to_partial:
  !TS l ls pre post.
  first_enc TS ==>
  t_jgmt TS l ls pre post ==>
  p_jgmt TS l ls pre post
 Proof
-fs [t_jgmt_def, p_jgmt_def] >>
-rpt strip_tac >>
-QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+gs[t_jgmt_def, p_jgmt_def] >>
 metis_tac [weak_unique]
+QED
+
+Theorem partial_to_total:
+ !TS l ls pre post.
+ first_enc TS ==>
+ p_jgmt TS l ls pre post ==>
+ t_jgmt TS l ls pre (\s. T) ==>
+ t_jgmt TS l ls pre post
+Proof
+gs[t_jgmt_def, p_jgmt_def] >>
+metis_tac[]
 QED
 
 Theorem partial_case_rule_thm:
@@ -151,16 +163,6 @@ rpt strip_tac >>
 fs [p_jgmt_def] >>
 rpt strip_tac >>
 metis_tac [weak_unique]
-QED
-
-(* TODO: exactly t_jgmt_imp_partial_triple *)
-Theorem total_to_partial:
- !TS l ls pre post.
- first_enc TS ==>
- t_jgmt TS l ls pre post ==>
- p_jgmt TS l ls pre post
-Proof
-fs [t_jgmt_imp_partial_triple]
 QED
 
 

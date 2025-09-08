@@ -1,3 +1,6 @@
+(*
+  Total-correctness program logic asserting postconditions upon the first encounter of the ending label set.
+*)
 open HolKernel Parse boolLib bossLib;
 
 open holba_auxiliaryLib;
