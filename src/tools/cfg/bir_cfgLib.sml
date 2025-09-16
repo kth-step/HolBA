@@ -280,5 +280,31 @@ in
                            cfg_update_node_basic
                            lbl_tms n_dict_in;
 
+
+  fun cfg_update_node_call (n:cfg_node) =
+    if not (cfg_nodetype_is_call (#CFGN_type n)) then NONE else
+    let
+      val succ_lbl_tm_o = cfg_node_to_succ_lbl_tm n;
+      val _ = if length (#CFGN_targets n) > 0 then () else raise ERR "cfg_update_node_call" "targets should be empty";
+      val _ = if isSome succ_lbl_tm_o then () else raise ERR "cfg_update_node_call" "couldn't determine successor labels";
+      val _ = print_term (valOf succ_lbl_tm_o);
+
+      val n' =
+	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+	    CFGN_hc_descr = #CFGN_hc_descr n,
+	    CFGN_targets  = [valOf succ_lbl_tm_o],
+	    CFGN_type     = #CFGN_type n
+	  } : cfg_node;
+    in
+      SOME n'
+    end
+
+
+  fun cfg_update_nodes_call lbl_tms n_dict_in =
+      cfg_update_nodes_gen "cfg_update_node_call"
+                           cfg_update_node_call
+                           lbl_tms n_dict_in;
+
+
 end (* local *)
 end (* struct *)
