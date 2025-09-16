@@ -273,7 +273,7 @@ in (* local *)
     end
 
   (* adjust the order of a mapping according to a given list *)
-  fun birs_env_set_order_CONV varnames tm (* tm is birs_state_t record *) =
+  fun birs_env_set_order_CONV_speedoracle varnames tm (* tm is birs_state_t record *) =
     let
       fun is_m_for_varname vn = (fn x => x = vn) o stringSyntax.fromHOLstring o fst o pairSyntax.dest_pair;
       fun get_exp_if vn m =
@@ -304,6 +304,67 @@ in (* local *)
     in
       env_eq_thm
     end;
+  val bird_gen_env_open_thm1 = birs_auxTheory.birs_gen_env_thm;
+  val bird_gen_env_open_thm2 = birs_auxTheory.birs_gen_env_NULL_thm;
+  fun bird_gen_env_open_CONV tm =
+    (if (listSyntax.is_nil o dest_birs_gen_env) tm then
+      REWR_CONV (bird_gen_env_open_thm2)
+    else
+      REWR_CONV (bird_gen_env_open_thm1) THENC
+      RAND_CONV bird_gen_env_open_CONV) tm;
+  val bird_gen_env_gen_thm1 = GSYM birs_auxTheory.birs_gen_env_thm;
+  val bird_gen_env_gen_thm2 = GSYM birs_auxTheory.birs_gen_env_NULL_thm;
+  fun bird_gen_env_gen_CONV tm =
+    (if combinSyntax.is_K_1 tm then
+      REWR_CONV (bird_gen_env_gen_thm2)
+    else
+      (*(fn tm => (print "\nbefore::::\n"; print_term tm; print "\n\n"; REFL tm)) THENC*)
+      RAND_CONV bird_gen_env_gen_CONV THENC
+      REWR_CONV (bird_gen_env_gen_thm1)) tm;
+  val birs_env_order_oracle_speed = ref false;
+  fun birs_env_set_order_CONV varnames tm (* tm is birs_state_t record *) =
+    if !birs_env_order_oracle_speed then
+      birs_env_set_order_CONV_speedoracle varnames tm
+    else
+      let
+        open birs_auxTheory;
+        open stringSyntax;
+        open holba_convLib;
+        open bir_convLib;
+        
+        fun reorder_single vn env =
+          let
+            val _ = if not (combinSyntax.is_K env) then () else (print vn; print "\n"; raise ERR "reorder_single" "environment unexpected, should not reach K");
+            val vn1 = (fst o combinSyntax.dest_update o fst o dest_comb) env;
+          in
+            if (fromHOLstring) vn1 = vn then
+              REFL env
+            else
+              (RAND_CONV (reorder_single vn) THENC
+              (*(fn tm => (print "\nbefore::::\n"; print_term tm; print "\n\n"; REFL tm)) THENC*)
+              REWR_CONV birs_auxTheory.update_swap_thm THENC
+              (*(fn tm => (print "\nafter:::::\n"; print_term tm; print "\n\n"; REFL tm)) THENC*)
+              ITE_CONV bir_varname_EQ_CONV) env
+          end;
+
+        fun set_env_order [] env = REFL env
+          | set_env_order (vn::vns) env =
+              (reorder_single vn THENC
+              RAND_CONV (set_env_order vns)) env;
+
+        val env_eq_thm = birs_env_CONV (
+          (fn env => (
+            birs_check_env_norm ("birs_env_set_order_CONV", "") env;
+            (*Profile.profile "birs_env_set_order_CONV_p1" (REWRITE_CONV [birs_gen_env_thm, birs_gen_env_NULL_thm])*)
+            bird_gen_env_open_CONV env)
+          ) THENC
+          set_env_order varnames THENC
+          (*Profile.profile "birs_env_set_order_CONV_p2" (REWRITE_CONV [bird_gen_env_gen_thm1, bird_gen_env_gen_thm2])*)
+          bird_gen_env_gen_CONV) tm;
+      in
+        env_eq_thm
+      end;
+  val birs_env_set_order_CONV = fn x => Profile.profile "birs_env_set_order_CONV" (birs_env_set_order_CONV x);
 
   (* move a certain mapping to the top *)
   fun birs_env_var_top_CONV varname =

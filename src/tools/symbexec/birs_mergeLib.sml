@@ -23,9 +23,10 @@ local
   val birs_state_acc_CONV = REWRITE_CONV [bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM];
 
 in (* local *)
-  val birs_freesymb_oracle_speed = ref true;
-  val birs_mem_shuffle_oracle_speed = ref true;
+  val birs_freesymb_oracle_speed = ref false;
+  val birs_mem_shuffle_oracle_speed = ref false;
 
+  val birs_sound_symb_freesymbintro_RULE_smt_timeout_handler = ref (NONE: (string -> unit) option);
   fun birs_sound_symb_freesymbintro_RULE alpha_tm bexp_tm vn_tm symbexp1_tm symbexp2_tm thm =
     let
       val debug = false;
@@ -110,21 +111,28 @@ in (* local *)
               (BExp_BinPred BIExp_Equal (BExp_Den alpha) bexp)
               bs2.bsst_pcond) symbexp symbexp' *)
       (* NOTE: this use of z3 is maybe a problem/expensive *)
-      val thm2_6 = solve_assumption (
-        RATOR_CONV (LAND_CONV birs_state_acc_CONV) THENC
-        (fn simp_tm =>
-          let
-            val simp_thm_o = check_simplification_tm simp_tm
+      val check_simplification_tm_fun =
+        case !birs_sound_symb_freesymbintro_RULE_smt_timeout_handler of
+          NONE => check_simplification_tm
+        | SOME f => (fn simp_tm =>
+              check_simplification_tm simp_tm
               handle holba_z3Lib.Z3TIMEOUT (t, q) =>
                 let
                   val filename = holba_fileLib.get_tempfile "z3_query_timeout" ".txt";
                   val _ = holba_fileLib.write_to_file filename q;
                   val _ = print ("wrote birsmt query to disk: "^filename^"\n");
+                  val _ = f filename;
                 in
                   SOME (aux_moveawayLib.mk_oracle_preserve_tags [] "BIRS_FREESYMB_Z3TIMEOUT" simp_tm)
-                end;
+                end
+          )
+      val thm2_6 = solve_assumption (
+        RATOR_CONV (LAND_CONV birs_state_acc_CONV) THENC
+        (fn simp_tm =>
+          let
+            val simp_thm_o = check_simplification_tm_fun simp_tm;
             val _ = if isSome simp_thm_o then () else
-              raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound";
+              (print_term simp_tm; raise ERR "birs_sound_symb_freesymbintro_RULE" "expression replacement not sound");
             val thm = valOf simp_thm_o;
           in
             MP (SPEC (concl thm) satTheory.EQT_Imp1) thm
@@ -321,6 +329,22 @@ in (* local *)
     end;
   *)
 
+  fun print_mem_exp cutoff_size mem_exp =
+    let
+      (*val _ = print_term mem_exp;*)
+      val (mexp, stores) = birs_simp_instancesLib.dest_BExp_Store_list mem_exp [];
+      val _ = print ("MEM " ^ (term_to_string mexp) ^ " [\n");
+      fun print_store (expad, _, expv) =
+        let
+          val expad_s = term_to_string expad;
+          val expv_s = term_to_string expv;
+          val expv_s = if String.size expv_s > cutoff_size then "(...)" else expv_s;
+          val _ = print ("@" ^ expad_s ^ "\n---------->\n["^Int.toString(String.size expv_s)^"]" ^ expv_s ^ "\n...................................\n");
+        in () end;
+      val _ = map (print_store) stores;
+      val _ = print ("\n]\n");
+    in () end;
+
   local
     fun updatestore upd_m upd_v s =
       let
@@ -350,7 +374,19 @@ in (* local *)
         val symbname = get_freesymb_name ();
         val (_,mapped_exp) = (get_birs_Pi_first_env_top_mapping o concl) thm;
         val (_, stores) = birs_simp_instancesLib.dest_BExp_Store_list mapped_exp [];
-        val exp_tm = (fn (_,_,expv) => expv) (List.nth(stores,idx));
+        val exp_tm = (fn (_,_,expv) => expv) (List.nth(List.rev stores,idx));
+        (*
+        val _ = print ("\n\nidx:"^(Int.toString idx)^"\n");
+        val _ = print "\nvalue:\n";
+        val _ = print_term exp_tm;
+        val _ = print "\nmem before:\n";
+        val _ = print_mem_exp 10000 mapped_exp;
+        val _ = print "\nmem after:\n";
+        val symb_tm = bir_envSyntax.mk_BVar (stringSyntax.fromMLstring symbname, (bir_exp_typecheckLib.get_type_of_bexp exp_tm));
+        val _ = print_mem_exp 10000 (replacefun idx (bslSyntax.bden symb_tm) exp_tm mapped_exp); (*(bslSyntax.bden symb_tm) exp_tm exp_old*)
+        val _ = print "\n\n";
+        *)
+        (*val _ = raise ERR "" "";*)
       in
         birs_Pi_first_forget_RULE_gen symbname exp_tm (replacefun idx) thm
       end;
@@ -444,21 +480,6 @@ in (* local *)
   end
 
 
-fun print_mem_exp cutoff_size mem_exp =
-  let
-    (*val _ = print_term mem_exp;*)
-    val (mexp, stores) = birs_simp_instancesLib.dest_BExp_Store_list mem_exp [];
-    val _ = print ("MEM " ^ (term_to_string mexp) ^ " [\n");
-    fun print_store (expad, _, expv) =
-      let
-        val expad_s = term_to_string expad;
-        val expv_s = term_to_string expv;
-        val expv_s = if String.size expv_s > cutoff_size then "(...)" else expv_s;
-        val _ = print ("@" ^ expad_s ^ "\n---------->\n["^Int.toString(String.size expv_s)^"]" ^ expv_s ^ "\n...................................\n");
-      in () end;
-    val _ = map (print_store) stores;
-    val _ = print ("\n]\n");
-  in () end;
 
   fun birs_simplify_top_mapping exp exp_new thm =
     let
@@ -747,6 +768,9 @@ fun print_mem_exp cutoff_size mem_exp =
       let
         val merged_thm = birs_Pi_merge_RULE_ thm;
 
+        (*
+        NOTE: seems to work for now. this check was anyways too crude. some paths might additionally introduce tautologies as conjuncts,
+        and depending on what thm merging is used, it could be that the pcond conjuncts in sys and Pi are totally independent from each other
         (* check that the path condition has only changed in ways we want *)
         val pcond_sysl = (dest_bandl o get_birs_sys_pcond o concl) merged_thm;
         val pcond_Pifl = (dest_bandl o get_birs_Pi_first_pcond o concl) merged_thm;
@@ -754,9 +778,10 @@ fun print_mem_exp cutoff_size mem_exp =
         val pcond_Pif_extral = list_minus term_id_eq pcond_Pifl pcond_sysl;
         fun check_extra extra =
           if (length extra = 0) orelse ((length extra = 1) andalso (bir_extra_expsSyntax.is_BExp_IntervalPred (hd extra))) then () else
-          raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong:" ^ (term_to_string (mk_bandl extra)));
+          (print "\n\nextra path codnition conjucnts:\n"; List.app print_term extra; raise ERR "birs_Pi_merge_RULE" ("should be none or exactly one conjunct that is a BExp_IntervalPred, something is wrong"));
         val _ = check_extra pcond_sys_extral;
         val _ = check_extra pcond_Pif_extral;
+        *)
       in
         merged_thm
       end

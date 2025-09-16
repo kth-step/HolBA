@@ -858,6 +858,19 @@ Theorem birs_gen_env_thm:
 Proof
 SIMP_TAC std_ss [birs_gen_env_def, listTheory.FOLDR, birs_gen_env_fun_def]
 QED
+Theorem update_swap_thm:
+  !vn1 sv1 vn2 sv2 env.
+        (vn1 =+ sv1) ((vn2 =+ sv2) env) =
+        if vn1 = vn2 then
+          (vn1 =+ sv1) env (* we won't use this case *)
+        else
+          (vn2 =+ sv2) ((vn1 =+ sv1) env)
+Proof
+  REPEAT STRIP_TAC >>
+  Cases_on `vn1 = vn2` >> (
+    gvs [combinTheory.UPDATE_COMMUTES]
+  )
+QED
 Theorem birs_gen_env_FILTER_EQ_thm:
   !vn l.
     birs_gen_env (FILTER (\x. FST x <> vn) l) vn = NONE
@@ -1072,6 +1085,22 @@ Proof
   metis_tac [GSYM combinTheory.o_THM]
 QED
 
+Theorem map_pair_fun_EL_gen_thm[local]:
+  !f a b.
+    (\x. (FST x, f (SND x))) (a, b)
+    =
+    (a, f b)
+Proof
+  gvs []
+QED
 
+Theorem birs_symb_env_subst1_gen_env_EL_thm:
+  !v e vn ve.
+    (\x. (FST x, bir_exp_subst1 v e (SND x))) (vn, ve)
+    =
+    (vn, bir_exp_subst1 v e ve)
+Proof
+  REWRITE_TAC [map_pair_fun_EL_gen_thm]
+QED
 
 val _ = export_theory();

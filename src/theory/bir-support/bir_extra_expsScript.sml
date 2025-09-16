@@ -3,6 +3,7 @@ open HolBACoreSimps
 open bir_expTheory bir_exp_immTheory bir_valuesTheory
 open bir_typing_expTheory bir_envTheory wordsTheory
 open bir_exp_immSyntax
+open bir_exp_substitutionsTheory;
 
 (* Some extra expressions that are sometimes useful. *)
 
@@ -2253,6 +2254,14 @@ Proof
   Cases_on ‘x’ >> Cases_on ‘x'’ >> Cases_on ‘x''’ >> FULL_SIMP_TAC std_ss [bir_type_t_11] >> EVAL_TAC >> CASE_TAC >> (
     FULL_SIMP_TAC std_ss []) >>
   CASE_TAC >> FULL_SIMP_TAC std_ss []
+QED
+
+Theorem bir_exp_subst1_BExp_IntervalPred_thm:
+  !v ve e e_l e_h.
+    bir_exp_subst1 v ve (BExp_IntervalPred e (e_l, e_h)) =
+    BExp_IntervalPred (bir_exp_subst1 v ve e) (bir_exp_subst1 v ve e_l, bir_exp_subst1 v ve e_h)
+Proof
+  fs [BExp_IntervalPred_def, bir_exp_subst1_REWRS]
 QED
 
 

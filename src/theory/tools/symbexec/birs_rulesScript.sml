@@ -579,6 +579,7 @@ Theorem birs_rule_RENAME1_FREE_thm[local]:
   !prog L bs bs2 Pi alpha alpha'.
     bir_var_type alpha = bir_var_type alpha' ==>
     alpha NOTIN (birs_symb_symbols bs) ==>
+    alpha' NOTIN (birs_symb_symbols bs) ==>
     alpha' NOTIN (birs_symb_symbols bs2) ==>
     birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
     birs_symb_exec prog (bs, L, (birs_symb_subst1 (alpha, BExp_Den alpha') bs2) INSERT Pi)
@@ -615,6 +616,7 @@ Theorem birs_rule_RENAME1_FREE_spec_thm:
     birs_symb_exec prog (bs, L, bs2 INSERT Pi) ==>
     bir_var_type alpha = bir_var_type alpha' ==>
     alpha NOTIN birs_symb_symbols bs ==>
+    alpha' NOTIN birs_symb_symbols bs ==>
     alpha' NOTIN birs_symb_symbols bs2 ==>
     birs_symb_exec prog (bs, L, (birs_symb_subst1 (alpha, BExp_Den alpha') bs2) INSERT Pi)
 Proof
