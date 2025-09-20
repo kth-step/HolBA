@@ -47,7 +47,7 @@ Definition tg_jgmt_def:
    )
 End
 
-Theorem partial_global_to_partial:
+Theorem pg_jgmt_to_p_jgmt:
  !TS l ls pre post.
  first_enc TS ==>
  pg_jgmt TS l ls pre post ==>
@@ -63,48 +63,5 @@ gs[first_enc_def] >>
 QSPECL_ASSUM ``!(n:num) s'. _`` [`n`, `s'`] >>
 gs[]
 QED
-
-(*
-Theorem partial_global_equiv_partial:
- !TS l ls pre post.
- first_enc TS ==>
- (pg_jgmt TS l ls pre post <=>
-  p_jgmt TS l ls pre post /\
-  (!l'. l' IN ls ==>
-    ~(p_jgmt TS l {l'} pre (\s. F)) ==>
-    p_jgmt TS l' ls post post))
-Proof
-rpt strip_tac >>
-eq_tac >- (
- rpt strip_tac >- (
-  metis_tac[partial_global_to_partial]
- ) >>
- cheat
-) >>
-rpt strip_tac >>
-cheat
-QED
-
-Theorem total_global_to_total:
- !TS l ls pre post.
- first_enc TS ==>
- normal TS l ls pre ==>
- tg_jgmt TS l ls pre post <=>
- t_jgmt TS l ls pre post
-Proof
-cheat
-QED
-
-Theorem total_global_equiv_total:
- !TS l ls pre post.
- first_enc TS ==>
- tg_jgmt TS l ls pre post <=>
- (t_jgmt TS l ls pre post /\
-  !l'. l' IN ls ==>
-   p_jgmt TS l' ls post post)
-Proof
-cheat
-QED
-*)
 
 val _ = export_theory();

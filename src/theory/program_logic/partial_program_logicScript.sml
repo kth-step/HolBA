@@ -20,7 +20,7 @@ Definition p_jgmt_def:
   post s'
 End
 
-Theorem total_to_partial:
+Theorem t_jgmt_to_p_jgmt:
  !TS l ls pre post.
  first_enc TS ==>
  t_jgmt TS l ls pre post ==>
@@ -30,7 +30,7 @@ gs[t_jgmt_def, p_jgmt_def] >>
 metis_tac [weak_unique]
 QED
 
-Theorem partial_to_total:
+Theorem p_jgmt_to_t_jgmt:
  !TS l ls pre post.
  first_enc TS ==>
  p_jgmt TS l ls pre post ==>

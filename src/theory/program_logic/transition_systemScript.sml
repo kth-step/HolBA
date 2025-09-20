@@ -1427,4 +1427,67 @@ Cases_on `n` >> (gs[]) >>
 gs[FUNPOW_OPT_REWRS]
 QED
 
+Theorem weak_comp_funpow:
+ !TS.
+  first_enc TS ==>
+  !ls n s s''.
+   (!n'. n' > 0 /\ n' <= n ==> ?s'. FUNPOW_OPT TS.trs n' s = SOME s' /\ TS.ctrl s' NOTIN ls) ==>
+   (TS.weak ls s s'' <=>
+    ?s'. FUNPOW_OPT TS.trs n s = SOME s' /\
+    TS.weak ls s' s'')
+Proof
+rpt strip_tac >>
+eq_tac >- (
+ strip_tac >>
+ Cases_on `n = 0` >- (
+  qexists_tac `s` >>
+  gvs[FUNPOW_OPT_REWRS]
+ ) >>
+ qpat_assum `!n'. _` (fn thm => assume_tac $ Q.SPEC `n` thm) >>
+ `n > 0` by gs[] >>
+ FULL_SIMP_TAC std_ss [] >>
+ gs[first_enc_def] >>
+ qexists_tac `n'-n` >>
+ gs[] >>
+ `n' > n` by (
+  CCONTR_TAC >>
+  gs[] >>
+  qpat_x_assum `!n'. _` (fn thm => assume_tac $ Q.SPEC `n'` thm) >>
+  gs[]
+ ) >>
+ conj_tac >- (
+  metis_tac[FUNPOW_OPT_split2]
+ ) >>
+ rpt strip_tac >>
+ qpat_x_assum `!n''. _` (fn thm => assume_tac $ Q.SPEC `n''+n` thm) >>
+ gs[] >>
+ qexists_tac `s'3'` >>
+ gs[] >>
+ irule FUNPOW_OPT_INTER >>
+ qexistsl_tac [`s`, `n`] >>
+ gs[]
+) >>
+rpt strip_tac >>
+first_enc_weak_tac >>
+qexists_tac `n+n'` >>
+gs[] >>
+conj_tac >- (
+ ONCE_REWRITE_TAC[arithmeticTheory.ADD_COMM] >>
+ metis_tac[FUNPOW_OPT_ADD_thm]
+) >>
+rpt strip_tac >>
+Cases_on `n'' <= n` >- (
+  qpat_x_assum `!n'.
+          n' > 0 /\ n' <= n ==>
+          ?s'. FUNPOW_OPT TS.trs n' s = SOME s' /\ TS.ctrl s' NOTIN ls` (fn thm => assume_tac $ Q.SPEC `n''` thm) >>
+ gs[]
+) >>
+qpat_x_assum `!n''. _` (fn thm => assume_tac $ Q.SPEC `n''-n` thm) >>
+gs[] >>
+qexists_tac `s'3'` >>
+gs[] >>
+imp_res_tac FUNPOW_OPT_ADD_thm >>
+gs[]
+QED
+
 val _ = export_theory();

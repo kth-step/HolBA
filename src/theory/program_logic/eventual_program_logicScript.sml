@@ -29,7 +29,7 @@ Definition f_jgmt_def:
   post s'
 End
 
-Theorem eventual_to_total:
+Theorem f_jgmt_to_t_jgmt:
  !TS l ls pre post.
  first_enc TS ==>
  normal TS l ls pre ==>
@@ -86,7 +86,7 @@ Cases_on `n > 1` >- (
 gs[]
 QED
 
-Theorem total_to_eventual:
+Theorem t_jgmt_to_f_jgmt:
  !TS l ls pre post.
  first_enc TS ==>
  t_jgmt TS l ls pre post ==>
@@ -100,30 +100,5 @@ gs[first_enc_def] >>
 qexistsl_tac [`n`, `s'`] >>
 gs[]
 QED
-
-(*
-Theorem eventual_equiv_total:
- !TS l ls pre post.
- first_enc TS ==> 
- (f_jgmt TS l ls pre post <=>
- (t_jgmt TS l ls pre post \/
-  ?inv var.
-   t_jgmt TS l ls pre inv /\
-   (!l'. l' IN ls ==>
-    (!v. t_jgmt TS l' ls (\s. inv s /\ var s = v) (\s. inv s /\ var s < v)) /\
-    t_jgmt TS l' ls (\s. inv s /\ var s = 0) post)
- ))
-Proof
-rpt strip_tac >>
-eq_tac >- (
- rpt strip_tac >>
- cheat
-) >>
-rpt strip_tac >- (
- metis_tac[total_to_eventual]
-) >>
-cheat
-QED
-*)
 
 val _ = export_theory();
