@@ -1,3 +1,6 @@
+(*
+  Transition systems and their properties
+*)
 open HolKernel boolLib bossLib BasicProvers dep_rewrite;
 
 open holba_auxiliaryLib;
@@ -44,6 +47,32 @@ val first_enc_weak_tac =
 val first_enc_weak_goal_tac =
  PAT_ASSUM ``first_enc TS`` (fn thm => simp [MP (fst $ EQ_IMP_RULE (Q.SPEC `TS` first_enc_def)) thm]);
 
+Definition embedded_def:
+ embedded TS TS' <=>
+  (!s s' n. FUNPOW_OPT TS.trs n s = SOME s' ==> FUNPOW_OPT TS'.trs n s = SOME s') /\
+  (!s l. (TS'.ctrl s = l)  ==> (TS.ctrl s = l))
+End
+
+(* "ls is the domain of TS.trs" *)
+Definition trs_dom_def:
+ trs_dom TS ls =
+  !s l. (TS.trs s <> NONE /\ TS.ctrl s = l) <=> l IN ls
+End
+
+(* "TS, l, ls and pre enable a jgmt in normal form (all postconditions asserted where TS ends)" *)
+Definition normal_def:
+ normal TS l ls pre =
+  !s s'.
+   TS.ctrl s = l ==>
+   pre s ==>
+   !n.
+    (n > 0 /\
+     FUNPOW_OPT TS.trs n s = SOME s' /\
+     TS.ctrl s' IN ls
+    ) ==>
+    TS.trs s' = NONE
+End
+
 Theorem weak_comp:
  !TS.
   first_enc TS ==>
@@ -85,6 +114,7 @@ rpt strip_tac >| [
 ]
 QED
 
+(* "determinism of weak follows from first_enc" *)
 Theorem weak_unique:
  !TS.
   first_enc TS ==>
@@ -1119,5 +1149,345 @@ Cases_on `SUC n_l' = n_l` >- (
 fs []
 QED
 
+Theorem embedded_preserves_weak:
+!TS TS'.
+first_enc TS ==>
+first_enc TS' ==>
+embedded TS TS' ==>
+(!ls s s'. TS.weak ls s s' ==> TS'.weak ls s s')
+Proof
+rpt strip_tac >>
+gs[first_enc_def, embedded_def] >>
+qpat_x_assum `!s ls s'. TS.weak ls s s' <=> _` (fn thm => ALL_TAC) >>
+qpat_x_assum `!s ls s'. TS'.weak ls s s' <=> _` (fn thm => ALL_TAC) >>
+res_tac >>
+qexists_tac `n` >>
+gs[] >>
+metis_tac[]
+QED
+
+Theorem funpow_opt_inter_in_dom:
+!TS dom n n' s s' s''.
+trs_dom TS dom ==>
+n < n' ==>
+FUNPOW_OPT TS.trs n s = SOME s' ==>
+FUNPOW_OPT TS.trs n' s = SOME s'' ==>
+TS.ctrl s' IN dom
+Proof
+rpt strip_tac >>
+gs[trs_dom_def] >>
+qpat_x_assum `!s l. _` (fn thm => simp[GSYM $ Q.SPECL [`s'`, `TS.ctrl s'`] thm]) >>
+`?n''. n'' = n' - n` by gs[] >>
+`FUNPOW_OPT TS.trs n'' s' = SOME s''` by (
+ irule FUNPOW_OPT_INTER >>
+ qexistsl_tac [`s`, `n`] >>
+ gs[]
+) >>
+Cases_on `n'` >> (gs[]) >>
+`FUNPOW_OPT TS.trs (SUC (n'3' - n)) s' = SOME s''` suffices_by (
+ rpt strip_tac >>
+ gs[FUNPOW_OPT_REWRS]
+) >>
+`SUC n'3' - n = SUC (n'3' - n)` suffices_by (
+ strip_tac >>
+ FULL_SIMP_TAC pure_ss []
+) >>
+DECIDE_TAC
+QED
+
+Theorem embedded_weak_continues:
+!TS TS' ls n s s'.
+first_enc TS ==>
+first_enc TS' ==>
+embedded TS TS' ==>
+TS'.weak ls s s' ==>
+(!s'. ~TS.weak ls s s') ==>
+FUNPOW_OPT TS.trs n s = NONE ==>
+(!n'. n' < n ==> FUNPOW_OPT TS.trs n' s <> NONE) ==>
+?s'. FUNPOW_OPT TS'.trs n s = SOME s'
+Proof
+rpt strip_tac >>
+gs[first_enc_def] >>
+Cases_on `n' < n` >- (
+ `FUNPOW_OPT TS.trs n' s <> NONE` by res_tac >>
+ `FUNPOW_OPT TS.trs n' s = SOME s'` by (
+  FULL_SIMP_TAC std_ss [GSYM optionTheory.IS_SOME_EQ_NOT_NONE, optionTheory.IS_SOME_EXISTS] >>
+  gs[embedded_def] >>
+  (* ??? *)
+  res_tac >> res_tac >>
+  gs[]
+ ) >>
+ Cases_on `n = 0` >>
+ gs[] >>
+ qpat_x_assum `!s'' n''.
+          FUNPOW_OPT TS.trs n'' s = SOME s'' ==>
+          (~(n'' > 0) \/ TS.ctrl s'' NOTIN ls) \/
+          ?n'3'.
+            (n'3' < n'' /\ n'3' > 0) /\
+            !s''. FUNPOW_OPT TS.trs n'3' s = SOME s'' ==> TS.ctrl s'' IN ls` (fn thm => ASSUME_TAC $ Q.SPECL [`s'`, `n'`] thm) >>
+ gs[embedded_def] >>
+ qpat_x_assum `!n''.
+          n'' < n' /\ n'' > 0 ==>
+          ?s''. FUNPOW_OPT TS'.trs n'' s = SOME s'' /\ TS'.ctrl s'' NOTIN ls` (fn thm => ASSUME_TAC $ Q.SPECL [`n'''`] thm) >>
+ gs[] >>
+ `?s''. FUNPOW_OPT TS.trs n'3' s = SOME s''` by (
+  qpat_x_assum `!n'. n' < n ==> FUNPOW_OPT TS.trs n' s <> NONE` (fn thm => ASSUME_TAC $ Q.SPECL [`n'''`] thm) >>
+  gs[GSYM optionTheory.IS_SOME_EQ_NOT_NONE, optionTheory.IS_SOME_EXISTS]
+ ) >>
+ metis_tac[]
+) >>
+gs[] >>
+Cases_on `n' = n` >> gs[] >>
+`n < n'` by DECIDE_TAC >>
+qpat_x_assum `!n''.
+         n'' < n' /\ n'' > 0 ==>
+         ?s''. FUNPOW_OPT TS'.trs n'' s = SOME s'' /\ TS'.ctrl s'' NOTIN ls` (fn thm => ASSUME_TAC $ Q.SPECL [`n`] thm) >>
+gs[] >>
+Cases_on `n = 0` >> gvs[FUNPOW_OPT_REWRS]
+QED
+
+Theorem embedded_reachability:
+ !TS TS'.
+  first_enc TS ==>
+  first_enc TS' ==>
+  embedded TS TS' ==>
+  !dom dom'.
+   trs_dom TS dom ==>
+   trs_dom TS' dom' ==>
+   !ls'.
+    (!l'. l' IN ls' <=> l' IN dom' /\ l' NOTIN dom) ==>
+    !ls s s'.
+    (!l. TS.ctrl s = l ==> l IN dom) ==>
+    TS'.weak ls s s' ==>
+    ?s'. TS.weak (ls UNION ls') s s'
+Proof
+rpt strip_tac >>
+Cases_on `?s'. TS.weak ls s s'` >- (
+ gs[] >>
+ `?s'. TS.weak (ls UNION ls') s s'` by
+  (imp_res_tac weak_superset_thm >> gs[]) >>
+ metis_tac[]
+) >>
+gs[] >>
+Cases_on `?n. (OLEAST n. FUNPOW_OPT TS.trs n s = NONE) = SOME n` >- (
+ (* If not looping, then there exists a number of transitions n such that
+  * we reach NONE from s in TS *)
+ gs[whileTheory.OLEAST_EQ_SOME] >>
+ (* Alternative formulation of embedding *)
+ gs[embedded_def] >>
+ `?s'. TS.weak ls' s s'` suffices_by metis_tac[weak_superset_thm, pred_setTheory.UNION_COMM] >>
+ `n > 0` by (
+  Cases_on `n = 0` >> (gvs[FUNPOW_OPT_REWRS])
+ ) >>
+ `?n'. n' = n-1` by gs[] >>
+ `?s''. FUNPOW_OPT TS.trs n' s = SOME s''` by (
+  QSPECL_X_ASSUM ``!n'. _`` [`n'`] >>
+  gs[GSYM optionTheory.IS_SOME_EQ_NOT_NONE, optionTheory.IS_SOME_EXISTS]
+ ) >>
+ `TS.ctrl s'' IN dom' /\ TS.ctrl s'' NOTIN dom` by (
+  CONJ_TAC >- (
+   `?s'. FUNPOW_OPT TS'.trs n s = SOME s'` by (
+    irule embedded_weak_continues >>
+    gs[] >>
+    qexistsl_tac [`TS`, `ls`, `s'`] >>
+    gs[embedded_def]
+   ) >>
+   `?s'. TS'.trs s'' = SOME s'` suffices_by (strip_tac >> gs[trs_dom_def] >>
+    qpat_x_assum `!s l. TS'.trs s <> NONE /\ TS'.ctrl s = l <=> l IN dom'` (fn thm => ASSUME_TAC $ GSYM $ Q.SPECL [`s''`, `TS'.ctrl s''`] thm) >>
+    gs[]
+   ) >>
+   `?s'''. FUNPOW_OPT TS'.trs 1 s'' = SOME s'''` suffices_by (strip_tac >>
+    FULL_SIMP_TAC pure_ss [Once arithmeticTheory.ONE] >>
+    gs[FUNPOW_OPT_REWRS, AllCaseEqs()]
+   ) >>
+   qexists_tac `s'''` >>
+   irule FUNPOW_OPT_split >>
+   qexistsl_tac [`n`, `s`] >>
+   gs[] >>
+   Cases_on `n = 1` >- (
+    gvs[trs_dom_def] >>
+    FULL_SIMP_TAC pure_ss [Once arithmeticTheory.ONE] >>
+    gvs[FUNPOW_OPT_REWRS, AllCaseEqs()] >>  
+    qpat_x_assum `!s'3' l. TS.trs s'3' <> NONE /\ TS'.ctrl s'3' = l <=> l IN dom` (fn thm => ASSUME_TAC $ GSYM thm) >>
+    gs[] >>
+    QSPECL_X_ASSUM ``!s'3' l. l IN dom <=> TS.trs s'3' <> NONE /\ TS'.ctrl s'3' = l`` [`s`, `TS'.ctrl s`] >>
+    gs[]
+   ) >>
+   gs[]
+  ) >>
+  gs[trs_dom_def] >>
+  `TS.trs s'' = NONE` suffices_by (
+   `?l. TS.ctrl s'' = l` by gs[] >>
+   strip_tac >>
+   gs[] >>
+   metis_tac[]
+  ) >>
+  Cases_on `n` >> gs[] >>
+  (* All previous steps were SOME, last must have been to NONE *)
+  `FUNPOW_OPT TS.trs (SUC n'') s = TS.trs s''` suffices_by gs[] >>
+  Cases_on `TS.trs s''` >- (
+   simp[pred_setTheory.UNION_COMM]
+  ) >>
+  REWRITE_TAC[Once arithmeticTheory.SUC_ONE_ADD] >>
+  irule FUNPOW_OPT_ADD_thm >>
+  qexists_tac `s''` >>
+  REWRITE_TAC[Once arithmeticTheory.ONE] >>
+  simp[FUNPOW_OPT_REWRS]
+ ) >>
+ `TS.ctrl s'' IN ls'` by gs[] >>
+ `!n''. n'' < n' ==> ?s'''. FUNPOW_OPT TS.trs n'' s = SOME s''' /\ TS.ctrl s''' NOTIN ls'` by (
+  rpt strip_tac >>
+  Cases_on `n' = 0` >> (gs[]) >>
+  `?s'3'. FUNPOW_OPT TS.trs n'' s = SOME s'3'` by (
+   QSPECL_X_ASSUM ``!n'. _`` [`n''`] >>
+   gs[GSYM optionTheory.IS_SOME_EQ_NOT_NONE, optionTheory.IS_SOME_EXISTS]
+  ) >>
+  qexists_tac `s'''` >>
+  gs[] >>
+  metis_tac[funpow_opt_inter_in_dom]  
+ ) >>
+ `?s'3' n'3'.
+          (n'3' > 0 /\ FUNPOW_OPT TS.trs n'3' s = SOME s'3' /\
+           TS'.ctrl s'3' IN dom' /\ TS'.ctrl s'3' NOTIN dom) /\
+          !n'4'.
+            n'4' < n'3' /\ n'4' > 0 ==>
+            ?s'4'.
+              FUNPOW_OPT TS.trs n'4' s = SOME s'4' /\
+              (TS'.ctrl s'4' NOTIN dom' \/ TS'.ctrl s'4' IN dom)` suffices_by gs[first_enc_def] >>
+ qexistsl_tac [`s''`, `n'`] >>
+ gs[] >>
+ Cases_on `n = 1` >- (
+  gvs[trs_dom_def] >>
+  gvs[FUNPOW_OPT_REWRS]
+ ) >>
+ gs[]
+) >>
+(* We're looping if we proceed from s... *)
+`!n. ?s'. FUNPOW_OPT TS.trs n s = SOME s'` by (
+ rpt strip_tac >>
+ gs[whileTheory.OLEAST_def] >>
+ QSPECL_X_ASSUM ``!n. _`` [`n`] >>
+ gs[GSYM optionTheory.IS_SOME_EQ_NOT_NONE, optionTheory.IS_SOME_EXISTS]
+) >>
+(*
+Cases_on `!n. ?s'. FUNPOW_OPT TS.trs n s = SOME s'` >- (
+*)
+(* s reaches ls in TS' in some n' steps greater than zero *)
+`?n'. n' > 0 /\ FUNPOW_OPT TS'.trs n' s = SOME s' /\
+ TS'.ctrl s' IN ls /\
+!n''.
+    n'' < n' /\ n'' > 0 ==>
+    ?s''.
+     FUNPOW_OPT TS'.trs n'' s = SOME s'' /\
+     TS'.ctrl s'' NOTIN ls` by (gs[first_enc_def] >> metis_tac[]) >>
+(* But what happens in TS at n' steps? *)
+qpat_x_assum `!n. ?s'. _` (fn thm => ASSUME_TAC $ Q.SPEC `n'` thm) >>
+`!ls s s' n. FUNPOW_OPT TS.trs n s = SOME s' ==> FUNPOW_OPT TS'.trs n s = SOME s'` by metis_tac[embedded_def] >>
+gs[] >>
+`s'' = s'` by (res_tac >> gs[]) >>
+gvs[] >>
+(* Contradiction with !s'. ~TS.weak ls s s' *)
+gs[first_enc_def, embedded_def] >>
+`(~(n' > 0) \/ TS'.ctrl s' NOTIN ls) \/
+ ?n'4'.
+   (n'4' < n' /\ n'4' > 0) /\
+   !s'3'.
+     FUNPOW_OPT TS.trs n'4' s = SOME s'3' ==> TS'.ctrl s'3' IN ls` by (res_tac >> gs[]) >>
+(* Earlier step exists *)
+`?s'''. FUNPOW_OPT TS.trs n'''' s = SOME s'''` by metis_tac[FUNPOW_OPT_prev_EXISTS] >>
+`TS'.ctrl s'3' IN ls` by metis_tac[] >>
+metis_tac[]
+QED
+
+Theorem trs_outside_dom:
+!TS dom l s.
+ first_enc TS ==>
+ trs_dom TS dom ==>
+ TS.ctrl s = l ==>
+ l NOTIN dom ==>
+ TS.trs s = NONE
+Proof
+rpt strip_tac >>
+gs[trs_dom_def] >>
+metis_tac[]
+QED
+
+Theorem weak_outside_dom:
+!TS dom l s.
+ first_enc TS ==>
+ trs_dom TS dom ==>
+ TS.ctrl s = l ==>
+ l NOTIN dom ==>
+ !ls s'. ~TS.weak ls s s'
+Proof
+rpt strip_tac >>
+imp_res_tac trs_outside_dom >>
+gs[first_enc_def] >>
+Cases_on `n` >> (gs[]) >>
+gs[FUNPOW_OPT_REWRS]
+QED
+
+Theorem weak_comp_funpow:
+ !TS.
+  first_enc TS ==>
+  !ls n s s''.
+   (!n'. n' > 0 /\ n' <= n ==> ?s'. FUNPOW_OPT TS.trs n' s = SOME s' /\ TS.ctrl s' NOTIN ls) ==>
+   (TS.weak ls s s'' <=>
+    ?s'. FUNPOW_OPT TS.trs n s = SOME s' /\
+    TS.weak ls s' s'')
+Proof
+rpt strip_tac >>
+eq_tac >- (
+ strip_tac >>
+ Cases_on `n = 0` >- (
+  qexists_tac `s` >>
+  gvs[FUNPOW_OPT_REWRS]
+ ) >>
+ qpat_assum `!n'. _` (fn thm => assume_tac $ Q.SPEC `n` thm) >>
+ `n > 0` by gs[] >>
+ FULL_SIMP_TAC std_ss [] >>
+ gs[first_enc_def] >>
+ qexists_tac `n'-n` >>
+ gs[] >>
+ `n' > n` by (
+  CCONTR_TAC >>
+  gs[] >>
+  qpat_x_assum `!n'. _` (fn thm => assume_tac $ Q.SPEC `n'` thm) >>
+  gs[]
+ ) >>
+ conj_tac >- (
+  metis_tac[FUNPOW_OPT_split2]
+ ) >>
+ rpt strip_tac >>
+ qpat_x_assum `!n''. _` (fn thm => assume_tac $ Q.SPEC `n''+n` thm) >>
+ gs[] >>
+ qexists_tac `s'3'` >>
+ gs[] >>
+ irule FUNPOW_OPT_INTER >>
+ qexistsl_tac [`s`, `n`] >>
+ gs[]
+) >>
+rpt strip_tac >>
+first_enc_weak_tac >>
+qexists_tac `n+n'` >>
+gs[] >>
+conj_tac >- (
+ ONCE_REWRITE_TAC[arithmeticTheory.ADD_COMM] >>
+ metis_tac[FUNPOW_OPT_ADD_thm]
+) >>
+rpt strip_tac >>
+Cases_on `n'' <= n` >- (
+  qpat_x_assum `!n'.
+          n' > 0 /\ n' <= n ==>
+          ?s'. FUNPOW_OPT TS.trs n' s = SOME s' /\ TS.ctrl s' NOTIN ls` (fn thm => assume_tac $ Q.SPEC `n''` thm) >>
+ gs[]
+) >>
+qpat_x_assum `!n''. _` (fn thm => assume_tac $ Q.SPEC `n''-n` thm) >>
+gs[] >>
+qexists_tac `s'3'` >>
+gs[] >>
+imp_res_tac FUNPOW_OPT_ADD_thm >>
+gs[]
+QED
 
 val _ = export_theory();

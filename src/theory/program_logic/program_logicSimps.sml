@@ -1,3 +1,7 @@
+(*
+  Simplification set fragment for use when reasoning with transition systems.
+*)
+(* TODO: Is this really needed? *)
 structure program_logicSimps :> program_logicSimps =
 struct
 
