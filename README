@@ -19,10 +19,13 @@ HolBA-SE directories are as follows:
 
 Notable subdirectories:
 
-- `src/theory/tools/symbexec`: HOL4 symbolic execution theory, instantiation for BIR
-- `src/tools/symbexec`: 
+- `src/theory/tools/symbexec`: HOL4 symbolic execution theory, BIR instantiation
+- `src/tools/symbexec`: functions for applying symbolic execution results
 
 ## Getting Started Guide
+
+$ docker build -t holbase .
+$ docker run -it --rm holbase
 
 ## Step-by-Step Instructions for Replication
 
