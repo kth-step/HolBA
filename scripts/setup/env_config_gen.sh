@@ -36,12 +36,6 @@ function is_holba {
   [[ "$(grep -c 'HOLBA' "$1/scripts/setup/env_derive.sh")" -ge 1 ]] \
       || { echo "bad env_derive.sh" > /dev/stderr; return $FALSE; }
 
-  [[ -f "$1/README.md" ]] \
-      || { echo "no README.md" > /dev/stderr; return $FALSE; }
-
-  [[ "$(head -n1 "$1/README.md" 2> /dev/null | grep -c '# HolBA')" -eq 1 ]] \
-      || { echo "bad README.md" > /dev/stderr; return $FALSE; }
-
   true
 }
 
