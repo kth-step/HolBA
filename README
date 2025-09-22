@@ -1,0 +1,80 @@
+# Artifact for paper 19: HolBA-SE
+
+This README describes the artifact for VMCAI paper 19, which
+has the title "Forward Symbolic Execution for Trustworthy Automation
+of Binary Code Verification". We refer to this artifact as HolBA-SE.
+
+## HolBA-SE overview
+
+HolBA-SE is an extension of the HolBA library for binary analysis.
+In turn, HolBA depends on the HOL4 theorem prover, implemented in
+Standard ML (SML). HolBA-SE relies specifically on the Poly/ML compiler.
+
+HolBA-SE directories are as follows:
+
+- `scripts`: installation scripts
+- `src`: SML sources for HolBA-SE library
+- `examples/riscv`: SML sources for RISC-V application
+- `examples/arm_cm0`: SML sources for ARM Cortex-M0 application
+
+Notable subdirectories:
+
+- `src/theory/tools/symbexec`: HOL4 symbolic execution theory, instantiation for BIR
+- `src/tools/symbexec`: 
+
+## Getting Started Guide
+
+## Step-by-Step Instructions for Replication
+
+### 0. Building HolBA-SE
+
+In the root directory (where this README resides), run:
+
+$ Holmake
+
+This takes 5-10 minutes on a modern machine.
+
+### 1. Formal proofs of theorems
+
+Machine-checked theorems in HOL4 have the SML type `thm`.
+To ensure that there are theorems with this type.
+
+$ hol
+
+- Symbolic execution rules
+- Symbolic matching definition
+- Symbolic semantics of BIR
+- inference rule system is "correct" for any symbolic/concrete system satisfying Theorem 1
+- Theorem 1 for BIR
+- Theorem 2
+
+### 2. Evaluation of symbolic execution (Table 1)
+
+$ cd examples/riscv
+$ ./collect_experiment_data.py
+
+This takes up to a few minutes on a modern machine.
+
+The final output should have symbolic execution time in seconds
+for all example programs in Table 1. This data is also stored
+in the file experiment_data.log.
+
+### 3. RISC-V functional verification case studies (Section 6)
+
+ChaCha20 cipher case study:
+
+$ cd examples/riscv/chacha20
+$ Holmake
+
+This can take 5-10 minutes on a modern machine.
+
+RISC-V kernel hand-written assembly case study:
+
+$ cd examples/riscv/kernel-trap
+$ Holmake
+
+This can take 5-10 minutes on a modern machine.
+
+### 4. Cortex-M0 execution time verification case studies (Section 7)
+
+### Non-replicable: Cortex-M0 hardware testing and aiT tool
