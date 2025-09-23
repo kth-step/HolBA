@@ -15,56 +15,8 @@ BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
 cycles for returning from this function at 0x8007152w (bx lr) are: 3
 
 Label                                 #calls     real     user   system       gc
-0_birs_sound_symb_freesymbintro_RULE       1    0.047    0.037    0.001    0.008
-0_birs_symb_subst1_CONV                    1    0.003    0.003    0.000    0.000
-1_birs_sound_symb_rename_free_RULE         1    0.020    0.016    0.004    0.000
-auxset_bir_status_EQ_CONV                123    0.014    0.013    0.001    0.000
-auxset_bir_var_EQ_CONV                   529    0.022    0.011    0.001    0.008
-auxset_bir_varname_EQ_CONV              1562    0.025    0.021    0.001    0.000
-auxset_birs_state_EQ_CONV                 41    0.002    0.002    0.000    0.000
-auxset_birs_state_EQ_CONV_0status         41    0.001    0.001    0.000    0.000
-bir_exp_subst1_CONV                       15    0.002    0.002    0.000    0.000
-bir_smt_check_unsat::birsmt               30    0.087    0.007    0.005    0.000
-bir_vars_of_exp_DIRECT_CONV              130    0.007    0.006    0.000    0.000
-birs_Pi_first_freesymb_RULE                1    0.047    0.037    0.001    0.008
-birs_basic_execute                         1    0.857    0.761    0.041    0.030
-birs_basic_from_sums                     107    0.002    0.001    0.000    0.000
-birs_basic_merge                           1    0.020    0.016    0.004    0.000
-birs_env_set_order_CONV                    2    0.003    0.003    0.000    0.000
-birs_exec_to                               1    0.788    0.712    0.036    0.022
-birs_from_summaries                      107    0.001    0.001    0.000    0.000
-birs_from_summaries_inst                 107    0.000    0.000    0.000    0.000
-birs_intervals_Pi_bounds_RULE              1    0.000    0.000    0.000    0.000
-birs_intervals_Pi_unify_RULE               1    0.063    0.047    0.001    0.008
-birs_intervals_Pi_unify_name_RULE          1    0.020    0.016    0.004    0.000
-birs_rule_STEP_SEQ_fun                   106    0.611    0.565    0.027    0.018
-birs_rule_STEP_fun                         1    0.011    0.011    0.000    0.000
-birs_rule_SUBST_trysimp_first_fun         41    0.072    0.070    0.000    0.002
-birs_rule_tryjustassert_fun              107    0.078    0.055    0.004    0.002
-birs_rule_tryprune_fun                   214    0.003    0.002    0.000    0.000
-birs_simp_regular                         41    0.043    0.041    0.000    0.002
-birs_simp_try_fix_assumptions             24    0.001    0.001    0.000    0.000
-birs_simp_try_load                        16    0.003    0.003    0.000    0.000
-birs_simp_try_recurse                     41    0.000    0.000    0.000    0.000
+[[[[........]]]]
 birs_summary_gen                           1    0.953    0.795    0.052    0.030
-birs_symb_symbols_DIRECT_CONV              6    0.042    0.037    0.005    0.000
-build_tree                                 1    0.781    0.710    0.031    0.022
-eval_exp_CONV                             83    0.163    0.144    0.008    0.010
-eval_exp_CONV_p1                          83    0.041    0.036    0.001    0.003
-eval_exp_CONV_p2                          83    0.059    0.049    0.002    0.007
-eval_exp_CONV_p4                          83    0.030    0.027    0.002    0.000
-eval_exp_CONV_p5                          83    0.031    0.028    0.002    0.000
-exec_step_CONV                           107    0.526    0.484    0.025    0.016
-exec_step_CONV_B                          82    0.464    0.425    0.024    0.015
-exec_step_CONV_E                          25    0.010    0.009    0.000    0.002
-reduce_tree                                1    0.000    0.000    0.000    0.000
-rule_CONS_WIDEN                            2    0.014    0.007    0.000    0.000
-senv_typecheck_CONV                       83    0.028    0.024    0.001    0.002
-type_of_bir_exp_DIRECT_CONV              252    0.013    0.012    0.000    0.000
-zzz_1_matchmp                              2    0.001    0.001    0.000    0.000
-zzz_2_stateacc                             2    0.002    0.002    0.000    0.000
-zzz_3_spec                                 2    0.000    0.000    0.000    0.000
-zzz_4_mp                                   2    0.000    0.000    0.000    0.000
-zzz_5_stateacc                             3    0.004    0.004    0.000    0.000
+[[[[........]]]]
 Exporting theory "tiny_analysis" ... done.
 Theory "tiny_analysis" took 0.89228s to build

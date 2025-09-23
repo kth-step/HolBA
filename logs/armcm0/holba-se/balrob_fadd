@@ -17,73 +17,9 @@ BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
 cycles for returning from this function at 0x800447Cw (pop {r3, r4, r5, r6, r7, pc}) are: 10
 
 Label                                 #calls     real     user   system       gc
-0_birs_sound_symb_freesymbintro_RULE    2108  208.470  184.751    8.040   14.566
-0_birs_symb_subst1_CONV                 3998   29.311   27.323    0.754    1.156
-1_birs_sound_symb_inst_RULE               68  168.891  158.549    4.487    5.576
-1_birs_sound_symb_rename_RULE            136  115.074  101.903    3.895    9.087
-1_birs_sound_symb_rename_free_RULE       108   12.291   11.086    0.648    0.542
-auxset_bir_exp_EQ_CONV                   876    2.639    0.797    0.047    1.786
-auxset_bir_pc_EQ_CONV                   1458    0.137    0.127    0.006    0.000
-auxset_bir_status_EQ_CONV               3816    0.464    0.432    0.011    0.006
-auxset_bir_var_EQ_CONV               3212530  128.944  105.305    4.321   11.401
-auxset_bir_varname_EQ_CONV           1865519   26.490   20.749    1.263    0.518
-auxset_birs_state_EQ_CONV               2182    2.943    1.082    0.059    1.786
-auxset_birs_state_EQ_CONV_0status       2182    0.073    0.066    0.002    0.000
-auxset_birs_state_EQ_CONV_1pc           1458    0.145    0.135    0.007    0.000
-auxset_birs_state_EQ_CONV_2pcond         876    2.645    0.807    0.047    1.786
-bir_exp_subst1_CONV                   103948   24.340   22.439    0.600    1.014
-bir_smt_check_unsat::birsmt             6340   16.423    8.602    0.480    0.266
-bir_vars_of_exp_DIRECT_CONV           138506    5.271    4.630    0.259    0.087
-birs_Pi_first_freesymb_RULE             2108  209.365  185.601    8.067   14.571
-birs_basic_execute                        15  481.516  418.126   14.052   45.368
-birs_basic_from_sums                    4047  265.099  233.076    7.774   22.750
-birs_basic_merge                          15  320.853  283.903   11.295   21.601
-birs_env_set_order_CONV                 6663   20.278   18.879    0.551    0.755
-birs_exec_to                              15  459.303  404.020   12.974   39.072
-birs_freesymbs_DIRECT_CONV              1040  123.607   99.550    3.812   20.059
-birs_from_summaries                     4047  265.064  233.046    7.773   22.750
-birs_from_summaries_inst                4047  264.857  232.850    7.764   22.747
-birs_intervals_Pi_bounds_RULE             15   12.466    5.425    0.376    4.886
-birs_intervals_Pi_unify_RULE              83   25.223   16.183    1.215    6.361
-birs_intervals_Pi_unify_name_RULE         15   13.129   11.874    0.680    0.561
-birs_rule_SEQ_fun                        239  119.517  102.646    3.317   13.453
-birs_rule_SEQ_fun_p2                     239   67.652   54.523    2.619   10.429
-birs_rule_SEQ_fun_p3                     239    5.963    3.841    0.185    1.931
-birs_rule_SEQ_fun_p4                     239   44.537   42.969    0.495    1.055
-birs_rule_STEP_SEQ_fun                  3793   60.839   56.749    1.463    2.500
-birs_rule_STEP_fun                       186    1.478    1.354    0.073    0.046
-birs_rule_SUBST_trysimp_first_fun       4493   12.693   11.344    0.337    0.362
-birs_rule_tryjustassert_fun             3979    3.220    2.262    0.069    0.053
-birs_rule_tryprune_fun                  7958    0.880    0.615    0.022    0.004
-birs_simp_regular                       4493    4.011    3.185    0.103    0.066
-birs_simp_try_fix_assumptions           1323    0.198    0.188    0.006    0.000
-birs_simp_try_load                         9    0.048    0.032    0.000    0.000
-birs_simp_try_recurse                   4493    0.018    0.009    0.000    0.000
-birs_simp_try_recurse_overhead          1856    0.168    0.161    0.002    0.000
-birs_simp_try_store                       28    0.243    0.102    0.008    0.000
-birs_sound_inst_RULE                      68  250.035  219.794    7.370   22.276
+[[[[........]]]]
 birs_summary_gen                          15  803.292  702.863   25.377   67.000
-birs_symb_symbols_DIRECT_CONV          11424  308.220  272.215   11.850   23.702
-birs_symb_symbols_set_DIRECT_CONV       2267   97.565   80.615    3.737   13.057
-build_tree                                15  339.689  301.282    9.652   25.619
-eval_exp_CONV                           3373   13.287   12.446    0.501    0.302
-eval_exp_CONV_p1                        3373    3.081    2.882    0.128    0.052
-eval_exp_CONV_p2                        3373    3.261    3.055    0.124    0.070
-eval_exp_CONV_p4                        3373    2.246    2.092    0.090    0.049
-eval_exp_CONV_p5                        3373    4.569    4.255    0.153    0.126
-exec_step_CONV                          3979   56.298   52.349    1.367    2.461
-exec_step_CONV_B                        3263   52.064   48.332    1.229    2.382
-exec_step_CONV_E                         716    0.981    0.927    0.026    0.020
-reduce_tree                               15  119.532  102.661    3.318   13.453
-rule_CONS_NARROW                          68   27.213   16.292    0.815    9.935
-rule_CONS_WIDEN                         2772  102.503   82.917    3.071   12.104
-senv_typecheck_CONV                     3373    1.364    1.280    0.055    0.016
-type_of_bir_exp_DIRECT_CONV            17927    1.297    1.165    0.039    0.036
-zzz_1_matchmp                           2772   21.761   20.362    0.768    0.598
-zzz_2_stateacc                          2772   43.491   36.604    1.209    5.600
-zzz_3_spec                              2772    4.799    4.484    0.177    0.118
-zzz_4_mp                                2772    0.103    0.095    0.002    0.000
-zzz_5_stateacc                          4880   27.383   22.982    0.940    3.400
+[[[[........]]]]
 
 
 smt query times = num: 6340; sum:4551; avg:1; range:[0, 89] ms
