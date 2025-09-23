@@ -20,20 +20,44 @@ HolBA-SE directories are as follows:
 Notable subdirectories:
 
 - `src/theory/tools/symbexec`: HOL4 symbolic execution theory, BIR instantiation
-- `src/tools/symbexec`: functions for applying symbolic execution results
+- `src/tools/symbexec`: SML functions for applying symbolic execution results
 - `examples/riscv/chacha20`: ChaCha20 cipher case study
 - `examples/riscv/kernel-trap`: RISC-V kernel case study
 
+We estimate the artifact takes 1-2 hours to build and replicate
+on a modern machine. We tested on an Intel Core i5-9600K with 32GB RAM.
+Low RAM such as 8GB is unlikely to work.
+
 ## Getting Started Guide
 
-### Using Dockerfile
+### Alternative 1: using bundled Dockerfile
+
+We provide a Dockerfile in the artifact root directory
+(where this README resides) that can be used to bootstrap
+and enter an environment for replicating results:
 
 $ docker build -t holbase .
 $ docker run -it --rm holbase
 
-This takes 20 minutes on a modern machine.
+This takes 20-25 minutes on a modern machine and builds an x86 environment.
+The second docker command enters the shell where step-by-step instructions
+below can be run.
 
-### Manual building
+### Alternative 2: manual building
+
+HolBA-SE can be replicated outside Docker by manually installing the following dependencies:
+
+- Poly/ML, version 5.7.1 or later (https://github.com/polyml/polyml/releases)
+- HOL4, tag trindemossen-1 (https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-1)
+- Z3, version 4.13.4 (https://github.com/Z3Prover/z3/releases/tag/z3-4.13.4)
+
+HolBA is then built using the "Holmake" tool bundled with HOL4. To let HolBA
+know where to find the z3 binary, its path must be set via the environment:
+
+$ export HOL4_Z3_EXECUTABLE=/path/to/bin/z3
+
+Assuming Holmake is in the path, this should give an environment equivalent
+to the Docker one in this shell.
 
 ## Step-by-Step Instructions for Replication
 
@@ -44,6 +68,8 @@ In the root directory (where this README resides), run:
 $ Holmake
 
 This takes 10-20 minutes on a modern machine.
+
+The result should be output with lots of "OK".
 
 ### 1. HOL4 definitions and theorems
 
@@ -124,7 +150,7 @@ Figure 4 (p. 10):
 
 > symb_rulesTheory.symb_rule_SEQ_thm;
 
-### 2. Evaluation of symbolic execution (Table 1)
+### 2. Evaluation of symbolic execution (Table 1, p. 14)
 
 Starting from the root directory, run:
 
@@ -134,23 +160,40 @@ This takes 5-10 minutes on a modern machine.
 
 The final output should have symbolic execution time in seconds
 for all example programs in Table 1. This data is also stored
-in the file experiment_data.log.
+in the file experiment_data.log. We provide a local sample of
+experiment_data.log in logs/riscv/experiment_data.log for
+comparison.
 
 ### 3. RISC-V functional verification case studies (Section 6)
 
-ChaCha20 cipher case study:
+To check the ChaCha20 cipher case study, start from the root directory and run:
 
-$ cd examples/riscv/chacha20
-$ Holmake
+$ cd examples/riscv/chacha20 && Holmake
+
+This can take 5-10 minutes on a modern machine.
+
+The output should include a bunch of "OK".
+
+Key files that are checked:
+
+- examples/riscv/chacha20/chachaScript.sml - abstract definition of ChaCha
+- examples/riscv/chacha20/chacha20_spec_riscvScript.sml - ChaCha20 column round and diagonal round pre/postconditions
+- examples/riscv/chacha20/chacha20_column_round_propScript.sml - ChaCha20 column round RISC-V contract (see near end of file)
+- examples/riscv/chacha20/chacha20_diagonal_round_propScript.sml - ChaCha20 diagonal round RISC-V contract (see near end of file)
+
+To check RISC-V kernel case study, start from the root directory and run:
+
+$ cd examples/riscv/kernel-trap && Holmake
 
 This can take 5-10 minutes on a modern machine.
 
-RISC-V kernel hand-written assembly case study:
+The output should include a bunch of "OK".
 
-$ cd examples/riscv/kernel-trap
-$ Holmake
+Key files that are checked:
 
-This can take 5-10 minutes on a modern machine.
+- examples/riscv/kernel-trap/kernel_trap_spec_riscvScript.sml - pre/postconditions
+- examples/riscv/kernel-trap/kernel_trap_entry_propScript.sml - trap_entry RISC-V contract (see near end of file)
+- examples/riscv/kernel-trap/kernel_trap_return_propScript.sml - trap_return RISC-V contract (see near end of file)
 
 ### 4. Cortex-M0 execution time verification case studies (Section 7)
 
