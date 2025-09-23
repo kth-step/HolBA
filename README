@@ -16,6 +16,8 @@ HolBA-SE directories are as follows:
 - `src`: SML sources for HolBA-SE library
 - `examples/riscv`: SML sources for RISC-V application
 - `examples/arm_cm0`: SML sources for ARM Cortex-M0 application
+- `src_exectime`: sources for the ARM Cortex-M0 benchmark binary, the hardware testing harness, and the AbsInt aiT project files
+- `logs`: contains the various logs for our verification applications, and also from hardware testing and AbsInt aiT runs
 
 Notable subdirectories:
 
@@ -197,4 +199,35 @@ Key files that are checked:
 
 ### 4. Cortex-M0 execution time verification case studies (Section 7)
 
-### 5. Cortex-M0 hardware testing and aiT tool (Section 7)
+Checking the execution time evaluations in Section consosts of two parts.
+
+#### Reproducing verificaion results
+
+To check the verification results using HolBA-SE, start from the root directory and run:
+
+$ ./src_exectime/holba-se_run_all.sh
+
+This takes about an hour on a modern machine.
+
+The output should include a bunch of "OK".
+
+Key files that are checked:
+
+- examples/arm_cm0/tiny/tiny_analysisScript.sml - 
+- examples/arm_cm0/aes/aes_o0_wholeScript.sml - 
+- examples/arm_cm0/aes/aes_o0_loopScript.sml - 
+- examples/arm_cm0/modexp_simple/modexp_asm_uidivmodScript.sml - 
+- examples/arm_cm0/modexp_simple/modexp_asmScript.sml - 
+- examples/arm_cm0/motor_set/motor_o0Script.sml - 
+- examples/arm_cm0/motor_set/motor_o3Script.sml - 
+- examples/arm_cm0/balrob/v2-faster/...Script.sml - 
+- examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml - 
+
+The outputs of the verification tool reside in the various .hollogs directories and are automatically copied into the logs directory with simpler names. These files contain the execution times, the validated runtimes, and manually exctracted execution times for return instructions. Note that the validated runtimes have to be added together with the return times as they are not accounted for as symbolic execution stops before executing the return instructions.
+
+#### Data from testing on hardware and AbsInt aiT tool
+
+Reproducing the "aiT" column of Table 2 requires a proprietary tool and an appropriate license. In case this is not available, the logs directory contains our collected outputs. They are the same for the same binary even if the tool runs multiple times.
+
+Reproducing the "testing" column of Table 2 requires a specialized hardware setup, which is described in the EmbExp-Box repository (https://github.com/kth-step/embexp-box). Given those in place, log collection is executed by the testing harness in src_exectime/testing/run_all_testing.sh.
+
