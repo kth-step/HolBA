@@ -1,0 +1,52 @@
+# embexp instance index
+# ---------------------------------
+
+ifndef EMBEXP_INSTANCE_IDX
+  export EMBEXP_INSTANCE_IDX=0
+endif
+
+
+
+# embexp port redirections
+# ---------------------------------
+
+export EMBEXP_UART_PORT=$(shell bash -c "echo $$(( 20000 + ($(EMBEXP_INSTANCE_IDX) * 100) ))")
+export EMBEXP_GDBS_PORT=$(shell bash -c "echo $$(( 20013 + ($(EMBEXP_INSTANCE_IDX) * 100) ))")
+export PROGPLAT_LOAD_ELF_IN=$(PROGPLAT_LOAD_ELF)
+
+
+# targets for running and debugging
+# ---------------------------------
+
+connect:
+	../EmbExp-Box/interface/remote.py $(PROGPLAT_BOARD) -idx $(EMBEXP_INSTANCE_IDX)
+
+# Ctrl+] mode character
+uart:
+	telnet localhost $(EMBEXP_UART_PORT)
+
+log:
+	stty -icanon && nc localhost $(EMBEXP_UART_PORT)
+
+run debug: $(NAME)
+	./scripts/run_gdb.py ${GDB} "localhost:$(EMBEXP_GDBS_PORT)" $(NAME) $(BOARDCONFIG) $@
+
+runlog: $(NAME)
+	./scripts/run_only.py ${GDB} "localhost:$(EMBEXP_GDBS_PORT)" $(NAME) $(BOARDCONFIG) run_exp
+	@echo "======================="
+	@echo "======================="
+	@cat temp/uart.log
+
+runlog_reset: $(NAME)
+	./scripts/connect_and_run.py
+
+runlog_try: $(NAME)
+	./scripts/try_run_only.py
+
+cleanuart:
+	make clean && make runlog && cat temp/uart.log
+
+reset:
+	${GDB} --eval-command="target remote localhost:$(EMBEXP_GDBS_PORT)" -x scripts/gdb/reset_$(BOARDCONFIG).gdb -x scripts/gdb/run.gdb
+
+.PHONY: connect uart log run runlog runlog_reset runlog_try cleanuart reset

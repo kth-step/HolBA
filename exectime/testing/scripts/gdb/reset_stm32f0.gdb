@@ -1,0 +1,2 @@
+monitor reset halt
+

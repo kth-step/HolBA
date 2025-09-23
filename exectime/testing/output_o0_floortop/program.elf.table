@@ -1,0 +1,328 @@
+
+output/program.elf:     file format elf32-littlearm
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00009568  08000000  08000000  00000078  2**3
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rodata       000001e0  08009570  08009570  000095e8  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .rodata.set_inputs 000001e8  08009750  08009750  000097c8  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  3 .rodata.__func__.3834 00000009  08009938  08009938  000099b0  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rodata.__func__.3839 00000008  08009944  08009944  000099bc  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  5 .rodata.__func__.3844 00000007  0800994c  0800994c  000099c4  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .data         00001028  20000000  08009960  000099d0  2**3
+                  CONTENTS, ALLOC, LOAD, DATA
+  7 .bss          00000748  20001028  0800a988  0000a9f8  2**2
+                  ALLOC
+  8 .debug_info   00002f1b  00000000  00000000  0000a9f8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_abbrev 00000dfb  00000000  00000000  0000d913  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_aranges 00000368  00000000  00000000  0000e70e  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 000002b8  00000000  00000000  0000ea76  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_macro  000029bf  00000000  00000000  0000ed2e  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 13 .debug_line   0000249d  00000000  00000000  000116ed  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 14 .debug_str    00009cde  00000000  00000000  00013b8a  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 15 .comment      0000007f  00000000  00000000  0001d868  2**0
+                  CONTENTS, READONLY
+ 16 .ARM.attributes 0000002f  00000000  00000000  0001d8e7  2**0
+                  CONTENTS, READONLY
+ 17 .debug_frame  0000098c  00000000  00000000  0001d918  2**2
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+08000000 l    d  .text	00000000 .text
+08009570 l    d  .rodata	00000000 .rodata
+08009750 l    d  .rodata.set_inputs	00000000 .rodata.set_inputs
+08009938 l    d  .rodata.__func__.3834	00000000 .rodata.__func__.3834
+08009944 l    d  .rodata.__func__.3839	00000000 .rodata.__func__.3839
+0800994c l    d  .rodata.__func__.3844	00000000 .rodata.__func__.3844
+20000000 l    d  .data	00000000 .data
+20001028 l    d  .bss	00000000 .bss
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_ranges	00000000 .debug_ranges
+00000000 l    d  .debug_macro	00000000 .debug_macro
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .ARM.attributes	00000000 .ARM.attributes
+00000000 l    d  .debug_frame	00000000 .debug_frame
+00000000 l    df *ABS*	00000000 init.c
+08001680 l     F .text	00000018 wr32
+08001698 l     F .text	00000014 rd32
+080016ac l     F .text	0000001e or32
+080016ca l     F .text	0000001e and32
+080016e8 l     F .text	000000f4 gpio_func
+080017dc l     F .text	00000070 gpio_mode
+20001768 l     O .bss	00000004 ticks
+08001994 l     F .text	0000015c isr_reset
+08001af0 l     F .text	00000014 isr_none
+08009938 l     O .rodata.__func__.3834	00000009 __func__.3834
+08001b04 l     F .text	00000014 isr_nmi
+08009944 l     O .rodata.__func__.3839	00000008 __func__.3839
+08001b18 l     F .text	00000014 isr_hf
+0800994c l     O .rodata.__func__.3844	00000007 __func__.3844
+08001b2c l     F .text	00000018 isr_systick
+08000000 l     O .text	00000040 _isrv_sys
+08000040 l     O .text	00000080 _isrv_irq
+00000000 l    df *ABS*	00000000 arch/m0/src/experiment/exp_time_run_asm.o
+080000c0 l       .text	00000000 scamv_entry
+08001c1e l       .text	00000000 scamv_exit
+20001010 l       .data	00000000 _sp_store
+20001018 l       .data	00000000 _scamv_ret_store
+20001020 l       .data	00000000 _scamv_timeafter_store
+08001c40 l       .text	00000000 _NoOverflow
+00000000 l    df *ABS*	00000000 motor.c
+00000000 l    df *ABS*	00000000 io.c
+08000518 l     F .text	0000003a strlen_own
+00000000 l    df *ABS*	00000000 benchmark.c
+00000000 l    df *ABS*	00000000 binarypatcher.c
+00000000 l    df *ABS*	00000000 main.c
+00000000 l    df *ABS*	00000000 printf.c
+08001300 l     F .text	00000028 printf_string
+08001328 l     F .text	0000008e printf_int
+080013b6 l     F .text	00000080 printf_hex
+08001436 l     F .text	0000004e printf_bin
+00000000 l    df *ABS*	00000000 uart_gen.c
+00000000 l    df *ABS*	00000000 time.c
+00000000 l    df *ABS*	00000000 exp_time_runner.c
+00000000 l    df *ABS*	00000000 all/src/benchmark_asm.o
+08001ba4 l       .text	00000000 _NoOverflow
+08001bb4 l       .text	00000000 _benchmark_helper_wait_1ms_loop
+00000000 l    df *ABS*	00000000 _udivsi3.o
+08004000 l       .text	00000000 .udivsi3_skip_div0_test
+00000000 l    df *ABS*	00000000 _divsi3.o
+08004154 l       .text	00000000 .divsi3_skip_div0_test
+00000000 l    df *ABS*	00000000 _dvmd_tls.o
+00000000 l    df *ABS*	00000000 _arm_cmpsf2.o
+00000000 l    df *ABS*	00000000 addsf3.c
+00000000 l    df *ABS*	00000000 divsf3.c
+00000000 l    df *ABS*	00000000 eqsf2.c
+00000000 l    df *ABS*	00000000 gesf2.c
+00000000 l    df *ABS*	00000000 lesf2.c
+00000000 l    df *ABS*	00000000 mulsf3.c
+00000000 l    df *ABS*	00000000 subsf3.c
+00000000 l    df *ABS*	00000000 fixsfsi.c
+00000000 l    df *ABS*	00000000 floatsisf.c
+00000000 l    df *ABS*	00000000 _clzsi2.o
+00000000 l    df *ABS*	00000000 pid.c
+08006000 l     F .text	00000028 abs_own
+08006028 l     F .text	000000cc atan2f_own
+00000000 l    df *ABS*	00000000 all/src/otherbenchs.o
+08007000 l       .text	00000000 eval3_entry
+08007018 l       .text	00000000 ait_e1
+0800702a l       .text	00000000 ait_e2
+08007038 l       .text	00000000 finished
+0800703a l       .text	00000000 loop
+080070e0 l       .text	00000000 _reffunc_ld3_jumphere
+08007118 l       .text	00000000 _reffunc_ld3_j1
+08007120 l       .text	00000000 _reffunc_ld3_j2
+08007128 l       .text	00000000 _reffunc_ld3_j3
+08007130 l       .text	00000000 _reffunc_ld3_j4
+08007138 l       .text	00000000 _reffunc_ld3_j5
+08007140 l       .text	00000000 _reffunc_ld3_j6
+08007148 l       .text	00000000 _reffunc_ld3_j7
+08007150 l       .text	00000000 _reffunc_ld3_j8
+08007170 l       .text	00000000 _reffunc_bx_jumphere
+08007188 l       .text	00000000 _reffunc_b16_00_j
+08007192 l       .text	00000000 _reffunc_b16_10_j
+08007198 l       .text	00000000 _reffunc_b16_finished
+080071b4 l       .text	00000000 l6
+0800720c l       .text	00000000 l12
+080071ea l       .text	00000000 l10
+08007224 l       .text	00000000 _reffunc_cjmp_jumphere
+00000000 l    df *ABS*	00000000 all/src/morebenchs_asm.o
+0800801e l       .text	00000000 _my_uidivmod_asm_n1
+0800800c l       .text	00000000 _my_uidivmod_asm_n5
+08008028 l       .text	00000000 _my_uidivmod_asm_n2
+0800801a l       .text	00000000 _my_uidivmod_asm_nb
+08008034 l       .text	00000000 _my_uidivmod_asm_n3
+08008062 l       .text	00000000 _my_uidivmod_asm_n4
+0800804c l       .text	00000000 _my_uidivmod_asm_n6
+0800803a l       .text	00000000 _my_uidivmod_asm_na
+08008042 l       .text	00000000 _my_uidivmod_asm_n7
+08008046 l       .text	00000000 _my_uidivmod_asm_n9
+0800805c l       .text	00000000 _my_uidivmod_asm_n8
+080080be l       .text	00000000 _my_uidivmod_mod_asm_n1
+0800808c l       .text	00000000 _my_uidivmod_mod_asm_n3
+080080b4 l       .text	00000000 _my_uidivmod_mod_asm_n2
+080080b8 l       .text	00000000 _my_uidivmod_mod_asm_n9
+0800810a l       .text	00000000 _my_uidivmod_mod_asm_n4
+080080ce l       .text	00000000 _my_uidivmod_mod_asm_n8
+08008100 l       .text	00000000 _my_uidivmod_mod_asm_n5
+080080f2 l       .text	00000000 _my_uidivmod_mod_asm_n6
+08008104 l       .text	00000000 _my_uidivmod_mod_asm_n7
+08008130 l       .text	00000000 _my_modexp_loop
+08008150 l       .text	00000000 _my_modexp_branch_skip
+0800816a l       .text	00000000 _my_modexp_loop_done
+0800819a l       .text	00000000 _motor_prep_input_l1
+080081a4 l       .text	00000000 _motor_prep_input_l2
+00000000 l    df *ABS*	00000000 morebenchs.c
+0800910c l     F .text	00000438 wc_AesEncryptSimplified
+080000dc g     F .text	00000044 motor_prep_input
+20001274 g     O .bss	00000004 motorPower
+080015e0 g     F .text	0000002e expmem_byte_to_word
+080012f0 g     F .text	0000000e printf_echoloop
+080060f4 g     F .text	00000048 imu_handler_pid_entry_empty
+2000104c g     O .bss	00000004 motor_sram_memb_2
+08001484 g     F .text	000000f6 printf
+080008a8 g     F .text	000009c0 set_inputs
+080006dc g     F .text	00000050 benchmark_measure2
+080070e8 g       .text	00000000 _reffunc_ld4
+08007080 g       .text	00000000 _reffunc_test4_9nopsubadd
+08001c58 g       .text	00000000 _time_run
+08007158 g       .text	00000000 _reffunc_bx
+2000000c g     O .data	00000004 kd
+08001b44 g     F .text	00000014 systicks
+08000552 g     F .text	00000032 out_vprintf
+20001030 g       .bss	00000000 _sbss
+08007178 g       .text	00000000 _reffunc_b16_00
+08004420 g     F .text	00000334 .hidden __aeabi_fadd
+20001044 g     O .bss	00000004 motor_sram_memb_0
+080018d4 g     F .text	00000044 uart_write
+0800077c g     F .text	0000004c benchmark_measure4
+080002c4 g     F .text	0000000a io_init
+20001278 g     O .bss	00000004 angleLast
+08007098 g       .text	00000000 _reffunc_test5
+08000678 g     F .text	0000000a disable_all_interrupts
+080043d8 g     F .text	00000012 .hidden __aeabi_fcmpgt
+080005f0 g     F .text	00000088 out_info_inthex
+080070b8 g       .text	00000000 _reffunc_ld
+08004000 g     F .text	0000010a .hidden __udivsi3
+08001610 g     F .text	00000038 _clean_experiment_memory
+080054dc g     F .text	00000094 .hidden __aeabi_i2f
+08006190 g     F .text	00000044 imu_handler_pid_set_state_INPUT
+08004c60 g     F .text	0000009e .hidden __lesf2
+20001164 g     O .bss	00000100 out_buffer
+20000000 g       .data	00000000 _sdata
+08008178 g       .text	00000000 _motor_prep_input
+08001bca g       .text	00000000 _imu_handler_pid_entry_dummy
+08004ac4 g     F .text	0000004e .hidden __nesf2
+08009960 g       .data	00000000 _erom
+20001054 g     O .bss	00000105 in_buffer
+08000280 g     F .text	00000044 motor_set_f
+08001648 g     F .text	00000038 time_run
+08007180 g       .text	00000000 _reffunc_b16_10
+08008070 g       .text	00000000 _my_uidivmod_mod_asm
+08001b58 g       .text	00000000 _benchmark_timer_reset
+08005064 g     F .text	00000388 .hidden __aeabi_fsub
+20001368 g     O .bss	00000400 _experiment_memory
+20001770 g       .bss	00000000 _ebss
+080090aa g     F .text	00000062 my_modexp
+08007010 g       .text	00000000 _alignmenttestfun_b16
+080043ec g     F .text	00000012 .hidden __aeabi_fcmpge
+08007048 g       .text	00000000 _reffunc_test1
+20001294 g     O .bss	00000004 errorSumNew
+08001974 g     F .text	00000020 uart_getchar
+080005ac g     F .text	00000028 out_debug
+08004b6c g     F .text	0000009c .hidden __gtsf2
+080061d4 g     F .text	00000044 imu_handler_pid_set_state_IMU
+080043c4 g     F .text	00000012 .hidden __aeabi_fcmple
+08000864 g     F .text	00000044 benchmark_measure7
+08006218 g     F .text	0000022c imu_handler_pid_entry
+080070c8 g       .text	00000000 _reffunc_ld3
+08007058 g       .text	00000000 _reffunc_test2
+080070c0 g       .text	00000000 _reffunc_ld2_ldnop
+08004154 g     F .text	00000000 .hidden __aeabi_idiv
+080070b0 g       .text	00000000 _reffunc_st
+08008120 g       .text	00000000 _my_modexp_asm
+20001034 g     O .bss	00000004 motor_sram_mem2
+080055c8 g     F .text	0000003c .hidden __clzsi2
+0800184c g     F .text	00000088 uart_init
+08000684 g     F .text	00000058 benchmark_measure
+080012c4 g     F .text	0000000a main_core1
+0800157a g     F .text	0000002a uart_print_string
+0800703a g       .text	00000000 _start
+20001348 g     O .bss	00000010 my_aes_inBlock
+080001ac g     F .text	0000008c motor_set_r
+20001050 g     O .bss	00000004 in_idx
+20001280 g     O .bss	00000004 errorSum
+20001048 g     O .bss	00000004 motor_sram_memb_1
+08005450 g     F .text	00000040 .hidden __aeabi_f2iz
+08004ac4 g     F .text	0000004e .hidden __eqsf2
+20001290 g     O .bss	00000004 errorDiff
+080015a4 g     F .text	00000012 uart_echoloop
+08000120 g     F .text	0000008c motor_set_l
+08000584 g     F .text	00000028 out_info
+08009960 g       *ABS*	00000000 _sdata_flash
+080002d0 g     F .text	0000018c in_handle
+080047b8 g     F .text	00000224 .hidden __aeabi_fdiv
+08009000 g     F .text	000000aa my_uidivmod_mod
+20001288 g     O .bss	00000004 angle
+080012e2 g     F .text	0000000e printf_init
+08004368  w    F .text	00000002 .hidden __aeabi_ldiv0
+20000008 g     O .data	00000004 ki
+08000814 g     F .text	00000050 benchmark_measure6
+08007220 g       .text	00000000 _reffunc_cjmp
+08009544 g     F .text	00000024 my_aes
+08001b82 g       .text	00000000 _benchmark_timer_measure
+080012d8 g     F .text	0000000a main_core3
+08001284 g     F .text	00000040 main
+08004c60 g     F .text	0000009e .hidden __ltsf2
+08004000 g     F .text	00000000 .hidden __aeabi_uidiv
+080004f4 g     F .text	00000024 out_data_int
+08004394 g     F .text	00000010 .hidden __aeabi_cfcmple
+08004154 g     F .text	000001cc .hidden __divsi3
+0800613c g     F .text	00000054 imu_handler_pid_set_state_PID
+08001bb2 g       .text	00000000 _benchmark_helper_wait_1ms
+20000010 g     O .data	00001000 Te
+20001358 g     O .bss	00000010 my_aes_outBlock
+08004b6c g     F .text	0000009c .hidden __gesf2
+0800025a g     F .text	00000026 motor_set_multi
+2000128c g     O .bss	00000004 error
+080043a4 g     F .text	0000000c .hidden __aeabi_fcmpeq
+08004d58 g     F .text	00000264 .hidden __aeabi_fmul
+20001284 g     O .bss	00000004 pid_counter
+20001040 g     O .bss	00000004 motor_sram_mema_2
+0800438c g     F .text	00000018 .hidden __aeabi_cfrcmple
+0800072c g     F .text	00000050 benchmark_measure3
+08008000 g       .text	00000000 _my_uidivmod_asm
+20001160 g     O .bss	00000004 in_data
+2000103c g     O .bss	00000004 motor_sram_mema_1
+08007068 g       .text	00000000 _reffunc_test3
+08007040 g       .text	00000000 _reffunc_test0
+08001276 g     F .text	0000000e experiment_complete_marker
+20001030 g     O .bss	00000004 motor_sram_mem1
+080043b0 g     F .text	00000012 .hidden __aeabi_fcmplt
+08007110 g       .text	00000000 _reffunc_ld5_ldldbr8
+2000115c g     O .bss	00000004 in_data_len
+08000238 g     F .text	00000022 motor_set
+0800410c g     F .text	00000008 .hidden __aeabi_uidivmod
+20001159 g     O .bss	00000001 in_ch
+20001272 g     O .bss	00000001 motor_on
+080005d4 g     F .text	0000001c out_error
+20001028 g       .data	00000000 _edata
+20001264 g     O .bss	0000000e imu_values
+08009570 g       .rodata	00000000 .etext
+08001918 g     F .text	00000038 uart_read
+08001268 g     F .text	0000000e benchmark_run
+080012ce g     F .text	0000000a main_core2
+0800045c g     F .text	00000098 out_data
+08004394 g     F .text	00000010 .hidden __aeabi_cfcmpeq
+080015b8 g     F .text	00000028 run_time_experiment
+08001be4 g       .text	00000000 _time_run1
+08004368  w    F .text	00000002 .hidden __aeabi_idiv0
+080000cc g     F .text	00000010 motor_dummy_fun
+20000000 g     O .data	00000004 angleTarget
+080081b8 g       .text	00000000 _motor_prep_input_mod
+20000004 g     O .data	00000004 kp
+080071a0 g       .text	00000000 _mymodexp
+080007c8 g     F .text	0000004c benchmark_measure5
+08004320 g     F .text	00000008 .hidden __aeabi_idivmod
+20001298 g     O .bss	000000b0 my_aes_rk
+2000127c g     O .bss	00000004 errorLast
+08001950 g     F .text	00000024 uart_putchar
+20001038 g     O .bss	00000004 motor_sram_mema_0
+
+

@@ -1,0 +1,4 @@
+{
+  "result_type": "raw_ok",
+  "result": "Init complete.\n----\nprint_cache_valid\n----\n0\t::0\t:: tag: 00100000\n2\t::0\t:: tag: 00100080\n----\nExperiment complete.\n"
+}

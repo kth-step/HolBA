@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.absint.com/dtd/a3-apx-22.04.xsd" xmlns="http://www.absint.com/apx" build="11114914" target="arm" version="22.04">
+ <options>
+  <general_options>
+   <include_path>..%2F..%2F..%2F..%2Fabsint</include_path>
+  </general_options>
+  <analyses_options>
+   <default_loop_bound>0</default_loop_bound>
+   <default_recursion_bound>0</default_recursion_bound>
+  </analyses_options>
+  <arm_options>
+   <general>
+    <target>Cortex-M0</target>
+   </general>
+  </arm_options>
+ </options>
+ <files>
+  <executables>latestround/program_o3_floortop.elf</executables>
+  <ais>program.ais</ais>
+ </files>
+ <analyses>
+  <analysis id="ld5_ldldbr8" type="wcet_analysis" enabled="true">
+   <analysis_start>_reffunc_ld5_ldldbr8</analysis_start>
+  </analysis>
+  <analysis id="my_aes" type="wcet_analysis" enabled="true">
+   <analysis_start>my_aes</analysis_start>
+  </analysis>
+  <analysis id="_my_modexp_asm" type="wcet_analysis" enabled="true" group="modexp">
+   <analysis_start>_my_modexp_asm</analysis_start>
+  </analysis>
+  <analysis id="_my_uidivmod_mod_asm" type="wcet_analysis" enabled="true" group="modexp">
+   <analysis_start>_my_uidivmod_mod_asm</analysis_start>
+  </analysis>
+  <analysis id="motor_set" type="wcet_analysis" enabled="true" group="motor">
+   <analysis_start>motor_set</analysis_start>
+  </analysis>
+  <analysis id="motor_set_multi" enabled="true" type="wcet_analysis" group="motor">
+   <analysis_start>motor_set_multi</analysis_start>
+  </analysis>
+  <analysis id="motor_set_l" enabled="true" type="wcet_analysis" group="motor">
+   <analysis_start>motor_set_l</analysis_start>
+  </analysis>
+  <analysis id="motor_prep_input" enabled="true" type="wcet_analysis" group="motor">
+   <analysis_start>motor_prep_input</analysis_start>
+  </analysis>
+  <analysis id="imu_handler_pid_entry" type="wcet_analysis" enabled="true" group="pid">
+   <analysis_start>imu_handler_pid_entry</analysis_start>
+  </analysis>
+  <analysis id="__aeabi_fadd" type="wcet_analysis" enabled="true" group="pid">
+   <analysis_start>__aeabi_fadd</analysis_start>
+  </analysis>
+  <analysis id="__aeabi_fdiv" type="wcet_analysis" enabled="true" group="pid">
+   <analysis_start>__aeabi_fdiv</analysis_start>
+  </analysis>
+ </analyses>
+</project>

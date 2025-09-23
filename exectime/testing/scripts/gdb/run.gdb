@@ -1,0 +1,4 @@
+monitor resume
+detach
+quit
+

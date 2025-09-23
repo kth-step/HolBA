@@ -1,0 +1,19 @@
+# enter AIS annotations here or use 'Insert AIS annotation...' from the context menu
+# enter AIS annotations here or use 'Insert AIS annotation...' from the context menu
+
+compiler: "arm-gcc";
+
+#clock: 1 MHz;
+
+area 0x0 to 0xffffffff {
+  attribute "memory_type": "SRAM";
+  attribute "port_width": 32;
+  access time: 0 cycle;
+  access cached: false;
+}
+
+
+#mapping { max length: 1; default unroll: 100; }
+mapping { max length: inf; default unroll: 100; }   # High analysis precision
+#mapping { max length: inf; default unroll:   2; }   # Less loop unrolling, reduced complexity
+#mapping { max length: 2;   default unroll:   2; }   # Low analysis precision, for stack usage analysis usually sufficient

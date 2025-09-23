@@ -1,0 +1,52 @@
+# cross compiler
+# ---------------------------------
+
+ifndef EMBEXP_CROSS
+  EMBEXP_CROSS = aarch64-linux-gnu-
+  ifeq ("$(PROGPLAT_ARCH)", "arm8")
+    ifdef HOLBA_GCC_ARM8_CROSS
+      EMBEXP_CROSS = ${HOLBA_GCC_ARM8_CROSS}
+    endif
+  else ifeq ("$(PROGPLAT_ARCH)", "arm7")
+    ifdef HOLBA_GCC_ARM_CROSS
+      EMBEXP_CROSS = ${HOLBA_GCC_ARM_CROSS}
+    endif
+  else ifeq ("$(PROGPLAT_ARCH)", "m0")
+    ifdef HOLBA_GCC_ARM_CROSS
+      EMBEXP_CROSS = ${HOLBA_GCC_ARM_CROSS}
+    endif
+  else ifeq ("$(PROGPLAT_ARCH)", "rv32imac")
+    ifdef HOLBA_GCC_RISCV64_CROSS
+      EMBEXP_CROSS = ${HOLBA_GCC_RISCV64_CROSS}
+    endif
+  endif
+endif
+
+ifndef EMBEXP_GDB
+  EMBEXP_GDB = ${EMBEXP_CROSS}gdb
+endif
+
+CROSS = ${EMBEXP_CROSS}
+GDB   = ${EMBEXP_GDB}
+$(info !!! using EMBEXP_CROSS = "$(CROSS)")
+$(info !!! using EMBEXP_GDB   = "$(GDB)")
+
+ifeq ("$(PROGPLAT_ARCH)", "m0")
+  ARMDIR = $(dir $(EMBEXP_CROSS))..
+
+  ARMSYS = $(ARMDIR)/arm-none-eabi/lib/thumb/v6-m
+  ARMLIB = $(ARMDIR)/lib/gcc/arm-none-eabi/7.3.1/thumb/v6-m
+  $(info !!! using ARMSYS       = "$(ARMSYS)")
+  $(info !!! using ARMLIB       = "$(ARMLIB)")
+else ifeq ("$(PROGPLAT_ARCH)", "rv32imac")
+  RVDIR = $(dir $(EMBEXP_CROSS))..
+
+  RVSYS = $(RVDIR)/riscv64-unknown-elf/lib/rv32imac/ilp32
+  RVLIB = $(RVDIR)/lib/gcc/riscv64-unknown-elf/8.3.0/rv32imac/ilp32
+  $(info !!! using RVSYS        = "$(RVSYS)")
+  $(info !!! using RVLIB        = "$(RVLIB)")
+endif
+
+$(info )
+
+
