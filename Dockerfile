@@ -2,29 +2,44 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ENV HOLBA_POLYML_VERSION=PREPACKAGED
+ENV HOLBA_POLYML_VERSION=v5.9.1
 ENV HOLBA_Z3_VERSION=4.13.4
 ENV HOLBA_HOL4_VERSION=trindemossen-1
 ENV HOLBA_Z3_ASSET_SUFFIX=-x64-glibc-2.35.zip
 
+# Install required dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    unzip \
+    tar \
+    wget \
+    build-essential \
+    python3 \
+    python3-pip \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create a non-root user with a known password
-RUN useradd -m -s /bin/bash evaluser \
+RUN useradd -ms /bin/bash evaluser \
     && echo "evaluser:evalpass" | chpasswd \
     && usermod -aG sudo evaluser \
     && echo "evaluser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Copy current directory into the user's home
-COPY . /home/evaluser/
+# Setup opt directory
+ENV HOLBA_OPT_DIR=/home/evaluser/HolBA_opt
+RUN mkdir -p $HOLBA_OPT_DIR && chown -R evaluser:evaluser $HOLBA_OPT_DIR
 
-# Ensure the user owns their files
-RUN chown -R evaluser:evaluser /home/evaluser
-
-# Switch to the non-root user
+# Switch to the non-root user, copy into the container, run setup and configuration
+# ---------------------------------------------------------------------------------
 USER evaluser
-WORKDIR /home/evaluser
+WORKDIR /home/evaluser/HolBA
+
+COPY --chown=evaluser:evaluser HolBA .
 
 RUN ./scripts/setup/install_base.sh
-
 RUN ./scripts/setup/install_z3.sh
 
-CMD ["bash"]
+RUN ./configure.sh
+
+CMD ["bash", "-i", "-c", "source ./env.sh && exec bash -i"]
