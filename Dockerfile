@@ -35,7 +35,7 @@ RUN mkdir -p $HOLBA_OPT_DIR && chown -R evaluser:evaluser $HOLBA_OPT_DIR
 USER evaluser
 WORKDIR /home/evaluser/HolBA
 
-COPY --chown=evaluser:evaluser HolBA .
+COPY --chown=evaluser:evaluser . .
 
 RUN ./scripts/setup/install_base.sh
 RUN ./scripts/setup/install_z3.sh
