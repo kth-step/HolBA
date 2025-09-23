@@ -49,7 +49,7 @@ tags
 opt
 
 # logs for general purpose logging
-logs
+#logs
 
 # configuration files
 config.env.sh
