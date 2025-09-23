@@ -199,7 +199,7 @@ Key files that are checked:
 
 ### 4. Cortex-M0 execution time verification case studies (Section 7)
 
-Checking the execution time evaluations in Section consosts of two parts.
+Checking the execution time evaluations in Section consists of two parts.
 
 #### Reproducing verificaion results
 
@@ -223,11 +223,18 @@ Key files that are checked:
 - examples/arm_cm0/balrob/v2-faster/...Script.sml - a set of subfunctions for pid example
 - examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml - pid example
 
-The outputs of the verification tool reside in the various .hollogs directories and are automatically copied into the logs directory with simpler names. These files contain the execution times, the validated runtimes, and manually exctracted execution times for return instructions. Note that the validated runtimes have to be added together with the return times as they are not accounted for as symbolic execution stops before executing the return instructions.
+The outputs of the verification tool reside in the various .hollogs directories and are automatically copied into the logs/armcm0/holba-se directory with simpler names. These files contain the evaluation times, the validated execution times, and manually exctracted execution times for return instructions.
+
+For easier search of the result values, the logs/armcm0/holba-se directory is preloaded with logs from one of our runs, where irrelevant information has been removed.
+
+Note that the validated execution times have to be added together with the return times as they are not accounted for as symbolic execution stops before executing the return instructions. This is done so that the values in the table are as comparable as possible (testing and holba-se use the same counting, while aiT starts from an empty pipeline and also includes return instructions).
+
+For evaluation times, some subfunctions of the pid example run in parallel, while other subfunctions or subfragments run in sequence. This has to be taken into account when determining the overall times for symbolic execution.
 
 #### Data from testing on hardware and AbsInt aiT tool
 
-Reproducing the "aiT" column of Table 2 requires a proprietary tool and an appropriate license. In case this is not available, the logs directory contains our collected outputs. They are the same for the same binary even if the tool runs multiple times.
+Reproducing the "aiT" column of Table 2 requires a proprietary tool and an appropriate license. The aiT project files for this reside in src_exectime/aiT. In case this is not available, the logs/armcm0/aiT directory contains our collected outputs. They are the same for the same binary even if the tool runs multiple times.
 
-Reproducing the "testing" column of Table 2 requires a specialized hardware setup, which is described in the EmbExp-Box repository (https://github.com/kth-step/embexp-box). Given those in place, log collection is executed by the testing harness in src_exectime/testing/run_all_testing.sh.
+Regarding the sentence with "two subsequent calls to motor_set o3" in Section 7.2, the counterexample is already shown with function itself. The argument is that aiT counts 2-3 more cycles due to their processor model, which assumes an empty pipeline at start. Our counting instead is like the one given in the ARM Cortex-M0 reference manual, which means that aiT WCET values are at least two cycles higher than ours (both testing and HolBA-SE upper execution time bounds). By this argument, aiT WCET values that are strictly smaller than the highest measured value plus 2 constitute counterexamples to WCET soundness. For the motor_set o3 example we also include a symbolic execution without overapproximation (the corresponding theorem includes AIO in the name and is produced in the same log file) and this confirms the highest observed execution time during testing (i.e., 91 cycles) is indeed the lowest upper execution time bound. The same argument about counterexamples applies to the WCET value of aiT for the aes example, for which all values in the table are identical.
 
+Reproducing the "testing" column of Table 2 requires a specialized hardware setup, which is described in the EmbExp-Box repository (https://github.com/kth-step/embexp-box), which is also required for data collection. Given those in place, log collection is executed by the testing harness in src_exectime/testing, which is executed with the script run_all_testing.sh. We collected and included three sets of hardware testing logs in logs/armcm0/testing.
