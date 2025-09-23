@@ -1,0 +1,21 @@
+$ ./run_all_exectime.sh
+
+tiny_analysisTheory                                                      examples/arm_cm0/tiny  (4s)     OK
+
+aes_o0_loopTheory                                                         examples/arm_cm0/aes (62s)     OK
+aes_o0_wholeTheory                                                                            (499s)     OK
+
+...
+
+motor_o3Theory                                                                                (156s)     OK
+motor_o0Theory                                                                                (368s)     OK
+
+balrob_endsTheory                                                                             (127s)     OK
+balrob_fmulTheory                                                                             (427s)     OK
+balrob_miscTheory                                                                             (146s)     OK
+balrob_symb_transfTheory                                                                       (10s)     OK
+balrob_faddTheory                                                                             (766s)     OK
+balrob_fdivTheory                                                                             (871s)     OK
+balrob_fsubTheory                                                                              (20m)     OK
+balrob_ftopTheory                                                                             (741s)     OK
+balrob_topTheory                                                                               (25m)     OK
