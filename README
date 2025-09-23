@@ -1,6 +1,6 @@
 # HolBA-SE
 
-This README describes the artifact for VMCAI paper 19, which
+This README describes the artifact for VMCAI 2025 paper 19, which
 has the title "Forward Symbolic Execution for Trustworthy Automation
 of Binary Code Verification". We refer to the artifact as HolBA-SE.
 
@@ -49,7 +49,7 @@ HolBA-SE can be replicated outside Docker by manually installing the following d
 
 - Poly/ML, version 5.7.1 or later (https://github.com/polyml/polyml/releases)
 - HOL4, tag trindemossen-1 (https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-1)
-- Z3, version 4.13.4 (https://github.com/Z3Prover/z3/releases/tag/z3-4.13.4)
+- Z3, version 4.14.1 (https://github.com/Z3Prover/z3/releases/tag/z3-4.14.1)
 
 HolBA is then built using the "Holmake" tool bundled with HOL4. To let HolBA
 know where to find the z3 binary, its path must be set via the environment:
