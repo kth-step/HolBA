@@ -1,10 +1,10 @@
-# Artifact for paper 19: HolBA-SE
+# HolBA-SE
 
 This README describes the artifact for VMCAI paper 19, which
 has the title "Forward Symbolic Execution for Trustworthy Automation
-of Binary Code Verification". We refer to this artifact as HolBA-SE.
+of Binary Code Verification". We refer to the artifact as HolBA-SE.
 
-## HolBA-SE overview
+## Artifact overview
 
 HolBA-SE is an extension of the HolBA library for binary analysis.
 In turn, HolBA depends on the HOL4 theorem prover, implemented in
@@ -21,11 +21,17 @@ Notable subdirectories:
 
 - `src/theory/tools/symbexec`: HOL4 symbolic execution theory, BIR instantiation
 - `src/tools/symbexec`: functions for applying symbolic execution results
+- `examples/riscv/chacha20`: ChaCha20 cipher case study
+- `examples/riscv/kernel-trap`: RISC-V kernel case study
 
 ## Getting Started Guide
 
+### Using Dockerfile
+
 $ docker build -t holbase .
 $ docker run -it --rm holbase
+
+### Manual building
 
 ## Step-by-Step Instructions for Replication
 
@@ -35,28 +41,94 @@ In the root directory (where this README resides), run:
 
 $ Holmake
 
-This takes 5-10 minutes on a modern machine.
+This takes 10-20 minutes on a modern machine.
 
-### 1. Formal proofs of theorems
+### 1. HOL4 definitions and theorems
 
-Machine-checked theorems in HOL4 have the SML type `thm`.
-To ensure that there are theorems with this type.
+Machine-checked definitions and theorems in HOL4 have the SML type `thm`.
+All of these definitions and theorems are checked in the previous step,
+but they can be inspected for reassurance. This is easiest done by
+starting a HOL4 toplevel from the root directory:
 
-$ hol
+$ hol --holstate src/holba-heap
 
-- Symbolic execution rules
-- Symbolic matching definition
-- Symbolic semantics of BIR
-- inference rule system is "correct" for any symbolic/concrete system satisfying Theorem 1
-- Theorem 1 for BIR
-- Theorem 2
+This will give a prompt starting with ">" that can be exited with Ctrl+d.
+
+Using the prompt, Definition 1 (p. 6) can be inspected using:
+
+> symb_recordTheory.symb_matchstate_def;
+
+Theorem 1 (p. 7):
+
+> bir_symb_soundTheory.birs_symb_step_sound_thm;
+
+Definition 2 (p. 7):
+
+> symb_recordTheory.symb_minimal_interpretation_def;
+
+Definition 3:
+
+> symb_recordTheory.symb_matchstate_ext_def;
+
+Definition 4:
+
+> symb_recordTheory.symb_hl_step_in_L_sound_def;
+
+Theorem 2: 
+
+> symb_prop_transferTheory.symb_prop_transfer_thm;
+
+Figure 3 (p. 9):
+
+(symbstep)
+
+> symb_rulesTheory.symb_rule_STEP_thm;
+
+(case)
+
+> symb_rulesTheory.symb_rule_SPLIT_thm;
+
+(infeasible)
+
+> symb_rulesTheory.symb_rule_INF_thm;
+
+(rename)
+
+> symb_rulesTheory.symb_rule_SRENAME_thm;
+
+(freesymb_rename)
+
+> symb_rulesTheory.symb_rule_SRENAME_FREE_thm;
+
+(subst)
+
+> symb_rulesTheory.symb_rule_INST_thm;
+
+Figure 4 (p. 10):
+
+(simplify)
+
+> symb_rulesTheory.symb_rule_FRESH_thm;
+
+(consequence)
+
+> symb_rulesTheory.symb_rule_CONS_thm;
+
+(transfer)
+
+> symb_rulesTheory.symb_rule_STRENGTHEN_thm;
+
+(sequence)
+
+> symb_rulesTheory.symb_rule_SEQ_thm;
 
 ### 2. Evaluation of symbolic execution (Table 1)
 
-$ cd examples/riscv
-$ ./collect_experiment_data.py
+Starting from the root directory, run:
 
-This takes up to a few minutes on a modern machine.
+$ cd examples/riscv && ./collect_experiment_data.py
+
+This takes 5-10 minutes on a modern machine.
 
 The final output should have symbolic execution time in seconds
 for all example programs in Table 1. This data is also stored
@@ -80,4 +152,4 @@ This can take 5-10 minutes on a modern machine.
 
 ### 4. Cortex-M0 execution time verification case studies (Section 7)
 
-### Non-replicable: Cortex-M0 hardware testing and aiT tool
+### 5. Cortex-M0 hardware testing and aiT tool (Section 7)

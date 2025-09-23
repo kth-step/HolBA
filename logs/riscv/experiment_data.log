@@ -1,0 +1,20 @@
+aes-unopt/aes_unopt/0:
+  57.707s
+aes/aes/0:
+  7.509s
+incr/incr/0:
+  0.047s
+isqrt/isqrt/0:
+  0.053s
+isqrt/isqrt/1:
+  0.034s
+isqrt/isqrt/2:
+  0.018s
+mod2/mod2/0:
+  0.057s
+modexp/modexp/0:
+  0.173s
+motor/motor/0:
+  4.604s
+swap/swap/0:
+  0.163s
