@@ -213,15 +213,15 @@ The output should include a bunch of "OK".
 
 Key files that are checked:
 
-- examples/arm_cm0/tiny/tiny_analysisScript.sml - 
-- examples/arm_cm0/aes/aes_o0_wholeScript.sml - 
-- examples/arm_cm0/aes/aes_o0_loopScript.sml - 
-- examples/arm_cm0/modexp_simple/modexp_asm_uidivmodScript.sml - 
-- examples/arm_cm0/modexp_simple/modexp_asmScript.sml - 
-- examples/arm_cm0/motor_set/motor_o0Script.sml - 
-- examples/arm_cm0/motor_set/motor_o3Script.sml - 
-- examples/arm_cm0/balrob/v2-faster/...Script.sml - 
-- examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml - 
+- examples/arm_cm0/tiny/tiny_analysisScript.sml - ldldbr8 example
+- examples/arm_cm0/aes/aes_o0_wholeScript.sml - aes example
+- examples/arm_cm0/aes/aes_o0_loopScript.sml - subfragment for aes example (loop body)
+- examples/arm_cm0/modexp_simple/modexp_asm_uidivmodScript.sml - subfunction for modexp example
+- examples/arm_cm0/modexp_simple/modexp_asmScript.sml - modexp example
+- examples/arm_cm0/motor_set/motor_o0Script.sml - motor_set example
+- examples/arm_cm0/motor_set/motor_o3Script.sml - motor_set example at optimization level o3
+- examples/arm_cm0/balrob/v2-faster/...Script.sml - a set of subfunctions for pid example
+- examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml - pid example
 
 The outputs of the verification tool reside in the various .hollogs directories and are automatically copied into the logs directory with simpler names. These files contain the execution times, the validated runtimes, and manually exctracted execution times for return instructions. Note that the validated runtimes have to be added together with the return times as they are not accounted for as symbolic execution stops before executing the return instructions.
 
