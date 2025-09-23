@@ -5,7 +5,8 @@ tiny_analysisTheory                                                      example
 aes_o0_loopTheory                                                         examples/arm_cm0/aes (62s)     OK
 aes_o0_wholeTheory                                                                            (499s)     OK
 
-...
+modexp_asm_uidivmodTheory                                                                     (342s)     OK
+modexp_asmTheory                                                                              (302s)     OK
 
 motor_o3Theory                                                                                (156s)     OK
 motor_o0Theory                                                                                (368s)     OK
