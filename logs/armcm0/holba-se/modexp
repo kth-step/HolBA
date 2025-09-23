@@ -1,5 +1,5 @@
 
-preparing program lookups - 3.002s
+preparing program lookups - 3.124s
 <<HOL message: Created theory "modexp_asm">>
 
 Label                      #calls     real     user   system       gc
@@ -7,39 +7,39 @@ now reducing it to one sound structure
 symb state exp sizes = 45
 pc = pc(address(imm(32; 0x8008130)); 0)
 
->>>>>> executed step in 0.013s
+>>>>>> executed step in 0.010s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 45
 pc = pc(address(imm(32; 0x8008130)); 1)
 
->>>>>> executed step in 0.025s
+>>>>>> executed step in 0.020s
 
 symb state exp sizes = 45
 pc = pc(address(imm(32; 0x8008130)); 2)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 47
 pc = pc(address(imm(32; 0x8008130)); 3)
 
->>>>>> executed step in 0.009s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 47
 pc = pc(address(imm(32; 0x8008130)); 4)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 49
 pc = pc(address(imm(32; 0x8008130)); 5)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 49
 pc = pc(address(imm(32; 0x8008130)); 6)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 51
 pc = pc(address(imm(32; 0x8008130)); 7)
@@ -61,12 +61,12 @@ pc = pc(address(imm(32; 0x8008132)); 1)
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x8008132)); 2)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.011s
 
 symb state exp sizes = 76
 pc = pc(address(imm(32; 0x8008132)); 3)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 80
 pc = pc(address(imm(32; 0x8008132)); 4)
@@ -93,12 +93,12 @@ pc = pc(address(imm(32; 0x8008134)); 0)
 symb state exp sizes = 84
 pc = pc(address(imm(32; 0x8008134)); 1)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 78
 pc = pc(address(imm(32; 0x8008134)); 2)
 
->>>>>> executed step in 0.009s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x8008134)); 3)
@@ -108,7 +108,7 @@ pc = pc(address(imm(32; 0x8008134)); 3)
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x8008134)); 4)
 
->>>>>> executed step in 0.009s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x8008134)); 5)
@@ -125,12 +125,12 @@ pc = pc(address(imm(32; 0x8008136)); 0)
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x8008136)); 1)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 80
 pc = pc(address(imm(32; 0x8008136)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 88
 pc = pc(address(imm(32; 0x8008136)); 3)
@@ -140,7 +140,7 @@ pc = pc(address(imm(32; 0x8008136)); 3)
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x8008136)); 4)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x8008136)); 5)
@@ -157,17 +157,17 @@ pc = pc(address(imm(32; 0x8008138)); 0)
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x8008138)); 1)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 77
 pc = pc(address(imm(32; 0x8008138)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 79
 pc = pc(address(imm(32; 0x8008138)); 3)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.011s
 
 symb state exp sizes = 99
 pc = pc(address(imm(32; 0x8008138)); 4)
@@ -177,7 +177,7 @@ pc = pc(address(imm(32; 0x8008138)); 4)
 symb state exp sizes = 99
 pc = pc(address(imm(32; 0x8008138)); 5)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 99
 pc = pc(address(imm(32; 0x8008138)); 6)
@@ -187,7 +187,7 @@ pc = pc(address(imm(32; 0x8008138)); 6)
 symb state exp sizes = 99
 pc = pc(address(imm(32; 0x800813A)); 0)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.008s
 
 >>>>>> tryassert in 0.001s
 
@@ -217,14 +217,14 @@ pc = pc(address(imm(32; 0x800813C)); 0)
 symb state exp sizes = 109
 pc = pc(address(imm(32; 0x800813C)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 109
 pc = pc(address(imm(32; 0x800813C)); 2)
 
->>>>>> executed step in 0.013s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 105
 pc = pc(address(imm(32; 0x800813C)); 3)
@@ -241,7 +241,7 @@ pc = pc(address(imm(32; 0x800813E)); 0)
 
 >>>>>> executed step in 0.004s
 
->>>>>> tryassert in 0.001s
+>>>>>> tryassert in 0.002s
 
 symb state exp sizes = 105
 pc = pc(address(imm(32; 0x800813E)); 1)
@@ -251,7 +251,7 @@ pc = pc(address(imm(32; 0x800813E)); 1)
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x800813E)); 2)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 99
 pc = pc(address(imm(32; 0x800813E)); 3)
@@ -261,7 +261,7 @@ pc = pc(address(imm(32; 0x800813E)); 3)
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x800813E)); 4)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.011s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x800813E)); 5)
@@ -273,26 +273,26 @@ pc = pc(address(imm(32; 0x8008140)); 0)
 
 >>>>>> executed step in 0.005s
 
->>>>>> tryassert in 0.001s
+>>>>>> tryassert in 0.002s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008140)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.000s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008140)); 2)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.020s
 
 >>>>>> tryassert in 0.002s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008140)); 3)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 103
 pc = pc(address(imm(32; 0x8008140)); 4)
@@ -302,12 +302,12 @@ pc = pc(address(imm(32; 0x8008140)); 4)
 symb state exp sizes = 103
 pc = pc(address(imm(32; 0x8008140)); 5)
 
->>>>>> executed step in 0.024s
+>>>>>> executed step in 0.029s
 
 symb state exp sizes = 123
 pc = pc(address(imm(32; 0x8008140)); 6)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 125
 pc = pc(address(imm(32; 0x8008140)); 7)
@@ -324,12 +324,12 @@ pc = pc(address(imm(32; 0x8008142)); 0)
 symb state exp sizes = 125
 pc = pc(address(imm(32; 0x8008142)); 1)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 117
 pc = pc(address(imm(32; 0x8008142)); 2)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 117
 pc = pc(address(imm(32; 0x8008142)); 3)
@@ -344,12 +344,12 @@ pc = pc(address(imm(32; 0x8008142)); 4)
 symb state exp sizes = 97
 pc = pc(address(imm(32; 0x8008142)); 5)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008142)); 6)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008142)); 7)
@@ -361,17 +361,17 @@ pc = pc(address(imm(32; 0x8008144)); 0)
 
 >>>>>> executed step in 0.005s
 
->>>>>> tryassert in 0.002s
+>>>>>> tryassert in 0.001s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008144)); 1)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 101
 pc = pc(address(imm(32; 0x8008144)); 2)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 97
 pc = pc(address(imm(32; 0x8008144)); 3)
@@ -381,12 +381,12 @@ pc = pc(address(imm(32; 0x8008144)); 3)
 symb state exp sizes = 97
 pc = pc(address(imm(32; 0x8008144)); 4)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 93
 pc = pc(address(imm(32; 0x8008144)); 5)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 93
 pc = pc(address(imm(32; 0x8008144)); 6)
@@ -408,29 +408,29 @@ pc = pc(address(imm(32; 0x8008146)); 0)
 symb state exp sizes = 93
 pc = pc(address(imm(32; 0x8008146)); 1)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 93
 pc = pc(address(imm(32; 0x8008146)); 2)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 93
 pc = pc(address(imm(32; 0x8008146)); 3)
 
->>>>>> executed step in 0.043s
+>>>>>> executed step in 0.035s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 8.822s
+  applying instantiation took 10.216s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.022s
+  unifying interval representation of state took 0.057s
 post instantiation code runs now
 MEM BExp_BinExp BIExp_Minus (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
   (BExp_Const (Imm32 24w)) [
@@ -448,43 +448,43 @@ pc = pc(address(imm(32; 0x8008118)); 0)
 symb state exp sizes = 138
 pc = pc(address(imm(32; 0x8008118)); 1)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 138
 pc = pc(address(imm(32; 0x8008118)); 2)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.025s
 
 >>>>>> tryassert in 0.011s
 
 symb state exp sizes = 138
 pc = pc(address(imm(32; 0x8008118)); 3)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 138
 pc = pc(address(imm(32; 0x8008118)); 4)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x8008118)); 5)
 
->>>>>> executed step in 0.027s
+>>>>>> executed step in 0.019s
 
 symb state exp sizes = 138
 pc = pc(address(imm(32; 0x8008118)); 6)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 138
 pc = pc(address(imm(32; 0x8008118)); 7)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.032s
 
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x8008118)); 8)
@@ -501,7 +501,7 @@ pc = pc(address(imm(32; 0x800814A)); 0)
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x800814A)); 1)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x800814A)); 2)
@@ -511,22 +511,22 @@ pc = pc(address(imm(32; 0x800814A)); 2)
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x800814A)); 3)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x800814A)); 4)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.034s
 
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x800814A)); 5)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814A)); 6)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814A)); 7)
@@ -543,39 +543,39 @@ pc = pc(address(imm(32; 0x800814C)); 0)
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 1)
 
->>>>>> executed step in 0.009s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 2)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.020s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 3)
 
->>>>>> executed step in 0.029s
+>>>>>> executed step in 0.040s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 4)
 
->>>>>> executed step in 0.030s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 5)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 6)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 7)
 
->>>>>> executed step in 0.024s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814C)); 8)
@@ -599,19 +599,19 @@ pc = pc(address(imm(32; 0x800814E)); 1)
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814E)); 2)
 
->>>>>> executed step in 0.013s
+>>>>>> executed step in 0.012s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814E)); 3)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 136
 pc = pc(address(imm(32; 0x800814E)); 4)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.020s
 
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x800814E)); 5)
@@ -621,7 +621,7 @@ pc = pc(address(imm(32; 0x800814E)); 5)
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008150)); 0)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.003s
 
@@ -638,12 +638,12 @@ pc = pc(address(imm(32; 0x8008150)); 2)
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008150)); 3)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008150)); 4)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008150)); 5)
@@ -653,7 +653,7 @@ pc = pc(address(imm(32; 0x8008150)); 5)
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008150)); 6)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008150)); 7)
@@ -670,7 +670,7 @@ pc = pc(address(imm(32; 0x8008152)); 0)
 symb state exp sizes = 141
 pc = pc(address(imm(32; 0x8008152)); 1)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.033s
 
 symb state exp sizes = 143
 pc = pc(address(imm(32; 0x8008152)); 2)
@@ -680,12 +680,12 @@ pc = pc(address(imm(32; 0x8008152)); 2)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008152)); 3)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008152)); 4)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008152)); 5)
@@ -702,31 +702,31 @@ pc = pc(address(imm(32; 0x8008154)); 0)
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008154)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.000s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008154)); 2)
 
->>>>>> executed step in 0.013s
+>>>>>> executed step in 0.012s
 
 >>>>>> tryassert in 0.004s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008154)); 3)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008154)); 4)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008154)); 5)
 
->>>>>> executed step in 0.030s
+>>>>>> executed step in 0.042s
 removed stores: 1
 removed stores: 1
 removed stores: 1
@@ -756,27 +756,27 @@ pc = pc(address(imm(32; 0x8008156)); 1)
 symb state exp sizes = 156
 pc = pc(address(imm(32; 0x8008156)); 2)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.032s
 
 symb state exp sizes = 156
 pc = pc(address(imm(32; 0x8008156)); 3)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 156
 pc = pc(address(imm(32; 0x8008156)); 4)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 156
 pc = pc(address(imm(32; 0x8008156)); 5)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 158
 pc = pc(address(imm(32; 0x8008156)); 6)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 158
 pc = pc(address(imm(32; 0x8008156)); 7)
@@ -786,7 +786,7 @@ pc = pc(address(imm(32; 0x8008156)); 7)
 symb state exp sizes = 158
 pc = pc(address(imm(32; 0x8008158)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.003s
 
@@ -798,27 +798,27 @@ pc = pc(address(imm(32; 0x8008158)); 1)
 symb state exp sizes = 158
 pc = pc(address(imm(32; 0x8008158)); 2)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 156
 pc = pc(address(imm(32; 0x8008158)); 3)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 156
 pc = pc(address(imm(32; 0x8008158)); 4)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.035s
 
 symb state exp sizes = 154
 pc = pc(address(imm(32; 0x8008158)); 5)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 154
 pc = pc(address(imm(32; 0x8008158)); 6)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 154
 pc = pc(address(imm(32; 0x8008158)); 7)
@@ -835,12 +835,12 @@ pc = pc(address(imm(32; 0x800815A)); 0)
 symb state exp sizes = 154
 pc = pc(address(imm(32; 0x800815A)); 1)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 154
 pc = pc(address(imm(32; 0x800815A)); 2)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 154
 pc = pc(address(imm(32; 0x800815A)); 3)
@@ -850,14 +850,14 @@ pc = pc(address(imm(32; 0x800815A)); 3)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 11.388s
+  applying instantiation took 9.750s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.120s
+  unifying interval representation of state took 0.117s
 post instantiation code runs now
 removed stores: 9
 MEM BExp_BinExp BIExp_Minus (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
@@ -876,7 +876,7 @@ pc = pc(address(imm(32; 0x8008118)); 0)
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008118)); 1)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.001s
 
@@ -885,7 +885,7 @@ pc = pc(address(imm(32; 0x8008118)); 2)
 
 >>>>>> executed step in 0.024s
 
->>>>>> tryassert in 0.009s
+>>>>>> tryassert in 0.010s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008118)); 3)
@@ -907,12 +907,12 @@ pc = pc(address(imm(32; 0x8008118)); 5)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008118)); 6)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008118)); 7)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x8008118)); 8)
@@ -929,7 +929,7 @@ pc = pc(address(imm(32; 0x800815E)); 0)
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x800815E)); 1)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x800815E)); 2)
@@ -939,22 +939,22 @@ pc = pc(address(imm(32; 0x800815E)); 2)
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x800815E)); 3)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x800815E)); 4)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 147
 pc = pc(address(imm(32; 0x800815E)); 5)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x800815E)); 6)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x800815E)); 7)
@@ -971,7 +971,7 @@ pc = pc(address(imm(32; 0x8008160)); 0)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
@@ -983,12 +983,12 @@ pc = pc(address(imm(32; 0x8008160)); 2)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 3)
 
->>>>>> executed step in 0.024s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 4)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 5)
@@ -998,12 +998,12 @@ pc = pc(address(imm(32; 0x8008160)); 5)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 6)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 7)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008160)); 8)
@@ -1020,12 +1020,12 @@ pc = pc(address(imm(32; 0x8008162)); 0)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 1)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 2)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 3)
@@ -1035,17 +1035,17 @@ pc = pc(address(imm(32; 0x8008162)); 3)
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 4)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 5)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 6)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 145
 pc = pc(address(imm(32; 0x8008162)); 7)
@@ -1072,7 +1072,7 @@ pc = pc(address(imm(32; 0x8008164)); 2)
 symb state exp sizes = 150
 pc = pc(address(imm(32; 0x8008164)); 3)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.020s
 
 symb state exp sizes = 166
 pc = pc(address(imm(32; 0x8008164)); 4)
@@ -1082,7 +1082,7 @@ pc = pc(address(imm(32; 0x8008164)); 4)
 symb state exp sizes = 167
 pc = pc(address(imm(32; 0x8008164)); 5)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 169
 pc = pc(address(imm(32; 0x8008164)); 6)
@@ -1109,12 +1109,12 @@ pc = pc(address(imm(32; 0x8008166)); 1)
 symb state exp sizes = 170
 pc = pc(address(imm(32; 0x8008166)); 2)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.019s
 
 symb state exp sizes = 172
 pc = pc(address(imm(32; 0x8008166)); 3)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.020s
 
 symb state exp sizes = 168
 pc = pc(address(imm(32; 0x8008166)); 4)
@@ -1124,7 +1124,7 @@ pc = pc(address(imm(32; 0x8008166)); 4)
 symb state exp sizes = 169
 pc = pc(address(imm(32; 0x8008166)); 5)
 
->>>>>> executed step in 0.024s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 169
 pc = pc(address(imm(32; 0x8008166)); 6)
@@ -1136,29 +1136,29 @@ starting a branch
 symb state exp sizes = 110
 pc = pc(address(imm(32; 0x8008150)); 0)
 
->>>>>> executed step in 0.004s
+>>>>>> executed step in 0.008s
 
 >>>>>> tryassert in 0.002s
 
 symb state exp sizes = 110
 pc = pc(address(imm(32; 0x8008150)); 1)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 102
 pc = pc(address(imm(32; 0x8008150)); 2)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 94
 pc = pc(address(imm(32; 0x8008150)); 3)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.008s
 
 symb state exp sizes = 74
 pc = pc(address(imm(32; 0x8008150)); 4)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 68
 pc = pc(address(imm(32; 0x8008150)); 5)
@@ -1185,12 +1185,12 @@ pc = pc(address(imm(32; 0x8008152)); 0)
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008152)); 1)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 64
 pc = pc(address(imm(32; 0x8008152)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 66
 pc = pc(address(imm(32; 0x8008152)); 3)
@@ -1212,12 +1212,12 @@ pc = pc(address(imm(32; 0x8008154)); 0)
 
 >>>>>> executed step in 0.004s
 
->>>>>> tryassert in 0.003s
+>>>>>> tryassert in 0.002s
 
 symb state exp sizes = 68
 pc = pc(address(imm(32; 0x8008154)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
@@ -1231,7 +1231,7 @@ pc = pc(address(imm(32; 0x8008154)); 2)
 symb state exp sizes = 68
 pc = pc(address(imm(32; 0x8008154)); 3)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 70
 pc = pc(address(imm(32; 0x8008154)); 4)
@@ -1241,12 +1241,12 @@ pc = pc(address(imm(32; 0x8008154)); 4)
 symb state exp sizes = 70
 pc = pc(address(imm(32; 0x8008154)); 5)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x8008154)); 6)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 92
 pc = pc(address(imm(32; 0x8008154)); 7)
@@ -1256,14 +1256,14 @@ pc = pc(address(imm(32; 0x8008154)); 7)
 symb state exp sizes = 92
 pc = pc(address(imm(32; 0x8008156)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.004s
 
 >>>>>> tryassert in 0.002s
 
 symb state exp sizes = 92
 pc = pc(address(imm(32; 0x8008156)); 1)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 92
 pc = pc(address(imm(32; 0x8008156)); 2)
@@ -1310,12 +1310,12 @@ pc = pc(address(imm(32; 0x8008158)); 1)
 symb state exp sizes = 94
 pc = pc(address(imm(32; 0x8008158)); 2)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.011s
 
 symb state exp sizes = 92
 pc = pc(address(imm(32; 0x8008158)); 3)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 92
 pc = pc(address(imm(32; 0x8008158)); 4)
@@ -1325,7 +1325,7 @@ pc = pc(address(imm(32; 0x8008158)); 4)
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x8008158)); 5)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x8008158)); 6)
@@ -1340,7 +1340,7 @@ pc = pc(address(imm(32; 0x8008158)); 7)
 symb state exp sizes = 90
 pc = pc(address(imm(32; 0x800815A)); 0)
 
->>>>>> executed step in 0.004s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.002s
 
@@ -1362,14 +1362,14 @@ pc = pc(address(imm(32; 0x800815A)); 3)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 8.189s
+  applying instantiation took 8.213s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.024s
+  unifying interval representation of state took 0.026s
 post instantiation code runs now
 MEM BExp_BinExp BIExp_Minus (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
   (BExp_Const (Imm32 24w)) [
@@ -1387,43 +1387,43 @@ pc = pc(address(imm(32; 0x8008118)); 0)
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008118)); 1)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008118)); 2)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.019s
 
 >>>>>> tryassert in 0.009s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008118)); 3)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008118)); 4)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x8008118)); 5)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.026s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008118)); 6)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008118)); 7)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x8008118)); 8)
@@ -1440,17 +1440,17 @@ pc = pc(address(imm(32; 0x800815E)); 0)
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x800815E)); 1)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x800815E)); 2)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x800815E)); 3)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.014s
 
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x800815E)); 4)
@@ -1460,7 +1460,7 @@ pc = pc(address(imm(32; 0x800815E)); 4)
 symb state exp sizes = 139
 pc = pc(address(imm(32; 0x800815E)); 5)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x800815E)); 6)
@@ -1482,14 +1482,14 @@ pc = pc(address(imm(32; 0x8008160)); 0)
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008160)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.009s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008160)); 2)
 
->>>>>> executed step in 0.026s
+>>>>>> executed step in 0.020s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008160)); 3)
@@ -1509,7 +1509,7 @@ pc = pc(address(imm(32; 0x8008160)); 5)
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008160)); 6)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008160)); 7)
@@ -1524,14 +1524,14 @@ pc = pc(address(imm(32; 0x8008160)); 8)
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.011s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 1)
 
->>>>>> executed step in 0.021s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 2)
@@ -1541,17 +1541,17 @@ pc = pc(address(imm(32; 0x8008162)); 2)
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 3)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 4)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 5)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008162)); 6)
@@ -1573,12 +1573,12 @@ pc = pc(address(imm(32; 0x8008164)); 0)
 symb state exp sizes = 137
 pc = pc(address(imm(32; 0x8008164)); 1)
 
->>>>>> executed step in 0.020s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 140
 pc = pc(address(imm(32; 0x8008164)); 2)
 
->>>>>> executed step in 0.017s
+>>>>>> executed step in 0.016s
 
 symb state exp sizes = 142
 pc = pc(address(imm(32; 0x8008164)); 3)
@@ -1588,7 +1588,7 @@ pc = pc(address(imm(32; 0x8008164)); 3)
 symb state exp sizes = 158
 pc = pc(address(imm(32; 0x8008164)); 4)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 159
 pc = pc(address(imm(32; 0x8008164)); 5)
@@ -1608,24 +1608,24 @@ pc = pc(address(imm(32; 0x8008164)); 7)
 symb state exp sizes = 161
 pc = pc(address(imm(32; 0x8008166)); 0)
 
->>>>>> executed step in 0.008s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 161
 pc = pc(address(imm(32; 0x8008166)); 1)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 162
 pc = pc(address(imm(32; 0x8008166)); 2)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 164
 pc = pc(address(imm(32; 0x8008166)); 3)
 
->>>>>> executed step in 0.019s
+>>>>>> executed step in 0.018s
 
 symb state exp sizes = 160
 pc = pc(address(imm(32; 0x8008166)); 4)
@@ -1635,7 +1635,7 @@ pc = pc(address(imm(32; 0x8008166)); 4)
 symb state exp sizes = 161
 pc = pc(address(imm(32; 0x8008166)); 5)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 161
 pc = pc(address(imm(32; 0x8008166)); 6)
@@ -1643,35 +1643,35 @@ pc = pc(address(imm(32; 0x8008166)); 6)
 >>>>>> executed step in 0.001s
 
 no executable states left, terminating here
->>>>>>>>>> birs_rule_SEQ_fun in 0.613s
->>>>>>>>>> birs_rule_SEQ_fun in 0.099s
->>>>>>>>>> birs_rule_SEQ_fun in 0.114s
->>>>>>>>>> birs_rule_SEQ_fun in 0.136s
->>>>>>>>>> birs_rule_SEQ_fun in 0.679s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.609s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.097s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.113s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.133s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.671s
 
 ======
- > exec_until took 40.801s
+ > exec_until took 40.444s
 unifying interval representation of state
 applying freesymb_RULE
-  applying freesymb_RULE took 0.022s
-  unifying interval representation of state took 0.110s
+  applying freesymb_RULE took 0.029s
+  unifying interval representation of state took 0.114s
 unifying interval representation of state
 applying freesymb_RULE
-  applying freesymb_RULE took 0.021s
-  unifying interval representation of state took 0.105s
+  applying freesymb_RULE took 0.020s
+  unifying interval representation of state took 0.106s
 unifying name for interval representation of state
-  unifying name for interval representation of state took 0.052s
+  unifying name for interval representation of state took 0.044s
 unifying name for interval representation of state
-  unifying name for interval representation of state took 0.043s
+  unifying name for interval representation of state took 0.051s
 widening of interval bounds
   widening of interval bounds took 0.035s
 Number of states to merge: 2
 applying freesymb_RULE
-  applying freesymb_RULE took 0.041s
+  applying freesymb_RULE took 0.052s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.041s
+  applying freesymb_RULE took 0.039s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.042s
+  applying freesymb_RULE took 0.053s
 applying freesymb_RULE
   applying freesymb_RULE took 0.041s
 
@@ -1688,30 +1688,30 @@ forgetting:
 
 
 applying freesymb_RULE
-  applying freesymb_RULE took 0.077s
+  applying freesymb_RULE took 0.069s
 applying freesymb_RULE
   applying freesymb_RULE took 0.064s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.068s
+  applying freesymb_RULE took 0.056s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.052s
+  applying freesymb_RULE took 0.051s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.075s
+  applying freesymb_RULE took 0.063s
 applying freesymb_RULE
   applying freesymb_RULE took 0.059s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.080s
+  applying freesymb_RULE took 0.075s
 applying freesymb_RULE
   applying freesymb_RULE took 0.060s
 applying freesymb_RULE
-  applying freesymb_RULE took 0.066s
-applying freesymb_RULE
-  applying freesymb_RULE took 0.073s
-applying freesymb_RULE
-  applying freesymb_RULE took 0.068s
-applying freesymb_RULE
   applying freesymb_RULE took 0.078s
-  merging two in Pi took 1.635s
+applying freesymb_RULE
+  applying freesymb_RULE took 0.062s
+applying freesymb_RULE
+  applying freesymb_RULE took 0.082s
+applying freesymb_RULE
+  applying freesymb_RULE took 0.064s
+  merging two in Pi took 1.632s
 BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
   (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
      (BExp_Const (Imm64 1362w)),
@@ -1720,85 +1720,85 @@ BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
 Saved ORACLE thm ____ "balrob_summary__my_modexp_asm_loop_thm"
 
 Label                                 #calls     real     user   system       gc
-0_birs_sound_symb_freesymbintro_RULE      18    1.026    0.875    0.028    0.063
-0_birs_symb_subst1_CONV                  216   21.619   19.770    0.480    1.349
-1_birs_sound_symb_inst_RULE                3   23.318   20.871    0.632    1.792
-1_birs_sound_symb_rename_RULE              6   13.939   12.870    0.299    0.760
-1_birs_sound_symb_rename_free_RULE         2    0.096    0.082    0.008    0.006
+0_birs_sound_symb_freesymbintro_RULE      18    1.017    0.877    0.019    0.059
+0_birs_symb_subst1_CONV                  216   21.382   19.578    0.519    1.268
+1_birs_sound_symb_inst_RULE                3   22.911   20.694    0.649    1.550
+1_birs_sound_symb_rename_RULE              6   13.711   12.719    0.273    0.709
+1_birs_sound_symb_rename_free_RULE         2    0.094    0.083    0.004    0.007
 auxset_bir_exp_EQ_CONV                     1    0.001    0.001    0.000    0.000
-auxset_bir_pc_EQ_CONV                      5    0.001    0.000    0.000    0.000
-auxset_bir_status_EQ_CONV                190    0.039    0.038    0.000    0.000
-auxset_bir_var_EQ_CONV                 75433    1.436    1.133    0.059    0.086
-auxset_bir_varname_EQ_CONV             46273    0.602    0.466    0.025    0.021
-auxset_birs_state_EQ_CONV                 66    0.005    0.004    0.001    0.000
+auxset_bir_pc_EQ_CONV                      5    0.001    0.001    0.000    0.000
+auxset_bir_status_EQ_CONV                190    0.046    0.033    0.007    0.005
+auxset_bir_var_EQ_CONV                 75433    1.399    1.127    0.051    0.065
+auxset_bir_varname_EQ_CONV             46273    0.581    0.463    0.019    0.009
+auxset_birs_state_EQ_CONV                 66    0.005    0.005    0.000    0.000
 auxset_birs_state_EQ_CONV_0status         66    0.002    0.002    0.000    0.000
-auxset_birs_state_EQ_CONV_1pc              5    0.001    0.000    0.000    0.000
+auxset_birs_state_EQ_CONV_1pc              5    0.001    0.001    0.000    0.000
 auxset_birs_state_EQ_CONV_2pcond           1    0.001    0.001    0.000    0.000
-bir_exp_subst1_CONV                     4320   21.345   19.499    0.475    1.342
-bir_smt_check_unsat::birsmt             1032    3.605    0.784    0.042    0.027
-bir_vars_of_exp_DIRECT_CONV             4084    0.847    0.721    0.026    0.092
-birs_Pi_first_freesymb_RULE               18    1.029    0.878    0.028    0.063
-birs_basic_execute                         1   41.035   34.809    1.179    2.473
-birs_basic_from_sums                     293   32.205   27.883    0.993    2.189
-birs_basic_merge                           1    1.767    1.420    0.051    0.105
-birs_env_set_order_CONV                  107    0.320    0.267    0.025    0.028
-birs_exec_to                               1   40.811   34.690    1.175    2.468
-birs_freesymbs_DIRECT_CONV                54    2.602    2.025    0.119    0.456
-birs_from_summaries                      293   32.203   27.881    0.993    2.189
-birs_from_summaries_inst                 293   32.199   27.877    0.992    2.189
+bir_exp_subst1_CONV                     4320   21.106   19.314    0.513    1.253
+bir_smt_check_unsat::birsmt             1032    3.803    0.803    0.124    0.036
+bir_vars_of_exp_DIRECT_CONV             4084    0.775    0.715    0.013    0.040
+birs_Pi_first_freesymb_RULE               18    1.020    0.879    0.019    0.059
+birs_basic_execute                         1   40.678   34.463    1.247    2.324
+birs_basic_from_sums                     293   31.985   27.690    1.009    2.108
+birs_basic_merge                           1    1.764    1.433    0.029    0.101
+birs_env_set_order_CONV                  107    0.302    0.280    0.014    0.007
+birs_exec_to                               1   40.450   34.340    1.247    2.318
+birs_freesymbs_DIRECT_CONV                54    2.662    2.047    0.091    0.524
+birs_from_summaries                      293   31.983   27.688    1.008    2.108
+birs_from_summaries_inst                 293   31.979   27.684    1.008    2.108
 birs_intervals_Pi_bounds_RULE              1    0.035    0.025    0.000    0.000
-birs_intervals_Pi_unify_RULE               4    0.382    0.192    0.009    0.005
-birs_intervals_Pi_unify_name_RULE          1    0.097    0.083    0.008    0.006
-birs_rule_SEQ_fun                          5    1.641    1.588    0.016    0.036
-birs_rule_SEQ_fun_p2                       5    0.236    0.219    0.013    0.004
-birs_rule_SEQ_fun_p3                       5    0.013    0.010    0.003    0.000
-birs_rule_SEQ_fun_p4                       5    1.375    1.342    0.000    0.032
-birs_rule_STEP_SEQ_fun                   287    4.286    3.958    0.121    0.191
-birs_rule_STEP_fun                         3    0.025    0.017    0.008    0.000
-birs_rule_SUBST_trysimp_first_fun        251    5.727    3.188    0.182    0.118
-birs_rule_tryjustassert_fun              290    0.308    0.195    0.002    0.009
-birs_rule_tryprune_fun                   580    0.013    0.010    0.000    0.000
-birs_simp_regular                        251    5.340    2.820    0.167    0.113
-birs_simp_try_fix_assumptions            617    0.200    0.193    0.005    0.000
-birs_simp_try_load                        19    1.433    0.515    0.014    0.034
+birs_intervals_Pi_unify_RULE               4    0.420    0.206    0.021    0.016
+birs_intervals_Pi_unify_name_RULE          1    0.096    0.085    0.004    0.007
+birs_rule_SEQ_fun                          5    1.624    1.571    0.019    0.034
+birs_rule_SEQ_fun_p2                       5    0.229    0.221    0.005    0.003
+birs_rule_SEQ_fun_p3                       5    0.012    0.012    0.000    0.000
+birs_rule_SEQ_fun_p4                       5    1.367    1.322    0.014    0.031
+birs_rule_STEP_SEQ_fun                   287    4.162    3.845    0.171    0.130
+birs_rule_STEP_fun                         3    0.025    0.022    0.000    0.002
+birs_rule_SUBST_trysimp_first_fun        251    5.704    3.098    0.212    0.085
+birs_rule_tryjustassert_fun              290    0.308    0.181    0.014    0.005
+birs_rule_tryprune_fun                   580    0.013    0.009    0.000    0.000
+birs_simp_regular                        251    5.344    2.756    0.197    0.082
+birs_simp_try_fix_assumptions            617    0.221    0.191    0.007    0.021
+birs_simp_try_load                        19    1.450    0.512    0.016    0.030
 birs_simp_try_recurse                    251    0.001    0.000    0.000    0.000
-birs_simp_try_recurse_overhead          1699    0.527    0.456    0.045    0.021
-birs_simp_try_store                      388    2.788    1.316    0.077    0.031
-birs_sound_inst_RULE                       3   28.400   25.436    0.820    2.106
-birs_summary_gen                           1   42.884   36.259    1.256    2.589
-birs_symb_symbols_DIRECT_CONV            301    5.414    4.498    0.249    0.662
-birs_symb_symbols_set_DIRECT_CONV        116    2.911    2.265    0.120    0.524
-build_tree                                 1   39.161   33.100    1.151    2.432
-eval_exp_CONV                            258    0.944    0.867    0.035    0.040
-eval_exp_CONV_p1                         258    0.216    0.199    0.008    0.008
-eval_exp_CONV_p2                         258    0.266    0.252    0.010    0.003
-eval_exp_CONV_p4                         258    0.181    0.172    0.007    0.002
-eval_exp_CONV_p5                         258    0.273    0.235    0.009    0.027
-exec_step_CONV                           290    3.741    3.438    0.116    0.170
-exec_step_CONV_B                         250    3.285    3.015    0.106    0.159
-exec_step_CONV_E                          40    0.262    0.241    0.005    0.003
-reduce_tree                                1    1.641    1.588    0.016    0.036
-rule_CONS_NARROW                           3    0.379    0.327    0.012    0.032
-rule_CONS_WIDEN                           33    0.636    0.392    0.016    0.029
-senv_typecheck_CONV                      258    0.149    0.140    0.006    0.003
-type_of_bir_exp_DIRECT_CONV            19539    0.375    0.307    0.024    0.006
-zzz_1_matchmp                             33    0.081    0.077    0.004    0.000
-zzz_2_stateacc                            33    0.182    0.147    0.012    0.023
-zzz_3_spec                                33    0.017    0.017    0.000    0.000
+birs_simp_try_recurse_overhead          1699    0.480    0.439    0.023    0.013
+birs_simp_try_store                      388    2.915    1.332    0.145    0.029
+birs_sound_inst_RULE                       3   28.179   25.305    0.800    2.041
+birs_summary_gen                           1   42.517   35.934    1.281    2.440
+birs_symb_symbols_DIRECT_CONV            301    5.200    4.529    0.191    0.476
+birs_symb_symbols_set_DIRECT_CONV        116    2.662    2.232    0.100    0.328
+build_tree                                 1   38.819   32.763    1.228    2.284
+eval_exp_CONV                            258    0.907    0.797    0.077    0.032
+eval_exp_CONV_p1                         258    0.217    0.182    0.023    0.011
+eval_exp_CONV_p2                         258    0.268    0.237    0.014    0.017
+eval_exp_CONV_p4                         258    0.168    0.157    0.011    0.000
+eval_exp_CONV_p5                         258    0.246    0.212    0.029    0.005
+exec_step_CONV                           290    3.651    3.350    0.158    0.127
+exec_step_CONV_B                         250    3.226    2.946    0.150    0.127
+exec_step_CONV_E                          40    0.253    0.239    0.000    0.000
+reduce_tree                                1    1.624    1.571    0.019    0.034
+rule_CONS_NARROW                           3    0.563    0.319    0.019    0.217
+rule_CONS_WIDEN                           33    0.713    0.397    0.049    0.066
+senv_typecheck_CONV                      258    0.146    0.131    0.008    0.007
+type_of_bir_exp_DIRECT_CONV            19539    0.395    0.310    0.014    0.033
+zzz_1_matchmp                             33    0.110    0.081    0.010    0.018
+zzz_2_stateacc                            33    0.194    0.137    0.034    0.023
+zzz_3_spec                                33    0.018    0.017    0.000    0.000
 zzz_4_mp                                  33    0.001    0.001    0.000    0.000
-zzz_5_stateacc                            51    0.210    0.197    0.003    0.009
+zzz_5_stateacc                            51    0.223    0.197    0.004    0.021
 now reducing it to one sound structure
 symb state exp sizes = 41
 pc = pc(address(imm(32; 0x8008120)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 41
 pc = pc(address(imm(32; 0x8008120)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.001s
 
@@ -1812,17 +1812,17 @@ pc = pc(address(imm(32; 0x8008120)); 2)
 symb state exp sizes = 41
 pc = pc(address(imm(32; 0x8008120)); 3)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 43
 pc = pc(address(imm(32; 0x8008120)); 4)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 45
 pc = pc(address(imm(32; 0x8008120)); 5)
 
->>>>>> executed step in 0.018s
+>>>>>> executed step in 0.017s
 
 symb state exp sizes = 60
 pc = pc(address(imm(32; 0x8008120)); 6)
@@ -1837,24 +1837,24 @@ pc = pc(address(imm(32; 0x8008120)); 7)
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008122)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.004s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008122)); 1)
 
->>>>>> executed step in 0.016s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008122)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008122)); 3)
 
->>>>>> executed step in 0.009s
+>>>>>> executed step in 0.008s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008122)); 4)
@@ -1876,12 +1876,12 @@ pc = pc(address(imm(32; 0x8008124)); 0)
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008124)); 1)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.015s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008124)); 2)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008124)); 3)
@@ -1903,7 +1903,7 @@ pc = pc(address(imm(32; 0x8008126)); 1)
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008126)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008126)); 3)
@@ -1913,21 +1913,21 @@ pc = pc(address(imm(32; 0x8008126)); 3)
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008128)); 0)
 
->>>>>> executed step in 0.008s
+>>>>>> executed step in 0.004s
 
->>>>>> tryassert in 0.001s
+>>>>>> tryassert in 0.002s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008128)); 1)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.004s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008128)); 2)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.013s
 
 >>>>>> tryassert in 0.002s
 
@@ -1939,7 +1939,7 @@ pc = pc(address(imm(32; 0x8008128)); 3)
 symb state exp sizes = 62
 pc = pc(address(imm(32; 0x8008128)); 4)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.013s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x8008128)); 5)
@@ -1949,19 +1949,19 @@ pc = pc(address(imm(32; 0x8008128)); 5)
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812A)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.004s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812A)); 1)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812A)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812A)); 3)
@@ -1971,7 +1971,7 @@ pc = pc(address(imm(32; 0x800812A)); 3)
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812A)); 4)
 
->>>>>> executed step in 0.015s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812A)); 5)
@@ -1988,26 +1988,26 @@ pc = pc(address(imm(32; 0x800812C)); 0)
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812C)); 1)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.004s
 
 >>>>>> tryassert in 0.000s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812C)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 >>>>>> tryassert in 0.002s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812C)); 3)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 67
 pc = pc(address(imm(32; 0x800812C)); 4)
 
->>>>>> executed step in 0.013s
+>>>>>> executed step in 0.012s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812C)); 5)
@@ -2017,29 +2017,29 @@ pc = pc(address(imm(32; 0x800812C)); 5)
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812E)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.004s
 
 >>>>>> tryassert in 0.001s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812E)); 1)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812E)); 2)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812E)); 3)
 
->>>>>> executed step in 0.010s
+>>>>>> executed step in 0.009s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812E)); 4)
 
->>>>>> executed step in 0.014s
+>>>>>> executed step in 0.010s
 
 symb state exp sizes = 72
 pc = pc(address(imm(32; 0x800812E)); 5)
@@ -2049,14 +2049,14 @@ pc = pc(address(imm(32; 0x800812E)); 5)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 2.524s
+  applying instantiation took 2.519s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.027s
+  unifying interval representation of state took 0.026s
 post instantiation code runs now
 removed stores: 1
 MEM BExp_BinPred BIExp_Equal
@@ -2076,7 +2076,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 175
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 177
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2090,14 +2090,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.788s
+  applying instantiation took 5.353s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.162s
+  unifying interval representation of state took 0.205s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2117,7 +2117,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 182
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.026s
 
 symb state exp sizes = 184
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2131,14 +2131,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 6.366s
+  applying instantiation took 5.591s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.201s
+  unifying interval representation of state took 0.138s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2158,7 +2158,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 189
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 191
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2172,14 +2172,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.976s
+  applying instantiation took 5.746s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.137s
+  unifying interval representation of state took 0.144s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2208,12 +2208,12 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 
 >>>>>> tryprune in 0.003s
 
->>>>>> tryprune in 0.001s
+>>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.896s
+  applying instantiation took 4.912s
 
 ====================================================
 ====================================================
@@ -2233,14 +2233,14 @@ fetched a theorem
 symb state exp sizes = 203
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.007s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 203
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.028s
 
 symb state exp sizes = 205
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2254,14 +2254,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.889s
+  applying instantiation took 5.933s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.152s
+  unifying interval representation of state took 0.149s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2295,14 +2295,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.968s
+  applying instantiation took 6.105s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.156s
+  unifying interval representation of state took 0.160s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2322,7 +2322,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 217
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 219
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2336,14 +2336,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.978s
+  applying instantiation took 5.859s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.136s
+  unifying interval representation of state took 0.208s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2356,35 +2356,35 @@ fetched a theorem
 symb state exp sizes = 224
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 224
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 226
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.003s
 
->>>>>> tryprune in 0.002s
+>>>>>> tryprune in 0.001s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.041s
+  applying instantiation took 4.880s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.136s
+  unifying interval representation of state took 1.186s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2397,35 +2397,35 @@ fetched a theorem
 symb state exp sizes = 231
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.011s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 231
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 233
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.020s
+
+>>>>>> tryprune in 0.005s
 
 >>>>>> tryprune in 0.003s
-
->>>>>> tryprune in 0.001s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.105s
+  applying instantiation took 4.956s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.128s
+  unifying interval representation of state took 0.120s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2438,14 +2438,14 @@ fetched a theorem
 symb state exp sizes = 238
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.007s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 238
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.028s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 240
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2454,19 +2454,19 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 
 >>>>>> tryprune in 0.004s
 
->>>>>> tryprune in 0.001s
+>>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.240s
+  applying instantiation took 4.853s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.147s
+  unifying interval representation of state took 0.134s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2486,7 +2486,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 245
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.029s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 247
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2500,14 +2500,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 7.997s
+  applying instantiation took 5.019s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.187s
+  unifying interval representation of state took 0.155s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2527,28 +2527,28 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 252
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 254
 pc = pc(address(imm(32; 0x8008168)); 2)
 
 >>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.001s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.390s
+  applying instantiation took 4.882s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.209s
+  unifying interval representation of state took 0.211s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2561,7 +2561,7 @@ fetched a theorem
 symb state exp sizes = 259
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.007s
 
 >>>>>> tryassert in 0.003s
 
@@ -2582,14 +2582,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 4.945s
+  applying instantiation took 4.948s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.156s
+  unifying interval representation of state took 0.154s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2609,28 +2609,28 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 266
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.028s
 
 symb state exp sizes = 268
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.001s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.035s
+  applying instantiation took 4.917s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.143s
+  unifying interval representation of state took 0.171s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2650,7 +2650,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 273
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 275
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -2664,14 +2664,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.001s
+  applying instantiation took 4.969s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.150s
+  unifying interval representation of state took 0.152s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2691,21 +2691,21 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 280
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 282
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.001s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.010s
+  applying instantiation took 5.008s
 
 ====================================================
 ====================================================
@@ -2732,12 +2732,12 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 287
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 289
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.003s
 
@@ -2746,14 +2746,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.047s
+  applying instantiation took 5.017s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.146s
+  unifying interval representation of state took 0.128s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2768,33 +2768,33 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 
 >>>>>> executed step in 0.006s
 
->>>>>> tryassert in 0.003s
+>>>>>> tryassert in 0.004s
 
 symb state exp sizes = 294
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.030s
+>>>>>> executed step in 0.024s
 
 symb state exp sizes = 296
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.003s
 
->>>>>> tryprune in 0.001s
+>>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.071s
+  applying instantiation took 5.115s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.138s
+  unifying interval representation of state took 0.139s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2814,12 +2814,12 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 301
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 303
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.003s
 
@@ -2828,14 +2828,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.094s
+  applying instantiation took 7.139s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.160s
+  unifying interval representation of state took 0.164s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2848,35 +2848,35 @@ fetched a theorem
 symb state exp sizes = 308
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.009s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 308
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.035s
 
 symb state exp sizes = 310
 pc = pc(address(imm(32; 0x8008168)); 2)
 
 >>>>>> executed step in 0.006s
 
->>>>>> tryprune in 0.004s
+>>>>>> tryprune in 0.003s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.161s
+  applying instantiation took 5.222s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.148s
+  unifying interval representation of state took 1.906s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2889,7 +2889,7 @@ fetched a theorem
 symb state exp sizes = 315
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.007s
 
 >>>>>> tryassert in 0.003s
 
@@ -2901,23 +2901,23 @@ pc = pc(address(imm(32; 0x8008168)); 1)
 symb state exp sizes = 317
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.012s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.150s
+  applying instantiation took 5.133s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.146s
+  unifying interval representation of state took 0.137s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2937,12 +2937,12 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 322
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 324
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.003s
 
@@ -2951,14 +2951,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.119s
+  applying instantiation took 5.040s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.172s
+  unifying interval representation of state took 0.158s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -2971,19 +2971,19 @@ fetched a theorem
 symb state exp sizes = 329
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 329
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 331
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.013s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.003s
 
@@ -2992,14 +2992,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.126s
+  applying instantiation took 5.067s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.180s
+  unifying interval representation of state took 0.176s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3012,35 +3012,35 @@ fetched a theorem
 symb state exp sizes = 336
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 336
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 338
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.004s
+>>>>>> tryprune in 0.003s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 7.516s
+  applying instantiation took 5.097s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.225s
+  unifying interval representation of state took 0.149s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3053,35 +3053,35 @@ fetched a theorem
 symb state exp sizes = 343
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 343
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 345
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.139s
+  applying instantiation took 5.195s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.141s
+  unifying interval representation of state took 0.139s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3101,7 +3101,7 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 350
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.032s
 
 symb state exp sizes = 352
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -3115,14 +3115,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 8.033s
+  applying instantiation took 7.721s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.139s
+  unifying interval representation of state took 0.142s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3135,14 +3135,14 @@ fetched a theorem
 symb state exp sizes = 357
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.007s
 
->>>>>> tryassert in 0.003s
+>>>>>> tryassert in 0.004s
 
 symb state exp sizes = 357
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 359
 pc = pc(address(imm(32; 0x8008168)); 2)
@@ -3156,14 +3156,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.123s
+  applying instantiation took 7.568s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.169s
+  unifying interval representation of state took 0.241s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3183,28 +3183,28 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 364
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.025s
 
 symb state exp sizes = 366
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.006s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.164s
+  applying instantiation took 5.491s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.143s
+  unifying interval representation of state took 0.151s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3224,12 +3224,12 @@ pc = pc(address(imm(32; 0x8008168)); 0)
 symb state exp sizes = 371
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.023s
 
 symb state exp sizes = 373
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryprune in 0.004s
 
@@ -3238,14 +3238,14 @@ pc = pc(address(imm(32; 0x8008168)); 2)
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.181s
+  applying instantiation took 5.377s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.123s
+  unifying interval representation of state took 0.141s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3258,35 +3258,35 @@ fetched a theorem
 symb state exp sizes = 378
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.003s
 
 symb state exp sizes = 378
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.024s
+>>>>>> executed step in 0.022s
 
 symb state exp sizes = 380
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.191s
+  applying instantiation took 5.379s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.144s
+  unifying interval representation of state took 0.153s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3299,35 +3299,35 @@ fetched a theorem
 symb state exp sizes = 385
 pc = pc(address(imm(32; 0x8008168)); 0)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
->>>>>> tryassert in 0.003s
+>>>>>> tryassert in 0.004s
 
 symb state exp sizes = 385
 pc = pc(address(imm(32; 0x8008168)); 1)
 
->>>>>> executed step in 0.023s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 387
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryprune in 0.003s
+>>>>>> tryprune in 0.004s
 
 >>>>>> tryprune in 0.002s
 
 found 1 summaries with matching pc
 trying to instantiate a summary
 applying instantiation
-  applying instantiation took 5.223s
+  applying instantiation took 5.192s
 
 ====================================================
 ====================================================
 used a summary
 
 unifying interval representation of state
-  unifying interval representation of state took 0.130s
+  unifying interval representation of state took 0.134s
 post instantiation code runs now
 removed stores: 13
 MEM BExp_BinPred BIExp_Equal
@@ -3352,28 +3352,28 @@ pc = pc(address(imm(32; 0x8008168)); 1)
 symb state exp sizes = 394
 pc = pc(address(imm(32; 0x8008168)); 2)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryprune in 0.002s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816A)); 0)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
->>>>>> tryassert in 0.012s
+>>>>>> tryassert in 0.004s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816A)); 1)
 
->>>>>> executed step in 0.007s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.002s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816A)); 2)
 
->>>>>> executed step in 0.039s
+>>>>>> executed step in 0.038s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816A)); 3)
@@ -3388,14 +3388,14 @@ pc = pc(address(imm(32; 0x800816A)); 4)
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816C)); 0)
 
->>>>>> executed step in 0.005s
+>>>>>> executed step in 0.006s
 
->>>>>> tryassert in 0.004s
+>>>>>> tryassert in 0.003s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816C)); 1)
 
->>>>>> executed step in 0.008s
+>>>>>> executed step in 0.006s
 
 >>>>>> tryassert in 0.000s
 
@@ -3419,7 +3419,7 @@ pc = pc(address(imm(32; 0x800816E)); 0)
 
 >>>>>> executed step in 0.006s
 
->>>>>> tryassert in 0.003s
+>>>>>> tryassert in 0.004s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816E)); 1)
@@ -3429,7 +3429,7 @@ pc = pc(address(imm(32; 0x800816E)); 1)
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816E)); 2)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x800816E)); 3)
@@ -3451,7 +3451,7 @@ pc = pc(address(imm(32; 0x8008170)); 1)
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008170)); 2)
 
->>>>>> executed step in 0.029s
+>>>>>> executed step in 0.021s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008170)); 3)
@@ -3468,24 +3468,24 @@ pc = pc(address(imm(32; 0x8008172)); 0)
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 1)
 
->>>>>> executed step in 0.006s
+>>>>>> executed step in 0.005s
 
 >>>>>> tryassert in 0.002s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 2)
 
->>>>>> executed step in 0.028s
+>>>>>> executed step in 0.027s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 3)
 
->>>>>> executed step in 0.029s
+>>>>>> executed step in 0.027s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 4)
 
->>>>>> executed step in 0.026s
+>>>>>> executed step in 0.028s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 5)
@@ -3495,7 +3495,7 @@ pc = pc(address(imm(32; 0x8008172)); 5)
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 6)
 
->>>>>> executed step in 0.022s
+>>>>>> executed step in 0.037s
 
 symb state exp sizes = 400
 pc = pc(address(imm(32; 0x8008172)); 7)
@@ -3503,47 +3503,47 @@ pc = pc(address(imm(32; 0x8008172)); 7)
 >>>>>> executed step in 0.001s
 
 no executable states left, terminating here
->>>>>>>>>> birs_rule_SEQ_fun in 0.905s
->>>>>>>>>> birs_rule_SEQ_fun in 0.833s
->>>>>>>>>> birs_rule_SEQ_fun in 0.829s
->>>>>>>>>> birs_rule_SEQ_fun in 0.829s
->>>>>>>>>> birs_rule_SEQ_fun in 0.826s
->>>>>>>>>> birs_rule_SEQ_fun in 0.820s
->>>>>>>>>> birs_rule_SEQ_fun in 0.830s
->>>>>>>>>> birs_rule_SEQ_fun in 0.827s
->>>>>>>>>> birs_rule_SEQ_fun in 0.839s
->>>>>>>>>> birs_rule_SEQ_fun in 0.825s
->>>>>>>>>> birs_rule_SEQ_fun in 0.824s
->>>>>>>>>> birs_rule_SEQ_fun in 0.827s
->>>>>>>>>> birs_rule_SEQ_fun in 0.827s
->>>>>>>>>> birs_rule_SEQ_fun in 0.834s
->>>>>>>>>> birs_rule_SEQ_fun in 0.830s
->>>>>>>>>> birs_rule_SEQ_fun in 0.831s
->>>>>>>>>> birs_rule_SEQ_fun in 0.824s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.897s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.819s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.814s
 >>>>>>>>>> birs_rule_SEQ_fun in 0.828s
->>>>>>>>>> birs_rule_SEQ_fun in 0.840s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.819s
 >>>>>>>>>> birs_rule_SEQ_fun in 0.827s
->>>>>>>>>> birs_rule_SEQ_fun in 0.830s
->>>>>>>>>> birs_rule_SEQ_fun in 0.834s
->>>>>>>>>> birs_rule_SEQ_fun in 0.822s
->>>>>>>>>> birs_rule_SEQ_fun in 0.833s
->>>>>>>>>> birs_rule_SEQ_fun in 0.823s
->>>>>>>>>> birs_rule_SEQ_fun in 0.826s
->>>>>>>>>> birs_rule_SEQ_fun in 0.844s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.820s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.819s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.824s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.805s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.810s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.817s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.820s
 >>>>>>>>>> birs_rule_SEQ_fun in 0.825s
->>>>>>>>>> birs_rule_SEQ_fun in 0.835s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.823s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.816s
 >>>>>>>>>> birs_rule_SEQ_fun in 0.821s
->>>>>>>>>> birs_rule_SEQ_fun in 0.811s
->>>>>>>>>> birs_rule_SEQ_fun in 0.157s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.825s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.832s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.816s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.821s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.812s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.808s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.835s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.850s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.824s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.827s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.810s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.832s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.806s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.801s
+>>>>>>>>>> birs_rule_SEQ_fun in 0.159s
 
 ======
- > exec_until took 287.516s
+ > exec_until took 293.127s
 unifying interval representation of state
 applying freesymb_RULE
-  applying freesymb_RULE took 0.069s
-  unifying interval representation of state took 0.185s
+  applying freesymb_RULE took 0.056s
+  unifying interval representation of state took 0.171s
 unifying name for interval representation of state
-  unifying name for interval representation of state took 0.076s
+  unifying name for interval representation of state took 0.071s
 Number of states to merge: 1
 Saved ORACLE thm ____ "balrob_summary__my_modexp_asm_thm"
 
@@ -3561,72 +3561,72 @@ BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
 cycles for returning from this function at 0x8008174w (bx lr) are: 3
 
 Label                                 #calls     real     user   system       gc
-0_birs_sound_symb_freesymbintro_RULE      19    1.094    0.927    0.036    0.071
-0_birs_symb_subst1_CONV                 2817   75.031   69.564    1.528    3.887
-1_birs_sound_symb_inst_RULE               35  162.501  146.351    4.698   11.376
-1_birs_sound_symb_rename_RULE             70   69.556   64.196    2.068    3.258
-1_birs_sound_symb_rename_free_RULE         3    0.171    0.153    0.012    0.006
+0_birs_sound_symb_freesymbintro_RULE      19    1.072    0.932    0.019    0.059
+0_birs_symb_subst1_CONV                 2817   75.032   67.394    1.575    6.010
+1_birs_sound_symb_inst_RULE               35  164.185  145.748    4.837   13.528
+1_birs_sound_symb_rename_RULE             70   68.732   63.682    1.907    3.112
+1_birs_sound_symb_rename_free_RULE         3    0.165    0.154    0.004    0.007
 auxset_bir_exp_EQ_CONV                     1    0.001    0.001    0.000    0.000
 auxset_bir_pc_EQ_CONV                     37    0.004    0.004    0.000    0.000
-auxset_bir_status_EQ_CONV                447    0.079    0.077    0.001    0.000
-auxset_bir_var_EQ_CONV               1194925   34.741   23.498    0.972    7.701
-auxset_bir_varname_EQ_CONV            391729    6.746    4.450    0.208    1.348
-auxset_birs_state_EQ_CONV                152    0.013    0.011    0.001    0.000
+auxset_bir_status_EQ_CONV                447    0.085    0.070    0.008    0.005
+auxset_bir_var_EQ_CONV               1194925   28.240   23.753    0.958    0.923
+auxset_bir_varname_EQ_CONV            391729    5.411    4.366    0.202    0.098
+auxset_birs_state_EQ_CONV                152    0.013    0.012    0.000    0.000
 auxset_birs_state_EQ_CONV_0status        152    0.004    0.004    0.000    0.000
 auxset_birs_state_EQ_CONV_1pc             37    0.004    0.004    0.000    0.000
 auxset_birs_state_EQ_CONV_2pcond           1    0.001    0.001    0.000    0.000
-bir_exp_subst1_CONV                    56340   71.680   66.225    1.464    3.821
-bir_smt_check_unsat::birsmt            10845   37.773   10.167    0.962    0.768
-bir_vars_of_exp_DIRECT_CONV            41080   13.306   12.039    0.464    0.718
-birs_Pi_first_freesymb_RULE               19    1.097    0.930    0.036    0.071
-birs_basic_execute                         2  328.743  274.207    9.312   19.468
-birs_basic_from_sums                     493  289.487  238.485    8.887   18.419
-birs_basic_merge                           2    1.843    1.492    0.055    0.105
-birs_env_set_order_CONV                  813    2.705    2.478    0.113    0.109
-birs_exec_to                               2  328.331  273.991    9.300   19.455
-birs_freesymbs_DIRECT_CONV               656   51.090   43.562    1.600    5.909
-birs_from_summaries                      493  289.484  238.482    8.887   18.419
-birs_from_summaries_inst                 493  289.476  238.475    8.886   18.419
-birs_intervals_Pi_bounds_RULE              2    0.035    0.025    0.000    0.000
-birs_intervals_Pi_unify_RULE              37    5.372    1.800    0.178    0.119
-birs_intervals_Pi_unify_name_RULE          2    0.173    0.155    0.012    0.006
-birs_rule_SEQ_fun                         37   27.559   26.666    0.197    0.686
-birs_rule_SEQ_fun_p2                      37    2.252    2.118    0.071    0.062
-birs_rule_SEQ_fun_p3                      37    0.073    0.068    0.005    0.000
-birs_rule_SEQ_fun_p4                      37   25.056   24.307    0.117    0.622
-birs_rule_STEP_SEQ_fun                   454    6.909    6.494    0.143    0.253
-birs_rule_STEP_fun                         4    0.031    0.023    0.008    0.000
-birs_rule_SUBST_trysimp_first_fun        960   87.238   60.999    2.874    1.450
-birs_rule_tryjustassert_fun              458    0.601    0.393    0.003    0.016
-birs_rule_tryprune_fun                   916    0.383    0.271    0.010    0.014
-birs_simp_regular                        960   85.173   59.044    2.828    1.384
-birs_simp_try_fix_assumptions           1312    0.371    0.347    0.010    0.011
-birs_simp_try_load                        24    2.033    0.799    0.026    0.057
-birs_simp_try_recurse                    960    0.003    0.002    0.000    0.000
-birs_simp_try_recurse_overhead         20035    7.971    7.336    0.338    0.230
-birs_simp_try_store                     4464   69.436   45.467    2.300    0.991
-birs_sound_inst_RULE                      35  197.889  174.960    5.826   16.835
-birs_summary_gen                           2  330.707  275.763    9.393   19.588
-birs_symb_symbols_DIRECT_CONV           2978   75.427   67.752    3.021    4.610
-birs_symb_symbols_set_DIRECT_CONV       1481   43.578   39.783    1.549    2.224
-build_tree                                 2  300.757  247.318    9.095   18.769
-eval_exp_CONV                            414    1.566    1.470    0.042    0.053
-eval_exp_CONV_p1                         414    0.378    0.351    0.010    0.015
-eval_exp_CONV_p2                         414    0.435    0.416    0.012    0.006
-eval_exp_CONV_p4                         414    0.309    0.297    0.008    0.002
-eval_exp_CONV_p5                         414    0.433    0.390    0.011    0.029
-exec_step_CONV                           458    5.645    5.268    0.138    0.221
-exec_step_CONV_B                         373    4.885    4.568    0.126    0.186
-exec_step_CONV_E                          85    0.434    0.400    0.005    0.015
-reduce_tree                                2   27.560   26.668    0.197    0.686
-rule_CONS_NARROW                          35    9.367    5.357    0.232    3.684
-rule_CONS_WIDEN                          131    6.205    1.958    0.182    0.686
-senv_typecheck_CONV                      414    0.255    0.240    0.007    0.006
-type_of_bir_exp_DIRECT_CONV           534386    5.308    4.077    0.149    0.035
-zzz_1_matchmp                            131    0.437    0.378    0.028    0.029
-zzz_2_stateacc                           131    0.879    0.720    0.065    0.093
-zzz_3_spec                               131    0.096    0.089    0.007    0.000
-zzz_4_mp                                 131    0.005    0.005    0.000    0.000
-zzz_5_stateacc                           150    0.482    0.405    0.043    0.032
+bir_exp_subst1_CONV                    56340   71.818   64.214    1.503    5.930
+bir_smt_check_unsat::birsmt            10845   37.905   10.204    0.860    0.253
+bir_vars_of_exp_DIRECT_CONV            41080   13.749   12.260    0.322    1.082
+birs_Pi_first_freesymb_RULE               19    1.075    0.935    0.019    0.059
+birs_basic_execute                         2  333.984  273.539   10.124   23.862
+birs_basic_from_sums                     493  295.177  238.021    9.682   23.135
+birs_basic_merge                           2    1.835    1.504    0.029    0.101
+birs_env_set_order_CONV                  813    2.708    2.460    0.152    0.091
+birs_exec_to                               2  333.582  273.318   10.124   23.857
+birs_freesymbs_DIRECT_CONV               656   53.541   44.737    1.635    7.150
+birs_from_summaries                      493  295.174  238.019    9.682   23.135
+birs_from_summaries_inst                 493  295.167  238.012    9.682   23.135
+birs_intervals_Pi_bounds_RULE              2    0.036    0.025    0.000    0.000
+birs_intervals_Pi_unify_RULE              37    8.238    1.805    0.287    2.777
+birs_intervals_Pi_unify_name_RULE          2    0.167    0.156    0.004    0.007
+birs_rule_SEQ_fun                         37   27.286   26.697    0.136    0.446
+birs_rule_SEQ_fun_p2                      37    2.222    2.145    0.061    0.017
+birs_rule_SEQ_fun_p3                      37    0.074    0.071    0.003    0.000
+birs_rule_SEQ_fun_p4                      37   24.811   24.306    0.071    0.426
+birs_rule_STEP_SEQ_fun                   454    6.730    6.303    0.212    0.193
+birs_rule_STEP_fun                         4    0.031    0.029    0.000    0.002
+birs_rule_SUBST_trysimp_first_fun        960   88.498   61.125    3.498    1.369
+birs_rule_tryjustassert_fun              458    0.595    0.368    0.016    0.011
+birs_rule_tryprune_fun                   916    0.395    0.259    0.030    0.014
+birs_simp_regular                        960   86.466   59.222    3.432    1.304
+birs_simp_try_fix_assumptions           1312    0.399    0.355    0.009    0.031
+birs_simp_try_load                        24    2.049    0.802    0.024    0.040
+birs_simp_try_recurse                    960    0.004    0.002    0.000    0.000
+birs_simp_try_recurse_overhead         20035    7.874    7.252    0.338    0.216
+birs_simp_try_store                     4464   71.440   46.272    2.969    0.967
+birs_sound_inst_RULE                      35  199.385  174.385    5.792   18.939
+birs_summary_gen                           2  335.928  275.114   10.158   23.979
+birs_symb_symbols_DIRECT_CONV           2978   79.112   68.951    2.787    7.333
+birs_symb_symbols_set_DIRECT_CONV       1481   48.360   40.650    1.367    6.323
+build_tree                                 2  306.284  246.608    9.988   23.410
+eval_exp_CONV                            414    1.487    1.355    0.097    0.032
+eval_exp_CONV_p1                         414    0.360    0.316    0.030    0.011
+eval_exp_CONV_p2                         414    0.427    0.392    0.018    0.017
+eval_exp_CONV_p4                         414    0.286    0.273    0.013    0.000
+eval_exp_CONV_p5                         414    0.402    0.360    0.036    0.005
+exec_step_CONV                           458    5.513    5.118    0.194    0.179
+exec_step_CONV_B                         373    4.813    4.453    0.172    0.179
+exec_step_CONV_E                          85    0.415    0.390    0.011    0.000
+reduce_tree                                2   27.287   26.699    0.136    0.446
+rule_CONS_NARROW                          35    6.797    5.435    0.220    1.046
+rule_CONS_WIDEN                          131   10.033    1.962    0.274    4.323
+senv_typecheck_CONV                      414    0.244    0.226    0.010    0.007
+type_of_bir_exp_DIRECT_CONV           534386    5.432    4.125    0.167    0.068
+zzz_1_matchmp                            131    0.439    0.366    0.053    0.018
+zzz_2_stateacc                           131    5.089    0.708    0.109    4.266
+zzz_3_spec                               131    0.097    0.092    0.004    0.000
+zzz_4_mp                                 131    0.005    0.004    0.000    0.000
+zzz_5_stateacc                           150    0.475    0.402    0.051    0.021
 Exporting theory "modexp_asm" ... done.
-Theory "modexp_asm" took 5m04s to build
+Theory "modexp_asm" took 5m09s to build
