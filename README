@@ -31,6 +31,8 @@ Notable subdirectories:
 $ docker build -t holbase .
 $ docker run -it --rm holbase
 
+This takes 20 minutes on a modern machine.
+
 ### Manual building
 
 ## Step-by-Step Instructions for Replication
