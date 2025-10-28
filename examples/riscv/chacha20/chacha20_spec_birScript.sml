@@ -1,5 +1,7 @@
 open HolKernel boolLib Parse bossLib;
-open pairTheory pred_setTheory markerTheory wordsTheory wordsLib;
+open pairTheory pred_setTheory markerTheory wordsTheory;
+
+open pairSyntax wordsLib;
 
 open holba_auxiliaryTheory;
 
