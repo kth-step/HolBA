@@ -1,0 +1,13 @@
+
+incr:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000718 <incr>:
+ 718:	91000400 	add	x0, x0, #0x1
+ 71c:	d65f03c0 	ret
+
+0000000000000720 <main>:
+ 720:	52800020 	mov	w0, #0x1                   	// #1
+ 724:	d65f03c0 	ret
