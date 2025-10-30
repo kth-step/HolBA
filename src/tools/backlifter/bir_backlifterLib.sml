@@ -45,7 +45,7 @@ open bir_inst_liftingHelpersLib;
     open bir_compositionLib;
   in
 
-fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm = 
+  fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm =
   let
     val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
 
@@ -65,10 +65,9 @@ fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_de
 	      get_bir_cont_pre bir_ct,
 	      get_bir_cont_post bir_ct] arm8_lift_contract_thm;
 
-    (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
+    (* Prove the ARMv8 triple by supplying the antecedents of lift_contract_thm *)
     val arm8_contract_thm = prove(
-      ``arm8_cont ^prog_bin ^l ^ls ^arm8_pre
-		^arm8_post``,
+      ``arm8_cont ^prog_bin ^l ^ls ^arm8_pre ^arm8_post``,
 
     irule add_lift_thm >>
     REPEAT STRIP_TAC >| [
@@ -82,7 +81,6 @@ fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_de
         LAND_CONV (pred_setLib.UNION_CONV bir_convLib.bir_var_EQ_CONV) THENC
         holba_convLib.SUBSET_CONV bir_convLib.bir_var_EQ_CONV
       ),
-
       (* 2. Starting address exists in program *)
       rewrite_tac [bir_prog_def] >>
       CONV_TAC (
@@ -91,12 +89,12 @@ fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_de
         pred_setLib.IN_CONV bir_convLib.bir_label_EQ_CONV
       ),
 
-      (* 3. Provide translation of the ARM8 precondition to the BIR precondition *)
+      (* 3. Provide translation of the ARMv8 precondition to the BIR precondition *)
       FULL_SIMP_TAC std_ss [bir_pre1_def, arm8_pre_imp_bir_pre_thm],
 
-      (* 4. Provide translation of the ARM8 postcondition to BIR postcondition *)
+      (* 4. Provide translation of the ARMv8 postcondition to BIR postcondition *)
+      ASSUME_TAC (Q.ISPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` arm8_post_imp_bir_post_thm) >>
       FULL_SIMP_TAC std_ss bir_post_defs >>
-      ASSUME_TAC (Q.SPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` arm8_post_imp_bir_post_thm) >>
       FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [bir_post_bir_to_arm8_def] >>
       FULL_SIMP_TAC std_ss [],
 
