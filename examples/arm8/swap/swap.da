@@ -1,0 +1,18 @@
+
+swap:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000718 <swap>:
+ 718:	f9400002 	ldr	x2, [x0]
+ 71c:	f9400023 	ldr	x3, [x1]
+ 720:	eb03005f 	cmp	x2, x3
+ 724:	54000060 	b.eq	730 <swap+0x18>  // b.none
+ 728:	f9000003 	str	x3, [x0]
+ 72c:	f9000022 	str	x2, [x1]
+ 730:	d65f03c0 	ret
+
+0000000000000734 <main>:
+ 734:	52800000 	mov	w0, #0x0                   	// #0
+ 738:	d65f03c0 	ret
