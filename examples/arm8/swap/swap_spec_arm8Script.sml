@@ -57,10 +57,10 @@ Definition arm8_swap_pre_def:
  arm8_swap_pre (pre_x0:word64) (pre_x1:word64)
   (pre_x0_deref:word64) (pre_x1_deref:word64)
   (ms:arm8_state) : bool =
- (^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x0") /\
+ (^(mem_addrs_aligned_prog_disj_arm8_tm mem_params_standard "pre_x0") /\
   ms.REG 0w = pre_x0 /\
   arm8_load_64 ms.MEM pre_x0 = pre_x0_deref /\
-  ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x1") /\
+  ^(mem_addrs_aligned_prog_disj_arm8_tm mem_params_standard "pre_x1") /\
   ms.REG 1w = pre_x1 /\
   arm8_load_64 ms.MEM pre_x1 = pre_x1_deref)
 End

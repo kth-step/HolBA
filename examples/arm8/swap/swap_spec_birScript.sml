@@ -103,52 +103,6 @@ End
 (* Connecting ARMv8 and BSPEC contracts *)
 (* ------------------------------------ *)
 
-Theorem bir_load_from_mem_arm8_load_64:
- !ms map (w_ref:word64) w_deref.
-  ms.MEM = (\a. n2w (bir_load_mmap map (w2n a))) /\
-  bir_load_from_mem Bit8 Bit64 Bit64 map BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref) ==>
-  arm8_load_64 ms.MEM w_ref = w_deref
-Proof
- rw [arm8_load_64_def] >>
- fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
- fs [bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES] >>
- `size_of_bir_immtype Bit64 = dimindex(:64)` by rw [size_of_bir_immtype_def] >>
- fs [bir_exp_memTheory.bir_mem_addr_w2n]
-QED
-
-Theorem arm8_load_64_bir_load_from_mem:
- !ms map (w_ref:word64) w_deref.
- arm8_load_64 ms.MEM w_ref = w_deref /\
- ms.MEM = (\a. n2w (bir_load_mmap map (w2n a))) ==>
- bir_load_from_mem Bit8 Bit64 Bit64 map BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref)
-Proof
- rw [arm8_load_64_def] >>
- fs [bir_exp_memTheory.bir_load_from_mem_REWRS] >>
- fs [bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES] >>
- `size_of_bir_immtype Bit64 = dimindex(:64)` by rw [size_of_bir_immtype_def] >>
- fs [bir_exp_memTheory.bir_mem_addr_w2n]
-QED
-
-Theorem bmr_rel_arm8_MEM_map:
- !b f b1 ms map.
- bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms /\
- f "MEM" = SOME (BVal_Mem Bit64 Bit8 map) ==>
- ms.MEM = (\a. n2w (bir_load_mmap map (w2n a)))
-Proof
- rw [
-  arm8_bmr_rel_EVAL,
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,
-  bir_envTheory.bir_var_name_def
- ] >>
- fs []
-QED
-
-(* ----- *)
-
 Theorem swap_arm8_pre_imp_bspec_pre_thm:
  bir_pre_arm8_to_bir
   (arm8_swap_pre pre_x0 pre_x1 pre_x0_deref pre_x1_deref)
