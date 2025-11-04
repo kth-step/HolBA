@@ -4,9 +4,9 @@ open bir_obs_modelLib;
 
 open bslSyntax;
 
-open incrTheory;
+open swapTheory;
 
-val _ = new_theory "incr_obs";
+val _ = new_theory "swap_obs";
 
 val mem_bounds =
  let
@@ -20,16 +20,16 @@ val mem_bounds =
         mk_wordi (mem_end, 64))
   end;
 
-val bir_incr_obs_prog =
+val bir_swap_obs_prog =
  let
-   val prog_tm = (snd o dest_eq o concl) bir_incr_prog_def;
+   val prog_tm = (snd o dest_eq o concl) bir_swap_prog_def;
    val om = get_obs_model "mem_address_pc";
  in
    (#add_obs om) mem_bounds (proginst_fun_gen (#obs_hol_type om) prog_tm)
  end;
 
-Definition bir_incr_obs_prog_def:
- bir_incr_obs_prog = ^bir_incr_obs_prog
+Definition bir_swap_obs_prog_def:
+ bir_swap_obs_prog = ^bir_swap_obs_prog
 End
 
 val _ = export_theory ();

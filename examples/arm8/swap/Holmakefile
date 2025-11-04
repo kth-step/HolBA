@@ -14,6 +14,7 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/tools/backlifter \
            $(HOLBADIR)/src/tools/symbexec \
            $(HOLBADIR)/src/tools/symbexec/examples/common \
+           $(HOLBADIR)/src/tools/scamv/obsmodel \
            $(HOLBADIR)/src
 
 all: $(DEFAULT_TARGETS)
