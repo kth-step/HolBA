@@ -1362,7 +1362,7 @@ Proof
  ]
 QED
 
-Theorem arm9_bmr_x9_equiv:
+Theorem arm8_bmr_x9_equiv:
 !b f b9 ms w.
  bmr_rel arm8_bmr (bir_state_t b (BEnv f) b9) ms ==>
  (f "R9" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 9w = w)
@@ -1378,10 +1378,346 @@ Proof
  ]
 QED
 
-Theorem arm10_bmr_x10_equiv:
+Theorem arm8_bmr_x10_equiv:
 !b f b10 ms w.
  bmr_rel arm8_bmr (bir_state_t b (BEnv f) b10) ms ==>
  (f "R10" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 10w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x11_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R11" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 11w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x12_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R12" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 12w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x13_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R13" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 13w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x14_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R14" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 14w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x15_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R15" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 15w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x16_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R16" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 16w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x17_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R17" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 17w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x18_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R18" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 18w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x19_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R19" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 19w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x20_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R20" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 20w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x21_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R21" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 21w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x22_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R22" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 22w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x23_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R23" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 23w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x24_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R24" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 24w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x25_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R25" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 25w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x26_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R26" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 26w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x27_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R27" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 27w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x28_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R28" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 28w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x29_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R29" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 29w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x30_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R30" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 30w = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def
+ ]
+QED
+
+Theorem arm8_bmr_x31_equiv:
+!b f b1 ms w.
+ bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
+ (f "R31" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 31w = w)
 Proof
  rw [] >>
  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
