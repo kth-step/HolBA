@@ -510,7 +510,7 @@ open bir_inst_liftingHelpersLib;
 		[bir_bool_expTheory.bir_is_bool_exp_env_def, bir_tsTheory.bir_ts_def, bir_tsTheory.bir_weak_trs_def] >>
               Cases_on `bir_exec_to_labels
               (^(pred_setSyntax.mk_set [start_label]) UNION (^ilist))
-              (bir_add_reg_prog:'observation_type bir_program_t) s` >> (
+              (bir_add_reg_prog:'obs_type bir_program_t) s` >> (
                 FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_programTheory.bir_exec_to_labels_def]
               ) >>
               IMP_RES_TAC bir_program_env_orderTheory.bir_exec_to_labels_n_ENV_ORDER >>

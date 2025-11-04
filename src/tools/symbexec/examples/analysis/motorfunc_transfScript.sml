@@ -121,7 +121,7 @@ End
 
 (* prepare property transfer theorem *)
 val birs_symb_symbols_f_sound_prog_thm =
-  (SPEC (inst [Type`:'observation_type` |-> Type.alpha] bprog) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
+  (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
 
 val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
@@ -792,7 +792,7 @@ ASSUME_TAC
     FULL_SIMP_TAC std_ss [pre_bir_nL_def, bir_programTheory.bir_state_is_terminated_def]
   ) >>
 
-  `MEM (BL_Address (Imm32 ^bir_frag_l_ml_tm)) (bir_labels_of_program (bprog:'observation_type bir_program_t))` by (
+  `MEM (BL_Address (Imm32 ^bir_frag_l_ml_tm)) (bir_labels_of_program (bprog:'obs_type bir_program_t))` by (
     EVAL_TAC
   ) >>
   FULL_SIMP_TAC std_ss [] >>

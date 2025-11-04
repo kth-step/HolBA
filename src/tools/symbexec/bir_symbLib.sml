@@ -146,7 +146,7 @@ fun bir_symb_transfer
    val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre_tm;
 
    val birs_symb_symbols_f_sound_prog_thm =
-     (SPEC (inst [Type`:'observation_type` |-> Type.alpha] bprog_tm)
+     (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog_tm)
        bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
 
    val birs_prop_transfer_thm =
@@ -314,7 +314,7 @@ fun bir_symb_transfer
       `\l. if l = ^bir_end_lbl_tm
            then ^bspec_post_tm
            else bir_exp_false`
-    ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`])
+    ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'obs_type`])
     abstract_jgmt_rel_bir_cont) >>
     rw [] >>
     METIS_TAC [abstract_jgmt_rel_thm]);
@@ -440,7 +440,7 @@ fun bir_symb_transfer_two
      REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre_tm;
 
    val birs_symb_symbols_f_sound_prog_thm =
-    (SPEC (inst [Type`:'observation_type` |-> Type.alpha] bprog_tm)
+    (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog_tm)
      bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
 
    val birs_prop_transfer_thm =
@@ -654,7 +654,7 @@ fun bir_symb_transfer_two
     `\l. if l = BL_Address (Imm64 ^end_addr_1_tm) then ^bspec_post_1_tm
         else if l = BL_Address (Imm64 ^end_addr_2_tm) then ^bspec_post_2_tm
         else bir_exp_false`
-  ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'observation_type`])
+  ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'obs_type`])
      abstract_jgmt_rel_bir_cont) >>
   rw [] >>
   METIS_TAC [abstract_jgmt_rel_thm]);

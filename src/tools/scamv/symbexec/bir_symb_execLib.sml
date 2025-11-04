@@ -138,7 +138,7 @@ fun symb_exec_run max bp pd st =
    
 (* Given a Program, exec until every branch halts *)
 (*
-val bir_program = ``BirProgram [] : 'observation_type bir_program_t``;
+val bir_program = ``BirProgram [] : 'obs_type bir_program_t``;
 
 val bir_program = ``BirProgram
       [<|bb_label := BL_Address_HC (Imm64 0w) "F9400023 (ldr x3, [x1])";

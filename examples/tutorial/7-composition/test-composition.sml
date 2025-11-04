@@ -26,7 +26,7 @@ val _ = print_and_check_thm
   bir_add_reg_ct
   ``
   bir_cont
-    (bir_add_reg_prog:'observation_type bir_program_t)
+    (bir_add_reg_prog:'obs_type bir_program_t)
     bir_exp_true
     (BL_Address (Imm64 28w))
     {BL_Address (Imm64 72w)} EMPTY bir_add_reg_contract_1_pre

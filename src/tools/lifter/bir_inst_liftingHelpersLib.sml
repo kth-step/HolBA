@@ -53,7 +53,7 @@ val bir_assert_desc_t_ty =
 
 val bir_updateE_desc_exp_tm = prim_mk_const{Name="bir_updateE_desc_exp", Thy="bir_update_block"}
 
-val block_observe_ty = mk_vartype "'observation_type"
+val block_observe_ty = mk_vartype "'obs_type"
 
 val bir_is_lifted_inst_block_COMPUTE_block_tm =
    inst [Type.alpha |-> block_observe_ty] (get_const "bir_is_lifted_inst_block_COMPUTE_block")
