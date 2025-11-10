@@ -33,7 +33,7 @@ val _ = print_and_check_thm
   ``
   bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x104A8w : word64))
    bir_swap_progbin
-   (bir_swap_prog : 'observation_type bir_program_t)
+   (bir_swap_prog : 'obs_type bir_program_t)
   ``;
 
 val _ = print_and_check_thm
@@ -67,7 +67,7 @@ val _ = print_and_check_thm
   ``
   bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x10498w : word64))
    bir_incr_progbin
-   (bir_incr_prog : 'observation_type bir_program_t)
+   (bir_incr_prog : 'obs_type bir_program_t)
   ``;
 
 val _ = print_and_check_thm
@@ -98,7 +98,7 @@ val _ = print_and_check_thm
   ``
   bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x10498w : word64))
    bir_mod2_progbin
-   (bir_mod2_prog : 'observation_type bir_program_t)
+   (bir_mod2_prog : 'obs_type bir_program_t)
   ``;
 
 val _ = print_and_check_thm

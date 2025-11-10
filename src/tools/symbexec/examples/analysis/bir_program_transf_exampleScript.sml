@@ -307,7 +307,7 @@ ASSUME_TAC
     FULL_SIMP_TAC std_ss [pre_bir_nL_def, bir_programTheory.bir_state_is_terminated_def]
   ) >>
 
-  `MEM (BL_Address (Imm32 ^bir_frag_l_ml_tm)) (bir_labels_of_program (bprog:'observation_type bir_program_t))` by (
+  `MEM (BL_Address (Imm32 ^bir_frag_l_ml_tm)) (bir_labels_of_program (bprog:'obs_type bir_program_t))` by (
     EVAL_TAC
   ) >>
   FULL_SIMP_TAC std_ss [] >>
