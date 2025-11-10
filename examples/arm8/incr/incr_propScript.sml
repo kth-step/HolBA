@@ -41,9 +41,9 @@ val progbin_tm = (fst o dest_eq o concl) bir_incr_progbin_def;
 val arm8_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_incr_pre_def;
 val arm8_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_incr_post_def;
 
-(* ---------------------------------- *)
-(* Backlifting BIR contract to RISC-V *)
-(* ---------------------------------- *)
+(* --------------------------------- *)
+(* Backlifting BIR contract to ARMv8 *)
+(* --------------------------------- *)
 
 val arm8_cont_incr_thm =
  get_arm8_contract

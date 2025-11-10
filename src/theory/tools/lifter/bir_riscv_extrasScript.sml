@@ -972,7 +972,7 @@ Theorem riscv_extra_FOLDS = LIST_CONJ [GSYM riscv_mem_load_dword_def,
 (********************)
 
 Theorem bir_load_from_mem_riscv_mem_load_dword:
- !b f b1 ms map w_ref w_deref.
+ !ms map w_ref w_deref.
   ms.MEM8 = (\a. n2w (bir_load_mmap map (w2n a))) /\
   bir_load_from_mem Bit8 Bit64 Bit64 map BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref) ==>
   riscv_mem_load_dword ms.MEM8 w_ref = w_deref
@@ -991,7 +991,7 @@ Proof
 QED
 
 Theorem riscv_mem_load_dword_bir_load_from_mem:
- !ms f mm w_ref w_deref.
+ !ms mm w_ref w_deref.
  riscv_mem_load_dword ms.MEM8 w_ref = w_deref /\
  ms.MEM8 = (\a. n2w (bir_load_mmap mm (w2n a))) ==>
  bir_load_from_mem Bit8 Bit64 Bit64 mm BEnd_LittleEndian (w2n w_ref) = SOME (Imm64 w_deref)

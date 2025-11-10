@@ -61,23 +61,9 @@ Definition bspec_incr_post_def:
       BIExp_Plus (BExp_Const (Imm64 pre_x0)) (BExp_Const (Imm64 1w)))
 End
 
-
 (* ------------------------------------ *)
 (* Connecting ARMv8 and BSPEC contracts *)
 (* ------------------------------------ *)
-
-Theorem arm8_bmr_x0_equiv:
-!b f b1 ms w.
- bmr_rel arm8_bmr (bir_state_t b (BEnv f) b1) ms ==>
- (f "R0" = SOME (BVal_Imm (Imm64 w)) <=> ms.REG 0w = w)
-Proof
- rw [] >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  arm8_bmr_rel_EVAL,bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def
- ]
-QED
 
 Theorem incr_arm8_pre_imp_bspec_pre_thm:
  bir_pre_arm8_to_bir (arm8_incr_pre pre_x0) (bspec_incr_pre pre_x0)

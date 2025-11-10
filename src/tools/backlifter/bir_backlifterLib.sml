@@ -45,7 +45,11 @@ open bir_inst_liftingHelpersLib;
     open bir_compositionLib;
   in
 
-  fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+  fun get_arch_contract arch_cont
+   arch_lift_contract_thm arch_wf_varset_def arch_vars_def bir_post_bir_to_arch_def
+   bir_ct prog_bin arch_pre arch_post bir_prog_def bir_pre_defs
+   bir_pre1_def arch_pre_imp_bir_pre_thm bir_post_defs
+   arch_post_imp_bir_post_thm bir_is_lifted_prog_thm =
   let
     val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
 
@@ -61,13 +65,13 @@ open bir_inst_liftingHelpersLib;
 	      l,
 	      ls,
 	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
-	      arm8_pre, arm8_post,
+	      arch_pre, arch_post,
 	      get_bir_cont_pre bir_ct,
-	      get_bir_cont_post bir_ct] arm8_lift_contract_thm;
+	      get_bir_cont_post bir_ct] arch_lift_contract_thm;
 
-    (* Prove the ARMv8 triple by supplying the antecedents of lift_contract_thm *)
-    val arm8_contract_thm = prove(
-      ``arm8_cont ^prog_bin ^l ^ls ^arm8_pre ^arm8_post``,
+    (* Prove the arch triple by supplying the antecedents of lift_contract_thm *)
+    val arch_contract_thm = prove(
+      ``^arch_cont ^prog_bin ^l ^ls ^arch_pre ^arch_post``,
 
     irule add_lift_thm >>
     REPEAT STRIP_TAC >| [
@@ -75,7 +79,7 @@ open bir_inst_liftingHelpersLib;
        *    set *)
       rewrite_tac [bir_prog_def] >>
       CONV_TAC (bir_convLib.bir_vars_of_program_CONV) >>
-      rewrite_tac ([arm8_wf_varset_def, arm8_vars_def]@bir_pre_defs) >>
+      rewrite_tac ([arch_wf_varset_def, arch_vars_def]@bir_pre_defs) >>
       CONV_TAC (bir_convLib.bir_vars_of_exp_CONV) >>
       CONV_TAC (
         LAND_CONV (pred_setLib.UNION_CONV bir_convLib.bir_var_EQ_CONV) THENC
@@ -89,13 +93,13 @@ open bir_inst_liftingHelpersLib;
         pred_setLib.IN_CONV bir_convLib.bir_label_EQ_CONV
       ),
 
-      (* 3. Provide translation of the ARMv8 precondition to the BIR precondition *)
-      FULL_SIMP_TAC std_ss [bir_pre1_def, arm8_pre_imp_bir_pre_thm],
+      (* 3. Provide translation of the arch precondition to the BIR precondition *)
+      FULL_SIMP_TAC std_ss [bir_pre1_def, arch_pre_imp_bir_pre_thm],
 
-      (* 4. Provide translation of the ARMv8 postcondition to BIR postcondition *)
-      ASSUME_TAC (Q.ISPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` arm8_post_imp_bir_post_thm) >>
+      (* 4. Provide translation of the arch postcondition to BIR postcondition *)
+      ASSUME_TAC (Q.ISPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` arch_post_imp_bir_post_thm) >>
       FULL_SIMP_TAC std_ss bir_post_defs >>
-      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [bir_post_bir_to_arm8_def] >>
+      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [bir_post_bir_to_arch_def] >>
       FULL_SIMP_TAC std_ss [],
 
       (* 5. Provide the lifter theorem of the program *)
@@ -112,78 +116,26 @@ open bir_inst_liftingHelpersLib;
     );
 
   in
-    arm8_contract_thm
+    arch_contract_thm
   end;
 
-  fun get_riscv_contract bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
-  let
-    val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
+  fun get_arm8_contract bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_pre_defs
+    bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs
+    arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+   get_arch_contract ``arm8_cont`` arm8_lift_contract_thm
+    arm8_wf_varset_def arm8_vars_def bir_post_bir_to_arm8_def
+    bir_ct prog_bin arm8_pre arm8_post bir_prog_def
+    bir_pre_defs bir_pre1_def arm8_pre_imp_bir_pre_thm bir_post_defs
+    arm8_post_imp_bir_post_thm bir_is_lifted_prog_thm;
 
-    val bir_prog = get_bir_cont_prog bir_ct
-    val l =
-      word_from_address (get_bir_cont_start_label bir_ct)
-    val ls_set = get_bir_cont_ilist bir_ct
-    val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set ls_set))
-
-    val add_lift_thm =
-      ISPECL [bir_prog,
-	      prog_bin,
-	      l,
-	      ls,
-	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
-	      riscv_pre, riscv_post,
-	      get_bir_cont_pre bir_ct,
-	      get_bir_cont_post bir_ct] riscv_lift_contract_thm;
-
-    (* Prove the RISC-V triple by supplying the antecedents of lift_contract_thm *)
-    val riscv_contract_thm = prove(
-      ``riscv_cont ^prog_bin ^l ^ls ^riscv_pre ^riscv_post``,
-
-    irule add_lift_thm >>
-    REPEAT STRIP_TAC >| [
-      (* 1. Prove that the union of variables in the program and precondition are a well-founded variable
-       *    set *)
-      rewrite_tac [bir_prog_def] >>
-      CONV_TAC (bir_convLib.bir_vars_of_program_CONV) >>
-      rewrite_tac ([riscv_wf_varset_def, riscv_vars_def]@bir_pre_defs) >>
-      CONV_TAC (bir_convLib.bir_vars_of_exp_CONV) >>
-      CONV_TAC (
-        LAND_CONV (pred_setLib.UNION_CONV bir_convLib.bir_var_EQ_CONV) THENC
-        holba_convLib.SUBSET_CONV bir_convLib.bir_var_EQ_CONV
-      ),
-      (* 2. Starting address exists in program *)
-      rewrite_tac [bir_prog_def] >>
-      CONV_TAC (
-        bir_convLib.bir_labels_of_program_CONV THENC
-        RAND_CONV holba_convLib.LIST_TO_SET_CONV THENC
-        pred_setLib.IN_CONV bir_convLib.bir_label_EQ_CONV
-      ),
-
-      (* 3. Provide translation of the RISC-V precondition to the BIR precondition *)
-      FULL_SIMP_TAC std_ss [bir_pre1_def, riscv_pre_imp_bir_pre_thm],
-
-      (* 4. Provide translation of the RISC-V postcondition to BIR postcondition *)
-      ASSUME_TAC (Q.ISPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` riscv_post_imp_bir_post_thm) >>
-      FULL_SIMP_TAC std_ss bir_post_defs >>
-      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [bir_post_bir_to_riscv_def] >>
-      FULL_SIMP_TAC std_ss [],
-
-      (* 5. Provide the lifter theorem of the program *)
-      FULL_SIMP_TAC std_ss [bir_is_lifted_prog_thm],
-
-      (* 6. Provide the BIR triple in the requisite format *)
-      ASSUME_TAC bir_ct >>
-      `{BL_Address (Imm64 ml') | ml' IN ^ls} = ^ls_set` suffices_by (
-              FULL_SIMP_TAC std_ss []
-      ) >>
-      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION] >>
-      METIS_TAC []
-    ]
-    );
-
-  in
-    riscv_contract_thm
-  end;
+  fun get_riscv_contract bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs
+    bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
+    riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+   get_arch_contract ``riscv_cont`` riscv_lift_contract_thm
+    riscv_wf_varset_def riscv_vars_def bir_post_bir_to_riscv_def
+    bir_ct prog_bin riscv_pre riscv_post bir_prog_def
+    bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
+    riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm;
 
   end
 end
