@@ -1,0 +1,333 @@
+
+output/program.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+08009158 <my_aes>:
+ 8009158:	b5f0      	push	{r4, r5, r6, r7, lr}
+ 800915a:	4657      	mov	r7, sl
+ 800915c:	4645      	mov	r5, r8
+ 800915e:	46de      	mov	lr, fp
+ 8009160:	464e      	mov	r6, r9
+ 8009162:	499d      	ldr	r1, [pc, #628]	; (80093d8 <my_aes+0x280>)
+ 8009164:	4b9d      	ldr	r3, [pc, #628]	; (80093dc <my_aes+0x284>)
+ 8009166:	b5e0      	push	{r5, r6, r7, lr}
+ 8009168:	680a      	ldr	r2, [r1, #0]
+ 800916a:	681d      	ldr	r5, [r3, #0]
+ 800916c:	685e      	ldr	r6, [r3, #4]
+ 800916e:	4055      	eors	r5, r2
+ 8009170:	684a      	ldr	r2, [r1, #4]
+ 8009172:	689f      	ldr	r7, [r3, #8]
+ 8009174:	4056      	eors	r6, r2
+ 8009176:	688a      	ldr	r2, [r1, #8]
+ 8009178:	68db      	ldr	r3, [r3, #12]
+ 800917a:	4057      	eors	r7, r2
+ 800917c:	68ca      	ldr	r2, [r1, #12]
+ 800917e:	b087      	sub	sp, #28
+ 8009180:	4053      	eors	r3, r2
+ 8009182:	2210      	movs	r2, #16
+ 8009184:	4694      	mov	ip, r2
+ 8009186:	4a96      	ldr	r2, [pc, #600]	; (80093e0 <my_aes+0x288>)
+ 8009188:	448c      	add	ip, r1
+ 800918a:	31a0      	adds	r1, #160	; 0xa0
+ 800918c:	9105      	str	r1, [sp, #20]
+ 800918e:	21c0      	movs	r1, #192	; 0xc0
+ 8009190:	4690      	mov	r8, r2
+ 8009192:	0109      	lsls	r1, r1, #4
+ 8009194:	4441      	add	r1, r8
+ 8009196:	468a      	mov	sl, r1
+ 8009198:	2180      	movs	r1, #128	; 0x80
+ 800919a:	0109      	lsls	r1, r1, #4
+ 800919c:	4441      	add	r1, r8
+ 800919e:	468b      	mov	fp, r1
+ 80091a0:	4661      	mov	r1, ip
+ 80091a2:	22ff      	movs	r2, #255	; 0xff
+ 80091a4:	9101      	str	r1, [sp, #4]
+ 80091a6:	4644      	mov	r4, r8
+ 80091a8:	0e29      	lsrs	r1, r5, #24
+ 80091aa:	0010      	movs	r0, r2
+ 80091ac:	0089      	lsls	r1, r1, #2
+ 80091ae:	5861      	ldr	r1, [r4, r1]
+ 80091b0:	4654      	mov	r4, sl
+ 80091b2:	4018      	ands	r0, r3
+ 80091b4:	0080      	lsls	r0, r0, #2
+ 80091b6:	5820      	ldr	r0, [r4, r0]
+ 80091b8:	9c01      	ldr	r4, [sp, #4]
+ 80091ba:	4041      	eors	r1, r0
+ 80091bc:	6820      	ldr	r0, [r4, #0]
+ 80091be:	4c89      	ldr	r4, [pc, #548]	; (80093e4 <my_aes+0x28c>)
+ 80091c0:	4041      	eors	r1, r0
+ 80091c2:	0c30      	lsrs	r0, r6, #16
+ 80091c4:	4010      	ands	r0, r2
+ 80091c6:	0080      	lsls	r0, r0, #2
+ 80091c8:	5820      	ldr	r0, [r4, r0]
+ 80091ca:	4644      	mov	r4, r8
+ 80091cc:	4041      	eors	r1, r0
+ 80091ce:	4658      	mov	r0, fp
+ 80091d0:	9102      	str	r1, [sp, #8]
+ 80091d2:	0a39      	lsrs	r1, r7, #8
+ 80091d4:	4011      	ands	r1, r2
+ 80091d6:	0089      	lsls	r1, r1, #2
+ 80091d8:	5840      	ldr	r0, [r0, r1]
+ 80091da:	0011      	movs	r1, r2
+ 80091dc:	9003      	str	r0, [sp, #12]
+ 80091de:	0e30      	lsrs	r0, r6, #24
+ 80091e0:	0080      	lsls	r0, r0, #2
+ 80091e2:	5820      	ldr	r0, [r4, r0]
+ 80091e4:	4654      	mov	r4, sl
+ 80091e6:	4029      	ands	r1, r5
+ 80091e8:	0089      	lsls	r1, r1, #2
+ 80091ea:	5861      	ldr	r1, [r4, r1]
+ 80091ec:	4c7d      	ldr	r4, [pc, #500]	; (80093e4 <my_aes+0x28c>)
+ 80091ee:	4048      	eors	r0, r1
+ 80091f0:	9901      	ldr	r1, [sp, #4]
+ 80091f2:	6849      	ldr	r1, [r1, #4]
+ 80091f4:	4048      	eors	r0, r1
+ 80091f6:	0c39      	lsrs	r1, r7, #16
+ 80091f8:	4011      	ands	r1, r2
+ 80091fa:	0089      	lsls	r1, r1, #2
+ 80091fc:	5861      	ldr	r1, [r4, r1]
+ 80091fe:	465c      	mov	r4, fp
+ 8009200:	4048      	eors	r0, r1
+ 8009202:	0a19      	lsrs	r1, r3, #8
+ 8009204:	4011      	ands	r1, r2
+ 8009206:	0089      	lsls	r1, r1, #2
+ 8009208:	5861      	ldr	r1, [r4, r1]
+ 800920a:	0014      	movs	r4, r2
+ 800920c:	4034      	ands	r4, r6
+ 800920e:	00a4      	lsls	r4, r4, #2
+ 8009210:	46a4      	mov	ip, r4
+ 8009212:	4644      	mov	r4, r8
+ 8009214:	4689      	mov	r9, r1
+ 8009216:	0e39      	lsrs	r1, r7, #24
+ 8009218:	0089      	lsls	r1, r1, #2
+ 800921a:	5864      	ldr	r4, [r4, r1]
+ 800921c:	4661      	mov	r1, ip
+ 800921e:	9404      	str	r4, [sp, #16]
+ 8009220:	4654      	mov	r4, sl
+ 8009222:	5861      	ldr	r1, [r4, r1]
+ 8009224:	9c04      	ldr	r4, [sp, #16]
+ 8009226:	4017      	ands	r7, r2
+ 8009228:	404c      	eors	r4, r1
+ 800922a:	0021      	movs	r1, r4
+ 800922c:	9c01      	ldr	r4, [sp, #4]
+ 800922e:	00bf      	lsls	r7, r7, #2
+ 8009230:	68a4      	ldr	r4, [r4, #8]
+ 8009232:	0a36      	lsrs	r6, r6, #8
+ 8009234:	4061      	eors	r1, r4
+ 8009236:	0c1c      	lsrs	r4, r3, #16
+ 8009238:	4014      	ands	r4, r2
+ 800923a:	00a4      	lsls	r4, r4, #2
+ 800923c:	46a4      	mov	ip, r4
+ 800923e:	9104      	str	r1, [sp, #16]
+ 8009240:	4661      	mov	r1, ip
+ 8009242:	4c68      	ldr	r4, [pc, #416]	; (80093e4 <my_aes+0x28c>)
+ 8009244:	0e1b      	lsrs	r3, r3, #24
+ 8009246:	5861      	ldr	r1, [r4, r1]
+ 8009248:	9c04      	ldr	r4, [sp, #16]
+ 800924a:	009b      	lsls	r3, r3, #2
+ 800924c:	404c      	eors	r4, r1
+ 800924e:	9404      	str	r4, [sp, #16]
+ 8009250:	0a2c      	lsrs	r4, r5, #8
+ 8009252:	4014      	ands	r4, r2
+ 8009254:	00a4      	lsls	r4, r4, #2
+ 8009256:	46a4      	mov	ip, r4
+ 8009258:	465c      	mov	r4, fp
+ 800925a:	4661      	mov	r1, ip
+ 800925c:	5861      	ldr	r1, [r4, r1]
+ 800925e:	0c2d      	lsrs	r5, r5, #16
+ 8009260:	468c      	mov	ip, r1
+ 8009262:	4641      	mov	r1, r8
+ 8009264:	58cb      	ldr	r3, [r1, r3]
+ 8009266:	4651      	mov	r1, sl
+ 8009268:	59cf      	ldr	r7, [r1, r7]
+ 800926a:	9901      	ldr	r1, [sp, #4]
+ 800926c:	407b      	eors	r3, r7
+ 800926e:	68cf      	ldr	r7, [r1, #12]
+ 8009270:	4015      	ands	r5, r2
+ 8009272:	407b      	eors	r3, r7
+ 8009274:	4016      	ands	r6, r2
+ 8009276:	4f5b      	ldr	r7, [pc, #364]	; (80093e4 <my_aes+0x28c>)
+ 8009278:	00ad      	lsls	r5, r5, #2
+ 800927a:	00b6      	lsls	r6, r6, #2
+ 800927c:	597f      	ldr	r7, [r7, r5]
+ 800927e:	59a5      	ldr	r5, [r4, r6]
+ 8009280:	464e      	mov	r6, r9
+ 8009282:	407b      	eors	r3, r7
+ 8009284:	4667      	mov	r7, ip
+ 8009286:	3110      	adds	r1, #16
+ 8009288:	9c03      	ldr	r4, [sp, #12]
+ 800928a:	406b      	eors	r3, r5
+ 800928c:	9d02      	ldr	r5, [sp, #8]
+ 800928e:	9101      	str	r1, [sp, #4]
+ 8009290:	4065      	eors	r5, r4
+ 8009292:	4046      	eors	r6, r0
+ 8009294:	9c04      	ldr	r4, [sp, #16]
+ 8009296:	9905      	ldr	r1, [sp, #20]
+ 8009298:	9801      	ldr	r0, [sp, #4]
+ 800929a:	4067      	eors	r7, r4
+ 800929c:	4288      	cmp	r0, r1
+ 800929e:	d182      	bne.n	80091a6 <my_aes+0x4e>
+ 80092a0:	0011      	movs	r1, r2
+ 80092a2:	4684      	mov	ip, r0
+ 80092a4:	4029      	ands	r1, r5
+ 80092a6:	484f      	ldr	r0, [pc, #316]	; (80093e4 <my_aes+0x28c>)
+ 80092a8:	0089      	lsls	r1, r1, #2
+ 80092aa:	5841      	ldr	r1, [r0, r1]
+ 80092ac:	4660      	mov	r0, ip
+ 80092ae:	4644      	mov	r4, r8
+ 80092b0:	6840      	ldr	r0, [r0, #4]
+ 80092b2:	4011      	ands	r1, r2
+ 80092b4:	4041      	eors	r1, r0
+ 80092b6:	0a18      	lsrs	r0, r3, #8
+ 80092b8:	4010      	ands	r0, r2
+ 80092ba:	0080      	lsls	r0, r0, #2
+ 80092bc:	5820      	ldr	r0, [r4, r0]
+ 80092be:	24ff      	movs	r4, #255	; 0xff
+ 80092c0:	0224      	lsls	r4, r4, #8
+ 80092c2:	46a1      	mov	r9, r4
+ 80092c4:	4020      	ands	r0, r4
+ 80092c6:	4654      	mov	r4, sl
+ 80092c8:	4041      	eors	r1, r0
+ 80092ca:	0c38      	lsrs	r0, r7, #16
+ 80092cc:	4010      	ands	r0, r2
+ 80092ce:	0080      	lsls	r0, r0, #2
+ 80092d0:	5820      	ldr	r0, [r4, r0]
+ 80092d2:	24ff      	movs	r4, #255	; 0xff
+ 80092d4:	9101      	str	r1, [sp, #4]
+ 80092d6:	4659      	mov	r1, fp
+ 80092d8:	0424      	lsls	r4, r4, #16
+ 80092da:	4020      	ands	r0, r4
+ 80092dc:	0e34      	lsrs	r4, r6, #24
+ 80092de:	00a4      	lsls	r4, r4, #2
+ 80092e0:	590c      	ldr	r4, [r1, r4]
+ 80092e2:	9901      	ldr	r1, [sp, #4]
+ 80092e4:	0e24      	lsrs	r4, r4, #24
+ 80092e6:	0624      	lsls	r4, r4, #24
+ 80092e8:	4320      	orrs	r0, r4
+ 80092ea:	4041      	eors	r1, r0
+ 80092ec:	9101      	str	r1, [sp, #4]
+ 80092ee:	0011      	movs	r1, r2
+ 80092f0:	483c      	ldr	r0, [pc, #240]	; (80093e4 <my_aes+0x28c>)
+ 80092f2:	4031      	ands	r1, r6
+ 80092f4:	0089      	lsls	r1, r1, #2
+ 80092f6:	5841      	ldr	r1, [r0, r1]
+ 80092f8:	4660      	mov	r0, ip
+ 80092fa:	4644      	mov	r4, r8
+ 80092fc:	6880      	ldr	r0, [r0, #8]
+ 80092fe:	4011      	ands	r1, r2
+ 8009300:	4041      	eors	r1, r0
+ 8009302:	0a28      	lsrs	r0, r5, #8
+ 8009304:	4010      	ands	r0, r2
+ 8009306:	0080      	lsls	r0, r0, #2
+ 8009308:	5820      	ldr	r0, [r4, r0]
+ 800930a:	464c      	mov	r4, r9
+ 800930c:	4020      	ands	r0, r4
+ 800930e:	4654      	mov	r4, sl
+ 8009310:	4041      	eors	r1, r0
+ 8009312:	0c18      	lsrs	r0, r3, #16
+ 8009314:	4010      	ands	r0, r2
+ 8009316:	0080      	lsls	r0, r0, #2
+ 8009318:	5820      	ldr	r0, [r4, r0]
+ 800931a:	24ff      	movs	r4, #255	; 0xff
+ 800931c:	0424      	lsls	r4, r4, #16
+ 800931e:	4020      	ands	r0, r4
+ 8009320:	9002      	str	r0, [sp, #8]
+ 8009322:	4658      	mov	r0, fp
+ 8009324:	0e3c      	lsrs	r4, r7, #24
+ 8009326:	00a4      	lsls	r4, r4, #2
+ 8009328:	5904      	ldr	r4, [r0, r4]
+ 800932a:	9802      	ldr	r0, [sp, #8]
+ 800932c:	0e24      	lsrs	r4, r4, #24
+ 800932e:	0624      	lsls	r4, r4, #24
+ 8009330:	4320      	orrs	r0, r4
+ 8009332:	4041      	eors	r1, r0
+ 8009334:	0010      	movs	r0, r2
+ 8009336:	4038      	ands	r0, r7
+ 8009338:	9102      	str	r1, [sp, #8]
+ 800933a:	0081      	lsls	r1, r0, #2
+ 800933c:	4829      	ldr	r0, [pc, #164]	; (80093e4 <my_aes+0x28c>)
+ 800933e:	4644      	mov	r4, r8
+ 8009340:	5840      	ldr	r0, [r0, r1]
+ 8009342:	4661      	mov	r1, ip
+ 8009344:	68c9      	ldr	r1, [r1, #12]
+ 8009346:	4010      	ands	r0, r2
+ 8009348:	4048      	eors	r0, r1
+ 800934a:	0a31      	lsrs	r1, r6, #8
+ 800934c:	4011      	ands	r1, r2
+ 800934e:	0089      	lsls	r1, r1, #2
+ 8009350:	5861      	ldr	r1, [r4, r1]
+ 8009352:	464c      	mov	r4, r9
+ 8009354:	4021      	ands	r1, r4
+ 8009356:	4654      	mov	r4, sl
+ 8009358:	4048      	eors	r0, r1
+ 800935a:	0c29      	lsrs	r1, r5, #16
+ 800935c:	4011      	ands	r1, r2
+ 800935e:	0089      	lsls	r1, r1, #2
+ 8009360:	5861      	ldr	r1, [r4, r1]
+ 8009362:	24ff      	movs	r4, #255	; 0xff
+ 8009364:	9003      	str	r0, [sp, #12]
+ 8009366:	4658      	mov	r0, fp
+ 8009368:	0424      	lsls	r4, r4, #16
+ 800936a:	4021      	ands	r1, r4
+ 800936c:	0e1c      	lsrs	r4, r3, #24
+ 800936e:	00a4      	lsls	r4, r4, #2
+ 8009370:	5904      	ldr	r4, [r0, r4]
+ 8009372:	4013      	ands	r3, r2
+ 8009374:	0e24      	lsrs	r4, r4, #24
+ 8009376:	0624      	lsls	r4, r4, #24
+ 8009378:	4321      	orrs	r1, r4
+ 800937a:	4c1a      	ldr	r4, [pc, #104]	; (80093e4 <my_aes+0x28c>)
+ 800937c:	009b      	lsls	r3, r3, #2
+ 800937e:	58e3      	ldr	r3, [r4, r3]
+ 8009380:	4664      	mov	r4, ip
+ 8009382:	6824      	ldr	r4, [r4, #0]
+ 8009384:	4013      	ands	r3, r2
+ 8009386:	4063      	eors	r3, r4
+ 8009388:	4644      	mov	r4, r8
+ 800938a:	0a3f      	lsrs	r7, r7, #8
+ 800938c:	4017      	ands	r7, r2
+ 800938e:	00bf      	lsls	r7, r7, #2
+ 8009390:	59e4      	ldr	r4, [r4, r7]
+ 8009392:	0c36      	lsrs	r6, r6, #16
+ 8009394:	464f      	mov	r7, r9
+ 8009396:	4032      	ands	r2, r6
+ 8009398:	4656      	mov	r6, sl
+ 800939a:	403c      	ands	r4, r7
+ 800939c:	0092      	lsls	r2, r2, #2
+ 800939e:	4063      	eors	r3, r4
+ 80093a0:	58b4      	ldr	r4, [r6, r2]
+ 80093a2:	22ff      	movs	r2, #255	; 0xff
+ 80093a4:	0412      	lsls	r2, r2, #16
+ 80093a6:	4014      	ands	r4, r2
+ 80093a8:	465a      	mov	r2, fp
+ 80093aa:	9803      	ldr	r0, [sp, #12]
+ 80093ac:	0e2d      	lsrs	r5, r5, #24
+ 80093ae:	00ad      	lsls	r5, r5, #2
+ 80093b0:	4048      	eors	r0, r1
+ 80093b2:	490d      	ldr	r1, [pc, #52]	; (80093e8 <my_aes+0x290>)
+ 80093b4:	5952      	ldr	r2, [r2, r5]
+ 80093b6:	60c8      	str	r0, [r1, #12]
+ 80093b8:	0e12      	lsrs	r2, r2, #24
+ 80093ba:	0612      	lsls	r2, r2, #24
+ 80093bc:	4314      	orrs	r4, r2
+ 80093be:	4063      	eors	r3, r4
+ 80093c0:	600b      	str	r3, [r1, #0]
+ 80093c2:	9b01      	ldr	r3, [sp, #4]
+ 80093c4:	604b      	str	r3, [r1, #4]
+ 80093c6:	9b02      	ldr	r3, [sp, #8]
+ 80093c8:	608b      	str	r3, [r1, #8]
+ 80093ca:	b007      	add	sp, #28
+ 80093cc:	bc3c      	pop	{r2, r3, r4, r5}
+ 80093ce:	4690      	mov	r8, r2
+ 80093d0:	4699      	mov	r9, r3
+ 80093d2:	46a2      	mov	sl, r4
+ 80093d4:	46ab      	mov	fp, r5
+ 80093d6:	bdf0      	pop	{r4, r5, r6, r7, pc}
+ 80093d8:	200012bc 	.word	0x200012bc
+ 80093dc:	2000129c 	.word	0x2000129c
+ 80093e0:	20000010 	.word	0x20000010
+ 80093e4:	20000410 	.word	0x20000410
+ 80093e8:	200012ac 	.word	0x200012ac
+

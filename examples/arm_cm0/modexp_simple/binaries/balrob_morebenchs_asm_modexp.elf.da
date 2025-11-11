@@ -1,0 +1,164 @@
+
+output/program.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+08008070 <_my_uidivmod_mod_asm>:
+ 8008070:	b580      	push	{r7, lr}
+ 8008072:	b086      	sub	sp, #24
+ 8008074:	af00      	add	r7, sp, #0
+ 8008076:	6078      	str	r0, [r7, #4]
+ 8008078:	6039      	str	r1, [r7, #0]
+ 800807a:	2301      	movs	r3, #1
+ 800807c:	617b      	str	r3, [r7, #20]
+ 800807e:	2300      	movs	r3, #0
+ 8008080:	613b      	str	r3, [r7, #16]
+ 8008082:	2301      	movs	r3, #1
+ 8008084:	60fb      	str	r3, [r7, #12]
+ 8008086:	2300      	movs	r3, #0
+ 8008088:	60bb      	str	r3, [r7, #8]
+ 800808a:	e018      	b.n	80080be <_my_uidivmod_mod_asm_n1>
+
+0800808c <_my_uidivmod_mod_asm_n3>:
+ 800808c:	68fb      	ldr	r3, [r7, #12]
+ 800808e:	2b00      	cmp	r3, #0
+ 8008090:	d010      	beq.n	80080b4 <_my_uidivmod_mod_asm_n2>
+ 8008092:	683a      	ldr	r2, [r7, #0]
+ 8008094:	687b      	ldr	r3, [r7, #4]
+ 8008096:	429a      	cmp	r2, r3
+ 8008098:	d20c      	bcs.n	80080b4 <_my_uidivmod_mod_asm_n2>
+ 800809a:	697b      	ldr	r3, [r7, #20]
+ 800809c:	2b00      	cmp	r3, #0
+ 800809e:	d009      	beq.n	80080b4 <_my_uidivmod_mod_asm_n2>
+ 80080a0:	683b      	ldr	r3, [r7, #0]
+ 80080a2:	2b00      	cmp	r3, #0
+ 80080a4:	db06      	blt.n	80080b4 <_my_uidivmod_mod_asm_n2>
+ 80080a6:	683b      	ldr	r3, [r7, #0]
+ 80080a8:	005b      	lsls	r3, r3, #1
+ 80080aa:	603b      	str	r3, [r7, #0]
+ 80080ac:	697b      	ldr	r3, [r7, #20]
+ 80080ae:	005b      	lsls	r3, r3, #1
+ 80080b0:	617b      	str	r3, [r7, #20]
+ 80080b2:	e001      	b.n	80080b8 <_my_uidivmod_mod_asm_n9>
+
+080080b4 <_my_uidivmod_mod_asm_n2>:
+ 80080b4:	2300      	movs	r3, #0
+ 80080b6:	60fb      	str	r3, [r7, #12]
+
+080080b8 <_my_uidivmod_mod_asm_n9>:
+ 80080b8:	68bb      	ldr	r3, [r7, #8]
+ 80080ba:	3301      	adds	r3, #1
+ 80080bc:	60bb      	str	r3, [r7, #8]
+
+080080be <_my_uidivmod_mod_asm_n1>:
+ 80080be:	68bb      	ldr	r3, [r7, #8]
+ 80080c0:	2b1f      	cmp	r3, #31
+ 80080c2:	dde3      	ble.n	800808c <_my_uidivmod_mod_asm_n3>
+ 80080c4:	2301      	movs	r3, #1
+ 80080c6:	60fb      	str	r3, [r7, #12]
+ 80080c8:	2300      	movs	r3, #0
+ 80080ca:	60bb      	str	r3, [r7, #8]
+ 80080cc:	e01d      	b.n	800810a <_my_uidivmod_mod_asm_n4>
+
+080080ce <_my_uidivmod_mod_asm_n8>:
+ 80080ce:	68fb      	ldr	r3, [r7, #12]
+ 80080d0:	2b00      	cmp	r3, #0
+ 80080d2:	d015      	beq.n	8008100 <_my_uidivmod_mod_asm_n5>
+ 80080d4:	697b      	ldr	r3, [r7, #20]
+ 80080d6:	2b00      	cmp	r3, #0
+ 80080d8:	d012      	beq.n	8008100 <_my_uidivmod_mod_asm_n5>
+ 80080da:	687a      	ldr	r2, [r7, #4]
+ 80080dc:	683b      	ldr	r3, [r7, #0]
+ 80080de:	429a      	cmp	r2, r3
+ 80080e0:	d307      	bcc.n	80080f2 <_my_uidivmod_mod_asm_n6>
+ 80080e2:	687a      	ldr	r2, [r7, #4]
+ 80080e4:	683b      	ldr	r3, [r7, #0]
+ 80080e6:	1ad3      	subs	r3, r2, r3
+ 80080e8:	607b      	str	r3, [r7, #4]
+ 80080ea:	693a      	ldr	r2, [r7, #16]
+ 80080ec:	697b      	ldr	r3, [r7, #20]
+ 80080ee:	4313      	orrs	r3, r2
+ 80080f0:	613b      	str	r3, [r7, #16]
+
+080080f2 <_my_uidivmod_mod_asm_n6>:
+ 80080f2:	697b      	ldr	r3, [r7, #20]
+ 80080f4:	085b      	lsrs	r3, r3, #1
+ 80080f6:	617b      	str	r3, [r7, #20]
+ 80080f8:	683b      	ldr	r3, [r7, #0]
+ 80080fa:	085b      	lsrs	r3, r3, #1
+ 80080fc:	603b      	str	r3, [r7, #0]
+ 80080fe:	e001      	b.n	8008104 <_my_uidivmod_mod_asm_n7>
+
+08008100 <_my_uidivmod_mod_asm_n5>:
+ 8008100:	2300      	movs	r3, #0
+ 8008102:	60fb      	str	r3, [r7, #12]
+
+08008104 <_my_uidivmod_mod_asm_n7>:
+ 8008104:	68bb      	ldr	r3, [r7, #8]
+ 8008106:	3301      	adds	r3, #1
+ 8008108:	60bb      	str	r3, [r7, #8]
+
+0800810a <_my_uidivmod_mod_asm_n4>:
+ 800810a:	68bb      	ldr	r3, [r7, #8]
+ 800810c:	2b1f      	cmp	r3, #31
+ 800810e:	ddde      	ble.n	80080ce <_my_uidivmod_mod_asm_n8>
+ 8008110:	687b      	ldr	r3, [r7, #4]
+ 8008112:	1c18      	adds	r0, r3, #0
+ 8008114:	46bd      	mov	sp, r7
+ 8008116:	b006      	add	sp, #24
+ 8008118:	bd80      	pop	{r7, pc}
+ 800811a:	46c0      	nop			; (mov r8, r8)
+ 800811c:	46c0      	nop			; (mov r8, r8)
+ 800811e:	46c0      	nop			; (mov r8, r8)
+
+08008120 <_my_modexp_asm>:
+ 8008120:	b470      	push	{r4, r5, r6}
+ 8008122:	2620      	movs	r6, #32
+ 8008124:	b082      	sub	sp, #8
+ 8008126:	4675      	mov	r5, lr
+ 8008128:	9501      	str	r5, [sp, #4]
+ 800812a:	2501      	movs	r5, #1
+ 800812c:	9500      	str	r5, [sp, #0]
+ 800812e:	2300      	movs	r3, #0
+
+08008130 <_my_modexp_loop>:
+ 8008130:	1c04      	adds	r4, r0, #0
+ 8008132:	40dc      	lsrs	r4, r3
+ 8008134:	2501      	movs	r5, #1
+ 8008136:	402c      	ands	r4, r5
+ 8008138:	42ac      	cmp	r4, r5
+ 800813a:	d109      	bne.n	8008150 <_my_modexp_branch_skip>
+ 800813c:	9c00      	ldr	r4, [sp, #0]
+ 800813e:	434c      	muls	r4, r1
+ 8008140:	b40f      	push	{r0, r1, r2, r3}
+ 8008142:	1c20      	adds	r0, r4, #0
+ 8008144:	1c11      	adds	r1, r2, #0
+ 8008146:	f7ff ff93 	bl	8008070 <_my_uidivmod_mod_asm>
+ 800814a:	1c04      	adds	r4, r0, #0
+ 800814c:	bc0f      	pop	{r0, r1, r2, r3}
+ 800814e:	9400      	str	r4, [sp, #0]
+
+08008150 <_my_modexp_branch_skip>:
+ 8008150:	1c0c      	adds	r4, r1, #0
+ 8008152:	434c      	muls	r4, r1
+ 8008154:	b40f      	push	{r0, r1, r2, r3}
+ 8008156:	1c20      	adds	r0, r4, #0
+ 8008158:	1c11      	adds	r1, r2, #0
+ 800815a:	f7ff ff89 	bl	8008070 <_my_uidivmod_mod_asm>
+ 800815e:	1c04      	adds	r4, r0, #0
+ 8008160:	bc0f      	pop	{r0, r1, r2, r3}
+ 8008162:	1c21      	adds	r1, r4, #0
+ 8008164:	3301      	adds	r3, #1
+ 8008166:	42b3      	cmp	r3, r6
+ 8008168:	d1e2      	bne.n	8008130 <_my_modexp_loop>
+
+0800816a <_my_modexp_loop_done>:
+ 800816a:	9800      	ldr	r0, [sp, #0]
+ 800816c:	9d01      	ldr	r5, [sp, #4]
+ 800816e:	46ae      	mov	lr, r5
+ 8008170:	b002      	add	sp, #8
+ 8008172:	bc70      	pop	{r4, r5, r6}
+ 8008174:	4770      	bx	lr
+ 8008176:	46c0      	nop			; (mov r8, r8)
+

@@ -1,0 +1,198 @@
+
+output/program.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+08007080 <_reffunc_test4_9nopsubadd>:
+ 8007080:	46c0      	nop			; (mov r8, r8)
+ 8007082:	46c0      	nop			; (mov r8, r8)
+ 8007084:	46c0      	nop			; (mov r8, r8)
+ 8007086:	46c0      	nop			; (mov r8, r8)
+ 8007088:	46c0      	nop			; (mov r8, r8)
+ 800708a:	46c0      	nop			; (mov r8, r8)
+ 800708c:	1840      	adds	r0, r0, r1
+ 800708e:	1a89      	subs	r1, r1, r2
+ 8007090:	1ad2      	subs	r2, r2, r3
+ 8007092:	4770      	bx	lr
+ 8007094:	46c0      	nop			; (mov r8, r8)
+ 8007096:	46c0      	nop			; (mov r8, r8)
+
+08007098 <_reffunc_test5>:
+ 8007098:	46c0      	nop			; (mov r8, r8)
+ 800709a:	46c0      	nop			; (mov r8, r8)
+ 800709c:	46c0      	nop			; (mov r8, r8)
+ 800709e:	46c0      	nop			; (mov r8, r8)
+ 80070a0:	46c0      	nop			; (mov r8, r8)
+ 80070a2:	46c0      	nop			; (mov r8, r8)
+ 80070a4:	1840      	adds	r0, r0, r1
+ 80070a6:	1a89      	subs	r1, r1, r2
+ 80070a8:	1ad2      	subs	r2, r2, r3
+ 80070aa:	1b1b      	subs	r3, r3, r4
+ 80070ac:	4770      	bx	lr
+ 80070ae:	46c0      	nop			; (mov r8, r8)
+
+080070b0 <_reffunc_st>:
+ 80070b0:	9000      	str	r0, [sp, #0]
+ 80070b2:	4770      	bx	lr
+ 80070b4:	46c0      	nop			; (mov r8, r8)
+ 80070b6:	46c0      	nop			; (mov r8, r8)
+
+080070b8 <_reffunc_ld>:
+ 80070b8:	9800      	ldr	r0, [sp, #0]
+ 80070ba:	4770      	bx	lr
+ 80070bc:	46c0      	nop			; (mov r8, r8)
+ 80070be:	46c0      	nop			; (mov r8, r8)
+
+080070c0 <_reffunc_ld2_ldnop>:
+ 80070c0:	9800      	ldr	r0, [sp, #0]
+ 80070c2:	46c0      	nop			; (mov r8, r8)
+ 80070c4:	4770      	bx	lr
+ 80070c6:	46c0      	nop			; (mov r8, r8)
+
+080070c8 <_reffunc_ld3>:
+ 80070c8:	46c0      	nop			; (mov r8, r8)
+ 80070ca:	46c0      	nop			; (mov r8, r8)
+ 80070cc:	46c0      	nop			; (mov r8, r8)
+ 80070ce:	46c0      	nop			; (mov r8, r8)
+ 80070d0:	46c0      	nop			; (mov r8, r8)
+ 80070d2:	46c0      	nop			; (mov r8, r8)
+ 80070d4:	9800      	ldr	r0, [sp, #0]
+ 80070d6:	9800      	ldr	r0, [sp, #0]
+ 80070d8:	e002      	b.n	80070e0 <_reffunc_ld3_jumphere>
+ 80070da:	46c0      	nop			; (mov r8, r8)
+ 80070dc:	46c0      	nop			; (mov r8, r8)
+ 80070de:	46c0      	nop			; (mov r8, r8)
+
+080070e0 <_reffunc_ld3_jumphere>:
+ 80070e0:	46c0      	nop			; (mov r8, r8)
+ 80070e2:	4770      	bx	lr
+ 80070e4:	46c0      	nop			; (mov r8, r8)
+ 80070e6:	46c0      	nop			; (mov r8, r8)
+
+080070e8 <_reffunc_ld4>:
+ 80070e8:	46c0      	nop			; (mov r8, r8)
+ 80070ea:	46c0      	nop			; (mov r8, r8)
+ 80070ec:	46c0      	nop			; (mov r8, r8)
+ 80070ee:	46c0      	nop			; (mov r8, r8)
+ 80070f0:	46c0      	nop			; (mov r8, r8)
+ 80070f2:	46c0      	nop			; (mov r8, r8)
+ 80070f4:	9800      	ldr	r0, [sp, #0]
+ 80070f6:	9800      	ldr	r0, [sp, #0]
+ 80070f8:	9800      	ldr	r0, [sp, #0]
+ 80070fa:	9800      	ldr	r0, [sp, #0]
+ 80070fc:	9800      	ldr	r0, [sp, #0]
+ 80070fe:	9800      	ldr	r0, [sp, #0]
+ 8007100:	9800      	ldr	r0, [sp, #0]
+ 8007102:	9800      	ldr	r0, [sp, #0]
+ 8007104:	46c0      	nop			; (mov r8, r8)
+ 8007106:	46c0      	nop			; (mov r8, r8)
+ 8007108:	4770      	bx	lr
+ 800710a:	46c0      	nop			; (mov r8, r8)
+ 800710c:	46c0      	nop			; (mov r8, r8)
+ 800710e:	46c0      	nop			; (mov r8, r8)
+
+08007110 <_reffunc_ld5_ldldbr8>:
+ 8007110:	9800      	ldr	r0, [sp, #0]
+ 8007112:	9800      	ldr	r0, [sp, #0]
+ 8007114:	e000      	b.n	8007118 <_reffunc_ld3_j1>
+ 8007116:	46c0      	nop			; (mov r8, r8)
+
+08007118 <_reffunc_ld3_j1>:
+ 8007118:	9800      	ldr	r0, [sp, #0]
+ 800711a:	9800      	ldr	r0, [sp, #0]
+ 800711c:	e000      	b.n	8007120 <_reffunc_ld3_j2>
+ 800711e:	46c0      	nop			; (mov r8, r8)
+
+08007120 <_reffunc_ld3_j2>:
+ 8007120:	9800      	ldr	r0, [sp, #0]
+ 8007122:	9800      	ldr	r0, [sp, #0]
+ 8007124:	e000      	b.n	8007128 <_reffunc_ld3_j3>
+ 8007126:	46c0      	nop			; (mov r8, r8)
+
+08007128 <_reffunc_ld3_j3>:
+ 8007128:	9800      	ldr	r0, [sp, #0]
+ 800712a:	9800      	ldr	r0, [sp, #0]
+ 800712c:	e000      	b.n	8007130 <_reffunc_ld3_j4>
+ 800712e:	46c0      	nop			; (mov r8, r8)
+
+08007130 <_reffunc_ld3_j4>:
+ 8007130:	9800      	ldr	r0, [sp, #0]
+ 8007132:	9800      	ldr	r0, [sp, #0]
+ 8007134:	e000      	b.n	8007138 <_reffunc_ld3_j5>
+ 8007136:	46c0      	nop			; (mov r8, r8)
+
+08007138 <_reffunc_ld3_j5>:
+ 8007138:	9800      	ldr	r0, [sp, #0]
+ 800713a:	9800      	ldr	r0, [sp, #0]
+ 800713c:	e000      	b.n	8007140 <_reffunc_ld3_j6>
+ 800713e:	46c0      	nop			; (mov r8, r8)
+
+08007140 <_reffunc_ld3_j6>:
+ 8007140:	9800      	ldr	r0, [sp, #0]
+ 8007142:	9800      	ldr	r0, [sp, #0]
+ 8007144:	e000      	b.n	8007148 <_reffunc_ld3_j7>
+ 8007146:	46c0      	nop			; (mov r8, r8)
+
+08007148 <_reffunc_ld3_j7>:
+ 8007148:	9800      	ldr	r0, [sp, #0]
+ 800714a:	9800      	ldr	r0, [sp, #0]
+ 800714c:	e000      	b.n	8007150 <_reffunc_ld3_j8>
+ 800714e:	46c0      	nop			; (mov r8, r8)
+
+08007150 <_reffunc_ld3_j8>:
+ 8007150:	46c0      	nop			; (mov r8, r8)
+ 8007152:	4770      	bx	lr
+ 8007154:	46c0      	nop			; (mov r8, r8)
+ 8007156:	46c0      	nop			; (mov r8, r8)
+
+08007158 <_reffunc_bx>:
+ 8007158:	46c0      	nop			; (mov r8, r8)
+ 800715a:	46c0      	nop			; (mov r8, r8)
+ 800715c:	46c0      	nop			; (mov r8, r8)
+ 800715e:	46c0      	nop			; (mov r8, r8)
+ 8007160:	46c0      	nop			; (mov r8, r8)
+ 8007162:	46c0      	nop			; (mov r8, r8)
+ 8007164:	4830      	ldr	r0, [pc, #192]	; (8007228 <_reffunc_cjmp_jumphere+0x4>)
+ 8007166:	2101      	movs	r1, #1
+ 8007168:	4308      	orrs	r0, r1
+ 800716a:	4a2f      	ldr	r2, [pc, #188]	; (8007228 <_reffunc_cjmp_jumphere+0x4>)
+ 800716c:	4700      	bx	r0
+ 800716e:	46c0      	nop			; (mov r8, r8)
+
+08007170 <_reffunc_bx_jumphere>:
+ 8007170:	46c0      	nop			; (mov r8, r8)
+ 8007172:	4770      	bx	lr
+ 8007174:	46c0      	nop			; (mov r8, r8)
+ 8007176:	46c0      	nop			; (mov r8, r8)
+
+08007178 <_reffunc_b16_00>:
+ 8007178:	e006      	b.n	8007188 <_reffunc_b16_00_j>
+ 800717a:	46c0      	nop			; (mov r8, r8)
+ 800717c:	46c0      	nop			; (mov r8, r8)
+ 800717e:	46c0      	nop			; (mov r8, r8)
+
+08007180 <_reffunc_b16_10>:
+ 8007180:	e007      	b.n	8007192 <_reffunc_b16_10_j>
+ 8007182:	46c0      	nop			; (mov r8, r8)
+ 8007184:	46c0      	nop			; (mov r8, r8)
+ 8007186:	46c0      	nop			; (mov r8, r8)
+
+08007188 <_reffunc_b16_00_j>:
+ 8007188:	46c0      	nop			; (mov r8, r8)
+ 800718a:	e005      	b.n	8007198 <_reffunc_b16_finished>
+ 800718c:	46c0      	nop			; (mov r8, r8)
+ 800718e:	46c0      	nop			; (mov r8, r8)
+ 8007190:	46c0      	nop			; (mov r8, r8)
+
+08007192 <_reffunc_b16_10_j>:
+ 8007192:	46c0      	nop			; (mov r8, r8)
+ 8007194:	e000      	b.n	8007198 <_reffunc_b16_finished>
+ 8007196:	46c0      	nop			; (mov r8, r8)
+
+08007198 <_reffunc_b16_finished>:
+ 8007198:	4770      	bx	lr
+ 800719a:	46c0      	nop			; (mov r8, r8)
+ 800719c:	46c0      	nop			; (mov r8, r8)
+ 800719e:	46c0      	nop			; (mov r8, r8)
+

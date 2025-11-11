@@ -1,0 +1,189 @@
+
+output/program.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+080000dc <motor_prep_input>:
+ 80000dc:	b580      	push	{r7, lr}
+ 80000de:	b084      	sub	sp, #16
+ 80000e0:	af00      	add	r7, sp, #0
+ 80000e2:	6078      	str	r0, [r7, #4]
+ 80000e4:	687b      	ldr	r3, [r7, #4]
+ 80000e6:	0fdb      	lsrs	r3, r3, #31
+ 80000e8:	b2da      	uxtb	r2, r3
+ 80000ea:	210f      	movs	r1, #15
+ 80000ec:	187b      	adds	r3, r7, r1
+ 80000ee:	701a      	strb	r2, [r3, #0]
+ 80000f0:	187b      	adds	r3, r7, r1
+ 80000f2:	781b      	ldrb	r3, [r3, #0]
+ 80000f4:	2b00      	cmp	r3, #0
+ 80000f6:	d002      	beq.n	80000fe <motor_prep_input+0x22>
+ 80000f8:	687b      	ldr	r3, [r7, #4]
+ 80000fa:	425b      	negs	r3, r3
+ 80000fc:	607b      	str	r3, [r7, #4]
+ 80000fe:	687b      	ldr	r3, [r7, #4]
+ 8000100:	4a06      	ldr	r2, [pc, #24]	; (800011c <motor_prep_input+0x40>)
+ 8000102:	4293      	cmp	r3, r2
+ 8000104:	dd00      	ble.n	8000108 <motor_prep_input+0x2c>
+ 8000106:	4b05      	ldr	r3, [pc, #20]	; (800011c <motor_prep_input+0x40>)
+ 8000108:	607b      	str	r3, [r7, #4]
+ 800010a:	687b      	ldr	r3, [r7, #4]
+ 800010c:	4a03      	ldr	r2, [pc, #12]	; (800011c <motor_prep_input+0x40>)
+ 800010e:	1ad3      	subs	r3, r2, r3
+ 8000110:	607b      	str	r3, [r7, #4]
+ 8000112:	687b      	ldr	r3, [r7, #4]
+ 8000114:	0018      	movs	r0, r3
+ 8000116:	46bd      	mov	sp, r7
+ 8000118:	b004      	add	sp, #16
+ 800011a:	bd80      	pop	{r7, pc}
+ 800011c:	00001770 	.word	0x00001770
+
+08000120 <motor_set_l>:
+ 8000120:	b580      	push	{r7, lr}
+ 8000122:	b084      	sub	sp, #16
+ 8000124:	af00      	add	r7, sp, #0
+ 8000126:	6078      	str	r0, [r7, #4]
+ 8000128:	687b      	ldr	r3, [r7, #4]
+ 800012a:	0fdb      	lsrs	r3, r3, #31
+ 800012c:	b2da      	uxtb	r2, r3
+ 800012e:	230f      	movs	r3, #15
+ 8000130:	18fb      	adds	r3, r7, r3
+ 8000132:	701a      	strb	r2, [r3, #0]
+ 8000134:	687b      	ldr	r3, [r7, #4]
+ 8000136:	0018      	movs	r0, r3
+ 8000138:	f7ff ffd0 	bl	80000dc <motor_prep_input>
+ 800013c:	0003      	movs	r3, r0
+ 800013e:	607b      	str	r3, [r7, #4]
+ 8000140:	4b15      	ldr	r3, [pc, #84]	; (8000198 <motor_set_l+0x78>)
+ 8000142:	2201      	movs	r2, #1
+ 8000144:	601a      	str	r2, [r3, #0]
+ 8000146:	687b      	ldr	r3, [r7, #4]
+ 8000148:	4a14      	ldr	r2, [pc, #80]	; (800019c <motor_set_l+0x7c>)
+ 800014a:	4293      	cmp	r3, r2
+ 800014c:	d10a      	bne.n	8000164 <motor_set_l+0x44>
+ 800014e:	4b14      	ldr	r3, [pc, #80]	; (80001a0 <motor_set_l+0x80>)
+ 8000150:	681b      	ldr	r3, [r3, #0]
+ 8000152:	1c5a      	adds	r2, r3, #1
+ 8000154:	4b13      	ldr	r3, [pc, #76]	; (80001a4 <motor_set_l+0x84>)
+ 8000156:	601a      	str	r2, [r3, #0]
+ 8000158:	4b11      	ldr	r3, [pc, #68]	; (80001a0 <motor_set_l+0x80>)
+ 800015a:	681b      	ldr	r3, [r3, #0]
+ 800015c:	1c5a      	adds	r2, r3, #1
+ 800015e:	4b12      	ldr	r3, [pc, #72]	; (80001a8 <motor_set_l+0x88>)
+ 8000160:	601a      	str	r2, [r3, #0]
+ 8000162:	e015      	b.n	8000190 <motor_set_l+0x70>
+ 8000164:	230f      	movs	r3, #15
+ 8000166:	18fb      	adds	r3, r7, r3
+ 8000168:	781b      	ldrb	r3, [r3, #0]
+ 800016a:	2b00      	cmp	r3, #0
+ 800016c:	d008      	beq.n	8000180 <motor_set_l+0x60>
+ 800016e:	4b0c      	ldr	r3, [pc, #48]	; (80001a0 <motor_set_l+0x80>)
+ 8000170:	681b      	ldr	r3, [r3, #0]
+ 8000172:	1c5a      	adds	r2, r3, #1
+ 8000174:	4b0b      	ldr	r3, [pc, #44]	; (80001a4 <motor_set_l+0x84>)
+ 8000176:	601a      	str	r2, [r3, #0]
+ 8000178:	687a      	ldr	r2, [r7, #4]
+ 800017a:	4b0b      	ldr	r3, [pc, #44]	; (80001a8 <motor_set_l+0x88>)
+ 800017c:	601a      	str	r2, [r3, #0]
+ 800017e:	e007      	b.n	8000190 <motor_set_l+0x70>
+ 8000180:	687a      	ldr	r2, [r7, #4]
+ 8000182:	4b08      	ldr	r3, [pc, #32]	; (80001a4 <motor_set_l+0x84>)
+ 8000184:	601a      	str	r2, [r3, #0]
+ 8000186:	4b06      	ldr	r3, [pc, #24]	; (80001a0 <motor_set_l+0x80>)
+ 8000188:	681b      	ldr	r3, [r3, #0]
+ 800018a:	1c5a      	adds	r2, r3, #1
+ 800018c:	4b06      	ldr	r3, [pc, #24]	; (80001a8 <motor_set_l+0x88>)
+ 800018e:	601a      	str	r2, [r3, #0]
+ 8000190:	46c0      	nop			; (mov r8, r8)
+ 8000192:	46bd      	mov	sp, r7
+ 8000194:	b004      	add	sp, #16
+ 8000196:	bd80      	pop	{r7, pc}
+ 8000198:	20001030 	.word	0x20001030
+ 800019c:	00001770 	.word	0x00001770
+ 80001a0:	20001040 	.word	0x20001040
+ 80001a4:	20001038 	.word	0x20001038
+ 80001a8:	2000103c 	.word	0x2000103c
+
+080001ac <motor_set_r>:
+ 80001ac:	b580      	push	{r7, lr}
+ 80001ae:	b084      	sub	sp, #16
+ 80001b0:	af00      	add	r7, sp, #0
+ 80001b2:	6078      	str	r0, [r7, #4]
+ 80001b4:	687b      	ldr	r3, [r7, #4]
+ 80001b6:	0fdb      	lsrs	r3, r3, #31
+ 80001b8:	b2da      	uxtb	r2, r3
+ 80001ba:	230f      	movs	r3, #15
+ 80001bc:	18fb      	adds	r3, r7, r3
+ 80001be:	701a      	strb	r2, [r3, #0]
+ 80001c0:	687b      	ldr	r3, [r7, #4]
+ 80001c2:	0018      	movs	r0, r3
+ 80001c4:	f7ff ff8a 	bl	80000dc <motor_prep_input>
+ 80001c8:	0003      	movs	r3, r0
+ 80001ca:	607b      	str	r3, [r7, #4]
+ 80001cc:	4b15      	ldr	r3, [pc, #84]	; (8000224 <motor_set_r+0x78>)
+ 80001ce:	2201      	movs	r2, #1
+ 80001d0:	601a      	str	r2, [r3, #0]
+ 80001d2:	687b      	ldr	r3, [r7, #4]
+ 80001d4:	4a14      	ldr	r2, [pc, #80]	; (8000228 <motor_set_r+0x7c>)
+ 80001d6:	4293      	cmp	r3, r2
+ 80001d8:	d10a      	bne.n	80001f0 <motor_set_r+0x44>
+ 80001da:	4b14      	ldr	r3, [pc, #80]	; (800022c <motor_set_r+0x80>)
+ 80001dc:	681b      	ldr	r3, [r3, #0]
+ 80001de:	1c5a      	adds	r2, r3, #1
+ 80001e0:	4b13      	ldr	r3, [pc, #76]	; (8000230 <motor_set_r+0x84>)
+ 80001e2:	601a      	str	r2, [r3, #0]
+ 80001e4:	4b11      	ldr	r3, [pc, #68]	; (800022c <motor_set_r+0x80>)
+ 80001e6:	681b      	ldr	r3, [r3, #0]
+ 80001e8:	1c5a      	adds	r2, r3, #1
+ 80001ea:	4b12      	ldr	r3, [pc, #72]	; (8000234 <motor_set_r+0x88>)
+ 80001ec:	601a      	str	r2, [r3, #0]
+ 80001ee:	e015      	b.n	800021c <motor_set_r+0x70>
+ 80001f0:	230f      	movs	r3, #15
+ 80001f2:	18fb      	adds	r3, r7, r3
+ 80001f4:	781b      	ldrb	r3, [r3, #0]
+ 80001f6:	2b00      	cmp	r3, #0
+ 80001f8:	d008      	beq.n	800020c <motor_set_r+0x60>
+ 80001fa:	687a      	ldr	r2, [r7, #4]
+ 80001fc:	4b0c      	ldr	r3, [pc, #48]	; (8000230 <motor_set_r+0x84>)
+ 80001fe:	601a      	str	r2, [r3, #0]
+ 8000200:	4b0a      	ldr	r3, [pc, #40]	; (800022c <motor_set_r+0x80>)
+ 8000202:	681b      	ldr	r3, [r3, #0]
+ 8000204:	1c5a      	adds	r2, r3, #1
+ 8000206:	4b0b      	ldr	r3, [pc, #44]	; (8000234 <motor_set_r+0x88>)
+ 8000208:	601a      	str	r2, [r3, #0]
+ 800020a:	e007      	b.n	800021c <motor_set_r+0x70>
+ 800020c:	4b07      	ldr	r3, [pc, #28]	; (800022c <motor_set_r+0x80>)
+ 800020e:	681b      	ldr	r3, [r3, #0]
+ 8000210:	1c5a      	adds	r2, r3, #1
+ 8000212:	4b07      	ldr	r3, [pc, #28]	; (8000230 <motor_set_r+0x84>)
+ 8000214:	601a      	str	r2, [r3, #0]
+ 8000216:	687a      	ldr	r2, [r7, #4]
+ 8000218:	4b06      	ldr	r3, [pc, #24]	; (8000234 <motor_set_r+0x88>)
+ 800021a:	601a      	str	r2, [r3, #0]
+ 800021c:	46c0      	nop			; (mov r8, r8)
+ 800021e:	46bd      	mov	sp, r7
+ 8000220:	b004      	add	sp, #16
+ 8000222:	bd80      	pop	{r7, pc}
+ 8000224:	20001034 	.word	0x20001034
+ 8000228:	00001770 	.word	0x00001770
+ 800022c:	2000104c 	.word	0x2000104c
+ 8000230:	20001044 	.word	0x20001044
+ 8000234:	20001048 	.word	0x20001048
+
+08000238 <motor_set>:
+ 8000238:	b580      	push	{r7, lr}
+ 800023a:	b082      	sub	sp, #8
+ 800023c:	af00      	add	r7, sp, #0
+ 800023e:	6078      	str	r0, [r7, #4]
+ 8000240:	6039      	str	r1, [r7, #0]
+ 8000242:	687b      	ldr	r3, [r7, #4]
+ 8000244:	0018      	movs	r0, r3
+ 8000246:	f7ff ff6b 	bl	8000120 <motor_set_l>
+ 800024a:	683b      	ldr	r3, [r7, #0]
+ 800024c:	0018      	movs	r0, r3
+ 800024e:	f7ff ffad 	bl	80001ac <motor_set_r>
+ 8000252:	46c0      	nop			; (mov r8, r8)
+ 8000254:	46bd      	mov	sp, r7
+ 8000256:	b002      	add	sp, #8
+ 8000258:	bd80      	pop	{r7, pc}
