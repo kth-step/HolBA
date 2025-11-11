@@ -1863,10 +1863,10 @@ REPEAT STRIP_TAC >>
   METIS_TAC []
 QED
 
-val oracle_proof_SRENAME_FREE = mk_oracle_thm "I_AM_VERY_CONVINCED" ([], “
+
+Theorem symb_rule_SRENAME_FREE_red_thm[local]:
   !sr.
-!sys L sys2 Pi symb symb_new.
-  (* TODO: maybe need more or less of these assumptions *)
+!sys2 symb symb_new H s' sys2_r.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
   (symb_subst_f_sound_NOTIN sr) ==>
@@ -1876,19 +1876,132 @@ val oracle_proof_SRENAME_FREE = mk_oracle_thm "I_AM_VERY_CONVINCED" ([], “
 
   (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
 
-  (* symb is free *)
-  (symb NOTIN (symb_symbols sr sys)) ==>
-  (* and symb_new does not occur in sys2  *)
+  (symb_new NOTIN symb_interpr_dom H) ==>
   (symb_new NOTIN (symb_symbols sr sys2)) ==>
 
-  (symb_hl_step_in_L_sound sr (sys, L, sys2 INSERT Pi)) ==>
-  (symb_hl_step_in_L_sound sr (sys, L, (symb_subst sr (symb, sr.sr_mk_exp_symb_f symb_new) sys2) INSERT Pi))
-”);
+  (symb_matchstate_ext sr sys2 H s') ==>
+  (sys2_r = (symb_subst sr (symb,sr.sr_mk_exp_symb_f symb_new) sys2)) ==>
+
+  (symb_matchstate_ext sr sys2_r H s')
+Proof
+  rewrite_tac [symb_matchstate_ext_def] >>
+  rpt strip_tac >>
+  rename1 ‘symb_interpr_ext H2 H1’ >>
+
+  ‘sr.sr_typeof_exp (sr.sr_mk_exp_symb_f symb_new) = SOME (sr.sr_typeof_symb symb)’ by (
+    (* basic soundness *)
+    fs [symb_mk_exp_symb_f_sound_typeof_def]
+  ) >>
+
+  (* case symb NOTIN sys2: via subst "symb_subst sr (symb,sr.sr_mk_exp_symb_f symb_new) sys2 = sys2" *)
+  Cases_on ‘symb NOTIN symb_symbols sr sys2’ >- (
+    metis_tac [symb_subst_sound_NOTIN_thm]
+  ) >>
+
+  ‘?H3. symb_interpr_ext H3 H1 /\ symb_matchstate sr sys2 H3 s' /\ symb_new NOTIN symb_interpr_dom H3’ by (
+    (* clear symb_new (maybe need minimal, but probably not) *)
+    Q.ABBREV_TAC ‘H3 = symb_interpr_update H2 (symb_new,NONE)’ >>
+    Q.EXISTS_TAC ‘H3’ >>
+    conj_tac >- (
+      fs [symb_interpr_ext_def] >>
+
+      ‘symb_interpr_dom H1 SUBSET (symb_interpr_dom H2 DELETE symb_new)’ by (
+        fs [GSYM symb_interpr_ext_def] >>
+        imp_res_tac symb_interpr_ext_IMP_dom_thm >>
+        fs [SUBSET_DELETE]
+      ) >>
+
+      metis_tac [symb_interprs_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_TRANS_thm]
+    ) >>
+
+    conj_tac >- (
+      ‘symb_interprs_eq_for H3 H2 (symb_symbols sr sys2)’ by (
+        Q.UNABBREV_TAC ‘H3’ >>
+
+        ‘symb_symbols sr sys2 SUBSET (symb_interpr_dom H2 DELETE symb_new)’ by (
+          ‘symb_symbols sr sys2 SUBSET symb_interpr_dom H2’ by (
+            metis_tac [symb_matchstate_def, symb_suitable_interpretation_SUBSET_dom_thm]
+          ) >>
+          fs [SUBSET_DELETE]
+        ) >>
+        metis_tac [symb_interprs_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_TRANS_thm]
+      ) >>
+      ‘symb_interpr_ext H2 H3’ by (
+        Q.UNABBREV_TAC ‘H3’ >>
+        fs [symb_interpr_ext_symb_NONE_thm]
+      ) >>
+      metis_tac [symb_matchstate_def, symb_interpr_ext_welltyped_IMP_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+    ) >>
+
+    Q.UNABBREV_TAC ‘H3’ >>
+    fs [symb_interpr_dom_UPDATE_NONE_thm]
+  ) >>
+  ‘?v. symb_interpr_get H3 symb = SOME v /\ sr.sr_typeof_symb symb = sr.sr_typeof_val v’ by (
+    (* symb_interpr_get H2 symb = symb_interpr_get H3 symb *)
+    ‘(symb IN symb_interpr_dom H3) /\ (symb_interpr_welltyped sr H3)’ by (
+      fs [symb_matchstate_def] >>
+      metis_tac [symb_matchstate_def, matchstate_IMP_symbols_SUBSET_interpr_dom_thm, SUBSET_DEF]
+    ) >>
+    (* symb IN H2, welltyped H2, H3 symb = H2 symb *)
+    fs [symb_interpr_welltyped_def]
+  ) >>
+  Q.ABBREV_TAC ‘H4 = symb_interpr_update H3 (symb_new,SOME v)’ >>
+  Q.ABBREV_TAC ‘H5 = symb_interpr_update H4 (symb,SOME v)’ >>
+  ‘symb_interpr_ext H4 H1 /\ symb_matchstate sr sys2 H4 s'’ by (
+    (* Abbr H4, H3 > 1, symb_new NOTIN sys2 *)
+    ‘symb_interpr_ext H4 H1 /\ symb_interpr_ext H4 H3’ by metis_tac [symb_interpr_ext_UPDATE_thm, symb_interpr_ext_TRANS_thm] >>
+    asm_rewrite_tac [] >>
+
+    ‘symb_interpr_welltyped sr H4’ by (
+      metis_tac [symb_matchstate_def, symb_interpr_update_SOME_IMP_welltyped_thm]
+    ) >>
+    metis_tac [symb_interpr_ext_matchstate_IMP_matchstate_thm]
+  ) >>
+  ‘symb_matchstate sr sys2 H5 s'’ by (
+    (* H5 = H4 (Abbr H5, H3 symb = v) *)
+    ‘H5 = H4’ by (
+      Q.UNABBREV_TAC ‘H5’ >> Q.UNABBREV_TAC ‘H4’ >>
+      rewrite_tac [symb_interpr_EQ_thm, symb_interpr_get_update_thm] >>
+      rpt strip_tac >>
+      rpt CASE_TAC
+    ) >> fs []
+  ) >>
+
+  ‘sr.sr_interpret_f H4 (sr.sr_mk_exp_symb_f symb_new) = SOME v’ by (
+    (* Abbr H4, basic soudness with symb_interpr_update_def *)
+    ‘symb_interpr_get H4 symb_new = SOME v’ by (
+      Q.UNABBREV_TAC ‘H4’ >>
+      rewrite_tac [symb_interpr_get_update_id_thm]
+    ) >>
+    metis_tac [symb_mk_exp_symb_f_sound_def]
+  ) >>
+
+  ‘sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb_new) SUBSET symb_interpr_dom H4’ by (
+    (* Abbr H4, basic soudness with symb_interpr_update_def and symb_interpr_dom_def *)
+    fs [symb_mk_exp_symb_f_sound_def] >>
+    Q.UNABBREV_TAC ‘H4’ >>
+    fs [symb_interpr_dom_UPDATE_SOME_thm]
+  ) >>
+  ‘symb_interpr_get H4 symb = SOME v’ by (
+    (* Abbr H4, H3 symb = v *)
+    Q.UNABBREV_TAC ‘H4’ >>
+    fs [symb_interpr_get_update_thm]
+  ) >>
+
+  ‘!v'. symb_interpr_get H4 symb = SOME v' ==> sr.sr_typeof_symb symb = sr.sr_typeof_val v'’ by (
+    fs []
+  ) >>
+
+  Q.EXISTS_TAC ‘H4’ >>
+  conj_tac >- asm_rewrite_tac [] >>
+
+  imp_res_tac symb_record_soundTheory.symb_subst_sound_thm2 >>
+  metis_tac []
+QED
 
 Theorem symb_rule_SRENAME_FREE_thm:
   !sr.
 !sys L sys2 Pi symb symb_new.
-  (* TODO: maybe need more or less of these assumptions *)
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
   (symb_subst_f_sound_NOTIN sr) ==>
@@ -1900,13 +2013,31 @@ Theorem symb_rule_SRENAME_FREE_thm:
 
   (* symb is free *)
   (symb NOTIN (symb_symbols sr sys)) ==>
-  (* and symb_new does not occur in sys2  *)
+  (* and symb_new neither occurs in sys nor in sys2 *)
+  (symb_new NOTIN (symb_symbols sr sys)) ==>
   (symb_new NOTIN (symb_symbols sr sys2)) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, sys2 INSERT Pi)) ==>
   (symb_hl_step_in_L_sound sr (sys, L, (symb_subst sr (symb, sr.sr_mk_exp_symb_f symb_new) sys2) INSERT Pi))
 Proof
-  ACCEPT_TAC oracle_proof_SRENAME_FREE
+  rewrite_tac [symb_hl_step_in_L_sound_def] >>
+  rpt strip_tac >>
+  Q.PAT_X_ASSUM ‘!x. A’ (ASSUME_TAC o Q.SPECL [‘s’, ‘H’]) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC ‘n’ >> Q.EXISTS_TAC ‘s'’ >>
+  asm_rewrite_tac [] >>
+  Cases_on ‘sys' <> sys2’ >- (
+    Q.EXISTS_TAC ‘sys'’ >>
+    ‘sys' IN Pi’ by (fs []) >> gvs []
+  ) >>
+  fs [] >>
+
+  ‘symb_new NOTIN symb_interpr_dom H’ by (
+    fs [symb_minimal_interpretation_EQ_dom_thm]
+  ) >>
+
+  Q.EXISTS_TAC ‘symb_subst sr (symb,sr.sr_mk_exp_symb_f symb_new) sys2’ >>
+  metis_tac [symb_rule_SRENAME_FREE_red_thm]
 QED
 
 (* ************************* *)
