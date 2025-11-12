@@ -52,6 +52,47 @@ open bir_programSyntax;
       (new_gns, new_ges, new_i)
     end;
 
+  fun gen_statistics_for_nodes_proc (n:cfg_node, (instrs, condjmps, indirjmps)) =
+    if cfg_node_type_eq (#CFGN_type n, CFGNT_Basic) orelse
+       cfg_nodetype_is_call (#CFGN_type n) orelse
+       cfg_node_type_eq (#CFGN_type n, CFGNT_Return) then
+      (instrs + 1, condjmps, indirjmps)
+    else if cfg_node_type_eq (#CFGN_type n, CFGNT_CondJump) then
+    let
+      val descr_o = #CFGN_hc_descr n;
+      val descr_o_s = if isSome descr_o then valOf descr_o else "NONE";
+      val targets = #CFGN_targets n;
+      val numtargets = List.length targets;
+      val numtargets_s = Int.toString numtargets;
+
+      val s = "----------------- " ^ descr_o_s ^ " :::: " ^ numtargets_s ^ "\n";
+      (*val _ = print s;*)
+    in
+      (instrs + 1, condjmps + 1, indirjmps)
+    end
+    else if cfg_node_type_eq (#CFGN_type n, CFGNT_Jump) then
+    let
+      val descr_o = #CFGN_hc_descr n;
+
+      val targets = #CFGN_targets n;
+      val numtargets = List.length targets;
+
+      val numtargets_s = Int.toString numtargets;
+      (*val _ = if numtargets > 0 then () else raise ERR "gen_statistics_for_nodes_proc" "indirjump error";*)
+      val descr_o_s = if isSome descr_o then valOf descr_o else "NONE";
+      
+      val s = descr_o_s ^ " :::: " ^ numtargets_s ^ "\n";
+      val _ = print s;
+
+      val is_indir   = numtargets > 1;
+    in
+      (instrs + 1, condjmps, if is_indir then indirjmps + 1 else indirjmps)
+    end
+    else if cfg_node_type_eq (#CFGN_type n, CFGNT_Halt) then
+      raise ERR "gen_statistics_for_nodes_proc" "halt not allowed here"
+    else
+      raise ERR "gen_statistics_for_nodes_proc" "unknown node type";
+
 in
 
   fun cfg_display_graph_ns ns =
@@ -63,6 +104,16 @@ in
       val _ = writeToFile dot_str (file ^ ".dot");
       val _ = convertAndView file;
     in () end;
+
+  fun cfg_statistics_ns ns =
+    let
+      val (instrs, condjmps, indirjmps) = List.foldr gen_statistics_for_nodes_proc (0, 0, 0) ns;
+
+      val s = "instrs: " ^ (Int.toString instrs) ^ "\n" ^
+              "condjmps: " ^ (Int.toString condjmps) ^ "\n" ^
+              "indirjmps: " ^ (Int.toString indirjmps) ^ "\n";
+      val _ = print s;
+    in (instrs, condjmps, indirjmps) end;
 
 end (* local *)
 end (* struct *)

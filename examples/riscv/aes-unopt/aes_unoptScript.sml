@@ -3,14 +3,14 @@ open HolKernel Parse;
 open bir_lifter_interfaceLib;
 open birs_auxLib;
 
-val progname = "aes";
+val progname = "aes_unopt";
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory progname;
 
-val _ = lift_da_and_store progname (progname ^ ".da") da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x19f0));
+val _ = lift_da_and_store progname "aes.da" da_riscv ((Arbnum.fromInt 0), (Arbnum.fromInt 0x19f0));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)

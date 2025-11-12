@@ -2,7 +2,7 @@ open HolKernel boolLib Parse bossLib;
 
 open bir_predLib;
 
-val _ = new_theory "aes_spec";
+val _ = new_theory "aes_unopt_spec";
 
 (* ------------------ *)
 (* Program boundaries *)

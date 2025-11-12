@@ -1,0 +1,559 @@
+
+output/program.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+0800910c <wc_AesEncryptSimplified>:
+ 800910c:	b580      	push	{r7, lr}
+ 800910e:	b096      	sub	sp, #88	; 0x58
+ 8009110:	af00      	add	r7, sp, #0
+ 8009112:	60f8      	str	r0, [r7, #12]
+ 8009114:	60b9      	str	r1, [r7, #8]
+ 8009116:	607a      	str	r2, [r7, #4]
+ 8009118:	603b      	str	r3, [r7, #0]
+ 800911a:	68bb      	ldr	r3, [r7, #8]
+ 800911c:	3b01      	subs	r3, #1
+ 800911e:	637b      	str	r3, [r7, #52]	; 0x34
+ 8009120:	687b      	ldr	r3, [r7, #4]
+ 8009122:	681b      	ldr	r3, [r3, #0]
+ 8009124:	657b      	str	r3, [r7, #84]	; 0x54
+ 8009126:	687b      	ldr	r3, [r7, #4]
+ 8009128:	685b      	ldr	r3, [r3, #4]
+ 800912a:	653b      	str	r3, [r7, #80]	; 0x50
+ 800912c:	687b      	ldr	r3, [r7, #4]
+ 800912e:	689b      	ldr	r3, [r3, #8]
+ 8009130:	64fb      	str	r3, [r7, #76]	; 0x4c
+ 8009132:	687b      	ldr	r3, [r7, #4]
+ 8009134:	68db      	ldr	r3, [r3, #12]
+ 8009136:	64bb      	str	r3, [r7, #72]	; 0x48
+ 8009138:	68fb      	ldr	r3, [r7, #12]
+ 800913a:	681b      	ldr	r3, [r3, #0]
+ 800913c:	6d7a      	ldr	r2, [r7, #84]	; 0x54
+ 800913e:	4053      	eors	r3, r2
+ 8009140:	657b      	str	r3, [r7, #84]	; 0x54
+ 8009142:	68fb      	ldr	r3, [r7, #12]
+ 8009144:	3304      	adds	r3, #4
+ 8009146:	681b      	ldr	r3, [r3, #0]
+ 8009148:	6d3a      	ldr	r2, [r7, #80]	; 0x50
+ 800914a:	4053      	eors	r3, r2
+ 800914c:	653b      	str	r3, [r7, #80]	; 0x50
+ 800914e:	68fb      	ldr	r3, [r7, #12]
+ 8009150:	3308      	adds	r3, #8
+ 8009152:	681b      	ldr	r3, [r3, #0]
+ 8009154:	6cfa      	ldr	r2, [r7, #76]	; 0x4c
+ 8009156:	4053      	eors	r3, r2
+ 8009158:	64fb      	str	r3, [r7, #76]	; 0x4c
+ 800915a:	68fb      	ldr	r3, [r7, #12]
+ 800915c:	330c      	adds	r3, #12
+ 800915e:	681b      	ldr	r3, [r3, #0]
+ 8009160:	6cba      	ldr	r2, [r7, #72]	; 0x48
+ 8009162:	4053      	eors	r3, r2
+ 8009164:	64bb      	str	r3, [r7, #72]	; 0x48
+ 8009166:	68fb      	ldr	r3, [r7, #12]
+ 8009168:	3310      	adds	r3, #16
+ 800916a:	60fb      	str	r3, [r7, #12]
+ 800916c:	e0d8      	b.n	8009320 <wc_AesEncryptSimplified+0x214>
+ 800916e:	6d7b      	ldr	r3, [r7, #84]	; 0x54
+ 8009170:	0e1b      	lsrs	r3, r3, #24
+ 8009172:	b2db      	uxtb	r3, r3
+ 8009174:	633b      	str	r3, [r7, #48]	; 0x30
+ 8009176:	6d3b      	ldr	r3, [r7, #80]	; 0x50
+ 8009178:	0c1b      	lsrs	r3, r3, #16
+ 800917a:	b2db      	uxtb	r3, r3
+ 800917c:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 800917e:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
+ 8009180:	0a1b      	lsrs	r3, r3, #8
+ 8009182:	b2db      	uxtb	r3, r3
+ 8009184:	62bb      	str	r3, [r7, #40]	; 0x28
+ 8009186:	6cbb      	ldr	r3, [r7, #72]	; 0x48
+ 8009188:	b2db      	uxtb	r3, r3
+ 800918a:	627b      	str	r3, [r7, #36]	; 0x24
+ 800918c:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 800918e:	009a      	lsls	r2, r3, #2
+ 8009190:	4be8      	ldr	r3, [pc, #928]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 8009192:	18d3      	adds	r3, r2, r3
+ 8009194:	681b      	ldr	r3, [r3, #0]
+ 8009196:	623b      	str	r3, [r7, #32]
+ 8009198:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 800919a:	009a      	lsls	r2, r3, #2
+ 800919c:	4be6      	ldr	r3, [pc, #920]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 800919e:	18d3      	adds	r3, r2, r3
+ 80091a0:	681b      	ldr	r3, [r3, #0]
+ 80091a2:	61fb      	str	r3, [r7, #28]
+ 80091a4:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 80091a6:	009a      	lsls	r2, r3, #2
+ 80091a8:	4be4      	ldr	r3, [pc, #912]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 80091aa:	18d3      	adds	r3, r2, r3
+ 80091ac:	681b      	ldr	r3, [r3, #0]
+ 80091ae:	61bb      	str	r3, [r7, #24]
+ 80091b0:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 80091b2:	009a      	lsls	r2, r3, #2
+ 80091b4:	4be2      	ldr	r3, [pc, #904]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 80091b6:	18d3      	adds	r3, r2, r3
+ 80091b8:	681b      	ldr	r3, [r3, #0]
+ 80091ba:	617b      	str	r3, [r7, #20]
+ 80091bc:	6a3a      	ldr	r2, [r7, #32]
+ 80091be:	69fb      	ldr	r3, [r7, #28]
+ 80091c0:	405a      	eors	r2, r3
+ 80091c2:	69bb      	ldr	r3, [r7, #24]
+ 80091c4:	405a      	eors	r2, r3
+ 80091c6:	697b      	ldr	r3, [r7, #20]
+ 80091c8:	405a      	eors	r2, r3
+ 80091ca:	68fb      	ldr	r3, [r7, #12]
+ 80091cc:	681b      	ldr	r3, [r3, #0]
+ 80091ce:	4053      	eors	r3, r2
+ 80091d0:	647b      	str	r3, [r7, #68]	; 0x44
+ 80091d2:	6d3b      	ldr	r3, [r7, #80]	; 0x50
+ 80091d4:	0e1b      	lsrs	r3, r3, #24
+ 80091d6:	b2db      	uxtb	r3, r3
+ 80091d8:	633b      	str	r3, [r7, #48]	; 0x30
+ 80091da:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
+ 80091dc:	0c1b      	lsrs	r3, r3, #16
+ 80091de:	b2db      	uxtb	r3, r3
+ 80091e0:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 80091e2:	6cbb      	ldr	r3, [r7, #72]	; 0x48
+ 80091e4:	0a1b      	lsrs	r3, r3, #8
+ 80091e6:	b2db      	uxtb	r3, r3
+ 80091e8:	62bb      	str	r3, [r7, #40]	; 0x28
+ 80091ea:	6d7b      	ldr	r3, [r7, #84]	; 0x54
+ 80091ec:	b2db      	uxtb	r3, r3
+ 80091ee:	627b      	str	r3, [r7, #36]	; 0x24
+ 80091f0:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 80091f2:	009a      	lsls	r2, r3, #2
+ 80091f4:	4bcf      	ldr	r3, [pc, #828]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 80091f6:	18d3      	adds	r3, r2, r3
+ 80091f8:	681b      	ldr	r3, [r3, #0]
+ 80091fa:	623b      	str	r3, [r7, #32]
+ 80091fc:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 80091fe:	009a      	lsls	r2, r3, #2
+ 8009200:	4bcd      	ldr	r3, [pc, #820]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 8009202:	18d3      	adds	r3, r2, r3
+ 8009204:	681b      	ldr	r3, [r3, #0]
+ 8009206:	61fb      	str	r3, [r7, #28]
+ 8009208:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 800920a:	009a      	lsls	r2, r3, #2
+ 800920c:	4bcb      	ldr	r3, [pc, #812]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 800920e:	18d3      	adds	r3, r2, r3
+ 8009210:	681b      	ldr	r3, [r3, #0]
+ 8009212:	61bb      	str	r3, [r7, #24]
+ 8009214:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 8009216:	009a      	lsls	r2, r3, #2
+ 8009218:	4bc9      	ldr	r3, [pc, #804]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 800921a:	18d3      	adds	r3, r2, r3
+ 800921c:	681b      	ldr	r3, [r3, #0]
+ 800921e:	617b      	str	r3, [r7, #20]
+ 8009220:	6a3a      	ldr	r2, [r7, #32]
+ 8009222:	69fb      	ldr	r3, [r7, #28]
+ 8009224:	405a      	eors	r2, r3
+ 8009226:	69bb      	ldr	r3, [r7, #24]
+ 8009228:	405a      	eors	r2, r3
+ 800922a:	697b      	ldr	r3, [r7, #20]
+ 800922c:	405a      	eors	r2, r3
+ 800922e:	68fb      	ldr	r3, [r7, #12]
+ 8009230:	3304      	adds	r3, #4
+ 8009232:	681b      	ldr	r3, [r3, #0]
+ 8009234:	4053      	eors	r3, r2
+ 8009236:	643b      	str	r3, [r7, #64]	; 0x40
+ 8009238:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
+ 800923a:	0e1b      	lsrs	r3, r3, #24
+ 800923c:	b2db      	uxtb	r3, r3
+ 800923e:	633b      	str	r3, [r7, #48]	; 0x30
+ 8009240:	6cbb      	ldr	r3, [r7, #72]	; 0x48
+ 8009242:	0c1b      	lsrs	r3, r3, #16
+ 8009244:	b2db      	uxtb	r3, r3
+ 8009246:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 8009248:	6d7b      	ldr	r3, [r7, #84]	; 0x54
+ 800924a:	0a1b      	lsrs	r3, r3, #8
+ 800924c:	b2db      	uxtb	r3, r3
+ 800924e:	62bb      	str	r3, [r7, #40]	; 0x28
+ 8009250:	6d3b      	ldr	r3, [r7, #80]	; 0x50
+ 8009252:	b2db      	uxtb	r3, r3
+ 8009254:	627b      	str	r3, [r7, #36]	; 0x24
+ 8009256:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 8009258:	009a      	lsls	r2, r3, #2
+ 800925a:	4bb6      	ldr	r3, [pc, #728]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 800925c:	18d3      	adds	r3, r2, r3
+ 800925e:	681b      	ldr	r3, [r3, #0]
+ 8009260:	623b      	str	r3, [r7, #32]
+ 8009262:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 8009264:	009a      	lsls	r2, r3, #2
+ 8009266:	4bb4      	ldr	r3, [pc, #720]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 8009268:	18d3      	adds	r3, r2, r3
+ 800926a:	681b      	ldr	r3, [r3, #0]
+ 800926c:	61fb      	str	r3, [r7, #28]
+ 800926e:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 8009270:	009a      	lsls	r2, r3, #2
+ 8009272:	4bb2      	ldr	r3, [pc, #712]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 8009274:	18d3      	adds	r3, r2, r3
+ 8009276:	681b      	ldr	r3, [r3, #0]
+ 8009278:	61bb      	str	r3, [r7, #24]
+ 800927a:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 800927c:	009a      	lsls	r2, r3, #2
+ 800927e:	4bb0      	ldr	r3, [pc, #704]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 8009280:	18d3      	adds	r3, r2, r3
+ 8009282:	681b      	ldr	r3, [r3, #0]
+ 8009284:	617b      	str	r3, [r7, #20]
+ 8009286:	6a3a      	ldr	r2, [r7, #32]
+ 8009288:	69fb      	ldr	r3, [r7, #28]
+ 800928a:	405a      	eors	r2, r3
+ 800928c:	69bb      	ldr	r3, [r7, #24]
+ 800928e:	405a      	eors	r2, r3
+ 8009290:	697b      	ldr	r3, [r7, #20]
+ 8009292:	405a      	eors	r2, r3
+ 8009294:	68fb      	ldr	r3, [r7, #12]
+ 8009296:	3308      	adds	r3, #8
+ 8009298:	681b      	ldr	r3, [r3, #0]
+ 800929a:	4053      	eors	r3, r2
+ 800929c:	63fb      	str	r3, [r7, #60]	; 0x3c
+ 800929e:	6cbb      	ldr	r3, [r7, #72]	; 0x48
+ 80092a0:	0e1b      	lsrs	r3, r3, #24
+ 80092a2:	b2db      	uxtb	r3, r3
+ 80092a4:	633b      	str	r3, [r7, #48]	; 0x30
+ 80092a6:	6d7b      	ldr	r3, [r7, #84]	; 0x54
+ 80092a8:	0c1b      	lsrs	r3, r3, #16
+ 80092aa:	b2db      	uxtb	r3, r3
+ 80092ac:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 80092ae:	6d3b      	ldr	r3, [r7, #80]	; 0x50
+ 80092b0:	0a1b      	lsrs	r3, r3, #8
+ 80092b2:	b2db      	uxtb	r3, r3
+ 80092b4:	62bb      	str	r3, [r7, #40]	; 0x28
+ 80092b6:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
+ 80092b8:	b2db      	uxtb	r3, r3
+ 80092ba:	627b      	str	r3, [r7, #36]	; 0x24
+ 80092bc:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 80092be:	009a      	lsls	r2, r3, #2
+ 80092c0:	4b9c      	ldr	r3, [pc, #624]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 80092c2:	18d3      	adds	r3, r2, r3
+ 80092c4:	681b      	ldr	r3, [r3, #0]
+ 80092c6:	623b      	str	r3, [r7, #32]
+ 80092c8:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 80092ca:	009a      	lsls	r2, r3, #2
+ 80092cc:	4b9a      	ldr	r3, [pc, #616]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 80092ce:	18d3      	adds	r3, r2, r3
+ 80092d0:	681b      	ldr	r3, [r3, #0]
+ 80092d2:	61fb      	str	r3, [r7, #28]
+ 80092d4:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 80092d6:	009a      	lsls	r2, r3, #2
+ 80092d8:	4b98      	ldr	r3, [pc, #608]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 80092da:	18d3      	adds	r3, r2, r3
+ 80092dc:	681b      	ldr	r3, [r3, #0]
+ 80092de:	61bb      	str	r3, [r7, #24]
+ 80092e0:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 80092e2:	009a      	lsls	r2, r3, #2
+ 80092e4:	4b96      	ldr	r3, [pc, #600]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 80092e6:	18d3      	adds	r3, r2, r3
+ 80092e8:	681b      	ldr	r3, [r3, #0]
+ 80092ea:	617b      	str	r3, [r7, #20]
+ 80092ec:	6a3a      	ldr	r2, [r7, #32]
+ 80092ee:	69fb      	ldr	r3, [r7, #28]
+ 80092f0:	405a      	eors	r2, r3
+ 80092f2:	69bb      	ldr	r3, [r7, #24]
+ 80092f4:	405a      	eors	r2, r3
+ 80092f6:	697b      	ldr	r3, [r7, #20]
+ 80092f8:	405a      	eors	r2, r3
+ 80092fa:	68fb      	ldr	r3, [r7, #12]
+ 80092fc:	330c      	adds	r3, #12
+ 80092fe:	681b      	ldr	r3, [r3, #0]
+ 8009300:	4053      	eors	r3, r2
+ 8009302:	63bb      	str	r3, [r7, #56]	; 0x38
+ 8009304:	6c7b      	ldr	r3, [r7, #68]	; 0x44
+ 8009306:	657b      	str	r3, [r7, #84]	; 0x54
+ 8009308:	6c3b      	ldr	r3, [r7, #64]	; 0x40
+ 800930a:	653b      	str	r3, [r7, #80]	; 0x50
+ 800930c:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+ 800930e:	64fb      	str	r3, [r7, #76]	; 0x4c
+ 8009310:	6bbb      	ldr	r3, [r7, #56]	; 0x38
+ 8009312:	64bb      	str	r3, [r7, #72]	; 0x48
+ 8009314:	68fb      	ldr	r3, [r7, #12]
+ 8009316:	3310      	adds	r3, #16
+ 8009318:	60fb      	str	r3, [r7, #12]
+ 800931a:	6b7b      	ldr	r3, [r7, #52]	; 0x34
+ 800931c:	3b01      	subs	r3, #1
+ 800931e:	637b      	str	r3, [r7, #52]	; 0x34
+ 8009320:	6b7b      	ldr	r3, [r7, #52]	; 0x34
+ 8009322:	2b00      	cmp	r3, #0
+ 8009324:	d000      	beq.n	8009328 <wc_AesEncryptSimplified+0x21c>
+ 8009326:	e722      	b.n	800916e <wc_AesEncryptSimplified+0x62>
+ 8009328:	6c7b      	ldr	r3, [r7, #68]	; 0x44
+ 800932a:	0e1b      	lsrs	r3, r3, #24
+ 800932c:	b2db      	uxtb	r3, r3
+ 800932e:	633b      	str	r3, [r7, #48]	; 0x30
+ 8009330:	6c3b      	ldr	r3, [r7, #64]	; 0x40
+ 8009332:	0c1b      	lsrs	r3, r3, #16
+ 8009334:	b2db      	uxtb	r3, r3
+ 8009336:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 8009338:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+ 800933a:	0a1b      	lsrs	r3, r3, #8
+ 800933c:	b2db      	uxtb	r3, r3
+ 800933e:	62bb      	str	r3, [r7, #40]	; 0x28
+ 8009340:	6bbb      	ldr	r3, [r7, #56]	; 0x38
+ 8009342:	b2db      	uxtb	r3, r3
+ 8009344:	627b      	str	r3, [r7, #36]	; 0x24
+ 8009346:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 8009348:	009a      	lsls	r2, r3, #2
+ 800934a:	4b7c      	ldr	r3, [pc, #496]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 800934c:	18d3      	adds	r3, r2, r3
+ 800934e:	681b      	ldr	r3, [r3, #0]
+ 8009350:	623b      	str	r3, [r7, #32]
+ 8009352:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 8009354:	009a      	lsls	r2, r3, #2
+ 8009356:	4b7a      	ldr	r3, [pc, #488]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 8009358:	18d3      	adds	r3, r2, r3
+ 800935a:	681b      	ldr	r3, [r3, #0]
+ 800935c:	61fb      	str	r3, [r7, #28]
+ 800935e:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 8009360:	009a      	lsls	r2, r3, #2
+ 8009362:	4b74      	ldr	r3, [pc, #464]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 8009364:	18d3      	adds	r3, r2, r3
+ 8009366:	681b      	ldr	r3, [r3, #0]
+ 8009368:	61bb      	str	r3, [r7, #24]
+ 800936a:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 800936c:	009a      	lsls	r2, r3, #2
+ 800936e:	4b72      	ldr	r3, [pc, #456]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 8009370:	18d3      	adds	r3, r2, r3
+ 8009372:	681b      	ldr	r3, [r3, #0]
+ 8009374:	617b      	str	r3, [r7, #20]
+ 8009376:	6a3b      	ldr	r3, [r7, #32]
+ 8009378:	0e1b      	lsrs	r3, r3, #24
+ 800937a:	061a      	lsls	r2, r3, #24
+ 800937c:	69f9      	ldr	r1, [r7, #28]
+ 800937e:	23ff      	movs	r3, #255	; 0xff
+ 8009380:	041b      	lsls	r3, r3, #16
+ 8009382:	400b      	ands	r3, r1
+ 8009384:	431a      	orrs	r2, r3
+ 8009386:	69b9      	ldr	r1, [r7, #24]
+ 8009388:	23ff      	movs	r3, #255	; 0xff
+ 800938a:	021b      	lsls	r3, r3, #8
+ 800938c:	400b      	ands	r3, r1
+ 800938e:	405a      	eors	r2, r3
+ 8009390:	697b      	ldr	r3, [r7, #20]
+ 8009392:	21ff      	movs	r1, #255	; 0xff
+ 8009394:	400b      	ands	r3, r1
+ 8009396:	405a      	eors	r2, r3
+ 8009398:	68fb      	ldr	r3, [r7, #12]
+ 800939a:	681b      	ldr	r3, [r3, #0]
+ 800939c:	4053      	eors	r3, r2
+ 800939e:	657b      	str	r3, [r7, #84]	; 0x54
+ 80093a0:	6c3b      	ldr	r3, [r7, #64]	; 0x40
+ 80093a2:	0e1b      	lsrs	r3, r3, #24
+ 80093a4:	b2db      	uxtb	r3, r3
+ 80093a6:	633b      	str	r3, [r7, #48]	; 0x30
+ 80093a8:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+ 80093aa:	0c1b      	lsrs	r3, r3, #16
+ 80093ac:	b2db      	uxtb	r3, r3
+ 80093ae:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 80093b0:	6bbb      	ldr	r3, [r7, #56]	; 0x38
+ 80093b2:	0a1b      	lsrs	r3, r3, #8
+ 80093b4:	b2db      	uxtb	r3, r3
+ 80093b6:	62bb      	str	r3, [r7, #40]	; 0x28
+ 80093b8:	6c7b      	ldr	r3, [r7, #68]	; 0x44
+ 80093ba:	b2db      	uxtb	r3, r3
+ 80093bc:	627b      	str	r3, [r7, #36]	; 0x24
+ 80093be:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 80093c0:	009a      	lsls	r2, r3, #2
+ 80093c2:	4b5e      	ldr	r3, [pc, #376]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 80093c4:	18d3      	adds	r3, r2, r3
+ 80093c6:	681b      	ldr	r3, [r3, #0]
+ 80093c8:	623b      	str	r3, [r7, #32]
+ 80093ca:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 80093cc:	009a      	lsls	r2, r3, #2
+ 80093ce:	4b5c      	ldr	r3, [pc, #368]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 80093d0:	18d3      	adds	r3, r2, r3
+ 80093d2:	681b      	ldr	r3, [r3, #0]
+ 80093d4:	61fb      	str	r3, [r7, #28]
+ 80093d6:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 80093d8:	009a      	lsls	r2, r3, #2
+ 80093da:	4b56      	ldr	r3, [pc, #344]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 80093dc:	18d3      	adds	r3, r2, r3
+ 80093de:	681b      	ldr	r3, [r3, #0]
+ 80093e0:	61bb      	str	r3, [r7, #24]
+ 80093e2:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 80093e4:	009a      	lsls	r2, r3, #2
+ 80093e6:	4b54      	ldr	r3, [pc, #336]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 80093e8:	18d3      	adds	r3, r2, r3
+ 80093ea:	681b      	ldr	r3, [r3, #0]
+ 80093ec:	617b      	str	r3, [r7, #20]
+ 80093ee:	6a3b      	ldr	r3, [r7, #32]
+ 80093f0:	0e1b      	lsrs	r3, r3, #24
+ 80093f2:	061a      	lsls	r2, r3, #24
+ 80093f4:	69f9      	ldr	r1, [r7, #28]
+ 80093f6:	23ff      	movs	r3, #255	; 0xff
+ 80093f8:	041b      	lsls	r3, r3, #16
+ 80093fa:	400b      	ands	r3, r1
+ 80093fc:	431a      	orrs	r2, r3
+ 80093fe:	69b9      	ldr	r1, [r7, #24]
+ 8009400:	23ff      	movs	r3, #255	; 0xff
+ 8009402:	021b      	lsls	r3, r3, #8
+ 8009404:	400b      	ands	r3, r1
+ 8009406:	405a      	eors	r2, r3
+ 8009408:	697b      	ldr	r3, [r7, #20]
+ 800940a:	21ff      	movs	r1, #255	; 0xff
+ 800940c:	400b      	ands	r3, r1
+ 800940e:	405a      	eors	r2, r3
+ 8009410:	68fb      	ldr	r3, [r7, #12]
+ 8009412:	3304      	adds	r3, #4
+ 8009414:	681b      	ldr	r3, [r3, #0]
+ 8009416:	4053      	eors	r3, r2
+ 8009418:	653b      	str	r3, [r7, #80]	; 0x50
+ 800941a:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+ 800941c:	0e1b      	lsrs	r3, r3, #24
+ 800941e:	b2db      	uxtb	r3, r3
+ 8009420:	633b      	str	r3, [r7, #48]	; 0x30
+ 8009422:	6bbb      	ldr	r3, [r7, #56]	; 0x38
+ 8009424:	0c1b      	lsrs	r3, r3, #16
+ 8009426:	b2db      	uxtb	r3, r3
+ 8009428:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 800942a:	6c7b      	ldr	r3, [r7, #68]	; 0x44
+ 800942c:	0a1b      	lsrs	r3, r3, #8
+ 800942e:	b2db      	uxtb	r3, r3
+ 8009430:	62bb      	str	r3, [r7, #40]	; 0x28
+ 8009432:	6c3b      	ldr	r3, [r7, #64]	; 0x40
+ 8009434:	b2db      	uxtb	r3, r3
+ 8009436:	627b      	str	r3, [r7, #36]	; 0x24
+ 8009438:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 800943a:	009a      	lsls	r2, r3, #2
+ 800943c:	4b3f      	ldr	r3, [pc, #252]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 800943e:	18d3      	adds	r3, r2, r3
+ 8009440:	681b      	ldr	r3, [r3, #0]
+ 8009442:	623b      	str	r3, [r7, #32]
+ 8009444:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 8009446:	009a      	lsls	r2, r3, #2
+ 8009448:	4b3d      	ldr	r3, [pc, #244]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 800944a:	18d3      	adds	r3, r2, r3
+ 800944c:	681b      	ldr	r3, [r3, #0]
+ 800944e:	61fb      	str	r3, [r7, #28]
+ 8009450:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 8009452:	009a      	lsls	r2, r3, #2
+ 8009454:	4b37      	ldr	r3, [pc, #220]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 8009456:	18d3      	adds	r3, r2, r3
+ 8009458:	681b      	ldr	r3, [r3, #0]
+ 800945a:	61bb      	str	r3, [r7, #24]
+ 800945c:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 800945e:	009a      	lsls	r2, r3, #2
+ 8009460:	4b35      	ldr	r3, [pc, #212]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 8009462:	18d3      	adds	r3, r2, r3
+ 8009464:	681b      	ldr	r3, [r3, #0]
+ 8009466:	617b      	str	r3, [r7, #20]
+ 8009468:	6a3b      	ldr	r3, [r7, #32]
+ 800946a:	0e1b      	lsrs	r3, r3, #24
+ 800946c:	061a      	lsls	r2, r3, #24
+ 800946e:	69f9      	ldr	r1, [r7, #28]
+ 8009470:	23ff      	movs	r3, #255	; 0xff
+ 8009472:	041b      	lsls	r3, r3, #16
+ 8009474:	400b      	ands	r3, r1
+ 8009476:	431a      	orrs	r2, r3
+ 8009478:	69b9      	ldr	r1, [r7, #24]
+ 800947a:	23ff      	movs	r3, #255	; 0xff
+ 800947c:	021b      	lsls	r3, r3, #8
+ 800947e:	400b      	ands	r3, r1
+ 8009480:	405a      	eors	r2, r3
+ 8009482:	697b      	ldr	r3, [r7, #20]
+ 8009484:	21ff      	movs	r1, #255	; 0xff
+ 8009486:	400b      	ands	r3, r1
+ 8009488:	405a      	eors	r2, r3
+ 800948a:	68fb      	ldr	r3, [r7, #12]
+ 800948c:	3308      	adds	r3, #8
+ 800948e:	681b      	ldr	r3, [r3, #0]
+ 8009490:	4053      	eors	r3, r2
+ 8009492:	64fb      	str	r3, [r7, #76]	; 0x4c
+ 8009494:	6bbb      	ldr	r3, [r7, #56]	; 0x38
+ 8009496:	0e1b      	lsrs	r3, r3, #24
+ 8009498:	b2db      	uxtb	r3, r3
+ 800949a:	633b      	str	r3, [r7, #48]	; 0x30
+ 800949c:	6c7b      	ldr	r3, [r7, #68]	; 0x44
+ 800949e:	0c1b      	lsrs	r3, r3, #16
+ 80094a0:	b2db      	uxtb	r3, r3
+ 80094a2:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 80094a4:	6c3b      	ldr	r3, [r7, #64]	; 0x40
+ 80094a6:	0a1b      	lsrs	r3, r3, #8
+ 80094a8:	b2db      	uxtb	r3, r3
+ 80094aa:	62bb      	str	r3, [r7, #40]	; 0x28
+ 80094ac:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+ 80094ae:	b2db      	uxtb	r3, r3
+ 80094b0:	627b      	str	r3, [r7, #36]	; 0x24
+ 80094b2:	6b3b      	ldr	r3, [r7, #48]	; 0x30
+ 80094b4:	009a      	lsls	r2, r3, #2
+ 80094b6:	4b21      	ldr	r3, [pc, #132]	; (800953c <wc_AesEncryptSimplified+0x430>)
+ 80094b8:	18d3      	adds	r3, r2, r3
+ 80094ba:	681b      	ldr	r3, [r3, #0]
+ 80094bc:	623b      	str	r3, [r7, #32]
+ 80094be:	6afb      	ldr	r3, [r7, #44]	; 0x2c
+ 80094c0:	009a      	lsls	r2, r3, #2
+ 80094c2:	4b1f      	ldr	r3, [pc, #124]	; (8009540 <wc_AesEncryptSimplified+0x434>)
+ 80094c4:	18d3      	adds	r3, r2, r3
+ 80094c6:	681b      	ldr	r3, [r3, #0]
+ 80094c8:	61fb      	str	r3, [r7, #28]
+ 80094ca:	6abb      	ldr	r3, [r7, #40]	; 0x28
+ 80094cc:	009a      	lsls	r2, r3, #2
+ 80094ce:	4b19      	ldr	r3, [pc, #100]	; (8009534 <wc_AesEncryptSimplified+0x428>)
+ 80094d0:	18d3      	adds	r3, r2, r3
+ 80094d2:	681b      	ldr	r3, [r3, #0]
+ 80094d4:	61bb      	str	r3, [r7, #24]
+ 80094d6:	6a7b      	ldr	r3, [r7, #36]	; 0x24
+ 80094d8:	009a      	lsls	r2, r3, #2
+ 80094da:	4b17      	ldr	r3, [pc, #92]	; (8009538 <wc_AesEncryptSimplified+0x42c>)
+ 80094dc:	18d3      	adds	r3, r2, r3
+ 80094de:	681b      	ldr	r3, [r3, #0]
+ 80094e0:	617b      	str	r3, [r7, #20]
+ 80094e2:	6a3b      	ldr	r3, [r7, #32]
+ 80094e4:	0e1b      	lsrs	r3, r3, #24
+ 80094e6:	061a      	lsls	r2, r3, #24
+ 80094e8:	69f9      	ldr	r1, [r7, #28]
+ 80094ea:	23ff      	movs	r3, #255	; 0xff
+ 80094ec:	041b      	lsls	r3, r3, #16
+ 80094ee:	400b      	ands	r3, r1
+ 80094f0:	431a      	orrs	r2, r3
+ 80094f2:	69b9      	ldr	r1, [r7, #24]
+ 80094f4:	23ff      	movs	r3, #255	; 0xff
+ 80094f6:	021b      	lsls	r3, r3, #8
+ 80094f8:	400b      	ands	r3, r1
+ 80094fa:	405a      	eors	r2, r3
+ 80094fc:	697b      	ldr	r3, [r7, #20]
+ 80094fe:	21ff      	movs	r1, #255	; 0xff
+ 8009500:	400b      	ands	r3, r1
+ 8009502:	405a      	eors	r2, r3
+ 8009504:	68fb      	ldr	r3, [r7, #12]
+ 8009506:	330c      	adds	r3, #12
+ 8009508:	681b      	ldr	r3, [r3, #0]
+ 800950a:	4053      	eors	r3, r2
+ 800950c:	64bb      	str	r3, [r7, #72]	; 0x48
+ 800950e:	683b      	ldr	r3, [r7, #0]
+ 8009510:	6d7a      	ldr	r2, [r7, #84]	; 0x54
+ 8009512:	601a      	str	r2, [r3, #0]
+ 8009514:	683b      	ldr	r3, [r7, #0]
+ 8009516:	3304      	adds	r3, #4
+ 8009518:	6d3a      	ldr	r2, [r7, #80]	; 0x50
+ 800951a:	601a      	str	r2, [r3, #0]
+ 800951c:	683b      	ldr	r3, [r7, #0]
+ 800951e:	3308      	adds	r3, #8
+ 8009520:	6cfa      	ldr	r2, [r7, #76]	; 0x4c
+ 8009522:	601a      	str	r2, [r3, #0]
+ 8009524:	683b      	ldr	r3, [r7, #0]
+ 8009526:	330c      	adds	r3, #12
+ 8009528:	6cba      	ldr	r2, [r7, #72]	; 0x48
+ 800952a:	601a      	str	r2, [r3, #0]
+ 800952c:	46c0      	nop			; (mov r8, r8)
+ 800952e:	46bd      	mov	sp, r7
+ 8009530:	b016      	add	sp, #88	; 0x58
+ 8009532:	bd80      	pop	{r7, pc}
+ 8009534:	20000010 	.word	0x20000010
+ 8009538:	20000410 	.word	0x20000410
+ 800953c:	20000810 	.word	0x20000810
+ 8009540:	20000c10 	.word	0x20000c10
+
+08009544 <my_aes>:
+ 8009544:	b580      	push	{r7, lr}
+ 8009546:	af00      	add	r7, sp, #0
+ 8009548:	4b04      	ldr	r3, [pc, #16]	; (800955c <my_aes+0x18>)
+ 800954a:	4a05      	ldr	r2, [pc, #20]	; (8009560 <my_aes+0x1c>)
+ 800954c:	4805      	ldr	r0, [pc, #20]	; (8009564 <my_aes+0x20>)
+ 800954e:	210a      	movs	r1, #10
+ 8009550:	f7ff fddc 	bl	800910c <wc_AesEncryptSimplified>
+ 8009554:	46c0      	nop			; (mov r8, r8)
+ 8009556:	46bd      	mov	sp, r7
+ 8009558:	bd80      	pop	{r7, pc}
+ 800955a:	46c0      	nop			; (mov r8, r8)
+ 800955c:	20001358 	.word	0x20001358
+ 8009560:	20001348 	.word	0x20001348
+ 8009564:	20001298 	.word	0x20001298

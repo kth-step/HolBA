@@ -107,7 +107,42 @@ in (* local *)
       aux_moveawayLib.mk_oracle_preserve_tags [thm] "BIRS_SYMB_INST_RENAME_SUBST" thm2_tm
     end;
 
-  val birs_subst1_oracle_speed = ref true;
+  local
+    fun bir_exp_subst1_CONV_plain tm =
+      let
+        fun recurse_conv tm2 =
+          if identical tm tm2 then
+            (* error condition "unchanged" (due to unknown/new exp) *)
+            (print_term tm; raise ERR "bir_exp_subst1_CONV_plain" "diverging")
+          else
+            GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 bir_exp_subst1_CONV_plain tm2;
+
+        val conv =
+          if (bir_expSyntax.is_BExp_Den o rand) tm then
+            (*(fn tmx => (print "\nsubst_den 1\n"; print_term tmx; print "\n\n"; REFL tmx)) THENC*)
+            REWR_CONV (((fn x => List.nth (x, 2)) o CONJUNCTS) bir_exp_substitutionsTheory.bir_exp_subst1_REWRS) THENC
+            (*(fn tmx => (print "\nsubst_den 2\n"; print_term tmx; print "\n\n"; REFL tmx)) THENC*)
+            ITE_CONV bir_var_EQ_CONV
+            (*(fn tmx => (print "\nsubst_den 3\n"; print_term tmx; print "\n\n"; REFL tmx))*)
+          else if (bir_extra_expsSyntax.is_BExp_IntervalPred o rand) tm then
+            REWR_CONV bir_extra_expsTheory.bir_exp_subst1_BExp_IntervalPred_thm THENC
+            (*REWR_CONV (bir_extra_expsTheory.BExp_IntervalPred_def) THENC*)
+            recurse_conv
+          else
+            REWRITE_CONV [Once bir_exp_substitutionsTheory.bir_exp_subst1_REWRS] THENC
+            recurse_conv;
+      in
+        conv tm
+      end
+      handle e => (print "\nERROR in bir_exp_subst1_CONV_plain:\n"; print_term tm; print "\n\n"; raise e);
+  in
+    fun bir_exp_subst1_CONV tm =
+      if not (bir_exp_substitutionsSyntax.is_bir_exp_subst1 tm) then (print_term tm; raise ERR "bir_exp_subst1_CONV" "not a bir_exp_subst1") else
+      bir_exp_subst1_CONV_plain tm;
+    val bir_exp_subst1_CONV = Profile.profile "bir_exp_subst1_CONV" bir_exp_subst1_CONV;
+  end
+
+  val birs_subst1_oracle_speed = ref false;
   fun birs_symb_subst1_CONV tm =
     if !birs_subst1_oracle_speed then
       let
@@ -120,16 +155,22 @@ in (* local *)
       end
     else
       let
-        (* TODO: when fixing this, better implement for multisubst and have subst1 as special case *)
-        val subst1_conv = EVAL THENC REWRITE_CONV [GSYM bir_extra_expsTheory.BExp_IntervalPred_def]; (* TODO big TODO, also: reverting BExp_IntervalPred_def only needed for pcond *)
         val env_subst1_conv =
           REWR_CONV birs_auxTheory.birs_symb_env_subst1_gen_env_thm THENC
-          RAND_CONV (listLib.MAP_CONV EVAL); (* TODO: ? *)
+          RAND_CONV (listLib.MAP_CONV (
+            REWR_CONV birs_auxTheory.birs_symb_env_subst1_gen_env_EL_thm THENC
+            (RAND_CONV ((*(fn tm => (print "\n\n"; print_term tm; print "\n\n"; raise ERR "stop here" ""; REFL tm)) THENC*) bir_exp_subst1_CONV))
+          ));
 
         val conv =
           REWR_CONV bir_symb_soundTheory.birs_symb_subst1_REWR_thm THENC
-          GEN_match_conv birsSyntax.is_birs_symb_env_subst1 env_subst1_conv THENC
-          GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 subst1_conv;
+          (*(fn tm => (print "\n\n"; print_term tm; print "\n\n"; raise ERR "stop here" ""; REFL tm)) THENC*)
+          (* pcond first *)
+          GEN_match_conv bir_exp_substitutionsSyntax.is_bir_exp_subst1 (
+            bir_exp_subst1_CONV
+          ) THENC
+          (* then env *)
+          GEN_match_conv birsSyntax.is_birs_symb_env_subst1 env_subst1_conv;
         val thm = conv tm;
       in
         thm
@@ -140,7 +181,7 @@ in (* local *)
     LAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def) THENC
     RAND_CONV (REWR_CONV bir_envTheory.bir_var_type_def) THENC
     REWR_CONV boolTheory.REFL_CLAUSE (*aux_setLib.bir_type_EQ_CONV*);
-  val rule_RENAME_oracle_speed = ref true; (* TODO: oracle switch unused, remove later *)
+  val rule_RENAME_oracle_speed = ref false; (* TODO: oracle switch unused, remove later *)
   fun birs_sound_symb_rename_RULE symb_symb_map thm =
     (*if !rule_RENAME_oracle_speed then
       birs_sound_symb_basic_subst_oracle (List.map (fn (bv_symb,bv_symb') => (bv_symb, bslSyntax.bden bv_symb')) symb_symb_map) thm
@@ -209,6 +250,7 @@ in (* local *)
             fun symb_assump_conv errstr conv =
               NEG_CONV (
                 RAND_CONV (conv) THENC
+                (*(fn tm => (print_term tm; REFL tm)) THENC*)
                 pred_setLib.IN_CONV bir_var_EQ_CONV
               ) THENC (
                 fn tm =>
@@ -228,7 +270,10 @@ in (* local *)
             val thm2 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs1" birs_symb_symbols_DIRECT_CONV)) thm1) TRUTH
               handle e => (print "\n\nrule_RENAME_FREE thm2 failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
             (*val _ = print_thm thm2;*)
-            val thm3 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs2" birs_symb_symbols_DIRECT_CONV)) thm2) TRUTH
+            val thm2b = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs2" birs_symb_symbols_DIRECT_CONV)) thm2) TRUTH
+              handle e => (print "\n\nrule_RENAME_FREE thm2b failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
+            (*val _ = print_thm thm2b;*)
+            val thm3 = MP (CONV_RULE (LAND_CONV (symb_assump_conv "birs3" birs_symb_symbols_DIRECT_CONV)) thm2b) TRUTH
               handle e => (print "\n\nrule_RENAME_FREE thm3 failed:\n"; print_thm thm1; print "\n\n\n"; raise e);
             (*val _ = print_thm thm3;*)
             val thm4 =
@@ -244,7 +289,7 @@ in (* local *)
       end;
   val birs_sound_symb_rename_free_RULE = fn x => Profile.profile "1_birs_sound_symb_rename_free_RULE" (birs_sound_symb_rename_free_RULE x);
 
-  val rule_INST_oracle_speed = ref true;
+  val rule_INST_oracle_speed = ref false;
   fun birs_sound_symb_inst_RULE symb_exp_map thm =
     (* TODO: remove option here to avoid missing checks *)
     if !rule_INST_oracle_speed then
@@ -344,7 +389,8 @@ in (* local *)
          (only keep the conjunct corresponding to the original path condition symbol
             NOTE: to be sound and possible, this conjunct must be stronger than what was there already) *)
         (* take first Pi state of A, env and pcond *)
-      val B_thm_inst_sys = birs_sys_pcond_RULE A_pcond B_thm_inst;
+      val B_thm_inst_sys = birs_sys_pcond_RULE A_pcond B_thm_inst
+        handle _ => raise ERR "birs_sound_inst_RULE" "instantiation failed due to pcond in sys of B_thm not covering all of pcond in state";
 
       (* TODO: can only handle one Pi state, for now *)
       val _ = if len_of_thm_Pi B_thm_inst_sys = 1 then () else
