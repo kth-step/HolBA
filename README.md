@@ -307,21 +307,19 @@ is not available, the `logs/armcm0/aiT` directory contains our collected
 outputs. They are the same for the same binary even if the tool runs
 multiple times.
 
-Regarding the sentence with "two subsequent calls to motor_set o3" in
-Section 7.2, the counterexample is already shown with function itself.
-The argument is that aiT counts 2-3 more cycles due to their processor model,
-which assumes an empty pipeline at start. Our counting instead is like the
-one given in the ARM Cortex-M0 reference manual, which means that aiT WCET
-values are at least two cycles higher than ours (both testing and HolBA-SE
-upper execution time bounds). By this argument, aiT WCET values that are
-strictly smaller than the highest measured value plus 2 constitute counterexamples
-to WCET soundness. For the motor_set o3 example we also include a symbolic
-execution without overapproximation (the corresponding theorem includes AIO
-in the name and is produced in the same log file) and this confirms the highest
-observed execution time during testing (i.e., 91 cycles) is indeed the lowest
-upper execution time bound. The same argument about counterexamples applies to
-the WCET value of aiT for the aes example, for which all values in the table
-are identical.
+The two counterexamples "aes" and "motor_set o3" under the different cycle
+counting of aiT in Section 7.2 can be understood as follows. The argument is
+that aiT counts 2-3 more cycles due to their processor model, which assumes an
+empty pipeline at start. Instead, our counting works like the one given in the
+ARM Cortex-M0 reference manual. Together, this implies that aiT WCET values are
+at least two cycles higher than WCET values with our counting. By this argument,
+aiT WCET values that are strictly smaller than the highest measured value plus
+two constitute counterexamples to WCET soundness. In this way couterexamples can
+be simply checked by comparing the testing and aiT column plus two. For
+"motor_set o3", we also include a symbolic execution without overapproximation
+(the corresponding theorem includes "AIO" in the name and is produced in the same
+log file) and this confirms the highest observed execution time during testing
+(i.e., 91 cycles) is indeed the lowest upper execution time bound.
 
 #### Data from testing on hardware
 
