@@ -1,14 +1,15 @@
 # HolBA-SE
 
-This README describes the artifact for VMCAI 2026 paper 19, which
-has the title "Forward Symbolic Execution for Trustworthy Automation
+This README describes the artifact for the VMCAI 2026 paper 
+"Forward Symbolic Execution for Trustworthy Automation
 of Binary Code Verification". We refer to the artifact as HolBA-SE.
 
 ## Artifact overview
 
-HolBA-SE is an extension of the HolBA library for binary analysis.
-In turn, HolBA depends on the HOL4 theorem prover, implemented in
-Standard ML (SML). HolBA-SE relies specifically on the Poly/ML compiler.
+HolBA-SE is an extension of the HolBA library for binary analysis
+(https://github.com/kth-step/holba). In turn, HolBA depends on the
+HOL4 theorem prover, implemented in Standard ML (SML). HolBA-SE
+relies specifically on the Poly/ML compiler.
 
 HolBA-SE directories are as follows:
 
@@ -16,8 +17,10 @@ HolBA-SE directories are as follows:
 - `src`: SML sources for HolBA-SE library
 - `examples/riscv`: SML sources for RISC-V application
 - `examples/arm_cm0`: SML sources for ARM Cortex-M0 application
-- `src_exectime`: sources for the ARM Cortex-M0 benchmark binary, the hardware testing harness, and the AbsInt aiT project files
-- `logs`: contains the various logs for our verification applications, and also from hardware testing and AbsInt aiT runs
+- `src_exectime`: sources for the ARM Cortex-M0 benchmark binary,
+   the hardware testing harness, and the AbsInt aiT project files
+- `logs`: contains the various logs for our verification applications,
+   and also from hardware testing and AbsInt aiT runs
 
 Notable subdirectories:
 
@@ -26,9 +29,9 @@ Notable subdirectories:
 - `examples/riscv/chacha20`: ChaCha20 cipher case study
 - `examples/riscv/kernel-trap`: RISC-V kernel case study
 
-We estimate the artifact takes 1-2 hours to build and replicate
+We estimate the artifact takes around two hours to build and replicate
 on a modern machine. We tested on an Intel Core i5-9600K with 32GB RAM.
-Low RAM such as 8GB is unlikely to work.
+Less RAM than 32GB is unlikely to work, due to some demanding case studies.
 
 ## Getting Started Guide
 
@@ -41,13 +44,14 @@ and enter an environment for replicating results:
 $ docker build -t holbase .
 $ docker run -it --rm holbase
 
-This takes 20-25 minutes on a modern machine and builds an x86 environment.
-The second docker command enters the shell where step-by-step instructions
+This requires an x86 environment and takes 20-25 minutes on a modern machine.
+The second docker command enters the shell where the step-by-step instructions
 below can be run.
 
-### Alternative 2: manual building
+### Alternative 2: manual installation of dependencies
 
-HolBA-SE can be replicated outside Docker by manually installing the following dependencies:
+HolBA-SE can be replicated outside Docker by manually installing
+the following dependencies:
 
 - Poly/ML, version 5.7.1 or later (https://github.com/polyml/polyml/releases)
 - HOL4, tag trindemossen-1 (https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-1)
@@ -84,15 +88,15 @@ $ hol --holstate src/holba-heap
 
 This will give a prompt starting with ">" that can be exited with Ctrl+d.
 
-Using the prompt, Definition 1 (p. 6) can be inspected using:
+Using the prompt, Definition 1 can be inspected using:
 
 > symb_recordTheory.symb_matchstate_def;
 
-Theorem 1 (p. 7):
+Theorem 1:
 
 > bir_symb_soundTheory.birs_symb_step_sound_thm;
 
-Definition 2 (p. 7):
+Definition 2:
 
 > symb_recordTheory.symb_minimal_interpretation_def;
 
@@ -108,7 +112,7 @@ Theorem 2:
 
 > symb_prop_transferTheory.symb_prop_transfer_thm;
 
-Figure 3 (p. 9):
+Figure 3:
 
 (symbstep)
 
@@ -134,7 +138,7 @@ Figure 3 (p. 9):
 
 > symb_rulesTheory.symb_rule_INST_thm;
 
-Figure 4 (p. 10):
+Figure 4:
 
 (simplify)
 
@@ -152,7 +156,7 @@ Figure 4 (p. 10):
 
 > symb_rulesTheory.symb_rule_SEQ_thm;
 
-### 2. Evaluation of symbolic execution (Table 1, p. 14)
+### 2. Evaluation of symbolic execution (Table 1)
 
 Starting from the root directory, run:
 
@@ -199,9 +203,9 @@ Key files that are checked:
 
 ### 4. Cortex-M0 execution time verification case studies (Section 7)
 
-Checking the execution time evaluations in Section consists of two parts.
+Checking the execution time evaluations in Section 7 consists of two parts.
 
-#### Reproducing verificaion results
+#### Reproducing verification results
 
 To check the verification results using HolBA-SE, start from the root directory and run:
 
@@ -223,18 +227,86 @@ Key files that are checked:
 - examples/arm_cm0/balrob/v2-faster/...Script.sml - a set of subfunctions for pid example
 - examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml - pid example
 
-The outputs of the verification tool reside in the various .hollogs directories and are automatically copied into the logs/armcm0/holba-se directory with simpler names. These files contain the evaluation times, the validated execution times, and manually exctracted execution times for return instructions.
+The outputs of the verification tool reside in the various .hollogs
+directories and are automatically copied into the logs/armcm0/holba-se
+directory with simpler names. These files contain the evaluation times,
+the validated execution times, and manually exctracted execution times
+for return instructions.
 
-For easier search of the result values, the logs/armcm0/holba-se directory is preloaded with logs from one of our runs, where irrelevant information has been removed.
+For easier search of the result values, the logs/armcm0/holba-se directory
+is preloaded with logs from one of our runs, where irrelevant information
+has been removed.
 
-Note that the validated execution times have to be added together with the return times as they are not accounted for as symbolic execution stops before executing the return instructions. This is done so that the values in the table are as comparable as possible (testing and holba-se use the same counting, while aiT starts from an empty pipeline and also includes return instructions).
+Note that the validated execution times have to be added together with the
+return times as they are not accounted for as symbolic execution stops
+before executing the return instructions. This is done so that the values
+in the table are as comparable as possible (testing and holba-se use the
+same counting, while aiT starts from an empty pipeline and also includes
+return instructions).
 
-For evaluation times, some subfunctions of the pid example run in parallel, while other subfunctions or subfragments run in sequence. This has to be taken into account when determining the overall times for symbolic execution.
+For example, after a successful run, the file logs/armcm0/holba-se/aes
+will contain the following:
 
-#### Data from testing on hardware and AbsInt aiT tool
+```
+!!! RESULT !!!
+[oracles: BIRS_CONST_LOAD, BIRS_CONTR_Z3, BIRS_IMP_Z3,
+ BIRS_PCOND_SAT_Z3, BIRS_SIMP_Z3, DISK_THM]
+[axioms: ]
 
-Reproducing the "aiT" column of Table 2 requires a proprietary tool and an appropriate license. The aiT project files for this reside in src_exectime/aiT. In case this is not available, the logs/armcm0/aiT directory contains our collected outputs. They are the same for the same binary even if the tool runs multiple times.
+BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
+  (BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 3755w)),
+   BExp_BinExp BIExp_Plus (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 3755w)))
+cycles for returning from this function at 0x8009558w (pop {r7, pc}) are: 6
+```
 
-Regarding the sentence with "two subsequent calls to motor_set o3" in Section 7.2, the counterexample is already shown with function itself. The argument is that aiT counts 2-3 more cycles due to their processor model, which assumes an empty pipeline at start. Our counting instead is like the one given in the ARM Cortex-M0 reference manual, which means that aiT WCET values are at least two cycles higher than ours (both testing and HolBA-SE upper execution time bounds). By this argument, aiT WCET values that are strictly smaller than the highest measured value plus 2 constitute counterexamples to WCET soundness. For the motor_set o3 example we also include a symbolic execution without overapproximation (the corresponding theorem includes AIO in the name and is produced in the same log file) and this confirms the highest observed execution time during testing (i.e., 91 cycles) is indeed the lowest upper execution time bound. The same argument about counterexamples applies to the WCET value of aiT for the aes example, for which all values in the table are identical.
+If we add 6 cycles to 3755, we get the best and worst cycle count of 3761,
+which is the constant time for aes presented in Table 2. Also, at the end
+of logs/armcm0/holba-se/aes, there is the HOL4 evaluation time, which will
+be similar to the following:
 
-Reproducing the "testing" column of Table 2 requires a specialized hardware setup, which is described in the EmbExp-Box repository (https://github.com/kth-step/embexp-box), which is also required for data collection. Given those in place, log collection is executed by the testing harness in src_exectime/testing, which is executed with the script run_all_testing.sh. We collected and included three sets of hardware testing logs in logs/armcm0/testing.
+``` 
+Exporting theory "aes_o0_whole" ... done.
+Theory "aes_o0_whole" took 8m32s to build
+```
+
+However, the exact evaluation time will vary. For example, some subfunctions
+of the pid example run in parallel, while other subfunctions or subfragments
+run in sequence. This has to be taken into account when determining the overall
+times for symbolic execution.
+
+#### Data from AbsInt aiT tool
+
+Reproducing the "aiT" column of Table 2 requires the proprietary aiT
+tool (https://www.absint.com/ait/index.htm) and an appropriate license.
+The aiT project files for this reside in src_exectime/aiT. In case this
+is not available, the logs/armcm0/aiT directory contains our collected
+outputs. They are the same for the same binary even if the tool runs
+multiple times.
+
+Regarding the sentence with "two subsequent calls to motor_set o3" in
+Section 7.2, the counterexample is already shown with function itself.
+The argument is that aiT counts 2-3 more cycles due to their processor model,
+which assumes an empty pipeline at start. Our counting instead is like the
+one given in the ARM Cortex-M0 reference manual, which means that aiT WCET
+values are at least two cycles higher than ours (both testing and HolBA-SE
+upper execution time bounds). By this argument, aiT WCET values that are
+strictly smaller than the highest measured value plus 2 constitute counterexamples
+to WCET soundness. For the motor_set o3 example we also include a symbolic
+execution without overapproximation (the corresponding theorem includes AIO
+in the name and is produced in the same log file) and this confirms the highest
+observed execution time during testing (i.e., 91 cycles) is indeed the lowest
+upper execution time bound. The same argument about counterexamples applies to
+the WCET value of aiT for the aes example, for which all values in the table
+are identical.
+
+#### Data from testing on hardware
+
+Reproducing the "testing" column of Table 2 requires a specialized
+hardware setup, which is described in the EmbExp-Box repository
+(https://github.com/kth-step/embexp-box), which is also required
+for data collection. Given those in place, log collection is executed
+by the testing harness in src_exectime/testing, which is executed with
+the script run_all_testing.sh. We collected and included three sets
+of hardware testing logs in logs/armcm0/testing.
