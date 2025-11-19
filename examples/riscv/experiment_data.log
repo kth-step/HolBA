@@ -1,0 +1,69 @@
+aes/aes/0:
+  lifting time = 69.557 s
+  symbexec time = 6.835s
+kernel-trap/kernel_trap/0:
+  lifting time = 42.413 s
+  symbexec time = 6.756s
+kernel-trap/kernel_trap/1:
+  symbexec time = 2.454s
+kernel-trap/kernel_trap_entry_s/0:
+  symbtransf time = 375.693s
+kernel-trap/kernel_trap_return_s/0:
+  symbtransf time = 14.187s
+swap/swap/0:
+  lifting time = 3.071 s
+  symbexec time = 0.193s
+swap/swap_s/0:
+  symbtransf time = 3.911s
+chacha20/chacha20/0:
+  lifting time = 258.734 s
+chacha20/chacha20_keysetup/0:
+  symbexec time = 2.827s
+chacha20/chacha20_diagonal_round/0:
+  symbexec time = 27.602s
+chacha20/chacha20_quarter_round/0:
+  symbexec time = 0.245s
+chacha20/chacha20_quarter_round/1:
+  symbexec time = 0.159s
+chacha20/chacha20_quarter_round/2:
+  symbexec time = 0.953s
+chacha20/chacha20_ivsetup/0:
+  symbexec time = 15.627s
+chacha20/chacha20_column_round/0:
+  symbexec time = 18.676s
+chacha20/chacha20_column_round_s/0:
+  symbtransf time = 81.167s
+chacha20/chacha20_quarter_round_s/0:
+  symbtransf time = 3.068s
+chacha20/chacha20_quarter_round_s/1:
+  symbtransf time = 2.926s
+chacha20/chacha20_quarter_round_s/2:
+  symbtransf time = 25.382s
+chacha20/chacha20_diagonal_round_s/0:
+  symbtransf time = 106.258s
+isqrt/isqrt/0:
+  lifting time = 6.284 s
+  symbexec time = 0.054s
+isqrt/isqrt/1:
+  symbexec time = 0.045s
+isqrt/isqrt/2:
+  symbexec time = 0.025s
+isqrt/isqrt_s/0:
+  symbtransf time = 0.533s
+isqrt/isqrt_s/1:
+  symbtransf time = 0.587s
+aes-unopt/aes_unopt/0:
+  lifting time = 42.183 s
+  symbexec time = 71.379s
+mod2/mod2/0:
+  symbexec time = 0.035s
+mod2/mod2_s/0:
+  symbtransf time = 0.417s
+incr/incr/0:
+  lifting time = 1.402 s
+  symbexec time = 0.035s
+incr/incr_s/0:
+  symbtransf time = 0.309s
+motor/motor/0:
+  lifting time = 24.410 s
+  symbexec time = 3.938s
