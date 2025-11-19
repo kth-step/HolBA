@@ -16,7 +16,7 @@ parser.add_argument("-f", "--full",           help="include long-running example
 args = parser.parse_args()
 
 def get_example_dirs():
-	excluded_dirs = ["chacha20","kernel-trap"] if not args.full else []
+	excluded_dirs = (["chacha20","kernel-trap"] if not args.full else []) + ["incr-mem", "mod2-mem", "modexp", "symbexectests"]
 	filterfun = lambda x: not x.startswith(".")
 	path = os.getcwd()
 	example_dirs = [f.path for f in os.scandir(path) if f.is_dir() and f.name not in excluded_dirs and filterfun(f.name)]
@@ -37,10 +37,31 @@ def holmake_dir(path):
 	result = subprocess.run(["Holmake"], shell=True, cwd=path, check=True)
 
 def find_symbexec_logs(path):
-	logfile_paths = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and f.name.endswith("_symb_execTheory")]
-	return logfile_paths
+	valid_exampls = list(map(lambda x: x.split("/")[-1].replace("-", "_"), get_example_dirs()))
+	logfile_paths_lifting = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and any(f.name == exampl + "Theory" for exampl in valid_exampls)]
+	logfile_paths_symbexec = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and f.name.endswith("_symb_execTheory")]
+	return (logfile_paths_lifting, logfile_paths_symbexec)
 
-def clean_output(data):
+def clean_output_lifting(data):
+	startstr = "time to lift individual instructions only -"
+	endstr = "Total time : "
+	lifting_runs = []
+	while True:
+		startidx = data.find(startstr)
+		if startidx < 0:
+			break
+		endidx1 = data[startidx:].find(endstr)
+		if endidx1 < 0:
+			raise Exception("should find this, something in the output is wrong")
+		endidx2 = data[startidx+endidx1+len(endstr):].find("\n")
+		if endidx2 < 0:
+			raise Exception("should find a newline here, something in the output is wrong")
+		endidx = startidx+endidx1+len(endstr)+endidx2
+		lifting_runs.append(data[startidx:endidx])
+		data = data[endidx:]
+	return lifting_runs
+
+def clean_output_symbexec(data):
 	startstr = "======\n > bir_symb_analysis_thm started\n"
 	endstr = "======\n > bir_symb_analysis_thm took "
 	symbexec_runs = []
@@ -59,35 +80,64 @@ def clean_output(data):
 		data = data[endidx:]
 	return symbexec_runs
 
-def parse_output(data):
+def parse_output_lifting(data):
+	#print(data)
+	data = data.split("\n")[-1:]
+	#print(data)
+	#exec_parts_time = data[1][19:]
+	exec_all_time = data[0][len("Total time : "):]#-len(" s -\x1b[0;32m OK")
+	exec_all_time = exec_all_time[:exec_all_time.find(" s -")]
+	#print(exec_all_time)
+	return f"lifting time = {exec_all_time} s"
+
+def parse_output_symbexec(data):
 	data = data.split("\n")[-5:]
 	#exec_parts_time = data[1][19:]
 	exec_all_time = data[4][30:]
-	return f"{exec_all_time}"
+	return f"symbexec time = {exec_all_time}"
 
 def collect_outputs(path):
-	log_paths = find_symbexec_logs(path)
-	for log_path in log_paths:
+	(logfile_paths_lifting, logfile_paths_symbexec) = find_symbexec_logs(path)
+	for log_path in logfile_paths_symbexec:
 		backup_file(log_path)
 	#print(log_paths)
-	outputs = []
-	for log_path in log_paths:
+	outputs = {}
+	def addoutput(k, o):
+		if not k in outputs.keys():
+			outputs[k] = []
+		outputs[k].append(o)
+	for log_path in logfile_paths_lifting:
+		print(f"Reading log '{log_path}'")
+		with open(log_path,"r") as file:
+			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("Theory"))]
+			data = file.read()
+			i = 0
+			for lifting_run in clean_output_lifting(data):
+				out = parse_output_lifting(lifting_run)
+				addoutput(logname + "/" + str(i), out)
+				i += 1
+	for log_path in logfile_paths_symbexec:
 		print(f"Reading log '{log_path}'")
 		with open(log_path,"r") as file:
 			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("_symb_execTheory"))]
 			data = file.read()
 			i = 0
-			for symbexec_run in clean_output(data):
-				out = parse_output(symbexec_run)
-				outputs.append((logname + "/" + str(i), out))
+			for symbexec_run in clean_output_symbexec(data):
+				out = parse_output_symbexec(symbexec_run)
+				addoutput(logname + "/" + str(i), out)
 				i += 1
-	return outputs
+	#flatten outputs
+	outputs_flat = []
+	for k in outputs.keys():
+		outputs_flat.append((k, outputs[k]))
+	return outputs_flat
 
 def present_output(output):
-	(logname, out) = output
+	(logname, outs) = output
 	result = ""
 	result += f"{logname}:\n"
-	result += f"  {out}\n"
+	for o in outs:
+		result += f"  {o}\n"
 	return result
 
 example_data = """
@@ -226,7 +276,7 @@ Theory "isqrt_symb_exec" took 1.4s to build
 """
 if args.testing:
 	#print("\n..................\n".join(clean_output(example_data)))
-	output = ("testdata", parse_output(clean_output(example_data)[0]))
+	output = ("testdata", parse_output_symbexec(clean_output_symbexec(example_data)[0]))
 	print(output)
 	present_output(output)
 	sys.exit()
