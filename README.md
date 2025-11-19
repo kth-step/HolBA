@@ -233,7 +233,7 @@ Checking the execution time evaluations in Section 7 consists of two parts.
 To check the verification results using HolBA-SE, start from the root directory and run:
 ```shell
 $ ./src_exectime/holba-se_run_all.sh
-``
+```
 
 This takes about an hour on a modern machine.
 
@@ -284,7 +284,7 @@ BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
 cycles for returning from this function at 0x8009558w (pop {r7, pc}) are: 6
 ```
 
-If we add 6 cycles to 3755, we get 3761 as the best and worst cycle count,
+Adding 6 cycles to 3755, we get 3761 as the best and worst cycle count,
 which is the constant time for aes presented in Table 2. Also, at the end
 of `logs/armcm0/holba-se/aes`, there is the HOL4 evaluation time, which will
 be similar to the following:
