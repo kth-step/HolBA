@@ -1,20 +1,48 @@
-aes-unopt/aes_unopt/0:
-  57.707s
-aes/aes/0:
-  7.509s
-incr/incr/0:
-  0.047s
-isqrt/isqrt/0:
-  0.053s
-isqrt/isqrt/1:
-  0.034s
-isqrt/isqrt/2:
-  0.018s
-mod2/mod2/0:
-  0.057s
-modexp/modexp/0:
-  0.173s
-motor/motor/0:
-  4.604s
-swap/swap/0:
-  0.163s
+aes:
+  lifting time (aes, 0) = 69.557 s
+  symbexec time (aes, 0) = 6.835s
+aes-unopt:
+  lifting time (aes_unopt, 0) = 42.183 s
+  symbexec time (aes_unopt, 0) = 71.379s
+chacha20:
+  lifting time (chacha20, 0) = 258.734 s
+  symbexec time (chacha20_keysetup, 0) = 2.827s
+  symbexec time (chacha20_diagonal_round, 0) = 27.602s
+  symbexec time (chacha20_quarter_round, 0) = 0.245s
+  symbexec time (chacha20_quarter_round, 1) = 0.159s
+  symbexec time (chacha20_quarter_round, 2) = 0.953s
+  symbexec time (chacha20_ivsetup, 0) = 15.627s
+  symbexec time (chacha20_column_round, 0) = 18.676s
+  symbtransf time (chacha20_column_round, 0) = 81.167s
+  symbtransf time (chacha20_quarter_round, 0) = 3.068s
+  symbtransf time (chacha20_quarter_round, 1) = 2.926s
+  symbtransf time (chacha20_quarter_round, 2) = 25.382s
+  symbtransf time (chacha20_diagonal_round, 0) = 106.258s
+incr:
+  lifting time (incr, 0) = 1.402 s
+  symbexec time (incr, 0) = 0.035s
+  symbtransf time (incr, 0) = 0.309s
+isqrt:
+  lifting time (isqrt, 0) = 6.284 s
+  symbexec time (isqrt, 0) = 0.054s
+  symbexec time (isqrt, 1) = 0.045s
+  symbexec time (isqrt, 2) = 0.025s
+  symbtransf time (isqrt, 0) = 0.533s
+  symbtransf time (isqrt, 1) = 0.587s
+kernel-trap:
+  lifting time (kernel_trap, 0) = 42.413 s
+  symbexec time (kernel_trap, 0) = 6.756s
+  symbexec time (kernel_trap, 1) = 2.454s
+  symbtransf time (kernel_trap_entry, 0) = 375.693s
+  symbtransf time (kernel_trap_return, 0) = 14.187s
+mod2:
+  lifting time (mod2, 0) = 1.402 s
+  symbexec time (mod2, 0) = 0.086s
+  symbtransf time (mod2, 0) = 0.353s
+motor:
+  lifting time (motor, 0) = 24.410 s
+  symbexec time (motor, 0) = 3.938s
+swap:
+  lifting time (swap, 0) = 3.071 s
+  symbexec time (swap, 0) = 0.193s
+  symbtransf time (swap, 0) = 3.911s
