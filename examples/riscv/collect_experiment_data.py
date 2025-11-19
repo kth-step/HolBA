@@ -108,21 +108,22 @@ def parse_output_lifting(data):
 	exec_all_time = data[0][len("Total time : "):]#-len(" s -\x1b[0;32m OK")
 	exec_all_time = exec_all_time[:exec_all_time.find(" s -")]
 	#print(exec_all_time)
-	return f"lifting time = {exec_all_time} s"
+	return f"{exec_all_time} s"
 
 def parse_output_symbexec(data):
 	data = data.split("\n")[-5:]
 	#exec_parts_time = data[1][19:]
 	exec_all_time = data[4][30:]
-	return f"symbexec time = {exec_all_time}"
+	return f"{exec_all_time}"
 
 def parse_output_symbtransf(data):
 	data = data.split("\n")[-1:]
 	#exec_parts_time = data[1][19:]
 	exec_all_time = data[0][len(" > bir_symb_transfer took "):]
-	return f"symbtransf time = {exec_all_time}"
+	return f"{exec_all_time}"
 
 def collect_outputs(path):
+	example_name = path.split("/")[-1]
 	(logfile_paths_lifting, logfile_paths_symbexec, logfile_paths_symbtransf) = find_symbexec_logs(path)
 	for log_path in logfile_paths_symbexec:
 		backup_file(log_path)
@@ -135,32 +136,32 @@ def collect_outputs(path):
 	for log_path in logfile_paths_lifting:
 		print(f"Reading log '{log_path}'")
 		with open(log_path,"r") as file:
-			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("Theory"))]
+			logname = log_path.split("/")[-1][:-(len("Theory"))]
 			data = file.read()
 			i = 0
 			for lifting_run in clean_output_lifting(data):
 				out = parse_output_lifting(lifting_run)
-				addoutput(logname + "/" + str(i), out)
+				addoutput(example_name, f"lifting time ({logname}, {i}) = {out}")
 				i += 1
 	for log_path in logfile_paths_symbexec:
 		print(f"Reading log '{log_path}'")
 		with open(log_path,"r") as file:
-			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("_symb_execTheory"))]
+			logname = log_path.split("/")[-1][:-(len("_symb_execTheory"))]
 			data = file.read()
 			i = 0
 			for symbexec_run in clean_output_symbexec(data):
 				out = parse_output_symbexec(symbexec_run)
-				addoutput(logname + "/" + str(i), out)
+				addoutput(example_name, f"symbexec time ({logname}, {i}) = {out}")
 				i += 1
 	for log_path in logfile_paths_symbtransf:
 		print(f"Reading log '{log_path}'")
 		with open(log_path,"r") as file:
-			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("_symb_execTheory"))]
+			logname = log_path.split("/")[-1][:-(len("_symb_transfTheory"))]
 			data = file.read()
 			i = 0
 			for symbtransf_run in clean_output_symbtransf(data):
 				out = parse_output_symbtransf(symbtransf_run)
-				addoutput(logname + "/" + str(i), out)
+				addoutput(example_name , f"symbtransf time ({logname}, {i}) = {out}")
 				i += 1
 	#flatten outputs
 	outputs_flat = []
@@ -323,6 +324,7 @@ example_dirs = get_example_dirs()
 #print(example_dirs)
 exceptions_happened = False
 collected_outputs = []
+example_dirs.sort()
 for path in example_dirs:
 	try:
 		print()

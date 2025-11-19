@@ -5,6 +5,9 @@ open birs_auxLib;
 
 val progname = "mod2";
 
+val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
+val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+
 val _ = new_theory progname;
 
 val _ = lift_da_and_store progname (progname ^ ".da") da_riscv ((Arbnum.fromInt 0x10488), (Arbnum.fromInt 0x10498));
