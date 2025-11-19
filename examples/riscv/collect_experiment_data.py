@@ -40,7 +40,8 @@ def find_symbexec_logs(path):
 	valid_exampls = list(map(lambda x: x.split("/")[-1].replace("-", "_"), get_example_dirs()))
 	logfile_paths_lifting = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and any(f.name == exampl + "Theory" for exampl in valid_exampls)]
 	logfile_paths_symbexec = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and f.name.endswith("_symb_execTheory")]
-	return (logfile_paths_lifting, logfile_paths_symbexec)
+	logfile_paths_symbtransf = [f.path for f in os.scandir(os.path.join(path, ".hollogs")) if f.is_file() and f.name.endswith("_symb_transfTheory")]
+	return (logfile_paths_lifting, logfile_paths_symbexec, logfile_paths_symbtransf)
 
 def clean_output_lifting(data):
 	startstr = "time to lift individual instructions only -"
@@ -80,6 +81,25 @@ def clean_output_symbexec(data):
 		data = data[endidx:]
 	return symbexec_runs
 
+def clean_output_symbtransf(data):
+	startstr = "======\n > bir_symb_transfer started\n"
+	endstr = "======\n > bir_symb_transfer took "
+	symbtransf_runs = []
+	while True:
+		startidx = data.find(startstr)
+		if startidx < 0:
+			break
+		endidx1 = data[startidx:].find(endstr)
+		if endidx1 < 0:
+			raise Exception("should find this, something in the output is wrong")
+		endidx2 = data[startidx+endidx1+len(endstr):].find("\n")
+		if endidx2 < 0:
+			raise Exception("should find a newline here, something in the output is wrong")
+		endidx = startidx+endidx1+len(endstr)+endidx2
+		symbtransf_runs.append(data[startidx:endidx])
+		data = data[endidx:]
+	return symbtransf_runs
+
 def parse_output_lifting(data):
 	#print(data)
 	data = data.split("\n")[-1:]
@@ -96,8 +116,14 @@ def parse_output_symbexec(data):
 	exec_all_time = data[4][30:]
 	return f"symbexec time = {exec_all_time}"
 
+def parse_output_symbtransf(data):
+	data = data.split("\n")[-1:]
+	#exec_parts_time = data[1][19:]
+	exec_all_time = data[0][len(" > bir_symb_transfer took "):]
+	return f"symbtransf time = {exec_all_time}"
+
 def collect_outputs(path):
-	(logfile_paths_lifting, logfile_paths_symbexec) = find_symbexec_logs(path)
+	(logfile_paths_lifting, logfile_paths_symbexec, logfile_paths_symbtransf) = find_symbexec_logs(path)
 	for log_path in logfile_paths_symbexec:
 		backup_file(log_path)
 	#print(log_paths)
@@ -124,6 +150,16 @@ def collect_outputs(path):
 			i = 0
 			for symbexec_run in clean_output_symbexec(data):
 				out = parse_output_symbexec(symbexec_run)
+				addoutput(logname + "/" + str(i), out)
+				i += 1
+	for log_path in logfile_paths_symbtransf:
+		print(f"Reading log '{log_path}'")
+		with open(log_path,"r") as file:
+			logname = log_path.split("/")[-3] + "/" + log_path.split("/")[-1][:-(len("_symb_execTheory"))]
+			data = file.read()
+			i = 0
+			for symbtransf_run in clean_output_symbtransf(data):
+				out = parse_output_symbtransf(symbtransf_run)
 				addoutput(logname + "/" + str(i), out)
 				i += 1
 	#flatten outputs
