@@ -21,6 +21,8 @@ val birs_prog_config = balrobLib.birs_prog_config;
 
 val _ = set_default_cheat_setting ();
 
+val bin_offset3 = 0x08006028 (*new*) - 0x10001438 (*old*); (* atan2f_own, imu_handler_pid_entry *)
+
 (* ------------------------------------ *)
 
 
@@ -28,8 +30,8 @@ val balrob_summary_atan2f_own_thm =
   let
     val reqs = ((0, 92), 2038);
     val locs =
-      (0x10001438,
-      [0x100014FA]);
+      (0x10001438+bin_offset3,
+      [0x100014FA+bin_offset3]);
   in
     birs_summary birs_prog_config
       [balrob_summary___lesf2_thm,
@@ -50,5 +52,9 @@ Theorem balrob_summary_atan2f_own_thm =
 val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
 
+(* ------------------------------------ *)
+
+
+val _ = run_default_postproc ();
 
 val _ = export_theory ();

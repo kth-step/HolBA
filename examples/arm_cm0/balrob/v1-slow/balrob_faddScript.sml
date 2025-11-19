@@ -10,7 +10,9 @@ val birs_prog_config = balrobLib.birs_prog_config;
 
 val _ = set_default_cheat_setting ();
 
-val fadd_offset = 0x1000030e - 0x257A;
+val bin_offset1 = 0x080055c8 (*new*) - 0x100013b4 (*old*); (* ..., __clzsi2 *)
+
+val fadd_offset = 0x1000030e - 0x257A + bin_offset1;
 
 (* ------------------------------------ *)
 
@@ -55,8 +57,8 @@ val balrob_summary___aeabi_fadd_thm =
   let
     val reqs = ((0, 32), 168);
     val locs =
-      ( 0x1000020c,
-      [0x10000268]);
+      ( 0x1000020c + bin_offset1,
+      [0x10000268 + bin_offset1]);
   in
     birs_summary birs_prog_config
       [balrob_summary___clzsi2_thm,
@@ -68,6 +70,7 @@ val balrob_summary___aeabi_fadd_thm =
   end;
 Theorem balrob_summary___aeabi_fadd_thm =
   balrob_summary___aeabi_fadd_thm;
+val _ = print_result balrob_summary___aeabi_fadd_thm ("0x800447Cw", "pop {r3, r4, r5, r6, r7, pc}", "10");
 
 
 (* ------------------------------------ *)
@@ -75,5 +78,9 @@ Theorem balrob_summary___aeabi_fadd_thm =
 val _ = print "\n";
 val _ = Profile.print_profile_results (Profile.results ());
 
+(* ------------------------------------ *)
+
+
+val _ = run_default_postproc ();
 
 val _ = export_theory ();

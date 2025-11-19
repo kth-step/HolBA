@@ -22,8 +22,8 @@ val symb_analysis_thm = balrob_summary___clzsi2_thm;
 (* TODO: move this after the symbolic execution, and infer the minimum and the maximum *)
 val (countw_min, countw_max) = (21, 21);
 
-val init_addr_tm = ``0x100013b4w : word32``;
-val end_addr_tm = ``0x100013dcw : word32``;
+val init_addr_tm = ``0x080055c8w : word32``;
+val end_addr_tm = ``0x080055f0w : word32``;
 
 val stack_max_usage = 77;
 val reqs = ((0, stack_max_usage), countw_max);
