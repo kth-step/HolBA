@@ -31,7 +31,7 @@ Notable subdirectories:
 
 We estimate the artifact takes around two hours to build and replicate
 on a modern machine. We tested on an Intel Core i5-9600K with 32GB RAM.
-Less RAM than 32GB is unlikely to work, due to some demanding case studies.
+Less RAM than 32GB is unlikely to work, due to demanding case studies.
 
 ## Getting Started Guide
 
@@ -41,8 +41,10 @@ We provide a Dockerfile in the artifact root directory
 (where this README resides) that can be used to bootstrap
 and enter an environment for replicating results:
 
+```shell
 $ docker build -t holbase .
 $ docker run -it --rm holbase
+```
 
 This requires an x86 environment and takes 20-25 minutes on a modern machine.
 The second docker command enters the shell where the step-by-step instructions
@@ -57,10 +59,12 @@ the following dependencies:
 - HOL4, tag trindemossen-1 (https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-1)
 - Z3, version 4.14.1 (https://github.com/Z3Prover/z3/releases/tag/z3-4.14.1)
 
-HolBA is then built using the "Holmake" tool bundled with HOL4. To let HolBA
-know where to find the z3 binary, its path must be set via the environment:
+HolBA is then built using the `Holmake` tool bundled with HOL4. To let HolBA
+know where to find the `z3` binary, its path must be set via the environment:
 
+```shell
 $ export HOL4_Z3_EXECUTABLE=/path/to/bin/z3
+```
 
 Assuming Holmake is in the path, this should give an environment equivalent
 to the Docker one in this shell.
@@ -71,7 +75,9 @@ to the Docker one in this shell.
 
 In the root directory (where this README resides), run:
 
+```shell
 $ Holmake
+```
 
 This takes 10-20 minutes on a modern machine.
 
@@ -84,83 +90,98 @@ All of these definitions and theorems are checked in the previous step,
 but they can be inspected for reassurance. This is easiest done by
 starting a HOL4 toplevel from the root directory:
 
+```shell
 $ hol --holstate src/holba-heap
+```
 
 This will give a prompt starting with ">" that can be exited with Ctrl+d.
 
-Using the prompt, Definition 1 can be inspected using:
-
+Using the prompt, Definition 1 can be inspected as follows:
+```
 > symb_recordTheory.symb_matchstate_def;
+```
 
 Theorem 1:
-
+```
 > bir_symb_soundTheory.birs_symb_step_sound_thm;
+```
 
 Definition 2:
-
+```
 > symb_recordTheory.symb_minimal_interpretation_def;
+```
 
 Definition 3:
-
+```
 > symb_recordTheory.symb_matchstate_ext_def;
+```
 
 Definition 4:
-
+```
 > symb_recordTheory.symb_hl_step_in_L_sound_def;
+```
 
 Theorem 2: 
-
+```
 > symb_prop_transferTheory.symb_prop_transfer_thm;
+```
 
-Figure 3:
-
-(symbstep)
-
+Figure 3, rule symbstep:
+```
 > symb_rulesTheory.symb_rule_STEP_thm;
+```
 
-(case)
-
+Figure 3, rule case:
+```
 > symb_rulesTheory.symb_rule_SPLIT_thm;
+```
 
-(infeasible)
-
+Figure 3, rule infeasible:
+```
 > symb_rulesTheory.symb_rule_INF_thm;
+```
 
-(rename)
-
+Figure 3, rule rename:
+```
 > symb_rulesTheory.symb_rule_SRENAME_thm;
+```
 
-(freesymb_rename)
-
+Figure 3, rule freesymb_rename:
+```
 > symb_rulesTheory.symb_rule_SRENAME_FREE_thm;
+```
 
-(subst)
-
+Figure 3, rule subst:
+```
 > symb_rulesTheory.symb_rule_INST_thm;
+```
 
-Figure 4:
-
-(simplify)
-
+Figure 4, rule simplify:
+```
 > symb_rulesTheory.symb_rule_FRESH_thm;
+```
 
-(consequence)
-
+Figure 4, rule consequence:
+```
 > symb_rulesTheory.symb_rule_CONS_thm;
+```
 
-(transfer)
-
+Figure 4, rule transfer:
+```
 > symb_rulesTheory.symb_rule_STRENGTHEN_thm;
+```
 
-(sequence)
-
+Figure 4, rule sequence:
+```
 > symb_rulesTheory.symb_rule_SEQ_thm;
+```
 
 ### 2. Evaluation of symbolic execution (Table 1)
 
 Starting from the root directory, run:
-
+```shell
 $ cd examples/riscv && ./collect_experiment_data.py
+```
 
 This takes 5-10 minutes on a modern machine.
 
@@ -173,33 +194,35 @@ comparison.
 ### 3. RISC-V functional verification case studies (Section 6)
 
 To check the ChaCha20 cipher case study, start from the root directory and run:
-
+```shell
 $ cd examples/riscv/chacha20 && Holmake
+```
 
 This can take 5-10 minutes on a modern machine.
 
 The output should include a bunch of "OK".
 
 Key files that are checked:
-
-- examples/riscv/chacha20/chachaScript.sml - abstract definition of ChaCha
-- examples/riscv/chacha20/chacha20_spec_riscvScript.sml - ChaCha20 column round and diagonal round pre/postconditions
-- examples/riscv/chacha20/chacha20_column_round_propScript.sml - ChaCha20 column round RISC-V contract (see near end of file)
-- examples/riscv/chacha20/chacha20_diagonal_round_propScript.sml - ChaCha20 diagonal round RISC-V contract (see near end of file)
+- `examples/riscv/chacha20/chachaScript.sml` - abstract definition of ChaCha
+- `examples/riscv/chacha20/chacha20_spec_riscvScript.sml` - ChaCha20 column round and diagonal round pre/postconditions
+- `examples/riscv/chacha20/chacha20_column_round_propScript.sml` - ChaCha20 column round RISC-V contract theorem (see near end of file)
+- `examples/riscv/chacha20/chacha20_diagonal_round_propScript.sml` - ChaCha20 diagonal round RISC-V contract theorem (see near end of file)
+- `examples/riscv/chacha20/chacha_equivScript.sml` - theorems showing equivalence between abstract ChaCha definitions and definitions used in RISC-V contracts
 
 To check RISC-V kernel case study, start from the root directory and run:
 
+```shell
 $ cd examples/riscv/kernel-trap && Holmake
+```
 
 This can take 5-10 minutes on a modern machine.
 
 The output should include a bunch of "OK".
 
 Key files that are checked:
-
-- examples/riscv/kernel-trap/kernel_trap_spec_riscvScript.sml - pre/postconditions
-- examples/riscv/kernel-trap/kernel_trap_entry_propScript.sml - trap_entry RISC-V contract (see near end of file)
-- examples/riscv/kernel-trap/kernel_trap_return_propScript.sml - trap_return RISC-V contract (see near end of file)
+- `examples/riscv/kernel-trap/kernel_trap_spec_riscvScript.sml` - RISC-V pre/postconditions
+- `examples/riscv/kernel-trap/kernel_trap_entry_propScript.sml` - trap_entry RISC-V contract (see near end of file)
+- `examples/riscv/kernel-trap/kernel_trap_return_propScript.sml` - trap_return RISC-V contract theorem (see near end of file)
 
 ### 4. Cortex-M0 execution time verification case studies (Section 7)
 
@@ -208,8 +231,9 @@ Checking the execution time evaluations in Section 7 consists of two parts.
 #### Reproducing verification results
 
 To check the verification results using HolBA-SE, start from the root directory and run:
-
+```shell
 $ ./src_exectime/holba-se_run_all.sh
+``
 
 This takes about an hour on a modern machine.
 
@@ -217,23 +241,23 @@ The output should include a bunch of "OK".
 
 Key files that are checked:
 
-- examples/arm_cm0/tiny/tiny_analysisScript.sml - ldldbr8 example
-- examples/arm_cm0/aes/aes_o0_wholeScript.sml - aes example
-- examples/arm_cm0/aes/aes_o0_loopScript.sml - subfragment for aes example (loop body)
-- examples/arm_cm0/modexp_simple/modexp_asm_uidivmodScript.sml - subfunction for modexp example
-- examples/arm_cm0/modexp_simple/modexp_asmScript.sml - modexp example
-- examples/arm_cm0/motor_set/motor_o0Script.sml - motor_set example
-- examples/arm_cm0/motor_set/motor_o3Script.sml - motor_set example at optimization level o3
-- examples/arm_cm0/balrob/v2-faster/...Script.sml - a set of subfunctions for pid example
-- examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml - pid example
+- `examples/arm_cm0/tiny/tiny_analysisScript.sml` - ldldbr8 example
+- `examples/arm_cm0/aes/aes_o0_wholeScript.sml` - aes example
+- `examples/arm_cm0/aes/aes_o0_loopScript`.sml - subfragment for aes example (loop body)
+- `examples/arm_cm0/modexp_simple/modexp_asm_uidivmodScript.sml` - subfunction for modexp example
+- `examples/arm_cm0/modexp_simple/modexp_asmScript.sml` - modexp example
+- `examples/arm_cm0/motor_set/motor_o0Script.sml` - motor_set example
+- `examples/arm_cm0/motor_set/motor_o3Script.sml` - motor_set example at optimization level o3
+- `examples/arm_cm0/balrob/v2-faster/*Script.sml` - a set of subfunctions for pid example
+- `examples/arm_cm0/balrob/v2-faster/balrob_topScript.sml` - pid example
 
-The outputs of the verification tool reside in the various .hollogs
-directories and are automatically copied into the logs/armcm0/holba-se
+The outputs of the verification tool reside in the various `.hollogs`
+directories and are automatically copied into the `logs/armcm0/holba-se`
 directory with simpler names. These files contain the evaluation times,
 the validated execution times, and manually exctracted execution times
 for return instructions.
 
-For easier search of the result values, the logs/armcm0/holba-se directory
+For easier search of the result values, the `logs/armcm0/holba-se` directory
 is preloaded with logs from one of our runs, where irrelevant information
 has been removed.
 
@@ -244,9 +268,8 @@ in the table are as comparable as possible (testing and holba-se use the
 same counting, while aiT starts from an empty pipeline and also includes
 return instructions).
 
-For example, after a successful run, the file logs/armcm0/holba-se/aes
+For example, after a successful run, the file `logs/armcm0/holba-se/aes`
 will contain the following:
-
 ```
 !!! RESULT !!!
 [oracles: BIRS_CONST_LOAD, BIRS_CONTR_Z3, BIRS_IMP_Z3,
@@ -261,11 +284,10 @@ BExp_IntervalPred (BExp_Den (BVar "syi_countw" (BType_Imm Bit64)))
 cycles for returning from this function at 0x8009558w (pop {r7, pc}) are: 6
 ```
 
-If we add 6 cycles to 3755, we get the best and worst cycle count of 3761,
+If we add 6 cycles to 3755, we get 3761 as the best and worst cycle count,
 which is the constant time for aes presented in Table 2. Also, at the end
-of logs/armcm0/holba-se/aes, there is the HOL4 evaluation time, which will
+of `logs/armcm0/holba-se/aes`, there is the HOL4 evaluation time, which will
 be similar to the following:
-
 ``` 
 Exporting theory "aes_o0_whole" ... done.
 Theory "aes_o0_whole" took 8m32s to build
@@ -280,8 +302,8 @@ times for symbolic execution.
 
 Reproducing the "aiT" column of Table 2 requires the proprietary aiT
 tool (https://www.absint.com/ait/index.htm) and an appropriate license.
-The aiT project files for this reside in src_exectime/aiT. In case this
-is not available, the logs/armcm0/aiT directory contains our collected
+The aiT project files for this reside in `src_exectime/aiT`. In case this
+is not available, the `logs/armcm0/aiT` directory contains our collected
 outputs. They are the same for the same binary even if the tool runs
 multiple times.
 
@@ -309,4 +331,4 @@ hardware setup, which is described in the EmbExp-Box repository
 for data collection. Given those in place, log collection is executed
 by the testing harness in src_exectime/testing, which is executed with
 the script run_all_testing.sh. We collected and included three sets
-of hardware testing logs in logs/armcm0/testing.
+of hardware testing logs in `logs/armcm0/testing.
