@@ -126,52 +126,52 @@ Theorem 2:
 > symb_prop_transferTheory.symb_prop_transfer_thm;
 ```
 
-Figure 3, rule symbstep:
+Figure 3, rule SYMBSTEP:
 ```
 > symb_rulesTheory.symb_rule_STEP_thm;
 ```
 
-Figure 3, rule case:
+Figure 3, rule CASE:
 ```
 > symb_rulesTheory.symb_rule_SPLIT_thm;
 ```
 
-Figure 3, rule infeasible:
+Figure 3, rule INFEASIBLE:
 ```
 > symb_rulesTheory.symb_rule_INF_thm;
 ```
 
-Figure 3, rule rename:
+Figure 3, rule RENAME:
 ```
 > symb_rulesTheory.symb_rule_SRENAME_thm;
 ```
 
-Figure 3, rule freesymb_rename:
+Figure 3, rule FREESYMB_RENAME:
 ```
 > symb_rulesTheory.symb_rule_SRENAME_FREE_thm;
 ```
 
-Figure 3, rule subst:
+Figure 3, rule SUBST:
 ```
 > symb_rulesTheory.symb_rule_INST_thm;
 ```
 
-Figure 4, rule simplify:
+Figure 4, rule SIMPLIFY:
 ```
 > symb_rulesTheory.symb_rule_FRESH_thm;
 ```
 
-Figure 4, rule consequence:
+Figure 4, rule CONSEQUENCE:
 ```
 > symb_rulesTheory.symb_rule_CONS_thm;
 ```
 
-Figure 4, rule transfer:
+Figure 4, rule TRANSFER:
 ```
 > symb_rulesTheory.symb_rule_STRENGTHEN_thm;
 ```
 
-Figure 4, rule sequence:
+Figure 4, rule SEQUENCE:
 ```
 > symb_rulesTheory.symb_rule_SEQ_thm;
 ```
