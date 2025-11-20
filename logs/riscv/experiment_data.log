@@ -39,6 +39,9 @@ mod2:
   lifting time (mod2, 0) = 1.402 s
   symbexec time (mod2, 0) = 0.086s
   symbtransf time (mod2, 0) = 0.353s
+modexp:
+  lifting time (modexp, 0) = 7.259 s
+  symbexec time (modexp, 0) = 0.261s
 motor:
   lifting time (motor, 0) = 24.410 s
   symbexec time (motor, 0) = 3.938s

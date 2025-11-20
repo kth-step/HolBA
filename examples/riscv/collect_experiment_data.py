@@ -16,7 +16,7 @@ parser.add_argument("-f", "--full",           help="include long-running example
 args = parser.parse_args()
 
 def get_example_dirs():
-	excluded_dirs = (["chacha20","kernel-trap"] if not args.full else []) + ["incr-mem", "mod2-mem", "modexp", "symbexectests"]
+	excluded_dirs = (["chacha20","kernel-trap"] if not args.full else []) + ["incr-mem", "mod2-mem", "symbexectests"]
 	filterfun = lambda x: not x.startswith(".")
 	path = os.getcwd()
 	example_dirs = [f.path for f in os.scandir(path) if f.is_dir() and f.name not in excluded_dirs and filterfun(f.name)]
