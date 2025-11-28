@@ -7,7 +7,8 @@ open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_symbLib;
 
 open isqrtTheory;
-open isqrt_specTheory;
+open isqrt_spec_riscvTheory;
+open isqrt_spec_birTheory;
 open isqrt_symb_execTheory;
 
 val _ = new_theory "isqrt_symb_transf";

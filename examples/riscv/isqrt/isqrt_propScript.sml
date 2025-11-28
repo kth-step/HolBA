@@ -27,7 +27,8 @@ open bir_env_oldTheory;
 open bir_program_varsTheory;
 
 open isqrtTheory;
-open isqrt_specTheory;
+open isqrt_spec_riscvTheory;
+open isqrt_spec_birTheory;
 open isqrt_symb_transfTheory;
 
 val _ = new_theory "isqrt_prop";

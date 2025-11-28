@@ -4,7 +4,9 @@ open wordsTheory;
 
 open bir_symbLib;
 
-open isqrtTheory isqrt_specTheory;
+open isqrtTheory; 
+open isqrt_spec_riscvTheory;
+open isqrt_spec_birTheory;
 
 val _ = new_theory "isqrt_symb_exec";
 
