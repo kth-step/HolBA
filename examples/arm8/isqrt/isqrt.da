@@ -1,0 +1,22 @@
+
+isqrt:     file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000718 <isqrt>:
+ 718:	aa0003e3 	mov	x3, x0
+ 71c:	d2800001 	mov	x1, #0x0                   	// #0
+ 720:	aa0103e0 	mov	x0, x1
+ 724:	91000421 	add	x1, x1, #0x1
+ 728:	9b017c22 	mul	x2, x1, x1
+ 72c:	eb02007f 	cmp	x3, x2
+ 730:	54ffff82 	b.cs	720 <isqrt+0x8>  // b.hs, b.nlast
+ 734:	d65f03c0 	ret
+
+0000000000000738 <main>:
+ 738:	a9bf7bfd 	stp	x29, x30, [sp, #-16]!
+ 73c:	910003fd 	mov	x29, sp
+ 740:	d2800140 	mov	x0, #0xa                   	// #10
+ 744:	97fffff5 	bl	718 <isqrt>
+ 748:	a8c17bfd 	ldp	x29, x30, [sp], #16
+ 74c:	d65f03c0 	ret
