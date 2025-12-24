@@ -1,10 +1,7 @@
 INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLDIR)/examples/l3-machine-code/arm8/model \
            $(HOLDIR)/examples/l3-machine-code/arm8/step \
-           $(HOLDIR)/examples/l3-machine-code/m0/model \
-           $(HOLDIR)/examples/l3-machine-code/m0/step \
-           $(HOLBADIR)/src/shared/l3-machine-code/riscv/model \
-           $(HOLBADIR)/src/shared/l3-machine-code/riscv/step \
+           $(HOLBADIR)/src \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/program_logic \
@@ -18,7 +15,7 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/tools/backlifter \
            $(HOLBADIR)/src/tools/symbexec \
            $(HOLBADIR)/src/tools/symbexec/examples/common \
-           $(HOLBADIR)/src
+           $(HOLBADIR)/src/tools/scamv/obsmodel
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

@@ -1,6 +1,7 @@
 INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLDIR)/examples/l3-machine-code/arm8/model \
            $(HOLDIR)/examples/l3-machine-code/arm8/step \
+           $(HOLBADIR)/src \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/program_logic \
