@@ -8,14 +8,16 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "incr";
 
-val _ = lift_da_and_store "incr" "incr.da" da_arm8
+val progname = "incr";
+
+val _ = lift_da_and_store progname "incr.da" da_arm8
  ((Arbnum.fromInt 0x718), (Arbnum.fromInt 0x728));
 
 (* ----------------------------------------- *)
 (* Program variable definitions and theorems *)
 (* ----------------------------------------- *)
 
-val bir_prog_def = DB.fetch "-" "bir_incr_prog_def";
-val _ = gen_prog_vars_birenvtyl_defthms "incr" bir_prog_def;
+val bir_prog_def = DB.fetch "-" ("bir_"^progname^"_prog_def");
+val _ = gen_prog_vars_birenvtyl_defthms progname bir_prog_def;
 
 val _ = export_theory ();

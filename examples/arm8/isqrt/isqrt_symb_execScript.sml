@@ -5,7 +5,7 @@ open wordsTheory;
 open bir_symbLib;
 
 open isqrtTheory; 
-open isqrt_spec_riscvTheory;
+open isqrt_spec_arm8Theory;
 open isqrt_spec_birTheory;
 
 val _ = new_theory "isqrt_symb_exec";
@@ -14,7 +14,7 @@ val _ = new_theory "isqrt_symb_exec";
 (* prepare program lookups     *)
 (* --------------------------- *)
 
-val bir_lift_thm = bir_isqrt_riscv_lift_THM;
+val bir_lift_thm = bir_isqrt_arm8_lift_THM;
 val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 
 (* --------------------------- *)

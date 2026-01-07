@@ -1730,4 +1730,22 @@ Proof
  ]
 QED
 
+Theorem arm8_bmr_bpc_label_PC_equiv:
+ !b benv ms w.
+  bmr_rel arm8_bmr (bir_state_t b benv BST_Running) ms ==>
+  (b.bpc_label = BL_Address (Imm64 w) <=> ms.PC = w)
+Proof
+ rw [] >>
+ FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [
+  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_expTheory.bir_eval_bin_pred_def,
+  bir_programTheory.bir_block_pc_def,
+  bir_programTheory.bir_programcounter_t_component_equality
+ ]
+QED
+
 val _ = export_theory();

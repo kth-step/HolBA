@@ -1,0 +1,14 @@
+INCLUDES = $(HOLBADIR)/examples/arm8/swap \
+           $(HOLBADIR)/examples/arm8/incr
+
+all: $(DEFAULT_TARGETS) test-arm8.exe
+.PHONY: all
+
+test-arm8.exe: test-arm8.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-arm8.exe
+	./test-arm8.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-arm8.exe
