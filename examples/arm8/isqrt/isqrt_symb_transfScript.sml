@@ -69,7 +69,6 @@ QED
 
 (* branch contract *)
 
-(*
 val bspec_cont_3_thm =
  bir_symb_transfer_two_thm
   bir_isqrt_prog_def
@@ -96,6 +95,5 @@ Theorem bspec_cont_isqrt_3:
 Proof
  rw [bspec_cont_3_thm]
 QED
-*)
 
 val _ = export_theory ();
