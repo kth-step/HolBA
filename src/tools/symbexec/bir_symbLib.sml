@@ -502,42 +502,11 @@ fun bir_symb_transfer_two
     birs_symb_matchstate sys2 H' bs' ==>
     Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^post_tm
      (birs_symb_to_concst bs) (birs_symb_to_concst bs')``,
-  
-   REPEAT STRIP_TAC >>
-  
-   FULL_SIMP_TAC (std_ss) [Q_bircont_thm] >>
-   CONJ_TAC >- (
-    REV_FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-   ) >>
-  
-   CONJ_TAC >- (
-    REV_FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
-   )  >>
-  
-   CONJ_TAC >- (
-    PAT_X_ASSUM ``A = B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
-    PAT_X_ASSUM ``A = B`` (K ALL_TAC) >>
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def, prog_vars_thm] >>
-  
-    IMP_RES_TAC birs_env_vars_are_initialised_IMP_thm >>
-    POP_ASSUM (K ALL_TAC) >>
-    PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ((snd o dest_eq o concl) prog_vars_thm)) >>
-    POP_ASSUM (MATCH_MP_TAC) >>
-  
-    REPEAT (POP_ASSUM (K ALL_TAC)) >>
-  
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm, birs_auxTheory.birs_exps_of_senv_thm] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_gen_env_def, birs_gen_env_fun_def, birs_gen_env_fun_def, bir_envTheory.bir_env_lookup_def] >>
-  
-    FULL_SIMP_TAC (std_ss++holBACore_ss++listSimps.LIST_ss) [birs_auxTheory.birs_exps_of_senv_COMP_thm] >>
-    CONV_TAC (RATOR_CONV (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_exp``] THENC SIMP_CONV (std_ss++holBACore_ss) [] THENC EVAL))) >>
-    CONV_TAC (RAND_CONV (computeLib.RESTR_EVAL_CONV [``bir_vars_of_program``] THENC SIMP_CONV (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss) [] THENC EVAL)) >>
-    REWRITE_TAC [birs_env_vars_are_initialised_INSERT_thm, birs_env_vars_are_initialised_EMPTY_thm, birs_env_var_is_initialised_def] >>
-  
-    EVAL_TAC >>
-    SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] >>
-    EVAL_TAC) >>
-  
+
+    REPEAT STRIP_TAC >>
+    (* TODO: this proof is overall not very suited as automation, quite slow *)
+    Profile.profile "bir_symbLib.Pi.3CONJS" (Q_bircont_SOLVE3CONJS_TAC prog_vars_thm) >> (* val varset_thm = prog_vars_thm; *)
+    (*TODO: the following two metis_tac are a bit slow for larger expressions*)
     `birs_symb_matchstate sys1 H' bs` by
      METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm] >>
     FULL_SIMP_TAC std_ss [P_bircont_thm] >>
