@@ -90,7 +90,6 @@ Proof
  ACCEPT_TAC arm8_cont_isqrt_2_thm
 QED
 
-(*
 val arm8_cont_isqrt_3_thm =
  get_arm8_contract
   bspec_cont_isqrt_3
@@ -103,12 +102,11 @@ val arm8_cont_isqrt_3_thm =
 
 Theorem arm8_cont_isqrt_3:
  arm8_cont bir_isqrt_progbin isqrt_init_addr_3 {isqrt_end_addr_3_loop; isqrt_end_addr_3_ret}
-  (arm8_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
-  (arm8_isqrt_post_3 pre_x10 pre_x13 pre_x14)
+  (arm8_isqrt_pre_3 pre_x1 pre_x2 pre_x3)
+  (arm8_isqrt_post_3 pre_x1 pre_x2 pre_x3)
 Proof
  rw [isqrt_init_addr_3_def,isqrt_end_addr_3_loop_def,isqrt_end_addr_3_ret_def] >>
  ACCEPT_TAC arm8_cont_isqrt_3_thm
 QED
-*)
 
 val _ = export_theory ();
