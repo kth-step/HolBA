@@ -1,0 +1,6 @@
+module swap:
+
+function swap:
+  contract:
+    requires \valid(x) && \valid(y);
+    ensures *x == \old(*y) && *y == \old(*x);
