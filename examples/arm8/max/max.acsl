@@ -1,0 +1,6 @@
+module max:
+
+function max:
+  contract:
+    requires \true;
+    ensures (\result == x || \result == y) && \result >= x && \result >= y;
