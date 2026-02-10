@@ -184,7 +184,7 @@ QED
 
 ### 7. Backlifting BIR contract to ARMv8 binary
 
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for ARMv8
+- built on a [general Hoare-style logic](https://doi.org/10.1016/j.jlamp.2025.101099) for unstructured programs, instantiated for ARMv8
 - requires collecting auxiliary results from above steps
 - **automatic** inside HOL4 if all parameters have the right shape
 
