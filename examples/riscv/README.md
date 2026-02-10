@@ -34,7 +34,7 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 ### 0. RISC-V program
 
 - RISC-V programs must be given in `.da` format for RV64G instruction set
-- C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
+- we found that C programs compiled with `-O1` before disassembly are easier to specify and verify (fewer instructions, close correspondence to source code)
 - to enable linking, include a (dummy) `main` function
 
 Example C program that increments an unsigned 64-bit integer:
