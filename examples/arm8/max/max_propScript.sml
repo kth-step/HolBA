@@ -65,10 +65,47 @@ Proof
 QED
 
 (* ------------------------ *)
-(* Unfolded ARMv8 contract *)
+(* Unfolded ARMv8 contract  *)
 (* ------------------------ *)
 
 val readable_thm = computeLib.RESTR_EVAL_RULE [``arm8_weak_trs``] arm8_cont_max;
+(*
+val readable_thm =
+    []
+   ⊢ ∀s. s.PC = 1816w ⇒
+         (¬s.SCTLR_EL1.E0E ∧ s.PSTATE.EL = 0w ∧ s.exception = NoException ∧
+          ¬s.SCTLR_EL1.SA0 ∧ ¬s.TCR_EL1.TBI0 ∧ ¬s.TCR_EL1.TBI1) ∧
+         (s.MEM 1816w = 31w ∧ s.MEM 1817w = 0w ∧ s.MEM 1818w = 1w ∧
+          s.MEM 1819w = 235w ∧ s.MEM 1820w = 0w ∧ s.MEM 1821w = 32w ∧
+          s.MEM 1822w = 129w ∧ s.MEM 1823w = 154w ∧ s.MEM 1824w = 192w ∧
+          s.MEM 1825w = 3w ∧ s.MEM 1826w = 95w ∧ s.MEM 1827w = 214w ∧
+          s.MEM 1828w = 224w ∧ s.MEM 1829w = 0w ∧ s.MEM 1830w = 128w ∧
+          s.MEM 1831w = 82w ∧ s.MEM 1832w = 192w ∧ s.MEM 1833w = 3w ∧
+          s.MEM 1834w = 95w ∧ s.MEM 1835w = 214w) ∧ s.REG 0w = pre_x0 ∧
+         s.REG 1w = pre_x1 ⇒
+         ∃s'.
+           (∃n. (n > 0 ∧
+                 FUNPOW (λx. option_CASE x NONE NextStateARM8) n (SOME s) =
+                 SOME s' ∧ s'.PC ∈ {1824w}) ∧
+                ∀n'.
+                  n' < n ∧ n' > 0 ⇒
+                  ∃ms''.
+                    FUNPOW (λx. option_CASE x NONE NextStateARM8) n' (SOME s) =
+                    SOME ms'' ∧ ms''.PC ∉ {1824w}) ∧
+           (¬s'.SCTLR_EL1.E0E ∧ s'.PSTATE.EL = 0w ∧
+            s'.exception = NoException ∧ ¬s'.SCTLR_EL1.SA0 ∧
+            ¬s'.TCR_EL1.TBI0 ∧ ¬s'.TCR_EL1.TBI1) ∧
+           (s'.MEM 1816w = 31w ∧ s'.MEM 1817w = 0w ∧ s'.MEM 1818w = 1w ∧
+            s'.MEM 1819w = 235w ∧ s'.MEM 1820w = 0w ∧ s'.MEM 1821w = 32w ∧
+            s'.MEM 1822w = 129w ∧ s'.MEM 1823w = 154w ∧ s'.MEM 1824w = 192w ∧
+            s'.MEM 1825w = 3w ∧ s'.MEM 1826w = 95w ∧ s'.MEM 1827w = 214w ∧
+            s'.MEM 1828w = 224w ∧ s'.MEM 1829w = 0w ∧ s'.MEM 1830w = 128w ∧
+            s'.MEM 1831w = 82w ∧ s'.MEM 1832w = 192w ∧ s'.MEM 1833w = 3w ∧
+            s'.MEM 1834w = 95w ∧ s'.MEM 1835w = 214w) ∧
+           (s'.REG 0w = pre_x0 ∨ s'.REG 0w = pre_x1) ∧ pre_x0 ≤₊ s'.REG 0w ∧
+           pre_x1 ≤₊ s'.REG 0w: thm
+*)
+
 Theorem arm8_cont_max_full = GEN_ALL readable_thm;
 
 val _ = export_theory ();
