@@ -18,8 +18,8 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
 all: $(DEFAULT_TARGETS)
 .PHONY: all
 
-framac: swap.c
-	frama-c -acsl-import swap.acsl swap.c -then -wp -wp-rte
+framac: max.c
+	frama-c -acsl-import max.acsl max.c -then -wp -wp-rte
 .PHONY: framac
 
 ifdef POLY

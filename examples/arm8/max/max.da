@@ -1,0 +1,15 @@
+
+max:     file format elf64-littleaarch64
+
+
+Disassembly of section .init:
+
+
+0000000000000718 <max>:
+ 718:	eb01001f 	cmp	x0, x1
+ 71c:	9a812000 	csel	x0, x0, x1, cs	// cs = hs, nlast
+ 720:	d65f03c0 	ret
+
+0000000000000724 <main>:
+ 724:	528000e0 	mov	w0, #0x7                   	// #7
+ 728:	d65f03c0 	ret
