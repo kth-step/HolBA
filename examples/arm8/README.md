@@ -18,7 +18,7 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 ### 0. ARMv8 program
 
 - ARMv8 programs must be given in `.da` format for AArch64 instruction set
-- C programs should ideally be compiled with `-O1` before disassembly (fewer instructions, close correspondence)
+- we found that C programs compiled with `-O1` before disassembly are easier to specify and verify (fewer instructions, close correspondence to source code)
 - to enable linking, include a (dummy) `main` function
 
 Example C program that increments an unsigned 64-bit integer:
@@ -150,9 +150,8 @@ QED
 
 ### 5. BIR symbolic execution analysis
 
-- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848), instantiated for BIR
+- built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848v2), instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
-- a summarizing collection of performance evaluations for the benchmark programs can be found in [experiment_data.log](experiment_data.log)
 - at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g., `aes/.hollogs/aes_symb_execTheory`
 
 Example:
@@ -185,7 +184,7 @@ QED
 
 ### 7. Backlifting BIR contract to ARMv8 binary
 
-- built on a [general Hoare-style logic](https://doi.org/10.1007/978-3-030-58768-0_11) for unstructured programs, instantiated for ARMv8
+- built on a [general Hoare-style logic](https://doi.org/10.1016/j.jlamp.2025.101099) for unstructured programs, instantiated for ARMv8
 - requires collecting auxiliary results from above steps
 - **automatic** inside HOL4 if all parameters have the right shape
 

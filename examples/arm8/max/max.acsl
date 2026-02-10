@@ -3,4 +3,4 @@ module max:
 function max:
   contract:
     requires \true;
-    ensures (\result == x || \result == y) && \result >= x && \result >= y;
+    ensures (\result == \old(x) || \result == \old(y)) && \old(x) <= \result && \old(y) <= \result;
