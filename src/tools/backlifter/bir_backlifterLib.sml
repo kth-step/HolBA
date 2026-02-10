@@ -150,5 +150,18 @@ open bir_inst_liftingHelpersLib;
     bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
     riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm;
 
+  fun get_riscv_contract_thm bir_ct progbin_def riscv_pre_def riscv_post_def bir_prog_def bir_pre_defs
+    bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
+    riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+      let
+        val prog_bin = (fst o dest_eq o concl) progbin_def;
+        val riscv_pre = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_pre_def;
+        val riscv_post = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_post_def;
+      in
+        get_riscv_contract bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs
+         bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
+         riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm
+      end;
+
   end
 end

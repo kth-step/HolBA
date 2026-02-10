@@ -12,4 +12,7 @@ sig
   val get_riscv_contract : thm -> term -> term -> term ->
     thm -> thm list -> thm -> thm -> thm list -> thm -> thm -> thm;
 
+  val get_riscv_contract_thm : thm -> thm -> thm -> thm ->
+    thm -> thm list -> thm -> thm -> thm list -> thm -> thm -> thm;
+
 end

@@ -33,23 +33,16 @@ open incr_symb_transfTheory;
 
 val _ = new_theory "incr_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_incr_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_incr_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_incr_post_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val riscv_cont_incr_thm =
- get_riscv_contract
+ get_riscv_contract_thm
   bspec_cont_incr
-  progbin_tm
-  riscv_pre_tm riscv_post_tm bir_incr_prog_def
+  bir_incr_progbin_def
+  riscv_incr_pre_def riscv_incr_post_def
+  bir_incr_prog_def
   [bspec_incr_pre_def]
   bspec_incr_pre_def incr_riscv_pre_imp_bspec_pre_thm
   [bspec_incr_post_def] incr_riscv_post_imp_bspec_post_thm
