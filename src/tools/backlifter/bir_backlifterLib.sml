@@ -159,8 +159,8 @@ open bir_inst_liftingHelpersLib;
         val riscv_post = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_post_def;
       in
         get_riscv_contract bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs
-         bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
-         riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm
+          bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs
+          riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm
       end;
 
   end
