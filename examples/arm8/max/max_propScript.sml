@@ -33,23 +33,16 @@ open max_symb_transfTheory;
 
 val _ = new_theory "max_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_max_progbin_def;
-val arm8_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_max_pre_def;
-val arm8_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_max_post_def;
-
 (* --------------------------------- *)
 (* Backlifting BIR contract to ARMv8 *)
 (* --------------------------------- *)
 
 val arm8_cont_max_thm =
- get_arm8_contract
+ get_arm8_contract_thm
   bspec_cont_max
-  progbin_tm
-  arm8_pre_tm arm8_post_tm bir_max_prog_def
+  bir_max_progbin_def
+  arm8_max_pre_def arm8_max_post_def
+  bir_max_prog_def
   [bspec_max_pre_def]
   bspec_max_pre_def max_arm8_pre_imp_bspec_pre_thm
   [bspec_max_post_def] max_arm8_post_imp_bspec_post_thm

@@ -33,29 +33,15 @@ open isqrt_symb_transfTheory;
 
 val _ = new_theory "isqrt_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_isqrt_progbin_def;
-
-val arm8_pre_1_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_isqrt_pre_1_def;
-val arm8_post_1_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_isqrt_post_1_def;
-
-val arm8_pre_2_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_isqrt_pre_2_def;
-val arm8_post_2_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_isqrt_post_2_def;
-
-val arm8_pre_3_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_isqrt_pre_3_def;
-val arm8_post_3_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) arm8_isqrt_post_3_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val arm8_cont_isqrt_1_thm =
- get_arm8_contract
+ get_arm8_contract_thm
   bspec_cont_isqrt_1
-  progbin_tm arm8_pre_1_tm arm8_post_1_tm
+  bir_isqrt_progbin_def
+  arm8_isqrt_pre_1_def arm8_isqrt_post_1_def
   bir_isqrt_prog_def
   [bspec_isqrt_pre_1_def]
   bspec_isqrt_pre_1_def isqrt_arm8_pre_1_imp_bspec_pre_1_thm
@@ -72,9 +58,10 @@ Proof
 QED
 
 val arm8_cont_isqrt_2_thm =
- get_arm8_contract
+ get_arm8_contract_thm
   bspec_cont_isqrt_2
-  progbin_tm arm8_pre_2_tm arm8_post_2_tm
+  bir_isqrt_progbin_def
+  arm8_isqrt_pre_2_def arm8_isqrt_post_2_def
   bir_isqrt_prog_def
   [bspec_isqrt_pre_2_def]
   bspec_isqrt_pre_2_def isqrt_arm8_pre_2_imp_bspec_pre_2_thm
@@ -91,9 +78,10 @@ Proof
 QED
 
 val arm8_cont_isqrt_3_thm =
- get_arm8_contract
+ get_arm8_contract_thm
   bspec_cont_isqrt_3
-  progbin_tm arm8_pre_3_tm arm8_post_3_tm
+  bir_isqrt_progbin_def
+  arm8_isqrt_pre_3_def arm8_isqrt_post_3_def
   bir_isqrt_prog_def
   [bspec_isqrt_pre_3_def]
   bspec_isqrt_pre_3_def isqrt_arm8_pre_3_imp_bspec_pre_3_thm

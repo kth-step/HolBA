@@ -73,7 +73,7 @@ val _ = print_and_check_thm
 val _ = print_and_check_thm
   "incr BSPEC contract theorem"
   bspec_cont_incr
- ``bir_cont (bir_incr_prog : 'a bir_program_t)
+ ``bir_cont (bir_incr_prog : 'obs_type bir_program_t)
   bir_exp_true (BL_Address (Imm64 0x10488w))
   {BL_Address (Imm64 0x1048cw)} {} (bspec_incr_pre pre_x10)
   (\l. if l = BL_Address (Imm64 0x1048cw)

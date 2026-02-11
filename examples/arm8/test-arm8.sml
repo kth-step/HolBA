@@ -38,7 +38,7 @@ val _ = print_and_check_thm
 val _ = print_and_check_thm
   "swap BSPEC contract theorem"
   bspec_cont_swap
-  ``bir_cont (bir_swap_prog : 'a bir_program_t)
+  ``bir_cont (bir_swap_prog : 'obs_type bir_program_t)
     bir_exp_true (BL_Address (Imm64 0x718w))
     {BL_Address (Imm64 0x730w)} {}
     (bspec_swap_pre pre_x0 pre_x1 pre_x0_deref pre_x1_deref)
@@ -72,7 +72,7 @@ val _ = print_and_check_thm
 val _ = print_and_check_thm
   "incr BSPEC contract theorem"
   bspec_cont_incr
- ``bir_cont (bir_incr_prog : 'a bir_program_t)
+ ``bir_cont (bir_incr_prog : 'obs_type bir_program_t)
   bir_exp_true (BL_Address (Imm64 0x718w))
   {BL_Address (Imm64 0x71cw)} {} (bspec_incr_pre pre_x0)
   (\l. if l = BL_Address (Imm64 0x71cw)
