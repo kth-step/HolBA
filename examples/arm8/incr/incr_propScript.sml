@@ -39,7 +39,7 @@ val _ = new_theory "incr_prop";
 
 val arm8_cont_incr_thm =
  get_arm8_contract_thm
-  bspec_cont_incr
+  bspec_cont_incr incr_init_addr_def [incr_end_addr_def]
   bir_incr_progbin_def
   arm8_incr_pre_def arm8_incr_post_def
   bir_incr_prog_def
@@ -53,7 +53,6 @@ Theorem arm8_cont_incr:
   (arm8_incr_pre pre_x0)
   (arm8_incr_post pre_x0)
 Proof
- rw [incr_init_addr_def,incr_end_addr_def] >>
  ACCEPT_TAC arm8_cont_incr_thm
 QED
 
@@ -62,6 +61,7 @@ QED
 (* ------------------------ *)
 
 val readable_thm = computeLib.RESTR_EVAL_RULE [``arm8_weak_trs``] arm8_cont_incr;
+
 Theorem arm8_cont_incr_full = GEN_ALL readable_thm;
 
 val _ = export_theory ();

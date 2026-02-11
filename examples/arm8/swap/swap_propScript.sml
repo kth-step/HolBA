@@ -39,7 +39,7 @@ val _ = new_theory "swap_prop";
 
 val arm8_cont_swap_thm =
  get_arm8_contract_thm
-  bspec_cont_swap
+  bspec_cont_swap swap_init_addr_def [swap_end_addr_def]
   bir_swap_progbin_def
   arm8_swap_pre_def arm8_swap_post_def
   bir_swap_prog_def
@@ -53,7 +53,6 @@ Theorem arm8_cont_swap:
   (arm8_swap_pre pre_x0 pre_x1 pre_x0_deref pre_x1_deref)
   (arm8_swap_post pre_x0 pre_x1 pre_x0_deref pre_x1_deref)
 Proof
- rw [swap_init_addr_def,swap_end_addr_def] >>
  ACCEPT_TAC arm8_cont_swap_thm
 QED
 
@@ -62,6 +61,7 @@ QED
 (* ----------------------- *)
 
 val readable_thm = computeLib.RESTR_EVAL_RULE [``arm8_weak_trs``] arm8_cont_swap;
+
 Theorem arm8_cont_swap_full = GEN_ALL readable_thm;
 
 val _ = export_theory ();

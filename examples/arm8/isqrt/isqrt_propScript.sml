@@ -39,7 +39,7 @@ val _ = new_theory "isqrt_prop";
 
 val arm8_cont_isqrt_1_thm =
  get_arm8_contract_thm
-  bspec_cont_isqrt_1
+  bspec_cont_isqrt_1 isqrt_init_addr_1_def [isqrt_end_addr_1_def]
   bir_isqrt_progbin_def
   arm8_isqrt_pre_1_def arm8_isqrt_post_1_def
   bir_isqrt_prog_def
@@ -53,13 +53,12 @@ Theorem arm8_cont_isqrt_1:
   (arm8_isqrt_pre_1 pre_x0)
   (arm8_isqrt_post_1 pre_x0)
 Proof
- rw [isqrt_init_addr_1_def,isqrt_end_addr_1_def] >>
  ACCEPT_TAC arm8_cont_isqrt_1_thm
 QED
 
 val arm8_cont_isqrt_2_thm =
  get_arm8_contract_thm
-  bspec_cont_isqrt_2
+  bspec_cont_isqrt_2 isqrt_init_addr_2_def [isqrt_end_addr_2_def]
   bir_isqrt_progbin_def
   arm8_isqrt_pre_2_def arm8_isqrt_post_2_def
   bir_isqrt_prog_def
@@ -73,13 +72,12 @@ Theorem arm8_cont_isqrt_2:
   (arm8_isqrt_pre_2 pre_x1 pre_x3)
   (arm8_isqrt_post_2 pre_x1 pre_x3)
 Proof
- rw [isqrt_init_addr_2_def,isqrt_end_addr_2_def] >>
  ACCEPT_TAC arm8_cont_isqrt_2_thm
 QED
 
 val arm8_cont_isqrt_3_thm =
  get_arm8_contract_thm
-  bspec_cont_isqrt_3
+  bspec_cont_isqrt_3 isqrt_init_addr_3_def [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
   bir_isqrt_progbin_def
   arm8_isqrt_pre_3_def arm8_isqrt_post_3_def
   bir_isqrt_prog_def
@@ -93,7 +91,6 @@ Theorem arm8_cont_isqrt_3:
   (arm8_isqrt_pre_3 pre_x1 pre_x2 pre_x3)
   (arm8_isqrt_post_3 pre_x1 pre_x2 pre_x3)
 Proof
- rw [isqrt_init_addr_3_def,isqrt_end_addr_3_loop_def,isqrt_end_addr_3_ret_def] >>
  ACCEPT_TAC arm8_cont_isqrt_3_thm
 QED
 
