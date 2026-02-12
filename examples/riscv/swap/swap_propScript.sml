@@ -33,22 +33,15 @@ open swap_symb_transfTheory;
 
 val _ = new_theory "swap_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_swap_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_swap_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_swap_post_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val riscv_cont_swap_thm =
- get_riscv_contract
-  bspec_cont_swap
-  progbin_tm riscv_pre_tm riscv_post_tm
+ get_riscv_contract_thm
+  bspec_cont_swap swap_init_addr_def [swap_end_addr_def]
+  bir_swap_progbin_def
+  riscv_swap_pre_def riscv_swap_post_def
   bir_swap_prog_def
   [bspec_swap_pre_def]
   bspec_swap_pre_def swap_riscv_pre_imp_bspec_pre_thm
@@ -60,7 +53,6 @@ Theorem riscv_cont_swap:
   (riscv_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
   (riscv_swap_post pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
 Proof
- rw [swap_init_addr_def,swap_end_addr_def] >>
  ACCEPT_TAC riscv_cont_swap_thm
 QED
 
@@ -69,6 +61,7 @@ QED
 (* ------------------------ *)
 
 val readable_thm = computeLib.RESTR_EVAL_RULE [``riscv_weak_trs``] riscv_cont_swap;
+
 Theorem riscv_cont_swap_full = GEN_ALL readable_thm;
 
 val _ = export_theory ();

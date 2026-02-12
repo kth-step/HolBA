@@ -39,7 +39,7 @@ val _ = new_theory "max_prop";
 
 val arm8_cont_max_thm =
  get_arm8_contract_thm
-  bspec_cont_max
+  bspec_cont_max max_init_addr_def [max_end_addr_def]
   bir_max_progbin_def
   arm8_max_pre_def arm8_max_post_def
   bir_max_prog_def
@@ -53,7 +53,6 @@ Theorem arm8_cont_max:
   (arm8_max_pre pre_x0 pre_x1)
   (arm8_max_post pre_x0 pre_x1)
 Proof
- rw [max_init_addr_def,max_end_addr_def] >>
  ACCEPT_TAC arm8_cont_max_thm
 QED
 
