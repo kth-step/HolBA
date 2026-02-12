@@ -1,0 +1,29 @@
+OTT = ott
+
+CLINE_OPTIONS = -r
+
+INCLUDES = $(HOLBADIR)/examples/bir/compute/src/theory \
+ $(HOLBADIR)/examples/bir/compute/examples \
+ $(HOLBADIR)/examples/bir/compute/src/shared \
+ $(HOLBADIR)/examples/bir/compute/examples/increment \
+ $(HOLBADIR)/examples/bir/compute/examples/mem_incr \
+ $(HOLBADIR)/examples/bir/compute/examples/sum_list \
+ $(HOLBADIR)/examples/bir/compute/examples/jump_chain
+
+all: $(DEFAULT_TARGETS) test-compute.exe
+.PHONY: all
+
+ott/bir.tex: ott/bir.ott
+	cd ott && $(OTT) -o bir.tex -tex_show_meta false bir.ott
+
+ott/bir.pdf: ott/bir.tex
+	cd ott && pdflatex bir.tex
+
+test-compute.exe: test-compute.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-compute.exe
+	./test-compute.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-compute.exe

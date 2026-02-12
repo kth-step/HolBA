@@ -9,6 +9,12 @@ HolBA is a library based on the HOL4 theorem prover that provides
 tools for analysis and formal proofs of properties of programs in binary
 format that use the ARMv8, RISC-V and Cortex-M0 instruction sets.
 
+Applications of HolBA include automated verification of contracts for [ARMv8](examples/arm8)
+and [RISC-V](examples/riscv) binaries, and verification of execution time bounds for
+[Cortex-M0](examples/arm_cm0), all based on the corresponding formal ISA specification
+in [L3](https://acjf3.github.io/l3/index.html). See the [publications](#related-publications)
+for more details.
+
 ## Building
 
 HolBA is built using the `Holmake` tool bundled with HOL4.
@@ -81,12 +87,10 @@ ${HOLBA_HOLMAKE}
 
 - `doc`: Documentation about HolBA and BIR
 - `examples`: Applications of HolBA
-  - `aes`: lifting + WP of an AES block cipher implementation on ARMv8 and Cortex-M0
-  - `bsl-wp-smt`: Small BIR example programs to test simplified BIR generation, WP propagation and SMT interface
-  - `ijr`: Theory and examples related to indirect jumps
-  - `nic`: Network interface controller formalization
-  - `riscv`: Examples of specifying and verifying RISC-V programs using symbolic execution
-  - `tutorial`: End-to-end tutorial of simple ARMv8 example programs
+  - `arm8`: Examples of specifying and verifying ARMv8 programs, including automation of contract proofs using symbolic execution
+  - `arm_cm0`: Examples of specifying and verifying Cortex-M0 programs, including automation of execution time bound proofs using symbolic execution
+  - `bir`: Examples of using the intermediate BIR language for specification and verification
+  - `riscv`: Examples of specifying and verifying RISC-V programs, including automation of contract proofs using symbolic execution
 - `scripts`: CI and installation scripts
 - `src`: Library sources
   - `extra`: General theories and libraries

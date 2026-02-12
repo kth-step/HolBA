@@ -1,0 +1,19 @@
+CLINE_OPTIONS = -r
+
+INCLUDES = $(HOLBADIR)/examples/bir/compute/examples/increment \
+ $(HOLBADIR)/examples/bir/compute/examples/and_not \
+ $(HOLBADIR)/examples/bir/compute/examples/mem_incr \
+ $(HOLBADIR)/examples/bir/compute/examples/sum_list \
+ $(HOLBADIR)/examples/bir/compute/examples/jump_chain
+
+all: $(DEFAULT_TARGETS) benchmark-examples.exe
+.PHONY: all
+
+benchmark-examples.exe: benchmark-examples.uo
+	$(HOLMOSMLC) -o $@ $<
+
+benchmark: benchmark-examples.exe
+	./benchmark-examples.exe
+.PHONY: benchmark
+
+EXTRA_CLEANS = benchmark-examples.exe
