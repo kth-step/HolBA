@@ -13,7 +13,7 @@ Applications of HolBA include automated verification of contracts for [ARMv8](ex
 and [RISC-V](examples/riscv) binaries, and verification of execution time bounds for
 [Cortex-M0](examples/arm_cm0), all based on the corresponding formal ISA specification
 in [L3](https://acjf3.github.io/l3/index.html). See the [publications](#related-publications)
-for more details.
+for more technical details and [examples](examples) of binary analysis for specific ISAs.
 
 ## Building
 
