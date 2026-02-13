@@ -9,11 +9,13 @@ HolBA is a library based on the HOL4 theorem prover that provides
 tools for analysis and formal proofs of properties of programs in binary
 format that use the ARMv8, RISC-V and Cortex-M0 instruction sets.
 
-Applications of HolBA include automated verification of contracts for [ARMv8](examples/arm8)
-and [RISC-V](examples/riscv) binaries, and verification of execution time bounds for
-[Cortex-M0](examples/arm_cm0), all based on the corresponding formal ISA specification
-in [L3](https://acjf3.github.io/l3/index.html). See the [publications](#related-publications)
-for more technical details and [examples](examples) of binary analysis for specific ISAs.
+Applications of HolBA include automated verification of contracts for
+ARMv8 and RISC-V binaries, as well as verification of execution time bounds
+for Cortex-M0, all based on the corresponding formal ISA specification
+in the [L3 language](https://acjf3.github.io/l3/index.html). HolBA analyses
+use an intermediate language called BIR that abstracts from many ISA details.
+See the [publications](#related-publications) for more technical details and
+[examples](examples) of binary analyses for specific ISAs.
 
 ## Building
 
