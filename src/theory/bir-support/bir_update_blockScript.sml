@@ -952,7 +952,7 @@ Tactical.REVERSE CONJ_TAC >- (
     Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
     `bir_updateE_desc_final_exp_vars eup = {var}` by (
        ASM_SIMP_TAC std_ss [bir_updateE_desc_final_exp_vars_def,
-	 bir_updateE_desc_final_exp_def, bir_vars_of_exp_def]
+         bir_updateE_desc_final_exp_def, bir_vars_of_exp_def]
     ) >>
     FULL_SIMP_TAC std_ss
       [EVERY_MEM, IN_SING, bir_vars_of_updateB_desc_def,

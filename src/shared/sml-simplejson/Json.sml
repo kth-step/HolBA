@@ -121,7 +121,7 @@ structure Json :> JSON = struct
 
     fun bmpToUtf8 cp =  (* convert a codepoint in Unicode BMP to utf8 bytes *)
         let open Word
-	    infix 6 orb andb >>
+            infix 6 orb andb >>
         in
             map (Char.chr o toInt)
                 (if cp < 0wx80 then
@@ -131,7 +131,7 @@ structure Json :> JSON = struct
                  else if cp < 0wx10000 then
                      [0wxe0 orb (cp >> 0w12),
                       0wx80 orb ((cp >> 0w6) andb 0wx3f),
-		      0wx80 orb (cp andb 0wx3f)]
+                      0wx80 orb (cp andb 0wx3f)]
                  else raise Fail ("Invalid BMP point " ^ (Word.toString cp)))
         end
                       

@@ -7115,8 +7115,8 @@ end
      val _ = if is_SOME_BStmtB_BStmt_Assign last_stmt then print "is an assign\n" else print "is no assign\n";
      val t1 = (
      (fn t => (
-	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
-	t)) o
+        (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
+        t)) o
      birs_simp_fun o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o

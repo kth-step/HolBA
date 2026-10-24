@@ -13,7 +13,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 Definition aes_program_def:
      aes_program =
-		           (BirProgram
+                           (BirProgram
               [<|bb_label :=
                    BL_Address_HC (Imm64 0x400570w)
                      "D101C3FF (sub sp, sp, #0x70)";
@@ -70,8 +70,8 @@ Definition aes_program_def:
                             Bit32))];
                  bb_last_statement :=
                    BStmt_Jmp (BLE_Label (BL_Address (Imm64
-							 0x40057Cw)))|>
-	      ])
+                                                         0x40057Cw)))|>
+              ])
 End
 
 (* Note: This approach does not obtain a HT for the last block. *)

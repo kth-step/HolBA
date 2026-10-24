@@ -39,9 +39,9 @@ End
 
 Theorem bir_load_mmap_w_alt_thm:
   !mmap_w a. bir_load_mmap_w (mmap_w: 'a word |-> 'b word) a =
-	       case FLOOKUP mmap_w a of
-		 | NONE => 0w
-		 | SOME v => v
+               case FLOOKUP mmap_w a of
+                 | NONE => 0w
+                 | SOME v => v
 Proof
 REPEAT STRIP_TAC >>
   REWRITE_TAC [bir_load_mmap_w_def] >>
@@ -782,7 +782,7 @@ SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
   ) >>
 
   `bir_load_from_mem sv sr sa mem_n en
-	  (b2n (w2bs va sa)) =
+          (b2n (w2bs va sa)) =
    bir_load_from_mem sv sr sa (bir_mmap_w_w2n (bir_mf2mm mem_f)) en (w2n va)` suffices_by (
      STRIP_TAC >>
      FULL_SIMP_TAC std_ss []

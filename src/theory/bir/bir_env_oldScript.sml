@@ -397,17 +397,17 @@ Theorem bir_var_set_is_well_typed_REWRS:
   (bir_var_set_is_well_typed (set [])) /\
     (!v vs. bir_var_set_is_well_typed (set (v::vs)) =
        (EVERY (\v'. (bir_var_name v = bir_var_name v') ==>
-		   (bir_var_type v = bir_var_type v')
-	     ) vs /\
+                   (bir_var_type v = bir_var_type v')
+             ) vs /\
        bir_var_set_is_well_typed (set vs))
     )
 Proof
 REPEAT STRIP_TAC >- (
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [listTheory.LIST_TO_SET,
-			  bir_var_set_is_well_typed_def]
+                          bir_var_set_is_well_typed_def]
 ) >>
 FULL_SIMP_TAC std_ss [listTheory.LIST_TO_SET,
-	  bir_var_set_is_well_typed_INSERT, listTheory.EVERY_MEM] >>
+          bir_var_set_is_well_typed_INSERT, listTheory.EVERY_MEM] >>
 METIS_TAC []
 QED
 

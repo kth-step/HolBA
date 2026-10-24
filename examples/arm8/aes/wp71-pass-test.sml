@@ -13,7 +13,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 (* Passified version of the AES fragment of 71 statements. *)
 Definition aes_program_def:
      aes_program =
-		           (BirProgram
+                           (BirProgram
   [<|bb_label :=
        BL_Address_HC (Imm64 0x400868w) "B90057E0 (str w0, [sp,#84])";
      bb_statements :=

@@ -192,7 +192,7 @@ end;
 fun scamv_phase_symb_exec () =
     let
       val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs));
-	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
+            val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
       val ps = initialise paths;
       val _ = current_pathstruct := SOME ps;
       val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
@@ -317,22 +317,22 @@ fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
 
-	(* measuring time*)
-	val timer = (Time.now());
+        (* measuring time*)
+        val timer = (Time.now());
 
         (* ADHOC this constrains paths to only those where *)
-	(* none of the observations appear *)
+        (* none of the observations appear *)
         val guard_path_spec =
             if !do_enum
             then all_obs_not_present
             else (fn _ => true);
 
         val (path_spec, rel) =
-	  (*   case !next_iter_rel of *)
-		(* NONE        => valOf (next_relation guard_path_spec)  *)
-	  (*     | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end *)
+          (*   case !next_iter_rel of *)
+                (* NONE        => valOf (next_relation guard_path_spec)  *)
+          (*     | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end *)
             valOf (next_relation guard_path_spec)
-		        handle Option =>
+                        handle Option =>
                        raise ERR "next_experiment" "next_relation returned a NONE";
         val _ = min_verb 1 (fn () =>
                                (print "Selected path: ";
@@ -351,7 +351,7 @@ fun next_experiment all_exps next_relation  =
 (*        val word_relation =
             case !current_word_rel of
                 NONE => new_word_relation
-	      (* r is a constraint used to build the next relation for path enumeration *)
+              (* r is a constraint used to build the next relation for path enumeration *)
               | SOME r => mk_conj (new_word_relation, r); *)
         val word_relation = mk_conj(new_word_relation, lookup_visited (!current_visited_map) path_spec)
                             handle NotFound => new_word_relation;
@@ -386,7 +386,7 @@ fun next_experiment all_exps next_relation  =
                | SOME cumulative =>
                  SOME ``^cumulative /\ ^new_constraint``); *)
 
-	(* ------------------------- training start ------------------------- *)
+        (* ------------------------- training start ------------------------- *)
         val paths = valOf (!current_pathstruct);
         val st_o =
             if !do_training
@@ -399,13 +399,13 @@ fun next_experiment all_exps next_relation  =
                                      paths)
             else
               NONE;
-	(* ------------------------- training end ------------------------- *)
-	(* val _ = print_term (valOf (!current_word_rel)); *)
+        (* ------------------------- training end ------------------------- *)
+        (* val _ = print_term (valOf (!current_word_rel)); *)
 
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
         val lifted_prog_w_obs = case !current_prog_w_obs of
-				    SOME x => x
-				  | NONE => raise ERR "next_test" "no program found";
+                                    SOME x => x
+                                  | NONE => raise ERR "next_test" "no program found";
 
         val _ = if not (!do_conc_exec) then () else (
           let
@@ -414,9 +414,9 @@ fun next_experiment all_exps next_relation  =
                 raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
           in () end);
 
-	(* show time *)
-	val d_s = Time.- (Time.now(), timer) |> Time.toString;
-	val _ = print ("Time to generate the experiment : "^d_s^"\n");
+        (* show time *)
+        val d_s = Time.- (Time.now(), timer) |> Time.toString;
+        val _ = print ("Time to generate the experiment : "^d_s^"\n");
 
         (* create experiment files *)
         val exp_id  =

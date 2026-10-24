@@ -88,39 +88,39 @@ open bir_cfgLib;
 
     (* single entry recursion, stop at first revisit or exit *)
     fun traverse_graph (g:cfg_graph) entry visited acc =
-	let
-	    val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
-	    val targets = #CFGN_targets n;
-	    val descr_o = #CFGN_hc_descr n;
-	    val n_type  = #CFGN_type n;
-		
-	    val acc_new = (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc;
-	    val targets_to_visit = List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets;
-	    
-	in
-	    List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc') 
-		       (entry::visited, acc_new) 
-		       targets_to_visit
-	end;
+        let
+            val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
+            val targets = #CFGN_targets n;
+            val descr_o = #CFGN_hc_descr n;
+            val n_type  = #CFGN_type n;
+                
+            val acc_new = (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc;
+            val targets_to_visit = List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets;
+            
+        in
+            List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc') 
+                       (entry::visited, acc_new) 
+                       targets_to_visit
+        end;
 
     fun traverse_graph_branch (g:cfg_graph) depth  entry visited acc =
-	let
-	    val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
-	    val targets = #CFGN_targets n;
-	    val descr_o = #CFGN_hc_descr n;
-	    val n_type  = #CFGN_type n;
+        let
+            val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
+            val targets = #CFGN_targets n;
+            val descr_o = #CFGN_hc_descr n;
+            val n_type  = #CFGN_type n;
 
-	    val (targets_to_visit, acc_new) = 
-		if (cfg_node_type_eq (n_type, CFGNT_CondJump)) orelse (depth = 0) 
-		then ([], (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc)
-		else (List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets,
-		      (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc)
-	in
+            val (targets_to_visit, acc_new) = 
+                if (cfg_node_type_eq (n_type, CFGNT_CondJump)) orelse (depth = 0) 
+                then ([], (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc)
+                else (List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets,
+                      (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc)
+        in
 
-	    List.foldr (fn(entry',(visited',acc')) => traverse_graph_branch g (depth-1) entry' visited' acc') 
-		       (entry::visited, acc_new) 
-		       targets_to_visit
-	end;
+            List.foldr (fn(entry',(visited',acc')) => traverse_graph_branch g (depth-1) entry' visited' acc') 
+                       (entry::visited, acc_new) 
+                       targets_to_visit
+        end;
 
     (* given a branch, extract the statements of that branch as a list *)
     fun extract_branch_stmts g depth branch bl_dict =
@@ -145,45 +145,45 @@ open bir_cfgLib;
       | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
 
     fun bir_free_vars exp =
-	let
-	    open stringSyntax;
-	    fun var_to_str v =
-		let val (name,_) = dest_var v
-		in
-		    fromMLstring name
-		end
-	    val fvs =
-	        if is_comb exp then
-		    let val (con,args) = strip_comb exp
-		    in
-		        if identical con ``BExp_MemConst``
-		        then [var_to_str (List.nth(args, 2))]
-		        else if identical con ``BExp_Den``
-		        then
-		            let val v = case strip_comb (hd args) of
-				            (_,v::_) => v
-				          | _ => raise ERR "bir_free_vars" "not expected"
-		            in
-			        [v]
-		            end
-		        else
-		            List.concat (map bir_free_vars args)
-		    end
-	        else []
-	in
-	    nub_with (fn (x,y) => identical x y) fvs
-	end;
+        let
+            open stringSyntax;
+            fun var_to_str v =
+                let val (name,_) = dest_var v
+                in
+                    fromMLstring name
+                end
+            val fvs =
+                if is_comb exp then
+                    let val (con,args) = strip_comb exp
+                    in
+                        if identical con ``BExp_MemConst``
+                        then [var_to_str (List.nth(args, 2))]
+                        else if identical con ``BExp_Den``
+                        then
+                            let val v = case strip_comb (hd args) of
+                                            (_,v::_) => v
+                                          | _ => raise ERR "bir_free_vars" "not expected"
+                            in
+                                [v]
+                            end
+                        else
+                            List.concat (map bir_free_vars args)
+                    end
+                else []
+        in
+            nub_with (fn (x,y) => identical x y) fvs
+        end;
 
     fun bir_free_vars_stmt_b stmt_b =
-	      let
-	        open stringSyntax;
+              let
+                open stringSyntax;
           open bir_envSyntax;
           open bir_programSyntax;
           val fvs =
-		          if is_BStmt_Assign stmt_b
+                          if is_BStmt_Assign stmt_b
               then
                 let val (var,exp) = dest_BStmt_Assign stmt_b
-		            in
+                            in
                   (fst (dest_BVar var))::(bir_free_vars exp)
                 end
               else
@@ -193,12 +193,12 @@ open bir_cfgLib;
         end;
 
     fun primed_term t =
-	      let open stringSyntax numSyntax;
-	          fun primed_subst tm =
-		            List.map (fn v =>
-			                       let val vp = lift_string string_ty (fromHOLstring v ^ "*")
-			                       in ``^v`` |-> ``^vp`` end)
-			                   (bir_free_vars_stmt_b tm)
+              let open stringSyntax numSyntax;
+                  fun primed_subst tm =
+                            List.map (fn v =>
+                                               let val vp = lift_string string_ty (fromHOLstring v ^ "*")
+                                               in ``^v`` |-> ``^vp`` end)
+                                           (bir_free_vars_stmt_b tm)
         in
           List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) t (primed_subst t)
         end
@@ -253,19 +253,19 @@ open bir_cfgLib;
 
     (* generate shadow branches for a given cjmp *)
     fun add_shadow_branches obs_fun g depth dict (left_branch, right_branch) prog =
-	let
-	    open listSyntax
-	    open pairSyntax
+        let
+            open listSyntax
+            open pairSyntax
       fun to_stmt_list xs = mk_list(xs, “:bir_val_t bir_stmt_basic_t”);
       val gen_shadow = gen_shadow_branch obs_fun g depth dict;
       val left_shadow =  to_stmt_list (gen_shadow left_branch)
       val right_shadow = to_stmt_list (gen_shadow right_branch);
       fun prepend_block (itm, p) =
           (rhs o concl o EVAL)``prepend_obs_in_bir_prog_block ^itm ^p``
-	in
-	    foldl prepend_block prog
-		  [“(^left_branch, ^right_shadow)”, “(^right_branch, ^left_shadow)”]
-	end
+        in
+            foldl prepend_block prog
+                  [“(^left_branch, ^right_shadow)”, “(^right_branch, ^left_shadow)”]
+        end
 
     fun obs_refined n stm =
         if is_BStmt_Observe stm
@@ -287,26 +287,26 @@ open bir_cfgLib;
           go stmts
         end
 
- fun branch_instrumentation obs_fun prog depth = 	
+ fun branch_instrumentation obs_fun prog depth =        
     let (* build the dictionaries using the library under test *)
-	val bl_dict = gen_block_dict prog;
-	val lbl_tms = get_block_dict_keys bl_dict;
-	(* build the cfg and update the basic blocks *)
-	val n_dict = cfg_build_node_dict bl_dict lbl_tms;
-	    
-	val entries = [mk_key_from_address64 64 (Arbnum.fromHexString "0")];
-	val g1 = cfg_create "specExec" entries n_dict bl_dict;
-	    
-	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
+        val bl_dict = gen_block_dict prog;
+        val lbl_tms = get_block_dict_keys bl_dict;
+        (* build the cfg and update the basic blocks *)
+        val n_dict = cfg_build_node_dict bl_dict lbl_tms;
+            
+        val entries = [mk_key_from_address64 64 (Arbnum.fromHexString "0")];
+        val g1 = cfg_create "specExec" entries n_dict bl_dict;
+            
+        val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
   (* targets: each element in this list is a two-element list of branch targets
      there is one such element for each cjmp in the program *)
-	val targets = map (fn i => #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g1) i "_" "_")) cjmp_nodes;
+        val targets = map (fn i => #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g1) i "_" "_")) cjmp_nodes;
   fun unpack_targets ts =
       case ts of
           left::right::_ => (left,right)
         | _ => raise ERR "branch_instrumentation" "CJMP node without two targets"
     in
-	    foldl (fn (ts, p) =>
+            foldl (fn (ts, p) =>
                 add_shadow_branches obs_fun g1 depth bl_dict (unpack_targets ts) p)
             prog
             targets
@@ -354,9 +354,9 @@ fun get_obs_model id =
   let
     val obs_hol_type =
              if id = "mem_address_pc" then
-	  bir_arm8_mem_addr_pc_model.obs_hol_type
+          bir_arm8_mem_addr_pc_model.obs_hol_type
         else if id = "mem_address_pc_lspc" then
-	  bir_arm8_mem_addr_pc_lspc_model.obs_hol_type
+          bir_arm8_mem_addr_pc_lspc_model.obs_hol_type
         else if id = "cache_tag_index" then
           bir_arm8_cache_line_model.obs_hol_type
         else if id = "cache_tag_only" then

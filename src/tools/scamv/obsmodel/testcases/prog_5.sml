@@ -2,13 +2,13 @@
 
 (*
 =================================
-	cmp x1, x2
-	b.hs #0x14
-	ldr x4, [x3, x1]
-	lsl x4, x4, #0x6
-	ldr x6, [x5, x4]
-	b #0x8
-	nop
+        cmp x1, x2
+        b.hs #0x14
+        ldr x4, [x3, x1]
+        lsl x4, x4, #0x6
+        ldr x6, [x5, x4]
+        b #0x8
+        nop
 =================================
 *)
 
@@ -138,25 +138,25 @@ F
 
 (*
 =================================
-	cmp x1, x2
+        cmp x1, x2
 obs0 0x0
-	b.hs #0x14
+        b.hs #0x14
 obs0 0x4
-	ldr x4, [x3, x1]
+        ldr x4, [x3, x1]
 obs0 0x8
 obs0 x1+x3
-	lsl x4, x4, #0x6
+        lsl x4, x4, #0x6
 obs0 0xC
-	ldr x6, [x5, x4]
+        ldr x6, [x5, x4]
 obs0 0x10
 obs0 x5+x4
-	b #0x8
+        b #0x8
 obs0 0x14
-	nop
+        nop
 obs0 x1*+x3*
 obs1 x5*+x4*
 obs0 0x18
-	HALT
+        HALT
 obs0 0x1C
 =================================
 *)

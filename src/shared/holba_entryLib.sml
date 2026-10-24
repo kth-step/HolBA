@@ -34,8 +34,8 @@ in
   in
     fun get_script_args () =
       case !script_args_data of
-	  SOME x => x
-	| NONE => (assign_args_data (); valOf (!script_args_data));
+          SOME x => x
+        | NONE => (assign_args_data (); valOf (!script_args_data));
   end
 
 end (* local *)

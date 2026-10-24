@@ -229,7 +229,7 @@ Induct_on `e` >> (
       FULL_SIMP_TAC std_ss [bir_eval_cast_def]
     ) >>
     METIS_TAC [type_of_bir_val_def, type_of_bir_gencast,
-	       NOT_NONE_SOME]
+               NOT_NONE_SOME]
   ],
 
   (* UnaryExp *)
@@ -240,7 +240,7 @@ Induct_on `e` >> (
       FULL_SIMP_TAC std_ss [bir_eval_unary_exp_def]
     ) >>
     METIS_TAC [type_of_bir_val_def, type_of_bir_unary_exp,
-	       NOT_NONE_SOME, bir_type_is_Imm_def]
+               NOT_NONE_SOME, bir_type_is_Imm_def]
   ],
 
   (* BinExp *)
@@ -251,7 +251,7 @@ Induct_on `e` >> (
     FULL_SIMP_TAC std_ss [bir_eval_bin_exp_REWRS]
   ) >>
   METIS_TAC [type_of_bir_val_def, type_of_bir_bin_exp,
-	     NOT_NONE_SOME, bir_type_is_Imm_def],
+             NOT_NONE_SOME, bir_type_is_Imm_def],
 
   (* BinPred *)
   Cases_on `bir_eval_exp e env` >> Cases_on `bir_eval_exp e' env` >> (
@@ -285,7 +285,7 @@ Induct_on `e` >> (
   ) >>
   Cases_on `b = Imm1 1w` >> (
     METIS_TAC [type_of_bir_val_def, NOT_NONE_SOME, bir_type_is_Imm_def,
-	       bool2b_def, BType_Bool_def, type_of_bool2b]
+               bool2b_def, BType_Bool_def, type_of_bool2b]
   ),
 
   (* Load *)

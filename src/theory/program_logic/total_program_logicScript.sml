@@ -290,8 +290,8 @@ WF_REL_TAC `(\(TS, s, wf_rel, var, l, le, invariant, C1).
       Q.UNABBREV_TAC `B'` >>
       FULL_SIMP_TAC std_ss [] >>
       `IMAGE (\a. get_var a (get_state a))
-	     (\b. b IN (\b. b IN B /\ (get_wf_rel b = get_wf_rel w))) (b3 b1)` suffices_by (
-	FULL_SIMP_TAC std_ss []
+             (\b. b IN (\b. b IN B /\ (get_wf_rel b = get_wf_rel w))) (b3 b1)` suffices_by (
+        FULL_SIMP_TAC std_ss []
       ) >>
       FULL_SIMP_TAC std_ss [pred_setTheory.IMAGE_applied] >>
       qexists_tac `(b0,b1,get_wf_rel w,b3,b4,b5,b6,b7)` >>
@@ -323,10 +323,10 @@ val loop_fun_ind_spec =
  Q.SPEC `\TS s wf_rel var l le invariant C1.
           first_enc TS ==>
           WF wf_rel ==>
-	  total_loop_jgmt TS l le invariant C1 wf_rel var ==>
-	  t_jgmt TS l le (\s. invariant s /\ ~C1 s) post ==>
-	  (invariant s /\ TS.ctrl s = l) ==>
-	  (?s'. TS.weak le s s' /\ post s')` loop_fun_ind;
+          total_loop_jgmt TS l le invariant C1 wf_rel var ==>
+          t_jgmt TS l le (\s. invariant s /\ ~C1 s) post ==>
+          (invariant s /\ TS.ctrl s = l) ==>
+          (?s'. TS.weak le s s' /\ post s')` loop_fun_ind;
 
 
 val inductive_invariant_goal = fst $ dest_imp $ concl loop_fun_ind_spec;

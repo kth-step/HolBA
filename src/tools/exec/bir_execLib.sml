@@ -26,8 +26,8 @@ struct
   fun print_log_with_style sty f s = let
     val log_ = !log;
     val _ = case log_ of
-	        NONE       => ()
-	      | SOME log_v => if f then TextIO.output (log_v, s) else ();
+                NONE       => ()
+              | SOME log_v => if f then TextIO.output (log_v, s) else ();
     val _ = print_with_style_ sty s;
   in () end;
 
@@ -239,8 +239,8 @@ val _ = debug_trace := 2;
       val timer = timer_start 0;
 
       val valid_prog_thm = case validprog_o of
-			      SOME thm => thm
-	                    | NONE     => bir_exec_valid_prog prog_l_def;
+                              SOME thm => thm
+                            | NONE     => bir_exec_valid_prog prog_l_def;
 
       val d_s = timer_stop timer;
       val _ = print_l "ok\n";
@@ -253,8 +253,8 @@ val _ = debug_trace := 2;
       val timer = timer_start 0;
 
       val well_typed_prog_thm = case welltypedprog_o of
-				    SOME thm => thm
-				  | NONE     => bir_exec_well_typed_prog prog_l_def;
+                                    SOME thm => thm
+                                  | NONE     => bir_exec_well_typed_prog prog_l_def;
 
       val d_s = timer_stop timer;
       val _ = print_l "ok\n";
@@ -267,16 +267,16 @@ val _ = debug_trace := 2;
       val timer = timer_start 0;
 
       val state = case state_o of
-		    SOME state => state
-		  | NONE       =>
+                    SOME state => state
+                  | NONE       =>
                       let
-			val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
+                        val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
 
-			val vars = gen_vars_of_prog prog;
+                        val vars = gen_vars_of_prog prog;
 
-			val env = bir_exec_env_initd_env vars;
+                        val env = bir_exec_env_initd_env vars;
 
-			val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
+                        val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
                       in
                         state
                       end;

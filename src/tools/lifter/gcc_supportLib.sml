@@ -108,14 +108,14 @@ fun parse_dataline skipentries cl =
           handle HOL_ERR _ =>
             let
               fun find_two _   _     _ []     = NONE
-		| find_two acc true  c (x::l) = if (c = x) then SOME (acc-1)
+                | find_two acc true  c (x::l) = if (c = x) then SOME (acc-1)
                                                            else find_two (acc+1) false c l
-		| find_two acc false c (x::l) = if (c = x) then find_two (acc+1) true  c l
+                | find_two acc false c (x::l) = if (c = x) then find_two (acc+1) true  c l
                                                            else find_two (acc+1) false c l;
               fun split_at_two c cl =
                 case find_two 0 false c cl of
-		   NONE   => raise ERR "parse_disassembly_file_line" "couldn't find the two characters"
-	         | SOME i => i;
+                   NONE   => raise ERR "parse_disassembly_file_line" "couldn't find the two characters"
+                 | SOME i => i;
               val cl = tl cl';
               val i = split_at_two #" " cl;
             in

@@ -25,29 +25,29 @@ signature test_bmr = sig
   val lift_instr_cached :
      bool ->
        num * num ->
-	 thm * thm ->
-	   lift_inst_cache ->
-	     num ->
-	       string ->
-		 string option ->
-		   thm option * bir_inst_liftingExn_data option * string *
-		   lift_inst_cache
+         thm * thm ->
+           lift_inst_cache ->
+             num ->
+               string ->
+                 string option ->
+                   thm option * bir_inst_liftingExn_data option * string *
+                   lift_inst_cache
   (* For lifting a single instruction *)
   val lift_instr :
      num ->
        num ->
-	 num ->
-	   string ->
-	     string option ->
-	       thm option * bir_inst_liftingExn_data option * string
+         num ->
+           string ->
+             string option ->
+               thm option * bir_inst_liftingExn_data option * string
   (* For lifting a list of instructions *)
   val lift_instr_list :
      num ->
        num ->
-	 num ->
-	   string list ->
-	     int * int *
-	     (thm option * bir_inst_liftingExn_data option * string) list
+         num ->
+           string list ->
+             int * int *
+             (thm option * bir_inst_liftingExn_data option * string) list
   (* Prints the final results *)
   val final_results : string -> string list -> unit
 end

@@ -71,7 +71,7 @@ struct
   (10,"StorePair32-2"),                  (10,"LoadPair32-1"),                  (10,"LoadPair32-2"),
   (10,"LoadStorePair64-1"),              (10,"LoadStorePair64-2"),             (10,"LoadStorePair64-3"),
   (10,"LoadStorePair64-4"),              (10,"NoOperation")]
-			   
+                           
  fun instClass subs =
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
@@ -90,7 +90,7 @@ struct
 
  local
      fun random_bit () =
-	 if Random.range (0, 2) (rand_gen_get()) = 1 then boolSyntax.T else boolSyntax.F
+         if Random.range (0, 2) (rand_gen_get()) = 1 then boolSyntax.T else boolSyntax.F
  in
  fun random_hex tm =
      let
@@ -120,7 +120,7 @@ struct
  fun intersect([],[]) = []
    | intersect(L1,[]) = []
    | intersect(L1,L2) = if member(hd(L2), L1) then hd(L2)::intersect(L1, tl(L2))
-			else intersect(L1, tl(L2));
+                        else intersect(L1, tl(L2));
 
  fun remChars  (c,s) =
      let fun rem [] = []
@@ -129,7 +129,7 @@ struct
              then rem cs
              else c'::rem cs
      in
-	 implode (rem (explode s)) 
+         implode (rem (explode s)) 
      end
 
  fun getReg args = 
@@ -156,18 +156,18 @@ struct
  val ThenRegx = CONCATENATION;
  fun RepeatRegx re n =
      let fun repeat 0 i = []
- 	   | repeat n i = i :: repeat (n - 1) i
+           | repeat n i = i :: repeat (n - 1) i
      in
- 	 flatten(repeat re n)
+         flatten(repeat re n)
      end;
 
 
  val pattern_xzrwzr1  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
- 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any_, END]);
+                                 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any_, END]);
 
  val pattern_xzrwzr2  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
- 				 @[Star (OrRegx(alphaList@numList@specialChar)), whitespace_r]
- 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any_, END]);
+                                 @[Star (OrRegx(alphaList@numList@specialChar)), whitespace_r]
+                                 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any_, END]);
 
  val pattern_xzrwzr = OrRegx[pattern_xzrwzr1, pattern_xzrwzr2];
 
@@ -198,18 +198,18 @@ struct
 
  fun filter_inspected_instr str =
      let
- 	 fun reader nil    = NONE
+         fun reader nil    = NONE
            | reader (h::t) = SOME (h, t)
-			     
- 	 fun checkPatterns (pattern, str) =
- 	     let
- 		 val result = Option.map (fn (str, strm) => str) (
- 			      evalRegex pattern reader (String.explode str)
- 			      )
- 		 val resultBool = if (isSome result) then true else false
- 	     in
- 		 resultBool
- 	     end
+                             
+         fun checkPatterns (pattern, str) =
+             let
+                 val result = Option.map (fn (str, strm) => str) (
+                              evalRegex pattern reader (String.explode str)
+                              )
+                 val resultBool = if (isSome result) then true else false
+             in
+                 resultBool
+             end
      in
        List.exists (fn p => checkPatterns(p, str)) (get_patternList())
      end
@@ -244,11 +244,11 @@ struct
  fun instGen () =
      let
          val gen = rand_gen_get();
-	 val ic = (snd(weighted_select arm8_names_weighted gen));
-	 val ib = random ic;
-	 val il = filter (fn c => String.isSubstring "WORD" c) (decomp ib);
+         val ic = (snd(weighted_select arm8_names_weighted gen));
+         val ib = random ic;
+         val il = filter (fn c => String.isSubstring "WORD" c) (decomp ib);
      in
-	 if (not(null il) orelse (filter_inspected_instr ((hd o splitter o hd o decomp) ib))) then instGen () else (ic, ib)
+         if (not(null il) orelse (filter_inspected_instr ((hd o splitter o hd o decomp) ib))) then instGen () else (ic, ib)
      end 
  (*
   val inst = "15c984de"
@@ -257,15 +257,15 @@ struct
   *)
  local
      fun addr_to_hexString adr =
-	 (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
+         (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 
      fun cmp_ast s =
-	 case instructionFromString s of
-	     OK ast => ast
+         case instructionFromString s of
+             OK ast => ast
            | _ => raise ERR "cmp_ast" "some progGen error"
 
      fun cmp_mcode ast = 
-	 (case Encode ast of
+         (case Encode ast of
               arm8.ARM8 w =>
               ("",
                Option.SOME(L3.padLeftString(#"0",(8,BitsN.toHexString w))))
@@ -276,67 +276,67 @@ struct
      let
          val gen = rand_gen_get()
          val adr = (4*(Random.range (1, 1+len-pc) gen))
-	 val adr_str = String.concat["b +#0x", (addr_to_hexString(adr))]
-	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
+         val adr_str = String.concat["b +#0x", (addr_to_hexString(adr))]
+         val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
-	 (emp_str, inst)
+         (emp_str, inst)
      end
  fun c_branch_instGen (inst, pc, len) =
      let
          val gen = rand_gen_get()
          val adr = (4*(Random.range (1, 1+len-pc) gen))
-	 val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
-	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
+         val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
+         val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
-	 (emp_str, inst)
+         (emp_str, inst)
      end
  fun cmp_and_branch_instGen (inst, pc, len) =
      let
          val gen = rand_gen_get()
          val adr = (4*(Random.range (1, 1+len-pc) gen))
-	 val tks = (p_tokens(hd(decomp(inst))))
-	 val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
-	 val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
+         val tks = (p_tokens(hd(decomp(inst))))
+         val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
+         val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
      in
-	 (emp_str, inst)
+         (emp_str, inst)
      end     
  end
 
  fun instsGen (pc, [], len)  =
      let val (c, inst) = instGen ()
-	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
+         val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
-	 case (instClass c) of 
-	     "BranchImmediate" =>  instsGen (pc, [], len)
-	   | "BranchConditional" => instsGen (pc, [], len)
-	   | "CompareAndBranch" => instsGen (pc, [], len)			   
-	   | _ => if String.isPrefix "bl" inst
+         case (instClass c) of 
+             "BranchImmediate" =>  instsGen (pc, [], len)
+           | "BranchConditional" => instsGen (pc, [], len)
+           | "CompareAndBranch" => instsGen (pc, [], len)                          
+           | _ => if String.isPrefix "bl" inst
                   then instsGen (pc, [], len)
                   else (hd args, inst)
      end
      
    | instsGen (pc, src, len) =
      let val (c, inst) = instGen ()
-	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
-	 val inclusion =  intersect (src, tl args)
+         val args = getReg (p_tokens ((snd o inst_decomp) inst))
+         val inclusion =  intersect (src, tl args)
      in
-	 case (instClass c) of 
-	     "BranchImmediate" =>  branch_instGen(pc, len)
-	   | "BranchConditional" => c_branch_instGen (inst,pc, len)
-	   | "CompareAndBranch" => cmp_and_branch_instGen (inst,pc, len)			   
-	   | _ =>
-	     if List.null inclusion orelse String.isPrefix "bl" inst
-	     then instsGen (pc,src, len)
-	     else (hd args, inst)
+         case (instClass c) of 
+             "BranchImmediate" =>  branch_instGen(pc, len)
+           | "BranchConditional" => c_branch_instGen (inst,pc, len)
+           | "CompareAndBranch" => cmp_and_branch_instGen (inst,pc, len)                           
+           | _ =>
+             if List.null inclusion orelse String.isPrefix "bl" inst
+             then instsGen (pc,src, len)
+             else (hd args, inst)
      end
 
  (* ---------------------------------------------  *)
  fun progGen n =
      let val src = ref ([]:string list);
-	 val pc = ref 0;
+         val pc = ref 0;
      in
-	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, n)) 			
-				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
+         (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, n))                    
+                                    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
  val do_debug = false;

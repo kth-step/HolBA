@@ -28,14 +28,14 @@ in
 
   fun machstate_print (MACHSTATE (regmap, (wsz, defval, memmap))) =
       let
-	  val _ = print ("MACHSTATE = (\n");
-	  val _ = print ("  mem := " ^ (Arbnum.toString defval) ^ ", otherwise {\n");
-	  val _ = List.map (fn (a,v) =>  print ("\t(0x"^(Arbnum.toHexString(a))^"\t-> 0x"^(Arbnum.toHexString(v))^")\n"))
+          val _ = print ("MACHSTATE = (\n");
+          val _ = print ("  mem := " ^ (Arbnum.toString defval) ^ ", otherwise {\n");
+          val _ = List.map (fn (a,v) =>  print ("\t(0x"^(Arbnum.toHexString(a))^"\t-> 0x"^(Arbnum.toHexString(v))^")\n"))
                            (Redblackmap.listItems memmap);
-	  val _ = print "  }\n  regs := {\n";
-	  val _ = List.map (fn (n,v) => print ("\t(" ^ n ^ "\t-> 0x" ^(Arbnum.toHexString( v))^ ")\n"))
+          val _ = print "  }\n  regs := {\n";
+          val _ = List.map (fn (n,v) => print ("\t(" ^ n ^ "\t-> 0x" ^(Arbnum.toHexString( v))^ ")\n"))
                            (Redblackmap.listItems regmap);
-	  val _ = print "  }\n)\n";
+          val _ = print "  }\n)\n";
       in () end;
 
   fun machstate_add_reg (rn, rv) (MACHSTATE (rm, m)) =
@@ -67,7 +67,7 @@ in
       fun mentry_to_json (k,v) =
         let
           val addr  = "0x" ^ (Arbnumcore.toHexString k);
-	  val value = "0x" ^ (Arbnumcore.toHexString v);
+          val value = "0x" ^ (Arbnumcore.toHexString v);
         in
           (addr, STRING value)
         end;

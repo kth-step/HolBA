@@ -356,9 +356,9 @@ in
         let
           val ethm = run tm
         in
-	  if (is_System o rhs o concl) thm2
-	  then tidy_up_system_inst ethm
-	  else ethm
+          if (is_System o rhs o concl) thm2
+          then tidy_up_system_inst ethm
+          else ethm
         end
       val ethm2 = tidy_up_signalAddressException ethm1
       val thm4 = Conv.RIGHT_CONV_RULE (Conv.REWR_CONV ethm2) thm3

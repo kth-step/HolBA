@@ -15,8 +15,8 @@ sig
             | Compare of Operand * Operand
             | Nop
             | Add     of Operand * Operand * Operand
-	    | Lsl     of Operand * Operand * Operand
-		      
+            | Lsl     of Operand * Operand * Operand
+                      
     val pp_program : ArmInstruction list -> string list;
 
     val arb_addr : int Gen;
@@ -51,7 +51,7 @@ sig
     val prog_gen_a_la_qc_noresize : ArmInstruction list Gen -> int -> string list;
 
     val arb_program_glue_spectre : (ArmInstruction list * ArmInstruction list) Gen ->
-				   ArmInstruction list Gen -> ArmInstruction list Gen
+                                   ArmInstruction list Gen -> ArmInstruction list Gen
     val arb_program_spectre : ArmInstruction list Gen
 end
 

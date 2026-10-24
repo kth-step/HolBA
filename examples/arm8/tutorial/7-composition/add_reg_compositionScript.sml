@@ -65,7 +65,7 @@ val bir_add_reg_loop_exit_comp_ct =
   (* The definitions of any shorthands in postcondition of contract 1
    * and precondition of contract 2 *)
   val def_list = [bir_add_reg_contract_3_post_variant_def,
-		  bir_add_reg_contract_2_pre_variant_def];
+                  bir_add_reg_contract_2_pre_variant_def];
 *)
 
 val loop_bir_cont =
@@ -96,14 +96,14 @@ val loop_exit_bir_cont =
   val prog_def = ;
   (* The definitions of the loop condition and both preconditions *)
   val def_list = [bir_add_reg_loop_condition_def,
-		  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_2_post_variant_def,
+                  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_2_post_variant_def,
                   bir_add_reg_contract_4_pre_def];
 *)
 
 val loop_and_exit_ct =
   bir_compose_simp_loop_predset
     loop_bir_cont loop_exit_bir_cont ``bir_add_reg_I`` ``bir_add_reg_loop_condition`` (bden (bvar "R2" ``(BType_Imm Bit64)``)) bir_add_reg_prog_def [bir_add_reg_loop_condition_def,
-		  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_2_post_variant_def,
+                  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_2_post_variant_def,
                   bir_add_reg_contract_4_pre_def];
 
 (****************************************************************)

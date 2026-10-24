@@ -14,34 +14,34 @@ val wp_tests =
     (* program term *)
     ``BirProgram [
       <|bb_label := BL_Label "entry";
-	bb_statements := [];
-	bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "mem_store"))
+        bb_statements := [];
+        bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "mem_store"))
       |>;
       <|bb_label := BL_Label "mem_store"; (* init *)
-	bb_statements := [
-	  BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
-	    (BExp_Store
-	      (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-	      (BExp_Den (BVar "ADDR1" (BType_Imm Bit32)))
-	      BEnd_BigEndian
-	      (BExp_Const (Imm16 42w)))
-	];
-	bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "mem_load"))
+        bb_statements := [
+          BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
+            (BExp_Store
+              (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
+              (BExp_Den (BVar "ADDR1" (BType_Imm Bit32)))
+              BEnd_BigEndian
+              (BExp_Const (Imm16 42w)))
+        ];
+        bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "mem_load"))
       |>;
       <|bb_label := BL_Label "mem_load";
-	bb_statements := [
-	  BStmt_Assign (BVar "x" (BType_Imm Bit16))
-	    (BExp_Load
-	      (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-	      (BExp_Den (BVar "ADDR2" (BType_Imm Bit32)))
-	      BEnd_BigEndian
-	      Bit16)
-	];
-	bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "end"))
+        bb_statements := [
+          BStmt_Assign (BVar "x" (BType_Imm Bit16))
+            (BExp_Load
+              (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
+              (BExp_Den (BVar "ADDR2" (BType_Imm Bit32)))
+              BEnd_BigEndian
+              Bit16)
+        ];
+        bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "end"))
       |>;
       <|bb_label := BL_Label "end";
-	bb_statements := [];
-	bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))
+        bb_statements := [];
+        bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))
       |>
     ]``,
     (* Precondition *)

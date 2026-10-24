@@ -96,75 +96,75 @@ fun uop_to_smt uop = if is_BIExp_Not uop then
 
 fun export_to_smt exp =
     if is_BExp_Const exp then
-	if exp = ``BExp_Const (Imm1 1w)`` then ("true", ``:word1``)
-	else if exp = ``BExp_Const (Imm1 0w)`` then ("false", ``:word1``)
-	else 
-	    let val (s,w) =(gen_dest_Imm o dest_BExp_Const) exp
-	    in
-		(String.concat[
-		 "(_ bv", 
-		 Arbnumcore.toString(wordsSyntax.dest_word_literal w), 
-		 " ", Int.toString s, ")"], type_of w)
-	    end
+        if exp = ``BExp_Const (Imm1 1w)`` then ("true", ``:word1``)
+        else if exp = ``BExp_Const (Imm1 0w)`` then ("false", ``:word1``)
+        else 
+            let val (s,w) =(gen_dest_Imm o dest_BExp_Const) exp
+            in
+                (String.concat[
+                 "(_ bv", 
+                 Arbnumcore.toString(wordsSyntax.dest_word_literal w), 
+                 " ", Int.toString s, ")"], type_of w)
+            end
     else if is_BExp_Den exp then
         ((fst o dest_BVar_string o dest_BExp_Den) exp, ``:word64``)
     else if is_BExp_UnaryExp exp then
         let
             val (uop, exp) = (dest_BExp_UnaryExp) exp;
             val uopstr = uop_to_smt uop;
-	    val e1 = (export_to_smt exp)
+            val e1 = (export_to_smt exp)
         in
-	    (String.concat ["(", uopstr, " ", 
-			    (fst e1), ")"],
-	     snd e1)
+            (String.concat ["(", uopstr, " ", 
+                            (fst e1), ")"],
+             snd e1)
         end
     else if is_BExp_BinExp exp then
         let
             val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
-	    val e1 = (export_to_smt exp1)
-	    val e2 = (export_to_smt exp2)
+            val e1 = (export_to_smt exp1)
+            val e2 = (export_to_smt exp2)
             val bpredopstr = if (snd e1) = ``:word1`` then bop_to_smt bop
-			     else bbv_to_smt bop;
+                             else bbv_to_smt bop;
         in
-	    (String.concat ["(", bpredopstr, " ", 
-			    (fst e1), " ", 
-			    (fst e2), ")"],
-	     snd e1)
+            (String.concat ["(", bpredopstr, " ", 
+                            (fst e1), " ", 
+                            (fst e2), ")"],
+             snd e1)
         end
     else if is_BExp_BinPred exp then
         let
             val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
-	    val e1 = (export_to_smt exp1)
-	    val e2 = (export_to_smt exp2)
+            val e1 = (export_to_smt exp1)
+            val e2 = (export_to_smt exp2)
             val bpredopstr = bpredop_to_smt bpredop;
         in
-	    (String.concat ["(", bpredopstr, " ", 
-			    (fst e1), " ", 
-			    (fst e2), ")"],
-	     ``:word1``)
+            (String.concat ["(", bpredopstr, " ", 
+                            (fst e1), " ", 
+                            (fst e2), ")"],
+             ``:word1``)
         end
     else if is_BExp_Load exp then
         let
             val (expm, expad, endi, sz) = (dest_BExp_Load) exp
-	    val em = (export_to_smt expm)
-	    val ead = (export_to_smt expad)
+            val em = (export_to_smt expm)
+            val ead = (export_to_smt expad)
             val szn = (size_of_bir_immtype_t) sz
         in
-	    if is_BEnd_LittleEndian endi then
-		if szn = 64 then
-		    let val selects = List.map (fn n => String.concat ["(select ", fst em, " (bvadd ", fst ead, " (_ bv", n," 64)))"]) (List.tabulate (8, Int.toString))
-		    in
-			(List.foldl (fn (a,b) => String.concat ["(concat ", a, b, " )"])
-				   (hd selects) (tl selects),
-			 ``:word64``)	 
-		    end
-		else
-		    raise (ERR "castt_to_string" (term_to_string exp))
-	    else
-		raise (ERR "castt_to_string" (term_to_string exp))
+            if is_BEnd_LittleEndian endi then
+                if szn = 64 then
+                    let val selects = List.map (fn n => String.concat ["(select ", fst em, " (bvadd ", fst ead, " (_ bv", n," 64)))"]) (List.tabulate (8, Int.toString))
+                    in
+                        (List.foldl (fn (a,b) => String.concat ["(concat ", a, b, " )"])
+                                   (hd selects) (tl selects),
+                         ``:word64``)    
+                    end
+                else
+                    raise (ERR "castt_to_string" (term_to_string exp))
+            else
+                raise (ERR "castt_to_string" (term_to_string exp))
         end
     else
-	raise (ERR "castt_to_string" (term_to_string exp))
+        raise (ERR "castt_to_string" (term_to_string exp))
 ;
 
 
@@ -220,21 +220,21 @@ fun bir_exp_vars_in_exp exp =
 ;
 fun bir_exp_dist_vars_in_exp exp =
     let
-	val vars = bir_exp_vars_in_exp exp;
+        val vars = bir_exp_vars_in_exp exp;
     in
-	List.foldr (fn (var, vl) => if List.exists (fn x => x = var) vl then vl else var::vl) [] vars
+        List.foldr (fn (var, vl) => if List.exists (fn x => x = var) vl then vl else var::vl) [] vars
     end;
 
 fun var_to_smt (v, t) =
     if t = ``BType_Mem Bit64 Bit8`` then
-	String.concat ["(declare-const ", v, "(Array (_ BitVec 64) (_ BitVec 8))) \n"]
+        String.concat ["(declare-const ", v, "(Array (_ BitVec 64) (_ BitVec 8))) \n"]
     else
-	String.concat ["(declare-const ", v, "(_ BitVec 64)) \n"];
+        String.concat ["(declare-const ", v, "(_ BitVec 64)) \n"];
 
 val thm1 = SIMP_CONV std_ss [bir_wp_simpTheory.bir_exp_and_def,
-			     bir_wp_simpTheory.bir_exp_imp_def,
-			     bir_wp_simpTheory.bir_exp_or_def,
-			     bir_wp_simpTheory.bir_exp_not_def] wp;
+                             bir_wp_simpTheory.bir_exp_imp_def,
+                             bir_wp_simpTheory.bir_exp_or_def,
+                             bir_wp_simpTheory.bir_exp_not_def] wp;
 val wp1 = (snd o dest_eq o concl) thm1;
 
 
@@ -244,9 +244,9 @@ val pre = " (and (and (= (bvand SP_EL0 (_ bv7 64)) (_ bv0 64)) (bvugt SP_EL0 (_ 
 (* val pre = " (= SP_EL0 (_ bv16777216 64) )"; *)
 (* val pre = " (= (bvand SP_EL0 (_ bv3 64)) (_ bv0 64))"; *)
 val pre = (String.concat [
-	  "(and (= (bvand R0_wp_0  (_ bv3 64)) (_ bv0 64)) ",
-	  pre,
-	  ")"]);
+          "(and (= (bvand R0_wp_0  (_ bv3 64)) (_ bv0 64)) ",
+          pre,
+          ")"]);
     
 writeFile "/tmp/aaa.z3" (String.concat
  ((List.map var_to_smt (bir_exp_dist_vars_in_exp wp1)) @

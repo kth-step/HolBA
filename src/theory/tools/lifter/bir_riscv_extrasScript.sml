@@ -182,23 +182,23 @@ val WORD_CONTR_TAC =
   REPEAT (
     NTAC 2 CASE_TAC >> (
       TRY (
-	Q.PAT_ASSUM `a + b = c`
-	  (fn thm1 =>
-	    FIRST_ASSUM
-	      (fn thm2 =>
-		let
-		  val tm1 = concl thm1
-		  val tm2 = concl thm2
-		in
-		  if is_neg tm2
-		  then FAIL_TAC ""
-		  else if term_eq tm1 tm2
-		  then FAIL_TAC ""
-		  else ASSUME_TAC (prove_word_assum_contr tm1 tm2)
-		end
-	      )
-	  ) >>
-	REV_FULL_SIMP_TAC std_ss []
+        Q.PAT_ASSUM `a + b = c`
+          (fn thm1 =>
+            FIRST_ASSUM
+              (fn thm2 =>
+                let
+                  val tm1 = concl thm1
+                  val tm2 = concl thm2
+                in
+                  if is_neg tm2
+                  then FAIL_TAC ""
+                  else if term_eq tm1 tm2
+                  then FAIL_TAC ""
+                  else ASSUME_TAC (prove_word_assum_contr tm1 tm2)
+                end
+              )
+          ) >>
+        REV_FULL_SIMP_TAC std_ss []
       )
     )
   );

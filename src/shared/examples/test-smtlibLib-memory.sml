@@ -164,7 +164,7 @@ val results = List.map (fn (name, z3bin_o, exst, expected) =>
             PolyML.print result;
             print ("expected: \n");
             PolyML.print expected;
-	    ());
+            ());
     in res end
   ) test_cases;
 

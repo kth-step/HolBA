@@ -68,7 +68,7 @@ struct
       val env_empty = ``(K NONE) : string -> bir_val_t option``;
 
       fun list_mk_update ([], env) = env
-	| list_mk_update (h::l, env) = list_mk_update (l, mk_comb (mk_update h, env));
+        | list_mk_update (h::l, env) = list_mk_update (l, mk_comb (mk_update h, env));
 
       val env = mk_BEnv (list_mk_update (List.rev var_assigns, env_empty));
     in
@@ -81,10 +81,10 @@ struct
   (* list of theorems to evaluate environment lookups *)
   val env_lookup_thms =
        [bir_var_name_def,
-	bir_var_type_def,
-	K_DEF,
-	UPDATE_APPLY,
-	bir_env_lookup_def
+        bir_var_type_def,
+        K_DEF,
+        UPDATE_APPLY,
+        bir_env_lookup_def
        ];
 
   val type_of_bir_val_thms =
@@ -92,7 +92,7 @@ struct
 
   val env_check_type_thms =
        [bir_env_lookup_type_def,
-	bir_env_check_type_def,
+        bir_env_check_type_def,
         BType_Bool_def
        ]@env_lookup_thms@type_of_bir_val_thms;
 

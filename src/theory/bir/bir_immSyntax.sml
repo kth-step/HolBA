@@ -125,15 +125,15 @@ val bir_imm_t_sizes_list =
 local
   fun bir_imm_of_size_ _ [] = raise ERR "bir_imm_of_size_" "empty sizes list"
     | bir_imm_of_size_ n ((h:term * int)::t) =
-	if n = (snd h)
-	then (fst h)
-	else if not (null t)
+        if n = (snd h)
+        then (fst h)
+        else if not (null t)
         then bir_imm_of_size_ n t
         else
-	  raise (ERR "bir_imm_of_size"
-		     ("The number of bits "^(Int.toString n)^
-		      " does not correspond with any binary word"^
-		      " length in supported BIR syntax."))
+          raise (ERR "bir_imm_of_size"
+                     ("The number of bits "^(Int.toString n)^
+                      " does not correspond with any binary word"^
+                      " length in supported BIR syntax."))
 in
 fun bir_imm_of_size n =
   bir_imm_of_size_ n bir_imm_t_sizes_list

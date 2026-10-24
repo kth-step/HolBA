@@ -41,7 +41,7 @@ in
         else if hwsize = 64 then
           (SMTTY_BV 64)
         else
-	  problem_gen "hvar_to_smtlib_type" hv "don't know how to convert HOL type, bad word size: "
+          problem_gen "hvar_to_smtlib_type" hv "don't know how to convert HOL type, bad word size: "
     end;
 
   fun bvar_to_smtlib_ref bv =
@@ -340,13 +340,13 @@ fun to_smtlib_bool (str, sty) =
       if export_abbreviation_dict andalso isSome abbr_o then (exst, valOf abbr_o)
       else if export_abbreviation_from_query andalso is_tl andalso is_bir_eq_abbrevd exp then
         let
-	  val (expval, expvar) = dest_bir_eq exp;
+          val (expval, expvar) = dest_bir_eq exp;
           val (exst1, v_var) = bexp_to_smtlib false exst expvar;
-	  
-	  val has_abbr = isSome (exst_get_abbr exst1 expval);
-	  val exst2 = exst_set_abbr_skip exst1 true;
+          
+          val has_abbr = isSome (exst_get_abbr exst1 expval);
+          val exst2 = exst_set_abbr_skip exst1 true;
           val (exst3, v_val) = bexp_to_smtlib false exst2 expval;
-	  val exst3 = exst_set_abbr_skip exst3 false;
+          val exst3 = exst_set_abbr_skip exst3 false;
 
           val args = [v_val, v_var];
           fun probfun () = problem exp "equality needs same type for both sides: ";
@@ -354,11 +354,11 @@ fun to_smtlib_bool (str, sty) =
           val v_var_cond = gen_smtlib_expr "=" args SMTTY_Bool;
 
           (* this must be done with care, can only be at toplevel and the resulting assertion have to be added to the conds in the exporter state *)
-	  (* maybe should just add it to the state, as it is a set it will not be added twice anyways? *)
+          (* maybe should just add it to the state, as it is a set it will not be added twice anyways? *)
           val exst4 = if has_abbr then exst3 else exst_add_abbr exst3 expval v_var;
-	in
-	  (exst4, v_var_cond)
-	end
+        in
+          (exst4, v_var_cond)
+        end
       else if is_BExp_Const exp then
         if (is_var o snd o gen_dest_Imm o dest_BExp_Const) exp then
           let
@@ -369,7 +369,7 @@ fun to_smtlib_bool (str, sty) =
           in
             (exst_add_var exst var, var)
           end
-	else
+        else
         let
           val (sz, wv) = (gen_dest_Imm o dest_BExp_Const) exp;
         in
@@ -526,7 +526,7 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 *)
       else if is_BExp_Load exp then
         let
-	  val (exst, abbr_skip) = exst_get_abbr_skip exst;
+          val (exst, abbr_skip) = exst_get_abbr_skip exst;
           val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
           val (exst1, valm)  = bexp_to_smtlib false exst  expm;
           val (exst2, valad) = bexp_to_smtlib false exst1 expad;
@@ -543,19 +543,19 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val szadi = styad_bvt;
           val szci  = styc_bvt;
           val szi  = (size_of_bir_immtype_t) sz;
-	  
+          
           val smt_endi = endi_to_smtlib endi (szci, szi);
 
-	  val loadval = gen_smt_load valm valad (smt_endi, szadi, szci, szi)
+          val loadval = gen_smt_load valm valad (smt_endi, szadi, szci, szi)
                         handle _ => problem exp "could not generate smt load expression";
 
-	  val (exst3, v_var) =
-	    if export_abbreviation_load then
-	      abbreviate_exp exst2 abbr_skip "vv" (exp, loadval)
-	    else
-	      (exst2, loadval);
+          val (exst3, v_var) =
+            if export_abbreviation_load then
+              abbreviate_exp exst2 abbr_skip "vv" (exp, loadval)
+            else
+              (exst2, loadval);
         in
-	  (exst3, v_var)
+          (exst3, v_var)
         end
 
 (*
@@ -567,7 +567,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
 *)
       else if is_BExp_Store exp then
         let
-	  val (exst, abbr_skip) = exst_get_abbr_skip exst;
+          val (exst, abbr_skip) = exst_get_abbr_skip exst;
           val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
           val (exst1, valm)  = bexp_to_smtlib false exst  expm;
           val (exst2, valad) = bexp_to_smtlib false exst1 expad;
@@ -589,17 +589,17 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
                     SMTTY_BV bvt => bvt
                   | _ => problem exp "can only write bitvectors to memory: ";
           val szi = styv_bvt;
-	  
+          
           val smt_endi = endi_to_smtlib endi (szci, szi);
 
           val storeval = gen_smt_store valm valad valv (smt_endi, szadi, szci, szi)
                          handle _ => problem exp "could not generate smt store expression";
 
-	  val (exst4, m_var) =
-	    if export_abbreviation_store then
-	      abbreviate_exp exst3 abbr_skip "mv" (exp, storeval)
-	    else
-	      (exst3, storeval);
+          val (exst4, m_var) =
+            if export_abbreviation_store then
+              abbreviate_exp exst3 abbr_skip "mv" (exp, storeval)
+            else
+              (exst3, storeval);
         in
           (exst4, m_var)
         end
@@ -630,8 +630,8 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
     else if is_bir_neg_or e then
       let
         val (e1, e2) = dest_bir_neg_or e;
-	val e1' = mk_bir_neg e1;
-	val e2' = mk_bir_neg e2;
+        val e1' = mk_bir_neg e1;
+        val e2' = mk_bir_neg e2;
       in
         preprocess_bexp acc (e1'::e2'::l)
       end
@@ -646,11 +646,11 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
         val (e1, e2) = dest_bir_eq e;
       in
         if is_bir_den e2 then
-	  preprocess_bexp (e::acc) l
-	else if not (is_bir_den e1) then
-	  preprocess_bexp (e::acc) l
-	else
-	  preprocess_bexp ((mk_bir_eq (e2, e1))::acc) l
+          preprocess_bexp (e::acc) l
+        else if not (is_bir_den e1) then
+          preprocess_bexp (e::acc) l
+        else
+          preprocess_bexp ((mk_bir_eq (e2, e1))::acc) l
       end
     else
       preprocess_bexp (e::acc) l;
@@ -672,9 +672,9 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
       val (exst, _) = foldl
         (fn (e,(exst,acc)) =>
           if Redblackset.member(acc,e) then (exst,acc) else
-	  (append_bexp e exst, Redblackset.add(acc,e)))
-	(exst, Redblackset.empty Term.compare)
-	es;
+          (append_bexp e exst, Redblackset.add(acc,e)))
+        (exst, Redblackset.empty Term.compare)
+        es;
      in
       exst
      end);

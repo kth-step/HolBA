@@ -61,13 +61,13 @@ open bir_inst_liftingHelpersLib;
 
     val add_lift_thm =
       ISPECL [bir_prog,
-	      prog_bin,
-	      l,
-	      ls,
-	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
-	      arch_pre, arch_post,
-	      get_bir_cont_pre bir_ct,
-	      get_bir_cont_post bir_ct] arch_lift_contract_thm;
+              prog_bin,
+              l,
+              ls,
+              (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
+              arch_pre, arch_post,
+              get_bir_cont_pre bir_ct,
+              get_bir_cont_post bir_ct] arch_lift_contract_thm;
 
     (* Prove the arch triple by supplying the antecedents of lift_contract_thm *)
     val arch_contract_thm = prove(
@@ -137,13 +137,13 @@ open bir_inst_liftingHelpersLib;
     val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set ls_set));
     val add_lift_thm =
       ISPECL [bir_prog,
-	      prog_bin,
-	      l,
-	      ls,
-	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
-	      arch_pre, arch_post,
-	      get_bir_cont_pre bir_ct,
-	      get_bir_cont_post bir_ct] arch_lift_contract_thm;
+              prog_bin,
+              l,
+              ls,
+              (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
+              arch_pre, arch_post,
+              get_bir_cont_pre bir_ct,
+              get_bir_cont_post bir_ct] arch_lift_contract_thm;
     (* Prove the arch triple by supplying the antecedents of lift_contract_thm *)
     val arch_contract_thm = prove (
       ``^arch_cont ^prog_bin ^init_addr ^end_addrs ^arch_pre ^arch_post``,

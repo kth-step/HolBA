@@ -35,9 +35,9 @@ fun bir_eval_exec prog st =
 
 fun bir_eval_mem_exec prog st =
     let val (_,_,status) = dest_bir_state st;
-	val mem_conv = (computeLib.RESTR_EVAL_CONV [``bir_store_in_mem``]) THENC
-		       (REWRITE_CONV [bir_store_in_mem_REWRS]) THENC
-			EVAL				       
+        val mem_conv = (computeLib.RESTR_EVAL_CONV [``bir_store_in_mem``]) THENC
+                       (REWRITE_CONV [bir_store_in_mem_REWRS]) THENC
+                        EVAL                                   
     in
       if not (is_BST_Running status)
       then ([], st)

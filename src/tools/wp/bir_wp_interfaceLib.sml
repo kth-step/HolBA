@@ -53,12 +53,12 @@ local
    * makes a finite map mapping these onto BIR False. *)
   fun make_elist_fmap elist =
     List.foldl (fn (label, map) =>
-		  mk_fupdate (map,
+                  mk_fupdate (map,
                               mk_pair (label, bir_exp_false_tm)
                              )
-	       )
-	       (mk_fempty (bir_label_t_ty, bir_exp_t_ty))
-	       elist
+               )
+               (mk_fempty (bir_label_t_ty, bir_exp_t_ty))
+               elist
   ;
 
 in
@@ -161,8 +161,8 @@ fun bir_obtain_ht prog_tm first_block_label_tm
     *)
     val (wps1, wps1_bool_sound_thm) =
       bir_wp_comp_wps prog_thm ((wps_tm, wps_bool_sound_thm),
-				(([]:term list), List.rev blstodo))
-			       (prog_tm, postcond_tm, ending_lam_disj)
+                                (([]:term list), List.rev blstodo))
+                               (prog_tm, postcond_tm, ending_lam_disj)
                                ending_label_list defs
 
     (* Pick out the soundness theorems, *)
@@ -178,8 +178,8 @@ fun bir_obtain_ht prog_tm first_block_label_tm
      * equality. *)
     val simp_thm4 =
       SIMP_RULE (std_ss++holBACore_ss++wordsLib.WORD_ss++
-		 wordsLib.WORD_ARITH_EQ_ss++pred_setLib.PRED_SET_ss)
-		[BL_Address_HC_def] simp_thm3
+                 wordsLib.WORD_ARITH_EQ_ss++pred_setLib.PRED_SET_ss)
+                [BL_Address_HC_def] simp_thm3
     (* CONJUNCTS now obtains a list with Hoare triples (plus an
      * abbreviation for the postcondition), from which we can pick
      * the theorem we need. *)
@@ -208,11 +208,11 @@ fun bir_obtain_ht prog_tm first_block_label_tm
   in
     (target_bir_triple, target_wp_tm)
   end handle Option => raise ERR "bir_obtain_ht"
-	("No Hoare triple was found for the start label "^
-	 (term_to_string first_block_label_tm)^" and "^
+        ("No Hoare triple was found for the start label "^
+         (term_to_string first_block_label_tm)^" and "^
          (* TODO: Ending labels here... *)
-	 "the provided Ending addresses"(*(term_to_string last_block_label_tm)*)^
-	 ". Please double-check these addresses in the BIR "^
+         "the provided Ending addresses"(*(term_to_string last_block_label_tm)*)^
+         ". Please double-check these addresses in the BIR "^
          "program.")
 ;
 

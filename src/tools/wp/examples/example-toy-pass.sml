@@ -12,7 +12,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 (* Passified version of the program found in toy1-test.sml *)
 Definition aes_program_def:
      aes_program =
-		           (BirProgram
+                           (BirProgram
   [<|bb_label :=
        BL_Address_HC (Imm64 0x400570w) "D101C3FF (sub sp, sp, #0x70)";
      bb_statements :=

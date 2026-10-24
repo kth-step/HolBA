@@ -472,11 +472,11 @@ subgoal `t_ext_jgmt TS invariant l ls1' (ls2 INTER ls2') pre1
  metis_tac [INTER_EMPTY_INTER_INTER_EMPTY_thm, pred_setTheory.INTER_COMM]
 ) >>
 subgoal `(!s. TS.ctrl s IN ls1' ==>
-	  (\s.
-	   if TS.ctrl s IN ls1
-	   then post1 s
-	   else post2 s) s ==>
-	   post2 s)` >- (
+          (\s.
+           if TS.ctrl s IN ls1
+           then post1 s
+           else post2 s) s ==>
+           post2 s)` >- (
  rpt strip_tac >>
  fs [] >>
  subgoal `~(TS.ctrl s IN ls1)` >- (

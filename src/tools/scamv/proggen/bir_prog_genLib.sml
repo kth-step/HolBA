@@ -40,7 +40,7 @@ struct
           BILMR(addr_start, entries) =>
           let
             val data_strs = List.map fst entries;
-	          (* val _ = List.map (fn x => print (x ^ "\r\n")) data_strs; *)
+                  (* val _ = List.map (fn x => print (x ^ "\r\n")) data_strs; *)
             val lengths_st = List.map String.size data_strs;
             val _ = List.map (fn x => ()) lengths_st;
             val lengths = List.map (fn x => Arbnum.fromInt (x div 2)) lengths_st;
@@ -68,11 +68,11 @@ struct
 
   fun process_asm_code asm_code =
       let
-	val da_file = bir_gcc_assembe_disassemble asm_code
+        val da_file = bir_gcc_assembe_disassemble asm_code
 
-	val (region_map, sections) = read_disassembly_file_regions da_file;
+        val (region_map, sections) = read_disassembly_file_regions da_file;
       in
-	  sections
+          sections
       end
 
   fun print_asm_code asm_code = (
@@ -88,7 +88,7 @@ struct
       val asm_code = prog_to_asm_code prog;
       val _ = print_asm_code asm_code;
       val compile_opt = SOME (process_asm_code asm_code)
-	     handle HOL_ERR x => err_handler x;
+             handle HOL_ERR x => err_handler x;
     in
       Option.map (fn a => (prog_len, prog, a)) compile_opt
     end;
@@ -122,8 +122,8 @@ struct
           raise ERR "gen_until_liftable" "lifting failed";
     in
       case lift_prog_preproc err_handler_preproc (prog_gen_fun args) of
-	  NONE => gen_until_liftable retry_on_liftfail prog_gen_fun args
-	| SOME prog_preproc => lift_prog_lift err_handler_lift prog_preproc
+          NONE => gen_until_liftable retry_on_liftfail prog_gen_fun args
+        | SOME prog_preproc => lift_prog_lift err_handler_lift prog_preproc
     end;
 
   fun add_halt_to_prog len lifted_prog =
@@ -222,7 +222,7 @@ fun pgen_qc_param param =
    | "spectre_v1_mod1" => prog_gen_a_la_qc arb_program_spectre_v1_mod1
    | "spectre_v1_mod2" => prog_gen_a_la_qc arb_program_spectre_v1_mod2
    | "spectre_v1_mod2_dep" => prog_gen_a_la_qc arb_program_spectre_v1_mod2_dep
-   | "straightline_branch" => prog_gen_a_la_qc arb_program_straightline_branch			  
+   | "straightline_branch" => prog_gen_a_la_qc arb_program_straightline_branch                    
    | _            => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true
