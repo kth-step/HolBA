@@ -45,49 +45,58 @@ val get_2  = bconst ``2w:word64``;
 (* =============================================================== *)
 
 (* overall contract is_even *)
-val bir_ieo_pre_def = Define `bir_ieo_pre v1 =
+Definition bir_ieo_pre_def:
+  bir_ieo_pre v1 =
 ^(beq (get_n, get_v1))
-`;
+End
 
-val bir_ieo_post_even_def = Define `bir_ieo_post_even v1 =
+Definition bir_ieo_post_even_def:
+  bir_ieo_post_even v1 =
 ^(beq (bmod (get_v1, get_2), get_0))
-`;
+End
 
-val bir_ieo_post_odd_def = Define `bir_ieo_post_odd v1 =
+Definition bir_ieo_post_odd_def:
+  bir_ieo_post_odd v1 =
 ^(beq (bmod (get_v1, get_2), get_1))
-`;
+End
 
 (* =============================================================== *)
 
-val bir_ieo_invariant_def = Define `bir_ieo_invariant v1 =
+Definition bir_ieo_invariant_def:
+  bir_ieo_invariant v1 =
 ^(beq (bmod (get_v1, get_2), bmod (get_n, get_2)))
-`;
+End
 
-val bir_ieo_condition_def = Define `bir_ieo_condition =
+Definition bir_ieo_condition_def:
+  bir_ieo_condition =
 ^(bgt(get_n, get_1))
-`;
+End
 
-val bir_ieo_variant_def = Define `bir_ieo_variant =
+Definition bir_ieo_variant_def:
+  bir_ieo_variant =
 ^(get_n)
-`;
+End
 
 (* =============================================================== *)
 
 (* section is_even loop pre *)
-val bir_ieo_sec_iseven_loop_pre_def = Define `bir_ieo_sec_iseven_loop_pre v1 v =
+Definition bir_ieo_sec_iseven_loop_pre_def:
+  bir_ieo_sec_iseven_loop_pre v1 v =
 (BExp_BinExp BIExp_And (bir_ieo_invariant v1)
                   (BExp_BinExp BIExp_And bir_ieo_condition
                      (BExp_BinPred BIExp_Equal bir_ieo_variant ^(get_v))))
-`;
+End
 
 (* section is_even exit pre *)
-val bir_ieo_sec_iseven_exit_pre_def = Define `bir_ieo_sec_iseven_exit_pre v1 =
+Definition bir_ieo_sec_iseven_exit_pre_def:
+  bir_ieo_sec_iseven_exit_pre v1 =
 (BExp_BinExp BIExp_And (bir_ieo_invariant v1) (BExp_UnaryExp BIExp_Not bir_ieo_condition))
-`;
+End
 
 
 (* section is_even loop post *)
-val bir_ieo_sec_iseven_loop_post_def = Define `bir_ieo_sec_iseven_loop_post v1 v =
+Definition bir_ieo_sec_iseven_loop_post_def:
+  bir_ieo_sec_iseven_loop_post v1 v =
 \l. if l = BL_Address (Imm32 0x000w) then
        (BExp_BinExp BIExp_And (bir_ieo_invariant v1)
                   (BExp_BinExp BIExp_And
@@ -95,36 +104,40 @@ val bir_ieo_sec_iseven_loop_post_def = Define `bir_ieo_sec_iseven_loop_post v1 v
                      (BExp_BinPred BIExp_LessOrEqual ^get_0 bir_ieo_variant)))
     else
       bir_exp_false
-`;
+End
 
 
 (* section is_even exit post *)
-val bir_ieo_sec_iseven_exit_post_def = Define `bir_ieo_sec_iseven_exit_post v1 =
+Definition bir_ieo_sec_iseven_exit_post_def:
+  bir_ieo_sec_iseven_exit_post v1 =
 \l. if l = BL_Address (Imm32 0x200w) then
       bir_ieo_post_even v1
     else if l = BL_Address (Imm32 0x204w) then
       bir_ieo_post_odd v1
     else
       bir_exp_false
-`;
+End
 
 (* =============================================================== *)
 
 (* section is_odd loop pre *)
-val bir_ieo_sec_isodd_loop_pre_def = Define `bir_ieo_sec_isodd_loop_pre v1 v =
+Definition bir_ieo_sec_isodd_loop_pre_def:
+  bir_ieo_sec_isodd_loop_pre v1 v =
 (BExp_BinExp BIExp_And (bir_ieo_invariant v1)
                   (BExp_BinExp BIExp_And bir_ieo_condition
                      (BExp_BinPred BIExp_Equal bir_ieo_variant ^(get_v))))
-`;
+End
 
 (* section is_odd exit pre *)
-val bir_ieo_sec_isodd_exit_pre_def = Define `bir_ieo_sec_isodd_exit_pre v1 =
+Definition bir_ieo_sec_isodd_exit_pre_def:
+  bir_ieo_sec_isodd_exit_pre v1 =
 (BExp_BinExp BIExp_And (bir_ieo_invariant v1) (BExp_UnaryExp BIExp_Not bir_ieo_condition))
-`;
+End
 
 
 (* section is_odd loop post *)
-val bir_ieo_sec_isodd_loop_post_def = Define `bir_ieo_sec_isodd_loop_post v1 v =
+Definition bir_ieo_sec_isodd_loop_post_def:
+  bir_ieo_sec_isodd_loop_post v1 v =
 \l. if l = BL_Address (Imm32 0x100w) then
        (BExp_BinExp BIExp_And (bir_ieo_invariant v1)
                   (BExp_BinExp BIExp_And
@@ -132,18 +145,19 @@ val bir_ieo_sec_isodd_loop_post_def = Define `bir_ieo_sec_isodd_loop_post v1 v =
                      (BExp_BinPred BIExp_LessOrEqual ^get_0 bir_ieo_variant)))
     else
       bir_exp_false
-`;
+End
 
 
 (* section is_odd exit post *)
-val bir_ieo_sec_isodd_exit_post_def = Define `bir_ieo_sec_isodd_exit_post v1 =
+Definition bir_ieo_sec_isodd_exit_post_def:
+  bir_ieo_sec_isodd_exit_post v1 =
 \l. if l = BL_Address (Imm32 0x200w) then
       bir_ieo_post_odd v1
     else if l = BL_Address (Imm32 0x204w) then
       bir_ieo_post_even v1
     else
       bir_exp_false
-`;
+End
 
 
 
@@ -169,8 +183,9 @@ val (bir_ieo_sec_iseven_loop_ht, bir_ieo_sec_iseven_loop_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_ieo_sec_iseven_loop_wp_def =
-  Define `bir_ieo_sec_iseven_loop_wp v1 v = ^(bir_ieo_sec_iseven_loop_wp_tm)`;
+Definition bir_ieo_sec_iseven_loop_wp_def:
+  bir_ieo_sec_iseven_loop_wp v1 v = ^(bir_ieo_sec_iseven_loop_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_ieo_sec_iseven_loop_ht);
 
 
@@ -190,8 +205,9 @@ val (bir_ieo_sec_iseven_exit_ht, bir_ieo_sec_iseven_exit_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_ieo_sec_iseven_exit_wp_def =
-  Define `bir_ieo_sec_iseven_exit_wp v1 = ^(bir_ieo_sec_iseven_exit_wp_tm)`;
+Definition bir_ieo_sec_iseven_exit_wp_def:
+  bir_ieo_sec_iseven_exit_wp v1 = ^(bir_ieo_sec_iseven_exit_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_ieo_sec_iseven_exit_ht);
 
 (* =============================================================== *)
@@ -212,8 +228,9 @@ val (bir_ieo_sec_isodd_loop_ht, bir_ieo_sec_isodd_loop_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_ieo_sec_isodd_loop_wp_def =
-  Define `bir_ieo_sec_isodd_loop_wp v1 v = ^(bir_ieo_sec_isodd_loop_wp_tm)`;
+Definition bir_ieo_sec_isodd_loop_wp_def:
+  bir_ieo_sec_isodd_loop_wp v1 v = ^(bir_ieo_sec_isodd_loop_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_ieo_sec_isodd_loop_ht);
 
 
@@ -233,8 +250,9 @@ val (bir_ieo_sec_isodd_exit_ht, bir_ieo_sec_isodd_exit_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_ieo_sec_isodd_exit_wp_def =
-  Define `bir_ieo_sec_isodd_exit_wp v1 = ^(bir_ieo_sec_isodd_exit_wp_tm)`;
+Definition bir_ieo_sec_isodd_exit_wp_def:
+  bir_ieo_sec_isodd_exit_wp v1 = ^(bir_ieo_sec_isodd_exit_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_ieo_sec_isodd_exit_ht);
 
 

@@ -43,7 +43,7 @@ BirProgram [
 ] : 'obs_type bir_program_t
 ``;
 
-val bprog_test_def = Define `
+Definition bprog_test_def:
     bprog_test =
 BirProgram [
            <|bb_label := BL_Address (Imm32 2826w);
@@ -59,7 +59,7 @@ BirProgram [
              bb_last_statement :=
                BStmt_Jmp (BLE_Label (BL_Address (Imm32 2828w)))|>
 ] : 'obs_type bir_program_t
-`;
+End
 val bprog = (fst o dest_eq o concl) bprog_test_def;
 
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 2826w))``;

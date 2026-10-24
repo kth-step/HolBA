@@ -60,7 +60,9 @@ val prem_init = ``BExp_BinExp BIExp_And ^prem_init (
                   )``;
 
 
-val aes_prem_def = Define `aes_prem = ^prem_init`;
+Definition aes_prem_def:
+  aes_prem = ^prem_init
+End
 val varexps_thms = (preproc_vars_thm true [] aes_prem_def)::varexps_thms;
 
 
@@ -68,9 +70,11 @@ val goalterm = ``bir_exp_is_taut (bir_exp_imp aes_prem (bir_exp_varsubst FEMPTY 
 
 
 (*ASSUME (simp_construct_wt (simp_extract goalterm) NONE);*)
-val wt0_thm = prove (``^(simp_construct_wt (simp_extract goalterm) NONE)``,
+Theorem wt0_thm[local]:
+  ^(simp_construct_wt (simp_extract goalterm) NONE)
+Proof
   CONV_TAC (well_typed_conv varexps_thms)
-);
+QED
 
 
 
@@ -90,7 +94,9 @@ val _ = if not runMeasurement then () else
 
 
 val wp_simp_term = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl) simp_thm;
-val wp_simp_def = Define `wp_simp = ^wp_simp_term`;
+Definition wp_simp_def:
+  wp_simp = ^wp_simp_term
+End
 
 
 val aes_wp_taut_thm = save_thm("aes_wp_taut_thm", REWRITE_RULE [GSYM wp_simp_def] simp_thm);

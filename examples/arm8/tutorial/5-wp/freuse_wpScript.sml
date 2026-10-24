@@ -54,70 +54,79 @@ val get_2  = bconst ``2w:word32``;
 
 
 (* section add_1 *)
-val bir_att_sec_add_1_pre_def = Define `bir_att_sec_add_1_pre v1 v2 v3 =
+Definition bir_att_sec_add_1_pre_def:
+  bir_att_sec_add_1_pre v1 v2 v3 =
 ^(bandl [
    (beq (get_a, get_v1)),
    (beq (get_b, get_v2)),
    (beq (get_t, get_v3))
    ])
-`;
+End
 
-val bir_att_sec_add_1_post_def = Define `bir_att_sec_add_1_post v1 v2 v3 =
+Definition bir_att_sec_add_1_post_def:
+  bir_att_sec_add_1_post v1 v2 v3 =
 ^(bandl [
    (beq (get_t, get_v3)),
    (beq (get_c, bplus(get_v1, get_v2)))
    ])
-`;
+End
 
 (* section add_2 *)
-val bir_att_sec_add_2_post_def = Define `bir_att_sec_add_2_post v1 v2 =
+Definition bir_att_sec_add_2_post_def:
+  bir_att_sec_add_2_post v1 v2 =
 ^(beq (get_c, bplus(get_v1, get_v2)))
-`;
+End
 
 
 
 (* section call_1 *)
-val bir_att_sec_call_1_pre_def = Define `bir_att_sec_call_1_pre v1 v2 =
+Definition bir_att_sec_call_1_pre_def:
+  bir_att_sec_call_1_pre v1 v2 =
 ^(bandl [
    (beq (get_x, get_v1)),
    (beq (get_y, get_v2))
    ])
-`;
+End
 
-val bir_att_sec_call_1_post_def = Define `bir_att_sec_call_1_post v1 v2 =
+Definition bir_att_sec_call_1_post_def:
+  bir_att_sec_call_1_post v1 v2 =
 ^(bandl [
    (beq (get_a, get_v1)),
    (beq (get_b, get_v2)),
    (beq (get_t, get_4 ))
    ])
-`;
+End
 
 (* section call_2 *)
-val bir_att_sec_call_2_pre_def = Define `bir_att_sec_call_2_pre v1 =
+Definition bir_att_sec_call_2_pre_def:
+  bir_att_sec_call_2_pre v1 =
 ^(bandl [
    (beq (get_c, get_v1))
    ])
-`;
+End
 
-val bir_att_sec_call_2_post_def = Define `bir_att_sec_call_2_post v1 =
+Definition bir_att_sec_call_2_post_def:
+  bir_att_sec_call_2_post v1 =
 ^(bandl [
    (beq (get_a, get_v1)),
    (beq (get_b, get_v1)),
    (beq (get_t, get_8 ))
    ])
-`;
+End
 
-val bir_att_sec_1_post_def = Define `bir_att_sec_1_post v1 v2 =
+Definition bir_att_sec_1_post_def:
+  bir_att_sec_1_post v1 v2 =
 ^(bandl [
    (beq (get_c, bplus(get_v1, get_v2)))
    ])
-`;
+End
 
-val bir_att_sec_2_post_def = Define `bir_att_sec_2_post v1 v2 =
+Definition bir_att_sec_2_post_def:
+  bir_att_sec_2_post v1 v2 =
 ^(bandl [
    (beq (get_c, bmult(get_2, bplus(get_v1, get_v2))))
    ])
-`;
+End
 
 
 
@@ -140,8 +149,9 @@ val (bir_att_sec_add_1_ht, bir_att_sec_add_1_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_att_sec_add_1_wp_def =
-  Define `bir_att_sec_add_1_wp v1 v2 v3 = ^(bir_att_sec_add_1_wp_tm)`;
+Definition bir_att_sec_add_1_wp_def:
+  bir_att_sec_add_1_wp v1 v2 v3 = ^(bir_att_sec_add_1_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_att_sec_add_1_ht);
 
 
@@ -161,8 +171,9 @@ val (bir_att_sec_call_1_ht, bir_att_sec_call_1_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_att_sec_call_1_wp_def =
-  Define `bir_att_sec_call_1_wp v1 v2 = ^(bir_att_sec_call_1_wp_tm)`;
+Definition bir_att_sec_call_1_wp_def:
+  bir_att_sec_call_1_wp v1 v2 = ^(bir_att_sec_call_1_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_att_sec_call_1_ht);
 
 
@@ -182,8 +193,9 @@ val (bir_att_sec_call_2_ht, bir_att_sec_call_2_wp_tm) =
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
-val bir_att_sec_call_2_wp_def =
-  Define `bir_att_sec_call_2_wp v1 = ^(bir_att_sec_call_2_wp_tm)`;
+Definition bir_att_sec_call_2_wp_def:
+  bir_att_sec_call_2_wp v1 = ^(bir_att_sec_call_2_wp_tm)
+End
 val _ = save_thm (prefix ^ "ht", bir_att_sec_call_2_ht);
 
 
@@ -218,8 +230,8 @@ val ret_block_thm =
 val prog_no_assum_thm = REWRITE_RULE [EVAL ``bir_prog_has_no_assumes ^prog_tm``]
                                      (SPEC prog_tm bir_never_assumviol_ht);
 
-val bir_att_sec_add_2_ht = prove(``
-!v1 v2 v3 v4s.
+Theorem bir_att_sec_add_2_ht[local]:
+  !v1 v2 v3 v4s.
 (MEM (BL_Address (Imm32 v3))
      (bir_labels_of_program ^prog_tm)) ==>
 ((BL_Address (Imm32 v3)) NOTIN v4s) ==>
@@ -229,14 +241,13 @@ val bir_att_sec_add_2_ht = prove(``
    ((BL_Address (Imm32 v3)) INSERT v4s)
    ^(precond_tm)
    ^(postcond_tm))
-``,
-
+Proof
 REPEAT STRIP_TAC >>
 REWRITE_TAC [bir_att_sec_add_1_post_def] >>
 ASSUME_TAC ret_block_thm >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_att_sec_add_2_post_def] >>
 IMP_RES_TAC prog_no_assum_thm
-);
+QED
 
 
 val _ = save_thm (prefix ^ "ht", bir_att_sec_add_2_ht);

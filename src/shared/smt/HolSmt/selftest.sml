@@ -147,9 +147,9 @@ val sat_Z3p = mk_Z3p expect_sat
 (* HOL definitions (e.g., user-defined data types)                           *)
 (*****************************************************************************)
 
-val _ = bossLib.Hol_datatype `dt1 = foo | bar | baz`
+val _ = bossLib.Datatype `dt1 = foo | bar | baz`
 
-val _ = bossLib.Hol_datatype `person = <| employed :bool; age :num |>`
+val _ = bossLib.Datatype `person = <| employed :bool; age :num |>`
 
 in
 

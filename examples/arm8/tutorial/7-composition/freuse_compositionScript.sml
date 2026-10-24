@@ -119,14 +119,15 @@ val bir_att_sec_add_ct =
 
   val assumes = ASSUME ct_assmpt;
 
-val notin_insert_neq_thm = prove(``!set el. el NOTIN set ==> (set <> el INSERT set)``,
-
+Theorem notin_insert_neq_thm[local]:
+  !set el. el NOTIN set ==> (set <> el INSERT set)
+Proof
 REPEAT STRIP_TAC >>
 subgoal `el IN (el INSERT set')` >- (
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 ) >>
 METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
-);
+QED
 val fix3_thm = (UNDISCH_ALL o prove) (``
 ^ct_assmpt ==>
 (!l.

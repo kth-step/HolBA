@@ -11,7 +11,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 
-val aes_program_def = Define `
+Definition aes_program_def:
      aes_program =
 		           (BirProgram
               [<|bb_label :=
@@ -71,7 +71,8 @@ val aes_program_def = Define `
                  bb_last_statement :=
                    BStmt_Jmp (BLE_Label (BL_Address (Imm64
 							 0x40057Cw)))|>
-	      ])`;
+	      ])
+End
 
 (* Note: This approach does not obtain a HT for the last block. *)
 val first_block_label_tm = ``BL_Address (Imm64 0x400570w)``;
@@ -81,14 +82,17 @@ val aes_post_exp_tm = ``
     (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
     (BExp_Const (Imm64 112w))
   )``;
-val aes_post_def = Define `
+Definition aes_post_def:
       aes_post = (\l. if (l = ^ending_block_label_tm)
                         then ^aes_post_exp_tm
-                        else bir_exp_false)`;
-val aes_ls_def = Define `
-      aes_ls = \x.(x = (^ending_block_label_tm))`;
-val aes_wps_def = Define `
-      aes_wps = FEMPTY :bir_label_t |-> bir_exp_t`;
+                        else bir_exp_false)
+End
+Definition aes_ls_def:
+      aes_ls = \x.(x = (^ending_block_label_tm))
+End
+Definition aes_wps_def:
+      aes_wps = FEMPTY :bir_label_t |-> bir_exp_t
+End
 
 
 val ending_label_list = [ending_block_label_tm];
@@ -124,8 +128,9 @@ val (wpsrec, wpsrec_bool_sound_thm) =
 
 (* to make it readable or speedup (copy and paste from a few lines
  * above) *)
-val aes_wpsrec_def = Define `
-      aes_wpsrec = ^wpsrec`;
+Definition aes_wpsrec_def:
+      aes_wpsrec = ^wpsrec
+End
 val wpsrec_bool_sound_thm_readable =
   REWRITE_RULE [GSYM aes_wpsrec_def] wpsrec_bool_sound_thm;
 

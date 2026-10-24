@@ -258,7 +258,7 @@ metis_tac []
 QED
 
 
-Triviality total_ext_post_weak_corollary_rule_thm:
+Theorem total_ext_post_weak_corollary_rule_thm[local]:
  !TS invariant l ls ls' pre post1 post2.
   first_enc TS ==>
   t_ext_jgmt TS invariant l ls ls' pre post1 ==>
@@ -272,7 +272,7 @@ metis_tac []
 QED
 
 
-Triviality total_ext_post_weak_corollary2_rule_thm:
+Theorem total_ext_post_weak_corollary2_rule_thm[local]:
  !TS invariant l ls1 ls2 ls' pre post1 post2.
   first_enc TS ==>
   ls1 INTER ls2 = EMPTY ==>
@@ -343,7 +343,7 @@ QED
 
 
 (* This proof should use the exclude list move lemma *)
-Triviality total_ext_seq_rule_thm:
+Theorem total_ext_seq_rule_thm[local]:
  !TS invariant l ls1 ls ls' pre post.
   first_enc TS ==>
   (* TODO: This really needed? *)

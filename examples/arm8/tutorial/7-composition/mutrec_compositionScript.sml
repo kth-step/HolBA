@@ -45,8 +45,16 @@ val bir_ieo_sec_isodd_exit_comp_ct =
 
 (* =============================================================== *)
 
-  val abs_ev_intro = prove(``bir_ieo_sec_iseven_loop_post v1 v = \l. bir_ieo_sec_iseven_loop_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
-  val abs_ev_intro2 = prove(``bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+Theorem abs_ev_intro[local]:
+  bir_ieo_sec_iseven_loop_post v1 v = \l. bir_ieo_sec_iseven_loop_post v1 v l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
+Theorem abs_ev_intro2[local]:
+  bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
 
   val loop_simp_ct_ = REWRITE_RULE [Once abs_ev_intro] bir_ieo_sec_iseven_loop_comp_ct;
 
@@ -68,8 +76,16 @@ val bir_ieo_sec_isodd_exit_comp_ct =
                                    bir_ieo_variant_def] loop_exit_simp3_ht;
 
 
-  val abs_od_intro = prove(``bir_ieo_sec_isodd_loop_post v1 v = \l. bir_ieo_sec_isodd_loop_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
-  val abs_od_intro2 = prove(``bir_ieo_sec_isodd_exit_post v1 = \l. bir_ieo_sec_isodd_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+Theorem abs_od_intro[local]:
+  bir_ieo_sec_isodd_loop_post v1 v = \l. bir_ieo_sec_isodd_loop_post v1 v l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
+Theorem abs_od_intro2[local]:
+  bir_ieo_sec_isodd_exit_post v1 = \l. bir_ieo_sec_isodd_exit_post v1 l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
 
   val loop_simp_ct_ = REWRITE_RULE [Once abs_od_intro] bir_ieo_sec_isodd_loop_comp_ct;
 

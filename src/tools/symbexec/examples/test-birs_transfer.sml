@@ -25,7 +25,7 @@ open birs_auxTheory;
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (* testing *)
-val bprog_test_def = Define `
+Definition bprog_test_def:
     bprog_test =
 BirProgram [
            <|bb_label := BL_Address (Imm32 2826w);
@@ -41,7 +41,7 @@ BirProgram [
              bb_last_statement :=
                BStmt_Jmp (BLE_Label (BL_Address (Imm32 2828w)))|>
 ] : 'obs_type bir_program_t
-`;
+End
 val bprog = (fst o dest_eq o concl) bprog_test_def;
 
 (* TODO: integrate environment builder function from the beginning *)
@@ -56,21 +56,20 @@ val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (^birs_sta
 
 
 (* ---------------------------------------------------------------------- *)
-val m0_mod_vars_def = Define `
+Definition m0_mod_vars_def:
     m0_mod_vars = bmr_vars (m0_mod_bmr (T,T))
-`;
+End
 
-val m0_mod_vars_thm = store_thm(
-   "m0_mod_vars_thm", ``
-!ef sel.
+Theorem m0_mod_vars_thm:
+  !ef sel.
   m0_mod_vars = bmr_vars (m0_mod_bmr (ef,sel))
-``,
+Proof
   METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL]
-);
+QED
 
-val birenvtyl_def = Define `
+Definition birenvtyl_def:
     birenvtyl = MAP BVarToPair m0_mod_vars
-`;
+End
 (*    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]*)
 (*
 bir_lifting_machinesTheory.m0_mod_REGS_lifted_imms_LIST_def
@@ -89,9 +88,9 @@ val birenvtyl_EVAL_thm = save_thm(
 (* ---------------------------------------------------------------------- *)
 
 
-val bprecond_def = Define `
+Definition bprecond_def:
     bprecond = BExp_BinPred BIExp_Equal (BExp_Den (BVar "R0" (BType_Imm Bit32))) (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-`;
+End
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
    val birs_state_init =
@@ -119,9 +118,9 @@ val (sys_tm, L_tm, Pi_tm) = (get_birs_sysLPi o concl) exec_thm;
 
 (* need the following legacy code because mk_bsysprecond (via birs_env_thm) is not incorporated into the rest of the code yet *)
 (* need to translate the precondition to a symbolic pathcondition, it means taking from the environment the corresponding mappings and substitute (that's symbolic evaluation) (then we know that states with matching environments also satisfy the original precondition because it is constructed by symbolic evaluation) *)
-val bsysprecond_def = Define `
+Definition bsysprecond_def:
     bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
-`;
+End
 val bprecond_birs_eval_exp_thm = save_thm(
    "bprecond_birs_eval_exp_thm",
   (computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
@@ -158,27 +157,26 @@ val birs_prop_transfer_thm =
 
 
 (* basic definitions for the property we want to prove (countw) *)
-val bprog_P_def = Define `
+Definition bprog_P_def:
     bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
        bir_envty_list birenvtyl st /\
        bir_eval_exp ^bprecond (BEnv st) = SOME bir_val_true)
-`;
+End
 (* translate the property to BIR state property *)
-val bprog_P_thm = store_thm(
-   "bprog_P_thm", ``
-!bs.
+Theorem bprog_P_thm:
+  !bs.
   bprog_P (birs_symb_to_concst bs) =
       (bs.bst_status = BST_Running /\
        bir_envty_list_b birenvtyl bs.bst_environ /\
        bir_eval_exp ^bprecond bs.bst_environ = SOME bir_val_true)
-``,
+Proof
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_P_def, bir_envty_list_b_thm, bir_BEnv_lookup_EQ_thm]
-);
+QED
 
 (* this is the relevant property about the cycle counter *)
-val bprog_Q_def = Define `
+Definition bprog_Q_def:
     bprog_Q
      ((SymbConcSt pc1 st1 status1):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
      ((SymbConcSt pc2 st2 status2):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
@@ -188,10 +186,9 @@ val bprog_Q_def = Define `
        /\
        (?v. st1 "countw" = SOME (BVal_Imm (Imm64 v)) /\ st2 "countw" = SOME (BVal_Imm (Imm64 (v + 1w))))
      )
-`;
-val bprog_Q_thm = store_thm(
-   "bprog_Q_thm", ``
-!bs1 bs2.
+End
+Theorem bprog_Q_thm:
+  !bs1 bs2.
   bprog_Q (birs_symb_to_concst bs1) (birs_symb_to_concst bs2) =
     (
       (bs2.bst_pc = ^birs_state_end_lbl)
@@ -199,17 +196,16 @@ val bprog_Q_thm = store_thm(
       (?v. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v)) /\
            bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 (v + 1w))))
     )
-``,
+Proof
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
-);
+QED
 (* ........................... *)
 
 (* P is generic enough *)
 
-val bprog_P_entails_thm = store_thm(
-   "bprog_P_entails_thm", ``
-P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm)
-``,
+Theorem bprog_P_entails_thm:
+  P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm)
+Proof
   REWRITE_TAC [GSYM bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
   REPEAT STRIP_TAC >>
@@ -230,15 +226,14 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^
   `(ALL_DISTINCT (MAP FST birenvtyl))` by EVAL_TAC >>
 
   METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm, bprecond_birs_eval_exp_thm2]
-);
+QED
 
 (* ........................... *)
 
 (* Q is implied by sys and Pi *)
-val bprog_Pi_overapprox_Q_thm = store_thm(
-   "bprog_Pi_overapprox_Q_thm", ``
-Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm) (IMAGE birs_symb_to_symbst ^Pi_tm) bprog_Q
-``,
+Theorem bprog_Pi_overapprox_Q_thm:
+  Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^sys_tm) (IMAGE birs_symb_to_symbst ^Pi_tm) bprog_Q
+Proof
   SIMP_TAC std_ss [(REWRITE_RULE [EVAL ``birenvtyl``] o EVAL) ``bir_senv_GEN_list birenvtyl``, bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
   REPEAT STRIP_TAC >>
@@ -413,7 +408,7 @@ birs_exps_of_senv_CONV tm2
     REPEAT (PAT_X_ASSUM ``BVal_Imm (Imm64 (n2w B)) = A`` (ASSUME_TAC o GSYM)) >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def]
   )
-);
+QED
 (* ........................... *)
 
 (* apply the theorem for property transfer *)
@@ -440,9 +435,8 @@ val bprog_concst_prop_thm =
 val st_init_lbl = (snd o dest_eq o hd o fst o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm;
 (* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
 val bprog_lbls  = List.nth ((snd o strip_comb o fst o dest_conj o snd o strip_exists o snd o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm, 3);
-val bprog_to_concst_prop_thm = store_thm(
-   "bprog_to_concst_prop_thm", ``
-!st.
+Theorem bprog_to_concst_prop_thm:
+  !st.
   (symb_concst_pc (birs_symb_to_concst st) = (^st_init_lbl)) ==>
   (bprog_P (birs_symb_to_concst st)) ==>
   (?n st'.
@@ -455,7 +449,7 @@ val bprog_to_concst_prop_thm = store_thm(
        st')
      /\
      (bprog_Q (birs_symb_to_concst st) (birs_symb_to_concst st')))
-``,
+Proof
   REPEAT STRIP_TAC >>
   IMP_RES_TAC (HO_MATCH_MP birs_symb_to_concst_PROP_FORALL_thm bprog_concst_prop_thm) >>
 
@@ -480,7 +474,7 @@ val bprog_to_concst_prop_thm = store_thm(
   )] >>
 
   METIS_TAC []
-);
+QED
 
 (* finish translation to pure BIR property *)
 val bprog_bir_prop_thm = save_thm(

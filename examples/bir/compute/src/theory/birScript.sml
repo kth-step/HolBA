@@ -29,16 +29,16 @@ Type word_thirtytwo = ``:word32``
 Type word_sixtyfour = ``:word64``
 
 Type word_hundredtwentyeight = ``:word128``
-val _ = Hol_datatype ` 
+Datatype:
 bir_imm_t =  (* immediates *)
-   Imm1 of word_one
- | Imm8 of word_eight
- | Imm16 of word_sixteen
- | Imm32 of word_thirtytwo
- | Imm64 of word_sixtyfour
- | Imm128 of word_hundredtwentyeight
-`;
-val _ = Hol_datatype ` 
+   Imm1 word_one
+ | Imm8 word_eight
+ | Imm16 word_sixteen
+ | Imm32 word_thirtytwo
+ | Imm64 word_sixtyfour
+ | Imm128 word_hundredtwentyeight
+End
+Datatype:
 bir_immtype_t =  (* immediate typing size *)
    Bit1
  | Bit8
@@ -46,56 +46,56 @@ bir_immtype_t =  (* immediate typing size *)
  | Bit32
  | Bit64
  | Bit128
-`;
-val _ = Hol_datatype ` 
+End
+Datatype:
 bir_endian_t =  (* endian for memory operations *)
    BEnd_BigEndian
  | BEnd_LittleEndian
  | BEnd_NoEndian
-`;
-val _ = Hol_datatype ` 
+End
+Datatype:
 bir_var_t =  (* variable to lookup in environment *)
-   BVar of ident
-`;
-val _ = Hol_datatype ` 
+   BVar ident
+End
+Datatype:
 bir_binexp_t =  (* binary expressions *)
    BIExp_And
  | BIExp_Plus
-`;
-val _ = Hol_datatype ` 
+End
+Datatype:
 bir_unaryexp_t =  (* unary expressions *)
    BIExp_ChangeSign
  | BIExp_Not
-`;
-val _ = Hol_datatype ` 
+End
+Datatype:
 bir_binpred_t =  (* binary predicates *)
    BIExp_Equal
  | BIExp_LessThan
-`;
-val _ = Hol_datatype ` 
+End
+Datatype:
 bir_val_t =  (* values for evaluation relation *)
-   BVal_Imm of bir_imm_t
- | BVal_Mem of bir_immtype_t => bir_immtype_t => mmap (* address type / value type *)
-`;
-val _ = Hol_datatype ` 
+   BVal_Imm bir_imm_t
+ | BVal_Mem bir_immtype_t bir_immtype_t mmap (* address type / value type *)
+End
+Datatype:
 bir_exp_t =  (* BIR expressions *)
-   BExp_Const of bir_imm_t
- | BExp_MemConst of bir_immtype_t => bir_immtype_t => mmap (* address type / value type *)
- | BExp_Den of bir_var_t
- | BExp_BinExp of bir_binexp_t => bir_exp_t => bir_exp_t
- | BExp_UnaryExp of bir_unaryexp_t => bir_exp_t
- | BExp_BinPred of bir_binpred_t => bir_exp_t => bir_exp_t
- | BExp_IfThenElse of bir_exp_t => bir_exp_t => bir_exp_t
- | BExp_Load of bir_exp_t => bir_exp_t => bir_endian_t => bir_immtype_t (* Memory value / Address Value (Imm) / Endian / Type of where to load *)
- | BExp_Store of bir_exp_t => bir_exp_t => bir_endian_t => bir_exp_t (* Memory value / Address Value (Imm) / Endian / Value to store *)
-`;
+   BExp_Const bir_imm_t
+ | BExp_MemConst bir_immtype_t bir_immtype_t mmap (* address type / value type *)
+ | BExp_Den bir_var_t
+ | BExp_BinExp bir_binexp_t bir_exp_t bir_exp_t
+ | BExp_UnaryExp bir_unaryexp_t bir_exp_t
+ | BExp_BinPred bir_binpred_t bir_exp_t bir_exp_t
+ | BExp_IfThenElse bir_exp_t bir_exp_t bir_exp_t
+ | BExp_Load bir_exp_t bir_exp_t bir_endian_t bir_immtype_t (* Memory value / Address Value (Imm) / Endian / Type of where to load *)
+ | BExp_Store bir_exp_t bir_exp_t bir_endian_t bir_exp_t (* Memory value / Address Value (Imm) / Endian / Value to store *)
+End
 
 Type b = ``:bool``
-val _ = Hol_datatype ` 
+Datatype:
 bir_type_t =  (* general typing *)
-   BType_Imm of bir_immtype_t
- | BType_Mem of bir_immtype_t => bir_immtype_t
-`;
+   BType_Imm bir_immtype_t
+ | BType_Mem bir_immtype_t bir_immtype_t
+End
 (* Booleans *)
 
 Definition bool2w_def:
@@ -706,30 +706,30 @@ Inductive bir_eval_exp:
  ==> 
 ( ( bir_eval_exp env (BExp_Store bir_exp1 bir_exp2 bir_endian bir_exp3) bir_val )))
 End
-val _ = Hol_datatype ` 
+Datatype:
 bir_label_t =  (* Label values for jumps *)
-   BL_Label of ident
- | BL_Address of bir_imm_t
-`;
-val _ = Hol_datatype ` 
+   BL_Label ident
+ | BL_Address bir_imm_t
+End
+Datatype:
 bir_label_exp_t =  (* Label expressions that may be computed *)
-   BLE_Label of bir_label_t
- | BLE_Exp of bir_exp_t
-`;
-val _ = Hol_datatype ` 
+   BLE_Label bir_label_t
+ | BLE_Exp bir_exp_t
+End
+Datatype:
 bir_stmt_basic_t =  (* Statements inside a program block *)
-   BStmt_Assign of bir_var_t => bir_exp_t
-`;
-val _ = Hol_datatype ` 
+   BStmt_Assign bir_var_t bir_exp_t
+End
+Datatype:
 bir_stmt_end_t =  (* Statements at the end of a block *)
-   BStmt_Jmp of bir_label_exp_t
- | BStmt_CJmp of bir_exp_t => bir_label_exp_t => bir_label_exp_t
-`;
-val _ = Hol_datatype ` 
+   BStmt_Jmp bir_label_exp_t
+ | BStmt_CJmp bir_exp_t bir_label_exp_t bir_label_exp_t
+End
+Datatype:
 bir_stmt_t =  (* General statement *)
-   BStmtB of bir_stmt_basic_t
- | BStmtE of bir_stmt_end_t
-`;
+   BStmtB bir_stmt_basic_t
+ | BStmtE bir_stmt_end_t
+End
 
 (* Block type : a label, basic statements and an end statement *)
 Datatype:
@@ -745,17 +745,17 @@ Datatype:
 End
 
 Type bir_block_t = ``:bir_block_t``
-val _ = Hol_datatype ` 
-bir_program_t = 
-   BirProgram of bir_block_t list
-`;
-val _ = Hol_datatype ` 
+Datatype:
+bir_program_t =
+   BirProgram (bir_block_t list)
+End
+Datatype:
 bir_status_t =  (* Program state *)
    BST_Running (* still running *)
  | BST_TypeError (* execution encountered a type error *)
  | BST_Failed (* execution failed *)
- | BST_JumpOutside of bir_label_t (* execution jumped to unknown label *)
-`;
+ | BST_JumpOutside bir_label_t (* execution jumped to unknown label *)
+End
 
 (* Program state *)
 Datatype:

@@ -65,16 +65,22 @@ val _ = birs_auxLib.prepare_program_lookups bir_lift_thm;
 (* Program boundaries *)
 (* ------------------ *)
 
-val tutorial_init_addr_def = Define `tutorial_init_addr : word64 = 0x0w`;
+Definition tutorial_init_addr_def:
+  tutorial_init_addr : word64 = 0x0w
+End
 
 (* TODO: fix multiple endpoints here *)
-val tutorial_end_addr_def = Define `tutorial_end_addr : word64 = ^endpoint`;
+Definition tutorial_end_addr_def:
+  tutorial_end_addr : word64 = ^endpoint
+End
 
 (* -------------- *)
 (* BSPEC contract *)
 (* -------------- *)
 
-val bspec_tutorial_pre_def = Define `bspec_tutorial_pre : bir_exp_t = ^precond`;
+Definition bspec_tutorial_pre_def:
+  bspec_tutorial_pre : bir_exp_t = ^precond
+End
 
 (* --------------------------- *)
 (* Symbolic analysis execution *)

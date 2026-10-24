@@ -10,8 +10,8 @@ val _ = type_abbrev("aes_state", ``:bool[4] -> bool[4] -> bool[8]``);
 
 val _ = new_constant ("aes_sbox", mk_vartype "word8 -> word8");
 
-val aes_sbox_list_def = Define `
-aes_sbox_list = [
+Definition aes_sbox_list_def:
+  aes_sbox_list = [
     0x63w:word8; 0x7Cw; 0x77w; 0x7Bw; 0xF2w; 0x6Bw; 0x6Fw; 0xC5w; 0x30w; 0x01w; 0x67w; 0x2Bw; 0xFEw; 0xD7w; 0xABw; 0x76w;
     0xCAw; 0x82w; 0xC9w; 0x7Dw; 0xFAw; 0x59w; 0x47w; 0xF0w; 0xADw; 0xD4w; 0xA2w; 0xAFw; 0x9Cw; 0xA4w; 0x72w; 0xC0w;
     0xB7w; 0xFDw; 0x93w; 0x26w; 0x36w; 0x3Fw; 0xF7w; 0xCCw; 0x34w; 0xA5w; 0xE5w; 0xF1w; 0x71w; 0xD8w; 0x31w; 0x15w;
@@ -28,35 +28,42 @@ aes_sbox_list = [
     0x70w; 0x3Ew; 0xB5w; 0x66w; 0x48w; 0x03w; 0xF6w; 0x0Ew; 0x61w; 0x35w; 0x57w; 0xB9w; 0x86w; 0xC1w; 0x1Dw; 0x9Ew;
     0xE1w; 0xF8w; 0x98w; 0x11w; 0x69w; 0xD9w; 0x8Ew; 0x94w; 0x9Bw; 0x1Ew; 0x87w; 0xE9w; 0xCEw; 0x55w; 0x28w; 0xDFw;
     0x8Cw; 0xA1w; 0x89w; 0x0Dw; 0xBFw; 0xE6w; 0x42w; 0x68w; 0x41w; 0x99w; 0x2Dw; 0x0Fw; 0xB0w; 0x54w; 0xBBw; 0x16w
-]`;
+]
+End
 
-val aes_sbox_def = Define `
- aes_sbox (x:word8) = EL (w2n x) aes_sbox_list`;
+Definition aes_sbox_def:
+ aes_sbox (x:word8) = EL (w2n x) aes_sbox_list
+End
 
-val aes_sub_byte_def = Define `
+Definition aes_sub_byte_def:
   aes_sub_byte (s:aes_state) = 
-   (\i.\j. aes_sbox(s i j))`;
+   (\i.\j. aes_sbox(s i j))
+End
 
-val aes_shift_row_def = Define `
+Definition aes_shift_row_def:
   aes_shift_row (s:aes_state) = 
-   (\i.\j. s i (j + i))`;
+   (\i.\j. s i (j + i))
+End
 
 
-val aes_mix_column_def = Define `
-aes_mix_column (s:aes_state) =
+Definition aes_mix_column_def:
+  aes_mix_column (s:aes_state) =
 (\i.\j. 
   let h c = 0xffw * (0x80w && (s i c)) in
   let b c = ((s i c) << 1) ⊕ (0x1Bw && (h c)) in
   (b j) ⊕ (s i (3w + j)) ⊕ (s i (2w + j)) ⊕ (b (1w+j)) ⊕ (s i (1w+j))
-)`;
+)
+End
 
-val aes_add_key_def = Define `
+Definition aes_add_key_def:
   aes_add_key (s:aes_state) k = 
-   (\i.\j. (s i j) ⊕ (k i j))`;
+   (\i.\j. (s i j) ⊕ (k i j))
+End
 
-val aes_round_def = Define `
+Definition aes_round_def:
   aes_round (s:aes_state) k =
-  aes_add_key (aes_mix_column (aes_shift_row (aes_sub_byte s))) k`;
+  aes_add_key (aes_mix_column (aes_shift_row (aes_sub_byte s))) k
+End
 
 val _ = EVAL ``aes_sub_byte x``;
 val _ = EVAL ``aes_shift_row x``;

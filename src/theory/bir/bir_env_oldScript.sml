@@ -35,9 +35,11 @@ End
 
 (* This duplication is kept deliberately, because despite the same semantics, the intentention
    of what you want to express is different *)
-val bir_env_var_is_declared_DEF_bir_env_check_type = store_thm ("bir_env_var_is_declared_ALT_DEF",
-  ``bir_env_var_is_declared env v = bir_env_check_type v env``,
-SIMP_TAC std_ss [bir_env_check_type_def, bir_env_var_is_declared_def]);
+Theorem bir_env_var_is_declared_ALT_DEF:
+  bir_env_var_is_declared env v = bir_env_check_type v env
+Proof
+  SIMP_TAC std_ss [bir_env_check_type_def, bir_env_var_is_declared_def]
+QED
 
 
 

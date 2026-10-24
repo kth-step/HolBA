@@ -10,7 +10,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 (* Passified version of the program found in toy1-test.sml *)
-val aes_program_def = Define `
+Definition aes_program_def:
      aes_program =
 		           (BirProgram
   [<|bb_label :=
@@ -66,7 +66,8 @@ val aes_program_def = Define `
                 (BExp_Cast BIExp_LowCast
                    (BExp_Den (BVar "R1_0" (BType_Imm Bit64))) Bit32)))];
      bb_last_statement :=
-       BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x40057Cw)))|>])`;
+       BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x40057Cw)))|>])
+End
 
 (* Note: Changed variable to SP_EL0_1 *)
 (* Note: This approach does not obtain a HT for the last val. *)
@@ -75,14 +76,17 @@ val aes_post_exp_tm = ``
     (BExp_Den (BVar "SP_EL0_1" (BType_Imm Bit64)))
     (BExp_Const (Imm64 112w))
   )``;
-val aes_post_def = Define `
-  aes_post (l:bir_label_t) = (^aes_post_exp_tm)`;
-val aes_ls_def = Define `
-      aes_ls = \x.(x = (BL_Address (Imm64 0x400578w)))`;
-val aes_wps_def = Define `
+Definition aes_post_def:
+  aes_post (l:bir_label_t) = (^aes_post_exp_tm)
+End
+Definition aes_ls_def:
+      aes_ls = \x.(x = (BL_Address (Imm64 0x400578w)))
+End
+Definition aes_wps_def:
       aes_wps = (FEMPTY |+ (BL_Address (Imm64 0x400578w),
                   (^aes_post_exp_tm))
-                )`;
+                )
+End
 
 (* Terms with just the abbreviations in the above definitions. *)
 val program = ``aes_program``;
@@ -113,8 +117,8 @@ val (wpsrec, wpsrec_bool_sound_thm) =
                            ) (program, post, ls) defs;
 
 (* 3b. Introduce abbreviations for legibility *)
-val aes_wpsrec_def = Define `
+Definition aes_wpsrec_def:
       aes_wpsrec = ^wpsrec
-`;
+End
 val wpsrec_bool_sound_thm_readable =
   REWRITE_RULE [GSYM aes_wpsrec_def] wpsrec_bool_sound_thm;

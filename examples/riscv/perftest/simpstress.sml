@@ -126,7 +126,7 @@ val unique_addrs_vals = makeunique addrs_vals [];
 val maxlen = length unique_addrs_vals;
 *)
 
-val bir_aespart_prog_def = Define `
+Definition bir_aespart_prog_def:
    bir_aespart_prog =
         BirProgram
           [<|bb_label :=
@@ -145,7 +145,7 @@ val bir_aespart_prog_def = Define `
                         Bit32) Bit64)];
              bb_last_statement :=
                BStmt_Jmp (BLE_Label (BL_Address (Imm64 2800w)))|>]
-`;
+End
 
 
 local

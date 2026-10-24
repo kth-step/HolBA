@@ -27,7 +27,7 @@ val _ = Feedback.set_trace "Definition.storage_message" 1;
 
 (* BIR program *)
 val _ = print "Defining BIR program...\n";
-val bir_mem_prog_def = Define `
+Definition bir_mem_prog_def:
   bir_mem_prog = BirProgram [
     <|bb_label := BL_Label "entry";
       bb_statements := [];
@@ -59,7 +59,8 @@ val bir_mem_prog_def = Define `
       bb_statements := [];
       bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))
     |>
-  ]`;
+  ]
+End
 val _ = print "Done!\n";
 
 (* Equivalent-ish Z3 program

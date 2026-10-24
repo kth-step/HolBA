@@ -63,7 +63,9 @@ val bstateval_tx = #bstateval tx_state
 val bstateval_td = #bstateval td_state
 
 (* Load and print the program *)
-val nic_program_def = Define `nic_program = ^(nic_programLib.nic_program)`;
+Definition nic_program_def:
+  nic_program = ^(nic_programLib.nic_program)
+End
 val _ = if !level_log >= logLib.INFO
   then (pprint_thm nic_program_def; print "\n")
   else ();
