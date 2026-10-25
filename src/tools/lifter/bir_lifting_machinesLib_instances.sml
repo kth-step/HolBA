@@ -722,9 +722,13 @@ local
      * registers. *)
     val thm6 =
       CONV_RULE (simp_conv THENC simp_conv2 THENC (SIMP_CONV std_ss (riscv_extra_THMS vn))) thm5
-    val thm7 = UNDISCH_ALL thm6
+    (* Minimum and maximum (from AMOMIN and similar) as comparisons *)
+    val thm7 =
+      PURE_REWRITE_RULE [wordsTheory.word_min_def, wordsTheory.word_max_def,
+                         wordsTheory.word_smin_def, wordsTheory.word_smax_def] thm6
+    val thm8 = UNDISCH_ALL thm7
   in
-    thm7
+    thm8
   end;
 
 in

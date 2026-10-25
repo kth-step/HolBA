@@ -682,8 +682,15 @@ AND x5, x6, x7: 007372B3 @ 0x10030 - OK
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
-FENCE x1, x2, i, i: 0881008F @ 0x10030 - FAILED
-   bmr_step_hex failed
+FENCE x1, x2, i, i: 0881008F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[143w; 0w; 129w; 8w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "0881008F";
+           bb_statements := [];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 ECALL: 00000073 @ 0x10030 - FAILED
    bmr_step_hex failed
@@ -921,8 +928,15 @@ SRAW x5, x6, x7: 407352BB @ 0x10030 - OK
 
 RV64 Zifencei Standard Extension
 
-FENCE.I x0, x0, 0: 0000100F @ 0x10030 - FAILED
-   bmr_step_hex failed
+FENCE.I x0, x0, 0: 0000100F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[15w; 16w; 0w; 0w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "0000100F";
+           bb_statements := [];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 
 RV64 Zicsr Standard Extension
@@ -1497,6 +1511,639 @@ REMUW x5, x6, x7: 027372BB @ 0x10030 - OK
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 
+RV64A Standard Extension
+
+AMOSWAP.W a0, a2, (a1): 08C5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 197w; 8w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "08C5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOADD.W a0, a2, (a1): 00C5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 197w; 0w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "00C5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_BinExp BIExp_Plus
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Load
+                               (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                               (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                               BEnd_LittleEndian Bit32) Bit64)
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOXOR.W a0, a2, (a1): 20C5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 197w; 32w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "20C5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_BinExp BIExp_Xor
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Load
+                               (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                               (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                               BEnd_LittleEndian Bit32) Bit64)
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOAND.W a0, a2, (a1): 60C5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 197w; 96w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "60C5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_BinExp BIExp_And
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Load
+                               (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                               (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                               BEnd_LittleEndian Bit32) Bit64)
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOOR.W a0, a2, (a1): 40C5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 197w; 64w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "40C5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_BinExp BIExp_Or
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Load
+                               (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                               (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                               BEnd_LittleEndian Bit32) Bit64)
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOMIN.W a0, a2, (a1): 80C5A52F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+AMOMAX.W a0, a2, (a1): A0C5A52F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+AMOMINU.W a0, a2, (a1): C0C5A52F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+AMOMAXU.W a0, a2, (a1): E0C5A52F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+AMOSWAP.D a0, a2, (a1): 08C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 8w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "08C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Den (BVar "x12" (BType_Imm Bit64))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOADD.D a0, a2, (a1): 00C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 0w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "00C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOXOR.D a0, a2, (a1): 20C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 32w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "20C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_BinExp BIExp_Xor
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOAND.D a0, a2, (a1): 60C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 96w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "60C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_BinExp BIExp_And
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOOR.D a0, a2, (a1): 40C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 64w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "40C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_BinExp BIExp_Or
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOMIN.D a0, a2, (a1): 80C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 128w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "80C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_IfThenElse
+                      (BExp_BinPred BIExp_SignedLessThan
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))
+                         (BExp_Load
+                            (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                            (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                            BEnd_LittleEndian Bit64))
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOMAX.D a0, a2, (a1): A0C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 160w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "A0C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_IfThenElse
+                      (BExp_BinPred BIExp_SignedLessThan
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))
+                         (BExp_Load
+                            (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                            (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                            BEnd_LittleEndian Bit64))
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOMINU.D a0, a2, (a1): C0C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 192w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "C0C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_IfThenElse
+                      (BExp_BinPred BIExp_LessThan
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))
+                         (BExp_Load
+                            (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                            (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                            BEnd_LittleEndian Bit64))
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOMAXU.D a0, a2, (a1): E0C5B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 197w; 224w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "E0C5B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_IfThenElse
+                      (BExp_BinPred BIExp_LessThan
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))
+                         (BExp_Load
+                            (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                            (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                            BEnd_LittleEndian Bit64))
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOSWAP.W.AQRL a0, a2, (a1): 0EC5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 197w; 14w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "0EC5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOOR.W x0, a2, (a1): 40C5A02F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 160w; 197w; 64w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "40C5A02F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_BinExp BIExp_Or
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Load
+                               (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                               (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                               BEnd_LittleEndian Bit32) Bit64)
+                         (BExp_Den (BVar "x12" (BType_Imm Bit64)))) Bit32))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOSWAP.W a0, a0, (a1): 08A5A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 165w; 8w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "08A5A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 4);
+              BStmt_Assign (BVar "tmp_x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_Cast BIExp_LowCast
+                      (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32));
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Den (BVar "tmp_x10" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+AMOADD.D a1, a2, (a1): 00C5B5AF @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[175w; 181w; 197w; 0w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "00C5B5AF";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "tmp_x11" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Den (BVar "x12" (BType_Imm Bit64)))));
+              BStmt_Assign (BVar "x11" (BType_Imm Bit64))
+                (BExp_Den (BVar "tmp_x11" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+LR.W a0, (a1): 1005A52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 165w; 5w; 16w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "1005A52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Cast BIExp_SignedCast
+                   (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                      (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                      BEnd_LittleEndian Bit32) Bit64)];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+LR.D a0, (a1): 1005B52F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 181w; 5w; 16w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "1005B52F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))));
+              BStmt_Assign (BVar "x10" (BType_Imm Bit64))
+                (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64)))
+                   BEnd_LittleEndian Bit64)];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+LR.W.AQ x0, (a1): 1405A02F @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[47w; 160w; 5w; 20w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "1405A02F";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_Aligned Bit64 2
+                   (BExp_Den (BVar "x11" (BType_Imm Bit64))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+SC.W a0, a2, (a1): 18C5A52F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+SC.D a0, a2, (a1): 18C5B52F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+
 RV64C Standard Extension (integer instructions)
 
 C.ADDI4SPN a0, sp, 16: 0808 @ 0x10030 - OK
@@ -2034,12 +2681,16 @@ C.SDSP a0, 8(sp): E42A @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 5/117
+Instructions FAILED: 9/144
 
-   "0881008F" (* bmr_step_hex failed *),
    "00000073" (* bmr_step_hex failed *),
    "00100073" (* bmr_step_hex failed *),
-   "0000100F" (* bmr_step_hex failed *),
+   "80C5A52F" (* bmr_step_hex failed *),
+   "A0C5A52F" (* bmr_step_hex failed *),
+   "C0C5A52F" (* bmr_step_hex failed *),
+   "E0C5A52F" (* bmr_step_hex failed *),
+   "18C5A52F" (* bmr_step_hex failed *),
+   "18C5B52F" (* bmr_step_hex failed *),
    "9002" (* bmr_step_hex failed *)
 ]
 

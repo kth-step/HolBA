@@ -183,6 +183,12 @@ val aligned3 = Q.prove(
   \\ blastLib.BBLAST_TAC
   )
 
+val aligned3b = Q.prove(
+  `(!w: word64. ((2 >< 0) w = 0w: word3) = aligned 3 w)`,
+  simp [alignmentTheory.aligned_extract]
+  \\ blastLib.BBLAST_TAC
+  )
+
 val address_align = blastLib.BBLAST_PROVE
   ``w2w ((63 >< 3) a : 61 word) << 3 = (63 '' 3) (a: word64)``
 
@@ -194,6 +200,32 @@ val address_aligned3 = uprove
   (
   simp [alignmentTheory.aligned_extract]
   \\ blastLib.BBLAST_TAC
+  )
+
+val read_word_data = uprove
+  `aligned 2 (a: word64) ==>
+   ((31 >< 0) (rawReadData a s) : word32 =
+    s.MEM8 (a + 3w) @@ s.MEM8 (a + 2w) @@ s.MEM8 (a + 1w) @@ (s.MEM8 a : word8))`
+  (
+  strip_tac
+  \\ `((2 >< 0) a = 0w: word3) /\ ((63 '' 3) a = a) \/
+      ((2 >< 0) a = 4w: word3) /\ ((63 '' 3) a = a - 4w)`
+       by (fs [alignmentTheory.aligned_extract] \\ blastLib.FULL_BBLAST_TAC)
+  \\ rw [rawReadData_def, MEM_def, address_align, address_align2]
+  \\ simp_tac (std_ss++wordsLib.WORD_ARITH_ss) []
+  \\ blastLib.BBLAST_TAC
+  )
+
+val read_dword_data = uprove
+  `aligned 3 (a: word64) ==>
+   (rawReadData a s =
+    s.MEM8 (a + 7w) @@ s.MEM8 (a + 6w) @@ s.MEM8 (a + 5w) @@ s.MEM8 (a + 4w) @@
+    s.MEM8 (a + 3w) @@ s.MEM8 (a + 2w) @@ s.MEM8 (a + 1w) @@ (s.MEM8 a : word8))`
+  (
+  strip_tac
+  \\ `((2 >< 0) a = 0w: word3) /\ ((63 '' 3) a = a)`
+       by (fs [alignmentTheory.aligned_extract] \\ blastLib.FULL_BBLAST_TAC)
+  \\ rw [rawReadData_def, MEM_def, address_align]
   )
 
 val words_of_dword = Q.prove(
@@ -822,21 +854,28 @@ val writeCSR = ev [writeCSR_def, write'CSR_def, write'Delta_def, Delta_def] [] [
    ------------------------------------------------------------------------ *)
 
 local
-  val l =
+  val l_pre =
     [GPR, in32BitMode, PC, wordsTheory.word_len_def,
      branchTo, translateAddr, jal, jalr, aligned2,
      aligned_select_word_s, aligned_select_word_z, select_word,
      aligned_select_half_s, aligned_select_half_z, select_half,
-     aligned_select_byte_s, aligned_select_byte_z, select_byte,
-     rawReadData, rawWriteData8, rawWriteData4, rawWriteData2, rawWriteData1]
+     aligned_select_byte_s, aligned_select_byte_z, select_byte]
+  val l_post = [rawWriteData8, rawWriteData4, rawWriteData2, rawWriteData1]
   val hyp_eq_rule =
     utilsLib.ALL_HYP_CONV_RULE (Conv.DEPTH_CONV wordsLib.word_EQ_CONV)
 in
   fun class args avoid n =
     let
       val is_csr = Lib.mem n ["CSRRW", "CSRRS", "CSRRC", "CSRRWI", "CSRRSI", "CSRRCI"]
+      val is_amo = String.isPrefix "AMO" n orelse Lib.mem n ["LR_W", "LR_D"]
       val name = "dfn'" ^ n
       val read = if Lib.mem n ["LD"] then [address_aligned3] else []
+      val amo =
+        if not is_amo then []
+        else if String.isSuffix "_D" n
+          then [aligned3b, read_dword_data, write'ReserveLoad_def]
+        else [read_word_data, write'ReserveLoad_def]
+      val l = l_pre @ (if is_amo then [] else [rawReadData]) @ l_post
       val (write, n) =
         if List.exists (tmem rd0) avoid then
           ([write'GPR0], n ^ "_NOP")
@@ -847,7 +886,7 @@ in
         if is_csr
         then [checkCSROp, check_CSR_access, CSR, privLevel, csrRW, csrPR]
         else []
-      val thms = DB.fetch "riscv" (name ^ "_def") :: write @ read @ csr
+      val thms = DB.fetch "riscv" (name ^ "_def") :: write @ read @ csr @ amo
     in
       case ev (thms @ l) avoid [] (Parse.Term ([QUOTE name] @ args)) of
          [th] => utilsLib.save_thms n [hyp_eq_rule th]
@@ -960,6 +999,37 @@ val csrinsti = class_rd0 `(rd, imm, csr)`
 val CSRRWI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRWI"
 val CSRRSI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRSI"
 val CSRRCI_M = csrinsti [[``^privilege_level = 3w``, ``^archbase <> 0w``]] "CSRRCI"
+
+(* A extension. Not covered:
+ *  * an address in x0
+ *  * SC_W and SC_D
+ *  * AMOMIN_W, AMOMAX_W, AMOMINU_W and AMOMAXU_W *)
+val amo_w = [``rs1 <> 0w: word5``, ``aligned 2 (^s.c_gpr ^s.procID rs1)``]
+val amo_d = [``rs1 <> 0w: word5``, ``aligned 3 (^s.c_gpr ^s.procID rs1)``,
+             ``^archbase <> 0w``]
+
+val amo = class_rd0 `(aq, rl, rd, rs1, rs2)`
+
+val AMOSWAP_W = amo [amo_w] "AMOSWAP_W"
+val AMOADD_W  = amo [amo_w] "AMOADD_W"
+val AMOXOR_W  = amo [amo_w] "AMOXOR_W"
+val AMOAND_W  = amo [amo_w] "AMOAND_W"
+val AMOOR_W   = amo [amo_w] "AMOOR_W"
+
+val AMOSWAP_D = amo [amo_d] "AMOSWAP_D"
+val AMOADD_D  = amo [amo_d] "AMOADD_D"
+val AMOXOR_D  = amo [amo_d] "AMOXOR_D"
+val AMOAND_D  = amo [amo_d] "AMOAND_D"
+val AMOOR_D   = amo [amo_d] "AMOOR_D"
+val AMOMIN_D  = amo [amo_d] "AMOMIN_D"
+val AMOMAX_D  = amo [amo_d] "AMOMAX_D"
+val AMOMINU_D = amo [amo_d] "AMOMINU_D"
+val AMOMAXU_D = amo [amo_d] "AMOMAXU_D"
+
+val lr = class_rd0 `(aq, rl, rd, rs1)`
+
+val LR_W = lr [amo_w] "LR_W"
+val LR_D = lr [amo_d] "LR_D"
 
 (* ------------------------------------------------------------------------ *)
 
