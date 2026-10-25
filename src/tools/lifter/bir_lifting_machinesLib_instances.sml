@@ -658,12 +658,14 @@ local
   fun prepare_mem_contains_thms vn hex_code =
     let
       val bytes = bytes_of_hex_code hex_code
-      val _ = if length bytes = 4
-              then ()
-              else failwith "invalid hex-code";
+      val ms_thm = if (length bytes = 2) then
+                      bmr_ms_mem_contains_RISCV_2
+                   else if (length bytes = 4) then
+                      bmr_ms_mem_contains_RISCV
+                   else failwith "invalid hex-code";
 
       val thm0 = SPECL (vn::(List.rev bytes))
-                       bmr_ms_mem_contains_RISCV
+                       ms_thm
 
       val thm1a = ASSUME (lhs (concl thm0))
       val thm2 = CONV_RULE (K thm0) thm1a
@@ -760,7 +762,8 @@ fun riscv_mk_data_mm mem_loc hex_code =
     val bytes = List.rev (bytes_of_hex_code hex_code)
 
     val _ =
-      if length bytes = 4 then () else failwith "invalid hex-code";
+      if (length bytes = 2) orelse (length bytes = 4) then ()
+      else failwith "invalid hex-code";
 
     val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
   in
