@@ -2,12 +2,12 @@
 
 (*
 =================================
-        ldr x12, [x27]
-        cmp x15, x16
-        b.gt #0xC
-        ldr x8, [x8, #8]
-        b #0x8
-        nop
+	ldr x12, [x27]
+	cmp x15, x16
+	b.gt #0xC
+	ldr x8, [x8, #8]
+	b #0x8
+	nop
 =================================
 *)
 
@@ -121,22 +121,22 @@ F
 
 (*
 =================================
-        ldr x12, [x27]
+	ldr x12, [x27]
 obs0 0x0
 obs0 x27
-        cmp x15, x16
+	cmp x15, x16
 obs0 0x4
-        b.gt #0xC
+	b.gt #0xC
 obs0 0x8
-        ldr x8, [x8, #8]
+	ldr x8, [x8, #8]
 obs0 0xC
 obs0 x8+8
-        b #0x8
+	b #0x8
 obs0 0x10
-        nop
+	nop
 obs1 x8*+8
 obs0 0x14
-        HALT
+	HALT
 obs0 0x18
 =================================
 *)

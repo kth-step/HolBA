@@ -2,13 +2,13 @@
 
 (*
 =================================
-        ldr x26, [x14,x24]
-        ldr x15, [x17, #0]
-        cmp x14, x15
-        b.eq #0xC
-        ldr x10, [x26, #76]
-        b #0x8
-        ldr x14, [x9]
+	ldr x26, [x14,x24]
+	ldr x15, [x17, #0]
+	cmp x14, x15
+	b.eq #0xC
+	ldr x10, [x26, #76]
+	b #0x8
+	ldr x14, [x9]
 =================================
 *)
 
@@ -1278,27 +1278,27 @@ BirProgram
 
 (*
 =================================
-        ldr x26, [x14,x24]
+	ldr x26, [x14,x24]
 obs0 0x0
 obs0 x14+x24
-        ldr x15, [x17, #0]
+	ldr x15, [x17, #0]
 obs0 0x4
 obs0 x17
-        cmp x14, x15
+	cmp x14, x15
 obs0 0x8
-        b.eq #0xC
+	b.eq #0xC
 obs0 0xC
-        ldr x10, [x26, #76]
+	ldr x10, [x26, #76]
 obs1 x9*
 obs0 0x10
 obs0 x26+76
-        b #0x8
+	b #0x8
 obs0 0x14
-        ldr x14, [x9]
+	ldr x14, [x9]
 obs1 x26*+76
 obs0 0x18
 obs0 x9
-        HALT
+	HALT
 obs0 0x1C
 
 =================================
