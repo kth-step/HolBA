@@ -1211,8 +1211,8 @@ QED
 
 Theorem bmr_ms_mem_contains_RISCV_2:
   !ms v1 v2.
-    (bmr_ms_mem_contains riscv_bmr ms (ms.c_PC ms.procID,
-                                      [v1; v2]) <=>
+    (bmr_ms_mem_contains riscv_bmr ms (ms.c_PC ms.procID, [v1; v2])
+    <=>
       ((ms.MEM8 (ms.c_PC ms.procID) = v1) /\
        (ms.MEM8 ((ms.c_PC ms.procID) + 1w) = v2)
       )
