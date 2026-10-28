@@ -65,7 +65,7 @@ Theorem bir_exec_stmt_assign_ENV:
       (bir_exec_stmt_assign v e st).bst_environ =
       case (bir_eval_exp e st.bst_environ) of
         | NONE => st.bst_environ
-	| SOME va => 
+        | SOME va => 
       (case bir_env_write v va st.bst_environ of
          | SOME env => env
          | NONE => st.bst_environ)

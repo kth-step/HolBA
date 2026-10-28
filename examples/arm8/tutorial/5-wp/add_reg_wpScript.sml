@@ -280,9 +280,9 @@ val (bir_add_reg_mem_ht, bir_add_reg_mem_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm ending_lam_disj
                 postcond_tm prefix elist defs;
 
-val bir_add_reg_mem_wp_def = Define `
+Definition bir_add_reg_mem_wp_def:
   bir_add_reg_mem_wp = ^(bir_add_reg_mem_wp_tm)
-`;
+End
 val _ = save_thm ("bir_add_reg_mem_ht", bir_add_reg_mem_ht);
 *)
 

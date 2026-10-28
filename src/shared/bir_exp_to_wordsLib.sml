@@ -134,10 +134,10 @@ struct
 
   fun bool2w exp_tm =
       let
-	  val to_rewrite = ``bool2w ^exp_tm``
-	  val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
+          val to_rewrite = ``bool2w ^exp_tm``
+          val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
       in
-	  (snd o dest_comb o concl) rewritten
+          (snd o dest_comb o concl) rewritten
       end
       handle e => raise wrap_exn "bool2w" e;
 
@@ -147,10 +147,10 @@ struct
 
     fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_imm";
     val s = syntax_fns 1
-		     (fn tm1 => fn e => fn w => (HolKernel.dest_monop tm1 e w, dim_of w))
-		     (fn tm => fn (w, ty) =>
-				  Term.mk_comb
-				      (Term.inst [Type.alpha |-> dim_of w, Type.beta |-> ty] tm, w));
+                     (fn tm1 => fn e => fn w => (HolKernel.dest_monop tm1 e w, dim_of w))
+                     (fn tm => fn (w, ty) =>
+                                  Term.mk_comb
+                                      (Term.inst [Type.alpha |-> dim_of w, Type.beta |-> ty] tm, w));
 
     val (w2wh_tm, mk_w2wh, dest_w2wh, is_w2wh)= s "w2wh";
   in
@@ -159,7 +159,7 @@ struct
 
   fun bir_exp_to_words exp =
     let
-	val _ = ()
+        val _ = ()
     in
       (* Constants *)
       if is_BExp_Const exp then
@@ -230,15 +230,15 @@ struct
           val cast_typ_to_int = size_of_bir_immtype_t sz;
         in
           case (term_to_string casttyp) of 
-		  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		| "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		| "BIExp_SignedCast"   =>  if val_typ_sz >= cast_typ_to_int
-					   then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-					   else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty)
-		| "BIExp_HighCast"     =>  if val_typ_sz >= cast_typ_to_int
-					   then mk_w2wh(val_ty, dw cast_ty)
-					   else wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		| x => raise ERR "unknown cast" ("cast type unknown: " ^ x)
+                  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+                | "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+                | "BIExp_SignedCast"   =>  if val_typ_sz >= cast_typ_to_int
+                                           then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+                                           else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty)
+                | "BIExp_HighCast"     =>  if val_typ_sz >= cast_typ_to_int
+                                           then mk_w2wh(val_ty, dw cast_ty)
+                                           else wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+                | x => raise ERR "unknown cast" ("cast type unknown: " ^ x)
         end
         handle e => raise wrap_exn "bir_exp_to_words::Cast" e
 
@@ -364,7 +364,7 @@ struct
             BEnd_LittleEndian
             Bit128
         ``;
-	val exp = ``
+        val exp = ``
           (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R1" (BType_Imm Bit64)))

@@ -119,14 +119,15 @@ val bir_att_sec_add_ct =
 
   val assumes = ASSUME ct_assmpt;
 
-val notin_insert_neq_thm = prove(``!set el. el NOTIN set ==> (set <> el INSERT set)``,
-
+Theorem notin_insert_neq_thm[local]:
+  !set el. el NOTIN set ==> (set <> el INSERT set)
+Proof
 REPEAT STRIP_TAC >>
 subgoal `el IN (el INSERT set')` >- (
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 ) >>
 METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
-);
+QED
 val fix3_thm = (UNDISCH_ALL o prove) (``
 ^ct_assmpt ==>
 (!l.
@@ -177,21 +178,21 @@ val fix3_thm = (UNDISCH_ALL o prove) (``
   fun populate_elist_set_hack elabels simp_ct =
     let
       val simp_ct1 =
-	((SPEC elabels) o
-	 (HO_MATCH_MP bir_il_to_el_set_rule_thm))
-	simp_ct;
+        ((SPEC elabels) o
+         (HO_MATCH_MP bir_il_to_el_set_rule_thm))
+        simp_ct;
       val simp_ct1_1 = fix_assmt simp_ct1;
       val simp_ct1_2 = fix_assmt2 simp_ct1_1;
       val simp_ct1_3 = fix_assmt3 simp_ct1_2;
       val simp_ct1 =
         REWRITE_RULE [pred_setTheory.UNION_EMPTY,
-		      pred_setTheory.INSERT_DIFF,
-		      pred_setTheory.COMPONENT,
-		      (REWRITE_RULE [pred_setTheory.SUBSET_OF_INSERT]
-		       (Q.SPECL [`a`,`b INSERT a`] pred_setTheory.SUBSET_DIFF_EMPTY)),
-		      pred_setTheory.DIFF_EQ_EMPTY,
-		      assumes]
-		     simp_ct1_3
+                      pred_setTheory.INSERT_DIFF,
+                      pred_setTheory.COMPONENT,
+                      (REWRITE_RULE [pred_setTheory.SUBSET_OF_INSERT]
+                       (Q.SPECL [`a`,`b INSERT a`] pred_setTheory.SUBSET_DIFF_EMPTY)),
+                      pred_setTheory.DIFF_EQ_EMPTY,
+                      assumes]
+                     simp_ct1_3
     in
       simp_ct1
     end;
@@ -217,7 +218,7 @@ val fix3_thm = (UNDISCH_ALL o prove) (``
 
 (* For debugging:
   val def_list = [bprog_add_times_two_def, bir_att_sec_add_2_post_def,
-		  bir_att_sec_add_1_post_def];
+                  bir_att_sec_add_1_post_def];
 
   val assmpt = ct_assmpt;
 *)

@@ -13,10 +13,10 @@ in
   fun to_graphViz_escaped_string s =
     let
       fun add_escape acc []      = acc
-	| add_escape acc (c::cs) =
-	    let val c_ = if c = #"\"" then [c, #"\\"] else [c] in
-	      add_escape (c_@acc) cs
-	    end;
+        | add_escape acc (c::cs) =
+            let val c_ = if c = #"\"" then [c, #"\\"] else [c] in
+              add_escape (c_@acc) cs
+            end;
     in
       (implode o List.rev o (add_escape []) o explode) s
     end;
@@ -118,11 +118,11 @@ fun simplify_graph (nodes, edges) =
            (not (length outs = 1 andalso length ins = 1)) orelse
            (let
               val (_,in_shape,_) = case List.find (fn (i,_,_) => i = hd ins) nodes of
-				       NONE => raise ERR "simplify_graph" "unexpected error"
-				     | SOME x => x;
+                                       NONE => raise ERR "simplify_graph" "unexpected error"
+                                     | SOME x => x;
               val (_,out_shape,_) = case List.find (fn (i,_,_) => i = hd outs) nodes of
-				       NONE => raise ERR "simplify_graph" "unexpected error"
-				     | SOME x => x;
+                                       NONE => raise ERR "simplify_graph" "unexpected error"
+                                     | SOME x => x;
             in
               in_shape <> node_shape_default orelse out_shape <> node_shape_default
             end)
@@ -150,8 +150,8 @@ fun simplify_graph (nodes, edges) =
     fun findNexts acc x =
       let
         val (_,y) = case List.find (fn (z,_) => x = z) edges of
-		        NONE => raise ERR "simplify_graph" "unexpected error"
-		      | SOME x => x;
+                        NONE => raise ERR "simplify_graph" "unexpected error"
+                      | SOME x => x;
       in
         if nodeExists y then (y,acc)
         else findNexts (acc+1) y

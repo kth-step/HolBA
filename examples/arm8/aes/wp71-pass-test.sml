@@ -11,9 +11,9 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 (* Time measurement should start here... *)
 
 (* Passified version of the AES fragment of 71 statements. *)
-val aes_program_def = Define `
+Definition aes_program_def:
      aes_program =
-		           (BirProgram
+                           (BirProgram
   [<|bb_label :=
        BL_Address_HC (Imm64 0x400868w) "B90057E0 (str w0, [sp,#84])";
      bb_statements :=
@@ -1000,26 +1000,27 @@ val aes_program_def = Define `
              Bit64)];
      bb_last_statement :=
        BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x400984w)))|>]
-)`;
+)
+End
 
 (* Note: Using same postcondition as in AESWpsScript, apart from
  * indexing. *)
 (* Note: This approach does not obtain a HT for the last block. *)
-val aes_post_def = Define `
+Definition aes_post_def:
   aes_post =
     (BExp_BinPred BIExp_Equal
                   (BExp_Den (BVar "R0_post" (BType_Imm Bit64)))
                   (BExp_Den (BVar "R0_47" (BType_Imm Bit64)))
     )
-`;
+End
 
-val aes_ls_def = Define `
+Definition aes_ls_def:
       aes_ls = \x.(x = (BL_Address (Imm64 0x400980w)))
-`;
+End
 
-val aes_wps_def = Define `
+Definition aes_wps_def:
       aes_wps = (FEMPTY |+ (BL_Address (Imm64 0x400980w), aes_post))
-`;
+End
 
 (* Terms with just the abbreviations in the above definitions. *)
 val program = ``aes_program``;
@@ -1050,7 +1051,8 @@ val (wpsrec, wpsrec_bool_sound_thm) =
                            ) (program, post, ls) defs;
 
 (* 3b. Introduce abbreviations for legibility *)
-val aes_wpsrec_def = Define `
-      aes_wpsrec = ^wpsrec`;
+Definition aes_wpsrec_def:
+      aes_wpsrec = ^wpsrec
+End
 val wpsrec_bool_sound_thm_readable =
   REWRITE_RULE [GSYM aes_wpsrec_def] wpsrec_bool_sound_thm;

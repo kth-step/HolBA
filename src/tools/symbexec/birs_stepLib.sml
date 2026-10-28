@@ -265,7 +265,7 @@ val tm = ``birs_symbval_concretizations
 val tm = ``birs_symbval_concretizations
                 (BExp_BinExp BIExp_And
                    (BExp_BinPred BIExp_LessThan
-		      (BExp_Const (Imm64 0x20w))
+                      (BExp_Const (Imm64 0x20w))
                       (BExp_Den (BVar "sy_x2" (BType_Imm Bit64))))
                    (BExp_BinPred BIExp_LessThan
                       (BExp_Den (BVar "sy_x2" (BType_Imm Bit64)))

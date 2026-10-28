@@ -59,7 +59,7 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
       val var_usage_list = GEN_find_all_subterm is_BVar prog;
 
       fun filter_doubles [] acc = acc
-	| filter_doubles (x::xs) acc = filter_doubles (List.filter (fn y => not (identical y x)) xs) (x::acc);
+        | filter_doubles (x::xs) acc = filter_doubles (List.filter (fn y => not (identical y x)) xs) (x::acc);
     in
       filter_doubles var_usage_list [] (* TODO: double check that these are all variables? *)
     end;
@@ -161,21 +161,21 @@ bir_is_well_typed_program
     fun bir_exec_well_typed_prog prog_l_def =
       let
         val prog_typed_thms = [
-			    bir_is_well_typed_program_def,bir_is_well_typed_block_def,
+                            bir_is_well_typed_program_def,bir_is_well_typed_block_def,
                             bir_is_well_typed_stmtE_def,bir_is_well_typed_stmtB_def,
-			    bir_is_well_typed_label_exp_def,
+                            bir_is_well_typed_label_exp_def,
 
-			    type_of_bir_exp_def,bir_var_type_def,bir_type_is_Imm_def,
+                            type_of_bir_exp_def,bir_var_type_def,bir_type_is_Imm_def,
                             type_of_bir_imm_def,
-			    BExp_Aligned_type_of,BExp_unchanged_mem_interval_distinct_type_of,
-			    bir_number_of_mem_splits_REWRS, BType_Bool_def, bir_exp_true_def,
+                            BExp_Aligned_type_of,BExp_unchanged_mem_interval_distinct_type_of,
+                            bir_number_of_mem_splits_REWRS, BType_Bool_def, bir_exp_true_def,
                             bir_exp_false_def, BExp_MSB_type_of,
-			    BExp_nzcv_ADD_DEFS, BExp_nzcv_SUB_DEFS, n2bs_def, BExp_word_bit_def,
-			    BExp_Align_type_of, BExp_ror_type_of, BExp_LSB_type_of,
+                            BExp_nzcv_ADD_DEFS, BExp_nzcv_SUB_DEFS, n2bs_def, BExp_word_bit_def,
+                            BExp_Align_type_of, BExp_ror_type_of, BExp_LSB_type_of,
                             BExp_word_bit_exp_type_of,
-			    BExp_ADD_WITH_CARRY_type_of, BExp_word_reverse_type_of,
+                            BExp_ADD_WITH_CARRY_type_of, BExp_word_reverse_type_of,
                             BExp_ror_exp_type_of
-			    ];
+                            ];
 
         val prog_l_const = (fst o dest_eq o concl) prog_l_def;
         val prog_const = (mk_BirProgram prog_l_const);

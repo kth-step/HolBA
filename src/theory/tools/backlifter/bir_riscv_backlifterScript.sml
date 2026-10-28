@@ -1467,8 +1467,8 @@ Theorem bir_riscv_inter_exec[local]:
     (!n''.
        n'' < c_addr_labels /\ n'' > 0 ==>
        ?ms''.
-	 (FUNPOW_OPT riscv_bmr.bmr_step_fun n'' ms = SOME ms'') /\
-	 (ms''.c_PC ms''.procID) NOTIN mls)
+         (FUNPOW_OPT riscv_bmr.bmr_step_fun n'' ms = SOME ms'') /\
+         (ms''.c_PC ms''.procID) NOTIN mls)
 Proof
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `c_addr_labels = n'` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
@@ -1503,8 +1503,8 @@ subgoal `bs''.bst_pc.bpc_label NOTIN
            {BL_Address (Imm64 ml') | ml' IN mls}` >- (
   subgoal `c_st' < c_st` >- (
     METIS_TAC [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
-	       bir_exec_to_labels_n_def,
-	       bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken]
+               bir_exec_to_labels_n_def,
+               bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken]
   ) >>
   METIS_TAC [bir_inter_exec_notin_end_label_set]
 ) >>
@@ -1521,7 +1521,7 @@ Theorem riscv_lift_contract_thm:
   !p mms ml mls mu mpre mpost bpre bpost.
     MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
     bir_cont p bir_exp_true (BL_Address (Imm64 ml))
-	{BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
+        {BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
       bir_is_lifted_prog riscv_bmr mu mms p ==>
       riscv_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
       bir_pre_riscv_to_bir mpre bpre ==>

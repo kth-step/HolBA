@@ -39,7 +39,7 @@ in
            (n, ((snd o dest_eq o concl o EVAL) ``SOME (bir_default_value_of_type ^t)``))) var_pairs;
 
       fun list_mk_update ([], env) = env
-	| list_mk_update (h::l, env) = list_mk_update (l, mk_comb (mk_update h, env));
+        | list_mk_update (h::l, env) = list_mk_update (l, mk_comb (mk_update h, env));
 
       val bir_env_map_empty = evalthis “(\x. case x of BEnv env => env) bir_env_empty”;
       val env_map = list_mk_update (var_assigns, bir_env_map_empty);

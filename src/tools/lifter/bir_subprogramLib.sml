@@ -38,39 +38,39 @@ struct
      * *)
     local
       fun address_of_block h =
-	let
-	  val (label, _, _) = dest_bir_block h
-	  val (curr_address, _) = dest_BL_Address_HC label
-	  val (_, word) = gen_dest_Imm curr_address
-	in
-	  uint_of_word word
-	end
+        let
+          val (label, _, _) = dest_bir_block h
+          val (curr_address, _) = dest_BL_Address_HC label
+          val (_, word) = gen_dest_Imm curr_address
+        in
+          uint_of_word word
+        end
 
       fun find_subprogram_end []     _  _ = NONE
-	| find_subprogram_end (h::t) a2 sprog_block =
-	  let
-	    val curr_address = address_of_block h
-	  in
-	    if curr_address = a2
-	    then SOME (sprog_block@[h])
-	    else find_subprogram_end t a2 (sprog_block@[h])
-	  end
+        | find_subprogram_end (h::t) a2 sprog_block =
+          let
+            val curr_address = address_of_block h
+          in
+            if curr_address = a2
+            then SOME (sprog_block@[h])
+            else find_subprogram_end t a2 (sprog_block@[h])
+          end
 
       fun find_subprogram_start []     _  _  = NONE
-	| find_subprogram_start (h::t) a1 a2 =
-	  let
-	    val curr_address = address_of_block h
-	  in
-	    if curr_address = a1
-	    then find_subprogram_end t a2 [h]
-	    else find_subprogram_start t a1 a2
-	  end
+        | find_subprogram_start (h::t) a1 a2 =
+          let
+            val curr_address = address_of_block h
+          in
+            if curr_address = a1
+            then find_subprogram_end t a2 [h]
+            else find_subprogram_start t a1 a2
+          end
 
     in
       fun extract_subprogram prog a1 a2 =
         let
           val (obs_ty, prog_list_tm) = dest_BirProgram_list prog
-	  val subprog_tm_opt =
+          val subprog_tm_opt =
             find_subprogram_start prog_list_tm a1 a2
         in
           mk_BirProgram_list (obs_ty, valOf subprog_tm_opt)

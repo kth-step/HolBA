@@ -535,8 +535,8 @@ Theorem bir_arm8_inter_exec[local]:
     (!n''.
        n'' < c_addr_labels /\ n'' > 0 ==>
        ?ms''.
-	 (FUNPOW_OPT arm8_bmr.bmr_step_fun n'' ms = SOME ms'') /\
-	 ms''.PC NOTIN mls
+         (FUNPOW_OPT arm8_bmr.bmr_step_fun n'' ms = SOME ms'') /\
+         ms''.PC NOTIN mls
     )
 Proof
 REPEAT STRIP_TAC >>
@@ -586,8 +586,8 @@ subgoal `bs''.bst_pc.bpc_label NOTIN
            {BL_Address (Imm64 ml') | ml' IN mls}` >- (
   subgoal `c_st' < c_st` >- (
     METIS_TAC [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
-	       bir_exec_to_labels_n_def,
-	       bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken]
+               bir_exec_to_labels_n_def,
+               bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken]
   ) >>
   METIS_TAC [bir_inter_exec_notin_end_label_set]
 ) >>

@@ -2078,7 +2078,7 @@ subgoal `c_l' = m` >- (
 FULL_SIMP_TAC std_ss [] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss)
-	      [bir_state_is_terminated_def, bir_state_COUNT_PC_def]
+              [bir_state_is_terminated_def, bir_state_COUNT_PC_def]
 QED
 
 
@@ -2333,9 +2333,9 @@ Cases_on `n'' = n'''` >- (
 ) >>
 Cases_on `n'' < n'''` >- (
   subgoal `!n.
-	   n < n''' ==>
-	   ~bir_state_is_terminated
-	     (bir_exec_infinite_steps_fun prog st n)` >- (
+           n < n''' ==>
+           ~bir_state_is_terminated
+             (bir_exec_infinite_steps_fun prog st n)` >- (
     FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
   ) >>
   QSPECL_X_ASSUM ``!n. _`` [`n''`] >>
@@ -2384,8 +2384,8 @@ Cases_on `n = n'` >- (
   Q.PAT_X_ASSUM `st' = st''`
     (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
   subgoal `0 < m ==>
-	   bir_state_COUNT_PC (F,(\pc. pc.bpc_index = 0))
-	     (bir_exec_infinite_steps_fun prog st n)` >- (
+           bir_state_COUNT_PC (F,(\pc. pc.bpc_index = 0))
+             (bir_exec_infinite_steps_fun prog st n)` >- (
     FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
   ) >>
   Cases_on `m` >- (
@@ -2524,7 +2524,7 @@ Theorem bir_exec_to_labels_n_ended_running:
 Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def,
-		      bir_exec_steps_GEN_SOME_EQ_Ended] >> (
+                      bir_exec_steps_GEN_SOME_EQ_Ended] >> (
   subgoal `c_l' = n` >- (
     FULL_SIMP_TAC arith_ss []
   ) >>
@@ -2823,8 +2823,8 @@ FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
 FULL_SIMP_TAC std_ss [] >>
 Cases_on `c_st < c_st'` >- (
   QSPECL_X_ASSUM ``!n.
-		   n < c_st' ==>
-		   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+                   n < c_st' ==>
+                   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
   REV_FULL_SIMP_TAC arith_ss []
 ) >>
 Cases_on `c_st' = c_st` >- (

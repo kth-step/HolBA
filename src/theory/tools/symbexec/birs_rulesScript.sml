@@ -16,42 +16,42 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "birs_rules";
 
-val IMAGE_DIFF_ASSOC_thm = prove(``
-!f s1 s2.
+Theorem IMAGE_DIFF_ASSOC_thm[local]:
+  !f s1 s2.
   (!x y. f x = f y <=> x = y) ==>
   ((IMAGE f s1) DIFF (IMAGE f s2) =
    IMAGE f (s1 DIFF s2))
-``,
+Proof
     fs [IMAGE_DEF, DIFF_DEF, EXTENSION] >>
     REPEAT STRIP_TAC >>
     EQ_TAC >> (
       METIS_TAC []
     )
-);
+QED
 
-val IMAGE_UNION_ASSOC_thm = prove(``
-!f s1 s2.
+Theorem IMAGE_UNION_ASSOC_thm[local]:
+  !f s1 s2.
   (!x y. f x = f y <=> x = y) ==>
   ((IMAGE f s1) UNION (IMAGE f s2) =
    IMAGE f (s1 UNION s2))
-``,
+Proof
     fs [IMAGE_DEF, UNION_DEF, EXTENSION] >>
     REPEAT STRIP_TAC >>
     EQ_TAC >> (
       METIS_TAC []
     )
-);
+QED
 
-val bestTheorem = prove(“
+Theorem bestTheorem[local]:
  !A B C.
   IMAGE birs_symb_to_symbst A DIFF {birs_symb_to_symbst B} UNION IMAGE birs_symb_to_symbst C =
   IMAGE birs_symb_to_symbst (A DIFF {B} UNION C)
-”,
+Proof
   REWRITE_TAC [GSYM IMAGE_SING] >>
   REWRITE_TAC
     [MATCH_MP IMAGE_DIFF_ASSOC_thm birs_symb_to_symbst_EQ_thm,
      MATCH_MP IMAGE_UNION_ASSOC_thm birs_symb_to_symbst_EQ_thm]
-);
+QED
 
 
 Theorem INSERT_SING_DIFF_ALT_thm[local]:
@@ -960,8 +960,8 @@ QED
 (* ******************************************************* *)
 (*      SEQ rule                                           *)
 (* ******************************************************* *)
-val betterTheorem = prove(``
-!sr.
+Theorem betterTheorem[local]:
+  !sr.
 !sys_A L_A Pi_A sys_B L_B Pi_B.
   (symb_symbols_f_sound sr) ==>
 
@@ -972,9 +972,9 @@ val betterTheorem = prove(``
   ((symb_symbols sr sys_A) INTER (symb_freesymbs sr (sys_B, L_B, Pi_B)) = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
-``,
+Proof
   METIS_TAC[symb_rulesTheory.symb_rule_SEQ_thm]
-);
+QED
 
 Theorem birs_rule_SEQ_gen_thm:
   !prog bsys_A L_A bPi_A bsys_B L_B bPi_B.

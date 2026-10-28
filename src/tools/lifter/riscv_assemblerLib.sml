@@ -53,12 +53,12 @@ fun remove_whitespaces str =
 local
   fun split_first_whitespace' [] = ([], [])  
     | split_first_whitespace' (h::t) =
-	if Char.isSpace h
+        if Char.isSpace h
         then ([], t)
-	else let
+        else let
                val (l, r) = split_first_whitespace' t
-	     in (h::l, r)
-	     end
+             in (h::l, r)
+             end
 in
 fun split_first_whitespace str =
     (fn (a, b) => (implode a, implode b)) (split_first_whitespace' (explode str))
@@ -98,9 +98,9 @@ fun get_bin_reg_arg len arg_str =
       case reg_index_opt of
         SOME reg_index => Int.fmt StringCvt.BIN reg_index
       | NONE => raise (ERR "get_bin_reg_arg"
-		          ("The string "^(reg_index_str)^
-		           " could not be parsed to a RISC-V GPR.")
-		          )
+                          ("The string "^(reg_index_str)^
+                           " could not be parsed to a RISC-V GPR.")
+                          )
   in
     add_leading_zeroes len reg_bin_str
   end
@@ -126,21 +126,21 @@ fun get_bin_imm_arg len arg_str =
         (TextIO.openString arg_str)
     val res_int =
       case scan_res_opt of
-	SOME i => i
+        SOME i => i
       | NONE   => raise (ERR "get_bin_imm_arg"
-		          ("The immediate "^(arg_str)^
-		           " could not be read from a decimal representation.")
-		          )
+                          ("The immediate "^(arg_str)^
+                           " could not be read from a decimal representation.")
+                          )
     val res_bin =
       let
-	val res_bin_prel = (Int.fmt StringCvt.BIN res_int)
+        val res_bin_prel = (Int.fmt StringCvt.BIN res_int)
       in
-	if (size res_bin_prel) <= len
-	then res_bin_prel
-	else raise (ERR "get_bin_imm_arg"
-			("The immediate "^(arg_str)^
-			  " was too large to convert to a binary of size "^(Int.toString res_int)^".")
-		   )
+        if (size res_bin_prel) <= len
+        then res_bin_prel
+        else raise (ERR "get_bin_imm_arg"
+                        ("The immediate "^(arg_str)^
+                          " was too large to convert to a binary of size "^(Int.toString res_int)^".")
+                   )
       end
     val sign_res_str =
       case (substring (res_bin, 0, 1)) of
@@ -156,9 +156,9 @@ fun get_bin_imm_arg len arg_str =
     if (size sign_res_str) = len
     then sign_res_str
     else raise (ERR "get_bin_imm_arg"
-		    ("The immediate "^(arg_str)^
-		      " was too large to convert to a binary of size "^(Int.toString res_int)^".")
-	       )
+                    ("The immediate "^(arg_str)^
+                      " was too large to convert to a binary of size "^(Int.toString res_int)^".")
+               )
   end
 end
 ;
@@ -251,9 +251,9 @@ fun get_inst_args inst_t_str inst args_str =
         let
           val reg_args_bin_list = map (get_bin_reg_arg 5) args_clean_list
         in
-	  R_args (el 1 reg_args_bin_list,
-		  el 2 reg_args_bin_list,
-		  el 3 reg_args_bin_list)
+          R_args (el 1 reg_args_bin_list,
+                  el 2 reg_args_bin_list,
+                  el 3 reg_args_bin_list)
         end
       )
     | I (opcode, funct3)         => (
@@ -265,54 +265,54 @@ fun get_inst_args inst_t_str inst args_str =
             "slli" =>
               if ((substring (imm_arg_bin, 0, 6)) = "000000")
               then I_args (el 1 reg_args_bin_list,
-		           el 2 reg_args_bin_list,
-		           imm_arg_bin)
+                           el 2 reg_args_bin_list,
+                           imm_arg_bin)
               else raise (ERR "get_inst_args"
-	                   (imm_arg_bin^" is an invalid immediate value for the SLLI instruction.")
-	                 )
+                           (imm_arg_bin^" is an invalid immediate value for the SLLI instruction.")
+                         )
           | "srli" =>
               if ((substring (imm_arg_bin, 0, 6)) = "000000")
               then I_args (el 1 reg_args_bin_list,
-		           el 2 reg_args_bin_list,
-		           imm_arg_bin)
+                           el 2 reg_args_bin_list,
+                           imm_arg_bin)
               else raise (ERR "get_inst_args"
-	                   (imm_arg_bin^" is an invalid immediate value for the SRLI instruction.")
-	                 )
+                           (imm_arg_bin^" is an invalid immediate value for the SRLI instruction.")
+                         )
           | "srai" =>
               if ((substring (imm_arg_bin, 0, 6)) = "010000")
               then I_args (el 1 reg_args_bin_list,
-		           el 2 reg_args_bin_list,
-		           imm_arg_bin)
+                           el 2 reg_args_bin_list,
+                           imm_arg_bin)
               else raise (ERR "get_inst_args"
-	                   (imm_arg_bin^" is an invalid immediate value for the SRAI instruction.")
-	                 )
+                           (imm_arg_bin^" is an invalid immediate value for the SRAI instruction.")
+                         )
           | "slliw" =>
               if ((substring (imm_arg_bin, 0, 7)) = "0000000")
               then I_args (el 1 reg_args_bin_list,
-		           el 2 reg_args_bin_list,
-		           imm_arg_bin)
+                           el 2 reg_args_bin_list,
+                           imm_arg_bin)
               else raise (ERR "get_inst_args"
-	                   (imm_arg_bin^" is an invalid immediate value for the SLLIW instruction.")
-	                 )
+                           (imm_arg_bin^" is an invalid immediate value for the SLLIW instruction.")
+                         )
           | "srliw" =>
               if ((substring (imm_arg_bin, 0, 7)) = "0000000")
               then I_args (el 1 reg_args_bin_list,
-		           el 2 reg_args_bin_list,
-		           imm_arg_bin)
+                           el 2 reg_args_bin_list,
+                           imm_arg_bin)
               else raise (ERR "get_inst_args"
-	                   (imm_arg_bin^" is an invalid immediate value for the SRLIW instruction.")
-	                 )
+                           (imm_arg_bin^" is an invalid immediate value for the SRLIW instruction.")
+                         )
           | "sraiw" =>
               if ((substring (imm_arg_bin, 0, 7)) = "0100000")
               then I_args (el 1 reg_args_bin_list,
-		           el 2 reg_args_bin_list,
-		           imm_arg_bin)
+                           el 2 reg_args_bin_list,
+                           imm_arg_bin)
               else raise (ERR "get_inst_args"
-	                   (imm_arg_bin^" is an invalid immediate value for the SRAIW instruction.")
-	                 )
+                           (imm_arg_bin^" is an invalid immediate value for the SRAIW instruction.")
+                         )
           | _ => I_args (el 1 reg_args_bin_list,
-		         el 2 reg_args_bin_list,
-		         imm_arg_bin)
+                         el 2 reg_args_bin_list,
+                         imm_arg_bin)
         end
       )
     | B (opcode, funct3) => (
@@ -320,15 +320,15 @@ fun get_inst_args inst_t_str inst args_str =
           val reg_args_bin_list = map (get_bin_reg_arg 5) (List.take (args_clean_list, 2))
           val imm_arg_bin = get_bin_imm_arg 12 (el 3 args_clean_list)
         in
-	  B_args (el 1 reg_args_bin_list,
-		  el 2 reg_args_bin_list,
-		  imm_arg_bin)
+          B_args (el 1 reg_args_bin_list,
+                  el 2 reg_args_bin_list,
+                  imm_arg_bin)
         end
       )
     | _                          =>
         raise (ERR "get_inst_args"
-	        ("The instruction type is unknown.")
-	      )
+                ("The instruction type is unknown.")
+              )
   end
 ;
 
@@ -349,8 +349,8 @@ fun assemble_bin_inst (R (opcode, funct3, funct7))
    rs2^rs1^funct3^(substring(imm, 8, 4))^
    (substring(imm, 1, 1))^opcode)
  | assemble_bin_inst _ _ = raise (ERR "assemble_bin_inst"
-	        ("The instruction and/or arguments' type is unknown.")
-	      )
+                ("The instruction and/or arguments' type is unknown.")
+              )
 ;
 
 (* Converts binary string to integer *)

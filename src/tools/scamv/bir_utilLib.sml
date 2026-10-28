@@ -40,7 +40,7 @@ fun stateful_tabulate f =
 fun mapPair f (c, oCobs) = (f c, f oCobs);
 
 fun nub_with eq [] = []
-	| nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
+        | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
 
 fun nub xs = nub_with (op=);
 
@@ -167,26 +167,26 @@ fun bir_free_vars exp =
           in
             fromMLstring name
           end
-	    val fvs =
-	        if is_comb exp then
-		        let val (con,args) = strip_comb exp
-		        in
-		          if identical con ``BExp_MemConst``
-		          then [var_to_str (List.nth(args, 2))]
-		          else if identical con ``BExp_Den``
-		          then
-		            let val v = case strip_comb (hd args) of
-				                        (_,v::_) => v
-				                      | _ => raise ERR "bir_free_vars" "not expected"
-		            in
-			            [v]
-		            end
-		          else
-		            List.concat (map bir_free_vars args)
-		        end
-	        else []
+            val fvs =
+                if is_comb exp then
+                        let val (con,args) = strip_comb exp
+                        in
+                          if identical con ``BExp_MemConst``
+                          then [var_to_str (List.nth(args, 2))]
+                          else if identical con ``BExp_Den``
+                          then
+                            let val v = case strip_comb (hd args) of
+                                                        (_,v::_) => v
+                                                      | _ => raise ERR "bir_free_vars" "not expected"
+                            in
+                                    [v]
+                            end
+                          else
+                            List.concat (map bir_free_vars args)
+                        end
+                else []
     in
-	    nub_with (fn (x,y) => identical x y) fvs
+            nub_with (fn (x,y) => identical x y) fvs
     end;
 
 fun member x ys = exists (fn y => y = x) ys;
@@ -208,7 +208,7 @@ fun make_word_relation relation require_distinctness =
       if require_distinctness
       then 
         let
-	        open boolSyntax;
+                open boolSyntax;
           
           fun primed_subst exp =
               List.map (fn v =>
@@ -228,18 +228,18 @@ fun make_word_relation relation require_distinctness =
           fun add_prime s = s^"'";
           
           val pairs = zip paired_vars (List.map add_prime paired_vars);
-	        val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
+                val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
                                               
           fun mk_distinct_reg (a,b) =
               let val va = mk_var (a,``:word64``);
                   val vb = mk_var (b,``:word64``);
               in
-		            (``(^va <> ^vb)``)
+                            (``(^va <> ^vb)``)
               end;
           
           val distinct = if null pairs 
-		       then raise NoObsInPath 
-		                     else list_mk_disj (map mk_distinct_reg rpair)
+                       then raise NoObsInPath 
+                                     else list_mk_disj (map mk_distinct_reg rpair)
                                            
         in
 ``^rel2w /\ ^distinct``

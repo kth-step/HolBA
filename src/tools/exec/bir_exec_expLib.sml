@@ -128,13 +128,13 @@ val (bir_update_mmap_tm,  mk_bir_update_mmap, dest_bir_update_mmap, is_bir_updat
         let
           val thm2 = REPEATC (
             (fn x => REWRITE_CONV [Once bir_update_mmap_def] x) THENC
-	    (fn x => if is_bir_update_mmap x then
-		       RATOR_CONV (LAND_CONV (
-			 EVAL THENC
-			 (fn x => REWRITE_CONV [Once finite_mapTheory.FUPDATE_PURGE] x) THENC
-			 EVAL)) x
-		     else
-		       raise UNCHANGED)
+            (fn x => if is_bir_update_mmap x then
+                       RATOR_CONV (LAND_CONV (
+                         EVAL THENC
+                         (fn x => REWRITE_CONV [Once finite_mapTheory.FUPDATE_PURGE] x) THENC
+                         EVAL)) x
+                     else
+                       raise UNCHANGED)
                 ) t;
 
         in

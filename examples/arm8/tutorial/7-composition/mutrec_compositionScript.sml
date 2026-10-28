@@ -45,8 +45,16 @@ val bir_ieo_sec_isodd_exit_comp_ct =
 
 (* =============================================================== *)
 
-  val abs_ev_intro = prove(``bir_ieo_sec_iseven_loop_post v1 v = \l. bir_ieo_sec_iseven_loop_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
-  val abs_ev_intro2 = prove(``bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+Theorem abs_ev_intro[local]:
+  bir_ieo_sec_iseven_loop_post v1 v = \l. bir_ieo_sec_iseven_loop_post v1 v l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
+Theorem abs_ev_intro2[local]:
+  bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
 
   val loop_simp_ct_ = REWRITE_RULE [Once abs_ev_intro] bir_ieo_sec_iseven_loop_comp_ct;
 
@@ -68,8 +76,16 @@ val bir_ieo_sec_isodd_exit_comp_ct =
                                    bir_ieo_variant_def] loop_exit_simp3_ht;
 
 
-  val abs_od_intro = prove(``bir_ieo_sec_isodd_loop_post v1 v = \l. bir_ieo_sec_isodd_loop_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
-  val abs_od_intro2 = prove(``bir_ieo_sec_isodd_exit_post v1 = \l. bir_ieo_sec_isodd_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+Theorem abs_od_intro[local]:
+  bir_ieo_sec_isodd_loop_post v1 v = \l. bir_ieo_sec_isodd_loop_post v1 v l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
+Theorem abs_od_intro2[local]:
+  bir_ieo_sec_isodd_exit_post v1 = \l. bir_ieo_sec_isodd_exit_post v1 l
+Proof
+  EVAL_TAC >> REWRITE_TAC []
+QED
 
   val loop_simp_ct_ = REWRITE_RULE [Once abs_od_intro] bir_ieo_sec_isodd_loop_comp_ct;
 
@@ -102,7 +118,7 @@ val bir_ieo_sec_isodd_exit_comp_ct =
   val loop_variant   = ``bir_ieo_variant``;
   val prog_def = mutrec_def;
   val def_list = [bir_ieo_condition_def,
-		  bir_ieo_variant_def,
+                  bir_ieo_variant_def,
                   bir_ieo_invariant_def,
                   bir_ieo_sec_iseven_loop_post_def,
                   bir_ieo_sec_iseven_loop_pre_def,
@@ -111,7 +127,7 @@ val bir_ieo_sec_isodd_exit_comp_ct =
 val loop_and_exit_ev_ht =
   bir_compose_simp_loop_unsigned_predset
     loop_simp_ct loop_ev_exit_ht ``bir_ieo_invariant v1`` ``bir_ieo_condition`` ``bir_ieo_variant`` mutrec_def [bir_ieo_condition_def,
-		  bir_ieo_variant_def,
+                  bir_ieo_variant_def,
                   bir_ieo_invariant_def,
                   bir_ieo_sec_iseven_loop_post_def,
                   bir_ieo_sec_iseven_loop_pre_def,
@@ -129,7 +145,7 @@ val loop_and_exit_ev_ht =
   val loop_variant   = ``bir_ieo_variant``;
   val prog_def = bprog_is_even_odd_def;
   val def_list = [bir_ieo_condition_def,
-		  bir_ieo_variant_def,
+                  bir_ieo_variant_def,
                   bir_ieo_invariant_def,
                   bir_ieo_sec_isodd_loop_post_def,
                   bir_ieo_sec_isodd_loop_pre_def,
@@ -138,7 +154,7 @@ val loop_and_exit_ev_ht =
 val loop_and_exit_od_ht =
   bir_compose_simp_loop_unsigned_predset
     loop_simp_ct loop_od_exit_ht ``bir_ieo_invariant v1`` ``bir_ieo_condition`` ``bir_ieo_variant`` mutrec_def [bir_ieo_condition_def,
-		  bir_ieo_variant_def,
+                  bir_ieo_variant_def,
                   bir_ieo_invariant_def,
                   bir_ieo_sec_isodd_loop_post_def,
                   bir_ieo_sec_isodd_loop_pre_def,
@@ -156,7 +172,7 @@ val thm1 = ((Q.SPECL [`mutrec`, `bir_exp_true`,
             if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
             else bir_ieo_sec_iseven_exit_post v1 l`,
           `bir_ieo_sec_iseven_exit_post v1`])
-	      bir_tsTheory.bir_post_weak_rule_thm);
+              bir_tsTheory.bir_post_weak_rule_thm);
 val thm2 = REWRITE_RULE [is_even_1_ht] thm1;
 val is_even_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm2)``,
   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
@@ -184,7 +200,7 @@ val thm1 = ((Q.SPECL [`mutrec`, `bir_exp_true`,
             if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
             else bir_ieo_sec_isodd_exit_post v1 l`,
           `bir_ieo_sec_isodd_exit_post v1`])
-	      bir_tsTheory.bir_post_weak_rule_thm);
+              bir_tsTheory.bir_post_weak_rule_thm);
 val thm2 = REWRITE_RULE [is_odd_1_ht] thm1;
 val is_odd_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm2)``,
   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>

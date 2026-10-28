@@ -31,26 +31,26 @@ exception ListMkBir of string
 
 fun primed_subst exp =
     let 
-	val (mfvs, rfvs) = List.partition (fn el =>  Term.term_eq el ``"MEM"``)(bir_free_vars exp)
-	val regs =
-	    List.map (fn v =>
-		    let val vp = lift_string string_ty (fromHOLstring v ^ "'")
-		    in
-			``BVar ^v`` |-> ``BVar ^vp`` end) rfvs
-	val mem  = mk_var ("MEM" ,Type`:num |-> num`)
-	val mem' = mk_var ("MEM'",Type`:num |-> num`)
+        val (mfvs, rfvs) = List.partition (fn el =>  Term.term_eq el ``"MEM"``)(bir_free_vars exp)
+        val regs =
+            List.map (fn v =>
+                    let val vp = lift_string string_ty (fromHOLstring v ^ "'")
+                    in
+                        ``BVar ^v`` |-> ``BVar ^vp`` end) rfvs
+        val mem  = mk_var ("MEM" ,Type`:num |-> num`)
+        val mem' = mk_var ("MEM'",Type`:num |-> num`)
     in
-	if List.null mfvs
-	then regs
-	else [mem |-> mem']@regs
+        if List.null mfvs
+        then regs
+        else [mem |-> mem']@regs
     end
-	
+        
 fun primed_vars exp = List.map (#residue) (primed_subst exp);
 
 fun primed_term exp =
     let val psub = primed_subst exp
     in
-	subst psub exp
+        subst psub exp
     end;
 
 fun primed ys =

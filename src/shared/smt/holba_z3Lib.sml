@@ -57,7 +57,7 @@ fun get_z3proc z3bin =
    val p = if isSome z3proc_ then check_and_restart (valOf z3proc_) else
       let
         val _ = if not (!debug_print) then () else
-	        print ("starting: " ^ z3bin ^ "\n");
+                print ("starting: " ^ z3bin ^ "\n");
         val p = openz3 z3bin;
     val _ = z3proc_bin_o := SOME z3bin;
     val _ = if not use_stack then () else
@@ -91,7 +91,7 @@ fun get_z3wrapproc () =
            SOME x => x
          | NONE => raise ERR "get_z3wrapproc" "variable HOL4_Z3_WRAPPED_EXECUTABLE not defined";
         val _ = if not (!debug_print) then () else
-	        print ("starting: " ^ z3wrap ^ "\n");
+                print ("starting: " ^ z3wrap ^ "\n");
         val p = openz3wrap z3wrap prelude_z3_path;
       in (z3wrapproc_o := SOME p; p) end;
   in
@@ -138,9 +138,9 @@ fun sendreceive_query z3bin q =
    (* https://microsoft.github.io/z3guide/docs/logic/basiccommands/ *)
    val _ = if not use_stack then
             TextIO.output (s_out, "(reset)\n")
-	   else
-	    (TextIO.output (s_out, "(pop)\n");
-	     TextIO.output (s_out, "(push)\n"));
+           else
+            (TextIO.output (s_out, "(pop)\n");
+             TextIO.output (s_out, "(push)\n"));
  in
    out_lines
  end
@@ -256,56 +256,56 @@ querysmt_raw NONE NONE "(display (_ bv20 16))"
 
   fun querysmt_parse_checksat out_lines =
         if out_lines = ["sat\n"] then
-	  BirSmtSat
+          BirSmtSat
         else if out_lines = ["unsat\n"] then
-	  BirSmtUnsat
+          BirSmtUnsat
         else if out_lines = ["unknown\n"] then
-	  BirSmtUnknown
+          BirSmtUnknown
         else
-	  (print "\n============================\n";
-	   map print out_lines;
-	   print "\n============================\n";
-	   raise ERR "querysmt_parse_checksat" "unknown output from z3");
+          (print "\n============================\n";
+           map print out_lines;
+           print "\n============================\n";
+           raise ERR "querysmt_parse_checksat" "unknown output from z3");
 
   fun querysmt_parse_getmodel out_lines =
         if hd out_lines = "sat\n" then
-	  let
-	    val model_lines = tl out_lines;
-	    val model_lines_fix = map (fn line => if (hd o rev o explode) line = #"\n" then (implode o rev o tl o rev o explode) line else line) model_lines;
-	  in
-	    (BirSmtSat, model_lines_fix)
-	  end
+          let
+            val model_lines = tl out_lines;
+            val model_lines_fix = map (fn line => if (hd o rev o explode) line = #"\n" then (implode o rev o tl o rev o explode) line else line) model_lines;
+          in
+            (BirSmtSat, model_lines_fix)
+          end
         else if hd out_lines = "unsat\n" then
-	  (BirSmtUnsat, [])
+          (BirSmtUnsat, [])
         else if hd out_lines = "unknown\n" then
-	  (BirSmtUnknown, [])
+          (BirSmtUnknown, [])
         else
-	  (print "\n============================\n";
-	   map print out_lines;
-	   print "\n============================\n";
-	   raise ERR "querysmt_parse_getmodel" "unknown output from z3");
+          (print "\n============================\n";
+           map print out_lines;
+           print "\n============================\n";
+           raise ERR "querysmt_parse_getmodel" "unknown output from z3");
 
   (* https://rise4fun.com/z3/tutorial *)
   (*
   val q = "(declare-const a Int)\n" ^
-	  "(declare-fun f (Int Bool) Int)\n" ^
-	  "(assert (> a 10))\n" ^
-	  "(assert (< (f a true) 100))\n" ^
-	  "(check-sat)\n";
+          "(declare-fun f (Int Bool) Int)\n" ^
+          "(assert (> a 10))\n" ^
+          "(assert (< (f a true) 100))\n" ^
+          "(check-sat)\n";
 
   val q = "(declare-const a Int)\n" ^
-	  "(declare-fun f (Int Bool) Int)\n" ^
-	  "(assert (> a 10))\n" ^
-	  "(assert (< (f a true) 100))\n" ^
-	  "(assert (>= (f a true) 100))\n" ^
-	  "(check-sat)\n";
+          "(declare-fun f (Int Bool) Int)\n" ^
+          "(assert (> a 10))\n" ^
+          "(assert (< (f a true) 100))\n" ^
+          "(assert (>= (f a true) 100))\n" ^
+          "(check-sat)\n";
 
   val q = "(declare-const a Int)\n" ^
-	  "(declare-const b Real)\n" ^
-	  "(declare-const c Real)\n" ^
-	  "(assert (> ("^"* a a) 3))\n" ^
-	  "(assert (= (+ ("^"* b b b) ("^"* b c)) 3.0))\n" ^
-	  "(check-sat)\n";
+          "(declare-const b Real)\n" ^
+          "(declare-const c Real)\n" ^
+          "(assert (> ("^"* a a) 3))\n" ^
+          "(assert (= (+ ("^"* b b b) ("^"* b c)) 3.0))\n" ^
+          "(check-sat)\n";
 
   val q = "(echo \"Z3 does not always find solutions to non-linear problems\")\n";
 
@@ -340,7 +340,7 @@ querysmt_raw NONE NONE "(display (_ bv20 16))"
   fun smt_type_to_smtlib SMTTY_Bool          = "Bool"
     | smt_type_to_smtlib (SMTTY_BV  i)       = "(_ BitVec " ^ (Int.toString i) ^ ")"
     | smt_type_to_smtlib (SMTTY_ARR (ad, v)) = "(Array " ^ (smt_type_to_smtlib (SMTTY_BV ad)) ^
-						     " " ^ (smt_type_to_smtlib (SMTTY_BV v)) ^ ")";
+                                                     " " ^ (smt_type_to_smtlib (SMTTY_BV v)) ^ ")";
 
   fun smt_type_is_bv (SMTTY_BV _) = true
     | smt_type_is_bv _            = false;
@@ -353,8 +353,8 @@ querysmt_raw NONE NONE "(display (_ bv20 16))"
 
   fun smt_vars_to_smtlib vars =
     Redblackset.foldr (fn ((vn, vty), str) => str ^ (
-	  "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
-	) ^ "\n") "" vars;
+          "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
+        ) ^ "\n") "" vars;
 
   fun smtlib_exp_compare ((an, aty),(bn, bty)) =
     if an = bn then
@@ -429,15 +429,15 @@ fun gen_smt_load_as_exp valm valad (endi, szadi, szci, szi) =
   else
   let
           val revfun =
-	    if endi = SMTMEM_LittleEndian then List.rev else
-	    if endi = SMTMEM_BigEndian then I else
+            if endi = SMTMEM_LittleEndian then List.rev else
+            if endi = SMTMEM_BigEndian then I else
             raise ERR "gen_smt_load_as_exp" "unsupported combination of endianness and memory dimension";
 
           fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
           fun gen_addr_val i = ("(bvadd " ^ (fst valad) ^ " " ^ (gen_addr_const i) ^ ")", SMTTY_BV szadi);
-	  
+          
           val selects = List.tabulate (szi div 8, fn i => gen_smtlib_expr "select" [valm, gen_addr_val i] (SMTTY_BV szci));
-	  val loadval = gen_smtlib_expr "concat" (revfun selects) (SMTTY_BV szi);
+          val loadval = gen_smtlib_expr "concat" (revfun selects) (SMTTY_BV szi);
   in
     loadval
   end;
@@ -449,8 +449,8 @@ fun gen_smt_store_as_exp valm valad valv (endi, szadi, szci, szi) =
   else
   let
           val revfun =
-	    if endi = SMTMEM_LittleEndian then List.rev else
-	    if endi = SMTMEM_BigEndian then I else
+            if endi = SMTMEM_LittleEndian then List.rev else
+            if endi = SMTMEM_BigEndian then I else
             raise ERR "gen_smt_load_as_exp" "unsupported combination of endianness and memory dimension";
 
           fun gen_addr_const i = "(_ bv" ^ (Int.toString i) ^ " " ^ (Int.toString szadi) ^ ")";
@@ -459,8 +459,8 @@ fun gen_smt_store_as_exp valm valad valv (endi, szadi, szci, szi) =
           fun gen_extract_val i = ("((_ extract "^(Int.toString ((i+1)*szci-1))^" "^(Int.toString (i*szci))^") " ^ (fst valv) ^ ")", SMTTY_BV szci);
 
           fun gen_store a i = gen_smtlib_expr "store" [a, gen_addr_val i, gen_extract_val i] (snd valm);
-	  val idxs = List.tabulate (szi div 8, I);
-	  
+          val idxs = List.tabulate (szi div 8, I);
+          
           val storeval = List.foldl (fn (i,a) => gen_store a i) valm (revfun idxs);
   in
     storeval
@@ -510,14 +510,14 @@ fun gen_smt_store_as_funcall valm valad valv opparam =
       raise ERR "querysmt_mk_q" "don't know how to handle expression type. must be bool"
     else
       let
-	val decls = smt_vars_to_smtlib vars;
-	val asserts_str =
-	  List.foldr (fn ((q,_), str) => str ^ (
-	    "(assert " ^ q ^ ")\n"
-	  )) "" asserts;
+        val decls = smt_vars_to_smtlib vars;
+        val asserts_str =
+          List.foldr (fn ((q,_), str) => str ^ (
+            "(assert " ^ q ^ ")\n"
+          )) "" asserts;
       in
           (decls       ^ "\n" ^
-	   asserts_str ^ "\n")
+           asserts_str ^ "\n")
       end;
 
   (*

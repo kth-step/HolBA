@@ -74,7 +74,7 @@ fun mk_fresh_gen () =
 (* input: (bir_exp * (cobs list) option) list *)
 fun initialise ps : path_struct =
     let
-	    val (somes, nones) = partition (is_some o snd) ps;
+            val (somes, nones) = partition (is_some o snd) ps;
       val ps' = List.map (fn (p,ob) => (p, Option.getOpt (ob,[]))) somes;
       fun smart_bandl xs = if null xs then btrue else bandl xs;
 (*      val negCond = smart_bandl o List.map (bnot o fst);

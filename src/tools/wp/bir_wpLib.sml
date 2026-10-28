@@ -83,15 +83,15 @@ open bir_inst_liftingHelpersLib;
          * booleanity-of-expression simplification set: *)
         SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) []
 (* Old last step: 
-	SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
-	    bir_is_bool_exp_def,
-	    type_of_bir_exp_def,
-	    bir_var_type_def,
-	    type_of_bir_imm_def,
-	    bir_type_is_Imm_def,
-	    BType_Bool_def,
-	    bir_exp_false_def
-	]
+        SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
+            bir_is_bool_exp_def,
+            type_of_bir_exp_def,
+            bir_var_type_def,
+            type_of_bir_imm_def,
+            bir_type_is_Imm_def,
+            BType_Bool_def,
+            bir_exp_false_def
+        ]
 *)
       )
       val wps_sound_thm =
@@ -280,7 +280,7 @@ open bir_inst_liftingHelpersLib;
 
   (* produce wps' and reestablish bool_sound_thm for it *)
   fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm
-				 ((program, post, ls), (label)) defs =
+                                 ((program, post, ls), (label)) defs =
     let
       val wps_id_suffix = label_to_wps_id_suffix label
 
@@ -374,12 +374,12 @@ open bir_inst_liftingHelpersLib;
       then [dest_BStmt_Jmp estmt]
       else if is_BStmt_CJmp estmt
       then let
-	     val (_, l1, l2) = dest_BStmt_CJmp estmt
-	   in
-	     [l1, l2]
-	   end
+             val (_, l1, l2) = dest_BStmt_CJmp estmt
+           in
+             [l1, l2]
+           end
       else raise ERR "get_block_estmt_labels"
-		     "Unhandled ending statement"
+                     "Unhandled ending statement"
     end
   ;
 
@@ -390,8 +390,8 @@ open bir_inst_liftingHelpersLib;
       val k = (fst o dest_pair) kv
     in
       (k)::(List.filter (fn k1 => not (cmp_label k1 k))
-			(bir_wp_fmap_to_dom_list fmap1)
-	   )
+                        (bir_wp_fmap_to_dom_list fmap1)
+           )
     end
       handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
@@ -403,7 +403,7 @@ local
       val opt_block = find_block h block_list
     in
       case opt_block of
-	SOME block => let
+        SOME block => let
                         (* Get labels from block estmt *)
                         val estmt_labels = map dest_BLE_Label (get_block_estmt_labels block)
                         (* Add labels to blstodo if not already there or in exclude list *)
@@ -436,19 +436,19 @@ end;
 
   (* Recursive procedure for traversing the control flow graph *)
   fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
-				(wpsdom, blstodo)
-			       ) (program, post, ls)
+                                (wpsdom, blstodo)
+                               ) (program, post, ls)
                                ending_label_list defs =
     let
       val block = List.find (fn block =>
-	let
-	  val (label, _, end_statement) = dest_bir_block block
+        let
+          val (label, _, end_statement) = dest_bir_block block
           (* TODO: Move these function definitions outside for minimum clutter? *)
-	  (*val label = (snd o dest_eq o concl o EVAL) label;*)
-	  fun is_lbl_in_wps lbl =
-	    List.exists (fn el => cmp_label el lbl) wpsdom
-	  fun is_lbl_in_endingls lbl =
-	    List.exists (fn el => cmp_label el lbl) ending_label_list
+          (*val label = (snd o dest_eq o concl o EVAL) label;*)
+          fun is_lbl_in_wps lbl =
+            List.exists (fn el => cmp_label el lbl) wpsdom
+          fun is_lbl_in_endingls lbl =
+            List.exists (fn el => cmp_label el lbl) ending_label_list
           (* Currently, we do not treat BLE_Exps. *)
           fun has_exp_lbl stmte =
             if is_BStmt_Jmp stmte
@@ -460,97 +460,97 @@ end;
             else if is_BStmt_Halt stmte
             then false
             else
-	      raise ERR "bir_wp_comp_wps.has_exp_lbl"
-			"unhandled end_statement type."
-	in
-	  if (is_BStmt_Halt end_statement)
-	  then false
+              raise ERR "bir_wp_comp_wps.has_exp_lbl"
+                        "unhandled end_statement type."
+        in
+          if (is_BStmt_Halt end_statement)
+          then false
           else if has_exp_lbl end_statement
           then false
           else if (is_BStmt_Jmp end_statement)
-	  then let
+          then let
                  val l = (dest_BLE_Label o dest_BStmt_Jmp) end_statement
                in
                  (is_lbl_in_endingls l) orelse (is_lbl_in_wps l)
                end
-	  else if (is_BStmt_CJmp end_statement)
-	  then let
+          else if (is_BStmt_CJmp end_statement)
+          then let
                  val (_, el1, el2) = dest_BStmt_CJmp end_statement
                  val l1 = dest_BLE_Label el1
                  val l2 = dest_BLE_Label el2
                in
                  ((is_lbl_in_endingls l1) orelse (is_lbl_in_wps l1))
-	           andalso
-	           ((is_lbl_in_endingls l2) orelse (is_lbl_in_wps l2))
+                   andalso
+                   ((is_lbl_in_endingls l2) orelse (is_lbl_in_wps l2))
                end
-	  else
-	    raise ERR "bir_wp_comp_wps" "unhandled end_statement type."
-	end) blstodo
+          else
+            raise ERR "bir_wp_comp_wps" "unhandled end_statement type."
+        end) blstodo
     in
       case block of
 (* For debugging:
   val bl = valOf block
 *)
-	SOME (bl) =>
-	  let
+        SOME (bl) =>
+          let
             val (label, _, _) = dest_bir_block bl
             val wpsdom1 = label::wpsdom
 
-	    val _ = if (!debug_trace > 1)
-		    then print ("\n\r\nstarting with block: "^
-				(term_to_string label)^"\r\n")
-		    else ();
+            val _ = if (!debug_trace > 1)
+                    then print ("\n\r\nstarting with block: "^
+                                (term_to_string label)^"\r\n")
+                    else ();
 
-	    val time_start = Time.now ();
+            val time_start = Time.now ();
 
-	    val prog_l_thm =
-	      bir_wp_comp_wps_iter_step1 label prog_thm
-					 (program, post, ls) defs
-	    val (wps1, wps1_bool_sound_thm) =
-	      bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm)
-					 prog_l_thm
-					 ((program, post, ls),
-					  (label)
-					 ) defs
-	    val blstodo1 =
-	      List.filter (
-		fn block =>
-		  let
-		    val (label_el, _, _) = dest_bir_block block;
-		  in
-		    not (cmp_label label label_el)
-		  end
-	      ) blstodo
+            val prog_l_thm =
+              bir_wp_comp_wps_iter_step1 label prog_thm
+                                         (program, post, ls) defs
+            val (wps1, wps1_bool_sound_thm) =
+              bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm)
+                                         prog_l_thm
+                                         ((program, post, ls),
+                                          (label)
+                                         ) defs
+            val blstodo1 =
+              List.filter (
+                fn block =>
+                  let
+                    val (label_el, _, _) = dest_bir_block block;
+                  in
+                    not (cmp_label label label_el)
+                  end
+              ) blstodo
 
-	    val _ = if (!debug_trace > 2)
-		    then
-		      let
+            val _ = if (!debug_trace > 2)
+                    then
+                      let
                         val _ = print "label: ";
                         val _ = print_term label;
                         val _ = print "\n";
-			val wp_exp_term =
-			  (snd o dest_comb o concl o EVAL)
-			    (finite_mapSyntax.mk_fapply
-			      (wps1, label)
-			    );
-			val _ = bir_exp_pretty_print wp_exp_term;
-		      in
-			()
-		      end
-		    else ();
+                        val wp_exp_term =
+                          (snd o dest_comb o concl o EVAL)
+                            (finite_mapSyntax.mk_fapply
+                              (wps1, label)
+                            );
+                        val _ = bir_exp_pretty_print wp_exp_term;
+                      in
+                        ()
+                      end
+                    else ();
 
-	    val _ =
+            val _ =
               if (!debug_trace > 1)
               then
-		let
-		  val time_as_sec =
-		    Time.toSeconds ((Time.now ()) - time_start);
-		  val time_str =
-		    LargeInt.toString time_as_sec;
-		in
-		  print ("it took " ^ time_str ^ "s\r\n")
-		end
-	      else ();
+                let
+                  val time_as_sec =
+                    Time.toSeconds ((Time.now ()) - time_start);
+                  val time_str =
+                    LargeInt.toString time_as_sec;
+                in
+                  print ("it took " ^ time_str ^ "s\r\n")
+                end
+              else ();
 
             val _ =
               if (!debug_trace > 0)
@@ -559,18 +559,18 @@ end;
                            "  \r"
                          )
               else ();
-	  in
+          in
 (* For debugging next step:
   val wps = wps1
   val wps_bool_sound_thm = wps1_bool_sound_thm
   val wpsdom = wpsdom1
   val blstodo = blstodo1
 *)
-	    bir_wp_comp_wps prog_thm ((wps1, wps1_bool_sound_thm),
-				      (wpsdom1, blstodo1)
-				     ) (program, post, ls)
+            bir_wp_comp_wps prog_thm ((wps1, wps1_bool_sound_thm),
+                                      (wpsdom1, blstodo1)
+                                     ) (program, post, ls)
                                      ending_label_list defs
-	  end
+          end
         | NONE =>
           let
             val _ = if (!debug_trace > 0) then print "\n" else ();

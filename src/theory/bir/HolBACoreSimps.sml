@@ -198,12 +198,12 @@ val simp_conv_for_bir_var_set_is_well_typed =
     REPEATC (
       (fn x => REWRITE_CONV [Once UNION_INSERT] x)
       THENC (
-	(RATOR_CONV o LAND_CONV) (
-	  (REWRITE_CONV [pred_setTheory.IN_INSERT])
-	  THENC
-	  (SIMP_CONV (std_ss++holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss)
-	    [pred_setTheory.NOT_IN_EMPTY])
-	)
+        (RATOR_CONV o LAND_CONV) (
+          (REWRITE_CONV [pred_setTheory.IN_INSERT])
+          THENC
+          (SIMP_CONV (std_ss++holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss)
+            [pred_setTheory.NOT_IN_EMPTY])
+        )
       )
     ) THENC
     REWRITE_CONV [pred_setTheory.UNION_EMPTY]
@@ -269,7 +269,7 @@ fun simp_conv_load_store match_tm =
       EVAL (#2 ((TypeBase.dest_case o rhs o concl) eval_store_thm));
     val bir_load_thm =
       REWRITE_RULE [type_of_bir_imm_def]
-	(HO_MATCH_MP bir_store_load_mem_THM bir_store_in_mem_thm);
+        (HO_MATCH_MP bir_store_load_mem_THM bir_store_in_mem_thm);
     val final_thm1 =
       computeLib.RESTR_EVAL_CONV [``bir_load_from_mem``] match_tm
   in

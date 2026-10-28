@@ -820,20 +820,20 @@ val check_CSR_access = EV [check_CSR_access_def] [] [] ``check_CSR_access (rw,pr
 val riscv_privilege_cases = store_thm("riscv_privilege_cases",
 ``!w1 w2 w3 w4 s.
   (case
-	    if (s.c_MCSR s.procID).mstatus.MPRV = 0w then User
-	    else if (s.c_MCSR s.procID).mstatus.MPRV = 1w then Supervisor
-	    else if (s.c_MCSR s.procID).mstatus.MPRV = 2w then Hypervisor
-	    else if (s.c_MCSR s.procID).mstatus.MPRV = 3w then Machine
-	    else ARB
-	  of
-	    User => w1
-	  | Supervisor => w2
-	  | Hypervisor => w3
-	  | Machine => w4) =
-	    (if (s.c_MCSR s.procID).mstatus.MPRV = 0w then w1
-	    else if (s.c_MCSR s.procID).mstatus.MPRV = 1w then w2
-	    else if (s.c_MCSR s.procID).mstatus.MPRV = 2w then w3
-	    else w4
+            if (s.c_MCSR s.procID).mstatus.MPRV = 0w then User
+            else if (s.c_MCSR s.procID).mstatus.MPRV = 1w then Supervisor
+            else if (s.c_MCSR s.procID).mstatus.MPRV = 2w then Hypervisor
+            else if (s.c_MCSR s.procID).mstatus.MPRV = 3w then Machine
+            else ARB
+          of
+            User => w1
+          | Supervisor => w2
+          | Hypervisor => w3
+          | Machine => w4) =
+            (if (s.c_MCSR s.procID).mstatus.MPRV = 0w then w1
+            else if (s.c_MCSR s.procID).mstatus.MPRV = 1w then w2
+            else if (s.c_MCSR s.procID).mstatus.MPRV = 2w then w3
+            else w4
 )
 ``,
 

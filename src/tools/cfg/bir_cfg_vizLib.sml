@@ -27,14 +27,14 @@ open bir_programSyntax;
   val dest_lbl_tm = dest_word_literal o snd o gen_dest_Imm o dest_BL_Address;
 
   fun gen_graph_for_edges_proc idx (t, (gn, ges, i)) =
-	(gn, (idx, (Arbnum.toInt o dest_lbl_tm) t)::ges, i);
+        (gn, (idx, (Arbnum.toInt o dest_lbl_tm) t)::ges, i);
 
   fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
     let
       val idx_num = (dest_lbl_tm o #CFGN_lbl_tm) n;
       val idx     = Arbnum.toInt idx_num;
       val shape   = if cfg_nodetype_is_call (#CFGN_type n) orelse cfg_node_type_eq (#CFGN_type n, CFGNT_Return)
-		    then node_shape_doublecircle else node_shape_default;
+                    then node_shape_doublecircle else node_shape_default;
       val content = [("id", "0x" ^ (Arbnum.toHexString idx_num))];
       val node    = (idx, shape, content);
 

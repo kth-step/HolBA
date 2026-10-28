@@ -49,11 +49,11 @@ subgoal `bs'.bst_pc.bpc_label IN {l | IS_BL_Address l}` >- (
   METIS_TAC [set_of_address_in_all_address_labels_thm]
 ) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
-				      bir_exec_to_labels_n_def] >>
+                                      bir_exec_to_labels_n_def] >>
 subgoal `bir_pc_cond_impl (F,
-	   (\pc.
-	     (pc.bpc_index = 0) /\
-	     pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls})) (F, (\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >- (
+           (\pc.
+             (pc.bpc_index = 0) /\
+             pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls})) (F, (\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >- (
   FULL_SIMP_TAC std_ss [bir_pc_cond_impl_def] >>
   REPEAT STRIP_TAC >>
   METIS_TAC [set_of_address_in_all_address_labels_thm]
@@ -110,20 +110,20 @@ REPEAT STRIP_TAC >>
  * and the to-addr-label-execution. *)
 (* The number of PCs counted (= in mls) at c_st' statement steps must be 0. *)
 subgoal `~bir_state_COUNT_PC (F,
-	  (\pc.
-	       (pc.bpc_index = 0) /\
-	       pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls}))
-	      (bir_exec_infinite_steps_fun p bs c_st')` >- (
+          (\pc.
+               (pc.bpc_index = 0) /\
+               pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls}))
+              (bir_exec_infinite_steps_fun p bs c_st')` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
-			bir_exec_steps_GEN_SOME_EQ_Ended] >>
+                        bir_exec_steps_GEN_SOME_EQ_Ended] >>
   (* Ergo, at c_st' statement steps, the PC label is not in mls, which follows after
    * some arithmetic. *)
   QSPECL_X_ASSUM ``!(n:num). (n < c_st) ==> _`` [`c_st'`] >>
   REV_FULL_SIMP_TAC std_ss [] >>
   subgoal `c_st' > 0` >- (
     METIS_TAC [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def,
-	       bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps,
-	       bir_state_is_terminated_def]
+               bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps,
+               bir_state_is_terminated_def]
   ) >>
   FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ, bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
   QSPECL_X_ASSUM ``!j. _`` [`PRE c_st'`] >>
@@ -139,8 +139,8 @@ subgoal `bs''.bst_pc.bpc_index = 0` >- (
 ) >>
 (* ... which proves the goal, after some identification of states. *)
 FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_exec_to_addr_label_n_def,
-		      bir_exec_to_labels_n_def,
-		      bir_exec_steps_GEN_SOME_EQ_Ended] >>
+                      bir_exec_to_labels_n_def,
+                      bir_exec_steps_GEN_SOME_EQ_Ended] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
 QED
 
