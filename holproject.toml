@@ -9,6 +9,16 @@ name = "HOLBADIR"
 git = "https://github.com/HOL-Theorem-Prover/HOL.git"
 rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
 
+[dependencies.hol_machine_code_hoare_triple]
+from = "hol"
+path = "examples/machine-code/hoare-triple"
+manifest = "shims/hol_machine_code_hoare_triple.toml"
+
+[dependencies.hol_l3_machine_code]
+from = "hol"
+path = "examples/l3-machine-code"
+manifest = "shims/hol_l3_machine_code.toml"
+
 [build]
 members = [
   "src/tools/exec",
@@ -53,9 +63,14 @@ exclude_globs = [
   "*/test-*.sml",
 ]
 roots = [
- "src/tools/lifter",
- "src/tools/backlifter",
- "src/shared/smt/HolSmt",
- "src/tools/symbexec",
+ "src/tools/lifter/bir_lifter_interfaceLib.sml",
+ "src/tools/backlifter/bir_backlifterLib.sml",
+ "src/tools/symbexec/birs_auxLib.sml",
+ "src/shared/smt/HolSmt/HolBA_HolSmtLib.sml",
+ "src/tools/scamv/obsmodel/bir_obs_modelScript.sml",
 ]
 tactic_timeout = 600.0
+
+# riscv.sml is compiled with -toplevel by Holmake (see its Holmakefile).
+[actions.riscv]
+loads = ["assemblerLib", "MutableMap16"]

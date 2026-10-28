@@ -1,0 +1,39 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.0"
+
+[project]
+name = "hol_l3_machine_code"
+
+[build]
+members = [
+  "common",
+  "lib",
+  "arm8/model",
+  "arm8/step",
+  "m0/model",
+  "m0/step",
+]
+
+[actions.Import]
+loads = ["fp-sig", "fp-functor"]
+
+# The following mirror Holmake rules in examples/l3-machine-code that compile
+# with -toplevel, which holbuild does not infer from load/open.
+[actions.FP32]
+loads = ["FP"]
+
+[actions.FP64]
+loads = ["FP"]
+
+[actions.MutableMap16]
+loads = ["Ptree", "Map", "MutableMapFunctor"]
+
+[actions.PureMap]
+loads = ["Ptree", "Map"]
+
+[actions.arm8]
+loads = ["assemblerLib", "MutableMap16"]
+
+[actions.m0]
+loads = ["assemblerLib", "MutableMap16"]
