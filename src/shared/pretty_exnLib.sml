@@ -19,13 +19,13 @@ struct
        ^ boldcyan " - Message: " ^ yellow (exnMessage exn) ^ "\n"
      );
 
-  fun pp_HOL_exn {origin_structure, origin_function, source_location, message} =
+  fun pp_HOL_exn hol_err =
     print (
       boldred "HOL_ERR:\n"
-       ^ boldcyan " - Structure: " ^ yellow origin_structure ^ "\n"
-       ^ boldcyan " - Function: " ^ yellow origin_function ^ "\n"
-       ^ boldcyan " - Message: " ^ message ^ "\n"
-       ^ boldcyan " - Location: " ^ (locn.toString source_location) ^ "\n"
+       ^ boldcyan " - Structure: " ^ yellow (top_structure_of hol_err) ^ "\n"
+       ^ boldcyan " - Function: " ^ yellow (top_function_of hol_err) ^ "\n"
+       ^ boldcyan " - Message: " ^ (message_of hol_err) ^ "\n"
+       ^ boldcyan " - Location: " ^ (locn.toString (top_location_of hol_err)) ^ "\n"
        ^ "\n"
      );
 

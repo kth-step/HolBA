@@ -1,0 +1,10 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.0"
+
+[project]
+name = "hol_machine_code_hoare_triple"
+
+[build]
+members = ["."]
+exclude = ["tutorial"]

@@ -42,15 +42,15 @@ Theorem EQ_15w_EVAL = LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_lis
 
 
 
-val RName_distinct = save_thm ("RName_distinct", let
-Theorem thm0[local]:
+Theorem RName_distinct0[local]:
   !r r'.
      r < 17 ==> r' < r ==> ((num2RName r = num2RName r') <=> (r = r'))
 Proof
 SIMP_TAC arith_ss [m0Theory.num2RName_11]
 QED
 
-  val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] thm0
+val RName_distinct = save_thm ("RName_distinct", let
+  val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] RName_distinct0
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
      rich_listTheory.COUNT_LIST_AUX_compute, listTheory.MEM,
      DISJ_IMP_THM, FORALL_AND_THM, m0Theory.num2RName_thm] thm1
