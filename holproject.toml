@@ -1,0 +1,61 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.0"
+
+[project]
+name = "HOLBADIR"
+
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
+
+[build]
+members = [
+  "src/tools/exec",
+  "src/tools/wp",
+  "src/tools/compute",
+  "src/tools/backlifter",
+  "src/tools/pass",
+  "src/tools/comp",
+  "src/tools/cfg",
+  "src/tools/scamv",
+  "src/tools/scamv/persistence",
+  "src/tools/scamv/obsmodel",
+  "src/tools/scamv/symbexec",
+  "src/tools/lifter",
+  "src/tools/symbexec",
+  "src/extra",
+  "src/shared",
+  "src/shared/l3-machine-code/riscv/step",
+  "src/shared/l3-machine-code/riscv/model",
+  "src/shared/smt",
+  "src/shared/smt/HolSmt",
+  "src/shared/convs",
+  "src/theory/tools/wp",
+  "src/theory/tools/backlifter",
+  "src/theory/tools/comp",
+  "src/theory/tools/lifter",
+  "src/theory/tools/symbexec",
+  "src/theory/bir",
+  "src/theory/models/l3mod",
+  "src/theory/program_logic",
+  "src/theory/bir-support",
+]
+exclude = [
+  "src/tools/cfg/examples", 
+  "src/tools/scamv/symbexec/examples",
+  "src/tools/lifter/benchmark",
+  "src/tools/wp/benchmark",
+]
+exclude_globs = [
+  "*/selftest.sml",
+  "*/selftest_*.sml",
+  "*/test-*.sml",
+]
+roots = [
+ "src/tools/lifter",
+ "src/tools/backlifter",
+ "src/shared/smt/HolSmt",
+ "src/tools/symbexec",
+]
+tactic_timeout = 600.0

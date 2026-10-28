@@ -848,13 +848,15 @@ Theorem exec_preserves_initialized_vars_thm[local]:
       )
 Proof
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-ASSUME_TAC (ISPECL [``(\stmt:'a bir_stmt_basic_t.
-                        bir_env_vars_are_initialised st.bst_environ
-                          (bir_vars_of_stmtB stmt))``,
+ASSUME_TAC (ISPECL [``stmts:'a bir_stmt_basic_t list``,
                     ``(\stmt:'a bir_stmt_basic_t.
                         bir_env_vars_are_initialised r.bst_environ
-                          (bir_vars_of_stmtB stmt))``]
-                   listTheory.EVERY_MONOTONIC) >>
+                          (bir_vars_of_stmtB stmt))``,
+                    ``(\stmt:'a bir_stmt_basic_t.
+                        bir_env_vars_are_initialised st.bst_environ
+                          (bir_vars_of_stmtB stmt))``
+                    ]
+                   (GEN_ALL listTheory.EVERY_MONOTONIC)) >>
 REV_FULL_SIMP_TAC std_ss [bir_varinit_invar_bstmt]
 QED
 

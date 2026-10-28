@@ -439,9 +439,9 @@ REPEAT STRIP_TAC >>
   Cases_on `i` >> FULL_SIMP_TAC arith_ss []
 ) >>
 BasicProvers.VAR_EQ_TAC >>
-DEEP_INTRO_TAC whileTheory.LEAST_ELIM >>
+DEEP_INTRO_TAC WhileTheory.LEAST_ELIM >>
 REPEAT STRIP_TAC >- METIS_TAC[] >>
-DEEP_INTRO_TAC whileTheory.LEAST_ELIM >>
+DEEP_INTRO_TAC WhileTheory.LEAST_ELIM >>
 REPEAT STRIP_TAC >- METIS_TAC[] >>
 rename1 `n1' = SUC n2` >>
 `?n1. n1' = SUC n1` by (
@@ -464,15 +464,15 @@ Induct >> (
 ) >>
 rpt strip_tac >| [
  qexists_tac `0` >>
- fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM],
+ fs [WhileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM],
 
  qpat_assum `!x. _` (fn thm => imp_res_tac thm) >>
  Cases_on `h = x` >- (
   qexists_tac `0` >>
-  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM]
+  fs [WhileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM]
  ) >>
  qexists_tac `SUC i` >>
- fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
+ fs [WhileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
  rpt strip_tac >>
  Cases_on `i'` >- (
   fs []
@@ -829,18 +829,18 @@ Proof
 rpt strip_tac >>
 CCONTR_TAC >>
 Cases_on `n' = n` >- (
- fs [whileTheory.OLEAST_EQ_SOME]
+ fs [WhileTheory.OLEAST_EQ_SOME]
 ) >>
 subgoal `n' > n` >- (
  gs []
 ) >>
 subgoal `FUNPOW_OPT f (n' - n) s = SOME s'` >- (
  irule FUNPOW_OPT_split2 >>
- fs [whileTheory.OLEAST_EQ_SOME] >>
+ fs [WhileTheory.OLEAST_EQ_SOME] >>
  qexists_tac `s` >>
  fs []
 ) >>
-fs [whileTheory.OLEAST_EQ_SOME] >>
+fs [WhileTheory.OLEAST_EQ_SOME] >>
 QSPECL_X_ASSUM ``!n''. n'' < n' ==> FUNPOW_OPT f n'' s <> SOME s'`` [`n' - n`] >>
 gs []
 QED

@@ -529,7 +529,7 @@ ASM_SIMP_TAC std_ss [integer_wordTheory.w2i_n2w_pos] >>
      METIS_TAC[]
   ) >>
   Q.ABBREV_TAC `m = LEAST i. w ' i` >>
-  `w ' m /\ (!i. i < m ==> ~(w ' i))` by METIS_TAC[whileTheory.LEAST_EXISTS_IMP] >>
+  `w ' m /\ (!i. i < m ==> ~(w ' i))` by METIS_TAC[WhileTheory.LEAST_EXISTS_IMP] >>
   `m < dimindex (:'a)` by (
      `~(i < m)` by METIS_TAC[] >>
      DECIDE_TAC
@@ -574,7 +574,7 @@ Q.SUBGOAL_THEN `(n MOD dimword (:'a) = 0) = (n2w n = (0w:'a word))` SUBST1_TAC >
 Cases_on `n2w n = (0w:'a word)` >> ASM_SIMP_TAC std_ss [LowestSetBit_ALT_DEF] >>
 FULL_SIMP_TAC std_ss [word_eq_0] >>
 Q.ABBREV_TAC `m = LEAST i. (n2w n) ' i` >>
-`((n2w n):'a word) ' m /\ (!i. i < m ==> ~(((n2w n):'a word) ' i))` by METIS_TAC[whileTheory.LEAST_EXISTS_IMP] >>
+`((n2w n):'a word) ' m /\ (!i. i < m ==> ~(((n2w n):'a word) ' i))` by METIS_TAC[WhileTheory.LEAST_EXISTS_IMP] >>
 `m < dimindex (:'a)` by (
    `~(i < m)` by METIS_TAC[] >>
    DECIDE_TAC

@@ -637,7 +637,7 @@ Theorem bir_vars_exec_infinite_steps_COUNT_STEPS_THM:
 Proof
   REPEAT STRIP_TAC >>
   Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p st1` >- (
-    FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def, whileTheory.OLEAST_EQ_NONE] >>
+    FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def, WhileTheory.OLEAST_EQ_NONE] >>
     GEN_TAC >>
     POP_ASSUM (ASSUME_TAC o Q.SPEC `i`) >>
     FULL_SIMP_TAC std_ss [] >>
@@ -646,7 +646,7 @@ Proof
     METIS_TAC [bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_is_terminated_def]
   ) >>
 
-  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def, whileTheory.OLEAST_EQ_SOME] >> (
+  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def, WhileTheory.OLEAST_EQ_SOME] >> (
     STRIP_TAC >- (
       IMP_RES_TAC bir_vars_exec_infinite_steps_fun_COUNT_PCs_THM >>
       IMP_RES_TAC bir_vars_exec_infinite_step_fun_THM >>
