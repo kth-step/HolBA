@@ -133,15 +133,14 @@ QED
 Theorem bir_immtype_of_size_REWRS_SOME = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``])
             [size_of_bir_immtype_def] (CONJUNCT1 bir_immtype_of_num_inv)
 
-
-
-val bir_immtype_of_size_REWRS_NONE = save_thm ("bir_immtype_of_size_REWRS_NONE",
-let
 Theorem thm_none_aux[local]:
   !n. ~(is_valid_bir_immtype_size n) ==> (bir_immtype_of_size n = NONE)
 Proof
 SIMP_TAC std_ss [is_valid_bir_immtype_size_IS_SOME]
 QED
+
+val bir_immtype_of_size_REWRS_NONE = save_thm ("bir_immtype_of_size_REWRS_NONE",
+let
   val thm_none = SIMP_RULE std_ss [is_valid_bir_immtype_size_REWRS] thm_none_aux
 in
   thm_none

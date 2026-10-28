@@ -729,7 +729,7 @@ REPEAT STRIP_TAC >>
   IMP_RES_TAC bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm >>
 
   FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def] >>
-  REWRITE_TAC [whileTheory.OLEAST_EQ_SOME] >>
+  REWRITE_TAC [WhileTheory.OLEAST_EQ_SOME] >>
   ASM_SIMP_TAC std_ss [] >>
 
   `bs'.bst_pc NOTIN L` by (

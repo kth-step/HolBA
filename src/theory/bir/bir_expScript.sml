@@ -335,10 +335,7 @@ Proof
 SIMP_TAC arith_ss [bir_eval_load_def]
 QED
 
-
-val bir_eval_load_FULL_REWRS = save_thm ("bir_eval_load_FULL_REWRS",
-let
-Theorem thm_prune0[local]:
+Theorem load_thm_prune0[local]:
   (!ta a.
       (type_of_bir_imm a <> ta) ==>
       (bir_eval_load (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm a)) en tr = NONE)) /\
@@ -352,7 +349,10 @@ Proof
 SIMP_TAC std_ss [bir_eval_load_NONE_REWRS]
 QED
 
-  val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def] thm_prune0
+val bir_eval_load_FULL_REWRS = save_thm ("bir_eval_load_FULL_REWRS",
+let
+
+  val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def] load_thm_prune0
 
 
   val (l1, l2) = partition (is_imp_only o concl) (CONJUNCTS thm_prune1)
@@ -472,10 +472,7 @@ Proof
 SIMP_TAC arith_ss [bir_eval_store_def]
 QED
 
-
-val bir_eval_store_FULL_REWRS = save_thm ("bir_eval_store_FULL_REWRS",
-let
-Theorem thm_prune0[local]:
+Theorem store_thm_prune0[local]:
   (!ta a.
       (type_of_bir_imm a <> ta) ==>
       (bir_eval_store (SOME (BVal_Mem ta tv mmap)) (SOME (BVal_Imm a)) en v = NONE)) /\
@@ -489,7 +486,10 @@ Proof
 SIMP_TAC std_ss [bir_eval_store_NONE_REWRS]
 QED
 
-  val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def, FORALL_AND_THM] thm_prune0
+val bir_eval_store_FULL_REWRS = save_thm ("bir_eval_store_FULL_REWRS",
+let
+
+  val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def, FORALL_AND_THM] store_thm_prune0
 
   val (l1, l2) = partition (is_imp_only o snd o strip_forall o concl) (CONJUNCTS thm_prune1)
 
