@@ -35,9 +35,11 @@ End
 
 (* This duplication is kept deliberately, because despite the same semantics, the intentention
    of what you want to express is different *)
-val bir_env_var_is_declared_DEF_bir_env_check_type = store_thm ("bir_env_var_is_declared_ALT_DEF",
-  ``bir_env_var_is_declared env v = bir_env_check_type v env``,
-SIMP_TAC std_ss [bir_env_check_type_def, bir_env_var_is_declared_def]);
+Theorem bir_env_var_is_declared_ALT_DEF:
+  bir_env_var_is_declared env v = bir_env_check_type v env
+Proof
+  SIMP_TAC std_ss [bir_env_check_type_def, bir_env_var_is_declared_def]
+QED
 
 
 
@@ -395,17 +397,17 @@ Theorem bir_var_set_is_well_typed_REWRS:
   (bir_var_set_is_well_typed (set [])) /\
     (!v vs. bir_var_set_is_well_typed (set (v::vs)) =
        (EVERY (\v'. (bir_var_name v = bir_var_name v') ==>
-		   (bir_var_type v = bir_var_type v')
-	     ) vs /\
+                   (bir_var_type v = bir_var_type v')
+             ) vs /\
        bir_var_set_is_well_typed (set vs))
     )
 Proof
 REPEAT STRIP_TAC >- (
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [listTheory.LIST_TO_SET,
-			  bir_var_set_is_well_typed_def]
+                          bir_var_set_is_well_typed_def]
 ) >>
 FULL_SIMP_TAC std_ss [listTheory.LIST_TO_SET,
-	  bir_var_set_is_well_typed_INSERT, listTheory.EVERY_MEM] >>
+          bir_var_set_is_well_typed_INSERT, listTheory.EVERY_MEM] >>
 METIS_TAC []
 QED
 

@@ -124,9 +124,9 @@ fun symb_exec_run max bp pd st =
       val sts_filtered = List.filter (decide_pred pd) sts;
       val _ = if not debug_on then () else
         let
-	  val _ = print "=========================================\n";
-	  val _ = print (Int.toString max);
-	  val _ = print "\n=========================================\n";
+          val _ = print "=========================================\n";
+          val _ = print (Int.toString max);
+          val _ = print "\n=========================================\n";
         in () end;
       val sts_rec = List.map (symb_exec_run max_new bp pd) sts_filtered;
     in
@@ -145,7 +145,7 @@ val bir_program = ``BirProgram
          bb_statements :=
          [BStmt_Assert
               (BExp_Const (Imm1 abc));
-	   BStmt_Assert
+           BStmt_Assert
               (BExp_Aligned Bit64 3 (BExp_Den (BVar "R1" (BType_Imm Bit64))));
             BStmt_Assign (BVar "R3" (BType_Imm Bit64))
               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))

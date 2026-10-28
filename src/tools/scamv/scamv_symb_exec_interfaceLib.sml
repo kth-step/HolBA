@@ -22,44 +22,44 @@ fun do_symb_exec prog =
         val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog;
 
         val numobss = List.foldr (op+) 0 (List.map (fn s => 
-	  let
-	    val (_,_,_,_,obs) = dest_bir_symb_state s;
+          let
+            val (_,_,_,_,obs) = dest_bir_symb_state s;
           in (length o fst o dest_list) obs end) leafs);
         val message = "found " ^ (Int.toString numobss) ^ " observations in all paths.";
         val _ = print (message ^ "\n");
         (* val _ = bir_embexp_log (message); *)
 
         (* retrieval of path condition and observation expressions *)
-	fun extract_cond_obs s =
-	  let
-	    val (_,_,cond,_,obs) = dest_bir_symb_state s;
-	    val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
+        fun extract_cond_obs s =
+          let
+            val (_,_,cond,_,obs) = dest_bir_symb_state s;
+            val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
 
-	    (* determine whether this is an error state *)
-	    val isErrorState = not (symb_is_BST_Halted s);
+            (* determine whether this is an error state *)
+            val isErrorState = not (symb_is_BST_Halted s);
 
-	    (* this converts BIR consts to HOL4 variables *)
-	    val obs_list = List.map (fn (oid,ec,eo, obsf) =>
-		   (oid,bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
+            (* this converts BIR consts to HOL4 variables *)
+            val obs_list = List.map (fn (oid,ec,eo, obsf) =>
+                   (oid,bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
 
-	    (* we require singleton lists for the observations at the moment *)
-	    (* check that we have HD as observation function, and apply it *)
-	    val obs_list' = List.map (fn (oid,ec,eo,obsf) =>
-		     let
-		       val (otl,_) = dest_list eo;
-		       val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
-			       handle _ =>
-				 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
-		     in
-		       if length otl <> 1 then
-		       	 raise ERR "extract_cond_obs" "currently we support only singleton observations"
-		       else
-			 (oid, ec, hd otl)
-		     end
-		   ) obs_list;
-	  in
-	    (bir_exp_hvar_to_bvar cond, if isErrorState then NONE else SOME obs_list')
-	  end;
+            (* we require singleton lists for the observations at the moment *)
+            (* check that we have HD as observation function, and apply it *)
+            val obs_list' = List.map (fn (oid,ec,eo,obsf) =>
+                     let
+                       val (otl,_) = dest_list eo;
+                       val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
+                               handle _ =>
+                                 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
+                     in
+                       if length otl <> 1 then
+                         raise ERR "extract_cond_obs" "currently we support only singleton observations"
+                       else
+                         (oid, ec, hd otl)
+                     end
+                   ) obs_list;
+          in
+            (bir_exp_hvar_to_bvar cond, if isErrorState then NONE else SOME obs_list')
+          end;
 
         val paths = List.map extract_cond_obs leafs;
 

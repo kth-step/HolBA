@@ -111,10 +111,10 @@ QED
 
 Definition bir_env_write_def:
   bir_env_write var va env =
-	 if (bir_env_check_type var env) then
-	   bir_env_update (bir_var_name var) va (bir_var_type var) env
-	 else
-	   NONE
+         if (bir_env_check_type var env) then
+           bir_env_update (bir_var_name var) va (bir_var_type var) env
+         else
+           NONE
 End
 
 (* ===================== *)

@@ -210,8 +210,8 @@ End
 Definition bir_symb_exec_stmt_halt_def:
   bir_symb_exec_stmt_halt ex (st: 'a bir_symb_state_t) = 
       case bir_symb_eval_exp_empty (bir_symb_eval_exp ex st.bsst_environ) of
-	| NONE => bir_symb_state_set_typeerror st
-	| SOME v => st with bsst_status := BST_Halted v
+        | NONE => bir_symb_state_set_typeerror st
+        | SOME v => st with bsst_status := BST_Halted v
 End
 
 (* Conditional jump:
@@ -265,16 +265,16 @@ End
 Definition bir_symb_exec_stmt_assert_def:
   bir_symb_exec_stmt_assert ex st = 
       let
-	ex_subst     = (bir_symb_eval_exp ex st.bsst_environ);
-	ex_subst_not = BExp_UnaryExp BIExp_Not ex_subst;
-	st_true  = 
-	  st with bsst_pred := BExp_BinExp BIExp_And ex_subst st.bsst_pred; 
-	st_false = 
-	  st with 
-	       <| bsst_status := BST_AssertionViolated;
-		  bsst_pred   := BExp_BinExp BIExp_And ex_subst_not st.bsst_pred |>;
+        ex_subst     = (bir_symb_eval_exp ex st.bsst_environ);
+        ex_subst_not = BExp_UnaryExp BIExp_Not ex_subst;
+        st_true  = 
+          st with bsst_pred := BExp_BinExp BIExp_And ex_subst st.bsst_pred; 
+        st_false = 
+          st with 
+               <| bsst_status := BST_AssertionViolated;
+                  bsst_pred   := BExp_BinExp BIExp_And ex_subst_not st.bsst_pred |>;
       in
-	[st_true; st_false]
+        [st_true; st_false]
 End
 
 
@@ -286,12 +286,12 @@ Definition bir_symb_exec_stmt_observe_def:
         [bir_symb_state_set_failed st]
       else
 *)
-	let
-	  obs_cond_ex = bir_symb_eval_exp c_ex st.bsst_environ;
-	  obs_lst_e   = MAP (\o_ex. bir_symb_eval_exp o_ex st.bsst_environ) obs_lst;
-	  obs         = <| obs_id := oid; obs_cond := obs_cond_ex; obs := obs_lst_e; obs_fun := f |>;
-	in
-	  [st with bsst_obs := (SNOC obs st.bsst_obs)]
+        let
+          obs_cond_ex = bir_symb_eval_exp c_ex st.bsst_environ;
+          obs_lst_e   = MAP (\o_ex. bir_symb_eval_exp o_ex st.bsst_environ) obs_lst;
+          obs         = <| obs_id := oid; obs_cond := obs_cond_ex; obs := obs_lst_e; obs_fun := f |>;
+        in
+          [st with bsst_obs := (SNOC obs st.bsst_obs)]
 End
 
 (* Basic Statement execution *)

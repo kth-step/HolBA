@@ -133,13 +133,13 @@ val _ = List.foldl (fn (config,_) =>
     (* iterate over all fragments *)
     val _ = List.foldl (fn (frag,frag_i) => if frag_i < skipidx orelse (maxlength > 0 andalso maxlength < length ((fn (x,_,_) => x) frag)) then frag_i + 1 else
       let
-	(*
-	val frag_i = 0;
-	val frag_i = 1;
+        (*
+        val frag_i = 0;
+        val frag_i = 1;
 
-	val frag_i = skipidx;
-	val frag = List.nth (frags,frag_i);
-	*)
+        val frag_i = skipidx;
+        val frag = List.nth (frags,frag_i);
+        *)
 
         (*
         val (frag_ns, _, _) = frag;
@@ -147,7 +147,7 @@ val _ = List.foldl (fn (config,_) =>
         val _ = bir_show_graph_inout false frag_ns g;
         *)
 
-	val theory_name = theory_name_prefix ^ (Int.toString frag_i);
+        val theory_name = theory_name_prefix ^ (Int.toString frag_i);
 
         val (frag_ns, frag_en, frag_ex) = frag;
         val _ = print ("==================================\n");
@@ -158,35 +158,35 @@ val _ = List.foldl (fn (config,_) =>
     val timer = (Time.now());
 
 
-	val _ = new_theory theory_name;
+        val _ = new_theory theory_name;
 
-	(* select only fragment blocks, and last block label *)
-	fun select_blocks_from_prog frag prog =
-	  let
-	    val (blocks,ty) = (dest_list o dest_BirProgram) prog;
-	    val (_,blocks_sel) = List.foldl (fn (b,(i,l)) => (i+1,if List.exists (fn x => x = i) frag then b::l else l)) (0,[]) blocks;
-	    val blocks_sel = List.rev blocks_sel;
+        (* select only fragment blocks, and last block label *)
+        fun select_blocks_from_prog frag prog =
+          let
+            val (blocks,ty) = (dest_list o dest_BirProgram) prog;
+            val (_,blocks_sel) = List.foldl (fn (b,(i,l)) => (i+1,if List.exists (fn x => x = i) frag then b::l else l)) (0,[]) blocks;
+            val blocks_sel = List.rev blocks_sel;
 
-	    val eval_label = (snd o dest_eq o concl o EVAL);
-	    val last_block = List.nth(blocks,(List.last frag));
-	    val (raw_BL_term, _, _) = dest_bir_block last_block;
-	    val BL_term = eval_label raw_BL_term;
+            val eval_label = (snd o dest_eq o concl o EVAL);
+            val last_block = List.nth(blocks,(List.last frag));
+            val (raw_BL_term, _, _) = dest_bir_block last_block;
+            val BL_term = eval_label raw_BL_term;
 
-	    val program = (mk_BirProgram o mk_list) (blocks_sel,ty);
-	    val last_block_label = BL_term;
-	  in
-	    (program,last_block_label)
-	  end;
+            val program = (mk_BirProgram o mk_list) (blocks_sel,ty);
+            val last_block_label = BL_term;
+          in
+            (program,last_block_label)
+          end;
 
-	val (program,_) = select_blocks_from_prog frag_ns prog;
+        val (program,_) = select_blocks_from_prog frag_ns prog;
 
         val block_index_to_label = (fn i =>
           let
             val block = List.nth(blocks,i);
 
-	    val eval_label = (snd o dest_eq o concl o EVAL);
-	    val (raw_BL_term, _, _) = dest_bir_block block;
-	    val BL_term = eval_label raw_BL_term;
+            val eval_label = (snd o dest_eq o concl o EVAL);
+            val (raw_BL_term, _, _) = dest_bir_block block;
+            val BL_term = eval_label raw_BL_term;
           in
             BL_term
           end);
@@ -194,53 +194,53 @@ val _ = List.foldl (fn (config,_) =>
         val last_block_labels = List.map block_index_to_label frag_ex;
         val first_block_labels = List.map block_index_to_label frag_en;
 
-	val ex_program_def = Define `
-	      ex_program = ^program
-	`;
-	val ex_post_tm = ``BExp_Const (Imm1 1w)``;
-	val ex_post_def = Define `
-	      ex_post (l:bir_label_t) = (^ex_post_tm)
-	`;
+        val ex_program_def = Define `
+              ex_program = ^program
+        `;
+        val ex_post_tm = ``BExp_Const (Imm1 1w)``;
+        val ex_post_def = Define `
+              ex_post (l:bir_label_t) = (^ex_post_tm)
+        `;
 
         val ex_ls_term = List.foldl (fn (lab,tm) => ``(^tm) \/ (x = ^(lab))``) (``x = ^(hd last_block_labels)``) (tl last_block_labels);
-	val ex_ls_def = Define `
-	      ex_ls = \x.(^ex_ls_term)
-	`;
+        val ex_ls_def = Define `
+              ex_ls = \x.(^ex_ls_term)
+        `;
 
         val ex_wps_term = List.foldl (fn (lab,tm) => ``(^tm) |+ (^lab, (^ex_post_tm))``) (``FEMPTY:bir_label_t |-> bir_exp_t``) last_block_labels;
-	val ex_wps_def = Define `
-	      ex_wps = (^ex_wps_term)
-	`;
+        val ex_wps_def = Define `
+              ex_wps = (^ex_wps_term)
+        `;
 
 
 
-	val ex_program = ``ex_program``;
-	val ex_post = ``ex_post``;
-	val ex_ls = ``ex_ls``;
-	val ex_wps = ``ex_wps``;(*(snd o dest_eq o concl) ex_wps_def;``ex_wps``;*)
+        val ex_program = ``ex_program``;
+        val ex_post = ``ex_post``;
+        val ex_ls = ``ex_ls``;
+        val ex_wps = ``ex_wps``;(*(snd o dest_eq o concl) ex_wps_def;``ex_wps``;*)
 
-	val defs = [ex_program_def, ex_post_def, ex_ls_def, ex_wps_def];
+        val defs = [ex_program_def, ex_post_def, ex_ls_def, ex_wps_def];
 
-	(*
-	val (program, post, ls) = (ex_program, ex_post, ex_ls);
-	val wps = ex_wps;
-	*)
-
-
-	(* wps_bool_sound_thm for initial wps *)
-	val prog_term = (snd o dest_comb o concl) ex_program_def;
-	val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) ex_wps;
-	val wps_bool_sound_thm = bir_wp_init_wps_bool_sound_thm (ex_program, ex_post, ex_ls) ex_wps defs;
-	val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term [];
+        (*
+        val (program, post, ls) = (ex_program, ex_post, ex_ls);
+        val wps = ex_wps;
+        *)
 
 
+        (* wps_bool_sound_thm for initial wps *)
+        val prog_term = (snd o dest_comb o concl) ex_program_def;
+        val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) ex_wps;
+        val wps_bool_sound_thm = bir_wp_init_wps_bool_sound_thm (ex_program, ex_post, ex_ls) ex_wps defs;
+        val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term [];
 
-	(* prepare "problem-static" part of the theorem *)
-	val reusable_thm = bir_wp_exec_of_block_reusable_thm;
-	val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (ex_program, ex_post, ex_ls) defs;
 
 
-	val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((ex_wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (ex_program, ex_post, ex_ls) defs;
+        (* prepare "problem-static" part of the theorem *)
+        val reusable_thm = bir_wp_exec_of_block_reusable_thm;
+        val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (ex_program, ex_post, ex_ls) defs;
+
+
+        val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((ex_wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (ex_program, ex_post, ex_ls) defs;
 
 
         val d_time = Time.- (Time.now(), timer);
@@ -276,16 +276,16 @@ val _ = List.foldl (fn (config,_) =>
 
 
 
-	val ex_wps1_def = Define `
-	      ex_wps1 = ^wps1
-	`;
+        val ex_wps1_def = Define `
+              ex_wps1 = ^wps1
+        `;
 
-	val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM ex_wps1_def] wps1_bool_sound_thm;
-	val _ = save_thm("ex_wps1_bool_sound_thm", wps1_bool_sound_thm_readable);
+        val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM ex_wps1_def] wps1_bool_sound_thm;
+        val _ = save_thm("ex_wps1_bool_sound_thm", wps1_bool_sound_thm_readable);
 
 
 
-	val _ = export_theory();
+        val _ = export_theory();
       in
         frag_i + 1
       end) 0 frags;

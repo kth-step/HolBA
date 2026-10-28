@@ -38,8 +38,8 @@ in
     let
       val file = TextIO.openIn filename;
       fun allLinesRevFun acc = case TextIO.inputLine file of
-			    NONE => acc
-			  | SOME l => allLinesRevFun (l::acc);
+                            NONE => acc
+                          | SOME l => allLinesRevFun (l::acc);
       val lines = List.rev (allLinesRevFun []) before TextIO.closeIn file;
     in
       lines
@@ -75,9 +75,9 @@ in
     let
       val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
       val _ = if not (OS.Process.isSuccess r) then
-		raise ERR "makedir" ("couldn't create the following directory: " ^ path)
-	      else
-		();
+                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
+              else
+                ();
     in
       ()
     end;

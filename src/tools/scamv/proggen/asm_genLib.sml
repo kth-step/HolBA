@@ -20,7 +20,7 @@ datatype ArmInstruction =
          | Compare of Operand * Operand
          | Nop
          | Add     of Operand * Operand * Operand
-	 | Lsl     of Operand * Operand * Operand
+         | Lsl     of Operand * Operand * Operand
 
 (* pp *)
 local
@@ -394,29 +394,29 @@ val arb_program_nobranch_nocmp = arb_list_of arb_instruction_nobranch_nocmp;
       
 fun arb_program_straightline_cond arb_prog_left arb_prog_right =
     let
-	fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
-	val arb_load_instr = arb_load_indir;
-	    
-	val arb_prog      = arb_prog_left  >>= (fn blockl =>
-			    arb_prog_right >>= (fn blockr =>
-			    (* arb_load_instr >>= (fn fld => *)
+        fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
+        val arb_load_instr = arb_load_indir;
+            
+        val arb_prog      = arb_prog_left  >>= (fn blockl =>
+                            arb_prog_right >>= (fn blockr =>
+                            (* arb_load_instr >>= (fn fld => *)
                               let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
                                return (
                                     blockl_wexit
                                     @blockr
-				    (* @[fld] *)
-			       )
+                                    (* @[fld] *)
+                               )
                               end
                         (* ) *)));
     in
-	arb_prog
+        arb_prog
     end;
     
 val arb_program_straightline_branch =
   let
     val arb_pad = sized (fn n => choose (1, n)) >>=
-                  (fn n => resize n arb_program_nobranch_nocmp);	
-	
+                  (fn n => resize n arb_program_nobranch_nocmp);        
+        
 
     val arb_load_instr = arb_load_indir;
 
@@ -478,19 +478,19 @@ local
 
   fun preamble2 () =
     let
-	val offsets = choose(0, 255)
-	val regs    = arb_regname_except ["x1", "x0"]
-	val zipped  = regs >>= (fn reg1 => offsets 
-			   >>= (fn off1 => arb_regname_except [reg1]
+        val offsets = choose(0, 255)
+        val regs    = arb_regname_except ["x1", "x0"]
+        val zipped  = regs >>= (fn reg1 => offsets 
+                           >>= (fn off1 => arb_regname_except [reg1]
                            >>= (fn reg2 => offsets
-		           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))))
+                           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))))
 
 
-	val ext_src = zipped >>= (fn (p1::p2::_ , [reg1, reg2]) =>
+        val ext_src = zipped >>= (fn (p1::p2::_ , [reg1, reg2]) =>
                                          sequence ([arb_ld_reg_src (fst p1), arb_ld_offset_src (fst p2) (snd p2)])
-			     >>= (fn h::t::_ => (return ([fst h, fst t], [snd h, snd t], [reg1, reg2]))))
+                             >>= (fn h::t::_ => (return ([fst h, fst t], [snd h, snd t], [reg1, reg2]))))
     in
-	ext_src >>= (fn (srcs, lds, [reg1, reg2]) =>  (arb_cmp_g (hd srcs) reg2)
+        ext_src >>= (fn (srcs, lds, [reg1, reg2]) =>  (arb_cmp_g (hd srcs) reg2)
                 >>= (fn cmpi => return (lds@[cmpi], [reg1, reg2])))
     end;
 
@@ -500,11 +500,11 @@ local
       
   val arb_block_l3 = 
       let 
-	  val offsets = choose(0, 255)
+          val offsets = choose(0, 255)
       in
     preamble2() >>= (fn (prmbl,  [reg1, reg2]) => offsets 
                >>= (fn offset => ((List.foldr (op@) []) <$> 
-   	             (sequence [(left_gen reg1 offset)]))
+                     (sequence [(left_gen reg1 offset)]))
                >>= (fn left => return (prmbl, left))))
       end;
 
@@ -512,33 +512,33 @@ in
 
   fun arb_program_glue_spectre arb_prog_preamble_left arb_prog_right =
       let
-  	  fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
+          fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
 
-  	  val arb_prog =arb_prog_preamble_left >>= (fn (prmbl, blockl) =>
+          val arb_prog =arb_prog_preamble_left >>= (fn (prmbl, blockl) =>
                         arb_prog_right >>= (fn blockr =>
             
                            let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
                              return (prmbl
-  			            @[Branch (SOME EQ, rel_jmp_after blockl_wexit)]
+                                    @[Branch (SOME EQ, rel_jmp_after blockl_wexit)]
                                     @blockl_wexit
                                     @blockr)
                            end
                         ));
       in
-  	  arb_prog
+          arb_prog
       end;
     
   val arb_program_spectre =
       let
-  	  val offsets = choose(0, 255);
-  	  val arb_load_instr  =  arb_load_indir;
-  	  val arb_store_instr = arb_store_indir;
+          val offsets = choose(0, 255);
+          val arb_load_instr  =  arb_load_indir;
+          val arb_store_instr = arb_store_indir;
 
 
-  	  val arb_block_r = (List.foldr (op@) []) <$> (
+          val arb_block_r = (List.foldr (op@) []) <$> (
               sequence [(fn x => [x]) <$> oneof[arb_load_indir]]);
       in
-  	  arb_program_glue_spectre arb_block_l3 arb_block_r
+          arb_program_glue_spectre arb_block_l3 arb_block_r
       end
       
 end

@@ -222,7 +222,7 @@ fun disassembly_section_to_minmax section =
       BILMR(addr_start, entries) =>
         let
           val data_strs = List.map fst entries;
-	  (* val _ = List.map (fn x => print (x ^ "\r\n")) data_strs; *)
+          (* val _ = List.map (fn x => print (x ^ "\r\n")) data_strs; *)
           val lengths_st = List.map String.size data_strs;
           val _ = List.map (fn x => ()) lengths_st;
           val lengths = List.map (fn x => Arbnum.fromInt (x div 2)) lengths_st;
@@ -395,13 +395,13 @@ fun lift_sections arch_str sections idx =
                             else raise ERR "lift_file" "unknown statement type"
                           ) stmts;
                      val e_exps = if is_BStmt_Jmp es then
-				    let val le = dest_BStmt_Jmp es; in
+                                    let val le = dest_BStmt_Jmp es; in
                                       if is_BLE_Label le then []
                                       else if is_BLE_Exp le then [dest_BLE_Exp le]
                                       else raise ERR "lift_file" "unknown end statement label type"
                                     end
-				  else if is_BStmt_CJmp es then
-				    let
+                                  else if is_BStmt_CJmp es then
+                                    let
                                       val (ce, le1, le2) = dest_BStmt_CJmp es;
                                       val le1_ =
                                         if is_BLE_Label le1 then []
@@ -414,8 +414,8 @@ fun lift_sections arch_str sections idx =
                                     in
                                       (ce::(le1_@le2_))
                                     end
-				  else if is_BStmt_Halt es then []
-				  else raise ERR "lift_file" "unknown end statement type";
+                                  else if is_BStmt_Halt es then []
+                                  else raise ERR "lift_file" "unknown end statement type";
 
                      val exps = List.concat (e_exps::s_exps);
 

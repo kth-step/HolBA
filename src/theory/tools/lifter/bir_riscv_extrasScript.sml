@@ -182,23 +182,23 @@ val WORD_CONTR_TAC =
   REPEAT (
     NTAC 2 CASE_TAC >> (
       TRY (
-	Q.PAT_ASSUM `a + b = c`
-	  (fn thm1 =>
-	    FIRST_ASSUM
-	      (fn thm2 =>
-		let
-		  val tm1 = concl thm1
-		  val tm2 = concl thm2
-		in
-		  if is_neg tm2
-		  then FAIL_TAC ""
-		  else if term_eq tm1 tm2
-		  then FAIL_TAC ""
-		  else ASSUME_TAC (prove_word_assum_contr tm1 tm2)
-		end
-	      )
-	  ) >>
-	REV_FULL_SIMP_TAC std_ss []
+        Q.PAT_ASSUM `a + b = c`
+          (fn thm1 =>
+            FIRST_ASSUM
+              (fn thm2 =>
+                let
+                  val tm1 = concl thm1
+                  val tm2 = concl thm2
+                in
+                  if is_neg tm2
+                  then FAIL_TAC ""
+                  else if term_eq tm1 tm2
+                  then FAIL_TAC ""
+                  else ASSUME_TAC (prove_word_assum_contr tm1 tm2)
+                end
+              )
+          ) >>
+        REV_FULL_SIMP_TAC std_ss []
       )
     )
   );
@@ -295,7 +295,11 @@ let
      SIMP_CONV (std_ss++wordsLib.WORD_ss) [def_thm,
         GSYM mem_store_byte_def] tm))
 
-  val word_add1_neq = prove(``a + 1w <> a``, blastLib.BBLAST_TAC >> fs[word1_distinct])
+Theorem word_add1_neq[local]:
+  a + 1w <> a
+Proof
+  blastLib.BBLAST_TAC >> fs[word1_distinct]
+QED
   val upd_add1_comm = GEN_ALL (HO_MATCH_MP UPDATE_COMMUTES word_add1_neq )
 
   fun mk_zero_thm def_thm tm = GEN_ALL (GSYM (
@@ -840,41 +844,39 @@ fun specialise_word thm =
   end
 end;
 
-val riscv_is_lifted_imm_exp_2EQ_GEN =
-  store_thm ("riscv_is_lifted_imm_exp_2EQ_GEN",
-  ``!w2 env w1 e1 e2.
+Theorem riscv_is_lifted_imm_exp_2EQ_GEN:
+  !w2 env w1 e1 e2.
       bir_is_lifted_imm_exp env e1 (Imm8 (w2w w1)) ==>
       bir_is_lifted_imm_exp env e2 (Imm8 (w2w w2)) ==>
       bir_is_lifted_imm_exp env (BExp_BinPred BIExp_Equal e1 e2)
-        (bool2b (w1 = (w2:word2)))``,
-
+        (bool2b (w1 = (w2:word2)))
+Proof
 wordsLib.Cases_word_value >> (
   SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
     bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
     BType_Bool_def] >>
   blastLib.BBLAST_TAC
 )
-);
+QED
 
 val riscv_is_lifted_imm_exp_2EQ = 
   SIMP_RULE (std_ss++wordsLib.WORD_ss) [] (specialise_word riscv_is_lifted_imm_exp_2EQ_GEN);
 
 (* 0 -> 31 *)
-val riscv_is_lifted_imm_exp_5EQ_GEN =
-  store_thm ("riscv_is_lifted_imm_exp_5EQ_GEN",
-  ``!w2 env w1 e1 e2.
+Theorem riscv_is_lifted_imm_exp_5EQ_GEN:
+  !w2 env w1 e1 e2.
       bir_is_lifted_imm_exp env e1 (Imm8 (w2w w1)) ==>
       bir_is_lifted_imm_exp env e2 (Imm8 (w2w w2)) ==>
       bir_is_lifted_imm_exp env (BExp_BinPred BIExp_Equal e1 e2)
-        (bool2b (w1 = (w2:word5)))``,
-
+        (bool2b (w1 = (w2:word5)))
+Proof
 wordsLib.Cases_word_value >> (
   SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
     bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
     BType_Bool_def] >>
   blastLib.BBLAST_TAC
 )
-);
+QED
 
 val riscv_is_lifted_imm_exp_5EQ = 
   SIMP_RULE (std_ss++wordsLib.WORD_ss) [] (specialise_word riscv_is_lifted_imm_exp_5EQ_GEN);

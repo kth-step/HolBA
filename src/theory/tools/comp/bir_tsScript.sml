@@ -62,8 +62,8 @@ Definition bir_ts_def:
   bir_ts (prog :'a bir_program_t) = <|
     trs  := bir_trs prog;
     weak := (\ls st st'.
-	       (bir_weak_trs ls prog st = SOME st')
-	    );
+               (bir_weak_trs ls prog st = SOME st')
+            );
     ctrl   := (\st. st.bst_pc.bpc_label)
   |>
 End
@@ -203,7 +203,7 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_trs_def] >>
 IMP_RES_TAC bir_exec_block_n_REWR_TERMINATED >>
 QSPECL_X_ASSUM ``!p n. _``
-	       [`prog`, `1`] >>
+               [`prog`, `1`] >>
 FULL_SIMP_TAC std_ss [bir_state_is_terminated_def, LET_DEF]
 QED
 
@@ -344,7 +344,7 @@ CASE_TAC >| [
       FULL_SIMP_TAC std_ss [] >>
       Q.EXISTS_TAC `st''` >>
       subgoal `~bir_state_is_terminated st''` >- (
-	IMP_RES_TAC bir_exec_block_n_block_ls_running_running
+        IMP_RES_TAC bir_exec_block_n_block_ls_running_running
       ) >>
       FULL_SIMP_TAC std_ss
         [bir_exec_block_n_to_FUNPOW_OPT_bir_trs] >>
@@ -363,28 +363,28 @@ CASE_TAC >| [
       (* Prove that n = n' using the original hypothesis of the
        * goal *)
       subgoal `n = n'` >- (
-	subgoal `~(n' < n)` >- (
-	  IMP_RES_TAC bir_exec_to_labels_reached_ls
-	) >>
-	Cases_on `n < n'` >- (
-	  (* This would mean that state b has crossed less than
+        subgoal `~(n' < n)` >- (
+          IMP_RES_TAC bir_exec_to_labels_reached_ls
+        ) >>
+        Cases_on `n < n'` >- (
+          (* This would mean that state b has crossed less than
            * m' blocks. Which entails, together with init
            * assumption, that PC label of b is not in ls (with
            * bir_exec_block_n_to_FUNPOW_OPT_bir_trs) *)
-	  subgoal `m < m'` >- (
-	    IMP_RES_TAC bir_exec_block_n_step_ls
-	  ) >>
-	  QSPECL_X_ASSUM
-	    ``!n'.
-	       n' < m' /\ n' > 0 ==>
-	       ?s''.
-		   (FUNPOW_OPT (bir_trs prog) n' st = SOME s'') /\
-		   s''.bst_pc.bpc_label NOTIN ls`` [`m`] >>
-	  REV_FULL_SIMP_TAC arith_ss [] >>
-	  IMP_RES_TAC bir_exec_block_n_to_FUNPOW_OPT_bir_trs >>
-	  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-	  FULL_SIMP_TAC (std_ss++holBACore_ss) []
-	) >>
+          subgoal `m < m'` >- (
+            IMP_RES_TAC bir_exec_block_n_step_ls
+          ) >>
+          QSPECL_X_ASSUM
+            ``!n'.
+               n' < m' /\ n' > 0 ==>
+               ?s''.
+                   (FUNPOW_OPT (bir_trs prog) n' st = SOME s'') /\
+                   s''.bst_pc.bpc_label NOTIN ls`` [`m`] >>
+          REV_FULL_SIMP_TAC arith_ss [] >>
+          IMP_RES_TAC bir_exec_block_n_to_FUNPOW_OPT_bir_trs >>
+          REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+          FULL_SIMP_TAC (std_ss++holBACore_ss) []
+        ) >>
         FULL_SIMP_TAC arith_ss []
       ) >>
       (* bir_exec_block_n_step_eq_running now gives us that the
@@ -392,8 +392,8 @@ CASE_TAC >| [
        * must evaluate to the same state, which proves the goal. *)
       subgoal `m = m'` >- (
         subgoal `~bir_state_is_terminated st'` >- (
-	  IMP_RES_TAC bir_exec_block_n_step_eq >>
-	  REV_FULL_SIMP_TAC arith_ss []
+          IMP_RES_TAC bir_exec_block_n_step_eq >>
+          REV_FULL_SIMP_TAC arith_ss []
         ) >>
         IMP_RES_TAC bir_exec_block_n_step_eq_running
       ) >>
@@ -504,7 +504,7 @@ QSPECL_X_ASSUM ``!s. _`` [`s`] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `s'` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def,
-				      bir_exec_to_labels_def] >>
+                                      bir_exec_to_labels_def] >>
 IMP_RES_TAC bir_exec_to_labels_n_ENV_ORDER >>
 IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
 ASM_SIMP_TAC std_ss [bir_eval_exp_TF, bir_is_bool_exp_env_REWRS]
@@ -724,16 +724,16 @@ Theorem bir_signed_loop_rule_thm:
     (!x.
      bir_cont prog invariant l ({l} UNION il) el
        (BExp_BinExp BIExp_And C1
-	  (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 x)))
+          (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 x)))
        )
        (\l'.
-	    if l' = l then
-	      (BExp_BinExp BIExp_And
-		 (BExp_BinPred BIExp_SignedLessThan variant
-		    (BExp_Const (Imm64 x)))
-		 (BExp_BinPred BIExp_SignedLessOrEqual
-		    (BExp_Const (Imm64 0w)) variant))
-	    else bir_exp_false)
+            if l' = l then
+              (BExp_BinExp BIExp_And
+                 (BExp_BinPred BIExp_SignedLessThan variant
+                    (BExp_Const (Imm64 x)))
+                 (BExp_BinPred BIExp_SignedLessOrEqual
+                    (BExp_Const (Imm64 0w)) variant))
+            else bir_exp_false)
     ) ==>
     bir_cont prog bir_exp_true l il el
       (BExp_BinExp BIExp_And invariant (BExp_UnaryExp BIExp_Not C1)) post ==>
@@ -796,12 +796,12 @@ STRIP_TAC >| [
 
   (* Prove precondition of the antecedent judgment *)
   Q.SUBGOAL_THEN `bir_exec_to_labels_triple_precond s
-		    (BExp_BinExp BIExp_And C1
-		       (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x)))))
-		    prog /\ bir_exec_to_labels_triple_precond s invariant prog`
+                    (BExp_BinExp BIExp_And C1
+                       (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x)))))
+                    prog /\ bir_exec_to_labels_triple_precond s invariant prog`
     (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
     SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, GSYM bir_and_equiv,
-		     bir_is_bool_exp_env_REWRS] >>
+                     bir_is_bool_exp_env_REWRS] >>
     FULL_SIMP_TAC (std_ss++holBACore_ss)
       [bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
        bir_vars_of_exp_def, bir_val_true_def, bir_is_bool_exp_env_def] >>
@@ -809,7 +809,7 @@ STRIP_TAC >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss) []
     ) >>
     METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET, bir_is_bool_exp_def,
-	       bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_eval_exp_IS_SOME_IMPLIES_TYPE]
+               bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_eval_exp_IS_SOME_IMPLIES_TYPE]
   ) >>
   REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def] >>
 
@@ -823,19 +823,19 @@ STRIP_TAC >| [
      bir_ts_def, bir_weak_trs_EQ, GSYM bir_and_equiv] >>
   subgoal `b2n (iv2i (THE (bir_eval_exp variant s'.bst_environ))) < x` >- (
     subgoal `?x'. bir_eval_exp variant s'.bst_environ =
-		    SOME (BVal_Imm (Imm64 x'))` >- (
+                    SOME (BVal_Imm (Imm64 x'))` >- (
       subgoal `?va. (bir_eval_exp variant s'.bst_environ = SOME va) /\
-		     (type_of_bir_val va = (BType_Imm it'))` >- (
-	METIS_TAC [type_of_bir_exp_THM_with_init_vars]
+                     (type_of_bir_val va = (BType_Imm it'))` >- (
+        METIS_TAC [type_of_bir_exp_THM_with_init_vars]
       ) >>
       METIS_TAC [bir_eval_imm_types]
     ) >>
     `bir_imm_word_lt (bir_eval_exp variant s'.bst_environ)
-		       (bir_eval_exp (BExp_Const (Imm64 (n2w x))) s'.bst_environ)` suffices_by (
+                       (bir_eval_exp (BExp_Const (Imm64 (n2w x))) s'.bst_environ)` suffices_by (
        FULL_SIMP_TAC (arith_ss++holBACore_ss++wordsLib.WORD_ss)
-	 [bir_imm_word_lt_def, wordsTheory.WORD_LT,
-	  iv2i_def, wordsTheory.WORD_LE,
-	  bir_val_true_def]
+         [bir_imm_word_lt_def, wordsTheory.WORD_LT,
+          iv2i_def, wordsTheory.WORD_LE,
+          bir_val_true_def]
     ) >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_slessthan_equiv, bir_imm_word_lt_def, bir_val_true_def]
   ) >>
@@ -877,16 +877,16 @@ Theorem bir_unsigned_loop_rule_thm:
     (!x.
      bir_cont prog invariant l ({l} UNION il) el
        (BExp_BinExp BIExp_And C1
-	  (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 x)))
+          (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 x)))
        )
        (\l'.
-	    if l' = l then
-	      (BExp_BinExp BIExp_And
-		 (BExp_BinPred BIExp_LessThan variant
-		    (BExp_Const (Imm64 x)))
-		 (BExp_BinPred BIExp_LessOrEqual
-		    (BExp_Const (Imm64 0w)) variant))
-	    else bir_exp_false)
+            if l' = l then
+              (BExp_BinExp BIExp_And
+                 (BExp_BinPred BIExp_LessThan variant
+                    (BExp_Const (Imm64 x)))
+                 (BExp_BinPred BIExp_LessOrEqual
+                    (BExp_Const (Imm64 0w)) variant))
+            else bir_exp_false)
     ) ==>
     bir_cont prog bir_exp_true l il el
       (BExp_BinExp BIExp_And invariant (BExp_UnaryExp BIExp_Not C1)) post ==>
@@ -949,12 +949,12 @@ STRIP_TAC >| [
 
   (* Prove precondition of the antecedent judgment *)
   Q.SUBGOAL_THEN `bir_exec_to_labels_triple_precond s
-		    (BExp_BinExp BIExp_And C1
-		       (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x)))))
-		    prog /\ bir_exec_to_labels_triple_precond s invariant prog`
+                    (BExp_BinExp BIExp_And C1
+                       (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x)))))
+                    prog /\ bir_exec_to_labels_triple_precond s invariant prog`
     (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
     SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, GSYM bir_and_equiv,
-		     bir_is_bool_exp_env_REWRS] >>
+                     bir_is_bool_exp_env_REWRS] >>
     FULL_SIMP_TAC (std_ss++holBACore_ss)
       [bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
        bir_vars_of_exp_def, bir_val_true_def, bir_is_bool_exp_env_def] >>
@@ -962,7 +962,7 @@ STRIP_TAC >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss) []
     ) >>
     METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET, bir_is_bool_exp_def,
-	       bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_eval_exp_IS_SOME_IMPLIES_TYPE]
+               bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_eval_exp_IS_SOME_IMPLIES_TYPE]
   ) >>
   REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def] >>
 
@@ -976,15 +976,15 @@ STRIP_TAC >| [
      bir_ts_def, bir_weak_trs_EQ, GSYM bir_and_equiv] >>
   subgoal `b2n (iv2i (THE (bir_eval_exp variant s'.bst_environ))) < x` >- (
     subgoal `?x'. bir_eval_exp variant s'.bst_environ =
-		    SOME (BVal_Imm (Imm64 x'))` >- (
+                    SOME (BVal_Imm (Imm64 x'))` >- (
       subgoal `?va. (bir_eval_exp variant s'.bst_environ = SOME va) /\
-		     (type_of_bir_val va = (BType_Imm it'))` >- (
-	METIS_TAC [type_of_bir_exp_THM_with_init_vars]
+                     (type_of_bir_val va = (BType_Imm it'))` >- (
+        METIS_TAC [type_of_bir_exp_THM_with_init_vars]
       ) >>
       METIS_TAC [bir_eval_imm_types]
     ) >>
     `bir_imm_word_lo (bir_eval_exp variant s'.bst_environ)
-		       (bir_eval_exp (BExp_Const (Imm64 (n2w x))) s'.bst_environ)` suffices_by (
+                       (bir_eval_exp (BExp_Const (Imm64 (n2w x))) s'.bst_environ)` suffices_by (
        FULL_SIMP_TAC (arith_ss++holBACore_ss)[bir_imm_word_lo_def, wordsTheory.WORD_LO,
                                               wordsTheory.w2n_n2w, iv2i_def]
     ) >>
@@ -1033,7 +1033,7 @@ REPEAT STRIP_TAC >> (
   IMP_RES_TAC weak_union_ctrl_not_in >>
   QSPECL_X_ASSUM ``!st. _`` [`s''`] >>
   subgoal `bir_eval_exp (post s''.bst_pc.bpc_label) s''.bst_environ =
-	    SOME bir_val_true` >- (
+            SOME bir_val_true` >- (
     FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def]
   ) >>
   FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_ts_def]
@@ -1091,11 +1091,11 @@ Cases_on `bir_get_current_statement prog s.bst_pc` >- (
     [`(F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`,
      `prog`,
      `(if
-	bir_state_COUNT_PC
-	  (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))
-	  (s with bst_status := BST_Failed)
+        bir_state_COUNT_PC
+          (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))
+          (s with bst_status := BST_Failed)
        then
-	 OPT_NUM_PRE (SOME 1)
+         OPT_NUM_PRE (SOME 1)
        else SOME 1)`] >>
   (* !!! *)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
@@ -1115,7 +1115,7 @@ Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_cont_def, t_ext_jgmt_def] >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [t_jgmt_def,
-				   bir_ts_def, bir_weak_trs_def] >>
+                                   bir_ts_def, bir_weak_trs_def] >>
 REPEAT STRIP_TAC >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
 IMP_RES_TAC bir_exec_to_labels_triple_precond_subprogram >>
@@ -1129,8 +1129,8 @@ subgoal `bir_is_valid_pc prog1 s.bst_pc` >- (
   METIS_TAC [bir_is_valid_pc_exec]
 ) >>
 subgoal `(!l.
-	    (s'.bst_status = BST_JumpOutside l) ==>
-	    ~MEM l (bir_labels_of_program prog2))` >- (
+            (s'.bst_status = BST_JumpOutside l) ==>
+            ~MEM l (bir_labels_of_program prog2))` >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_precond_def]
 ) >>
 IMP_RES_TAC bir_exec_to_labels_TERMINATES_SUBPROGRAM_EQ >>
@@ -1138,7 +1138,7 @@ Q.EXISTS_TAC `s'` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF] >>
 CONJ_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def,
-					bir_exec_to_labels_triple_precond_def] >>
+                                        bir_exec_to_labels_triple_precond_def] >>
   irule bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
   Q.EXISTS_TAC `s.bst_environ` >>
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
@@ -1175,8 +1175,8 @@ REPEAT STRIP_TAC >| [
       METIS_TAC [bir_is_valid_pc_exec]
     ) >>
     subgoal `(!l.
-		(ms'.bst_status = BST_JumpOutside l) ==>
-		~MEM l (bir_labels_of_program prog2))` >- (
+                (ms'.bst_status = BST_JumpOutside l) ==>
+                ~MEM l (bir_labels_of_program prog2))` >- (
       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
     ) >>
     IMP_RES_TAC bir_exec_to_labels_TERMINATES_SUBPROGRAM_EQ >>
@@ -1188,13 +1188,13 @@ REPEAT STRIP_TAC >| [
 
   FULL_SIMP_TAC std_ss [t_ext_jgmt_def] >>
   FULL_SIMP_TAC (std_ss++bir_wm_SS) [t_jgmt_def,
-				     bir_ts_def, bir_weak_trs_def] >>
+                                     bir_ts_def, bir_weak_trs_def] >>
   REPEAT STRIP_TAC >>
   IMP_RES_TAC bir_exec_to_labels_triple_precond_subprogram >>
   QSPECL_X_ASSUM ``!s. _`` [`s`] >>
   REV_FULL_SIMP_TAC std_ss [] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def,
-					bir_exec_to_labels_triple_precond_def] >>
+                                        bir_exec_to_labels_triple_precond_def] >>
   irule bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
   Q.EXISTS_TAC `s.bst_environ` >>
   Cases_on `bir_exec_to_labels (il UNION el) prog1 s` >> (

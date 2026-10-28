@@ -126,7 +126,7 @@ val unique_addrs_vals = makeunique addrs_vals [];
 val maxlen = length unique_addrs_vals;
 *)
 
-val bir_aespart_prog_def = Define `
+Definition bir_aespart_prog_def:
    bir_aespart_prog =
         BirProgram
           [<|bb_label :=
@@ -145,7 +145,7 @@ val bir_aespart_prog_def = Define `
                         Bit32) Bit64)];
              bb_last_statement :=
                BStmt_Jmp (BLE_Label (BL_Address (Imm64 2800w)))|>]
-`;
+End
 
 
 local
@@ -7115,8 +7115,8 @@ end
      val _ = if is_SOME_BStmtB_BStmt_Assign last_stmt then print "is an assign\n" else print "is no assign\n";
      val t1 = (
      (fn t => (
-	(*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
-	t)) o
+        (*print_term ((last o pairSyntax.strip_pair o snd o dest_comb o concl) t);*)
+        t)) o
      birs_simp_fun o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune1_spec_thm o
      birs_rule_tryprune_fun birs_rulesTheory.branch_prune2_spec_thm o

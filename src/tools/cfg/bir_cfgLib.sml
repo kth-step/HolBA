@@ -121,10 +121,10 @@ in
                        (term_to_string bbes))
 
       val n = { CFGN_lbl_tm   = lbl_tm,
-		CFGN_hc_descr = descr,
-		CFGN_targets  = cfg_t_l,
-		CFGN_type     = cfgn_type
-	      } : cfg_node;
+                CFGN_hc_descr = descr,
+                CFGN_targets  = cfg_t_l,
+                CFGN_type     = cfgn_type
+              } : cfg_node;
 
     in n end;
 
@@ -168,12 +168,12 @@ in
       val (nodes,exits) = cfg_collect_nodes n_dict entries [] [];
 
       val g = { CFGG_name       = name,
-		CFGG_entries    = entries,
-		CFGG_exits      = exits,
-		CFGG_nodes      = nodes,
-		CFGG_node_dict  = n_dict,
-		CFGG_block_dict = bl_dict
-	      } : cfg_graph;
+                CFGG_entries    = entries,
+                CFGG_exits      = exits,
+                CFGG_nodes      = nodes,
+                CFGG_node_dict  = n_dict,
+                CFGG_block_dict = bl_dict
+              } : cfg_graph;
     in g end;
 
   fun cfg_update (g:cfg_graph) n_dict =
@@ -189,24 +189,24 @@ in
   (* =================================== *)
   fun cfg_update_nodes_gen err_src_str update_fun lbl_tms_in n_dict_in =
       let
-	fun update_n_dict (lbl_tm, n_dict) =
-	  let
-	    val n:cfg_node =
-		    case lookup_block_dict n_dict lbl_tm of
-		       SOME x => x
-		     | NONE => raise ERR ("cfg_update_nodes_gen::" ^ err_src_str)
+        fun update_n_dict (lbl_tm, n_dict) =
+          let
+            val n:cfg_node =
+                    case lookup_block_dict n_dict lbl_tm of
+                       SOME x => x
+                     | NONE => raise ERR ("cfg_update_nodes_gen::" ^ err_src_str)
                                          ("cannot find label " ^ (term_to_string lbl_tm));
 
-	    val n_o = update_fun n;
-	    val n_dict' = if isSome n_o then
-				Redblackmap.update (n_dict, lbl_tm, K (valOf n_o))
-			      else
-				n_dict;
-	  in
-	    n_dict'
-	  end;
+            val n_o = update_fun n;
+            val n_dict' = if isSome n_o then
+                                Redblackmap.update (n_dict, lbl_tm, K (valOf n_o))
+                              else
+                                n_dict;
+          in
+            n_dict'
+          end;
       in
-	List.foldr update_n_dict n_dict_in lbl_tms_in
+        List.foldr update_n_dict n_dict_in lbl_tms_in
       end;
 
 
@@ -223,34 +223,34 @@ in
 
     fun cfg_node_to_succ_lbl_tm (n:cfg_node) =
       let
-	val lbl_tm   = #CFGN_lbl_tm n;
-	val descr_o  = #CFGN_hc_descr n;
+        val lbl_tm   = #CFGN_lbl_tm n;
+        val descr_o  = #CFGN_hc_descr n;
       in
       if (not (is_BL_Address lbl_tm)) orelse
-	 (is_none descr_o)
+         (is_none descr_o)
       then NONE else
        let
-	val descr = valOf descr_o;
-	val (i, addr_w_tm) = (gen_dest_Imm o dest_BL_Address) lbl_tm;
-	val addr = dest_word_literal addr_w_tm;
+        val descr = valOf descr_o;
+        val (i, addr_w_tm) = (gen_dest_Imm o dest_BL_Address) lbl_tm;
+        val addr = dest_word_literal addr_w_tm;
 
-	val instrLen2 = (length o fst o (list_split_pred #" ") o explode) descr;
-	val _ = if instrLen2 mod 2 = 0 then () else
-		raise ERR "cfg_node_to_succ_lbl_tm"
-			  ("something went wrong when trying to find the binary " ^
-			   "instruction addr: " ^ (term_to_string lbl_tm) ^
-			   ", descr: " ^ descr);
-	val instrLen = instrLen2 div 2;
-	val _ = if instrLen = 2 orelse instrLen = 4 then () else
-		raise ERR "cfg_node_to_succ_lbl_tm"
-			  ("something went wrong when trying to find the binary " ^
-			   "instruction addr: " ^ (term_to_string lbl_tm) ^
-			   ", wrong instruction length, descr: " ^ descr);
+        val instrLen2 = (length o fst o (list_split_pred #" ") o explode) descr;
+        val _ = if instrLen2 mod 2 = 0 then () else
+                raise ERR "cfg_node_to_succ_lbl_tm"
+                          ("something went wrong when trying to find the binary " ^
+                           "instruction addr: " ^ (term_to_string lbl_tm) ^
+                           ", descr: " ^ descr);
+        val instrLen = instrLen2 div 2;
+        val _ = if instrLen = 2 orelse instrLen = 4 then () else
+                raise ERR "cfg_node_to_succ_lbl_tm"
+                          ("something went wrong when trying to find the binary " ^
+                           "instruction addr: " ^ (term_to_string lbl_tm) ^
+                           ", wrong instruction length, descr: " ^ descr);
 
-	val addr_succ = Arbnum.+ (addr, Arbnum.fromInt instrLen);
-	val succ_lbl_tm = mk_key_from_address i addr_succ;
+        val addr_succ = Arbnum.+ (addr, Arbnum.fromInt instrLen);
+        val succ_lbl_tm = mk_key_from_address i addr_succ;
        in
-	SOME succ_lbl_tm
+        SOME succ_lbl_tm
        end
       end;
 
@@ -262,14 +262,14 @@ in
       val targets       = #CFGN_targets n;
 
       val update_this = is_some succ_lbl_tm_o andalso
-			list_eq identical targets [valOf succ_lbl_tm_o];
+                        list_eq identical targets [valOf succ_lbl_tm_o];
 
       val n' =
-	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,
-	    CFGN_hc_descr = #CFGN_hc_descr n,
-	    CFGN_targets  = #CFGN_targets n,
-	    CFGN_type     = CFGNT_Basic
-	  } : cfg_node;
+          { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+            CFGN_hc_descr = #CFGN_hc_descr n,
+            CFGN_targets  = #CFGN_targets n,
+            CFGN_type     = CFGNT_Basic
+          } : cfg_node;
     in
       if update_this then SOME n' else NONE
     end
@@ -290,11 +290,11 @@ in
       val _ = print_term (valOf succ_lbl_tm_o);
 
       val n' =
-	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,
-	    CFGN_hc_descr = #CFGN_hc_descr n,
-	    CFGN_targets  = [valOf succ_lbl_tm_o],
-	    CFGN_type     = #CFGN_type n
-	  } : cfg_node;
+          { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+            CFGN_hc_descr = #CFGN_hc_descr n,
+            CFGN_targets  = [valOf succ_lbl_tm_o],
+            CFGN_type     = #CFGN_type n
+          } : cfg_node;
     in
       SOME n'
     end

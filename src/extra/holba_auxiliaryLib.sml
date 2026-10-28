@@ -18,9 +18,9 @@ fun HO_MATCH_MPL thm []     = thm
 local
   fun insert_tm x [] = [x]
     | insert_tm x (y::ys) = 
-	if Term.compare (x, y) = LESS
-	then x::(y::ys)
-	else y::(insert_tm x ys)
+        if Term.compare (x, y) = LESS
+        then x::(y::ys)
+        else y::(insert_tm x ys)
 in
   (* Good for sorting short lists of terms *)
   fun ins_sort_tm [] = []

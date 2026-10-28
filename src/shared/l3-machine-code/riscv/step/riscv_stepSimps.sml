@@ -66,7 +66,7 @@ val writeCSR_conv = (
 (*
   wordsLib.WORD_CONV THENC (
     SIMP_CONV riscv_ss [LET_DEF, Delta_def, write'Delta_def,
-			CSR_def]
+                        CSR_def]
   ) THENC
   CSRMap_match_rule_conv THENC
   wordsLib.WORD_CONV THENC (
@@ -75,7 +75,7 @@ val writeCSR_conv = (
 *)
   wordsLib.WORD_CONV THENC (
     SIMP_CONV riscv_ss [LET_DEF, Delta_def, write'Delta_def,
-			CSR_def, CSRMap_def]
+                        CSR_def, CSRMap_def]
   ) THENC
   wordsLib.WORD_CONV THENC (
     SIMP_CONV riscv_ss []

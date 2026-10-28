@@ -206,7 +206,7 @@ fun is_reachable out_idxs nodes outs n =
     val result = List.exists (fn x => List.exists (fn y => x = y) outs) reachable_nodes_l;
 (*
     val _ = if result = is_reachable_chk out_idxs nodes outs n then ()
-	    else raise ERR "" "some error in is_rechable implementation";
+            else raise ERR "" "some error in is_rechable implementation";
 *)
   in
     result
@@ -295,18 +295,18 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
         val connects_in = List.exists (fn x => List.exists (fn y => x = y) ins_2) ex_1;
         val connects_out = List.exists (fn x => List.exists (fn y => x = y) outs_2) en_1;
 
-	val createscircle = connects_in andalso
-			    connects_out andalso
-			    (List.exists (fn x => is_reachable out_idxs ns_1 ins_2 x) ex_2);
+        val createscircle = connects_in andalso
+                            connects_out andalso
+                            (List.exists (fn x => is_reachable out_idxs ns_1 ins_2 x) ex_2);
 
         val mergable = (not createscircle) andalso (connects_in orelse connects_out);
       in
         if not mergable then NONE else SOME (
           let
-	  val new_nodes = ns_2 @ ns_1;
+          val new_nodes = ns_2 @ ns_1;
 
-	  val new_entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) new_nodes) (List.nth(in_idxs,z)))) new_nodes;
-	  val new_exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) new_nodes)) (List.nth(out_idxs,z)))) new_nodes;
+          val new_entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) new_nodes) (List.nth(in_idxs,z)))) new_nodes;
+          val new_exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) new_nodes)) (List.nth(out_idxs,z)))) new_nodes;
                 (*
                 val (new_entries,new_exits) = if isgluedin andalso connects_out then ((
                     List.filter (fn x =>
@@ -339,35 +339,35 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
     fun merge_fragl l _ [] = NONE
       | merge_fragl l frag1 (frag2::fs) =
           case merge_frags frag1 frag2 of
-	      NONE          => merge_fragl (frag2::l) frag1 fs
-	    | SOME new_frag => SOME (l @ (new_frag::fs));
+              NONE          => merge_fragl (frag2::l) frag1 fs
+            | SOME new_frag => SOME (l @ (new_frag::fs));
 
     fun merge_through l [] = NONE
       | merge_through l (frag::fs) =
           case merge_fragl l frag fs of
-	      NONE => merge_through (frag::l) fs
-	    | x    => x;
+              NONE => merge_through (frag::l) fs
+            | x    => x;
 
     fun process_comp_frags fs =
           case merge_through [] fs of
-	      NONE        => fs
-	    | SOME new_fs => process_comp_frags new_fs;
+              NONE        => fs
+            | SOME new_fs => process_comp_frags new_fs;
 
     val result = List.concat (List.map (fn c => process_comp_frags (prep_frag_todo_for_compnent c)) conn_comps);
 
     val _ = if (List.all (fn (ns,en,ex) =>
-		  let
-		    val entries = List.filter (fn z =>
-			    (List.nth(in_idxs,z)) = [] orelse
-			    not (List.all (fn x => List.exists (fn y => x = y) ns) (List.nth(in_idxs,z)))
-			  ) ns;
-		    val exits = List.filter (fn z =>
-			    not (List.all (fn x => (List.exists (fn y => x = y) ns)) (List.nth(out_idxs,z)))
-			  ) ns;
-		  in
-		    en = entries andalso ex = exits
-		  end) result) then ()
-	    else raise ERR "divide_loopfree_fragments" "there is a fragment where entry and exit points are wrong";
+                  let
+                    val entries = List.filter (fn z =>
+                            (List.nth(in_idxs,z)) = [] orelse
+                            not (List.all (fn x => List.exists (fn y => x = y) ns) (List.nth(in_idxs,z)))
+                          ) ns;
+                    val exits = List.filter (fn z =>
+                            not (List.all (fn x => (List.exists (fn y => x = y) ns)) (List.nth(out_idxs,z)))
+                          ) ns;
+                  in
+                    en = entries andalso ex = exits
+                  end) result) then ()
+            else raise ERR "divide_loopfree_fragments" "there is a fragment where entry and exit points are wrong";
   in
     result
   end;

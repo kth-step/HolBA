@@ -990,14 +990,14 @@ fun get_patched_step_hex ms_v hex_code =
       val thm1 = SPECL [mm_tm, label_tm] thm0
 
       val precond_thm =
-	let
-	  val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
-	  val pc_n_tm = rand pc_n_tm0;
-	  val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
-	  val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
-	in
-	  UNDISCH thmp_1
-	end;
+        let
+          val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
+          val pc_n_tm = rand pc_n_tm0;
+          val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
+          val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
+        in
+          UNDISCH thmp_1
+        end;
 
       val thm2 = MP thm1 precond_thm
     in
@@ -1181,14 +1181,14 @@ fun get_patched_step_hex ms_v hex_code =
       val thm1 = SPECL [mm_tm, label_tm] thm0
 
       val precond_thm =
-	let
-	  val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
-	  val pc_n_tm = rand pc_n_tm0;
-	  val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
-	  val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
-	in
-	  UNDISCH thmp_1
-	end;
+        let
+          val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
+          val pc_n_tm = rand pc_n_tm0;
+          val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
+          val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
+        in
+          UNDISCH thmp_1
+        end;
 
       val thm2 = MP thm1 precond_thm
     in

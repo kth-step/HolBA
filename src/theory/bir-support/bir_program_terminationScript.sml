@@ -279,12 +279,12 @@ Theorem bir_stmtE_is_jmp_to_label_REWRS:
        (bir_eval_label_exp le env = SOME l))) /\
     (!ce le1 le2 env l. (bir_stmtE_is_jmp_to_label env l (BStmt_CJmp ce le1 le2) <=>
        case (bir_eval_exp ce env) of
-	 | NONE => F
-	 | SOME va => (
-	      case (bir_dest_bool_val va) of
-		| NONE => F
-		| SOME T => (bir_eval_label_exp le1 env = SOME l)
-		| SOME F => (bir_eval_label_exp le2 env = SOME l)
+         | NONE => F
+         | SOME va => (
+              case (bir_dest_bool_val va) of
+                | NONE => F
+                | SOME T => (bir_eval_label_exp le1 env = SOME l)
+                | SOME F => (bir_eval_label_exp le2 env = SOME l)
            )
     )) /\
     (!l env e. (bir_stmtE_is_jmp_to_label env l (BStmt_Halt e) <=> F))
@@ -576,12 +576,12 @@ Theorem bir_exec_stmtE_status_typeerror_CJmp:
      (st.bst_status <> BST_TypeError) ==>
      (((bir_exec_stmtE p (BStmt_CJmp ce le1 le2) st).bst_status = BST_TypeError) <=>
       case bir_eval_exp ce st.bst_environ of
-	| NONE => T
-	| SOME va => (
-		case bir_dest_bool_val va of
-		   NONE => T
-		 | SOME T => (bir_eval_label_exp le1 st.bst_environ = NONE)
-		 | SOME F => (bir_eval_label_exp le2 st.bst_environ = NONE)
+        | NONE => T
+        | SOME va => (
+                case bir_dest_bool_val va of
+                   NONE => T
+                 | SOME T => (bir_eval_label_exp le1 st.bst_environ = NONE)
+                 | SOME F => (bir_eval_label_exp le2 st.bst_environ = NONE)
            ))
 Proof
 REPEAT GEN_TAC >>
@@ -956,7 +956,7 @@ Cases_on `(bir_block_pc b).bpc_index = 0` >| [
       REPEAT STRIP_TAC >>
       FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
       Q.PAT_X_ASSUM `b' = b`
-	(fn thm => (FULL_SIMP_TAC arith_ss [thm]))
+        (fn thm => (FULL_SIMP_TAC arith_ss [thm]))
     ) >>
     FULL_SIMP_TAC std_ss [] >>
     QSPECL_X_ASSUM ``!prog n' m l'. _``
@@ -1003,7 +1003,7 @@ subgoal
        prog st n' < 1` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
                         bir_exec_to_labels_n_def,
-			bir_exec_steps_GEN_SOME_EQ_Ended]
+                        bir_exec_steps_GEN_SOME_EQ_Ended]
 ) >>
 QSPECL_X_ASSUM ``!n'. _`` [`n'`] >>
 REV_FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ] >>
@@ -1011,7 +1011,7 @@ FULL_SIMP_TAC std_ss
   [bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
 QSPECL_X_ASSUM ``!(j:num). _`` [`PRE n'`] >>
 REV_FULL_SIMP_TAC arith_ss [arithmeticTheory.SUC_PRE,
-			    bir_state_COUNT_PC_def] >>
+                            bir_state_COUNT_PC_def] >>
 subgoal `bir_exec_infinite_steps_fun prog st n' = st''` >- (
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
 ) >>
@@ -1063,18 +1063,18 @@ Proof
 REPEAT STRIP_TAC >>
 subgoal `~bir_state_is_terminated st''` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-			bir_exec_to_labels_n_def,
-			bir_exec_steps_GEN_1_EQ_Ended] >>
+                        bir_exec_to_labels_n_def,
+                        bir_exec_steps_GEN_1_EQ_Ended] >>
   QSPECL_X_ASSUM ``!(n:num). n < n' ==> _``
-		 [`n''`] >>
+                 [`n''`] >>
   REV_FULL_SIMP_TAC arith_ss [] >>
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
 ) >>
 subgoal `st''.bst_pc.bpc_label NOTIN ls \/
          st''.bst_pc.bpc_index <> 0` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-			bir_exec_to_labels_n_def,
-			bir_exec_steps_GEN_1_EQ_Ended] >>
+                        bir_exec_to_labels_n_def,
+                        bir_exec_steps_GEN_1_EQ_Ended] >>
   subgoal `0 < n''` >- (
     subgoal `0 < m'` >- (
       FULL_SIMP_TAC arith_ss []
@@ -1082,7 +1082,7 @@ subgoal `st''.bst_pc.bpc_label NOTIN ls \/
     IMP_RES_TAC bir_exec_block_n_block_nz_init_running
   ) >>
   QSPECL_X_ASSUM ``!(n:num). 0 < n /\ n < n' ==> _``
-		 [`n''`] >>
+                 [`n''`] >>
   REV_FULL_SIMP_TAC arith_ss [] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss)
     [bir_state_COUNT_PC_def, bir_state_is_terminated_def] >>
@@ -1095,7 +1095,7 @@ Cases_on
   `bir_exec_infinite_steps_fun_COUNT_PCs
      (F,(\pc. pc.bpc_index = 0)) prog st n'' < m'` >- (
   FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM,
-			  bir_state_is_terminated_def] >>
+                          bir_state_is_terminated_def] >>
   REV_FULL_SIMP_TAC arith_ss []
 ) >>
 subgoal
@@ -1126,15 +1126,15 @@ Theorem bir_exec_to_labels_nz_blocks:
 Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-		      bir_exec_to_labels_n_def,
-		      bir_exec_steps_GEN_1_EQ_Looping] >>
+                      bir_exec_to_labels_n_def,
+                      bir_exec_steps_GEN_1_EQ_Looping] >>
 subgoal `~bir_state_is_terminated st` >- (
   QSPECL_X_ASSUM ``!n.
                    ~bir_state_is_terminated
                      (bir_exec_infinite_steps_fun prog st n)``
                  [`0`] >>
   FULL_SIMP_TAC std_ss [bir_state_is_terminated_def,
-			bir_exec_infinite_steps_fun_REWRS]
+                        bir_exec_infinite_steps_fun_REWRS]
 ) >>
 IMP_RES_TAC bir_exec_block_n_block_nz_init_running >>
 REV_FULL_SIMP_TAC arith_ss []
@@ -1154,8 +1154,8 @@ subgoal `0 < n` >- (
   FULL_SIMP_TAC arith_ss []
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-		      bir_exec_to_labels_n_def,
-		      bir_exec_steps_GEN_1_EQ_Looping] >>
+                      bir_exec_to_labels_n_def,
+                      bir_exec_steps_GEN_1_EQ_Looping] >>
 QSPECL_X_ASSUM ``!(n:num). (0 < n) ==> _`` [`n`] >>
 REV_FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_def] >>
 QSPECL_X_ASSUM ``!(n:num). _`` [`n`] >>
@@ -1163,7 +1163,7 @@ subgoal `bir_exec_infinite_steps_fun prog st n = st'` >- (
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
 ) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss)
-	      [bir_state_is_terminated_def] >>
+              [bir_state_is_terminated_def] >>
 IMP_RES_TAC bir_exec_block_n_block_nz_final_running >>
 REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def]
 QED

@@ -19,7 +19,7 @@ fun remChars  (c,s) =
             then rem cs
             else c'::rem cs
     in
-	implode (rem (explode s)) 
+        implode (rem (explode s)) 
     end
 
 val splitter = String.tokens (fn c => c = #";");
@@ -74,7 +74,7 @@ fun load_elf infile =
 
 fun c_data ast =
     case ast of
-	AddSubCarry''32 d => "AddSubCarry''32"
+        AddSubCarry''32 d => "AddSubCarry''32"
       | AddSubCarry''64 d => "AddSubCarry''64"
       | AddSubExtendRegister''32 d => "AddSubExtendRegister''32"
       | AddSubExtendRegister''64 d => "AddSubExtendRegister''64"
@@ -113,7 +113,7 @@ fun c_data ast =
 
 fun c_branch ast =
     case ast of
-	BranchConditional d =>"BranchConditional"
+        BranchConditional d =>"BranchConditional"
       | BranchImmediate d => "BranchImmediate"
       | BranchRegister d => "BranchRegister"
       | CompareAndBranch''32 d => "CompareAndBranch''32"
@@ -123,7 +123,7 @@ fun c_branch ast =
 
 fun c_load_store ast =
     case ast of
-	LoadStoreImmediate''8 d => "LoadStoreImmediate''8"
+        LoadStoreImmediate''8 d => "LoadStoreImmediate''8"
       | LoadStoreImmediate''16 d => "LoadStoreImmediate''16"
       | LoadStoreImmediate''32 d => "LoadStoreImmediate''32"
       | LoadStoreImmediate''64 d => "LoadStoreImmediate''64"
@@ -148,7 +148,7 @@ fun instClass subs =
 
 fun instructionClass ast =
     case ast of
-	Address a => "Address"
+        Address a => "Address"
       | Data d => instClass(c_data d)
       | LoadStore d => instClass(c_load_store d)
       | Branch b => instClass(c_branch b)
@@ -156,15 +156,15 @@ fun instructionClass ast =
 
 local 
     fun addr_to_hexString adr =
-	(BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
+        (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 
     fun cmp_ast s =
-	case instructionFromString s of
-	    OK ast => ast
+        case instructionFromString s of
+            OK ast => ast
           | _ => raise ERR "cmp_ast" "some progGen error"
 
     fun cmp_mcode ast = 
-	(case Encode ast of
+        (case Encode ast of
              arm8.ARM8 w =>
              ("",
               Option.SOME(L3.padLeftString(#"0",(8,BitsN.toHexString w))))
@@ -175,54 +175,54 @@ fun branch_instGen (pc, base, len) =
     let
         val gen = rand_gen_get ()
         val adr = base + (4*(Random.range (pc, len) gen))
-	val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
-	val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
+        val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
+        val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
     in
-	(inst)
+        (inst)
     end
 fun cond_branch_instGen (inst, pc, base, len) =
     let
         val gen = rand_gen_get ()
         val adr = base + (4*(Random.range (pc, len) gen))
-	val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
-	val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
+        val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
+        val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
     in
-	(inst)
+        (inst)
     end
 
 fun cmp_and_branch_instGen (inst, pc, base, len) =
     let
         val gen = rand_gen_get ()
         val adr = base + (4*(Random.range (pc, len) gen))
-	val tks = (p_tokens(hd(decomp(inst))))
-	val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
-	val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
+        val tks = (p_tokens(hd(decomp(inst))))
+        val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
+        val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
     in
-	(inst)
+        (inst)
     end
 
 end
 
 fun filter_slice (n, insts, base) =
     let val pc = ref 0;
-	fun instsGen (pc, inst, cls, base, len) =
-	    case (cls) of 
-		"BranchImmediate" => decomp(branch_instGen(pc, base, len))
-	      | "BranchConditional" => decomp(cond_branch_instGen (inst,pc, base, len))
-	      | "CompareAndBranch" => decomp(cmp_and_branch_instGen (inst,pc, base, len))
-	      | _ => decomp inst
+        fun instsGen (pc, inst, cls, base, len) =
+            case (cls) of 
+                "BranchImmediate" => decomp(branch_instGen(pc, base, len))
+              | "BranchConditional" => decomp(cond_branch_instGen (inst,pc, base, len))
+              | "CompareAndBranch" => decomp(cmp_and_branch_instGen (inst,pc, base, len))
+              | _ => decomp inst
 
     in
-	(map (fn (cls, i) => let val v = instsGen (!pc, i, cls, base, n) in (pc := !pc + 1); v end) insts)
+        (map (fn (cls, i) => let val v = instsGen (!pc, i, cls, base, n) in (pc := !pc + 1); v end) insts)
     end
 
 fun bir_prog_slice_arm8_rand (inputfile, base, len) =
     let val t1  = parse_objdump inputfile
-	val t2  = map (fn i => (instructionClass ((Decode((Option.valOf o BitsN.fromHexString) (i ,32)))), i)) t1
-	val idx = genint (rand_gen_get ()) ((List.length t1) - len)
-	val instructions = List.take(List.drop(t2,idx), len)
+        val t2  = map (fn i => (instructionClass ((Decode((Option.valOf o BitsN.fromHexString) (i ,32)))), i)) t1
+        val idx = genint (rand_gen_get ()) ((List.length t1) - len)
+        val instructions = List.take(List.drop(t2,idx), len)
     in
-	filter_slice (len, instructions, base)
+        filter_slice (len, instructions, base)
     end
 
   val do_debug = false;
@@ -239,7 +239,7 @@ val n = 3;
  fun bir_prog_gen_arm8_slice n = 
      let val mc = map (fn i => let val a::b::l = splitter (remChars (#" ", (hd i))) in b end)(bir_prog_slice_arm8_rand ("/home/xmate/Projects/HolBA/HolBA/examples/aes/bin/aes-aarch64.da", 0, n))
      in
-	 map ((strip_ws_off false) o remove_junk o hd o decomp) (mc)
+         map ((strip_ws_off false) o remove_junk o hd o decomp) (mc)
      end
      
 end; (* struct *)

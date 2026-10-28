@@ -69,7 +69,7 @@ val _ = List.foldl
       val _ = assert_this (identical conjr ``
           (MEM (^lbl_tm)
                (bir_labels_of_program (^prog_tm_abbr))
-	  )<=> T
+          )<=> T
         ``);
 
       val (eql, eqr) = dest_eq conjl;

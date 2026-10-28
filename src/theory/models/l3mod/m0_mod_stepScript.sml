@@ -42,12 +42,12 @@ val m0_state_type_ss = rewrites (type_rws ``:m0_state``);
 val m0_mod_state_type_ss = rewrites (type_rws ``:m0_mod_state``);
 
 val max_int_thm = REWRITE_RULE [EVAL ``UINT_MAXw:word64``]
-			       (INST_TYPE [alpha |-> ``:64``] WORD_LS_T);
+                               (INST_TYPE [alpha |-> ``:64``] WORD_LS_T);
 val w2n_min_thm = MP (SPECL [``0xFFFFFFFFFFFFFFFFw:word64``, ``d:word64``]
-			    (INST_TYPE [alpha |-> ``:64``] word_sub_w2n))
-		     (SPEC ``d:word64`` max_int_thm);
+                            (INST_TYPE [alpha |-> ``:64``] word_sub_w2n))
+                     (SPEC ``d:word64`` max_int_thm);
 val num_repr_max_thm = (TRANS (EVAL ``w2n (0xFFFFFFFFFFFFFFFFw:word64)``)
-			      (GSYM (EVAL ``(2 ** 64) - (1:num)``)));
+                              (GSYM (EVAL ``(2 ** 64) - (1:num)``)));
 
 (* mod step theorem gen *)
 Theorem m0_mod_step_thm:

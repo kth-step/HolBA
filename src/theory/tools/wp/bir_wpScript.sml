@@ -556,10 +556,10 @@ Cases_on `vname2 = vname` >- (
 
 (* Some cleaning up... *)
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
-	      [bir_var_name_def, bir_env_var_is_initialised_def,
-	       bir_env_lookup_def,
-	       finite_mapTheory.FLOOKUP_UPDATE,
-	       bir_env_vars_are_initialised_def] >>
+              [bir_var_name_def, bir_env_var_is_initialised_def,
+               bir_env_lookup_def,
+               finite_mapTheory.FLOOKUP_UPDATE,
+               bir_env_vars_are_initialised_def] >>
 
 (* Proving the antecedent of assumption 2 gives the goal as
  * assumption: v2 is in vars of post, therefore it is also in
@@ -569,8 +569,8 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
  * not equal.
  * *)
 subgoal `(BVar vname2 vtype2) IN
-	   bir_vars_of_exp (bir_exp_subst1 (BVar vname vtype)
-					   ex post
+           bir_vars_of_exp (bir_exp_subst1 (BVar vname vtype)
+                                           ex post
                            )` >- (
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
     [bir_exp_subst1_USED_VARS]
@@ -1272,10 +1272,10 @@ Definition bir_exec_to_labels_or_assumviol_triple_def:
       (r = BER_Ended l1 c1 c2 s') /\
       (
         (
-	  (s'.bst_status = BST_Running) /\
-	  bir_is_bool_exp_env s'.bst_environ (post s'.bst_pc.bpc_label) /\
-	  ((bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ) = SOME bir_val_true) /\
-	  ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
+          (s'.bst_status = BST_Running) /\
+          bir_is_bool_exp_env s'.bst_environ (post s'.bst_pc.bpc_label) /\
+          ((bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ) = SOME bir_val_true) /\
+          ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
         ) \/ (
           (s'.bst_status = BST_AssumptionViolated)
         )
@@ -1761,16 +1761,16 @@ Definition bir_wp_exec_of_block_def:
             BStmt_Jmp (BLE_Label l1) => (
               if (l1 IN ls)
               then
-		SOME (wps |+ (l, (bir_wp_exec_stmtsB
-				   bl.bb_statements (post l1)
-				 )))
+                SOME (wps |+ (l, (bir_wp_exec_stmtsB
+                                   bl.bb_statements (post l1)
+                                 )))
               else
-		case FLOOKUP wps l1 of
-		  NONE => NONE
-		| SOME wp =>
-		    SOME (wps |+ (l, (bir_wp_exec_stmtsB
-				       bl.bb_statements wp
-				     )))
+                case FLOOKUP wps l1 of
+                  NONE => NONE
+                | SOME wp =>
+                    SOME (wps |+ (l, (bir_wp_exec_stmtsB
+                                       bl.bb_statements wp
+                                     )))
             )
           | BStmt_CJmp e (BLE_Label l1) (BLE_Label l2) => (
               if (l1 IN ls)
@@ -1778,13 +1778,13 @@ Definition bir_wp_exec_of_block_def:
                 if (l2 IN ls)
                 then
                   SOME (wps |+ (l,
-		    (bir_wp_exec_stmtsB bl.bb_statements 
-		      (BExp_BinExp BIExp_And
-			(BExp_BinExp BIExp_Or
-			  (BExp_UnaryExp BIExp_Not e) (post l1))
-			(BExp_BinExp BIExp_Or e (post l2))
-		      )
-		    )))
+                    (bir_wp_exec_stmtsB bl.bb_statements 
+                      (BExp_BinExp BIExp_And
+                        (BExp_BinExp BIExp_Or
+                          (BExp_UnaryExp BIExp_Not e) (post l1))
+                        (BExp_BinExp BIExp_Or e (post l2))
+                      )
+                    )))
                 else
                   case FLOOKUP wps l2 of
                     NONE => NONE
@@ -1810,20 +1810,20 @@ Definition bir_wp_exec_of_block_def:
                         )
                       )))
                 else
-		  case FLOOKUP wps l1 of
-		    NONE => NONE
-		  | SOME wp1 => (
-		      case FLOOKUP wps l2 of
-			NONE => NONE
-		      | SOME wp2 => SOME (wps |+ (l,
-			  (bir_wp_exec_stmtsB bl.bb_statements 
-			    (BExp_BinExp BIExp_And
-			      (BExp_BinExp BIExp_Or
-				(BExp_UnaryExp BIExp_Not e) wp1)
-			      (BExp_BinExp BIExp_Or e wp2)
-			    )
-			  )))
-		    )
+                  case FLOOKUP wps l1 of
+                    NONE => NONE
+                  | SOME wp1 => (
+                      case FLOOKUP wps l2 of
+                        NONE => NONE
+                      | SOME wp2 => SOME (wps |+ (l,
+                          (bir_wp_exec_stmtsB bl.bb_statements 
+                            (BExp_BinExp BIExp_And
+                              (BExp_BinExp BIExp_Or
+                                (BExp_UnaryExp BIExp_Not e) wp1)
+                              (BExp_BinExp BIExp_Or e wp2)
+                            )
+                          )))
+                    )
               )
           | _ => NONE
       )
@@ -2039,192 +2039,192 @@ Cases_on `FLOOKUP wps l` >- (
     Cases_on `l1 IN ls` >| [
       FULL_SIMP_TAC std_ss [] >>
       subgoal `bir_is_bool_exp (
-		 bir_wp_exec_stmtsB bl.bb_statements (post l1)
-	       )` >- (
-	  FULL_SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def] >>
-	  METIS_TAC [bir_is_well_typed_program_def,
-		     bir_is_well_typed_block_def,
-		     listTheory.EVERY_MEM,
-		     bir_wp_exec_stmtsB_bool_thm]
+                 bir_wp_exec_stmtsB bl.bb_statements (post l1)
+               )` >- (
+          FULL_SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def] >>
+          METIS_TAC [bir_is_well_typed_program_def,
+                     bir_is_well_typed_block_def,
+                     listTheory.EVERY_MEM,
+                     bir_wp_exec_stmtsB_bool_thm]
       ) >>
       FULL_SIMP_TAC std_ss [] >>
       Q.PAT_X_ASSUM `FUPDATE A B = C`
-		    (fn thm => ASSUME_TAC (GSYM thm)) >>
+                    (fn thm => ASSUME_TAC (GSYM thm)) >>
       Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-					      (post l1)` >>
+                                              (post l1)` >>
       FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			    FEVERY_FEVERY_DRESTRICT_thm],
+                            FEVERY_FEVERY_DRESTRICT_thm],
 
       FULL_SIMP_TAC std_ss [] >>
       Cases_on `l1 IN FDOM wps` >> (
         FULL_SIMP_TAC std_ss []
       ) >>
       subgoal `bir_is_bool_exp
-		 (bir_wp_exec_stmtsB bl.bb_statements
-				     (FAPPLY wps l1)
-		 )` >- (
-	FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF] >>
-	METIS_TAC [bir_is_well_typed_program_def,
-		   bir_is_well_typed_block_def,
-		   listTheory.EVERY_MEM,
-		   bir_wp_exec_stmtsB_bool_thm]
+                 (bir_wp_exec_stmtsB bl.bb_statements
+                                     (FAPPLY wps l1)
+                 )` >- (
+        FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF] >>
+        METIS_TAC [bir_is_well_typed_program_def,
+                   bir_is_well_typed_block_def,
+                   listTheory.EVERY_MEM,
+                   bir_wp_exec_stmtsB_bool_thm]
       ) >>
       FULL_SIMP_TAC std_ss [] >>
       Q.PAT_X_ASSUM `FUPDATE A B = C`
-		    (fn thm => ASSUME_TAC (GSYM thm)) >>
+                    (fn thm => ASSUME_TAC (GSYM thm)) >>
       Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-					      (wps ' l1)` >>
+                                              (wps ' l1)` >>
       FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			    FEVERY_FEVERY_DRESTRICT_thm]
+                            FEVERY_FEVERY_DRESTRICT_thm]
     ],
 
     subgoal `bir_is_well_typed_stmtE
-	      (BStmt_CJmp e (BLE_Label l1)
-			    (BLE_Label l2))` >- (
+              (BStmt_CJmp e (BLE_Label l1)
+                            (BLE_Label l2))` >- (
       METIS_TAC [bir_is_well_typed_program_def,
-		 listTheory.EVERY_MEM,
-		 bir_is_well_typed_block_def]
+                 listTheory.EVERY_MEM,
+                 bir_is_well_typed_block_def]
     ) >>
     Cases_on `l1 IN ls` >| [
       FULL_SIMP_TAC std_ss [] >>
       Cases_on `l2 IN ls` >| [
         FULL_SIMP_TAC std_ss [] >>
-	Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-		       (BExp_BinExp BIExp_Or
-			 (BExp_UnaryExp BIExp_Not e)
-			 (post l1)
-		       )
-		       (BExp_BinExp BIExp_Or e (post l2)))` >>
-	subgoal `bir_is_bool_exp exp1` >- (
-	  FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
-				finite_mapTheory.FEVERY_DEF,
-				bir_is_well_typed_stmtE_def,
-				bir_is_bool_exp_GSYM, Abbr `exp1`,
+        Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
+                       (BExp_BinExp BIExp_Or
+                         (BExp_UnaryExp BIExp_Not e)
+                         (post l1)
+                       )
+                       (BExp_BinExp BIExp_Or e (post l2)))` >>
+        subgoal `bir_is_bool_exp exp1` >- (
+          FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
+                                finite_mapTheory.FEVERY_DEF,
+                                bir_is_well_typed_stmtE_def,
+                                bir_is_bool_exp_GSYM, Abbr `exp1`,
                                 bir_wp_post_map_contains_bool_exp_def]
-	) >>
-	subgoal `bir_is_bool_exp
-		  (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
-	  FULL_SIMP_TAC std_ss [] >>
-	  METIS_TAC [bir_is_well_typed_program_def,
-		     bir_is_well_typed_block_def,
-		     listTheory.EVERY_MEM,
-		     bir_wp_exec_stmtsB_bool_thm]
-	) >>
-	Q.PAT_X_ASSUM `FUPDATE A B = C`
-		      (fn thm => ASSUME_TAC (GSYM thm)) >>
-	Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-						(wps ' l1)` >>
-	FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			      FEVERY_FEVERY_DRESTRICT_thm],
+        ) >>
+        subgoal `bir_is_bool_exp
+                  (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
+          FULL_SIMP_TAC std_ss [] >>
+          METIS_TAC [bir_is_well_typed_program_def,
+                     bir_is_well_typed_block_def,
+                     listTheory.EVERY_MEM,
+                     bir_wp_exec_stmtsB_bool_thm]
+        ) >>
+        Q.PAT_X_ASSUM `FUPDATE A B = C`
+                      (fn thm => ASSUME_TAC (GSYM thm)) >>
+        Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
+                                                (wps ' l1)` >>
+        FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
+                              FEVERY_FEVERY_DRESTRICT_thm],
 
         FULL_SIMP_TAC std_ss [] >>
         Cases_on `l2 IN FDOM wps` >> (
           FULL_SIMP_TAC std_ss []
         ) >>
-	Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-		       (BExp_BinExp BIExp_Or
-			 (BExp_UnaryExp BIExp_Not e)
-			 (post l1)
-		       )
-		       (BExp_BinExp BIExp_Or e (wps ' l2)))` >>
-	  subgoal `bir_is_bool_exp exp1` >- (
-	    FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
-				  finite_mapTheory.FEVERY_DEF,
-				  bir_is_well_typed_stmtE_def,
-				  bir_is_bool_exp_GSYM, Abbr `exp1`,
-				  bir_wp_post_map_contains_bool_exp_def]
-	  ) >>
-	  subgoal `bir_is_bool_exp
-		    (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
-	    FULL_SIMP_TAC std_ss [] >>
-	    METIS_TAC [bir_is_well_typed_program_def,
-		       bir_is_well_typed_block_def,
-		       listTheory.EVERY_MEM,
-		       bir_wp_exec_stmtsB_bool_thm]
-	  ) >>
-	  Q.PAT_X_ASSUM `FUPDATE A B = C`
-			(fn thm => ASSUME_TAC (GSYM thm)) >>
-	  Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-						  (wps ' l1)` >>
-	  FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-				FEVERY_FEVERY_DRESTRICT_thm]
+        Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
+                       (BExp_BinExp BIExp_Or
+                         (BExp_UnaryExp BIExp_Not e)
+                         (post l1)
+                       )
+                       (BExp_BinExp BIExp_Or e (wps ' l2)))` >>
+          subgoal `bir_is_bool_exp exp1` >- (
+            FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
+                                  finite_mapTheory.FEVERY_DEF,
+                                  bir_is_well_typed_stmtE_def,
+                                  bir_is_bool_exp_GSYM, Abbr `exp1`,
+                                  bir_wp_post_map_contains_bool_exp_def]
+          ) >>
+          subgoal `bir_is_bool_exp
+                    (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
+            FULL_SIMP_TAC std_ss [] >>
+            METIS_TAC [bir_is_well_typed_program_def,
+                       bir_is_well_typed_block_def,
+                       listTheory.EVERY_MEM,
+                       bir_wp_exec_stmtsB_bool_thm]
+          ) >>
+          Q.PAT_X_ASSUM `FUPDATE A B = C`
+                        (fn thm => ASSUME_TAC (GSYM thm)) >>
+          Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
+                                                  (wps ' l1)` >>
+          FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
+                                FEVERY_FEVERY_DRESTRICT_thm]
         ],
 
         FULL_SIMP_TAC std_ss [] >>
         Cases_on `l2 IN ls` >| [
           FULL_SIMP_TAC std_ss [] >>
-	  Cases_on `l1 IN FDOM wps` >> (
-	    FULL_SIMP_TAC std_ss []
-	  ) >>
+          Cases_on `l1 IN FDOM wps` >> (
+            FULL_SIMP_TAC std_ss []
+          ) >>
           Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-		          (BExp_BinExp BIExp_Or
+                          (BExp_BinExp BIExp_Or
                             (BExp_UnaryExp BIExp_Not e)
-			    (wps ' l1)
-		        )
-		       (BExp_BinExp BIExp_Or e (post l2)))` >>
-	  subgoal `bir_is_bool_exp exp1` >- (
-	    FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
-				  finite_mapTheory.FEVERY_DEF,
-				  bir_is_well_typed_stmtE_def,
-				  bir_is_bool_exp_GSYM, Abbr `exp1`,
-				  bir_wp_post_map_contains_bool_exp_def]
-	  ) >>
-	  subgoal `bir_is_bool_exp
-		    (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
-	    FULL_SIMP_TAC std_ss [] >>
-	    METIS_TAC [bir_is_well_typed_program_def,
-		       bir_is_well_typed_block_def,
-		       listTheory.EVERY_MEM,
-		       bir_wp_exec_stmtsB_bool_thm]
-	  ) >>
-	  Q.PAT_X_ASSUM `FUPDATE A B = C`
-			(fn thm => ASSUME_TAC (GSYM thm)) >>
-	  Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-						  (wps ' l1)` >>
-	  FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-				FEVERY_FEVERY_DRESTRICT_thm],
+                            (wps ' l1)
+                        )
+                       (BExp_BinExp BIExp_Or e (post l2)))` >>
+          subgoal `bir_is_bool_exp exp1` >- (
+            FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
+                                  finite_mapTheory.FEVERY_DEF,
+                                  bir_is_well_typed_stmtE_def,
+                                  bir_is_bool_exp_GSYM, Abbr `exp1`,
+                                  bir_wp_post_map_contains_bool_exp_def]
+          ) >>
+          subgoal `bir_is_bool_exp
+                    (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
+            FULL_SIMP_TAC std_ss [] >>
+            METIS_TAC [bir_is_well_typed_program_def,
+                       bir_is_well_typed_block_def,
+                       listTheory.EVERY_MEM,
+                       bir_wp_exec_stmtsB_bool_thm]
+          ) >>
+          Q.PAT_X_ASSUM `FUPDATE A B = C`
+                        (fn thm => ASSUME_TAC (GSYM thm)) >>
+          Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
+                                                  (wps ' l1)` >>
+          FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
+                                FEVERY_FEVERY_DRESTRICT_thm],
 
           FULL_SIMP_TAC std_ss [] >>
-	  Cases_on `l1 IN FDOM wps /\ l2 IN FDOM wps` >- (
-	    FULL_SIMP_TAC std_ss [] >>
-	    Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-			   (BExp_BinExp BIExp_Or
-			     (BExp_UnaryExp BIExp_Not e)
-			     (FAPPLY wps l1)
-			   )
-			   (BExp_BinExp BIExp_Or e (FAPPLY wps l2)))` >>
-	    subgoal `bir_is_bool_exp (exp1)` >- (
-	      subgoal `bir_is_well_typed_stmtE
-			(BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))` >- (
-		METIS_TAC [bir_is_well_typed_program_def,
-			   listTheory.EVERY_MEM,
-			   bir_is_well_typed_block_def]
-	      ) >>
-	      FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
-				    finite_mapTheory.FEVERY_DEF,
-				    bir_is_well_typed_stmtE_def,
-				    bir_is_bool_exp_GSYM, Abbr `exp1`]
-	    ) >>
-	    subgoal `bir_is_bool_exp
-		      (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
-	      FULL_SIMP_TAC std_ss [] >>
-	      METIS_TAC [bir_is_well_typed_program_def,
-			 bir_is_well_typed_block_def,
-			 listTheory.EVERY_MEM,
-			 bir_wp_exec_stmtsB_bool_thm]
-	    ) >>
-	    Q.PAT_X_ASSUM `FUPDATE A B = C`
-			  (fn thm => ASSUME_TAC (GSYM thm)) >>
-	    Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-						    (wps ' l1)` >>
-	    FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-				  FEVERY_FEVERY_DRESTRICT_thm]
-	  ) >>
-	  FULL_SIMP_TAC std_ss [] >>
-	  FULL_SIMP_TAC std_ss [] >>
-	  Cases_on `l1 IN FDOM wps` >> (
-	    FULL_SIMP_TAC std_ss []
-	  )
+          Cases_on `l1 IN FDOM wps /\ l2 IN FDOM wps` >- (
+            FULL_SIMP_TAC std_ss [] >>
+            Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
+                           (BExp_BinExp BIExp_Or
+                             (BExp_UnaryExp BIExp_Not e)
+                             (FAPPLY wps l1)
+                           )
+                           (BExp_BinExp BIExp_Or e (FAPPLY wps l2)))` >>
+            subgoal `bir_is_bool_exp (exp1)` >- (
+              subgoal `bir_is_well_typed_stmtE
+                        (BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))` >- (
+                METIS_TAC [bir_is_well_typed_program_def,
+                           listTheory.EVERY_MEM,
+                           bir_is_well_typed_block_def]
+              ) >>
+              FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS,
+                                    finite_mapTheory.FEVERY_DEF,
+                                    bir_is_well_typed_stmtE_def,
+                                    bir_is_bool_exp_GSYM, Abbr `exp1`]
+            ) >>
+            subgoal `bir_is_bool_exp
+                      (bir_wp_exec_stmtsB bl.bb_statements exp1)` >- (
+              FULL_SIMP_TAC std_ss [] >>
+              METIS_TAC [bir_is_well_typed_program_def,
+                         bir_is_well_typed_block_def,
+                         listTheory.EVERY_MEM,
+                         bir_wp_exec_stmtsB_bool_thm]
+            ) >>
+            Q.PAT_X_ASSUM `FUPDATE A B = C`
+                          (fn thm => ASSUME_TAC (GSYM thm)) >>
+            Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
+                                                    (wps ' l1)` >>
+            FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
+                                  FEVERY_FEVERY_DRESTRICT_thm]
+          ) >>
+          FULL_SIMP_TAC std_ss [] >>
+          FULL_SIMP_TAC std_ss [] >>
+          Cases_on `l1 IN FDOM wps` >> (
+            FULL_SIMP_TAC std_ss []
+          )
         ]
       ]
     ]
@@ -2258,7 +2258,7 @@ Cases_on `FLOOKUP wps l` >> (
 ) >>
 subgoal `MEM bl bls` >- (
   METIS_TAC [bir_get_program_block_info_by_label_def,
-	     INDEX_FIND_EQ_SOME_0, listTheory.MEM_EL]
+             INDEX_FIND_EQ_SOME_0, listTheory.MEM_EL]
 ) >>
 FULL_SIMP_TAC std_ss [] >>
 REV_FULL_SIMP_TAC std_ss [] >>
@@ -2273,42 +2273,42 @@ Cases_on `bl.bb_last_statement` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >| [
     subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls)
-	       l ls
-	       (bir_wp_exec_stmtsB bl.bb_statements
-				   (post l1)
-	       ) post` >- (
+               l ls
+               (bir_wp_exec_stmtsB bl.bb_statements
+                                   (post l1)
+               ) post` >- (
       ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `l1`,
-			   `ls`, `post`]
-			  bir_exec_to_labels_or_assumviol_triple_jmp) >>
+                           `ls`, `post`]
+                          bir_exec_to_labels_or_assumviol_triple_jmp) >>
       subgoal `MEM l1 (bir_labels_of_program
-			(BirProgram bls)
-		      )` >- (
-	FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
-			      bir_labels_of_program_def] >>
-	Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==>
-		       ?E. G`
-		      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
-	FULL_SIMP_TAC list_ss
-		      [bir_edge_in_prog_def,
-		       bir_get_program_block_info_by_label_THM,
-		       listTheory.MEM_MAP] >>
-	METIS_TAC []
+                        (BirProgram bls)
+                      )` >- (
+        FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
+                              bir_labels_of_program_def] >>
+        Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==>
+                       ?E. G`
+                      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
+        FULL_SIMP_TAC list_ss
+                      [bir_edge_in_prog_def,
+                       bir_get_program_block_info_by_label_THM,
+                       listTheory.MEM_MAP] >>
+        METIS_TAC []
       ) >>
       FULL_SIMP_TAC std_ss
-		    [bir_get_program_block_info_by_label_MEM,
-		     finite_mapTheory.FEVERY_DEF]
+                    [bir_get_program_block_info_by_label_MEM,
+                     finite_mapTheory.FEVERY_DEF]
     ) >>  
     Q.PAT_X_ASSUM `FUPDATE A B = C`
-		  (fn thm => ASSUME_TAC (GSYM thm)) >>
+                  (fn thm => ASSUME_TAC (GSYM thm)) >>
     Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-					    (post l1)` >>
+                                            (post l1)` >>
     FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			  FEVERY_FEVERY_DRESTRICT_thm],
+                          FEVERY_FEVERY_DRESTRICT_thm],
 
     Cases_on `l1 IN FDOM wps` >> Cases_on `FLOOKUP wps l1` >> (
       FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DEF,
-			    finite_mapTheory.FDOM_FUPDATE,
-			    pred_setTheory.COMPONENT] >>
+                            finite_mapTheory.FDOM_FUPDATE,
+                            pred_setTheory.COMPONENT] >>
       FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) []
     ) >>
     subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls)
@@ -2317,41 +2317,41 @@ Cases_on `bl.bb_last_statement` >> (
                                    (wps ' l1)
                ) post` >- (
       ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `l1`,
-			   `ls`, `post`]
-			  bir_exec_to_labels_or_assumviol_triple_jmp) >>
+                           `ls`, `post`]
+                          bir_exec_to_labels_or_assumviol_triple_jmp) >>
       subgoal `MEM l1 (bir_labels_of_program
-			(BirProgram bls)
-		      )` >- (
-	FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
-			      bir_labels_of_program_def] >>
-	Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==>
-		       ?E. G`
-		      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
-	FULL_SIMP_TAC list_ss
-		      [bir_edge_in_prog_def,
-		       bir_get_program_block_info_by_label_THM,
-		       listTheory.MEM_MAP] >>
-	METIS_TAC []
+                        (BirProgram bls)
+                      )` >- (
+        FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
+                              bir_labels_of_program_def] >>
+        Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==>
+                       ?E. G`
+                      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
+        FULL_SIMP_TAC list_ss
+                      [bir_edge_in_prog_def,
+                       bir_get_program_block_info_by_label_THM,
+                       listTheory.MEM_MAP] >>
+        METIS_TAC []
       ) >>
       FULL_SIMP_TAC std_ss
-		    [bir_get_program_block_info_by_label_MEM,
-		     finite_mapTheory.FEVERY_DEF]
+                    [bir_get_program_block_info_by_label_MEM,
+                     finite_mapTheory.FEVERY_DEF]
     ) >>  
     Q.PAT_X_ASSUM `FUPDATE A B = C`
-		  (fn thm => ASSUME_TAC (GSYM thm)) >>
+                  (fn thm => ASSUME_TAC (GSYM thm)) >>
     RW_TAC std_ss [] >>
     Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements
-					    (wps ' l1)` >>
+                                            (wps ' l1)` >>
     FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			  FEVERY_FEVERY_DRESTRICT_thm]
+                          FEVERY_FEVERY_DRESTRICT_thm]
   ],
 
   Cases_on `b0` >>
   Cases_on `b1` >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
   FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DEF,
-			finite_mapTheory.FDOM_FUPDATE,
-			pred_setTheory.COMPONENT] >>
+                        finite_mapTheory.FDOM_FUPDATE,
+                        pred_setTheory.COMPONENT] >>
   FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [] >>
   rename1 `BStmt_CJmp b (BLE_Label l1) (BLE_Label b'')` >>
   rename1 `BStmt_CJmp b (BLE_Label l1) (BLE_Label l2)` >>
@@ -2360,170 +2360,170 @@ Cases_on `bl.bb_last_statement` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >| [
     Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-			   (BExp_BinExp BIExp_Or
-			     (BExp_UnaryExp BIExp_Not e)
-			     (post l1)
-			   )
-			   (BExp_BinExp BIExp_Or e
-						 (post l2)
-			   )
-			 )` >>
+                           (BExp_BinExp BIExp_Or
+                             (BExp_UnaryExp BIExp_Not e)
+                             (post l1)
+                           )
+                           (BExp_BinExp BIExp_Or e
+                                                 (post l2)
+                           )
+                         )` >>
     subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls) l ls
-	      (bir_wp_exec_stmtsB bl.bb_statements exp1)
-	      post` >- (
+              (bir_wp_exec_stmtsB bl.bb_statements exp1)
+              post` >- (
       ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `e`, `l1`,
-			   `l2`, `ls`, `post`]
-		 bir_exec_to_labels_or_assumviol_triple_cjmp) >>
+                           `l2`, `ls`, `post`]
+                 bir_exec_to_labels_or_assumviol_triple_cjmp) >>
       subgoal `MEM l1
-		(bir_labels_of_program (BirProgram bls)) /\
-	       MEM l2
-		(bir_labels_of_program (BirProgram bls))` >- (
-	FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
-			      bir_labels_of_program_def] >>
-	Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
-		      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
-	ASSUME_TAC (Q.SPEC `l2` thm)) >>
-	FULL_SIMP_TAC std_ss
-		      [bir_edge_in_prog_def,
-		       bir_get_program_block_info_by_label_THM,
-		       listTheory.MEM_MAP] >>
-	METIS_TAC []
+                (bir_labels_of_program (BirProgram bls)) /\
+               MEM l2
+                (bir_labels_of_program (BirProgram bls))` >- (
+        FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
+                              bir_labels_of_program_def] >>
+        Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
+                      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
+        ASSUME_TAC (Q.SPEC `l2` thm)) >>
+        FULL_SIMP_TAC std_ss
+                      [bir_edge_in_prog_def,
+                       bir_get_program_block_info_by_label_THM,
+                       listTheory.MEM_MAP] >>
+        METIS_TAC []
       ) >>
       FULL_SIMP_TAC std_ss
-		    [bir_get_program_block_info_by_label_MEM,
-		     finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
+                    [bir_get_program_block_info_by_label_MEM,
+                     finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
     ) >>
     Q.PAT_X_ASSUM `FUPDATE A B = C`
-		  (fn thm => ASSUME_TAC (GSYM thm)) >>
+                  (fn thm => ASSUME_TAC (GSYM thm)) >>
     FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			  FEVERY_FEVERY_DRESTRICT_thm],
+                          FEVERY_FEVERY_DRESTRICT_thm],
 
     Cases_on `l2 IN FDOM wps` >> (
       FULL_SIMP_TAC std_ss []
     ) >>
     Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-			   (BExp_BinExp BIExp_Or
-			     (BExp_UnaryExp BIExp_Not e)
-			     (post l1)
-			   )
-			   (BExp_BinExp BIExp_Or e
-						 (wps ' l2)
-			   )
-			 )` >>
+                           (BExp_BinExp BIExp_Or
+                             (BExp_UnaryExp BIExp_Not e)
+                             (post l1)
+                           )
+                           (BExp_BinExp BIExp_Or e
+                                                 (wps ' l2)
+                           )
+                         )` >>
     subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls) l ls
-	      (bir_wp_exec_stmtsB bl.bb_statements exp1)
-	      post` >- (
+              (bir_wp_exec_stmtsB bl.bb_statements exp1)
+              post` >- (
       ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `e`, `l1`,
-			   `l2`, `ls`, `post`]
-		 bir_exec_to_labels_or_assumviol_triple_cjmp) >>
+                           `l2`, `ls`, `post`]
+                 bir_exec_to_labels_or_assumviol_triple_cjmp) >>
       subgoal `MEM l1
-		(bir_labels_of_program (BirProgram bls)) /\
-	       MEM l2
-		(bir_labels_of_program (BirProgram bls))` >- (
-	FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
-			      bir_labels_of_program_def] >>
-	Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
-		      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
-	ASSUME_TAC (Q.SPEC `l2` thm)) >>
-	FULL_SIMP_TAC std_ss
-		      [bir_edge_in_prog_def,
-		       bir_get_program_block_info_by_label_THM,
-		       listTheory.MEM_MAP] >>
-	METIS_TAC []
+                (bir_labels_of_program (BirProgram bls)) /\
+               MEM l2
+                (bir_labels_of_program (BirProgram bls))` >- (
+        FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
+                              bir_labels_of_program_def] >>
+        Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
+                      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
+        ASSUME_TAC (Q.SPEC `l2` thm)) >>
+        FULL_SIMP_TAC std_ss
+                      [bir_edge_in_prog_def,
+                       bir_get_program_block_info_by_label_THM,
+                       listTheory.MEM_MAP] >>
+        METIS_TAC []
       ) >>
       FULL_SIMP_TAC std_ss
-		    [bir_get_program_block_info_by_label_MEM,
-		     finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
+                    [bir_get_program_block_info_by_label_MEM,
+                     finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
     ) >>
     Q.PAT_X_ASSUM `FUPDATE A B = C`
-		  (fn thm => ASSUME_TAC (GSYM thm)) >>
+                  (fn thm => ASSUME_TAC (GSYM thm)) >>
     FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			  FEVERY_FEVERY_DRESTRICT_thm],
+                          FEVERY_FEVERY_DRESTRICT_thm],
 
     Cases_on `l1 IN FDOM wps` >> (
       FULL_SIMP_TAC std_ss []
     ) >>
     Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-			   (BExp_BinExp BIExp_Or
-			     (BExp_UnaryExp BIExp_Not e)
-			     (wps ' l1)
-			   )
-			   (BExp_BinExp BIExp_Or e
-						 (post l2)
-			   )
-			 )` >>
+                           (BExp_BinExp BIExp_Or
+                             (BExp_UnaryExp BIExp_Not e)
+                             (wps ' l1)
+                           )
+                           (BExp_BinExp BIExp_Or e
+                                                 (post l2)
+                           )
+                         )` >>
     subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls) l ls
-	      (bir_wp_exec_stmtsB bl.bb_statements exp1)
-	      post` >- (
+              (bir_wp_exec_stmtsB bl.bb_statements exp1)
+              post` >- (
       ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `e`, `l1`,
-			   `l2`, `ls`, `post`]
-		 bir_exec_to_labels_or_assumviol_triple_cjmp) >>
+                           `l2`, `ls`, `post`]
+                 bir_exec_to_labels_or_assumviol_triple_cjmp) >>
       subgoal `MEM l1
-		(bir_labels_of_program (BirProgram bls)) /\
-	       MEM l2
-		(bir_labels_of_program (BirProgram bls))` >- (
-	FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
-			      bir_labels_of_program_def] >>
-	Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
-		      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
-	ASSUME_TAC (Q.SPEC `l2` thm)) >>
-	FULL_SIMP_TAC std_ss
-		      [bir_edge_in_prog_def,
-		       bir_get_program_block_info_by_label_THM,
-		       listTheory.MEM_MAP] >>
-	METIS_TAC []
+                (bir_labels_of_program (BirProgram bls)) /\
+               MEM l2
+                (bir_labels_of_program (BirProgram bls))` >- (
+        FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
+                              bir_labels_of_program_def] >>
+        Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
+                      (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
+        ASSUME_TAC (Q.SPEC `l2` thm)) >>
+        FULL_SIMP_TAC std_ss
+                      [bir_edge_in_prog_def,
+                       bir_get_program_block_info_by_label_THM,
+                       listTheory.MEM_MAP] >>
+        METIS_TAC []
       ) >>
       FULL_SIMP_TAC std_ss
-		    [bir_get_program_block_info_by_label_MEM,
-		     finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
+                    [bir_get_program_block_info_by_label_MEM,
+                     finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
     ) >>
     Q.PAT_X_ASSUM `FUPDATE A B = C`
-		  (fn thm => ASSUME_TAC (GSYM thm)) >>
+                  (fn thm => ASSUME_TAC (GSYM thm)) >>
     FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			  FEVERY_FEVERY_DRESTRICT_thm],
+                          FEVERY_FEVERY_DRESTRICT_thm],
 
 
     Cases_on `l1 IN FDOM wps` >> Cases_on `l2 IN FDOM wps` >> (
       FULL_SIMP_TAC std_ss []
     ) >>
     Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
-			   (BExp_BinExp BIExp_Or
-			     (BExp_UnaryExp BIExp_Not e)
-			     (FAPPLY wps l1)
-			   )
-			   (BExp_BinExp BIExp_Or e
-						 (FAPPLY wps l2)
-			   )
-			 )` >>
+                           (BExp_BinExp BIExp_Or
+                             (BExp_UnaryExp BIExp_Not e)
+                             (FAPPLY wps l1)
+                           )
+                           (BExp_BinExp BIExp_Or e
+                                                 (FAPPLY wps l2)
+                           )
+                         )` >>
   subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls) l ls
-	    (bir_wp_exec_stmtsB bl.bb_statements exp1)
-	    post` >- (
+            (bir_wp_exec_stmtsB bl.bb_statements exp1)
+            post` >- (
     ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `e`, `l1`,
-			 `l2`, `ls`, `post`]
-	       bir_exec_to_labels_or_assumviol_triple_cjmp) >>
+                         `l2`, `ls`, `post`]
+               bir_exec_to_labels_or_assumviol_triple_cjmp) >>
     subgoal `MEM l1
-	      (bir_labels_of_program (BirProgram bls)) /\
-	     MEM l2
-	      (bir_labels_of_program (BirProgram bls))` >- (
+              (bir_labels_of_program (BirProgram bls)) /\
+             MEM l2
+              (bir_labels_of_program (BirProgram bls))` >- (
       FULL_SIMP_TAC std_ss [bir_edges_blocks_in_prog_def,
-			    bir_labels_of_program_def] >>
+                            bir_labels_of_program_def] >>
       Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G`
-		    (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
+                    (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >>
       ASSUME_TAC (Q.SPEC `l2` thm)) >>
       FULL_SIMP_TAC std_ss
-		    [bir_edge_in_prog_def,
-		     bir_get_program_block_info_by_label_THM,
-		     listTheory.MEM_MAP] >>
+                    [bir_edge_in_prog_def,
+                     bir_get_program_block_info_by_label_THM,
+                     listTheory.MEM_MAP] >>
       METIS_TAC []
     ) >>
     FULL_SIMP_TAC std_ss
-		  [bir_get_program_block_info_by_label_MEM,
-		   finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
+                  [bir_get_program_block_info_by_label_MEM,
+                   finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
   ) >>
   Q.PAT_X_ASSUM `FUPDATE A B = C`
-		(fn thm => ASSUME_TAC (GSYM thm)) >>
+                (fn thm => ASSUME_TAC (GSYM thm)) >>
   FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE,
-			FEVERY_FEVERY_DRESTRICT_thm]
+                        FEVERY_FEVERY_DRESTRICT_thm]
   ]
 ]
 QED

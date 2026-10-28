@@ -104,45 +104,67 @@ val bir_prog_def = bdefprog_list obs_ty "bir_prog" [
   (blabel_str "epilogue", [], (bjmp o belabel_str) "end"),
   (blabel_str "end", [], bhalt (bconst32 0))
 ];
-val entry_label_def = Define `entry_label = BL_Label "entry"`
-val end_labels_def = Define `end_labels = (\label. label = (BL_Label "end"))`
+Definition entry_label_def:
+  entry_label = BL_Label "entry"
+End
+Definition end_labels_def:
+  end_labels = (\label. label = (BL_Label "end"))
+End
 
 (* Definition of the relation R (2) *)
-val bool2imm1_def = Define `(bool2imm1 T = Imm1 1w) /\ (bool2imm1 F = Imm1 0w)`
-val bool2imm1_REWR = store_thm ( "bool2imm1_REWR",
-  ``!b. bool2imm1 b = Imm1 (if b then 1w else 0w)``,
-  Cases >> FULL_SIMP_TAC std_ss [bool2imm1_def])
-val bool2bexp_def = Define `(bool2bexp b = BExp_Const (bool2imm1 b))`
-val bool2bval_def = Define `(bool2bval b = BVal_Imm (bool2imm1 b))`
-val w2bval32_def = Define `(w2bval32 n = BVal_Imm (Imm32 n))`
-val bexp_not_bool2b = prove (
-  ``!b. (bir_unary_exp BIExp_Not (bool2b b)) = (bool2b ~b)``,
-  Cases >> EVAL_TAC)
-val bexp_and_bool2b = prove (
-  ``!a b. (bir_bin_exp BIExp_And (bool2b a) (bool2b b)) = (bool2b (a /\ b))``,
-  REPEAT Cases >> EVAL_TAC)
-val bexp_or_bool2b = prove (
-  ``!a b. (bir_bin_exp BIExp_Or (bool2b a) (bool2b b)) = (bool2b (a \/ b))``,
-  REPEAT Cases >> EVAL_TAC)
+Definition bool2imm1_def:
+  (bool2imm1 T = Imm1 1w) /\ (bool2imm1 F = Imm1 0w)
+End
+Theorem bool2imm1_REWR:
+  !b. bool2imm1 b = Imm1 (if b then 1w else 0w)
+Proof
+  Cases >> FULL_SIMP_TAC std_ss [bool2imm1_def]
+QED
+Definition bool2bexp_def:
+  (bool2bexp b = BExp_Const (bool2imm1 b))
+End
+Definition bool2bval_def:
+  (bool2bval b = BVal_Imm (bool2imm1 b))
+End
+Definition w2bval32_def:
+  (w2bval32 n = BVal_Imm (Imm32 n))
+End
+Theorem bexp_not_bool2b[local]:
+  !b. (bir_unary_exp BIExp_Not (bool2b b)) = (bool2b ~b)
+Proof
+  Cases >> EVAL_TAC
+QED
+Theorem bexp_and_bool2b[local]:
+  !a b. (bir_bin_exp BIExp_And (bool2b a) (bool2b b)) = (bool2b (a /\ b))
+Proof
+  REPEAT Cases >> EVAL_TAC
+QED
+Theorem bexp_or_bool2b[local]:
+  !a b. (bir_bin_exp BIExp_Or (bool2b a) (bool2b b)) = (bool2b (a \/ b))
+Proof
+  REPEAT Cases >> EVAL_TAC
+QED
 val bool2b_REWRS = [
   bool2b_11, bool2b_inv,
   bool2b_ELIMS, bool2b_EQ_IMM1_ELIMS, bool2b_NEQ_IMM_ELIMS,
   bir_eval_bool_exp_BExp_Const_bool2b, BVal_Imm_bool2b_EQ_TF_REWRS,
   bexp_not_bool2b, bexp_and_bool2b, bexp_or_bool2b
 ]
-val R_def = Define `
+Definition R_def:
   R (nic: nic_state) (bir_state: bir_state_t) <=>
     (  (bir_env_lookup "nic_dead" bir_state.bst_environ
           = SOME (BType_Bool, SOME (bool2bval nic.dead)))
     /\ (bir_env_lookup "nic_x" bir_state.bst_environ
-          = SOME (BType_Imm Bit32, SOME (w2bval32 nic.x))))`
+          = SOME (BType_Imm Bit32, SOME (w2bval32 nic.x))))
+End
 
 (* Lemma (3) *)
-val R_inj_thm = store_thm ( "R_inj_thm",
-  ``!nic. ?bir_state. R nic bir_state
+Theorem R_inj_thm:
+  !nic. ?bir_state. R nic bir_state
             /\ (bir_state.bst_pc.bpc_index = 0)
             /\ (bir_state.bst_pc.bpc_label = entry_label)
-            /\ (bir_state.bst_status = BST_Running)``,
+            /\ (bir_state.bst_status = BST_Running)
+Proof
   STRIP_TAC >>
   REWRITE_TAC [R_def] >>
   EXISTS_TAC ``
@@ -153,44 +175,59 @@ val R_inj_thm = store_thm ( "R_inj_thm",
         |+ ("nic_x", (BType_Imm Bit32, SOME (w2bval32 nic.x)))
     )|>`` >>
   EVAL_TAC
-)
+QED
 
 (* Equivalence theorem (4) *)
-val eq_thm = Define `
+Definition exec_prog_def:
   (exec_prog nic bir_prog nic')
     = (!(bir_state:bir_state_t) (bir_state':bir_state_t).
          R nic bir_state
       /\ (?obs step_count pc_count.
             (bir_exec_to_labels end_labels bir_prog bir_state
                 = BER_Ended obs step_count pc_count bir_state'))
-      ==> R nic' bir_state')`
+      ==> R nic' bir_state')
+End
+val eq_thm = exec_prog_def;
 
 (* This is the theorem we want to prove *)
-val NIC_P_def = Define `NIC_P nic = (nic.dead = F) /\ (nic.x = 0w)`
-val NIC_Q_def = Define `NIC_Q nic nic' = (nic'.dead = F) /\ (nic'.x = nic.x + 1w)`
+Definition NIC_P_def:
+  NIC_P nic = (nic.dead = F) /\ (nic.x = 0w)
+End
+Definition NIC_Q_def:
+  NIC_Q nic nic' = (nic'.dead = F) /\ (nic'.x = nic.x + 1w)
+End
 val goal_tm = ``!nic nic'. (NIC_P nic /\ exec_prog nic bir_prog nic') ==> NIC_Q nic nic'``;
 
 (* Equivalent preconditions on BIR variables *)
 (* Should be possible to autogenerate *)
-val BIR_P_exp_def = Define `BIR_P_exp = ^(bandl [
+Definition BIR_P_exp_def:
+  BIR_P_exp = ^(bandl [
   beq ((bden o bvarimm1) "nic_dead", bfalse),
   beq ((bden o bvarimm32) "nic_x", bconst32 0)
-])`
-val BIR_Q_exp_def = Define `BIR_Q_exp = ^(bandl [
+])
+End
+Definition BIR_Q_exp_def:
+  BIR_Q_exp = ^(bandl [
   beq ((bden o bvarimm1) "nic_dead", bfalse),
   beq ((bden o bvarimm32) "nic_x", bconst32 1)
-])`
-val BIR_P_def = Define `BIR_P bstate = bir_eval_bool_exp BIR_P_exp bstate.bst_environ`
-val BIR_Q_def = Define `BIR_Q bstate = bir_eval_bool_exp BIR_Q_exp bstate.bst_environ`
+])
+End
+Definition BIR_P_def:
+  BIR_P bstate = bir_eval_bool_exp BIR_P_exp bstate.bst_environ
+End
+Definition BIR_Q_def:
+  BIR_Q bstate = bir_eval_bool_exp BIR_Q_exp bstate.bst_environ
+End
 
 (* (b): NIC --> BIR_state *)
-val b_thm = store_thm ( "b_thm",
-  ``!bir_state. (?nic. R nic bir_state /\ NIC_P nic) ==> BIR_P bir_state``,
+Theorem b_thm:
+  !bir_state. (?nic. R nic bir_state /\ NIC_P nic) ==> BIR_P bir_state
+Proof
   REWRITE_TAC [BIR_P_def, NIC_P_def, R_def, bool2bval_def, w2bval32_def, bool2imm1_def] >>
   SIMP_TAC std_ss [bir_eval_bool_exp_def, bir_eval_exp_def] >>
   REPEAT STRIP_TAC >>
   REPEAT (FULL_SIMP_TAC std_ss [] >> EVAL_TAC)
-)
+QED
 
 (* (d): BIR_state' --> NIC' *)
 val holba_ss = arith_ss
@@ -203,10 +240,11 @@ val EVAL_SIMP_TAC = (ASSUM_LIST
 val FULL_EVAL_SIMP_TAC = (ASSUM_LIST
   (fn thms => FULL_SIMP_TAC holba_ss (List.map (EVAL o concl) thms)))
 fun PAT_X_TAC pat = Q.PAT_X_ASSUM pat (fn thm => ALL_TAC)
-val d_thm = store_thm ( "d_thm",
-  ``!bir_state'. BIR_Q bir_state'
+Theorem d_thm:
+  !bir_state'. BIR_Q bir_state'
       ==> (!nic nic' bir_state. (BIR_P bir_state /\ R nic bir_state /\ R nic' bir_state')
-            ==> (NIC_Q nic nic'))``,
+            ==> (NIC_Q nic nic'))
+Proof
   PURE_REWRITE_TAC [NIC_Q_def] >>
   PURE_REWRITE_TAC [BIR_P_def, BIR_Q_def, R_def] >>
   PURE_REWRITE_TAC [bool2bval_def, w2bval32_def, bool2imm1_REWR] >>
@@ -258,13 +296,14 @@ val d_thm = store_thm ( "d_thm",
     FULL_SIMP_TAC holba_ss [bir_eval_exp_def, bir_eval_bin_exp_def, bir_eval_bin_pred_def] >>
     FULL_SIMP_TAC holba_ss bool2b_REWRS
   ]
-)
+QED
 
 (* Useful lemmas *)
-val BIR_P_is_bool_exp_thm = store_thm ( "BIR_P_is_bool_exp_thm",
-  ``!nic bir_state.
+Theorem BIR_P_is_bool_exp_thm:
+  !nic bir_state.
       (R nic bir_state /\ BIR_P bir_state)
-      ==> bir_is_bool_exp_env bir_state.bst_environ BIR_P_exp``,
+      ==> bir_is_bool_exp_env bir_state.bst_environ BIR_P_exp
+Proof
   PURE_REWRITE_TAC [R_def, BIR_P_def, bir_is_bool_exp_env_def] >>
   REPEAT STRIP_TAC >| [
     PURE_REWRITE_TAC [bir_is_bool_exp_def, BIR_P_exp_def, type_of_bir_exp_def] >>
@@ -278,28 +317,32 @@ val BIR_P_is_bool_exp_thm = store_thm ( "BIR_P_is_bool_exp_thm",
     REWRITE_TAC [BType_Bool_def] >>
     REWRITE_TAC [type_of_bir_val_def, bool2bval_def, bool2imm1_REWR, w2bval32_def] >>
     REWRITE_TAC [type_of_bir_imm_def]
-  ])
-val bir_eval_bool_exp_LEMMA = store_thm ( "bir_eval_bool_exp_LEMMA",
-  ``!exp env.
+  ]
+QED
+Theorem bir_eval_bool_exp_LEMMA:
+  !exp env.
       (  (bir_is_bool_exp_env env exp)
       /\ (bir_eval_exp exp env = bir_val_true))
-      ==> (bir_eval_bool_exp exp env)``,
+      ==> (bir_eval_bool_exp exp env)
+Proof
   METIS_TAC [bir_eval_bool_exp_EQ]
-)
-val eval_BIR_P_is_true_thm = store_thm ( "eval_BIR_P_is_true_thm",
-  ``!nic bir_state.
+QED
+Theorem eval_BIR_P_is_true_thm:
+  !nic bir_state.
       (R nic bir_state /\ BIR_P bir_state)
-      ==> (bir_eval_exp BIR_P_exp bir_state.bst_environ = bir_val_true)``,
+      ==> (bir_eval_exp BIR_P_exp bir_state.bst_environ = bir_val_true)
+Proof
   METIS_TAC [BIR_P_is_bool_exp_thm, R_def, BIR_P_def, bir_eval_bool_exp_EQ]
-)
+QED
 
 (* TODO: Move to theory/bir[-support] *)
-val bir_type_of_val_is_imm_then_exists_imm = prove (
-  ``!imm_ty v. (type_of_bir_val v = SOME (BType_Imm imm_ty))
-        ==> (?imm. v = (BVal_Imm imm))``,
+Theorem bir_type_of_val_is_imm_then_exists_imm[local]:
+  !imm_ty v. (type_of_bir_val v = SOME (BType_Imm imm_ty))
+        ==> (?imm. v = (BVal_Imm imm))
+Proof
   Cases_on `v` >>
   SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
-)
+QED
 
 (* {P} bir_prog {Q} *)
 val (wp_thm, triple_thm) =
@@ -368,8 +411,9 @@ val (wp_thm, triple_thm) =
     )
     val bir_to_words_ss = pure_ss++HolBACoreSimps.holBACore_ss++BIR_TO_WORDS_ss
     (**)
-    val triple_thm = store_thm ( "triple_thm",
-      ``bir_exec_to_labels_triple bir_prog entry_label end_labels BIR_P_exp BIR_Q_exp``,
+Theorem triple_thm:
+  bir_exec_to_labels_triple bir_prog entry_label end_labels BIR_P_exp BIR_Q_exp
+Proof
       cheat
 (*
       (* WP --> Q *)
@@ -529,7 +573,7 @@ val (wp_thm, triple_thm) =
       ) >>
       METIS_TAC [bir_exec_to_labels_triple_def]
 *)
-    )
+QED
   in
     (EVAL ``FLOOKUP wpsrec (BL_Label "entry")``, triple_thm)
   end

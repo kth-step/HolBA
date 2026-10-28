@@ -52,19 +52,19 @@ val runMeasurement = true;
 val timer_start = Lib.start_time ();
 
 
-val aes_program_def = Define `
+Definition aes_program_def:
       aes_program = ^aes_program_term
-`;
-val aes_post_def = Define `
+End
+Definition aes_post_def:
       aes_post = (BExp_BinPred BIExp_Equal (BExp_Den (BVar "R3_post" (BType_Imm Bit32)))
                                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-`;
-val aes_ls_def = Define `
+End
+Definition aes_ls_def:
       aes_ls = \x.(x = ^last_block_label)
-`;
-val aes_wps_def = Define `
+End
+Definition aes_wps_def:
       aes_wps = (FEMPTY |+ (^last_block_label, aes_post))
-`;
+End
 
 
 
@@ -106,9 +106,9 @@ val _ = if not runMeasurement then () else
 
 
 
-val aes_wps1_def = Define `
+Definition aes_wps1_def:
       aes_wps1 = ^wps1
-`;
+End
 
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 val _ = save_thm("aes_wps1_bool_sound_thm", wps1_bool_sound_thm_readable);

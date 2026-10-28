@@ -62,13 +62,13 @@ end;
     val hex_code = String.map Char.toUpper hex_code
     val _ = print_log log_f hex_code;
     val d' = case desc of
-	      NONE => hex_code
-	    | SOME d => (print_log log_f (" (" ^ d ^")"); d)
+              NONE => hex_code
+            | SOME d => (print_log log_f (" (" ^ d ^")"); d)
     val _ = print_log log_f (" @ 0x" ^ (Arbnum.toHexString pc));
     val timer = (Time.now())
     val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d'), NONE) handle
-		     bir_inst_liftingExn (_, d)  => (NONE, SOME d)
-		   | HOL_ERR _ => (NONE, NONE);
+                     bir_inst_liftingExn (_, d)  => (NONE, SOME d)
+                   | HOL_ERR _ => (NONE, NONE);
 
     val d_time = Time.- (Time.now(), timer);
     val d_s = (Time.toString d_time);
@@ -76,24 +76,24 @@ end;
     val _ = print_log log_f (" - ");
     val _ = print (d_s ^ " s - ");
     val (res', cache') = case res of
-	       SOME (thm, cache', _) => ((SOME thm), cache')
-	     | NONE => (NONE, cache)
+               SOME (thm, cache', _) => ((SOME thm), cache')
+             | NONE => (NONE, cache)
     val _ = case res of
-	       SOME (thm, _, cache_used) =>
-		   (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
-		   (print_log_with_style sty_OK log_f "OK");
-		   (if cache_used then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cached") else ());
-		   (print_log log_f "\n");
-		   (if log_f then ((TextIO.output (log, thm_to_string thm));
-				   (TextIO.output (log, "\n"))) else ()))
-	     | NONE =>
-	       (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
-	       (print_log_with_style sty_FAIL log_f "FAILED\n"));
+               SOME (thm, _, cache_used) =>
+                   (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
+                   (print_log_with_style sty_OK log_f "OK");
+                   (if cache_used then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cached") else ());
+                   (print_log log_f "\n");
+                   (if log_f then ((TextIO.output (log, thm_to_string thm));
+                                   (TextIO.output (log, "\n"))) else ()))
+             | NONE =>
+               (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
+               (print_log_with_style sty_FAIL log_f "FAILED\n"));
     val _ = case ed of
-	NONE => ()
+        NONE => ()
       | SOME d => (let
-	  val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
-	in print_log_with_style sty_FAIL log_f s end)
+          val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
+        in print_log_with_style sty_FAIL log_f s end)
     val _ = if log_f then TextIO.output (log, "\n") else ();
   in
     (res', ed, d_s, cache')
@@ -114,7 +114,7 @@ end;
     val len_codes = (length hex_codes);
 
     val _ = print ("running " ^ (Int.toString (len_codes)) ^ " instrutions; first pc 0x" ^
-		(Arbnum.toHexString pc) ^ "\n\n");
+                (Arbnum.toHexString pc) ^ "\n\n");
 
     val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
 
@@ -131,7 +131,7 @@ end;
     val d_time = Time.- (Time.now(), timer);
     val d_s = (Time.toString d_time);
     val success_c = foldl (fn ((res, _, _), c) =>
-	 if (is_some res) then c+1 else c) 0 resL
+         if (is_some res) then c+1 else c) 0 resL
     val fail_c = len_codes - success_c
 
     val _ = print "\n";
@@ -160,28 +160,28 @@ end;
        in the code of selftest.sml
        as content of list expected_failed_hexcodes *)
     val _ = print_log true ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
-	   (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
+           (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
 
     fun comment_of_failing desc ed_opt =
       case (desc, ed_opt) of
-	   (NONE, NONE) => ""
-	 | (SOME d, NONE) => (" (* " ^ d ^ " *)")
-	 | (NONE, SOME d') => (" (* " ^ (bir_inst_liftingExn_data_to_string d') ^ " *)")
-	 | (SOME d, SOME d') => (" (* " ^ d ^ "; "^(bir_inst_liftingExn_data_to_string d')  ^ " *)");
+           (NONE, NONE) => ""
+         | (SOME d, NONE) => (" (* " ^ d ^ " *)")
+         | (NONE, SOME d') => (" (* " ^ (bir_inst_liftingExn_data_to_string d') ^ " *)")
+         | (SOME d, SOME d') => (" (* " ^ d ^ "; "^(bir_inst_liftingExn_data_to_string d')  ^ " *)");
 
     local
       fun print_failed' [] = ()
-	| print_failed' ((hex_code, desc, ed_opt, broken)::l) =
+        | print_failed' ((hex_code, desc, ed_opt, broken)::l) =
       let
-	(* print the ones that failed, but were not excepted to in red *)
-	val st = if broken then sty_FAIL else [];
-	val _ = print_log true "   ";
-	val _ = print_log_with_style st true ("\""^hex_code^"\"");
+        (* print the ones that failed, but were not excepted to in red *)
+        val st = if broken then sty_FAIL else [];
+        val _ = print_log true "   ";
+        val _ = print_log_with_style st true ("\""^hex_code^"\"");
 
-	val _ = print_log_with_style st true (comment_of_failing desc ed_opt)
+        val _ = print_log_with_style st true (comment_of_failing desc ed_opt)
 
       in if List.null l then (print_log true "\n]\n\n") else
-	     (print_log true ",\n"; print_failed' l)
+             (print_log true ",\n"; print_failed' l)
       end
     in
       fun print_failed failing_l = print_failed' (rev failing_l)
@@ -200,7 +200,7 @@ end;
     val broken_l = List.filter (fn (hc, d, edo, br) => br) failing_l';
     val _ = print_log true ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
     val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style sty_FAIL true ("   " ^ hc ^
-	 (comment_of_failing desc ed_opt) ^ "\n")) broken_l;
+         (comment_of_failing desc ed_opt) ^ "\n")) broken_l;
     val _ = print_log true "\n\n";
 
   in

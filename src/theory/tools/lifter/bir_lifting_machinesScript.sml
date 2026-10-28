@@ -1027,7 +1027,7 @@ Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
 (* NOTE: Since the L3 model uses separate immediate values for the fields
  * of a single system register (instead of letting the entire system register
  * be represented as one immediate), we do so here as well. *)
-val riscv_sysregs_lifted_imms_LIST_def = Define `
+Definition riscv_sysregs_lifted_imms_LIST_def:
   riscv_sysregs_lifted_imms_LIST = [
     (BMLI (BVar "mhartid" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mhartid))
@@ -1053,7 +1053,7 @@ val riscv_sysregs_lifted_imms_LIST_def = Define `
           (\ms:riscv_state. Imm64 $ reg'mip ((ms.c_MCSR ms.procID).mip))
     )
   ]
-`;
+End
 val riscv_sysregs_lifted_imms_LIST_EVAL = save_thm("riscv_sysregs_lifted_imms_LIST_EVAL",
   EVAL ``riscv_sysregs_lifted_imms_LIST``
 );

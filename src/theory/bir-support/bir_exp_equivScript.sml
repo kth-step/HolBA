@@ -387,11 +387,11 @@ let
                   (type_of_bir_exp ex = SOME (BType_Imm ^immtype)) ==>
                   (?w. bir_eval_exp ex env = SOME (BVal_Imm (^imm w)))
                ``,
-	       REPEAT STRIP_TAC >>
-	       IMP_RES_TAC bir_eval_imm_types_EXISTS >>
-	       Cases_on `i` >> (
-		 FULL_SIMP_TAC (std_ss++holBACore_ss) []
-	       )
+               REPEAT STRIP_TAC >>
+               IMP_RES_TAC bir_eval_imm_types_EXISTS >>
+               Cases_on `i` >> (
+                 FULL_SIMP_TAC (std_ss++holBACore_ss) []
+               )
          ))::(prove_eval_imm_types_thms t)
         )
       end
