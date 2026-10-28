@@ -73,11 +73,10 @@ val _ = print_header "RV64I Base Instruction Set (instructions inherited from RV
 val _ = print_msg "\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* 75 instructions in initial scope (including M extension) *)
-(* 4 still TODO:
- *  2 fences
+(* 2 still TODO:
  *  environment call and breakpoint *)
 (* TODO: Instructions from privileged instruction set: MRET (exists in latest L3 version), SRET (S ext., exists in latest L3 version), URET (N ext., exists in latest L3 version) *)
-(* TODO: Most important extensions: A (atomics), C (compressed) *)
+(* TODO: Rest of the A extension: SC.W and SC.D, and AMOMIN.W, AMOMAX.W, AMOMINU.W and AMOMAXU.W *)
 (* TODO: Are NOPs in riscv_stepLib correct? *)
 (* TODO: Take second look at stepLib code for Sail model (test.sml) *)
 
@@ -222,7 +221,6 @@ val _ = print_msg "\n\n";
 (*   0000  1000  1000   00010  000  00001  0001111
 
 Not sure about asm formatting...
-val _ = fail_with_msg "FENCE not yet supported by stepLib";
 *)
 val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
 
@@ -292,13 +290,7 @@ val _ = print_msg "\n";
 val _ = print_header "RV64 Zifencei Standard Extension";
 val _ = print_msg "\n\n";
 
-(* FENCE.I x0, x0, 0 :  000000000000   00000  001   00000  0001111
-
-  open riscv_stepLib;
-  val _ = riscv_step_hex "0000100F";
-
-val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
-*)
+(* FENCE.I x0, x0, 0 :  000000000000   00000  001   00000  0001111 *)
 
 val _ = riscv_test_hex_print_asm "FENCE.I x0, x0, 0" "0000100F";
 
@@ -378,15 +370,141 @@ val _ = print_msg "\n\n";
     "REMUW x5, x6, x7"
   ];
 
+val _ = print_msg "\n";
+val _ = print_header "RV64A Standard Extension";
+val _ = print_msg "\n\n";
+
+(* Atomic memory operations on words *)
+val _ = riscv_test_hex_print_asm "AMOSWAP.W a0, a2, (a1)" "08C5A52F";
+val _ = riscv_test_hex_print_asm "AMOADD.W a0, a2, (a1)" "00C5A52F";
+val _ = riscv_test_hex_print_asm "AMOXOR.W a0, a2, (a1)" "20C5A52F";
+val _ = riscv_test_hex_print_asm "AMOAND.W a0, a2, (a1)" "60C5A52F";
+val _ = riscv_test_hex_print_asm "AMOOR.W a0, a2, (a1)" "40C5A52F";
+(* TODO: the model compares 64 bits instead of 32 *)
+val _ = riscv_test_hex_print_asm "AMOMIN.W a0, a2, (a1)" "80C5A52F";
+val _ = riscv_test_hex_print_asm "AMOMAX.W a0, a2, (a1)" "A0C5A52F";
+val _ = riscv_test_hex_print_asm "AMOMINU.W a0, a2, (a1)" "C0C5A52F";
+val _ = riscv_test_hex_print_asm "AMOMAXU.W a0, a2, (a1)" "E0C5A52F";
+
+(* Atomic memory operations on doublewords *)
+val _ = riscv_test_hex_print_asm "AMOSWAP.D a0, a2, (a1)" "08C5B52F";
+val _ = riscv_test_hex_print_asm "AMOADD.D a0, a2, (a1)" "00C5B52F";
+val _ = riscv_test_hex_print_asm "AMOXOR.D a0, a2, (a1)" "20C5B52F";
+val _ = riscv_test_hex_print_asm "AMOAND.D a0, a2, (a1)" "60C5B52F";
+val _ = riscv_test_hex_print_asm "AMOOR.D a0, a2, (a1)" "40C5B52F";
+val _ = riscv_test_hex_print_asm "AMOMIN.D a0, a2, (a1)" "80C5B52F";
+val _ = riscv_test_hex_print_asm "AMOMAX.D a0, a2, (a1)" "A0C5B52F";
+val _ = riscv_test_hex_print_asm "AMOMINU.D a0, a2, (a1)" "C0C5B52F";
+val _ = riscv_test_hex_print_asm "AMOMAXU.D a0, a2, (a1)" "E0C5B52F";
+
+(* Ordering bits, x0 as destination, and destination equal to a source *)
+val _ = riscv_test_hex_print_asm "AMOSWAP.W.AQRL a0, a2, (a1)" "0EC5A52F";
+val _ = riscv_test_hex_print_asm "AMOOR.W x0, a2, (a1)" "40C5A02F";
+val _ = riscv_test_hex_print_asm "AMOSWAP.W a0, a0, (a1)" "08A5A52F";
+val _ = riscv_test_hex_print_asm "AMOADD.D a1, a2, (a1)" "00C5B5AF";
+
+(* Load-reserved and store-conditional *)
+val _ = riscv_test_hex_print_asm "LR.W a0, (a1)" "1005A52F";
+val _ = riscv_test_hex_print_asm "LR.D a0, (a1)" "1005B52F";
+val _ = riscv_test_hex_print_asm "LR.W.AQ x0, (a1)" "1405A02F";
+(* TODO: the result depends on the load reservation, which is not lifted *)
+val _ = riscv_test_hex_print_asm "SC.W a0, a2, (a1)" "18C5A52F";
+val _ = riscv_test_hex_print_asm "SC.D a0, a2, (a1)" "18C5B52F";
+
+val _ = print_msg "\n";
+val _ = print_header "RV64C Standard Extension (integer instructions)";
+val _ = print_msg "\n\n";
+
+(* 16-bit instructions.
+ * Corresponding 32-bit instructions in comments. *)
+
+(* Quadrant 0 *)
+  (* addi a0, sp, 16 *)
+  val _ = riscv_test_hex_print_asm "C.ADDI4SPN a0, sp, 16" "0808";
+  (* lw a0, 4(a1) *)
+  val _ = riscv_test_hex_print_asm "C.LW a0, 4(a1)" "41C8";
+  (* ld a0, 8(a1) *)
+  val _ = riscv_test_hex_print_asm "C.LD a0, 8(a1)" "6588";
+  (* sw a0, 4(a1) *)
+  val _ = riscv_test_hex_print_asm "C.SW a0, 4(a1)" "C1C8";
+  (* sd a0, 8(a1) *)
+  val _ = riscv_test_hex_print_asm "C.SD a0, 8(a1)" "E588";
+
+(* Quadrant 1 *)
+  (* addi x0, x0, 0 *)
+  val _ = riscv_test_hex_print_asm "C.NOP" "0001";
+  (* addi a0, a0, -5 *)
+  val _ = riscv_test_hex_print_asm "C.ADDI a0, -5" "156D";
+  (* addiw a0, a0, 3 *)
+  val _ = riscv_test_hex_print_asm "C.ADDIW a0, 3" "250D";
+  (* addi a0, x0, 0 *)
+  val _ = riscv_test_hex_print_asm "C.LI a0, 0" "4501";
+  (* addi sp, sp, -64 *)
+  val _ = riscv_test_hex_print_asm "C.ADDI16SP sp, -64" "7139";
+  (* lui a0, 0x1f *)
+  val _ = riscv_test_hex_print_asm "C.LUI a0, 0x1f" "657D";
+  (* srli a0, a0, 3 *)
+  val _ = riscv_test_hex_print_asm "C.SRLI a0, 3" "810D";
+  (* srai a0, a0, 3 *)
+  val _ = riscv_test_hex_print_asm "C.SRAI a0, 3" "850D";
+  (* andi a0, a0, -6 *)
+  val _ = riscv_test_hex_print_asm "C.ANDI a0, -6" "9969";
+  (* sub a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.SUB a0, a1" "8D0D";
+  (* xor a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.XOR a0, a1" "8D2D";
+  (* or a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.OR a0, a1" "8D4D";
+  (* and a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.AND a0, a1" "8D6D";
+  (* subw a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.SUBW a0, a1" "9D0D";
+  (* addw a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.ADDW a0, a1" "9D2D";
+  (* jal x0, 8 *)
+  val _ = riscv_test_hex_print_asm "C.J 8" "A021";
+  (* beq a0, x0, 8 *)
+  val _ = riscv_test_hex_print_asm "C.BEQZ a0, 8" "C501";
+  (* bne a0, x0, 8 *)
+  val _ = riscv_test_hex_print_asm "C.BNEZ a0, 8" "E501";
+
+(* Quadrant 2 *)
+  (* slli a0, a0, 3 *)
+  val _ = riscv_test_hex_print_asm "C.SLLI a0, 3" "050E";
+  (* lw a0, 4(sp) *)
+  val _ = riscv_test_hex_print_asm "C.LWSP a0, 4(sp)" "4512";
+  (* ld a0, 8(sp) *)
+  val _ = riscv_test_hex_print_asm "C.LDSP a0, 8(sp)" "6522";
+  (* jalr x0, 0(ra), that is, ret *)
+  val _ = riscv_test_hex_print_asm "C.JR ra" "8082";
+  (* add a0, x0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.MV a0, a1" "852E";
+  (* ebreak (not yet supported by stepLib, as EBREAK above) *)
+  val _ = riscv_test_hex_print_asm "C.EBREAK" "9002";
+  (* jalr ra, 0(a5) *)
+  val _ = riscv_test_hex_print_asm "C.JALR a5" "9782";
+  (* add a0, a0, a1 *)
+  val _ = riscv_test_hex_print_asm "C.ADD a0, a1" "952E";
+  (* sw a0, 4(sp) *)
+  val _ = riscv_test_hex_print_asm "C.SWSP a0, 4(sp)" "C22A";
+  (* sd a0, 8(sp) *)
+  val _ = riscv_test_hex_print_asm "C.SDSP a0, 8(sp)" "E42A";
+
 
 val riscv_expected_failed_hexcodes:string list =
 [
    (* Base *)
-   "0881008F" (* FENCE x1, x2, i, i *),
    "00000073" (* ECALL *),
    "00100073" (* EBREAK *),
-   (* Zifencei *)
-   "0000100F" (* FENCE.I *)
+   (* A *)
+   "80C5A52F" (* AMOMIN.W *),
+   "A0C5A52F" (* AMOMAX.W *),
+   "C0C5A52F" (* AMOMINU.W *),
+   "E0C5A52F" (* AMOMAXU.W *),
+   "18C5A52F" (* SC.W *),
+   "18C5B52F" (* SC.D *),
+   (* C *)
+   "9002" (* C.EBREAK *)
 ];
 
 val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;

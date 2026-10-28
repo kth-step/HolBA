@@ -1209,6 +1209,20 @@ SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def,
                                              bmr_mem_lf_def]
 QED
 
+Theorem bmr_ms_mem_contains_RISCV_2:
+  !ms v1 v2.
+    (bmr_ms_mem_contains riscv_bmr ms (ms.c_PC ms.procID, [v1; v2])
+    <=>
+      ((ms.MEM8 (ms.c_PC ms.procID) = v1) /\
+       (ms.MEM8 ((ms.c_PC ms.procID) + 1w) = v2)
+      )
+    )
+Proof
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def,
+                                             riscv_bmr_EVAL,
+                                             bmr_mem_lf_def]
+QED
+
 
 
 

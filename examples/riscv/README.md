@@ -33,7 +33,7 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 
 ### 0. RISC-V program
 
-- RISC-V programs must be given in `.da` format for RV64G instruction set
+- RISC-V programs must be given in `.da` format for RV64G instruction set, optionally with 16-bit integer instructions from the C extension
 - we found that C programs compiled with `-O1` before disassembly are easier to specify and verify (fewer instructions, close correspondence to source code)
 - to enable linking, include a (dummy) `main` function
 
@@ -78,7 +78,7 @@ Disassembly of section .text:
 - requires manual specification of code area addresses, for all code included in the binary program
 - the lifting stores HOL4 constants for the BIR program, the original binary program, and a lifting theorem for use in backlifting
 - **automatic** once arguments (names and code area boundaries) are given inside HOL4
-- the code area addresses have to be accurate, i.e., the end boundary is the address of the last instruction plus 4 in case of 32-bit instructions as in RV64G
+- the code area addresses have to be accurate, i.e., the end boundary is the address of the last instruction plus its size: 4 for 32-bit instructions as in RV64G, 2 for 16-bit (compressed) instructions
 
 Example:
 
