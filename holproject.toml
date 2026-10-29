@@ -3,7 +3,7 @@ schema = 2
 minimum_version = "0.11.0"
 
 [project]
-name = "HOLBADIR"
+name = "holba"
 
 [dependencies.hol]
 git = "https://github.com/HOL-Theorem-Prover/HOL.git"
@@ -20,56 +20,45 @@ path = "examples/l3-machine-code"
 manifest = "shims/hol_l3_machine_code.toml"
 
 [build]
-members = [
-  "src/tools/exec",
-  "src/tools/wp",
-  "src/tools/compute",
-  "src/tools/backlifter",
-  "src/tools/pass",
-  "src/tools/comp",
-  "src/tools/cfg",
-  "src/tools/scamv",
-  "src/tools/scamv/persistence",
-  "src/tools/scamv/obsmodel",
-  "src/tools/scamv/symbexec",
-  "src/tools/lifter",
-  "src/tools/symbexec",
-  "src/extra",
-  "src/shared",
-  "src/shared/l3-machine-code/riscv/step",
-  "src/shared/l3-machine-code/riscv/model",
-  "src/shared/smt",
-  "src/shared/smt/HolSmt",
-  "src/shared/convs",
-  "src/theory/tools/wp",
-  "src/theory/tools/backlifter",
-  "src/theory/tools/comp",
-  "src/theory/tools/lifter",
-  "src/theory/tools/symbexec",
-  "src/theory/bir",
-  "src/theory/models/l3mod",
-  "src/theory/program_logic",
-  "src/theory/bir-support",
-]
-exclude = [
-  "src/tools/cfg/examples", 
-  "src/tools/scamv/symbexec/examples",
-  "src/tools/lifter/benchmark",
-  "src/tools/wp/benchmark",
-]
+members = ["src"]
 exclude_globs = [
   "*/selftest.sml",
   "*/selftest_*.sml",
   "*/test-*.sml",
 ]
-roots = [
- "src/tools/lifter/bir_lifter_interfaceLib.sml",
- "src/tools/backlifter/bir_backlifterLib.sml",
- "src/tools/symbexec/birs_auxLib.sml",
- "src/shared/smt/HolSmt/HolBA_HolSmtLib.sml",
- "src/tools/scamv/obsmodel/bir_obs_modelScript.sml",
-]
+root_groups = ["lib"]
 tactic_timeout = 600.0
+
+# Everything HolBA provides as a library.
+[build.groups.lib]
+include = ["src"]
+exclude_globs = ["*/examples/*", "*/benchmark/*"]
+
+# Examples under src, built on demand: `holbuild build @examples`.
+[build.groups.examples]
+include_globs = ["*/examples/*"]
+exclude = [
+  "src/tools/symbexec/examples/analysis",
+  "src/tools/symbexec/examples/analysis_modexp",
+  "src/tools/symbexec/examples/analysis_shortprogs",
+  "src/tools/symbexec/examples/riscv",
+]
+
+# Benchmarks under src, built on demand: `holbuild build @benchmarks`.
+[build.groups.benchmarks]
+include_globs = ["*/benchmark/*"]
+exclude = ["src/tools/wp/benchmark"]
+
+# Known not to build: the symbexec examples use birs_rule_STEP_prog_fun, which
+# birs_execLib no longer exports; the wp benchmark needs .da files not in the repo.
+[build.groups.stale]
+include = [
+  "src/tools/symbexec/examples/analysis",
+  "src/tools/symbexec/examples/analysis_modexp",
+  "src/tools/symbexec/examples/analysis_shortprogs",
+  "src/tools/symbexec/examples/riscv",
+  "src/tools/wp/benchmark",
+]
 
 # riscv.sml is compiled with -toplevel by Holmake (see its Holmakefile).
 [actions.riscv]

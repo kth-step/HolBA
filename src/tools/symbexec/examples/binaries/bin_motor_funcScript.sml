@@ -1,3 +1,7 @@
+(* lets holbuild stage motor_set.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["motor_set.da"]
+
 open HolKernel Parse
 open PPBackEnd;
 

@@ -1,6 +1,6 @@
 (*
 load "bir_symb_execLib";
-load "toyBinaryTheory";
+load "toy_aarch64BinaryTheory";
 *)
 
 open bir_programTheory;

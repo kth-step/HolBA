@@ -12,10 +12,10 @@ rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
 
 # HolBA itself (the root holproject.toml of this repository). holbuild has no
 # path dependencies; to build against the enclosing checkout, put
-#   [overrides.HOLBADIR]
+#   [overrides.holba]
 #   path = "../.."
 # in examples/arm8/.holconfig.toml.
-[dependencies.HOLBADIR]
+[dependencies.holba]
 git = "https://github.com/kth-step/HolBA"
 rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"
 
@@ -28,8 +28,8 @@ members = [
   "swap",
   "update_sat",
 ]
-# HOLBADIR declares roots, so without explicit roots/root_groups here a plain
-# `holbuild build` would only build HOLBADIR's roots.
+# holba declares roots, so without explicit roots/root_groups here a plain
+# `holbuild build` would only build holba's roots.
 root_groups = ["add_reg", "incr", "isqrt", "max", "swap", "update_sat"]
 tactic_timeout = 600.0
 
