@@ -1,3 +1,7 @@
+(* lets holbuild stage kernel_trap.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["kernel_trap.da"]
+
 open HolKernel Parse;
 
 open bir_lifter_interfaceLib;

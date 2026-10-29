@@ -1,3 +1,7 @@
+(* lets holbuild stage mod2.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["mod2.da"]
+
 open HolKernel boolLib Parse bossLib;
 
 open bir_lifter_interfaceLib;
