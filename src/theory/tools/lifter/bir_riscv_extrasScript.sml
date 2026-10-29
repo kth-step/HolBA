@@ -254,6 +254,12 @@ val mem_dword_rev_simp = SIMP_RULE (std_ss++wordsLib.WORD_ss++wordsLib.WORD_ARIT
 val elim_zero_for_def_thm =
   GEN_ALL (SIMP_CONV (std_ss++wordsLib.WORD_ss) [] ``a + 0w  =+ w``);
 
+Theorem riscv_word_add1_neq[local]:
+  a + 1w <> a
+Proof
+  blastLib.BBLAST_TAC >> fs[word1_distinct]
+QED
+
 (* Essentially copied from ARMv8... *)
 val riscv_mem_store_FOLDS = save_thm ("riscv_mem_store_FOLDS",
 let
@@ -295,12 +301,7 @@ let
      SIMP_CONV (std_ss++wordsLib.WORD_ss) [def_thm,
         GSYM mem_store_byte_def] tm))
 
-Theorem word_add1_neq[local]:
-  a + 1w <> a
-Proof
-  blastLib.BBLAST_TAC >> fs[word1_distinct]
-QED
-  val upd_add1_comm = GEN_ALL (HO_MATCH_MP UPDATE_COMMUTES word_add1_neq )
+  val upd_add1_comm = GEN_ALL (HO_MATCH_MP UPDATE_COMMUTES riscv_word_add1_neq)
 
   fun mk_zero_thm def_thm tm = GEN_ALL (GSYM (
      SIMP_CONV (std_ss++wordsLib.WORD_ss) [def_thm, upd_add1_comm, GSYM mem_store_byte_def] tm))
