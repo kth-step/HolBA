@@ -63,6 +63,65 @@ Definition riscv_cont_def:
             (post ms))
 End
 
+(* ---------------------------------- *)
+(* Rules for RISC-V contract reasoning *)
+(* ---------------------------------- *)
+
+Theorem riscv_ts_first_enc:
+ first_enc riscv_ts
+Proof
+ rw [transition_systemTheory.first_enc_def, riscv_ts_def, riscv_weak_trs_def]
+QED
+
+(* Rule of consequence *)
+Theorem riscv_cont_conseq_rule:
+ !mms l ls pre1 pre2 post1 post2.
+  (!ms. pre2 ms ==> pre1 ms) ==>
+  (!ms. post1 ms ==> post2 ms) ==>
+  riscv_cont mms l ls pre1 post1 ==>
+  riscv_cont mms l ls pre2 post2
+Proof
+ rw [riscv_cont_def, t_jgmt_def] >>
+ METIS_TAC []
+QED
+
+(* Ending labels can be removed if the postcondition
+ * implies they are not encountered *)
+Theorem riscv_cont_subset_rule:
+ !mms l ls1 ls2 pre post.
+  (!ms. post ms ==> ms.c_PC ms.procID NOTIN ls2) ==>
+  riscv_cont mms l (ls1 UNION ls2) pre post ==>
+  riscv_cont mms l ls1 pre post
+Proof
+ rw [riscv_cont_def] >>
+ irule (MATCH_MP total_subset_rule_thm riscv_ts_first_enc) >>
+ qexists_tac `ls2` >>
+ fs [riscv_ts_def]
+QED
+
+(* Sequential composition, where the first contract states
+ * that execution reaches l2 before any label in ls *)
+Theorem riscv_cont_seq_rule:
+ !mms l l2 ls pre1 post1 pre2 post2.
+  l2 NOTIN ls ==>
+  riscv_cont mms l (l2 INSERT ls) pre1 post1 ==>
+  (!ms. post1 ms ==> ms.c_PC ms.procID = l2 /\ pre2 ms) ==>
+  riscv_cont mms l2 ls pre2 post2 ==>
+  riscv_cont mms l ls pre1 post2
+Proof
+ rpt strip_tac >>
+ fs [riscv_cont_def, t_jgmt_def] >>
+ rpt strip_tac >>
+ `?s'. riscv_ts.weak (l2 INSERT ls) ms s' /\ riscv_bmr.bmr_extra s' /\
+   EVERY (bmr_ms_mem_contains riscv_bmr s') mms /\ post1 s'` by METIS_TAC [] >>
+ `riscv_ts.ctrl s' = l2 /\ pre2 s'` by fs [riscv_ts_def] >>
+ `?s''. riscv_ts.weak ls s' s'' /\ riscv_bmr.bmr_extra s'' /\
+   EVERY (bmr_ms_mem_contains riscv_bmr s'') mms /\ post2 s''` by METIS_TAC [] >>
+ qexists_tac `s''` >> fs [] >>
+ `riscv_ts.weak ({l2} UNION ls) ms s'` by fs [GSYM pred_setTheory.INSERT_SING_UNION] >>
+ METIS_TAC [transition_systemTheory.weak_comp, riscv_ts_first_enc]
+QED
+
 (* FIXME: generalize for both arm8 and riscv *)
 Definition bir_pre_riscv_to_bir_def:
   bir_pre_riscv_to_bir pre pre_bir = (

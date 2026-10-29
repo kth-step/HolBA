@@ -17,25 +17,31 @@ val _ = new_theory "chacha20_column_round_symb_transf";
 (* BIR symbolic execution analysis *)
 (* ------------------------------- *)
 
+(* the contract also excludes the end of the double round
+   (diagonal round), to enable sequential composition *)
+
 val bspec_cont_thm =
- bir_symb_transfer_thm
+ bir_symb_transfer_excl_thm
   bir_chacha20_prog_def
   chacha20_column_round_init_addr_def chacha20_column_round_end_addr_def
+  chacha20_double_round_end_addr_def
   bspec_chacha20_column_round_pre_def bspec_chacha20_column_round_post_def
   chacha20_birenvtyl_def chacha20_prog_vars_list_def
   chacha20_column_round_symb_analysis_thm NONE chacha20_prog_vars_thm;
 
 val init_addr_tm = (snd o dest_eq o concl) chacha20_column_round_init_addr_def;
 val end_addr_tm = (snd o dest_eq o concl) chacha20_column_round_end_addr_def;
+val excl_addr_tm = (snd o dest_eq o concl) chacha20_double_round_end_addr_def;
 val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_chacha20_column_round_pre_def;
 val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_chacha20_column_round_post_def;
 
-Theorem bspec_cont_chacha20_column_round:
+Theorem bspec_cont_chacha20_column_round_excl:
  bir_cont bir_chacha20_prog bir_exp_true
-  (BL_Address (Imm64 ^init_addr_tm)) {BL_Address (Imm64 ^end_addr_tm)} {}
+  (BL_Address (Imm64 ^init_addr_tm))
+  {BL_Address (Imm64 ^end_addr_tm); BL_Address (Imm64 ^excl_addr_tm)} {}
   ^bspec_pre_tm
-  (\l. if l = BL_Address (Imm64 ^end_addr_tm)
-       then ^bspec_post_tm
+  (\l. if l = BL_Address (Imm64 ^end_addr_tm) then ^bspec_post_tm
+       else if l = BL_Address (Imm64 ^excl_addr_tm) then bir_exp_false
        else bir_exp_false)
 Proof
  rw [bspec_cont_thm]

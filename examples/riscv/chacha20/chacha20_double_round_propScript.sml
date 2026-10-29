@@ -41,80 +41,10 @@ open chachaTheory;
 open chacha20Theory;
 open chacha20_spec_riscvTheory;
 open chacha20_spec_birTheory;
-open transition_systemTheory;
-
-open chacha20_double_round_symb_transfTheory;
+open chacha20_column_round_propTheory;
 open chacha20_diagonal_round_propTheory;
 
 val _ = new_theory "chacha20_double_round_prop";
-
-(* ------------------------------------- *)
-(* Sequential composition of RISC-V contracts *)
-(* ------------------------------------- *)
-
-Theorem riscv_ts_first_enc[local]:
- first_enc riscv_ts
-Proof
- rw [first_enc_def, riscv_ts_def, riscv_weak_trs_def]
-QED
-
-(* The first contract must state that execution reaches l2 before
-   any label in ls, which is why ls is part of its ending label set *)
-Theorem riscv_cont_seq_rule[local]:
- !mms l l2 ls pre1 post1 pre2 post2.
-  l2 NOTIN ls ==>
-  riscv_cont mms l (l2 INSERT ls) pre1 post1 ==>
-  (!ms. post1 ms ==> ms.c_PC ms.procID = l2 /\ pre2 ms) ==>
-  riscv_cont mms l2 ls pre2 post2 ==>
-  riscv_cont mms l ls pre1 post2
-Proof
- rpt strip_tac >>
- fs [riscv_cont_def, t_jgmt_def] >>
- rpt strip_tac >>
- `?s'. riscv_ts.weak (l2 INSERT ls) ms s' /\ riscv_bmr.bmr_extra s' /\
-   EVERY (bmr_ms_mem_contains riscv_bmr s') mms /\ post1 s'` by METIS_TAC [] >>
- `riscv_ts.ctrl s' = l2 /\ pre2 s'` by fs [riscv_ts_def] >>
- `?s''. riscv_ts.weak ls s' s'' /\ riscv_bmr.bmr_extra s'' /\
-   EVERY (bmr_ms_mem_contains riscv_bmr s'') mms /\ post2 s''` by METIS_TAC [] >>
- qexists_tac `s''` >> fs [] >>
- `riscv_ts.weak ({l2} UNION ls) ms s'` by fs [GSYM INSERT_SING_UNION] >>
- METIS_TAC [weak_comp, riscv_ts_first_enc]
-QED
-
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_chacha20_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_excl_post_def;
-
-(* ----------------------------------------------- *)
-(* Backlifting BIR column round contract to RISC-V *)
-(* ----------------------------------------------- *)
-
-val riscv_cont_chacha20_column_round_excl_thm =
- get_riscv_contract
-  bspec_cont_chacha20_column_round_excl
-  progbin_tm riscv_pre_tm riscv_post_tm
-  bir_chacha20_prog_def
-  [bspec_chacha20_column_round_pre_def]
-  bspec_chacha20_column_round_pre_def chacha20_column_round_riscv_pre_imp_bspec_pre_thm
-  [bspec_chacha20_column_round_post_def] chacha20_column_round_riscv_excl_post_imp_bspec_post_thm
-  bir_chacha20_riscv_lift_THM;
-
-Theorem riscv_cont_chacha20_column_round_excl:
- riscv_cont bir_chacha20_progbin chacha20_column_round_init_addr
-  {chacha20_column_round_end_addr; chacha20_double_round_end_addr}
- (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
-   pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
- (riscv_chacha20_column_round_excl_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
-   pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
-Proof
- rw [chacha20_column_round_init_addr_def,chacha20_column_round_end_addr_def,
-     chacha20_double_round_end_addr_def] >>
- ACCEPT_TAC riscv_cont_chacha20_column_round_excl_thm
-QED
 
 (* ---------------------------------- *)
 (* Composing column and diagonal round *)

@@ -51,21 +51,40 @@ val _ = new_theory "chacha20_column_round_prop";
 
 val progbin_tm = (fst o dest_eq o concl) bir_chacha20_progbin_def;
 val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_post_def;
+val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_column_round_excl_post_def;
 
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
-val riscv_cont_chacha20_column_round_thm =
+val riscv_cont_chacha20_column_round_excl_thm =
  get_riscv_contract
-  bspec_cont_chacha20_column_round
+  bspec_cont_chacha20_column_round_excl
   progbin_tm riscv_pre_tm riscv_post_tm
   bir_chacha20_prog_def
   [bspec_chacha20_column_round_pre_def]
   bspec_chacha20_column_round_pre_def chacha20_column_round_riscv_pre_imp_bspec_pre_thm
-  [bspec_chacha20_column_round_post_def] chacha20_column_round_riscv_post_imp_bspec_post_thm
+  [bspec_chacha20_column_round_post_def] chacha20_column_round_riscv_excl_post_imp_bspec_post_thm
   bir_chacha20_riscv_lift_THM;
+
+(* column round contract that also excludes the end of the double round,
+   for sequential composition with the diagonal round *)
+Theorem riscv_cont_chacha20_column_round_excl:
+ riscv_cont bir_chacha20_progbin chacha20_column_round_init_addr
+  {chacha20_column_round_end_addr; chacha20_double_round_end_addr}
+ (riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+   pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+ (riscv_chacha20_column_round_excl_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+   pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+Proof
+ rw [chacha20_column_round_init_addr_def,chacha20_column_round_end_addr_def,
+     chacha20_double_round_end_addr_def] >>
+ ACCEPT_TAC riscv_cont_chacha20_column_round_excl_thm
+QED
+
+(* -------------------------------------- *)
+(* Column round contract without exclusion *)
+(* -------------------------------------- *)
 
 Theorem riscv_cont_chacha20_column_round:
  riscv_cont bir_chacha20_progbin chacha20_column_round_init_addr {chacha20_column_round_end_addr}
@@ -74,8 +93,25 @@ Theorem riscv_cont_chacha20_column_round:
  (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof
- rw [chacha20_column_round_init_addr_def,chacha20_column_round_end_addr_def] >>
- ACCEPT_TAC riscv_cont_chacha20_column_round_thm
+ MATCH_MP_TAC (REWRITE_RULE [AND_IMP_INTRO] riscv_cont_conseq_rule) >>
+ qexistsl_tac [
+  `riscv_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+   pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15`,
+  `riscv_chacha20_column_round_excl_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+   pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15`] >>
+ rpt conj_tac >- rw [] >- (
+  rpt strip_tac >>
+  Cases_on `ms.c_PC ms.procID = chacha20_column_round_end_addr` >>
+  fs [riscv_chacha20_column_round_excl_post_def]
+ ) >>
+ MATCH_MP_TAC (REWRITE_RULE [AND_IMP_INTRO] riscv_cont_subset_rule) >>
+ qexists_tac `{chacha20_double_round_end_addr}` >>
+ conj_tac >- (
+  rw [riscv_chacha20_column_round_excl_post_def,
+      chacha20_column_round_end_addr_def, chacha20_double_round_end_addr_def]
+ ) >>
+ REWRITE_TAC [GSYM INSERT_SING_UNION] >>
+ ACCEPT_TAC riscv_cont_chacha20_column_round_excl
 QED
 
 (* ------------------------ *)
