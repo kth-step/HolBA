@@ -1,3 +1,7 @@
+(* lets holbuild stage incr.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["incr.da"]
+
 open HolKernel Parse;
 
 open bir_lifter_interfaceLib;

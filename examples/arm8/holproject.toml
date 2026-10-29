@@ -21,11 +21,32 @@ rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"
 
 [build]
 members = [
+  "add_reg",
+  "incr",
+  "isqrt",
   "max",
+  "swap",
+  "update_sat",
 ]
 # HOLBADIR declares roots, so without explicit roots/root_groups here a plain
 # `holbuild build` would only build HOLBADIR's roots.
-root_groups = ["max"]
+root_groups = ["add_reg", "incr", "isqrt", "max", "swap", "update_sat"]
+tactic_timeout = 600.0
+
+[build.groups.add_reg]
+include = ["add_reg"]
+
+[build.groups.incr]
+include = ["incr"]
+
+[build.groups.isqrt]
+include = ["isqrt"]
 
 [build.groups.max]
 include = ["max"]
+
+[build.groups.swap]
+include = ["swap"]
+
+[build.groups.update_sat]
+include = ["update_sat"]
