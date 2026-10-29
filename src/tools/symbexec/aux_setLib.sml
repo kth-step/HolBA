@@ -62,14 +62,14 @@ in (* local *)
   val birs_env_EQ_CONV = Profile.profile "auxset_birs_env_EQ_CONV" birs_env_EQ_CONV;
 
 
-  val birs_state_EQ_thm = prove(``
+  (* derived without TAC_PROOF, which requires a current theory at load time *)
+  val birs_state_EQ_thm = simpLib.SIMP_PROVE bool_ss
+    [bir_symbTheory.birs_state_t_literal_11, simpLib.AC boolTheory.CONJ_ASSOC boolTheory.CONJ_COMM] ``
       !b21 f1 b11 b01 b22 f2 b12 b02.
        <|bsst_pc := b21; bsst_environ := f1; bsst_status := b11; bsst_pcond := b01|> =
        <|bsst_pc := b22; bsst_environ := f2; bsst_status := b12; bsst_pcond := b02|> <=>
        b11 = b12 /\ (b21 = b22 /\ (b01 = b02 /\ f1 = f2))
-    ``,
-      METIS_TAC [bir_symbTheory.birs_state_t_literal_11]
-    ); (*status, pc, pcond, senv*)
+    ``; (*status, pc, pcond, senv*)
   val birs_state_EQ_CONV =
     (REWR_CONV birs_state_EQ_thm) THENC
     CONJL_CONV

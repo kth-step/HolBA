@@ -1131,8 +1131,7 @@ fun get_patched_step_hex ms_v hex_code =
 
   (* Simple eval *)
 
-  val compute_bl_compset = listSimps.list_compset ();
-  val _ = computeLib.add_thms [bir_is_lifted_inst_block_COMPUTE_block_def,
+  val compute_bl_compset = computeLib.add_thms [bir_is_lifted_inst_block_COMPUTE_block_def,
              bir_update_assert_block_def, pairTheory.pair_case_thm,
              bir_assert_block_def, bir_update_blockE_INIT_def, bir_update_blockB_def,
              bir_updateE_desc_remove_var_def, bir_updateE_desc_var_def,
@@ -1143,8 +1142,8 @@ fun get_patched_step_hex ms_v hex_code =
              bir_temp_varsTheory.bir_temp_var_name_def,
              bir_assert_desc_exp_def,
              bir_update_blockB_STEP2_def,
-             bir_update_blockE_FINAL_def] compute_bl_compset
-  val _ = optionLib.OPTION_rws compute_bl_compset
+             bir_update_blockE_FINAL_def] listSimps.list_compset
+  val compute_bl_compset = optionLib.OPTION_rws compute_bl_compset
   val compute_bl_conv = computeLib.CBV_CONV compute_bl_compset
 
   fun compute_bl lb al_mem_t al_step_t eup_temp_t eup_t updates_t = let
@@ -1447,7 +1446,7 @@ val cache = lift_inst_cache_empty;
 *)
   local
      val discharge_hyp_CONV = SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0]
-     val final_CS = wordsLib.words_compset ()
+     val final_CS = wordsLib.words_compset
      val final_CONV = computeLib.CBV_CONV final_CS
   in
 (* For debugging RISC-V:
@@ -1561,10 +1560,9 @@ val cache = lift_inst_cache_empty;
 
     val bir_block_rewrs = type_rws ``:'o bir_block_t``;
 
-    val dist_labels_CS = reduceLib.num_compset ()
-    val _ = computeLib.add_thms (bir_block_rewrs@[b2n_n2w_REWRS, bir_program_addr_labels_sorted_def,
+    val dist_labels_CS = computeLib.add_thms (bir_block_rewrs@[b2n_n2w_REWRS, bir_program_addr_labels_sorted_def,
       bir_label_addresses_of_program_def, bir_label_addresses_of_program_REWRS,
-     bir_labels_of_program_REWRS, combinTheory.K_THM, sortingTheory.SORTED_DEF]) dist_labels_CS
+     bir_labels_of_program_REWRS, combinTheory.K_THM, sortingTheory.SORTED_DEF]) reduceLib.num_compset
 
     val dist_labels_CONV = computeLib.CBV_CONV dist_labels_CS
 
@@ -1572,12 +1570,11 @@ val cache = lift_inst_cache_empty;
           listTheory.FLAT]
 
 
-    val mm_equiv_merge_CS = reduceLib.num_compset ();
-    val _ = computeLib.add_thms [bmr_mem_contains_regions_EQUIV_MERGE_REWRS,
+    val mm_equiv_merge_CS = computeLib.add_thms [bmr_mem_contains_regions_EQUIV_MERGE_REWRS,
       listTheory.LENGTH, listTheory.REV_DEF,
-      listTheory.FLAT, listTheory.APPEND] mm_equiv_merge_CS
+      listTheory.FLAT, listTheory.APPEND] reduceLib.num_compset
 
-    val _ =  computeLib.add_conv (wordsSyntax.dimword_tm, 1, wordsLib.SIZES_CONV) mm_equiv_merge_CS
+    val mm_equiv_merge_CS = computeLib.add_conv (wordsSyntax.dimword_tm, 1, wordsLib.SIZES_CONV) mm_equiv_merge_CS
 
     val mm_equiv_merge_CONV = computeLib.CBV_CONV mm_equiv_merge_CS
 

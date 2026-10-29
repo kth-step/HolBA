@@ -31,9 +31,25 @@ fun get_streams p = Unix.streamsOf p;
 
 val z3proc_bin_o = ref (NONE : string option);
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
-val prelude_z3_path = holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/smt/holba_z3Lib_prelude.z3";
-val prelude_z3 = read_from_file prelude_z3_path;
-val prelude_z3_n = prelude_z3 ^ "\n";
+(* The prelude is located and read on first use, not at load time: under
+   holbuild, $(HOLBADIR) is not registered in holpathdb, so fall back to the
+   HOLBADIR environment variable. *)
+fun prelude_z3_path () =
+  let
+    val rel = "src/shared/smt/holba_z3Lib_prelude.z3";
+    val p = holpathdb.subst_pathvars ("$(HOLBADIR)/" ^ rel);
+  in
+    if not (String.isPrefix "$(" p) then p else
+    case OS.Process.getEnv "HOLBADIR" of
+       SOME d => OS.Path.concat (d, rel)
+     | NONE => raise ERR "prelude_z3_path" "cannot locate HolBA: $(HOLBADIR) is not a known HOL path and HOLBADIR is not set"
+  end;
+val prelude_z3_o = ref (NONE : string option);
+fun prelude_z3 () =
+  case !prelude_z3_o of
+     SOME x => x
+   | NONE => let val x = read_from_file (prelude_z3_path ()) in (prelude_z3_o := SOME x; x) end;
+fun prelude_z3_n () = prelude_z3 () ^ "\n";
 val use_stack = true;
 val debug_print = ref false;
 fun kill_z3proc z3p =
@@ -64,7 +80,7 @@ fun get_z3proc z3bin =
     let
             val (_,s_out) = get_streams p;
             (* prepare prelude and push *)
-            val () = TextIO.output (s_out, prelude_z3 ^ "\n");
+            val () = TextIO.output (s_out, prelude_z3_n ());
             val () = TextIO.output (s_out, "(push)\n");
     in
       ()
@@ -92,7 +108,7 @@ fun get_z3wrapproc () =
          | NONE => raise ERR "get_z3wrapproc" "variable HOL4_Z3_WRAPPED_EXECUTABLE not defined";
         val _ = if not (!debug_print) then () else
                 print ("starting: " ^ z3wrap ^ "\n");
-        val p = openz3wrap z3wrap prelude_z3_path;
+        val p = openz3wrap z3wrap (prelude_z3_path ());
       in (z3wrapproc_o := SOME p; p) end;
   in
     p
@@ -123,7 +139,7 @@ fun sendreceive_query z3bin q =
    val p = get_z3proc z3bin;
    val (s_in,s_out) = get_streams p;
    val _ = if not use_stack then
-            TextIO.output (s_out, prelude_z3_n)
+            TextIO.output (s_out, prelude_z3_n ())
            else ();
 
    val timer = holba_miscLib.timer_start 0;

@@ -575,7 +575,7 @@ val OPTION_BIND_CONV =
     (ALL_CONV)
     (TRY_CONV (REWR_CONV (option_bind_def_0)))
   );
-val includes_vs_EMPTY_thm = prove(``bir_envty_includes_vs envty EMPTY = T``, fs[bir_symbTheory.bir_envty_includes_vs_EMPTY]);
+val includes_vs_EMPTY_thm = EQT_INTRO (SPEC_ALL bir_symbTheory.bir_envty_includes_vs_EMPTY);
 fun bir_envty_includes_vs_CONV eq_thms tm = (
   if (pred_setSyntax.is_insert o rand) tm then
     REWR_CONV bir_envTheory.bir_envty_includes_vs_INSERT THENC
@@ -987,20 +987,17 @@ val K_o_thm = prove(“
 );
 *)
 
-val bir_pc_index_update_thm = prove(“
+val bir_pc_index_update_thm = simpLib.SIMP_PROVE (srw_ss()) [] “
   !l i f.
   <|bpc_label := l; bpc_index := i|> with bpc_index updated_by f =
   <|bpc_label := l; bpc_index := f i|>
-”, rpt GEN_TAC >> EVAL_TAC);
+”;
 
-val birs_state_thms = type_rws ``:birs_state_t``;
-val birs_state_thms_filtd1 = List.take(birs_state_thms, 7);
-val birs_state_thms_filtd = (hd birs_state_thms_filtd1)::(List.drop(birs_state_thms_filtd1, 3));
-val birs_state_thms_filtd1 = List.take(birs_state_thms, 7);
-val birs_state_thms_filtd2 = (hd birs_state_thms_filtd1)::(List.drop(birs_state_thms_filtd1, 3));
-val birs_state_thms_filtd3 = (List.take(birs_state_thms_filtd2, 2))@(List.drop(birs_state_thms_filtd2, 4));
-val birs_state_thms_filtd = [hd birs_state_thms_filtd3, (last) birs_state_thms_filtd3];
-val birs_state_thms_filtd = birs_state_thms_filtd3;
+(* selected by name: the order of type_rws differs between HOL versions *)
+val birs_state_thms_filtd =
+  [bir_symbTheory.birs_state_t_fupdcanon,
+   bir_symbTheory.birs_state_t_accfupds,
+   bir_symbTheory.birs_state_t_fupdfupds];
 
 val rewrite_conv_state =
   REWRITE_CONV ((*[(*bir_symbTheory.birs_state_t_accfupds, *)

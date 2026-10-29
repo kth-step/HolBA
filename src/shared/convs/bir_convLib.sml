@@ -90,13 +90,13 @@ in (* local *)
   val bir_varname_EQ_CONV = wrap_cache_result_EQ_BEQ_string stringLib.fromHOLstring bir_varname_EQ_CONV;
   val bir_varname_EQ_CONV = Profile.profile "auxset_bir_varname_EQ_CONV" bir_varname_EQ_CONV;
 
-  val bir_var_EQ_thm = prove(``
+  (* derived without TAC_PROOF, which requires a current theory at load time *)
+  val bir_var_EQ_thm = simpLib.SIMP_PROVE bool_ss
+    [bir_envTheory.bir_var_t_11, simpLib.AC boolTheory.CONJ_ASSOC boolTheory.CONJ_COMM] ``
     !a0 a1 a0' a1'.
       BVar a0 a1 = BVar a0' a1' <=>
       a1 = a1' /\ a0 = a0'
-  ``,
-    METIS_TAC [bir_envTheory.bir_var_t_11]
-  );
+  ``;
 
   val bir_immtype_EQ_CONV =
     REWRITE_CONV [bir_immTheory.bir_immtype_t_distinct, GSYM bir_immTheory.bir_immtype_t_distinct];

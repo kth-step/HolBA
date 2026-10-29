@@ -43,7 +43,7 @@ struct
 
   val bir_endian_ss = rewrites (type_rws ``:bir_endian_t``)
   val EVAL_CONV =
-      computeLib.compset_conv (reduceLib.num_compset())
+      computeLib.compset_conv (reduceLib.num_compset)
         [computeLib.Defs
              [pred_setTheory.NOT_IN_EMPTY, pred_setTheory.IN_INSERT,
               REWRITE_RULE [GSYM arithmeticTheory.DIV2_def] wordsTheory.BIT_SET_def,

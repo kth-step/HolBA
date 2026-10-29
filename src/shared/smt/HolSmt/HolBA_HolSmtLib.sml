@@ -7,7 +7,7 @@ structure HolBA_HolSmtLib :> HolBA_HolSmtLib = struct
 
   open Abbrev
 
-  fun GENERIC_SMT_TAC solver goal =
+  fun GENERIC_SMT_TAC solver goal (_ : Context.t) =
   let
     val ERR = Feedback.mk_HOL_ERR "HolBA_HolSmtLib" "GENERIC_SMT_TAC"
   in
@@ -39,7 +39,8 @@ structure HolBA_HolSmtLib :> HolBA_HolSmtLib = struct
   fun Z3_ORACLE_PROVE tm = prove (tm, Z3_ORACLE_TAC)
   fun Z3_PROVE tm = prove (tm, Z3_TAC)
 
-  (* report whether solvers are available *)
+  (* report whether solvers are available.  The probe calls prove(T,...),
+     which needs a current theory; skip when none is active. *)
   val _ =
     let
       fun check_available prove_fn name =
@@ -49,20 +50,25 @@ structure HolBA_HolSmtLib :> HolBA_HolSmtLib = struct
         )
       fun provoke_err prove_fn =
         ignore (prove_fn boolSyntax.T)  (* should fail *)
-          handle Feedback.HOL_ERR {message, ...} =>
-            Feedback.HOL_MESG ("HolBA_HolSmtLib: " ^ message)
+          handle Feedback.HOL_ERR herr =>
+            Feedback.HOL_MESG ("HolBA_HolSmtLib: " ^ Feedback.message_of herr)
     in
-      Feedback.set_trace "HolBA_HolSmtLib" 0;
-      if HolBA_Yices.is_configured () then
-        check_available YICES_PROVE "Yices"
-      else
-        provoke_err YICES_PROVE;
-      if HolBA_Z3.is_configured () then (
-        check_available Z3_ORACLE_PROVE "Z3 (oracle)";
-        check_available Z3_PROVE "Z3 (with proofs)"
-      ) else
-        provoke_err Z3_ORACLE_PROVE;
-      Feedback.reset_trace "HolBA_HolSmtLib"
+      case Thm.getCT () of
+          NONE => ()
+        | SOME _ =>
+            (
+              Feedback.set_trace "HolBA_HolSmtLib" 0;
+              if HolBA_Yices.is_configured () then
+                check_available YICES_PROVE "Yices"
+              else
+                provoke_err YICES_PROVE;
+              if HolBA_Z3.is_configured () then (
+                check_available Z3_ORACLE_PROVE "Z3 (oracle)";
+                check_available Z3_PROVE "Z3 (with proofs)"
+              ) else
+                provoke_err Z3_ORACLE_PROVE;
+              Feedback.reset_trace "HolBA_HolSmtLib"
+            )
     end
 
 end
