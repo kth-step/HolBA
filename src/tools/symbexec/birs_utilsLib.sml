@@ -86,13 +86,7 @@ in (* local *)
   local
     open pred_setSyntax;
     open pred_setTheory;
-    val rotate_first_INSERTs_thm = prove(``
-      !x1 x2 xs.
-      (x1 INSERT x2 INSERT xs) = (x2 INSERT x1 INSERT xs)
-    ``,
-      fs [EXTENSION] >>
-      metis_tac []
-    );
+    val rotate_first_INSERTs_thm = pred_setTheory.INSERT_COMM;
     fun is_two_INSERTs tm = (is_insert tm) andalso ((is_insert o snd o dest_insert) tm);
   in
     fun rotate_two_INSERTs_conv tm =

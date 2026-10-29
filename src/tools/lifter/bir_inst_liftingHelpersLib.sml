@@ -3,6 +3,8 @@ struct
 
 local
 
+(* theories referenced by name below via mk_thy_type/prim_mk_const *)
+open bir_update_blockTheory bir_inst_liftingTheory bir_lifter_general_auxTheory;
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open PPBackEnd
 open bir_inst_liftingLibTypes
