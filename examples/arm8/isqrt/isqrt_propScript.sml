@@ -88,8 +88,8 @@ val arm8_cont_isqrt_3_thm =
 
 Theorem arm8_cont_isqrt_3:
  arm8_cont bir_isqrt_progbin isqrt_init_addr_3 {isqrt_end_addr_3_loop; isqrt_end_addr_3_ret}
-  (arm8_isqrt_pre_3 pre_x1 pre_x2 pre_x3)
-  (arm8_isqrt_post_3 pre_x1 pre_x2 pre_x3)
+  (arm8_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3)
+  (arm8_isqrt_post_3 pre_x0 pre_x1 pre_x2 pre_x3)
 Proof
  ACCEPT_TAC arm8_cont_isqrt_3_thm
 QED

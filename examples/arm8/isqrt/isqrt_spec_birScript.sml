@@ -121,6 +121,10 @@ End
 val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
  ``BExp_BinPred
     BIExp_Equal
+    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x0))``,
+ ``BExp_BinPred
+    BIExp_Equal
     (BExp_Den (BVar "R1" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x1))``,
  ``BExp_BinPred
@@ -134,12 +138,16 @@ val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
 ];
 
 Definition bspec_isqrt_pre_3_def:
- bspec_isqrt_pre_3 (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
+ bspec_isqrt_pre_3 (pre_x0:word64) (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
   ^bspec_isqrt_pre_3_tm
 End
 
 val bspec_isqrt_post_3_loop_tm = bslSyntax.bandl [
-  ``BExp_BinPred
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x0))``,
+ ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "R1" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x1))``,
@@ -158,12 +166,16 @@ val bspec_isqrt_post_3_loop_tm = bslSyntax.bandl [
 ];
 
 Definition bspec_isqrt_post_3_loop_def:
- bspec_isqrt_post_3_loop (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
+ bspec_isqrt_post_3_loop (pre_x0:word64) (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
   ^bspec_isqrt_post_3_loop_tm
 End
 
 val bspec_isqrt_post_3_ret_tm = bslSyntax.bandl [
-  ``BExp_BinPred
+ ``BExp_BinPred
+    BIExp_Equal
+    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 pre_x0))``,
+ ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "R1" (BType_Imm Bit64)))
     (BExp_Const (Imm64 pre_x1))``,
@@ -182,7 +194,7 @@ val bspec_isqrt_post_3_ret_tm = bslSyntax.bandl [
 ];
 
 Definition bspec_isqrt_post_3_ret_def:
- bspec_isqrt_post_3_ret (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
+ bspec_isqrt_post_3_ret (pre_x0:word64) (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
   ^bspec_isqrt_post_3_ret_tm
 End
 
@@ -279,8 +291,8 @@ QED
 
 Theorem isqrt_arm8_pre_3_imp_bspec_pre_3_thm:
  bir_pre_arm8_to_bir
-  (arm8_isqrt_pre_3 pre_x1 pre_x2 pre_x3)
-  (bspec_isqrt_pre_3 pre_x1 pre_x2 pre_x3)
+  (arm8_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3)
+  (bspec_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3)
 Proof
  rw [bir_pre_arm8_to_bir_def,arm8_isqrt_pre_3_def,bspec_isqrt_pre_3_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
@@ -291,9 +303,9 @@ QED
 
 Theorem isqrt_arm8_post_3_imp_bspec_post_3_thm:
  !ls. bir_post_bir_to_arm8
-   (arm8_isqrt_post_3 pre_x1 pre_x2 pre_x3)
-   (\l. if l = BL_Address (Imm64 0x720w) then bspec_isqrt_post_3_loop pre_x1 pre_x2 pre_x3
-     else if l = BL_Address (Imm64 0x734w) then bspec_isqrt_post_3_ret pre_x1 pre_x2 pre_x3
+   (arm8_isqrt_post_3 pre_x0 pre_x1 pre_x2 pre_x3)
+   (\l. if l = BL_Address (Imm64 0x720w) then bspec_isqrt_post_3_loop pre_x0 pre_x1 pre_x2 pre_x3
+     else if l = BL_Address (Imm64 0x734w) then bspec_isqrt_post_3_ret pre_x0 pre_x1 pre_x2 pre_x3
      else bir_exp_false)
    ls
 Proof
