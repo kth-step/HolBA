@@ -213,9 +213,9 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [arm8_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
 QED
 
-Theorem isqrt_arm8_post_1_excl_imp_bspec_post_1_thm:
+Theorem isqrt_arm8_post_1_imp_bspec_post_1_thm:
  !ls. bir_post_bir_to_arm8
-   (arm8_isqrt_post_1_excl pre_x0)
+   (arm8_isqrt_post_1 pre_x0)
    (\l. if l = BL_Address (Imm64 0x720w) then bspec_isqrt_post_1 pre_x0
         else if l = BL_Address (Imm64 0x734w) then bir_exp_false
         else bir_exp_false)
@@ -234,7 +234,7 @@ Proof
    bir_eval_bin_pred_def,
    bir_eval_bin_pred_exists_64_eq
   ] >>
-  rw [arm8_isqrt_post_1_excl_def, isqrt_end_addr_1_def, arm8_isqrt_post_1_def] >>
+  rw [arm8_isqrt_post_1_def, isqrt_end_addr_1_def] >>
   METIS_TAC [arm8_bmr_x1_equiv, arm8_bmr_x3_equiv]
  ) >>
  Cases_on `b.bpc_label = BL_Address (Imm64 0x734w)` >>
@@ -253,9 +253,9 @@ Proof
  rw []
 QED
 
-Theorem isqrt_arm8_post_2_excl_imp_bspec_post_2_thm:
+Theorem isqrt_arm8_post_2_imp_bspec_post_2_thm:
  !ls. bir_post_bir_to_arm8
-   (arm8_isqrt_post_2_excl pre_x1 pre_x3)
+   (arm8_isqrt_post_2 pre_x1 pre_x3)
    (\l. if l = BL_Address (Imm64 0x72cw) then bspec_isqrt_post_2 pre_x1 pre_x3
         else if l = BL_Address (Imm64 0x734w) then bir_exp_false
         else bir_exp_false)
@@ -274,7 +274,7 @@ Proof
    bir_eval_bin_pred_def,
    bir_eval_bin_pred_exists_64_eq
   ] >>
-  rw [arm8_isqrt_post_2_excl_def, isqrt_end_addr_2_def, arm8_isqrt_post_2_def] >>
+  rw [arm8_isqrt_post_2_def, isqrt_end_addr_2_def] >>
   METIS_TAC [arm8_bmr_x0_equiv, arm8_bmr_x1_equiv, arm8_bmr_x2_equiv, arm8_bmr_x3_equiv]
  ) >>
  Cases_on `b.bpc_label = BL_Address (Imm64 0x734w)` >>

@@ -100,16 +100,15 @@ Definition arm8_isqrt_pre_1_def:
   (ms.REG 0w = pre_x0)
 End
 
+(* The postconditions of contracts 1 and 2 fix the PC to the end
+   label, so that the contracts can also list the loop exit as an
+   ending label that is never reached first, as needed for composition *)
+
 Definition arm8_isqrt_post_1_def:
  arm8_isqrt_post_1 (pre_x0:word64) (ms:arm8_state) : bool =
-  (ms.REG 1w = 0w /\ ms.REG 3w = pre_x0)
-End
-
-(* before loop contract that also excludes the loop exit *)
-
-Definition arm8_isqrt_post_1_excl_def:
- arm8_isqrt_post_1_excl (pre_x0:word64) (ms:arm8_state) : bool =
-  (if ms.PC = isqrt_end_addr_1 then arm8_isqrt_post_1 pre_x0 ms else F)
+  (ms.PC = isqrt_end_addr_1 /\
+   ms.REG 1w = 0w /\
+   ms.REG 3w = pre_x0)
 End
 
 (* loop body contract *)
@@ -122,17 +121,11 @@ End
 
 Definition arm8_isqrt_post_2_def:
  arm8_isqrt_post_2 (pre_x1:word64) (pre_x3:word64) (ms:arm8_state) : bool =
-  (ms.REG 0w = pre_x1 /\
+  (ms.PC = isqrt_end_addr_2 /\
+   ms.REG 0w = pre_x1 /\
    ms.REG 1w = pre_x1 + 1w /\
    ms.REG 2w = (pre_x1 + 1w) * (pre_x1 + 1w) /\
    ms.REG 3w = pre_x3)
-End
-
-(* loop body contract that also excludes the loop exit *)
-
-Definition arm8_isqrt_post_2_excl_def:
- arm8_isqrt_post_2_excl (pre_x1:word64) (pre_x3:word64) (ms:arm8_state) : bool =
-  (if ms.PC = isqrt_end_addr_2 then arm8_isqrt_post_2 pre_x1 pre_x3 ms else F)
 End
 
 (* loop branch contract *)
@@ -180,12 +173,8 @@ End
 (* Whole program contract  *)
 (* ----------------------- *)
 
-(* Intended theorem (not yet proven):
-
-   arm8_cont bir_isqrt_progbin isqrt_init_addr {isqrt_end_addr}
-    (arm8_isqrt_pre pre_x0) (arm8_isqrt_post pre_x0)
-
-   i.e., starting at 0x718 with x0 = n, execution reaches the ret
+(*
+   Starting at 0x718 with x0 = n, execution reaches the ret
    instruction at 0x734 with x0 = floor(sqrt(n)).
 
    The bound on n is needed for termination: the loop exits when
