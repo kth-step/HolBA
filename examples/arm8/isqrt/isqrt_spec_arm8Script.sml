@@ -105,6 +105,13 @@ Definition arm8_isqrt_post_1_def:
   (ms.REG 1w = 0w /\ ms.REG 3w = pre_x0)
 End
 
+(* before loop contract that also excludes the loop exit *)
+
+Definition arm8_isqrt_post_1_excl_def:
+ arm8_isqrt_post_1_excl (pre_x0:word64) (ms:arm8_state) : bool =
+  (if ms.PC = isqrt_end_addr_1 then arm8_isqrt_post_1 pre_x0 ms else F)
+End
+
 (* loop body contract *)
 
 Definition arm8_isqrt_pre_2_def:
@@ -119,6 +126,13 @@ Definition arm8_isqrt_post_2_def:
    ms.REG 1w = pre_x1 + 1w /\
    ms.REG 2w = (pre_x1 + 1w) * (pre_x1 + 1w) /\
    ms.REG 3w = pre_x3)
+End
+
+(* loop body contract that also excludes the loop exit *)
+
+Definition arm8_isqrt_post_2_excl_def:
+ arm8_isqrt_post_2_excl (pre_x1:word64) (pre_x3:word64) (ms:arm8_state) : bool =
+  (if ms.PC = isqrt_end_addr_2 then arm8_isqrt_post_2 pre_x1 pre_x3 ms else F)
 End
 
 (* loop branch contract *)

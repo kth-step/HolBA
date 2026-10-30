@@ -19,12 +19,12 @@ val _ = new_theory "isqrt_symb_transf";
 
 val _ = show_tags := true;
 
-(* before loop contract *)
+(* before loop contract, excluding the loop exit *)
 
 val bspec_cont_1_thm =
- bir_symb_transfer_thm
+ bir_symb_transfer_excl_thm
   bir_isqrt_prog_def
-  isqrt_init_addr_1_def isqrt_end_addr_1_def
+  isqrt_init_addr_1_def isqrt_end_addr_1_def isqrt_end_addr_def
   bspec_isqrt_pre_1_def bspec_isqrt_post_1_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_1_thm NONE isqrt_prog_vars_thm;
@@ -33,12 +33,12 @@ val _ = Portable.pprint Tag.pp_tag (tag bspec_cont_1_thm);
 
 Theorem bspec_cont_isqrt_1 = bspec_cont_1_thm
 
-(* loop body contract *)
+(* loop body contract, excluding the loop exit *)
 
 val bspec_cont_2_thm =
- bir_symb_transfer_thm
+ bir_symb_transfer_excl_thm
   bir_isqrt_prog_def
-  isqrt_init_addr_2_def isqrt_end_addr_2_def
+  isqrt_init_addr_2_def isqrt_end_addr_2_def isqrt_end_addr_def
   bspec_isqrt_pre_2_def bspec_isqrt_post_2_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_2_thm NONE isqrt_prog_vars_thm;

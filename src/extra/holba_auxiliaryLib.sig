@@ -6,6 +6,7 @@ sig
   val QSPECL_ASSUM : term -> Q.tmquote list -> tactic
   val QSPECL_X_ASSUM : term -> Q.tmquote list -> tactic
   val FULLSIMP_BY_THM : simpset -> thm -> tactic
+  val QINST_IRULE : (string * Q.tmquote) list -> thm -> tactic
 
   val HO_MATCH_MPL : thm -> thm list -> thm
 
