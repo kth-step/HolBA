@@ -11,7 +11,7 @@ open bin_balrob_smallprogsTheory;
 
 open bir_program_transfTheory;
 
-val _ = new_theory "modexp";
+val _ = new_theory "modexpExample";
 
 (*
 val _ = print_term (concl bin_motor_func_thm);

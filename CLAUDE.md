@@ -18,6 +18,13 @@
   - a group from `[build.groups.*]`: `holbuild build @chacha20`, or `holbuild build @examples` at the root for examples under `src/`
   - no target: the project's root groups
 - Example projects build against the enclosing checkout via `[overrides.holba] path = "../.."` in their `.holconfig.toml`.
+- holbuild builds each theory in a staging directory and only stages files it knows a script depends on. A script that reads a non-SML file by relative path (e.g. `lift_da_and_store` reading an assembly `.da` dump) must declare it at the top of the script, or it fails with `Io ... ENOENT`:
+  ```sml
+  (* lets holbuild stage foo.da for the relative read below; no-op otherwise *)
+  fun holbuild_extra_deps (_ : string list) = ()
+  val _ = holbuild_extra_deps ["foo.da"]
+  ```
+  holbuild picks up the `holbuild_extra_deps [...]` call when scanning the script. The local no-op definition keeps the script valid under Holmake. Every lifted example (`<prog>Script.sml`) needs this for its `.da` file.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 (still mentioned in the README) has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
