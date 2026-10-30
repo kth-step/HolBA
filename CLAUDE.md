@@ -22,6 +22,15 @@
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 (still mentioned in the README) has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
 
+## Iterating on proofs using holbuild with a short tactic timeout
+- The default tactic timeout is 600s (`tactic_timeout`), so a looping `simp`/`rw` costs 10 min. When developing proofs, use `--tactic-timeout N` (e.g. 30–120) so a bad tactic fails fast.
+- Cache entries record the timeout they were built under; a different `--tactic-timeout` makes them unusable and forces rebuilds. Up-to-date local objects in the project's `.holbuild/obj` are still reused.
+- So leverage the cache first, then apply the short timeout only to the goal file:
+  1. build its dependencies with the regular timeout, e.g. `holbuild build isqrt_symb_transfTheory`
+  2. iterate with `holbuild build --tactic-timeout 30 isqrt_propTheory`
+- Never pass `--tactic-timeout` to a broad target (`@group`, no target) or in a project whose `.holbuild` is cold (e.g. the repo root when only the examples have been built: they build HolBA in their own `.holbuild/packages/holba`). That rebuilds everything without cache.
+- Theories built under the short timeout are rebuilt once by the next regular build; this is cheap for small theories.
+
 ## Long builds and hangs
 - Durations vary widely on modern 8+ multicore machines:
   - small arm8 examples: about 1–2 min each
