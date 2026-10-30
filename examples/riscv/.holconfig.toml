@@ -1,2 +1,6 @@
 [overrides.holba]
 path = "../.."
+
+[build]
+jobs = 8
+checkpoint_limit_gb = 20
