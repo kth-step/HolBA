@@ -54,11 +54,22 @@
   6. `*_prop`: backlift to `riscv_cont`, final massaging to the desired spec
 - `examples/arm8/tutorial/` walks through the whole pipeline, including contract composition (step 7).
 
+## Where general code goes
+- Examples should only prove things specific to their program and specification. Move general results into the library (it is fine to develop them in an example first).
+- Contract rules (consequence, subset, sequencing, loops, ...) belong next to the contract definitions:
+  - `arm8_cont`: `src/theory/tools/backlifter/bir_arm8_backlifterScript.sml`
+  - `riscv_cont`: `src/theory/tools/backlifter/bir_riscv_backlifterScript.sml`
+- General tactics and rules that are not specific to BIR (e.g. `QINST_IRULE`, `QSPECL_ASSUM`) belong in `src/extra/holba_auxiliaryLib.sml` (and its `.sig`).
+- Changing these files rebuilds most of the library and all examples (a `holba_auxiliaryLib.sig` change took ~20 min for the arm8 examples), so batch such changes.
+
 ## Contract reasoning
 - `riscv_cont`/`t_jgmt` are total-correctness, **first-encounter** judgments: the post holds at the first label reached from the ending set.
   - So sequential composition needs the first contract to also list the second contract's end label(s), with postcondition `false`.
   - See `bir_symb_transfer_excl` and `riscv_cont_seq_rule`.
-- Run each symbolic execution/transfer once, producing the strongest contract needed. Derive weaker variants in `*_prop` with `riscv_cont_subset_rule` / `riscv_cont_conseq_rule`. `*_spec_*` theories may contain such auxiliary, stronger specifications.
+  - Symbolic transfer can only exclude labels outside the analysed fragment, and a fragment's own start label is always inside. So no fragment contract can show that a loop iteration reaches the loop head *first*, which the standard loop rule (`total_loop_rule_thm`) requires. This holds for both arm8 and riscv.
+  - Instead, use a loop rule over avoidance contracts, which only require that the loop exit is not encountered before returning to the head. arm8: `arm8_cont_avoid` and `arm8_cont_loop_rule`, used in `examples/arm8/isqrt`. riscv: `riscv_cont_avoid` and `riscv_cont_loop_rule`, which mirror the arm8 rules.
+  - Avoidance contracts come from ordinary contracts via `*_cont_avoid_intro`, and compose with `*_cont_avoid_seq_rule` / `*_cont_avoid_cont_seq_rule`.
+- Run each symbolic execution/transfer once, producing the strongest contract needed. Derive weaker variants in `*_prop` with `riscv_cont_subset_rule` / `riscv_cont_conseq_rule` (arm8: `arm8_cont_subset_rule` / `arm8_cont_conseq_rule`). `*_spec_*` theories may contain such auxiliary, stronger specifications.
 
 ## Git
 - Main branch is `master`. The HOL4 revision is pinned in `holproject.toml`.
