@@ -73,6 +73,9 @@ Proof
  rw [transition_systemTheory.first_enc_def, riscv_ts_def, riscv_weak_trs_def]
 QED
 
+Theorem riscv_weak_trs_comp[local] =
+ SIMP_RULE (srw_ss()) [riscv_ts_def] (MATCH_MP transition_systemTheory.weak_comp riscv_ts_first_enc)
+
 (* Rule of consequence *)
 Theorem riscv_cont_conseq_rule:
  !mms l ls pre1 pre2 post1 post2.
@@ -120,6 +123,165 @@ Proof
  qexists_tac `s''` >> fs [] >>
  `riscv_ts.weak ({l2} UNION ls) ms s'` by fs [GSYM pred_setTheory.INSERT_SING_UNION] >>
  METIS_TAC [transition_systemTheory.weak_comp, riscv_ts_first_enc]
+QED
+
+(* Ghost values in the precondition can be eliminated *)
+Theorem riscv_cont_exists_rule:
+ !mms l ls pre post.
+  (!x. riscv_cont mms l ls (pre x) post) ==>
+  riscv_cont mms l ls (\ms. ?x. pre x ms) post
+Proof
+ rw [riscv_cont_def, t_jgmt_def] >>
+ METIS_TAC []
+QED
+
+(* ------------------------------------------- *)
+(* Reaching a state while avoiding a label set *)
+(* ------------------------------------------- *)
+
+(* Reaching ms' from ms in a positive number of steps, without
+ * encountering any label in le, also not at ms'. Unlike riscv_weak_trs,
+ * this does not require ms' to be the first state with a given label,
+ * so it can describe a loop iteration returning to its own start label. *)
+Definition riscv_avoid_def:
+ riscv_avoid le =
+  TC (\ms ms'. ?ls. riscv_weak_trs (ls UNION le) ms ms' /\ ms'.c_PC ms'.procID NOTIN le)
+End
+
+Theorem riscv_avoid_trans:
+ !le ms ms' ms''.
+  riscv_avoid le ms ms' ==>
+  riscv_avoid le ms' ms'' ==>
+  riscv_avoid le ms ms''
+Proof
+ METIS_TAC [riscv_avoid_def, relationTheory.TC_TRANSITIVE, relationTheory.transitive_def]
+QED
+
+Theorem riscv_avoid_weak:
+ !le ms ms'.
+  riscv_avoid le ms ms' ==>
+  !ms''. riscv_weak_trs le ms' ms'' ==> riscv_weak_trs le ms ms''
+Proof
+ gen_tac >>
+ REWRITE_TAC [riscv_avoid_def] >>
+ ho_match_mp_tac relationTheory.TC_INDUCT >>
+ rw [] >>
+ METIS_TAC [riscv_weak_trs_comp]
+QED
+
+(* Avoidance contract: from l, reach a state satisfying post
+ * without encountering any label in le *)
+Definition riscv_cont_avoid_def:
+ riscv_cont_avoid mms l le pre post =
+  !ms.
+   riscv_bmr.bmr_extra ms ==>
+   EVERY (bmr_ms_mem_contains riscv_bmr ms) mms ==>
+   ms.c_PC ms.procID = l ==>
+   pre ms ==>
+   ?ms'. riscv_avoid le ms ms' /\
+    riscv_bmr.bmr_extra ms' /\
+    EVERY (bmr_ms_mem_contains riscv_bmr ms') mms /\
+    post ms'
+End
+
+(* A contract whose ending labels include le, but whose postcondition
+ * excludes them, is an avoidance contract *)
+Theorem riscv_cont_avoid_intro:
+ !mms l ls le pre post.
+  (!ms. post ms ==> ms.c_PC ms.procID NOTIN le) ==>
+  riscv_cont mms l (ls UNION le) pre post ==>
+  riscv_cont_avoid mms l le pre post
+Proof
+ rw [riscv_cont_def, riscv_cont_avoid_def, t_jgmt_def, riscv_ts_def] >>
+ first_x_assum (qspec_then `ms` mp_tac) >>
+ rw [] >>
+ rename1 `riscv_weak_trs (ls UNION le) ms ms2` >>
+ qexists_tac `ms2` >>
+ rw [riscv_avoid_def] >>
+ irule relationTheory.TC_SUBSET >>
+ simp [] >>
+ METIS_TAC []
+QED
+
+Theorem riscv_cont_avoid_conseq_rule:
+ !mms l le pre1 pre2 post1 post2.
+  (!ms. pre2 ms ==> pre1 ms) ==>
+  (!ms. post1 ms ==> post2 ms) ==>
+  riscv_cont_avoid mms l le pre1 post1 ==>
+  riscv_cont_avoid mms l le pre2 post2
+Proof
+ rw [riscv_cont_avoid_def] >>
+ METIS_TAC []
+QED
+
+Theorem riscv_cont_avoid_exists_rule:
+ !mms l le pre post.
+  (!x. riscv_cont_avoid mms l le (pre x) post) ==>
+  riscv_cont_avoid mms l le (\ms. ?x. pre x ms) post
+Proof
+ rw [riscv_cont_avoid_def] >>
+ METIS_TAC []
+QED
+
+Theorem riscv_cont_avoid_seq_rule:
+ !mms l l2 le pre1 post1 pre2 post2.
+  riscv_cont_avoid mms l le pre1 post1 ==>
+  (!ms. post1 ms ==> ms.c_PC ms.procID = l2 /\ pre2 ms) ==>
+  riscv_cont_avoid mms l2 le pre2 post2 ==>
+  riscv_cont_avoid mms l le pre1 post2
+Proof
+ rw [riscv_cont_avoid_def] >>
+ METIS_TAC [riscv_avoid_trans]
+QED
+
+(* Sequential composition of an avoidance contract with a contract *)
+Theorem riscv_cont_avoid_cont_seq_rule:
+ !mms l l2 le pre1 post1 pre2 post2.
+  riscv_cont_avoid mms l le pre1 post1 ==>
+  (!ms. post1 ms ==> ms.c_PC ms.procID = l2 /\ pre2 ms) ==>
+  riscv_cont mms l2 le pre2 post2 ==>
+  riscv_cont mms l le pre1 post2
+Proof
+ rw [riscv_cont_avoid_def, riscv_cont_def, t_jgmt_def, riscv_ts_def] >>
+ METIS_TAC [riscv_avoid_weak]
+QED
+
+(* Loop rule: each iteration returns to the loop head l without
+ * encountering the exit labels le, while decreasing the variant *)
+Theorem riscv_cont_loop_rule:
+ !mms l le invar C var post.
+  (!x. riscv_cont_avoid mms l le
+        (\ms. invar ms /\ C ms /\ var ms = x)
+        (\ms. ms.c_PC ms.procID = l /\ invar ms /\ var ms < (x:num))) ==>
+  riscv_cont mms l le (\ms. invar ms /\ ~C ms) post ==>
+  riscv_cont mms l le invar post
+Proof
+ rpt gen_tac >> strip_tac >> strip_tac >>
+ `!x ms.
+   var ms = x ==>
+   ms.c_PC ms.procID = l ==>
+   riscv_bmr.bmr_extra ms ==>
+   EVERY (bmr_ms_mem_contains riscv_bmr ms) mms ==>
+   invar ms ==>
+   ?ms'. riscv_weak_trs le ms ms' /\
+    riscv_bmr.bmr_extra ms' /\
+    EVERY (bmr_ms_mem_contains riscv_bmr ms') mms /\
+    post ms'` suffices_by (
+  rw [riscv_cont_def, t_jgmt_def, riscv_ts_def] >>
+  METIS_TAC []
+ ) >>
+ completeInduct_on `x` >>
+ rpt strip_tac >>
+ Cases_on `C ms` >- (
+  fs [riscv_cont_avoid_def] >>
+  `?ms1. riscv_avoid le ms ms1 /\
+    riscv_bmr.bmr_extra ms1 /\
+    EVERY (bmr_ms_mem_contains riscv_bmr ms1) mms /\
+    ms1.c_PC ms1.procID = l /\ invar ms1 /\ var ms1 < x` by METIS_TAC [] >>
+  METIS_TAC [riscv_avoid_weak]
+ ) >>
+ fs [riscv_cont_def, t_jgmt_def, riscv_ts_def] >>
+ METIS_TAC []
 QED
 
 (* FIXME: generalize for both arm8 and riscv *)
