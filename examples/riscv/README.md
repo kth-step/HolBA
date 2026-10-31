@@ -101,10 +101,10 @@ block of the instruction. Symbolic execution has to show these assertions:
 | H4: every PMP entry is OFF or NAPOT | `((pmpcfg0 >> 1) ^ pmpcfg0) & 0x0808080808080808 = 0`, and the same for `pmpcfg2` | loads, stores, AMOs and `lr` of 8 bytes |
 | floating point is on | `mstatus & 0x6000 <> 0` (`FS` is not Off) | the F and D instructions |
 
-A store also asserts, as before, that it does not write the lifted code
-(`BExp_unchanged_mem_interval_distinct`). A block thus has 4 assertions of the contract, 5 for a
-data access of at most 4 bytes and 7 for one of 8 bytes, and one more for floating point,
-besides the alignment and the store assertion.
+The assertion of the alignment (H5) is not new, and a store also asserts, as before, that it does
+not write the lifted code (`BExp_unchanged_mem_interval_distinct`). The other assertions are new:
+4 in every block, 5 in the block of a data access of at most 4 bytes and 7 in that of an 8-byte
+access, and one more for floating point.
 
 They are assertions, and not part of `riscv_state_is_OK` (the predicate of the machine record in
 `src/theory/tools/lifter/bir_lifting_machinesScript.sml`, which must hold before and after every
@@ -119,6 +119,28 @@ aligned need no assertion.
 A contract therefore assumes the M-mode contract: its RISC-V precondition states `riscv_mmode m`
 and its BIR precondition `bir_riscv_mmode_pre` (both in `bir_riscv_backlifterTheory`), as the
 steps below show.
+
+### Changes from the previous model
+
+Every instruction that lifted with the previous model still lifts, to the same block apart from
+the new assertions, except for these changes (`src/tools/lifter/selftest_riscv.log` shows the
+blocks):
+
+- `jalr`, and with it `ret`, `c.jr` and `c.jalr`, no longer asserts that bit 0 of its target is
+  clear: the instruction clears it, and with `misa.C` a target needs no more alignment than that;
+- the lifting theorem of `jal` and `c.j` no longer has the hypothesis that bit 0 of the pc is
+  clear, which the lifter now discharges;
+- `csrwi` with a zero immediate writes the CSR, which the previous model, against the
+  specification, did not: `csrwi mstatus, 0` assigns 0 to `mstatus`, and `csrwi mie, 0` to `mie`,
+  which is now lifted;
+- the mask `~x` of `csrrc` is `BExp_UnaryExp BIExp_Not x` instead of `-1 * x - 1`;
+- `csrr mip` no longer reads a stored register only: as in the specification, MSIP and MTIP come
+  from the CLINT in the memory and MEIP and SEIP from the external interrupt lines;
+- the BIR variable `MPRV`, which held the privilege, is `priv`.
+
+New are the lifting of `ecall`, `ebreak` and `c.ebreak`, of `amomin`, `amomax`, `amominu` and
+`amomaxu`, of `mret`, `wfi` and `sfence.vma`, of the floating-point loads, stores and moves, and of
+the CSR instructions on the CSRs that the previous model did not have.
 
 ## Binary verification workflow
 
