@@ -549,6 +549,33 @@ val _ = print_msg "\n\n";
   (* sd a0, 8(sp) *)
   val _ = riscv_test_hex_print_asm "C.SDSP a0, 8(sp)" "E42A";
 
+val _ = print_msg "\n";
+val _ = print_header "RV64F and RV64D Standard Extensions (loads, stores and moves)";
+val _ = print_msg "\n\n";
+
+(* The F and D instructions have the hypothesis mstatus.FS <> 0w (the
+ * floating-point unit is not Off), which is lifted to an assertion on
+ * mstatus, and those that write a floating-point register set FS to
+ * Dirty. *)
+val _ = riscv_test_hex_print_asm "FLD fa0, 0(s0)" "00043507";
+val _ = riscv_test_hex_print_asm "FSD fa5, 16(s0)" "00F43827";
+val _ = riscv_test_hex_print_asm "FSW fa0, 0(a1)" "00A5A027";
+val _ = riscv_test_hex_print_asm "FMV.X.D a0, fa2" "E2060553";
+val _ = riscv_test_hex_print_asm "FMV.D.X fa0, a0" "F2050553";
+val _ = riscv_test_hex_print_asm "FMV.X.W a0, fa0" "E0050553";
+val _ = riscv_test_hex_print_asm "C.FLD fa0, 8(a1)" "2588";
+val _ = riscv_test_hex_print_asm "C.FSD fa0, 8(a1)" "A588";
+val _ = riscv_test_hex_print_asm "C.FLDSP fa0, 8(sp)" "2522";
+val _ = riscv_test_hex_print_asm "C.FSDSP fa0, 8(sp)" "A42A";
+(* These write the 32-bit value NaN-boxed, as 0xFFFFFFFFw @@ v, a
+ * concatenation that the expression lifter does not lift. *)
+val _ = riscv_test_hex_print_asm "FLW fa0, 0(a0)" "00052507";
+val _ = riscv_test_hex_print_asm "FMV.W.X fa0, a0" "F0050553";
+(* Arithmetic does not lift: BIR has no floating-point operations, and
+ * already the hypothesis on the rounding mode (a field of fcsr, which is
+ * not lifted) fails to lift. *)
+val _ = riscv_test_hex_print_asm "FADD.D fa0, fa1, fa2" "02C5F553";
+
 
 val riscv_expected_failed_hexcodes:string list =
 [
@@ -560,7 +587,11 @@ val riscv_expected_failed_hexcodes:string list =
    "30126073" (* CSRSI misa, 0x4 *),
    (* A *)
    "18C5A52F" (* SC.W: depends on the load reservation, which is not lifted *),
-   "18C5B52F" (* SC.D: likewise *)
+   "18C5B52F" (* SC.D: likewise *),
+   (* F and D *)
+   "00052507" (* FLW: the NaN-boxed value is not lifted *),
+   "F0050553" (* FMV.W.X: likewise *),
+   "02C5F553" (* FADD.D: no floating-point arithmetic in BIR *)
 ];
 
 val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;
