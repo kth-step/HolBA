@@ -77,10 +77,13 @@ privilege, 8 bits: 3 for M-mode, 0 for U-mode), the CSRs `mstatus`, `mtvec`, `mi
 read of `mip` depends on.
 
 These do not lift: `sc.w` and `sc.d`; reads of the counters (`mcycle`, `minstret`, `cycle` and so
-on), of `misa`, of the floating-point CSRs and of the other CSRs that are not lifted; writes of
+on); reads of the CSRs that the model stores but the lifter does not lift (`misa`, `medeleg`,
+`mideleg`, `menvcfg`, the S-mode CSRs and the floating-point CSRs; `sstatus`, a view of `mstatus`,
+lifts), and reads and writes of the views `sie` and `sip` (which depend on `mideleg`); writes of
 `misa`; `flw` and `fmv.w.x`, which write a NaN-boxed value (the 32-bit value with 32 one-bits
 above it, a concatenation that the lifter does not translate); floating-point arithmetic and
-conversions; `sret` and illegal instructions; and code that runs in U-mode.
+conversions; `sret` and illegal instructions; and code that runs in U-mode. Reads of the constant
+CSRs, such as `mvendorid`, lift.
 
 `src/tools/lifter/selftest_riscv.sml` lifts a sample of each class (its log is
 `selftest_riscv.log`). The RISC-V section of `src/tools/lifter/README` has the details.

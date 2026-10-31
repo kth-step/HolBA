@@ -89,8 +89,9 @@ scause, stval, senvcfg and satp) lifts to a block without an assignment
 for it: the CSR is not part of the BIR state, and it has no effect on the
 lifted code, since a trap from M-mode is never delegated and M-mode
 accesses are not translated (mstatus.MPRV being clear).  A write of the
-view sstatus lifts to an assignment of mstatus; the views sie and sip
-depend on mideleg, so their reads and writes do not lift.
+view sstatus lifts to an assignment of mstatus, and a read of it to an
+expression on mstatus; the views sie and sip depend on mideleg, so their
+reads and writes do not lift.
 
 The loads, stores and moves of the D extension lift (FLD, FSD and their
 compressed forms, FMV.X.D, FMV.D.X), and of the F extension FSW and
@@ -100,10 +101,11 @@ concatenation.
 
 Instructions that read other state, or that need a step theorem that the
 step library does not have, do not lift: "csrr mcycle" and the other
-counters (NextRISCV does not count), reads of the CSRs that are not lifted
-(misa, medeleg, mideleg, the floating-point CSRs fflags, frm and fcsr, and
-so on), SC.W and SC.D (the load reservation is not lifted), writes of misa
-(see above), floating-point arithmetic and conversions (BIR has no
+counters (NextRISCV does not count), reads of the CSRs that the model
+stores but the lifter does not lift (misa, medeleg, mideleg, menvcfg, the
+S-mode CSRs other than sstatus, and the floating-point CSRs fflags, frm
+and fcsr), SC.W and SC.D (the load reservation is not lifted), writes of
+misa (see above), floating-point arithmetic and conversions (BIR has no
 floating-point operations, and their rounding mode, a field of fcsr, is
 not lifted), SRET (the step library has no step theorem for it) and
 illegal instructions.
