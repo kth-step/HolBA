@@ -800,8 +800,8 @@ end)
 (* (related to system register entries) *)
 (****************************************)
 (* This is a very ugly solution, since we don't have 2-bit
- * immediates... *)
-(* TODO: Do the same for 5-bit immediates (mstatus.VM) *)
+ * immediates: the privilege, a 2-bit word, is lifted as the 8-bit
+ * immediate w2w (ms.c_privilege ms.procID) (BIR variable "priv"). *)
 
 (* For specialisation of theorem with concrete values.
  * Apparently it doesn't work with an abstract :word2... *)
@@ -859,25 +859,179 @@ wordsLib.Cases_word_value >> (
 val riscv_is_lifted_imm_exp_2EQ = 
   SIMP_RULE (std_ss++wordsLib.WORD_ss) [] (specialise_word riscv_is_lifted_imm_exp_2EQ_GEN);
 
-(* 0 -> 31 *)
-val riscv_is_lifted_imm_exp_5EQ_GEN =
-  store_thm ("riscv_is_lifted_imm_exp_5EQ_GEN",
-  ``!w2 env w1 e1 e2.
-      bir_is_lifted_imm_exp env e1 (Imm8 (w2w w1)) ==>
-      bir_is_lifted_imm_exp env e2 (Imm8 (w2w w2)) ==>
-      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_Equal e1 e2)
-        (bool2b (w1 = (w2:word5)))``,
+(******************************************************)
+(* CSRs of a register type of the model, as 64-bit words *)
+(******************************************************)
 
-wordsLib.Cases_word_value >> (
-  SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
-    BType_Bool_def] >>
+(* The lifter lifts mstatus, mie and mcause as the 64-bit words of their
+ * registers (reg'mstatus, reg'mie and reg'mcause; the BIR variables
+ * "mstatus", "mie" and "mcause" of riscv_bmr).  The step theorems read and
+ * write these CSRs field by field, and build written values from words with
+ * rec'mstatus and so on.  The theorems below state all of this on the
+ * words, so that the lifter can express it over the BIR variables.  The
+ * positions of the fields are those of the registers in the model
+ * (riscvTheory.rec'mstatus_def and so on), which are those of the
+ * privileged specification. *)
+
+(* rec' undoes reg' (riscv_stepTheory.reg_rec_id is the converse). *)
+Theorem riscv_csr_rec_reg_id:
+  (!r. rec'mstatus (reg'mstatus r) = r) /\
+  (!r. rec'mie (reg'mie r) = r) /\
+  (!r. rec'mcause (reg'mcause r) = r)
+Proof
+  rpt conj_tac \\ Cases
+  \\ simp_tac (srw_ss())
+       [riscvTheory.reg'mstatus_def, riscvTheory.rec'mstatus_def,
+        riscvTheory.reg'mie_def, riscvTheory.rec'mie_def,
+        riscvTheory.reg'mcause_def, riscvTheory.rec'mcause_def]
+  \\ blastLib.BBLAST_TAC
+QED
+
+(* The fields of a register built from a word with rec'. *)
+Theorem riscv_csr_rec_fields:
+  (!w. (rec'mstatus w).SIE = word_bit 1 w) /\
+  (!w. (rec'mstatus w).MIE = word_bit 3 w) /\
+  (!w. (rec'mstatus w).SPIE = word_bit 5 w) /\
+  (!w. (rec'mstatus w).MPIE = word_bit 7 w) /\
+  (!w. (rec'mstatus w).SPP = word_bit 8 w) /\
+  (!w. (rec'mstatus w).MPP = (12 >< 11) w) /\
+  (!w. (rec'mstatus w).FS = (14 >< 13) w) /\
+  (!w. (rec'mstatus w).MPRV = word_bit 17 w) /\
+  (!w. (rec'mstatus w).MXR = word_bit 19 w) /\
+  (!w. (rec'mstatus w).TVM = word_bit 20 w) /\
+  (!w. (rec'mstatus w).TW = word_bit 21 w) /\
+  (!w. (rec'mstatus w).TSR = word_bit 22 w) /\
+  (!w. (rec'mie w).SSIE = word_bit 1 w) /\
+  (!w. (rec'mie w).MSIE = word_bit 3 w) /\
+  (!w. (rec'mie w).STIE = word_bit 5 w) /\
+  (!w. (rec'mie w).MTIE = word_bit 7 w) /\
+  (!w. (rec'mie w).SEIE = word_bit 9 w) /\
+  (!w. (rec'mie w).MEIE = word_bit 11 w) /\
+  (!w. (rec'mcause w).EC = (62 >< 0) w) /\
+  (!w. (rec'mcause w).Int = word_bit 63 w)
+Proof
+  simp_tac (srw_ss())
+    [riscvTheory.rec'mstatus_def, riscvTheory.rec'mie_def,
+     riscvTheory.rec'mcause_def]
+QED
+
+(* The fields of a register as bits of its word: for the CSRs that are
+ * lifted, a field of the stored register becomes an expression on the BIR
+ * variable of the CSR. *)
+Theorem riscv_csr_reg_fields:
+  (!r. r.SIE = word_bit 1 (reg'mstatus r)) /\
+  (!r. r.MIE = word_bit 3 (reg'mstatus r)) /\
+  (!r. r.SPIE = word_bit 5 (reg'mstatus r)) /\
+  (!r. r.MPIE = word_bit 7 (reg'mstatus r)) /\
+  (!r. r.SPP = word_bit 8 (reg'mstatus r)) /\
+  (!r. r.MPP = (12 >< 11) (reg'mstatus r)) /\
+  (!r. r.FS = (14 >< 13) (reg'mstatus r)) /\
+  (!r. r.MPRV = word_bit 17 (reg'mstatus r)) /\
+  (!r. r.MXR = word_bit 19 (reg'mstatus r)) /\
+  (!r. r.TVM = word_bit 20 (reg'mstatus r)) /\
+  (!r. r.TW = word_bit 21 (reg'mstatus r)) /\
+  (!r. r.TSR = word_bit 22 (reg'mstatus r)) /\
+  (!r. r.SSIE = word_bit 1 (reg'mie r)) /\
+  (!r. r.MSIE = word_bit 3 (reg'mie r)) /\
+  (!r. r.STIE = word_bit 5 (reg'mie r)) /\
+  (!r. r.MTIE = word_bit 7 (reg'mie r)) /\
+  (!r. r.SEIE = word_bit 9 (reg'mie r)) /\
+  (!r. r.MEIE = word_bit 11 (reg'mie r)) /\
+  (!r. r.EC = (62 >< 0) (reg'mcause r)) /\
+  (!r. r.Int = word_bit 63 (reg'mcause r))
+Proof
+  rpt conj_tac \\ Cases
+  \\ simp_tac (srw_ss())
+       [riscvTheory.reg'mstatus_def, riscvTheory.reg'mie_def,
+        riscvTheory.reg'mcause_def]
+  \\ blastLib.BBLAST_TAC
+QED
+
+(* An update of a field as an update of bits of the word. *)
+Theorem riscv_csr_reg_updates:
+  (!r b. reg'mstatus (r with SIE := b) =
+         reg'mstatus r && ~0x2w || (if b then 0x2w else 0w)) /\
+  (!r b. reg'mstatus (r with MIE := b) =
+         reg'mstatus r && ~0x8w || (if b then 0x8w else 0w)) /\
+  (!r b. reg'mstatus (r with SPIE := b) =
+         reg'mstatus r && ~0x20w || (if b then 0x20w else 0w)) /\
+  (!r b. reg'mstatus (r with MPIE := b) =
+         reg'mstatus r && ~0x80w || (if b then 0x80w else 0w)) /\
+  (!r b. reg'mstatus (r with SPP := b) =
+         reg'mstatus r && ~0x100w || (if b then 0x100w else 0w)) /\
+  (!r v. reg'mstatus (r with MPP := v) =
+         reg'mstatus r && ~0x1800w || w2w v << 11) /\
+  (!r v. reg'mstatus (r with FS := v) =
+         reg'mstatus r && ~0x6000w || w2w v << 13) /\
+  (!r b. reg'mstatus (r with MPRV := b) =
+         reg'mstatus r && ~0x20000w || (if b then 0x20000w else 0w)) /\
+  (!r b. reg'mstatus (r with MXR := b) =
+         reg'mstatus r && ~0x80000w || (if b then 0x80000w else 0w)) /\
+  (!r b. reg'mstatus (r with TVM := b) =
+         reg'mstatus r && ~0x100000w || (if b then 0x100000w else 0w)) /\
+  (!r b. reg'mstatus (r with TW := b) =
+         reg'mstatus r && ~0x200000w || (if b then 0x200000w else 0w)) /\
+  (!r b. reg'mstatus (r with TSR := b) =
+         reg'mstatus r && ~0x400000w || (if b then 0x400000w else 0w)) /\
+  (!r b. reg'mie (r with SSIE := b) =
+         reg'mie r && ~0x2w || (if b then 0x2w else 0w)) /\
+  (!r b. reg'mie (r with MSIE := b) =
+         reg'mie r && ~0x8w || (if b then 0x8w else 0w)) /\
+  (!r b. reg'mie (r with STIE := b) =
+         reg'mie r && ~0x20w || (if b then 0x20w else 0w)) /\
+  (!r b. reg'mie (r with MTIE := b) =
+         reg'mie r && ~0x80w || (if b then 0x80w else 0w)) /\
+  (!r b. reg'mie (r with SEIE := b) =
+         reg'mie r && ~0x200w || (if b then 0x200w else 0w)) /\
+  (!r b. reg'mie (r with MEIE := b) =
+         reg'mie r && ~0x800w || (if b then 0x800w else 0w)) /\
+  (!r v. reg'mcause (r with EC := v) =
+         reg'mcause r && 0x8000000000000000w || w2w v) /\
+  (!r b. reg'mcause (r with Int := b) =
+         reg'mcause r && 0x7FFFFFFFFFFFFFFFw ||
+         (if b then 0x8000000000000000w else 0w))
+Proof
+  rpt conj_tac \\ Cases \\ rpt gen_tac
+  \\ simp_tac (srw_ss())
+       ([riscvTheory.reg'mstatus_def, riscvTheory.reg'mie_def,
+         riscvTheory.reg'mcause_def] @
+        TypeBase.updates_of ``:mstatus`` @ TypeBase.updates_of ``:mie`` @
+        TypeBase.updates_of ``:mcause``)
+  \\ rpt COND_CASES_TAC
+  \\ blastLib.BBLAST_TAC
+QED
+
+(* Pushing the casts and shifts of an update into a conditional value. *)
+Theorem riscv_csr_cond_rand:
+  (!b (x:'a word) y. (w2w (if b then x else y) : 'b word) =
+                     if b then w2w x else w2w y) /\
+  (!b (x:'a word) y n. (if b then x else y) << n =
+                       if b then x << n else y << n) /\
+  (!b r1 r2. reg'mstatus (if b then r1 else r2) =
+             if b then reg'mstatus r1 else reg'mstatus r2) /\
+  (!b r1 r2. reg'mie (if b then r1 else r2) =
+             if b then reg'mie r1 else reg'mie r2) /\
+  (!b r1 r2. reg'mcause (if b then r1 else r2) =
+             if b then reg'mcause r1 else reg'mcause r2)
+Proof
+  rpt conj_tac \\ rpt gen_tac \\ Cases_on `b` \\ simp_tac std_ss []
+QED
+
+(* The step theorems require the pc to be 2-byte aligned as bit 0 of the
+ * pc being clear; the lifter discharges an alignment of a constant pc. *)
+Theorem riscv_word_bit_0_aligned:
+  !w:word64. ~word_bit 0 w <=> aligned 1 w
+Proof
+  rw [alignmentTheory.aligned_extract] \\ blastLib.BBLAST_TAC
+QED
+
+(* A 2-bit word, such as the privilege, cast to 64 bits through the 8-bit
+ * immediate that the lifter has for it. *)
+Theorem riscv_w2w_word2_word64:
+  !x:word2. (w2w x : word64) = w2w (w2w x : word8)
+Proof
   blastLib.BBLAST_TAC
-)
-);
-
-val riscv_is_lifted_imm_exp_5EQ = 
-  SIMP_RULE (std_ss++wordsLib.WORD_ss) [] (specialise_word riscv_is_lifted_imm_exp_5EQ_GEN);
+QED
 
 (*******************************************************)
 (* RISC-V predicates are usually cast to 64-bit format *)
@@ -946,8 +1100,7 @@ Theorem riscv_extra_LIFTS = LIST_CONJ [
     riscv_is_lifted_imm_exp_GE,
     riscv_is_lifted_imm_exp_GEU,
     (* CSR stuff *)
-    riscv_is_lifted_imm_exp_2EQ,
-    riscv_is_lifted_imm_exp_5EQ]
+    riscv_is_lifted_imm_exp_2EQ]
 
 
 Theorem riscv_CHANGE_INTERVAL_THMS = LIST_CONJ [riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL,

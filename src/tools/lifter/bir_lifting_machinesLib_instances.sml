@@ -619,14 +619,258 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
  * above - make separate variants for RISC-V? *)
 
 (* Type rewrites as a list of theorems (ARM8 also had rewrites
- * for ``:ProcState``)... *)
+ * for ``:ProcState``), with reg'mstatus (rec'mstatus w) = w and so on for
+ * the CSRs that are lifted as the words of their registers... *)
 val riscv_REWRS = (
   (type_rws ``:riscv_state``)@
-  (type_rws ``:MachineCSR``)
+  (type_rws ``:MachineCSR``)@
+  (type_rws ``:SupervisorCSR``)@
+  [riscv_stepTheory.reg_rec_id]
 );
 
-(* ... and as a simplification set. *)
-val riscv_extra_ss = rewrites (riscv_REWRS@[combinTheory.APPLY_UPDATE_THM])
+(* ... and as a simplification set, which also evaluates the casts of
+ * 2-bit literals to 8 bits, such as the w2w (3w:word2) that the lifted
+ * privilege is after a trap. *)
+val riscv_extra_ss =
+  simpLib.merge_ss
+    [rewrites (riscv_REWRS@[combinTheory.APPLY_UPDATE_THM]),
+     simpLib.std_conv_ss
+       {name = "riscv_w2w_word2_literal", conv = wordsLib.WORD_EVAL_CONV,
+        pats = [``(w2w (n2w n : word2)) : word8``]}]
+
+(* The CSRs that are lifted as the words of their registers (mstatus, mie
+ * and mcause; see riscv_sysregs_lifted_imms_LIST in
+ * bir_lifting_machinesScript.sml) in a step theorem of the hart of the
+ * machine state vn, as expressions on these words:
+ *
+ *   - a field of a stored register, (vn.c_MCSR vn.procID).mstatus.MIE,
+ *     becomes bits of the lifted word,
+ *     word_bit 3 (reg'mstatus (vn.c_MCSR vn.procID).mstatus);
+ *   - a register written by the instruction becomes rec' of a word, so
+ *     that the lifter finds the word of the BIR variable after the
+ *     instruction, by reg'mstatus (rec'mstatus w) = w;
+ *   - bit fields of words are stated with masks, shifts and casts to 8 and
+ *     64 bits, which BIR expressions have.  Each such step is an instance
+ *     of an equation of words that is proved by bit-blasting when it is
+ *     made.  In the values written to CSRs every bit field is rewritten;
+ *     elsewhere (hypotheses, values written to registers) only bit fields
+ *     of the words of the lifted CSRs, so that other instructions are
+ *     lifted as before. *)
+local
+  val csr_tys = [``:mstatus``, ``:mie``, ``:mcause``]
+  val record_rwts = List.concat (List.map type_rws csr_tys)
+  val rec_fields = bir_riscv_extrasTheory.riscv_csr_rec_fields
+  val reg_fields = CONJUNCTS bir_riscv_extrasTheory.riscv_csr_reg_fields
+  val rec_reg_id = CONJUNCTS bir_riscv_extrasTheory.riscv_csr_rec_reg_id
+  val word_rwts =
+    [riscv_stepTheory.reg_rec_id,
+     bir_riscv_extrasTheory.riscv_csr_reg_updates,
+     bir_riscv_extrasTheory.riscv_csr_cond_rand,
+     bir_riscv_extrasTheory.riscv_csr_rec_fields]
+
+  val word64_ty = ``:word64``
+  val word2_ty = ``:word2``
+  fun closed tm = List.null (free_vars tm)
+  fun num_of tm = Arbnum.toInt (numSyntax.dest_numeral tm)
+  fun pow2 k = Arbnum.pow (Arbnum.two, Arbnum.fromInt k)
+  fun mask (h, l) = Arbnum.- (pow2 (h + 1), pow2 l)
+  fun low_mask k = Arbnum.- (pow2 k, Arbnum.one)
+  (* the word of the word type wty with value n *)
+  fun word_of wty n =
+    wordsSyntax.mk_n2w (numSyntax.mk_numeral n, wordsSyntax.dest_word_type wty)
+  (* the width of the words with index type ity *)
+  fun width ity = Arbnum.toInt (fcpSyntax.dest_numeric_type ity)
+  fun prove_eq tm1 tm2 =
+    blastLib.BBLAST_PROVE (mk_eq (tm1, tm2))
+    handle HOL_ERR _ => raise UNCHANGED
+  (* (h >< l) w, with the bits of w that it takes, if it is an extract of a
+     word w with ok w *)
+  fun dest_extract ok tm =
+    let
+      val (h, l, w, ty) = wordsSyntax.dest_word_extract tm
+      val (hn, ln) = (num_of h, num_of l)
+      val hn' = Int.min (hn, ln + width ty - 1)
+    in
+      if ok w then (hn', ln, w) else raise UNCHANGED
+    end
+    handle HOL_ERR _ => raise UNCHANGED
+  fun extract_conv ok tm =
+    if boolSyntax.is_eq tm andalso
+       wordsSyntax.is_word_extract (lhs tm) andalso
+       wordsSyntax.is_word_literal (rhs tm) then
+      (* (h >< l) w = c *)
+      let
+        val (h, l, w) = dest_extract ok (lhs tm)
+        val c = Arbnum.* (wordsSyntax.dest_word_literal (rhs tm), pow2 l)
+      in
+        prove_eq tm
+          (mk_eq (wordsSyntax.mk_word_and (w, word_of (type_of w) (mask (h, l))),
+                  word_of (type_of w) c))
+      end
+    else if wordsSyntax.is_word_lo tm andalso
+            wordsSyntax.is_word_extract (fst (wordsSyntax.dest_word_lo tm)) andalso
+            wordsSyntax.is_word_literal (snd (wordsSyntax.dest_word_lo tm)) then
+      (* (h >< 0) w <+ c *)
+      let
+        val (e, c) = wordsSyntax.dest_word_lo tm
+        val (h, l, w) = dest_extract ok e
+        val _ = if l = 0 then () else raise UNCHANGED
+      in
+        prove_eq tm
+          (wordsSyntax.mk_word_lo
+             (wordsSyntax.mk_word_and (w, word_of (type_of w) (mask (h, 0))),
+              word_of (type_of w) (wordsSyntax.dest_word_literal c)))
+      end
+    else if wordsSyntax.is_word_lsl tm andalso
+            wordsSyntax.is_w2w (fst (wordsSyntax.dest_word_lsl tm)) andalso
+            wordsSyntax.is_word_extract
+              (fst (wordsSyntax.dest_w2w (fst (wordsSyntax.dest_word_lsl tm)))) then
+      (* w2w ((h >< l) w) << l, as wide as w *)
+      let
+        val (c, n) = wordsSyntax.dest_word_lsl tm
+        val (h, l, w) = dest_extract ok (fst (wordsSyntax.dest_w2w c))
+        val _ = if numSyntax.is_numeral n andalso num_of n = l andalso
+                   type_of w = type_of tm then () else raise UNCHANGED
+      in
+        prove_eq tm (wordsSyntax.mk_word_and (w, word_of (type_of w) (mask (h, l))))
+      end
+    else if wordsSyntax.is_w2w tm andalso
+            wordsSyntax.is_word_extract (fst (wordsSyntax.dest_w2w tm)) then
+      (* w2w ((h >< l) w), with a shift and a mask *)
+      let
+        val (h, l, w) = dest_extract ok (fst (wordsSyntax.dest_w2w tm))
+        val ty = type_of tm
+        val wty = wordsSyntax.dest_word_type ty
+        val k = h - l + 1
+        val shifted =
+          if l = 0 then w
+          else wordsSyntax.mk_word_lsr (w, numSyntax.term_of_int l)
+        val cast =
+          if ty = type_of w then shifted else wordsSyntax.mk_w2w (shifted, wty)
+      in
+        if k < width wty then
+          prove_eq tm (wordsSyntax.mk_word_and (cast, word_of ty (low_mask k)))
+        else raise UNCHANGED
+      end
+    else if wordsSyntax.is_w2w tm andalso type_of tm = word64_ty andalso
+            type_of (fst (wordsSyntax.dest_w2w tm)) = word2_ty andalso
+            ok (fst (wordsSyntax.dest_w2w tm)) andalso
+            not (wordsSyntax.is_word_literal (fst (wordsSyntax.dest_w2w tm))) then
+      (* a 2-bit word, cast to 64 bits through the 8-bit immediate *)
+      ISPEC (fst (wordsSyntax.dest_w2w tm))
+        bir_riscv_extrasTheory.riscv_w2w_word2_word64
+    else if wordsSyntax.is_word_concat tm andalso type_of tm = word64_ty then
+      (* (63 >< l) a @@ (l - 1 >< 0) b *)
+      let
+        val (x, y) = wordsSyntax.dest_word_concat tm
+        val (h1, l1, a) = dest_extract ok x
+        val (h2, l2, b) = dest_extract ok y
+        val _ = if h1 = 63 andalso l2 = 0 andalso h2 + 1 = l1 andalso
+                   type_of a = word64_ty andalso type_of b = word64_ty
+                then () else raise UNCHANGED
+        val m = word_of word64_ty (low_mask l1)
+      in
+        prove_eq tm
+          (wordsSyntax.mk_word_or
+             (wordsSyntax.mk_word_and (a, wordsSyntax.mk_word_1comp m),
+              wordsSyntax.mk_word_and (b, m)))
+      end
+    else raise UNCHANGED
+  (* closed words and booleans that the rewrites leave, such as
+     w2w (3w:word2) << 11 *)
+  fun ground_conv tm =
+    if closed tm andalso
+       (type_of tm = bool orelse wordsSyntax.is_word_type (type_of tm)) andalso
+       not (wordsSyntax.is_word_literal tm) andalso
+       not (bitstringSyntax.is_v2w tm) andalso
+       not (Teq tm) andalso not (Feq tm) then
+      let
+        val th = EVAL tm
+      in
+        if aconv (rhs (concl th)) tm then raise UNCHANGED else th
+      end
+    else raise UNCHANGED
+  (* a value written to a CSR *)
+  val value_conv =
+    TOP_DEPTH_CONV (extract_conv (K true)) THENC DEPTH_CONV ground_conv
+  val reg_value_conv =
+    SIMP_CONV std_ss word_rwts THENC value_conv
+  (* fails (HOL_ERR) on a term that is not an update of the field, so that
+     FIRST_CONV tries the next field *)
+  fun dest_fupd fupd_tm tm =
+    let
+      val (f, m) = dest_comb tm
+      val (fupd, k) = dest_comb f
+    in
+      if same_const fupd fupd_tm then combinSyntax.dest_K_1 k
+      else failwith "not an update of this field"
+    end
+  fun at_value conv = RATOR_CONV (RAND_CONV (RAND_CONV conv))
+  (* the value written to a register-typed CSR: rec' of a word *)
+  fun reg_fupd_conv (fupd_tm, reg_rec) tm =
+    let
+      val x = dest_fupd fupd_tm tm
+      val (rec_tm, _) = strip_comb (lhs (snd (strip_forall (concl reg_rec))))
+      val _ = if is_comb x andalso same_const (rator x) rec_tm
+              then failwith "already a word" else ()
+      (* x = rec' (reg' x) *)
+      val th0 = SYM (ISPEC x reg_rec)
+      val th1 = RAND_CONV reg_value_conv (rhs (concl th0))
+    in
+      at_value (K (TRANS th0 th1)) tm
+    end
+  (* the value written to a CSR that the model stores as a word *)
+  fun word_fupd_conv fupd_tm tm =
+    (dest_fupd fupd_tm tm; at_value value_conv tm)
+  fun fupds ty = List.map (fn (n, {fupd, ...}) => (n, fupd)) (TypeBase.fields_of ty)
+  val mcsr_fupds = fupds ``:MachineCSR``
+  val reg_fields_names = ["mstatus", "mie", "mcause"]
+  val value_convs =
+    ListPair.map (fn (n, th) => reg_fupd_conv (Lib.assoc n mcsr_fupds, th))
+      (reg_fields_names, rec_reg_id) @
+    List.mapPartial
+      (fn (n, fupd) =>
+         if Lib.mem n reg_fields_names then NONE
+         else SOME (word_fupd_conv fupd))
+      (mcsr_fupds @ fupds ``:SupervisorCSR``)
+  fun field_sel ty name =
+    prim_mk_const {Thy = "riscv",
+                   Name = TypeBasePure.mk_recordtype_fieldsel
+                            {tyname = ty, fieldname = name}}
+in
+  fun riscv_csr_conv vn =
+    let
+      val mcsr = ``^vn.c_MCSR ^vn.procID``
+      (* the registers of the hart, and their lifted words *)
+      val regs =
+        List.map (fn n => mk_comb (field_sel "MachineCSR" n, mcsr))
+          reg_fields_names
+      val images =
+        List.map
+          (fn r => mk_comb (prim_mk_const
+                              {Thy = "riscv",
+                               Name = "reg'" ^ fst (dest_type (type_of r))}, r))
+          regs
+      fun is_image w = List.exists (aconv w) images
+      (* reg_fields instantiated to the registers of the hart *)
+      val base_fields =
+        List.map
+          (fn th =>
+             let
+               val (r, _) = dest_forall (concl th)
+               val n = fst (dest_type (type_of r))
+             in
+               ISPEC (mk_comb (field_sel "MachineCSR" n, mcsr)) th
+             end) reg_fields
+      val fields_conv =
+        SIMP_CONV (std_ss ++ rewrites (record_rwts @ base_fields))
+          [rec_fields]
+    in
+      fields_conv THENC
+      DEPTH_CONV (FIRST_CONV value_convs) THENC
+      TOP_DEPTH_CONV (extract_conv is_image)
+    end
+end
 
 local
   (* The naming convention for this is slightly different in the
@@ -646,6 +890,11 @@ local
                 wordsTheory.WORD_SUB_INTRO,
                 wordsTheory.WORD_MULT_CLAUSES]
     )
+
+  (* ~word_bit 0 pc, the alignment of the pc in the step theorems, as
+     aligned 1 pc, which the lifter discharges for a constant pc *)
+  fun pc_aligned vn =
+    ISPEC ``^vn.c_PC ^vn.procID`` bir_riscv_extrasTheory.riscv_word_bit_0_aligned
 
   fun riscv_extra_THMS vn = let
      val thm0  = SPEC vn bmr_extra_RISCV
@@ -710,18 +959,24 @@ local
 	SIMP_RULE (std_ss++riscv_extra_ss) [riscvTheory.Skip_def] thm1
           handle UNCHANGED => thm1
     val thm3 = instantiate_riscv_thm thm2
+    (* The memory at the pc, and the conjuncts of riscv_state_is_OK (the
+     * extra predicate of riscv_bmr), discharge the hypotheses that they
+     * state. *)
     val thm4 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm)
                      thm3
                      (pc_mem_thms @ (riscv_extra_THMS vn))
 
     val thm5 = DISCH_ALL thm4
-    (* TODO: Simplifying with riscv_extra_THMS is useful when things like 32-bit mode comes up in
-     * expressions. This doesn't need to be handled using the explicit assumptions in
-     * riscv_extra_THMS, but could be lifted along with the MCSR and treated dynamically as part of
-     * the program. In other words, remove the last conversion when you start lifting system
-     * registers. *)
+    (* The remaining hypotheses are lifted to assertions: the contract of
+     * the M-mode step theorems (H1 to H6, see bir_lifting_machinesScript),
+     * alignment and the conditions of the instruction.  The conjuncts of
+     * riscv_state_is_OK simplify the hypotheses that they do not state as
+     * they are, such as ~word_bit 1 pc \/ misa.C, and the conclusion, such
+     * as the value of mepc that a CSR instruction reads. *)
     val thm6 =
-      CONV_RULE (simp_conv THENC simp_conv2 THENC (SIMP_CONV std_ss (riscv_extra_THMS vn))) thm5
+      CONV_RULE (simp_conv THENC riscv_csr_conv vn THENC simp_conv2 THENC
+                 (SIMP_CONV std_ss (riscv_extra_THMS vn)) THENC
+                 PURE_REWRITE_CONV [pc_aligned vn]) thm5
     (* Minimum and maximum (from AMOMIN and similar) as comparisons *)
     val thm7 =
       PURE_REWRITE_RULE [wordsTheory.word_min_def, wordsTheory.word_max_def,

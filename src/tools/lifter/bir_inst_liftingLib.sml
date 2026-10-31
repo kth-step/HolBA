@@ -248,7 +248,7 @@ open bir_inst_liftingLibTypes
   val tm = (* Put term returned by exception here, don't forget type information... *)
 
 (* Examples: *)
-val tm = ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w``;
+val tm = ``ms.c_privilege ms.procID = 3w``;
 val tm = ``aligned 3 (ms.c_gpr ms.procID 2w)``;
 
   (* In case of several preconds, continue with the following for 2, 3, 4, ...*)
@@ -449,7 +449,7 @@ fun get_patched_step_hex ms_v hex_code =
 
   val hex_code = String.map Char.toUpper "00E13423"; (* Working store *)
 
-  val hex_code = String.map Char.toUpper "340110F3"; (* Non-working CSR instr *)
+  val hex_code = String.map Char.toUpper "340110F3"; (* CSR *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
@@ -464,7 +464,6 @@ fun get_patched_step_hex ms_v hex_code =
     val ms'_t = rand (rhs (next_tm))
 
     (* lift all preconds *)
-    (* TODO: Something goes wrong here... *)
     val lift_thms = map exp_lift_fn preconds
     val assert_ok_thms = map (MATCH_MP bir_assert_desc_OK_via_lifting) lift_thms
     val al_step_l = map (fn thm => (rand (concl thm))) assert_ok_thms
@@ -1210,7 +1209,6 @@ fun get_patched_step_hex ms_v hex_code =
      fun raiseErr s = raise (bir_inst_liftingAuxExn (BILED_msg s));
 
      (* compute ms' and al_step *)
-     (* TODO: CSR: Something goes wrong here... *)
      val (ms'_t, al_step_t, ms'_thm) = compute_al_step_ms' next_thm0
        handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
 

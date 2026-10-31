@@ -6,3 +6,31 @@ performing such liftings. Please look at its signature for details.
 A large component of the lifter is the expression lifter, which is
 able to construct bir-expressions corresponding to terms of word types.
 You might want to look at "bir_exp_liftingLib" for using it directly.
+
+RISC-V
+------
+
+The RISC-V instance lifts the hart procID of HOL4's L3 model of RISC-V
+(priv-1.13 M-mode and U-mode with PMP, vendored with its step library in
+src/shared/l3-machine-code/riscv, see VENDORING.md there).  The step
+theorems describe a step of the hart in M-mode and carry the M-mode
+contract of the step library as hypotheses; the lifter turns each into an
+assertion of the BIR block of the instruction:
+
+  - every instruction: priv = 3 (H1), no locked PMP entry in pmpcfg0 and
+    pmpcfg2 (H3), mstatus.MIE clear (H6);
+  - loads, stores, AMOs, LR and SC: also mstatus.MPRV clear (H2) and the
+    natural alignment of the address (H5); for 8-byte accesses also every
+    PMP entry OFF or NAPOT (H4).
+
+The extra predicate of the machine record (riscv_state_is_OK in
+src/theory/tools/lifter/bir_lifting_machinesScript.sml) holds only what no
+lifted instruction changes: no exception, no pending control transfer,
+RV64 (misa.MXL <> 1) and the C extension enabled (misa.C).  The lifted state
+is listed in riscv_bmr there: the general-purpose and floating-point
+registers, the memory, the privilege ("priv", 8 bits) and the CSRs mstatus,
+mtvec, mie, mscratch, mepc, mcause, mtval, mhartid, mcounteren,
+mcountinhibit, scounteren, pmpcfg0, pmpcfg2 and pmpaddr0 to pmpaddr15.
+Instructions that read other state (for example "csrr mip", which reads the
+CLINT and the platform interrupt inputs, "csrr mcycle", or SC, which depends
+on the load reservation) do not lift.
