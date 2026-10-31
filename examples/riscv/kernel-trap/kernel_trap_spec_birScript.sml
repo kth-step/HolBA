@@ -50,9 +50,7 @@ val _ = new_theory "kernel_trap_spec_bir";
 (* ------------------------- *)
 
 val bspec_kernel_trap_entry_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
-    (BExp_Const (Imm8 3w))``,
+  rhs (concl bir_riscv_mmode_pre_def),
 
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "mscratch",
 
@@ -617,9 +615,7 @@ End
 (* -------------------------- *)
 
 val bspec_kernel_trap_return_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
-    (BExp_Const (Imm8 3w))``,
+  rhs (concl bir_riscv_mmode_pre_def),
 
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
 
@@ -955,7 +951,7 @@ val bspec_kernel_trap_return_post_tm = bslSyntax.bandl [
   ``BExp_BinPred BIExp_Equal
     (BExp_Den (BVar "mepc" (BType_Imm Bit64)))
     (BExp_BinExp BIExp_And
-     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFCw))
+     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))
      (BExp_Const (Imm64 pre_mepc_mem)))``,
 
   ``BExp_BinPred
@@ -1155,6 +1151,9 @@ Theorem kernel_trap_entry_riscv_pre_imp_bspec_pre_thm:
     pre_x15 pre_x16 pre_x17 pre_x18 pre_x19 pre_x20 pre_x21 pre_x22
     pre_x23 pre_x24 pre_x25 pre_x26 pre_x27 pre_x28 pre_x29 pre_x30 pre_x31)
 Proof
+  REWRITE_TAC [bspec_kernel_trap_entry_pre_def] >>
+  MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+  CONJ_TAC >- SIMP_TAC std_ss [riscv_kernel_trap_entry_pre_def] >>
   rw [bir_pre_riscv_to_bir_def] >-
    (rw [bspec_kernel_trap_entry_pre_def] >>    
     FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [
@@ -1246,6 +1245,9 @@ Theorem kernel_trap_return_riscv_pre_imp_bspec_pre_thm:
       pre_x20_mem pre_x21_mem pre_x22_mem pre_x23_mem pre_x24_mem pre_x25_mem
       pre_x26_mem pre_x27_mem pre_x28_mem pre_x29_mem pre_x30_mem pre_x31_mem)
 Proof
+ REWRITE_TAC [bspec_kernel_trap_return_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_kernel_trap_return_pre_def] >>
  rw [bir_pre_riscv_to_bir_def] >-
    (rw [bspec_kernel_trap_return_pre_def] >>
     FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_extra_expsTheory.BExp_Aligned_def] >>

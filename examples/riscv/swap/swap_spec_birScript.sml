@@ -44,6 +44,7 @@ val _ = new_theory "swap_spec_bir";
 (* -------------- *)
 
 val bspec_swap_pre_tm = bslSyntax.bandl [
+ rhs (concl bir_riscv_mmode_pre_def),
  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11",
  ``BExp_BinPred
@@ -108,6 +109,9 @@ Theorem swap_riscv_pre_imp_bspec_pre_thm:
   (riscv_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
   (bspec_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
 Proof
+  REWRITE_TAC [bspec_swap_pre_def] >>
+  MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+  CONJ_TAC >- SIMP_TAC std_ss [riscv_swap_pre_def] >>
   rw [bir_pre_riscv_to_bir_def] >-
    (rw [bspec_swap_pre_def] >>
     FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [

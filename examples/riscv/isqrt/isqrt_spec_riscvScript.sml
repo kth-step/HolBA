@@ -95,7 +95,8 @@ End
 
 Definition riscv_isqrt_pre_1_def:
  riscv_isqrt_pre_1 (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_isqrt_post_1_def:
@@ -108,7 +109,8 @@ End
 
 Definition riscv_isqrt_pre_2_def:
  riscv_isqrt_pre_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 13w = pre_x13 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 15w = pre_x15)
 End
 
@@ -125,7 +127,8 @@ End
 Definition riscv_isqrt_pre_3_def:
  riscv_isqrt_pre_3 (pre_x10:word64) (pre_x13:word64)
   (pre_x14:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14)
 End

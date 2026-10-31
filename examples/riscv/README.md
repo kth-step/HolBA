@@ -92,6 +92,10 @@ val _ = lift_da_and_store "incr" "incr.da" da_riscv
 - manually written in HOL4
 - expressed using the [L3](https://acjf3.github.io/l3/index.html) model of RISC-V on pre- and post-states
 - specifications must use variables to connect pre and post states
+- the lifted code runs in M-mode, and every lifted block asserts the M-mode contract of the
+  model's step theorems (see the RISC-V section of `src/tools/lifter/README`), so a precondition
+  includes `riscv_mmode m` (`bir_riscv_backlifterTheory`): the privilege is M, `mstatus.MIE` and
+  `mstatus.MPRV` are clear, and no PMP entry is locked or anything but OFF or NAPOT
 
 Example:
 
@@ -106,7 +110,8 @@ End
 
 Definition riscv_incr_pre_def:
  riscv_incr_pre (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_incr_post_def:
@@ -118,6 +123,9 @@ End
 
 - uses BIR boolean expressions that are closed except for occurrences of free HOL4 variables
 - may require conditions on memory accesses (alignment)
+- the precondition starts with `bir_riscv_mmode_pre`, the M-mode contract as a BIR expression on
+  the variables `priv`, `mstatus`, `pmpcfg0` and `pmpcfg2`, so that symbolic execution can show
+  that the assertions of the lifted blocks hold
 - used for symbolic execution
 - manually written in HOL4
 - the subset of BIR used is referred to as BSPEC
@@ -127,10 +135,12 @@ Example:
 ```sml
 Definition bspec_incr_pre_def:
  bspec_incr_pre (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
+  BExp_BinExp BIExp_And
+   ^(rhs (concl bir_riscv_mmode_pre_def))
+   (BExp_BinPred
+     BIExp_Equal
+     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 pre_x10)))
 End
 
 Definition bspec_incr_post_def:
@@ -148,6 +158,9 @@ End
 - RISC-V precondition implies BIR precondition
 - BIR postcondition implies RISC-V postcondition
 - manually written in HOL4
+- `bir_pre_riscv_to_bir_mmode_conj` (`bir_riscv_backlifterTheory`) takes care of the M-mode
+  conjuncts: applied with `MATCH_MP_TAC`, it leaves the implication of the rest of the
+  preconditions
 
 Example:
 

@@ -46,10 +46,12 @@ val _ = new_theory "incr_spec_bir";
 
 Definition bspec_incr_pre_def:
  bspec_incr_pre (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
+  BExp_BinExp BIExp_And
+   ^(rhs (concl bir_riscv_mmode_pre_def))
+   (BExp_BinPred
+     BIExp_Equal
+     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 pre_x10)))
 End
 
 Definition bspec_incr_post_def:
@@ -68,7 +70,10 @@ End
 Theorem incr_riscv_pre_imp_bspec_pre_thm:
  bir_pre_riscv_to_bir (riscv_incr_pre pre_x10) (bspec_incr_pre pre_x10)
 Proof
- rw [bir_pre_riscv_to_bir_def,riscv_incr_pre_def,bspec_incr_pre_def] >-
+ REWRITE_TAC [bspec_incr_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_incr_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_incr_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]

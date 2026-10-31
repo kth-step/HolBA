@@ -184,7 +184,14 @@ in (* local *)
   exception bir_vars_of_exp_exception of string * term;
   (* here apply only one "unfolding" and get empty or singleton sets, or one or two UNION operations, left-associative *)
   local
-    val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@[bir_extra_expsTheory.bir_vars_of_exp_BExp_IntervalPred_thm]);
+    (* with the variables of the abbreviations of bir_extra_expsTheory that
+       lifted code has, such as the bits of the RISC-V CSRs (BExp_word_bit) *)
+    val bir_vars_of_exp_rec_rewr_thm = (LIST_CONJ) ((CONJUNCTS bir_typing_expTheory.bir_vars_of_exp_def)@
+      [bir_extra_expsTheory.bir_vars_of_exp_BExp_IntervalPred_thm,
+       bir_extra_expsTheory.BExp_word_bit_vars_of,
+       bir_extra_expsTheory.BExp_word_bit_exp_vars_of,
+       bir_extra_expsTheory.BExp_LSB_vars_of,
+       bir_extra_expsTheory.BExp_MSB_vars_of]);
     fun bir_vars_of_exp_rec_CONV f_rec tm =
       let
         open pred_setSyntax;

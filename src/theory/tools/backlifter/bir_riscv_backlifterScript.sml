@@ -1884,4 +1884,144 @@ FULL_SIMP_TAC std_ss [] >>
 METIS_TAC [bir_state_is_terminated_def, bir_riscv_inter_exec]
 QED
 
+(* ------------------------------------------------------------------------ *)
+(* The M-mode contract of lifted code                                        *)
+(* ------------------------------------------------------------------------ *)
+
+(* Every block that the lifter makes of RISC-V code asserts the M-mode
+ * contract of the step theorems on the lifted privilege, mstatus and PMP
+ * configuration (H1, H2, H3, H4 and H6; see bir_lifting_machinesScript and
+ * riscv_stepTheory), and symbolic execution must show that each assertion
+ * holds.  So the BIR precondition of a contract of lifted code implies the
+ * assertions, and the RISC-V precondition implies the contract: riscv_mmode
+ * is the contract (but for H5, the alignment of the addresses of the
+ * accesses, which the precondition of a contract states on its registers),
+ * bir_riscv_mmode_pre its BIR expression, made of the expressions of the
+ * assertions, and bir_pre_riscv_to_bir_mmode_conj adds the two to the
+ * preconditions of a contract. *)
+Definition riscv_mmode_def:
+  riscv_mmode (ms:riscv_state) <=>
+    (ms.c_privilege ms.procID = 3w) /\
+    ~(ms.c_MCSR ms.procID).mstatus.MIE /\
+    ~(ms.c_MCSR ms.procID).mstatus.MPRV /\
+    pmp_unlocked (ms.c_MCSR ms.procID) /\
+    pmp_off_or_napot (ms.c_MCSR ms.procID)
+End
+
+Definition bir_riscv_mmode_pre_def:
+  bir_riscv_mmode_pre =
+  BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+       (BExp_Const (Imm8 3w)))
+  (BExp_BinExp BIExp_And
+    (BExp_UnaryExp BIExp_Not
+       (BExp_word_bit Bit64 (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3))
+  (BExp_BinExp BIExp_And
+    (BExp_UnaryExp BIExp_Not
+       (BExp_word_bit Bit64 (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 17))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w)))
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w))))))))
+End
+
+(* The contract on the words that the BIR variables hold. *)
+Theorem riscv_mmode_words[local]:
+  !ms. riscv_mmode ms <=>
+    (w2w (ms.c_privilege ms.procID) = (3w:word8)) /\
+    ~word_bit 3 (reg'mstatus (ms.c_MCSR ms.procID).mstatus) /\
+    ~word_bit 17 (reg'mstatus (ms.c_MCSR ms.procID).mstatus) /\
+    (0x8080808080808080w && (ms.c_MCSR ms.procID).pmpcfg0 = 0w) /\
+    (0x8080808080808080w && (ms.c_MCSR ms.procID).pmpcfg2 = 0w) /\
+    (0x808080808080808w &&
+     ((ms.c_MCSR ms.procID).pmpcfg0 ?? (ms.c_MCSR ms.procID).pmpcfg0 >>>~ 1w) =
+     0w) /\
+    (0x808080808080808w &&
+     ((ms.c_MCSR ms.procID).pmpcfg2 ?? (ms.c_MCSR ms.procID).pmpcfg2 >>>~ 1w) =
+     0w)
+Proof
+  rw [riscv_mmode_def, riscv_stepTheory.pmp_unlocked_def,
+      riscv_stepTheory.pmp_off_or_napot_def,
+      GSYM riscv_csr_reg_fields, wordsTheory.word_lsr_bv_def] >>
+  blastLib.BBLAST_TAC
+QED
+
+Theorem bir_riscv_mmode_pre_thm:
+  bir_pre_riscv_to_bir riscv_mmode bir_riscv_mmode_pre
+Proof
+  rw [bir_pre_riscv_to_bir_def, bir_riscv_mmode_pre_def] >-
+   SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss)
+     [bir_extra_expsTheory.BExp_word_bit_def, n2bs_def] >>
+  FULL_SIMP_TAC std_ss [riscv_mmode_words] >>
+  FULL_SIMP_TAC (srw_ss()++holBACore_ss)
+    [riscv_bmr_rel_EVAL, bir_extra_expsTheory.BExp_word_bit_eval,
+     bir_bool_expTheory.bir_val_true_def] >>
+  EVAL_TAC
+QED
+
+(* A precondition that implies two preconditions implies their
+ * conjunction. *)
+Theorem bir_pre_riscv_to_bir_conj:
+  !pre pre1 pre2 pre_bir1 pre_bir2.
+    (!ms. pre ms ==> pre1 ms /\ pre2 ms) /\
+    bir_pre_riscv_to_bir pre1 pre_bir1 /\
+    bir_pre_riscv_to_bir pre2 pre_bir2 ==>
+    bir_pre_riscv_to_bir pre (BExp_BinExp BIExp_And pre_bir1 pre_bir2)
+Proof
+  rw [bir_pre_riscv_to_bir_def] >-
+   FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_is_bool_exp_REWRS] >>
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def,
+    bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+  `pre1 ms /\ pre2 ms` by METIS_TAC [] >>
+  `(bir_eval_exp pre_bir1 bs.bst_environ = SOME bir_val_true) /\
+   (bir_eval_exp pre_bir2 bs.bst_environ = SOME bir_val_true)` by METIS_TAC [] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss)
+    [bir_expTheory.bir_eval_exp_def, bir_bool_expTheory.bir_val_true_def] >>
+  EVAL_TAC
+QED
+
+(* The M-mode contract added to the RISC-V and BIR preconditions of a
+ * contract: the BIR precondition is the conjunction of bir_riscv_mmode_pre,
+ * as an expression, and the BIR precondition of the contract. *)
+Theorem bir_pre_riscv_to_bir_mmode_conj:
+  !pre pre_bir.
+    (!ms. pre ms ==> riscv_mmode ms) /\
+    bir_pre_riscv_to_bir pre pre_bir ==>
+    bir_pre_riscv_to_bir pre
+      (BExp_BinExp BIExp_And ^(rhs (concl bir_riscv_mmode_pre_def)) pre_bir)
+Proof
+  rpt strip_tac >>
+  MATCH_MP_TAC bir_pre_riscv_to_bir_conj >>
+  qexistsl_tac [`riscv_mmode`, `pre`] >>
+  ASM_SIMP_TAC std_ss [GSYM bir_riscv_mmode_pre_def, bir_riscv_mmode_pre_thm]
+QED
+
 val _ = export_theory();

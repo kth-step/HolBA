@@ -48,10 +48,12 @@ val _ = new_theory "isqrt_spec_bir";
 
 Definition bspec_isqrt_pre_1_def:
  bspec_isqrt_pre_1 (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
+  BExp_BinExp BIExp_And
+   ^(rhs (concl bir_riscv_mmode_pre_def))
+   (BExp_BinPred
+     BIExp_Equal
+     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 pre_x10)))
 End
 
 val bspec_isqrt_post_1_tm = bslSyntax.bandl [
@@ -73,6 +75,7 @@ End
 (* loop body contract *)
 
 val bspec_isqrt_pre_2_tm = bslSyntax.bandl [
+ rhs (concl bir_riscv_mmode_pre_def),
  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x13" (BType_Imm Bit64)))
@@ -119,6 +122,7 @@ End
 (* branch contract *)
 
 val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
+ rhs (concl bir_riscv_mmode_pre_def),
  ``BExp_BinPred
     BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
@@ -195,7 +199,10 @@ Theorem isqrt_riscv_pre_1_imp_bspec_pre_1_thm:
   (riscv_isqrt_pre_1 pre_x10)
   (bspec_isqrt_pre_1 pre_x10)
 Proof
- rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_1_def,bspec_isqrt_pre_1_def] >-
+ REWRITE_TAC [bspec_isqrt_pre_1_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_isqrt_pre_1_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_1_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF]
@@ -237,7 +244,10 @@ Theorem isqrt_riscv_pre_2_imp_bspec_pre_2_thm:
   (riscv_isqrt_pre_2 pre_x13 pre_x15)
   (bspec_isqrt_pre_2 pre_x13 pre_x15)
 Proof
- rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_2_def,bspec_isqrt_pre_2_def] >-
+ REWRITE_TAC [bspec_isqrt_pre_2_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_isqrt_pre_2_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_2_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,bool2b_def,bool2w_def] >>
@@ -282,7 +292,10 @@ Theorem isqrt_riscv_pre_3_imp_bspec_pre_3_thm:
   (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
   (bspec_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
 Proof
- rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_3_def,bspec_isqrt_pre_3_def] >-
+ REWRITE_TAC [bspec_isqrt_pre_3_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_isqrt_pre_3_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_3_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,bool2b_def,bool2w_def] >>
