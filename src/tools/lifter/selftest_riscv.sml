@@ -367,6 +367,24 @@ val _ = riscv_test_hex_print_asm "CSRRWI x1, mcounteren(0x306), 0x1" "3060D0F3";
 val _ = riscv_test_hex_print_asm "CSRRSI x1, mcounteren(0x306), 0x1" "3060E0F3";
 val _ = riscv_test_hex_print_asm "CSRRCI x1, mcounteren(0x306), 0x1" "3060F0F3";
 
+(* satp has no effect in M-mode, where address translation is off, and no
+ * step theorem has a hypothesis on it.  It is lifted, so that a contract
+ * can state its value: a write lifts to an assignment of the value that
+ * legalize_satp keeps (the written value if its MODE, bits 63 to 60, is
+ * Bare, Sv39, Sv48 or Sv57, and the old value otherwise), and a read to
+ * the BIR variable *)
+val _ = riscv_test_hex_print_asm "CSRW satp(0x180), t0" "18029073";
+val _ = riscv_test_hex_print_asm "CSRWI satp(0x180), 0" "18005073";
+val _ = riscv_test_hex_print_asm "CSRR t0, satp(0x180)" "180022F3";
+
+(* sstatus, a view of mstatus: a write stores SIE, SPIE, SPP, FS, SUM and
+ * MXR of the written value and keeps the other fields of mstatus, and a
+ * read shows these six fields, UXL (2) and SD (set iff FS is Dirty).  SUM
+ * (bit 18) is writable, in mstatus too, since satp can select a
+ * translation mode *)
+val _ = riscv_test_hex_print_asm "CSRW sstatus(0x100), t0" "10029073";
+val _ = riscv_test_hex_print_asm "CSRR t0, sstatus(0x100)" "100022F3";
+
 (* Writes of misa, one that clears misa.C and one that sets it: no write of
  * misa lifts (see the RISC-V section of README) *)
 val _ = riscv_test_hex_print_asm "CSRW misa(0x301), zero" "30101073";

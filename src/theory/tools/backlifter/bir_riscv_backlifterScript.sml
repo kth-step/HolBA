@@ -273,6 +273,8 @@ Definition riscv_vars_def:
   (BVar "tmp_mcountinhibit" (BType_Imm Bit64));
   (BVar "scounteren" (BType_Imm Bit64));
   (BVar "tmp_scounteren" (BType_Imm Bit64));
+  (BVar "satp" (BType_Imm Bit64));
+  (BVar "tmp_satp" (BType_Imm Bit64));
   (BVar "pmpcfg0" (BType_Imm Bit64));
   (BVar "tmp_pmpcfg0" (BType_Imm Bit64));
   (BVar "pmpcfg2" (BType_Imm Bit64));
@@ -493,6 +495,7 @@ Definition default_riscv_bir_env_CSRS_def:
   (("mcounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcounteren)))
   (("mcountinhibit" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)))
   (("scounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)))
+  (("satp" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)))
   (("pmpcfg0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)))
   (("pmpcfg2" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)))
   (("pmpaddr0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr0)))
@@ -514,7 +517,7 @@ Definition default_riscv_bir_env_CSRS_def:
   (("procID" =+ SOME (BVal_Imm (Imm8 ms.procID)))
   (("extMEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))))
   (("extSEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID))))
-  env_map)))))))))))))))))))))))))))))))))
+  env_map))))))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_env_CSRS_tmp_def:
@@ -532,6 +535,7 @@ Definition default_riscv_bir_env_CSRS_tmp_def:
   (("tmp_mcounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcounteren)))
   (("tmp_mcountinhibit" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)))
   (("tmp_scounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)))
+  (("tmp_satp" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)))
   (("tmp_pmpcfg0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)))
   (("tmp_pmpcfg2" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)))
   (("tmp_pmpaddr0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr0)))
@@ -553,7 +557,7 @@ Definition default_riscv_bir_env_CSRS_tmp_def:
   (("tmp_procID" =+ SOME (BVal_Imm (Imm8 ms.procID)))
   (("tmp_extMEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))))
   (("tmp_extSEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID))))
-  env_map)))))))))))))))))))))))))))))))))
+  env_map))))))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_state_def:
@@ -576,7 +580,7 @@ End
  * walks down the chain, comparing the name of the variable with the name of
  * each update, without simplifying the values or the rest of the chain
  * (which simplifying the whole environment for each variable does, at a
- * high cost in time and memory with the 200 variables of riscv_vars). *)
+ * high cost in time and memory with the 202 variables of riscv_vars). *)
 val default_riscv_bir_state_environ = GEN_ALL (
   (SIMP_CONV (srw_ss()) [default_riscv_bir_state_def] THENC
    REWRITE_CONV [default_riscv_bir_env_CSRS_def,
@@ -1206,6 +1210,8 @@ Theorem default_riscv_bir_state_MCSRS_read[local]:
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)) /\
   bir_env_read (BVar "scounteren" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)) /\
+  bir_env_read (BVar "satp" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)) /\
   bir_env_read (BVar "pmpcfg0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)) /\
   bir_env_read (BVar "pmpcfg2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
@@ -1280,6 +1286,8 @@ Theorem default_riscv_bir_state_MCSRS_read_tmp[local]:
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)) /\
   bir_env_read (BVar "tmp_scounteren" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)) /\
+  bir_env_read (BVar "tmp_satp" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)) /\
   bir_env_read (BVar "tmp_pmpcfg0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)) /\
   bir_env_read (BVar "tmp_pmpcfg2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
@@ -1354,6 +1362,8 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
    SOME (bir_var_type (BVar "mcountinhibit" (BType_Imm Bit64))) /\
   bir_env_lookup_type "scounteren" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "scounteren" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "satp" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "satp" (BType_Imm Bit64))) /\
   bir_env_lookup_type "pmpcfg0" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "pmpcfg0" (BType_Imm Bit64))) /\
   bir_env_lookup_type "pmpcfg2" (default_riscv_bir_state ms).bst_environ =
@@ -1428,6 +1438,8 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
    SOME (bir_var_type (BVar "tmp_mcountinhibit" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_scounteren" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_scounteren" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_satp" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_satp" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_pmpcfg0" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_pmpcfg0" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_pmpcfg2" (default_riscv_bir_state ms).bst_environ =

@@ -888,15 +888,19 @@ QED
 (**********)
 (* RISC-V *)
 (**********)
-(* The model is the priv-1.13 L3 model of HOL4's riscv-l3 branch, vendored
- * in src/shared/l3-machine-code/riscv (see VENDORING.md there).  Every
- * component of riscv_state except MEM8, exception, log, totalCore and
- * procID is a map from the hart number (procID, 8 bits) to the component of
- * that hart; the lifter works on the hart procID.
+(* The model is the priv-1.13 L3 model of HOL4's riscv-l3 branch (M-mode,
+ * S-mode and U-mode, PMP, and Sv39, Sv48 and Sv57 address translation),
+ * vendored in src/shared/l3-machine-code/riscv (see VENDORING.md there).
+ * Every component of riscv_state except MEM8, exception, log, totalCore
+ * and procID is a map from the hart number (procID, 8 bits) to the
+ * component of that hart; the lifter works on the hart procID.
  *
  * The step theorems of riscv_stepLib describe one step of NextRISCV of a
  * hart in M-mode, and carry the hypotheses of the M-mode contract
- * (doc/design-privileged.md, section 1.5, of the riscv-l3 branch):
+ * (doc/design-privileged.md, section 1.5, of the riscv-l3 branch).  None
+ * is on satp: address translation is off in M-mode, for fetches by H1 and
+ * for data accesses by H1 and H2 (privileged specification, sections
+ * 12.1.11 and 3.1.6.4; doc/design-smode.md, section 1.1):
  *
  *   H1  ms.c_privilege ms.procID = 3w            every instruction
  *   H2  ~(ms.c_MCSR ms.procID).mstatus.MPRV      loads, stores, AMOs
@@ -1001,7 +1005,19 @@ Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
  * loads from the memory, the CLINT being part of it.  No instruction
  * changes them.  mcycle and minstret (c_cycles, c_instret) are not lifted:
  * NextRISCV does not count, so in the lifted semantics they would be
- * constants. *)
+ * constants.
+ *
+ * satp is lifted as stored, with no assertion and no conjunct of
+ * riscv_state_is_OK (doc/design-smode.md, section 1.6, decision S29 of the
+ * riscv-l3 branch).  It has no effect on lifted code, which runs in M-mode,
+ * where satp is not active (privileged specification, section 12.1.11).
+ * It is lifted so that a contract of an M-mode kernel can state its value,
+ * for example that satp.MODE (bits 63 to 60) is Bare when the kernel
+ * returns to U-mode.  A write of satp lifts to an assignment of the value
+ * that legalize_satp keeps: the written value if its MODE is Bare, Sv39,
+ * Sv48 or Sv57, and the old value otherwise (section 12.1.11: a write of
+ * another MODE has no effect).  riscv_state_is_OK cannot say that satp is
+ * Bare, since a lifted write of satp can change that. *)
 Definition riscv_sysregs_lifted_imms_LIST_def:
   riscv_sysregs_lifted_imms_LIST = [
     (BMLI (BVar "priv" (BType_Imm Bit8))
@@ -1030,6 +1046,8 @@ Definition riscv_sysregs_lifted_imms_LIST_def:
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mcountinhibit)));
     (BMLI (BVar "scounteren" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 ((ms.c_SCSR ms.procID).scounteren)));
+    (BMLI (BVar "satp" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_SCSR ms.procID).satp)));
     (BMLI (BVar "pmpcfg0" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpcfg0)));
     (BMLI (BVar "pmpcfg2" (BType_Imm Bit64))

@@ -899,6 +899,7 @@ Theorem riscv_csr_rec_fields:
   (!w. (rec'mstatus w).MPP = (12 >< 11) w) /\
   (!w. (rec'mstatus w).FS = (14 >< 13) w) /\
   (!w. (rec'mstatus w).MPRV = word_bit 17 w) /\
+  (!w. (rec'mstatus w).SUM = word_bit 18 w) /\
   (!w. (rec'mstatus w).MXR = word_bit 19 w) /\
   (!w. (rec'mstatus w).TVM = word_bit 20 w) /\
   (!w. (rec'mstatus w).TW = word_bit 21 w) /\
@@ -935,6 +936,7 @@ Theorem riscv_csr_reg_fields:
   (!r. r.MPP = (12 >< 11) (reg'mstatus r)) /\
   (!r. r.FS = (14 >< 13) (reg'mstatus r)) /\
   (!r. r.MPRV = word_bit 17 (reg'mstatus r)) /\
+  (!r. r.SUM = word_bit 18 (reg'mstatus r)) /\
   (!r. r.MXR = word_bit 19 (reg'mstatus r)) /\
   (!r. r.TVM = word_bit 20 (reg'mstatus r)) /\
   (!r. r.TW = word_bit 21 (reg'mstatus r)) /\
@@ -979,6 +981,8 @@ Theorem riscv_csr_reg_updates:
          reg'mstatus r && ~0x6000w || w2w v << 13) /\
   (!r b. reg'mstatus (r with MPRV := b) =
          reg'mstatus r && ~0x20000w || (if b then 0x20000w else 0w)) /\
+  (!r b. reg'mstatus (r with SUM := b) =
+         reg'mstatus r && ~0x40000w || (if b then 0x40000w else 0w)) /\
   (!r b. reg'mstatus (r with MXR := b) =
          reg'mstatus r && ~0x80000w || (if b then 0x80000w else 0w)) /\
   (!r b. reg'mstatus (r with TVM := b) =
