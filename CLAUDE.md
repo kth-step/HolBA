@@ -85,6 +85,8 @@
 - Write labels in contracts and their supporting lemmas as the named address definitions from `*_spec_<arch>` (e.g. `isqrt_end_addr_2`, `chacha20_column_round_end_addr`), not hex literals. This covers `arm8_cont`/`riscv_cont` statements, PC conditions in pre/postconditions, and label cases (`BL_Address (Imm64 ...)`) in BIR postcondition lemmas.
   - The BIR contracts from symbolic transfer (`bspec_cont_*`) contain the hex values. Backlift with `get_riscv_contract_thm` / `get_arm8_contract_thm`, which take the address definitions and state the result with the names. `get_riscv_contract` / `get_arm8_contract` are legacy.
   - If a BIR postcondition lemma names labels, also pass the address definitions in the `bir_post_defs` argument, so that it matches the hex labels of the BIR contract (see `examples/riscv/chacha20/chacha20_column_round_propScript.sml`).
+- Write BIR terms (e.g. the BIR pre/postconditions in `*_spec_bir`) with `bslSyntax` constructors (`beq`, `bden`, `bconst`, `bplus`, `bandl`, ...), not raw BIR abstract syntax (`BExp_BinPred BIExp_Equal (BExp_Den (BVar ...)) ...`). This limits verbosity and makes the terms clearer. Examples: `examples/arm8/update_sat/update_sat_spec_birScript.sml`, `examples/arm8/isqrt/isqrt_spec_birScript.sml`.
+  - Longer term, the aim is to remove the need to write explicit BIR in contract proof files at all.
 
 ## Git
 - Main branch is `master`. The HOL4 revision is pinned in `holproject.toml`.

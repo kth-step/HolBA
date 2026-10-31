@@ -38,6 +38,8 @@ open bir_program_varsTheory;
 
 open isqrt_spec_arm8Theory;
 
+open bslSyntax;
+
 val _ = new_theory "isqrt_spec_bir";
 
 (* --------------- *)
@@ -46,23 +48,18 @@ val _ = new_theory "isqrt_spec_bir";
 
 (* before loop contract *)
 
+val bspec_isqrt_pre_1_tm =
+  beq (bden (bvarimm 64 "R0"), bconst ``pre_x0:word64``);
+
 Definition bspec_isqrt_pre_1_def:
  bspec_isqrt_pre_1 (pre_x0:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))
+  ^bspec_isqrt_pre_1_tm
 End
 
-val bspec_isqrt_post_1_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 0w))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))``
+val bspec_isqrt_post_1_tm = bandl [
+  beq (bden (bvarimm 64 "R1"), bconst64 0),
+
+  beq (bden (bvarimm 64 "R3"), bconst ``pre_x0:word64``)
 ];
 
 Definition bspec_isqrt_post_1_def:
@@ -72,15 +69,10 @@ End
 
 (* loop body contract *)
 
-val bspec_isqrt_pre_2_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x3))``
+val bspec_isqrt_pre_2_tm = bandl [
+  beq (bden (bvarimm 64 "R1"), bconst ``pre_x1:word64``),
+
+  beq (bden (bvarimm 64 "R3"), bconst ``pre_x3:word64``)
 ];
 
 Definition bspec_isqrt_pre_2_def:
@@ -88,27 +80,16 @@ Definition bspec_isqrt_pre_2_def:
   ^bspec_isqrt_pre_2_tm
 End
 
-val bspec_isqrt_post_2_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 pre_x1)) (BExp_Const (Imm64 1w)))``,
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "R2" (BType_Imm Bit64)))
-     (BExp_BinExp
-       BIExp_Mult
-        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x1)) (BExp_Const (Imm64 1w)))
-        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x1)) (BExp_Const (Imm64 1w))))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x3))``
+val bspec_isqrt_post_2_tm = bandl [
+  beq (bden (bvarimm 64 "R0"), bconst ``pre_x1:word64``),
+
+  beq (bden (bvarimm 64 "R1"), bplus (bconst ``pre_x1:word64``, bconst64 1)),
+
+  beq (bden (bvarimm 64 "R2"),
+   bmult (bplus (bconst ``pre_x1:word64``, bconst64 1),
+          bplus (bconst ``pre_x1:word64``, bconst64 1))),
+
+  beq (bden (bvarimm 64 "R3"), bconst ``pre_x3:word64``)
 ];
 
 Definition bspec_isqrt_post_2_def:
@@ -118,23 +99,14 @@ End
 
 (* branch contract *)
 
-val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R2" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x2))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x3))``
+val bspec_isqrt_pre_3_tm = bandl [
+  beq (bden (bvarimm 64 "R0"), bconst ``pre_x0:word64``),
+
+  beq (bden (bvarimm 64 "R1"), bconst ``pre_x1:word64``),
+
+  beq (bden (bvarimm 64 "R2"), bconst ``pre_x2:word64``),
+
+  beq (bden (bvarimm 64 "R3"), bconst ``pre_x3:word64``)
 ];
 
 Definition bspec_isqrt_pre_3_def:
@@ -142,27 +114,16 @@ Definition bspec_isqrt_pre_3_def:
   ^bspec_isqrt_pre_3_tm
 End
 
-val bspec_isqrt_post_3_loop_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R2" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x2))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x3))``,
-  ``BExp_BinPred
-     BIExp_LessOrEqual
-      (BExp_Const (Imm64 pre_x2))
-      (BExp_Const (Imm64 pre_x3))``
+val bspec_isqrt_post_3_loop_tm = bandl [
+  beq (bden (bvarimm 64 "R0"), bconst ``pre_x0:word64``),
+
+  beq (bden (bvarimm 64 "R1"), bconst ``pre_x1:word64``),
+
+  beq (bden (bvarimm 64 "R2"), bconst ``pre_x2:word64``),
+
+  beq (bden (bvarimm 64 "R3"), bconst ``pre_x3:word64``),
+
+  ble (bconst ``pre_x2:word64``, bconst ``pre_x3:word64``)
 ];
 
 Definition bspec_isqrt_post_3_loop_def:
@@ -170,27 +131,16 @@ Definition bspec_isqrt_post_3_loop_def:
   ^bspec_isqrt_post_3_loop_tm
 End
 
-val bspec_isqrt_post_3_ret_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R2" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x2))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x3))``,
-  ``BExp_BinPred
-    BIExp_LessThan
-    (BExp_Const (Imm64 pre_x3))
-    (BExp_Const (Imm64 pre_x2))``
+val bspec_isqrt_post_3_ret_tm = bandl [
+  beq (bden (bvarimm 64 "R0"), bconst ``pre_x0:word64``),
+
+  beq (bden (bvarimm 64 "R1"), bconst ``pre_x1:word64``),
+
+  beq (bden (bvarimm 64 "R2"), bconst ``pre_x2:word64``),
+
+  beq (bden (bvarimm 64 "R3"), bconst ``pre_x3:word64``),
+
+  blt (bconst ``pre_x3:word64``, bconst ``pre_x2:word64``)
 ];
 
 Definition bspec_isqrt_post_3_ret_def:

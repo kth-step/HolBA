@@ -48,7 +48,7 @@ val _ = new_theory "update_sat_spec_bir";
 (* BSPEC contract *)
 (* -------------- *)
 
-val bspec_update_sat_pre_tm = bslSyntax.bandl [
+val bspec_update_sat_pre_tm = bandl [
   bslt (bminus (bchsign (bconst64 2147483647), bconst64 1), bconst ``pre_x2:word64``),
 
   bslt (bconst ``pre_x2:word64``, bconst ``pre_x3:word64``),
@@ -73,14 +73,14 @@ Definition bspec_update_sat_pre_def:
   ^bspec_update_sat_pre_tm
 End
 
-val bspec_update_sat_post_or_1_tm = bslSyntax.borl [
+val bspec_update_sat_post_or_1_tm = borl [
   bnot (band (beq (bconst ``pre_x0:word64``, bconst64 0),
    bslt (bminus (bconst ``pre_x1:word64``, bconst64 1), bconst ``pre_x2:word64``))),
 
   beq (bden (bvarimm 64 "R0"), bconst ``pre_x2:word64``)
 ];
 
-val bspec_update_sat_post_or_2_tm = bslSyntax.borl [
+val bspec_update_sat_post_or_2_tm = borl [
   bnot (band (beq (bconst ``pre_x0:word64``, bconst64 0),
    bsle (bconst ``pre_x2:word64``, bminus (bconst ``pre_x1:word64``, bconst64 1)))),
 
@@ -88,14 +88,14 @@ val bspec_update_sat_post_or_2_tm = bslSyntax.borl [
    bminus (bconst ``pre_x1:word64``, bconst64 1))
 ];
 
-val bspec_update_sat_post_or_3_tm = bslSyntax.borl [
+val bspec_update_sat_post_or_3_tm = borl [
   bnot (band (bnot (beq (bconst ``pre_x0:word64``, bconst64 0)),
    bslt (bconst ``pre_x3:word64``, bplus (bconst ``pre_x1:word64``, bconst64 1)))),
 
    beq (bden (bvarimm 64 "R0"), bconst ``pre_x3:word64``)
 ];
 
-val bspec_update_sat_post_or_4_tm = bslSyntax.borl [
+val bspec_update_sat_post_or_4_tm = borl [
   bnot (band (bnot (beq (bconst ``pre_x0:word64``, bconst64 0)),
    bsle (bplus (bconst ``pre_x1:word64``, bconst64 1), bconst ``pre_x3:word64``))),
 
@@ -103,7 +103,7 @@ val bspec_update_sat_post_or_4_tm = bslSyntax.borl [
     bplus (bconst ``pre_x1:word64``, bconst64 1))
 ];
 
-val bspec_update_sat_post_tm = bslSyntax.bandl [
+val bspec_update_sat_post_tm = bandl [
   bspec_update_sat_post_or_1_tm,
   bspec_update_sat_post_or_2_tm,
   bspec_update_sat_post_or_3_tm,
