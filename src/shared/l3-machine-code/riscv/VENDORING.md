@@ -7,7 +7,8 @@ U-mode, PMP, RV64GC):
 | | |
 |---|---|
 | Upstream | https://github.com/didriklundberg/HOL, branch `riscv-l3` |
-| Commit | `8f8ab4f206e9e6560c927e35754c447083520e06` (2026-10-31) |
+| Commit | `8f8ab4f206e9e6560c927e35754c447083520e06` (2026-10-31), with the local patches below |
+| Same files | `37a5d7e9a89caa4cd6cf3acea570dafc88946378` (2026-10-31), the next commit, which applies the local patches upstream: every vendored file is identical to its upstream counterpart there |
 | Upstream directory | `examples/l3-machine-code/riscv/` |
 | L3 version | L3-2018-02-09 (the model files are L3's HOL4 and SML exports of `src/riscv.spec`) |
 | HOL4 used by HolBA | `trindemossen-2` (upstream builds against HOL4 `develop`) |
@@ -37,7 +38,7 @@ are HolBA's: they build no heaps and find L3's `common` and `lib` directories un
 
 Each patch makes the vendored code build and run with HOL4 `trindemossen-2`, whose interfaces
 differ from those of HOL4 `develop` in the three places below. Each is written so that it also
-works with `develop`, so it can be applied upstream as it is.
+works with `develop`; upstream applied all four, unchanged, in `37a5d7e9a`.
 
 1. `step/riscv_stepScript.sml`: the `fupdselfid` theorems (`r with f := r.f = r` for every
    field `f`) of `riscv_state`, `MachineCSR`, `mstatus`, `UserCSR` and `FPCSR` are proved in
