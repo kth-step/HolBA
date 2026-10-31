@@ -2,3 +2,13 @@ INCLUDES = $(HOLBADIR)/src/shared/l3-machine-code/riscv/model
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+# The selftest of riscv_stepLib (upstream's step/selftest.sml, see
+# ../VENDORING.md).  It takes about six minutes, so it is not one of the
+# tests of "make tests"; run it with "Holmake selftest".
+selftest: riscv_step_selftest.sml riscv_stepLib.uo
+	$(protect $(HOLDIR)/bin/hol) < riscv_step_selftest.sml > riscv_step_selftest.log 2>&1 || { grep '^FAIL' riscv_step_selftest.log | head -50; tail -40 riscv_step_selftest.log; exit 1; }
+	tail -3 riscv_step_selftest.log
+.PHONY: selftest
+
+EXTRA_CLEANS = riscv_step_selftest.log
