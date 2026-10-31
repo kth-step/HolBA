@@ -6,6 +6,8 @@ open bir_tsTheory bir_bool_expTheory bir_programTheory;
 
 open bir_predLib;
 
+open bir_riscv_backlifterTheory;
+
 val _ = new_theory "aes_spec";
 
 (* ------------------ *)
@@ -47,8 +49,11 @@ val blksz = blocksize div 8;
 val sprn = "x2";
 
 
+(* The M-mode contract that the lifted blocks assert, and the conditions
+ * on the arguments and the memory accesses *)
 val bspec_aes_pre_tm = bslSyntax.bandl
- ([bslSyntax.beq (bslSyntax.bden (bslSyntax.bvarimm64 roundsrn), bslSyntax.bconst64 rounds),
+ ([rhs (concl bir_riscv_mmode_pre_def),
+   bslSyntax.beq (bslSyntax.bden (bslSyntax.bvarimm64 roundsrn), bslSyntax.bconst64 rounds),
    mem_addrs_stack_disj_reg_bir_tm sprn rkrn,
    mem_addrs_stack_disj_reg_bir_tm sprn inblkrn,
    mem_addrs_stack_disj_reg_bir_tm sprn Te_rn,

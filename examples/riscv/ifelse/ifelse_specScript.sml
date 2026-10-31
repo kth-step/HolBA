@@ -54,7 +54,10 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
+(* The M-mode contract that the lifted blocks assert, and the conditions
+ * on the memory accesses *)
 val bspec_ifelse_keysetup_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];

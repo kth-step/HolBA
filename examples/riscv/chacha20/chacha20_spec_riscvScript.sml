@@ -144,7 +144,8 @@ End
 Definition riscv_chacha20_line_pre_def:
  riscv_chacha20_line_pre (pre_a:word32) (pre_b:word32) (pre_d:word32)
   (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
+ (riscv_mmode m /\
+  n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
   n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
   n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
 End
@@ -163,7 +164,8 @@ End
 Definition riscv_chacha20_quarter_round_pre_def:
  riscv_chacha20_quarter_round_pre (pre_a:word32) (pre_b:word32) (pre_c:word32) (pre_d:word32)
   (m:riscv_state) : bool =
-  (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
+  (riscv_mmode m /\
+   n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
    n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
    n2w (w2n (m.c_gpr m.procID 28w)) = pre_c /\
    n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
@@ -188,7 +190,8 @@ Definition riscv_chacha20_column_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_0 /\
+ (riscv_mmode m /\
+  n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_0 /\
   n2w (w2n (m.c_gpr m.procID 16w)) = pre_arr_1 /\
   n2w (w2n (m.c_gpr m.procID 17w)) = pre_arr_2 /\
   n2w (w2n (m.c_gpr m.procID 6w))  = pre_arr_3 /\
@@ -246,7 +249,8 @@ Definition riscv_chacha20_diagonal_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 20w)) = pre_arr_0 /\
+ (riscv_mmode m /\
+  n2w (w2n (m.c_gpr m.procID 20w)) = pre_arr_0 /\
   n2w (w2n (m.c_gpr m.procID 19w)) = pre_arr_1 /\
   n2w (w2n (m.c_gpr m.procID 18w)) = pre_arr_2 /\
   n2w (w2n (m.c_gpr m.procID 9w)) = pre_arr_3 /\

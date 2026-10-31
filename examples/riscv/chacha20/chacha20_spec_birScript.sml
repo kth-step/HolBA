@@ -185,9 +185,13 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
+(* Each precondition starts with the M-mode contract that the lifted blocks
+ * assert (bir_riscv_backlifterTheory) *)
+
 (* keysetup *)
 
 val bspec_chacha20_keysetup_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
@@ -200,6 +204,7 @@ End
 (* ivsetup *)
 
 val bspec_chacha20_ivsetup_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
@@ -212,6 +217,7 @@ End
 (* first line *)
 
 val bspec_chacha20_line_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -251,6 +257,7 @@ End
 (* second line *)
 
 val bspec_chacha20_line_pre_other_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -290,6 +297,7 @@ End
 (* first quarter round *)
 
 val bspec_chacha20_quarter_round_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -345,6 +353,7 @@ End
 (* column round *)
 
 val bspec_chacha20_column_round_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -506,6 +515,7 @@ End
 (* diagonal round *)
 
 val bspec_chacha20_diagonal_round_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x20" (BType_Imm Bit64))) Bit32)
@@ -667,6 +677,7 @@ End
 (* double round *)
 
 val bspec_chacha20_double_round_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
@@ -836,7 +847,10 @@ Theorem chacha20_line_riscv_pre_imp_bspec_pre_thm:
   (riscv_chacha20_line_pre pre_a pre_b pre_d)
   (bspec_chacha20_line_pre pre_a pre_b pre_d)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_line_pre_def,bspec_chacha20_line_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_line_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_line_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_line_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -897,7 +911,10 @@ Theorem chacha20_quarter_round_riscv_pre_imp_bspec_pre_thm:
   (riscv_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
   (bspec_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_quarter_round_pre_def,bspec_chacha20_quarter_round_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_quarter_round_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_quarter_round_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_quarter_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -961,7 +978,10 @@ Theorem chacha20_column_round_riscv_pre_imp_bspec_pre_thm:
   (bspec_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def,bspec_chacha20_column_round_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_column_round_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_column_round_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -1027,7 +1047,10 @@ Theorem chacha20_diagonal_round_riscv_pre_imp_bspec_pre_thm:
   (bspec_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_diagonal_round_pre_def,bspec_chacha20_diagonal_round_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_diagonal_round_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_diagonal_round_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_diagonal_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
