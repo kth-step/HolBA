@@ -11,7 +11,8 @@ RISC-V
 ------
 
 The RISC-V instance lifts the hart procID of HOL4's L3 model of RISC-V
-(priv-1.13 M-mode and U-mode with PMP, vendored with its step library in
+(priv-1.13 M-mode, S-mode and U-mode with PMP and Sv39, Sv48 and Sv57
+address translation, vendored with its step library in
 src/shared/l3-machine-code/riscv, see VENDORING.md there).  The step
 theorems describe a step of the hart in M-mode and carry the M-mode
 contract of the step library as hypotheses; the lifter turns each into an
@@ -49,12 +50,22 @@ clear) need no assertion.
 The lifted state is listed in riscv_bmr there: the general-purpose and
 floating-point registers, the memory, the privilege ("priv", 8 bits: 3 for
 M-mode, 0 for U-mode), the CSRs mstatus, mtvec, mie, mip, mscratch, mepc,
-mcause, mtval, mhartid, mcounteren, mcountinhibit, scounteren, pmpcfg0,
-pmpcfg2 and pmpaddr0 to pmpaddr15 (mstatus, mie, mip and mcause as the
-64-bit words of their registers, so that their fields are bits of the BIR
-variables), the hart number ("procID", 8 bits) and the external interrupt
-lines ("extMEIP", "extSEIP", booleans).  No instruction changes the last
-three.
+mcause, mtval, mhartid, mcounteren, mcountinhibit, scounteren, satp,
+pmpcfg0, pmpcfg2 and pmpaddr0 to pmpaddr15 (mstatus, mie, mip and mcause as
+the 64-bit words of their registers, so that their fields are bits of the
+BIR variables), the hart number ("procID", 8 bits) and the external
+interrupt lines ("extMEIP", "extSEIP", booleans).  No instruction changes
+the last three.
+
+No step theorem has a hypothesis on satp, and no block asserts anything
+about it: address translation is off in M-mode (satp is active only when
+the effective privilege is S-mode or U-mode, and the hypotheses H1 and H2
+make it M-mode).  satp is lifted so that a contract can state its value,
+for example that satp.MODE (bits 63 to 60) is Bare when an M-mode kernel
+returns to U-mode.  A write of satp lifts to an assignment of the value
+that the model keeps (legalize_satp): the written value if its MODE is
+Bare, Sv39, Sv48 or Sv57, and the old value otherwise.  The extra
+predicate says nothing about satp, since lifted writes change it.
 
 The privileged instructions are lifted to the following blocks, after the
 assertions:
@@ -85,10 +96,9 @@ assertions:
 
 A write of a CSR that the model stores but the lifter does not lift
 (medeleg, mideleg, menvcfg, and of the S-mode CSRs stvec, sscratch, sepc,
-scause, stval, senvcfg and satp) lifts to a block without an assignment
-for it: the CSR is not part of the BIR state, and it has no effect on the
-lifted code, since a trap from M-mode is never delegated and M-mode
-accesses are not translated (mstatus.MPRV being clear).  A write of the
+scause, stval and senvcfg) lifts to a block without an assignment for it:
+the CSR is not part of the BIR state, and it has no effect on the lifted
+code, since a trap from M-mode is never delegated.  A write of the
 view sstatus lifts to an assignment of mstatus, and a read of it to an
 expression on mstatus; the views sie and sip depend on mideleg, so their
 reads and writes do not lift.
@@ -103,9 +113,9 @@ Instructions that read other state, or that need a step theorem that the
 step library does not have, do not lift: "csrr mcycle" and the other
 counters (NextRISCV does not count), reads of the CSRs that the model
 stores but the lifter does not lift (misa, medeleg, mideleg, menvcfg, the
-S-mode CSRs other than sstatus, and the floating-point CSRs fflags, frm
-and fcsr), SC.W and SC.D (the load reservation is not lifted), writes of
-misa (see above), floating-point arithmetic and conversions (BIR has no
-floating-point operations, and their rounding mode, a field of fcsr, is
-not lifted), SRET (the step library has no step theorem for it) and
-illegal instructions.
+S-mode CSRs stvec, sscratch, sepc, scause, stval and senvcfg, and the
+floating-point CSRs fflags, frm and fcsr), SC.W and SC.D (the load
+reservation is not lifted), writes of misa (see above), floating-point
+arithmetic and conversions (BIR has no floating-point operations, and
+their rounding mode, a field of fcsr, is not lifted), SRET (the step
+library has no step theorem for it) and illegal instructions.

@@ -888,9 +888,10 @@ QED
 (**********)
 (* RISC-V *)
 (**********)
-(* The model is the priv-1.13 L3 model of HOL4's riscv-l3 branch (M-mode,
- * S-mode and U-mode, PMP, and Sv39, Sv48 and Sv57 address translation),
- * vendored in src/shared/l3-machine-code/riscv (see VENDORING.md there).
+(* The model is the priv-1.13 L3 model of HOL4's riscv-l3-smode branch,
+ * which continues the riscv-l3 branch (M-mode, S-mode and U-mode, PMP, and
+ * Sv39, Sv48 and Sv57 address translation), vendored in
+ * src/shared/l3-machine-code/riscv (see VENDORING.md there).
  * Every component of riscv_state except MEM8, exception, log, totalCore
  * and procID is a map from the hart number (procID, 8 bits) to the
  * component of that hart; the lifter works on the hart procID.
@@ -1009,15 +1010,15 @@ Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
  *
  * satp is lifted as stored, with no assertion and no conjunct of
  * riscv_state_is_OK (doc/design-smode.md, section 1.6, decision S29 of the
- * riscv-l3 branch).  It has no effect on lifted code, which runs in M-mode,
- * where satp is not active (privileged specification, section 12.1.11).
- * It is lifted so that a contract of an M-mode kernel can state its value,
- * for example that satp.MODE (bits 63 to 60) is Bare when the kernel
- * returns to U-mode.  A write of satp lifts to an assignment of the value
- * that legalize_satp keeps: the written value if its MODE is Bare, Sv39,
- * Sv48 or Sv57, and the old value otherwise (section 12.1.11: a write of
- * another MODE has no effect).  riscv_state_is_OK cannot say that satp is
- * Bare, since a lifted write of satp can change that. *)
+ * riscv-l3-smode branch).  It has no effect on lifted code, which runs in
+ * M-mode, where satp is not active (privileged specification, section
+ * 12.1.11).  It is lifted so that a contract of an M-mode kernel can state
+ * its value, for example that satp.MODE (bits 63 to 60) is Bare when the
+ * kernel returns to U-mode.  A write of satp lifts to an assignment of the
+ * value that legalize_satp keeps: the written value if its MODE is Bare,
+ * Sv39, Sv48 or Sv57, and the old value otherwise (section 12.1.11: a
+ * write of another MODE has no effect).  riscv_state_is_OK cannot say that
+ * satp is Bare, since a lifted write of satp can change that. *)
 Definition riscv_sysregs_lifted_imms_LIST_def:
   riscv_sysregs_lifted_imms_LIST = [
     (BMLI (BVar "priv" (BType_Imm Bit8))

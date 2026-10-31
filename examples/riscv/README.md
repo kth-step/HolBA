@@ -34,15 +34,17 @@ See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md
 ### Provenance
 
 HolBA lifts RISC-V machine code with HOL4's [L3](https://acjf3.github.io/l3/index.html) model of
-RISC-V and its step library, in the version of the `riscv-l3` branch of a fork of HOL4
-(https://github.com/didriklundberg/HOL), which moves the model to the RISC-V privileged
-architecture 1.13: RV64GC with M-mode, U-mode and physical memory protection (PMP), and no S-mode
-or virtual memory. HolBA keeps a copy of the generated model and of the step library in
+RISC-V and its step library, in the version of the `riscv-l3-smode` branch (which continues the
+`riscv-l3` branch) of a fork of HOL4 (https://github.com/didriklundberg/HOL), which moves the
+model to the RISC-V privileged architecture 1.13: RV64GC with M-mode, S-mode and U-mode, physical
+memory protection (PMP), and the Sv39, Sv48 and Sv57 virtual memory of S-mode and U-mode. The
+lifter lifts M-mode code, where address translation is off. HolBA keeps a copy of the generated
+model and of the step library in
 [`src/shared/l3-machine-code/riscv`](../../src/shared/l3-machine-code/riscv); its `VENDORING.md`
-gives the upstream commit, the changes made for HOL4 `trindemossen-2` and how to update the copy.
-The L3 source of the model (`src/riscv.spec`) and the design of its privileged architecture
-(`doc/design-privileged.md`, which defines the hypotheses H1 to H6 below) are in the upstream
-directory `examples/l3-machine-code/riscv`.
+gives the upstream commit and how to update the copy. The L3 source of the model
+(`src/riscv.spec`) and the designs of its privileged architecture (`doc/design-privileged.md`,
+which defines the hypotheses H1 to H6 below) and of S-mode and virtual memory
+(`doc/design-smode.md`) are in the upstream directory `examples/l3-machine-code/riscv`.
 
 This model replaces an earlier, hand-edited one of the privileged architecture 1.7, in which
 `mstatus` held the current privilege. For lifted programs this means that the BIR variable `MPRV`
@@ -58,8 +60,8 @@ The lifter lifts code that runs in M-mode, one instruction at a time:
 - the C extension (compressed instructions);
 - `fence`, `fence.i`, and the Zicsr instructions on the CSRs that are lifted (listed below);
 - writes of the CSRs that the model stores but the lifter does not lift (`medeleg`, `mideleg`,
-  `menvcfg`, and the S-mode CSRs `stvec`, `sscratch`, `sepc`, `scause`, `stval`, `senvcfg` and
-  `satp`), as blocks without an assignment: these CSRs have no effect on M-mode code; a write of
+  `menvcfg`, and the S-mode CSRs `stvec`, `sscratch`, `sepc`, `scause`, `stval` and `senvcfg`),
+  as blocks without an assignment: these CSRs have no effect on M-mode code; a write of
   `sstatus`, a view of `mstatus`, assigns `mstatus`;
 - `ecall`, `ebreak` and `c.ebreak`, a trap to M-mode: the block sets `priv` (to 3), `mstatus`,
   `mepc`, `mcause` and `mtval`, and ends in a jump to the base address in `mtvec`;
@@ -72,18 +74,25 @@ The lifter lifts code that runs in M-mode, one instruction at a time:
 The BIR variables of a lifted program are `x0` to `x31`, `f0` to `f31`, `MEM8`, `priv` (the
 privilege, 8 bits: 3 for M-mode, 0 for U-mode), the CSRs `mstatus`, `mtvec`, `mie`, `mip`,
 `mscratch`, `mepc`, `mcause`, `mtval`, `mhartid`, `mcounteren`, `mcountinhibit`, `scounteren`,
-`pmpcfg0`, `pmpcfg2` and `pmpaddr0` to `pmpaddr15` (64 bits each; `mstatus`, `mie`, `mip` and
-`mcause` with the bit layout of the privileged specification), and `procID` (the hart number),
+`satp`, `pmpcfg0`, `pmpcfg2` and `pmpaddr0` to `pmpaddr15` (64 bits each; `mstatus`, `mie`, `mip`
+and `mcause` with the bit layout of the privileged specification), and `procID` (the hart number),
 `extMEIP` and `extSEIP` (the external interrupt lines), which no instruction changes and which a
 read of `mip` depends on.
 
+`satp` has no effect on lifted code, since address translation is off in M-mode, and no lifted
+block asserts anything about it. It is lifted so that a contract can state its value, for example
+that `satp` is Bare (its MODE, bits 63 to 60, is 0) when an M-mode kernel returns to U-mode. A
+write of `satp` assigns the value that the model keeps: the written value if its MODE is Bare,
+Sv39, Sv48 or Sv57, and the old value otherwise (a write of another MODE has no effect).
+
 These do not lift: `sc.w` and `sc.d`; reads of the counters (`mcycle`, `minstret`, `cycle` and so
 on); reads of the CSRs that the model stores but the lifter does not lift (`misa`, `medeleg`,
-`mideleg`, `menvcfg`, the S-mode CSRs and the floating-point CSRs; `sstatus`, a view of `mstatus`,
-lifts), and reads and writes of the views `sie` and `sip` (which depend on `mideleg`); writes of
-`misa`; `flw` and `fmv.w.x`, which write a NaN-boxed value (the 32-bit value with 32 one-bits
-above it, a concatenation that the lifter does not translate); floating-point arithmetic and
-conversions; `sret` and illegal instructions; and code that runs in U-mode. Reads of the constant
+`mideleg`, `menvcfg`, the S-mode CSRs `stvec`, `sscratch`, `sepc`, `scause`, `stval` and
+`senvcfg`, and the floating-point CSRs; `sstatus`, a view of `mstatus`, lifts), and reads and
+writes of the views `sie` and `sip` (which depend on `mideleg`); writes of `misa`; `flw` and
+`fmv.w.x`, which write a NaN-boxed value (the 32-bit value with 32 one-bits above it, a
+concatenation that the lifter does not translate); floating-point arithmetic and conversions;
+`sret` and illegal instructions; and code that runs in S-mode or U-mode. Reads of the constant
 CSRs, such as `mvendorid`, lift.
 
 `src/tools/lifter/selftest_riscv.sml` lifts a sample of each class (its log is
@@ -145,6 +154,18 @@ blocks):
 New are the lifting of `ecall`, `ebreak` and `c.ebreak`, of `amomin`, `amomax`, `amominu` and
 `amomaxu`, of `mret`, `wfi` and `sfence.vma`, of the floating-point loads, stores and moves, and of
 the CSR instructions on the CSRs that the previous model did not have.
+
+With the addition of S-mode and virtual memory to the model, two things changed for lifted
+code, which runs in M-mode and is not translated; every other block is as before:
+
+- `satp` is a BIR variable. A write of `satp` assigns it the value that the model keeps (see
+  [What lifts](#what-lifts)), where it lifted to a block without an assignment before, and
+  `csrr` of `satp`, which did not lift before, reads the variable.
+- The `SUM` bit of `mstatus` (bit 18) is writable. A write of `mstatus` or `sstatus` stores bit 18
+  of the written value, and a read of either shows it, so the masks in the blocks of the CSR
+  instructions on `mstatus` have bit 18 set: `0x7E79AA` (before `0x7A79AA`) for the bits that a
+  read shows, and `0x7E61AA` or `0x7E61A2` (before `0x7A61AA` and `0x7A61A2`) in the value that a
+  write stores.
 
 ## Binary verification workflow
 
