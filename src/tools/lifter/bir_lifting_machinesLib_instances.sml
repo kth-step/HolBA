@@ -628,18 +628,62 @@ val riscv_REWRS = (
   [riscv_stepTheory.reg_rec_id]
 );
 
-(* ... and as a simplification set, which also evaluates the casts of
- * 2-bit literals to 8 bits, such as the w2w (3w:word2) that the lifted
- * privilege is after a trap. *)
+(* The cast to 8 bits of a 2-bit word, which is what the lifted privilege
+ * (BIR variable "priv", the 8-bit immediate w2w (ms.c_privilege
+ * ms.procID)) is after an instruction that writes the privilege, as a BIR
+ * expression: the cast of a literal, such as the w2w (3w:word2) after a
+ * trap, is evaluated, the cast is pushed into a conditional, and the cast
+ * of a field of a word, such as the w2w ((12 >< 11) mstatus) after MRET
+ * (the privilege becomes mstatus.MPP), becomes a shift, a cast and a mask.
+ * The privilege itself, w2w (ms.c_privilege ms.procID), is left as it
+ * is. *)
+local
+  val word2_ty = ``:word2``
+  val word8_ty = ``:word8``
+  val cond_rand = ISPEC ``w2w : word2 -> word8`` boolTheory.COND_RAND
+  fun num_of tm = Arbnum.toInt (numSyntax.dest_numeral tm)
+in
+  fun riscv_w2w_word2_conv tm =
+    let
+      val (x, _) = wordsSyntax.dest_w2w tm
+      val _ = if type_of x = word2_ty andalso type_of tm = word8_ty then ()
+              else raise UNCHANGED
+    in
+      if wordsSyntax.is_word_literal x then wordsLib.WORD_EVAL_CONV tm
+      else if is_cond x then REWR_CONV cond_rand tm
+      else if wordsSyntax.is_word_extract x then
+        let
+          val (h, l, w, _) = wordsSyntax.dest_word_extract x
+          val (hn, ln) = (num_of h, num_of l)
+          (* the number of bits of w in the 2-bit field *)
+          val k = Int.min (hn, ln + 1) - ln + 1
+          val _ = if k > 0 then () else raise UNCHANGED
+          val shifted =
+            if ln = 0 then w else wordsSyntax.mk_word_lsr (w, l)
+          val cast =
+            if type_of shifted = word8_ty then shifted
+            else wordsSyntax.mk_w2w (shifted, ``:8``)
+          val mask = wordsSyntax.mk_wordii (if k = 1 then 1 else 3, 8)
+        in
+          blastLib.BBLAST_PROVE
+            (mk_eq (tm, wordsSyntax.mk_word_and (cast, mask)))
+        end
+      else raise UNCHANGED
+    end
+    handle HOL_ERR _ => raise UNCHANGED
+end
+
+(* ... and as a simplification set, with the casts of 2-bit words to 8 bits
+ * above. *)
 val riscv_extra_ss =
   simpLib.merge_ss
     [rewrites (riscv_REWRS@[combinTheory.APPLY_UPDATE_THM]),
      simpLib.std_conv_ss
-       {name = "riscv_w2w_word2_literal", conv = wordsLib.WORD_EVAL_CONV,
-        pats = [``(w2w (n2w n : word2)) : word8``]}]
+       {name = "riscv_w2w_word2", conv = riscv_w2w_word2_conv,
+        pats = [``(w2w (x : word2)) : word8``]}]
 
-(* The CSRs that are lifted as the words of their registers (mstatus, mie
- * and mcause; see riscv_sysregs_lifted_imms_LIST in
+(* The CSRs that are lifted as the words of their registers (mstatus, mie,
+ * mcause and mip; see riscv_sysregs_lifted_imms_LIST in
  * bir_lifting_machinesScript.sml) in a step theorem of the hart of the
  * machine state vn, as expressions on these words:
  *
@@ -657,7 +701,7 @@ val riscv_extra_ss =
  *     of the words of the lifted CSRs, so that other instructions are
  *     lifted as before. *)
 local
-  val csr_tys = [``:mstatus``, ``:mie``, ``:mcause``]
+  val csr_tys = [``:mstatus``, ``:mie``, ``:mcause``, ``:mip``]
   val record_rwts = List.concat (List.map type_rws csr_tys)
   val rec_fields = bir_riscv_extrasTheory.riscv_csr_rec_fields
   val reg_fields = CONJUNCTS bir_riscv_extrasTheory.riscv_csr_reg_fields
@@ -824,7 +868,7 @@ local
     (dest_fupd fupd_tm tm; at_value value_conv tm)
   fun fupds ty = List.map (fn (n, {fupd, ...}) => (n, fupd)) (TypeBase.fields_of ty)
   val mcsr_fupds = fupds ``:MachineCSR``
-  val reg_fields_names = ["mstatus", "mie", "mcause"]
+  val reg_fields_names = ["mstatus", "mie", "mcause", "mip"]
   val value_convs =
     ListPair.map (fn (n, th) => reg_fupd_conv (Lib.assoc n mcsr_fupds, th))
       (reg_fields_names, rec_reg_id) @
@@ -870,6 +914,60 @@ in
       DEPTH_CONV (FIRST_CONV value_convs) THENC
       TOP_DEPTH_CONV (extract_conv is_image)
     end
+end
+
+(* A load of 2, 4 or 8 bytes, m e1 @@ ... @@ m e0, as riscv_mem_load_half,
+ * riscv_mem_load_word or riscv_mem_load_dword at the address e0 of its
+ * lowest byte, which the lifter lifts to a BIR load.  riscv_extra_FOLDS
+ * folds the loads whose addresses are e0 + 1w, e0 + 2w and so on; this
+ * folds those whose addresses are written otherwise, such as the bytes of
+ * mtimecmp in a read of mip, from 8w * w2w procID + 0x2004007w down to
+ * 8w * w2w procID + 0x2004000w, and those of mtime, at constant addresses
+ * (the step library adds the constants up).  Each address is shown to be
+ * that of the definition by wordsLib.WORD_ARITH_CONV. *)
+local
+  val load_defs =
+    [(2, bir_riscv_extrasTheory.riscv_mem_load_half_def),
+     (4, bir_riscv_extrasTheory.riscv_mem_load_word_def),
+     (8, bir_riscv_extrasTheory.riscv_mem_load_dword_def)]
+  (* the bytes of a concatenation, the most significant first *)
+  fun bytes tm =
+    let
+      val (a, b) = wordsSyntax.dest_word_concat tm
+    in
+      a :: bytes b
+    end
+    handle HOL_ERR _ => [tm]
+  (* m d = m e, for the byte m d of the definition and the byte m e *)
+  fun byte_eq (b1, b2) =
+    if aconv b1 b2 then REFL b1
+    else AP_TERM (rator b1)
+           (EQT_ELIM (wordsLib.WORD_ARITH_CONV (mk_eq (rand b1, rand b2))))
+  (* t1 = t2, for concatenations of bytes of the same shape *)
+  fun chain_eq (t1, t2) =
+    let
+      val (a1, b1) = wordsSyntax.dest_word_concat t1
+      val (a2, b2) = wordsSyntax.dest_word_concat t2
+    in
+      MK_COMB (AP_TERM (rator (rator t1)) (byte_eq (a1, a2)),
+               chain_eq (b1, b2))
+    end
+    handle HOL_ERR _ => byte_eq (t1, t2)
+in
+  fun riscv_mem_load_fold_conv tm =
+    let
+      val bs = bytes tm
+      val def = Lib.assoc (List.length bs) load_defs
+      val m = rator (List.last bs)
+      val _ = if List.all (fn b => is_comb b andalso aconv (rator b) m) bs
+              then () else raise UNCHANGED
+      (* riscv_mem_load_... m e0 = m (e0 + ...) @@ ... @@ m e0 *)
+      val th0 = SPECL [m, rand (List.last bs)] def
+      val th1 = TRANS th0 (chain_eq (rhs (concl th0), tm))
+    in
+      SYM th1
+    end
+    handle HOL_ERR _ => raise UNCHANGED
 end
 
 local
@@ -974,7 +1072,8 @@ local
      * they are, such as ~word_bit 1 pc \/ misa.C, and the conclusion, such
      * as the value of mepc that a CSR instruction reads. *)
     val thm6 =
-      CONV_RULE (simp_conv THENC riscv_csr_conv vn THENC simp_conv2 THENC
+      CONV_RULE (simp_conv THENC TOP_DEPTH_CONV riscv_mem_load_fold_conv THENC
+                 riscv_csr_conv vn THENC simp_conv2 THENC
                  (SIMP_CONV std_ss (riscv_extra_THMS vn)) THENC
                  PURE_REWRITE_CONV [pc_aligned vn]) thm5
     (* Minimum and maximum (from AMOMIN and similar) as comparisons *)

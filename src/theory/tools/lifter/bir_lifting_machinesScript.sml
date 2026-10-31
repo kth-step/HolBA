@@ -983,21 +983,25 @@ Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
  * The current privilege, a 2-bit word (3w for M-mode, 0w for U-mode), is
  * lifted as an 8-bit immediate.  A CSR that the model stores as a 64-bit
  * word is lifted as it is stored; a CSR of a register type of the model
- * (mstatus, mie, mcause) as the 64-bit word of the register (reg'mstatus
- * and so on), whose bit fields are those of the CSR in the privileged
- * specification.  A field that the model keeps in no CSR word is not
- * lifted: the stored image of mstatus has no SD, UXL and SXL bits (which
- * read_mstatus adds when mstatus is read), and the stored PMP addresses
- * and configurations are those that the CSR instructions read and write.
+ * (mstatus, mie, mip, mcause) as the 64-bit word of the register
+ * (reg'mstatus and so on), whose bit fields are those of the CSR in the
+ * privileged specification.  A field that the model keeps in no CSR word
+ * is not lifted: the stored image of mstatus has no SD, UXL and SXL bits
+ * (which read_mstatus adds when mstatus is read), and the stored PMP
+ * addresses and configurations are those that the CSR instructions read
+ * and write.
  *
- * mip is not lifted: a read of mip (read_mip) combines its stored bits with
- * MTIP and MSIP, which the model computes from the memory-mapped mtime,
- * mtimecmp and msip of the CLINT at addresses that depend on procID, and
- * with MEIP and SEIP from the platform inputs c_extMEIP and c_extSEIP,
- * none of which are BIR variables, so "csrr mip" cannot be lifted, whether
- * or not the stored bits are.  mcycle and minstret (c_cycles, c_instret)
- * are not lifted either: NextRISCV does not count, so in the lifted
- * semantics they would be constants. *)
+ * The stored mip holds only SSIP, STIP and the software-written SEIP.  A
+ * read of mip (read_mip) adds MSIP and MTIP, which the model computes from
+ * the memory-mapped msip, mtimecmp and mtime of the CLINT, at addresses
+ * that depend on the hart number procID, and MEIP and SEIP from the
+ * platform's interrupt lines c_extMEIP and c_extSEIP.  These inputs are
+ * lifted too ("procID" as an 8-bit immediate, "extMEIP" and "extSEIP" as
+ * booleans), so that "csrr mip" lifts to an expression on them and on
+ * loads from the memory, the CLINT being part of it.  No instruction
+ * changes them.  mcycle and minstret (c_cycles, c_instret) are not lifted:
+ * NextRISCV does not count, so in the lifted semantics they would be
+ * constants. *)
 Definition riscv_sysregs_lifted_imms_LIST_def:
   riscv_sysregs_lifted_imms_LIST = [
     (BMLI (BVar "priv" (BType_Imm Bit8))
@@ -1008,6 +1012,8 @@ Definition riscv_sysregs_lifted_imms_LIST_def:
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mtvec)));
     (BMLI (BVar "mie" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 (reg'mie (ms.c_MCSR ms.procID).mie)));
+    (BMLI (BVar "mip" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 (reg'mip (ms.c_MCSR ms.procID).mip)));
     (BMLI (BVar "mscratch" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mscratch)));
     (BMLI (BVar "mepc" (BType_Imm Bit64))
@@ -1059,10 +1065,19 @@ Definition riscv_sysregs_lifted_imms_LIST_def:
     (BMLI (BVar "pmpaddr14" (BType_Imm Bit64))
           (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr14)));
     (BMLI (BVar "pmpaddr15" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr15)))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr15)));
+    (BMLI (BVar "procID" (BType_Imm Bit8))
+          (\ms:riscv_state. Imm8 ms.procID));
+    (BMLI (BVar "extMEIP" BType_Bool)
+          (\ms:riscv_state. bool2b (ms.c_extMEIP ms.procID)));
+    (BMLI (BVar "extSEIP" BType_Bool)
+          (\ms:riscv_state. bool2b (ms.c_extSEIP ms.procID)))
   ]
 End
-Theorem riscv_sysregs_lifted_imms_LIST_EVAL = EVAL ``riscv_sysregs_lifted_imms_LIST``
+(* Not by EVAL, which would unfold bool2b in the lifted interrupt lines, so
+ * that the lifter would not find them. *)
+Theorem riscv_sysregs_lifted_imms_LIST_EVAL =
+  REWRITE_CONV [riscv_sysregs_lifted_imms_LIST_def] ``riscv_sysregs_lifted_imms_LIST``
 
 (* Note: For some reason, MEM is named MEM8 in the RISC-V state.
  * Since memory is shared between processes, this does not require
@@ -1085,7 +1100,8 @@ Definition riscv_bmr_def:
   riscv_bmr = <|
     bmr_extra := \ms. riscv_state_is_OK ms;
     (* The 32 general-purpose registers, the 32 floating-point registers,
-     * the privilege and the lifted CSRs. *)
+     * the privilege, the lifted CSRs, the hart number and the external
+     * interrupt lines. *)
     bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST++riscv_sysregs_lifted_imms_LIST);
     bmr_mem := riscv_lifted_mem;
     bmr_pc := riscv_lifted_pc;

@@ -73,7 +73,6 @@ val _ = print_header "RV64I Base Instruction Set (instructions inherited from RV
 val _ = print_msg "\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* 75 instructions in initial scope (including M extension) *)
-(* TODO: Instructions from the privileged instruction set: MRET and WFI *)
 (* TODO: SC.W and SC.D, whose result depends on the load reservation *)
 (* TODO: Are NOPs in riscv_stepLib correct? *)
 (* TODO: Take second look at stepLib code for Sail model (test.sml) *)
@@ -83,7 +82,7 @@ val _ = print_msg "\n\n";
  * exp_lift_fn in bir_inst_liftingLib *)
 (* When you get something like
  *
- *   lifting of ``ms.c_extMEIP ms.procID`` failed
+ *   lifting of ``ms.c_cycles ms.procID`` failed
  *
  * the step theorem depends on state that is not lifted (riscv_bmr in
  * bir_lifting_machinesScript.sml lists the lifted state). *)
@@ -230,7 +229,8 @@ Not sure about asm formatting...
 val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
 
 (* Environment Call and Breakpoints (opcode SYSTEM): a trap to M-mode,
- * which sets mcause, mepc, mtval and mstatus and jumps to mtvec *)
+ * which sets mepc, mcause, mtval, mstatus and the privilege and jumps to
+ * the base of mtvec *)
 val _ = riscv_test_hex_print_asm "ECALL" "00000073";
 
 val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
@@ -315,7 +315,15 @@ val _ = riscv_test_hex_print_asm "CSRR a5, mcause(0x342)" "342027F3";
 
 val _ = riscv_test_hex_print_asm "CSRR a5, mtval(0x343)" "343027F3";
 
+(* A read of mip: the stored SSIP, STIP and SEIP, MSIP and MTIP from the
+ * CLINT in memory (msip and mtimecmp of the hart procID, and mtime), and
+ * the external interrupt lines *)
 val _ = riscv_test_hex_print_asm "CSRR a5, mip(0x344)" "344027F3";
+(* Writes of mip store only SSIP, STIP and SEIP; CSRRS and CSRRC read SEIP
+ * as stored, without the external line *)
+val _ = riscv_test_hex_print_asm "CSRRW x1, mip(0x344), x2" "344110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, mip(0x344), x2" "344120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, mip(0x344), x2" "344130F3";
 
 (* mcycle is not lifted: NextRISCV does not count cycles *)
 val _ = riscv_test_hex_print_asm "CSRR a5, mcycle(0xB00)" "B00027F3";
@@ -358,6 +366,24 @@ val _ = riscv_test_hex_print_asm "CSRRC x1, mcounteren(0x306), x2" "306130F3";
 val _ = riscv_test_hex_print_asm "CSRRWI x1, mcounteren(0x306), 0x1" "3060D0F3";
 val _ = riscv_test_hex_print_asm "CSRRSI x1, mcounteren(0x306), 0x1" "3060E0F3";
 val _ = riscv_test_hex_print_asm "CSRRCI x1, mcounteren(0x306), 0x1" "3060F0F3";
+
+(* A write of misa that clears misa.C, which riscv_state_is_OK requires *)
+val _ = riscv_test_hex_print_asm "CSRW misa(0x301), zero" "30101073";
+
+val _ = print_msg "\n";
+val _ = print_header "RV64 Privileged Instructions (M-mode)";
+val _ = print_msg "\n\n";
+
+(* Return from a trap: the privilege becomes mstatus.MPP (U-mode for the
+ * reserved encoding 2), MIE becomes MPIE, MPIE becomes 1, MPP becomes U,
+ * MPRV is cleared unless MPP is M, and the block ends in a jump to mepc *)
+val _ = riscv_test_hex_print_asm "MRET" "30200073";
+
+(* Wait for interrupt: does nothing in the model *)
+val _ = riscv_test_hex_print_asm "WFI" "10500073";
+
+(* Fence for address translation: does nothing in M-mode *)
+val _ = riscv_test_hex_print_asm "SFENCE.VMA x0, x0" "12000073";
 
 
 val _ = print_msg "\n";
@@ -525,10 +551,9 @@ val _ = print_msg "\n\n";
 val riscv_expected_failed_hexcodes:string list =
 [
    (* Zicsr *)
-   "344027F3" (* CSRR mip: the value read depends on the CLINT in memory, at
-                 addresses that depend on procID, and on the platform inputs
-                 c_extMEIP and c_extSEIP, none of which are lifted *),
    "B00027F3" (* CSRR mcycle: c_cycles is not lifted *),
+   "30101073" (* CSRW misa, zero at a 4-byte aligned pc: clears misa.C, so
+                 riscv_state_is_OK does not hold after it *),
    (* A *)
    "18C5A52F" (* SC.W: depends on the load reservation, which is not lifted *),
    "18C5B52F" (* SC.D: likewise *)

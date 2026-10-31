@@ -2674,27 +2674,501 @@ CSRR a5, mtval(0x343): 343027F3 @ 0x10030 - OK
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
-CSRR a5, mip(0x344): 344027F3 @ 0x10030 - FAILED
-   lifting of ``Imm64
-  (34w && reg'mip (ms.c_MCSR ms.procID).mip ||
-   (if (ms.c_MCSR ms.procID).mip.SEIP \/ ms.c_extSEIP ms.procID then 512w
-    else 0w) || (if ms.c_extMEIP ms.procID then 2048w else 0w) ||
-   (if word_bit 0 (ms.MEM8 (4w * w2w ms.procID + 0x2000000w)) then 8w else 0w) ||
-   if
-     ms.MEM8 (8w * w2w ms.procID + 0x2004007w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004006w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004005w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004004w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004003w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004002w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004001w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004000w) <=+
-     ms.MEM8 0x200BFFFw @@ ms.MEM8 0x200BFFEw @@ ms.MEM8 0x200BFFDw @@
-     ms.MEM8 0x200BFFCw @@ ms.MEM8 0x200BFFBw @@ ms.MEM8 0x200BFFAw @@
-     ms.MEM8 0x200BFF9w @@ ms.MEM8 0x200BFF8w
-   then
-     128w
-   else 0w)`` failed
+CSRR a5, mip(0x344): 344027F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 39w; 64w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "344027F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3));
+              BStmt_Assign (BVar "x15" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_BinExp BIExp_And (BExp_Const (Imm64 34w))
+                      (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                   (BExp_BinExp BIExp_Or
+                      (BExp_IfThenElse
+                         (BExp_BinExp BIExp_Or
+                            (BExp_word_bit Bit64
+                               (BExp_Den (BVar "mip" (BType_Imm Bit64))) 9)
+                            (BExp_Den (BVar "extSEIP" BType_Bool)))
+                         (BExp_Const (Imm64 512w)) (BExp_Const (Imm64 0w)))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_IfThenElse
+                            (BExp_Den (BVar "extMEIP" BType_Bool))
+                            (BExp_Const (Imm64 2048w))
+                            (BExp_Const (Imm64 0w)))
+                         (BExp_BinExp BIExp_Or
+                            (BExp_IfThenElse
+                               (BExp_LSB
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 4w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2000000w)))
+                                     BEnd_LittleEndian Bit8))
+                               (BExp_Const (Imm64 8w))
+                               (BExp_Const (Imm64 0w)))
+                            (BExp_IfThenElse
+                               (BExp_BinPred BIExp_LessOrEqual
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 8w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2004000w)))
+                                     BEnd_LittleEndian Bit64)
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_Const (Imm64 0x200BFF8w))
+                                     BEnd_LittleEndian Bit64))
+                               (BExp_Const (Imm64 128w))
+                               (BExp_Const (Imm64 0w)))))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRRW x1, mip(0x344), x2: 344110F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 16w; 65w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "344110F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_BinExp BIExp_And (BExp_Const (Imm64 34w))
+                      (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                   (BExp_BinExp BIExp_Or
+                      (BExp_IfThenElse
+                         (BExp_BinExp BIExp_Or
+                            (BExp_word_bit Bit64
+                               (BExp_Den (BVar "mip" (BType_Imm Bit64))) 9)
+                            (BExp_Den (BVar "extSEIP" BType_Bool)))
+                         (BExp_Const (Imm64 512w)) (BExp_Const (Imm64 0w)))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_IfThenElse
+                            (BExp_Den (BVar "extMEIP" BType_Bool))
+                            (BExp_Const (Imm64 2048w))
+                            (BExp_Const (Imm64 0w)))
+                         (BExp_BinExp BIExp_Or
+                            (BExp_IfThenElse
+                               (BExp_LSB
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 4w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2000000w)))
+                                     BEnd_LittleEndian Bit8))
+                               (BExp_Const (Imm64 8w))
+                               (BExp_Const (Imm64 0w)))
+                            (BExp_IfThenElse
+                               (BExp_BinPred BIExp_LessOrEqual
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 8w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2004000w)))
+                                     BEnd_LittleEndian Bit64)
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_Const (Imm64 0x200BFF8w))
+                                     BEnd_LittleEndian Bit64))
+                               (BExp_Const (Imm64 128w))
+                               (BExp_Const (Imm64 0w)))))));
+              BStmt_Assign (BVar "mip" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_And (BExp_Const (Imm64 546w))
+                   (BExp_Den (BVar "x2" (BType_Imm Bit64))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRRS x1, mip(0x344), x2: 344120F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 32w; 65w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "344120F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_BinExp BIExp_And (BExp_Const (Imm64 34w))
+                      (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                   (BExp_BinExp BIExp_Or
+                      (BExp_IfThenElse
+                         (BExp_BinExp BIExp_Or
+                            (BExp_word_bit Bit64
+                               (BExp_Den (BVar "mip" (BType_Imm Bit64))) 9)
+                            (BExp_Den (BVar "extSEIP" BType_Bool)))
+                         (BExp_Const (Imm64 512w)) (BExp_Const (Imm64 0w)))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_IfThenElse
+                            (BExp_Den (BVar "extMEIP" BType_Bool))
+                            (BExp_Const (Imm64 2048w))
+                            (BExp_Const (Imm64 0w)))
+                         (BExp_BinExp BIExp_Or
+                            (BExp_IfThenElse
+                               (BExp_LSB
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 4w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2000000w)))
+                                     BEnd_LittleEndian Bit8))
+                               (BExp_Const (Imm64 8w))
+                               (BExp_Const (Imm64 0w)))
+                            (BExp_IfThenElse
+                               (BExp_BinPred BIExp_LessOrEqual
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 8w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2004000w)))
+                                     BEnd_LittleEndian Bit64)
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_Const (Imm64 0x200BFF8w))
+                                     BEnd_LittleEndian Bit64))
+                               (BExp_Const (Imm64 128w))
+                               (BExp_Const (Imm64 0w)))))));
+              BStmt_Assign (BVar "mip" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_And (BExp_Const (Imm64 546w))
+                   (BExp_BinExp BIExp_Or
+                      (BExp_BinExp BIExp_And (BExp_Const (Imm64 512w))
+                         (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_BinExp BIExp_And
+                            (BExp_Const (Imm64 0xFFFFFFFFFFFFFDFFw))
+                            (BExp_BinExp BIExp_Or
+                               (BExp_BinExp BIExp_And
+                                  (BExp_Const (Imm64 34w))
+                                  (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                               (BExp_BinExp BIExp_Or
+                                  (BExp_IfThenElse
+                                     (BExp_BinExp BIExp_Or
+                                        (BExp_word_bit Bit64
+                                           (BExp_Den
+                                              (BVar "mip" (BType_Imm Bit64)))
+                                           9)
+                                        (BExp_Den (BVar "extSEIP" BType_Bool)))
+                                     (BExp_Const (Imm64 512w))
+                                     (BExp_Const (Imm64 0w)))
+                                  (BExp_BinExp BIExp_Or
+                                     (BExp_IfThenElse
+                                        (BExp_Den (BVar "extMEIP" BType_Bool))
+                                        (BExp_Const (Imm64 2048w))
+                                        (BExp_Const (Imm64 0w)))
+                                     (BExp_BinExp BIExp_Or
+                                        (BExp_IfThenElse
+                                           (BExp_LSB
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_BinExp BIExp_Mult
+                                                       (BExp_Const (Imm64 4w))
+                                                       (BExp_Cast
+                                                          BIExp_UnsignedCast
+                                                          (BExp_Den
+                                                             (BVar "procID"
+                                                                (BType_Imm
+                                                                   Bit8)))
+                                                          Bit64))
+                                                    (BExp_Const
+                                                       (Imm64 0x2000000w)))
+                                                 BEnd_LittleEndian Bit8))
+                                           (BExp_Const (Imm64 8w))
+                                           (BExp_Const (Imm64 0w)))
+                                        (BExp_IfThenElse
+                                           (BExp_BinPred BIExp_LessOrEqual
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_BinExp BIExp_Mult
+                                                       (BExp_Const (Imm64 8w))
+                                                       (BExp_Cast
+                                                          BIExp_UnsignedCast
+                                                          (BExp_Den
+                                                             (BVar "procID"
+                                                                (BType_Imm
+                                                                   Bit8)))
+                                                          Bit64))
+                                                    (BExp_Const
+                                                       (Imm64 0x2004000w)))
+                                                 BEnd_LittleEndian Bit64)
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_Const
+                                                    (Imm64 0x200BFF8w))
+                                                 BEnd_LittleEndian Bit64))
+                                           (BExp_Const (Imm64 128w))
+                                           (BExp_Const (Imm64 0w))))))))
+                         (BExp_Den (BVar "x2" (BType_Imm Bit64))))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRRC x1, mip(0x344), x2: 344130F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[243w; 48w; 65w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "344130F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_BinExp BIExp_And (BExp_Const (Imm64 34w))
+                      (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                   (BExp_BinExp BIExp_Or
+                      (BExp_IfThenElse
+                         (BExp_BinExp BIExp_Or
+                            (BExp_word_bit Bit64
+                               (BExp_Den (BVar "mip" (BType_Imm Bit64))) 9)
+                            (BExp_Den (BVar "extSEIP" BType_Bool)))
+                         (BExp_Const (Imm64 512w)) (BExp_Const (Imm64 0w)))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_IfThenElse
+                            (BExp_Den (BVar "extMEIP" BType_Bool))
+                            (BExp_Const (Imm64 2048w))
+                            (BExp_Const (Imm64 0w)))
+                         (BExp_BinExp BIExp_Or
+                            (BExp_IfThenElse
+                               (BExp_LSB
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 4w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2000000w)))
+                                     BEnd_LittleEndian Bit8))
+                               (BExp_Const (Imm64 8w))
+                               (BExp_Const (Imm64 0w)))
+                            (BExp_IfThenElse
+                               (BExp_BinPred BIExp_LessOrEqual
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_BinExp BIExp_Plus
+                                        (BExp_BinExp BIExp_Mult
+                                           (BExp_Const (Imm64 8w))
+                                           (BExp_Cast BIExp_UnsignedCast
+                                              (BExp_Den
+                                                 (BVar "procID"
+                                                    (BType_Imm Bit8))) Bit64))
+                                        (BExp_Const (Imm64 0x2004000w)))
+                                     BEnd_LittleEndian Bit64)
+                                  (BExp_Load
+                                     (BExp_Den
+                                        (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                                     (BExp_Const (Imm64 0x200BFF8w))
+                                     BEnd_LittleEndian Bit64))
+                               (BExp_Const (Imm64 128w))
+                               (BExp_Const (Imm64 0w)))))));
+              BStmt_Assign (BVar "mip" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_And (BExp_Const (Imm64 546w))
+                   (BExp_BinExp BIExp_And
+                      (BExp_UnaryExp BIExp_Not
+                         (BExp_Den (BVar "x2" (BType_Imm Bit64))))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_BinExp BIExp_And (BExp_Const (Imm64 512w))
+                            (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                         (BExp_BinExp BIExp_And
+                            (BExp_Const (Imm64 0xFFFFFFFFFFFFFDFFw))
+                            (BExp_BinExp BIExp_Or
+                               (BExp_BinExp BIExp_And
+                                  (BExp_Const (Imm64 34w))
+                                  (BExp_Den (BVar "mip" (BType_Imm Bit64))))
+                               (BExp_BinExp BIExp_Or
+                                  (BExp_IfThenElse
+                                     (BExp_BinExp BIExp_Or
+                                        (BExp_word_bit Bit64
+                                           (BExp_Den
+                                              (BVar "mip" (BType_Imm Bit64)))
+                                           9)
+                                        (BExp_Den (BVar "extSEIP" BType_Bool)))
+                                     (BExp_Const (Imm64 512w))
+                                     (BExp_Const (Imm64 0w)))
+                                  (BExp_BinExp BIExp_Or
+                                     (BExp_IfThenElse
+                                        (BExp_Den (BVar "extMEIP" BType_Bool))
+                                        (BExp_Const (Imm64 2048w))
+                                        (BExp_Const (Imm64 0w)))
+                                     (BExp_BinExp BIExp_Or
+                                        (BExp_IfThenElse
+                                           (BExp_LSB
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_BinExp BIExp_Mult
+                                                       (BExp_Const (Imm64 4w))
+                                                       (BExp_Cast
+                                                          BIExp_UnsignedCast
+                                                          (BExp_Den
+                                                             (BVar "procID"
+                                                                (BType_Imm
+                                                                   Bit8)))
+                                                          Bit64))
+                                                    (BExp_Const
+                                                       (Imm64 0x2000000w)))
+                                                 BEnd_LittleEndian Bit8))
+                                           (BExp_Const (Imm64 8w))
+                                           (BExp_Const (Imm64 0w)))
+                                        (BExp_IfThenElse
+                                           (BExp_BinPred BIExp_LessOrEqual
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_BinExp BIExp_Plus
+                                                    (BExp_BinExp BIExp_Mult
+                                                       (BExp_Const (Imm64 8w))
+                                                       (BExp_Cast
+                                                          BIExp_UnsignedCast
+                                                          (BExp_Den
+                                                             (BVar "procID"
+                                                                (BType_Imm
+                                                                   Bit8)))
+                                                          Bit64))
+                                                    (BExp_Const
+                                                       (Imm64 0x2004000w)))
+                                                 BEnd_LittleEndian Bit64)
+                                              (BExp_Load
+                                                 (BExp_Den
+                                                    (BVar "MEM8"
+                                                       (BType_Mem Bit64 Bit8)))
+                                                 (BExp_Const
+                                                    (Imm64 0x200BFF8w))
+                                                 BEnd_LittleEndian Bit64))
+                                           (BExp_Const (Imm64 128w))
+                                           (BExp_Const (Imm64 0w)))))))))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 CSRR a5, mcycle(0xB00): B00027F3 @ 0x10030 - FAILED
    lifting of ``Imm64 (ms.c_cycles ms.procID)`` failed
@@ -4584,6 +5058,146 @@ CSRRCI x1, mcounteren(0x306), 0x1: 3060F0F3 @ 0x10030 - OK
               BStmt_Assign (BVar "mcounteren" (BType_Imm Bit64))
                 (BExp_BinExp BIExp_And (BExp_Const (Imm64 6w))
                    (BExp_Den (BVar "mcounteren" (BType_Imm Bit64))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+CSRW misa(0x301), zero: 30101073 @ 0x10030 - FAILED
+   computing al_step and ms' failed
+
+
+RV64 Privileged Instructions (M-mode)
+
+MRET: 30200073 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[115w; 0w; 32w; 48w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "30200073";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3));
+              BStmt_Assign (BVar "priv" (BType_Imm Bit8))
+                (BExp_IfThenElse
+                   (BExp_BinPred BIExp_Equal
+                      (BExp_BinExp BIExp_And (BExp_Const (Imm64 6144w))
+                         (BExp_Den (BVar "mstatus" (BType_Imm Bit64))))
+                      (BExp_Const (Imm64 4096w))) (BExp_Const (Imm8 0w))
+                   (BExp_BinExp BIExp_And
+                      (BExp_Cast BIExp_LowCast
+                         (BExp_BinExp BIExp_RightShift
+                            (BExp_Den (BVar "mstatus" (BType_Imm Bit64)))
+                            (BExp_Const (Imm64 11w))) Bit8)
+                      (BExp_Const (Imm8 3w))));
+              BStmt_Assign (BVar "mstatus" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0xFFFFFFFFFFFFFFF7w))
+                      (BExp_BinExp BIExp_Or
+                         (BExp_BinExp BIExp_And
+                            (BExp_Const (Imm64 0xFFFFFFFFFFFFE77Fw))
+                            (BExp_BinExp BIExp_Or
+                               (BExp_BinExp BIExp_And
+                                  (BExp_Const (Imm64 0xFFFFFFFFFFFDFFFFw))
+                                  (BExp_Den
+                                     (BVar "mstatus" (BType_Imm Bit64))))
+                               (BExp_IfThenElse
+                                  (BExp_BinExp BIExp_And
+                                     (BExp_word_bit Bit64
+                                        (BExp_Den
+                                           (BVar "mstatus" (BType_Imm Bit64)))
+                                        17)
+                                     (BExp_BinPred BIExp_Equal
+                                        (BExp_BinExp BIExp_And
+                                           (BExp_Const (Imm64 6144w))
+                                           (BExp_Den
+                                              (BVar "mstatus"
+                                                 (BType_Imm Bit64))))
+                                        (BExp_Const (Imm64 6144w))))
+                                  (BExp_Const (Imm64 0x20000w))
+                                  (BExp_Const (Imm64 0w)))))
+                         (BExp_Const (Imm64 128w))))
+                   (BExp_IfThenElse
+                      (BExp_word_bit Bit64
+                         (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 7)
+                      (BExp_Const (Imm64 8w)) (BExp_Const (Imm64 0w))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Exp (BExp_Den (BVar "mepc" (BType_Imm Bit64))))|>])
+
+WFI: 10500073 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[115w; 0w; 80w; 16w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "10500073";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+SFENCE.VMA x0, x0: 12000073 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[115w; 0w; 0w; 18w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 0x10030w) "12000073";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_BinExp BIExp_And
+                      (BExp_Const (Imm64 0x8080808080808080w))
+                      (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+                   (BExp_Const (Imm64 0w)));
+              BStmt_Assert
+                (BExp_UnaryExp BIExp_Not
+                   (BExp_word_bit Bit64
+                      (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3))];
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
@@ -8142,29 +8756,10 @@ C.SDSP a0, 8(sp): E42A @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 4/181
+Instructions FAILED: 4/188
 
-   "344027F3" (* lifting of ``Imm64
-  (34w && reg'mip (ms.c_MCSR ms.procID).mip ||
-   (if (ms.c_MCSR ms.procID).mip.SEIP \/ ms.c_extSEIP ms.procID then 512w
-    else 0w) || (if ms.c_extMEIP ms.procID then 2048w else 0w) ||
-   (if word_bit 0 (ms.MEM8 (4w * w2w ms.procID + 0x2000000w)) then 8w else 0w) ||
-   if
-     ms.MEM8 (8w * w2w ms.procID + 0x2004007w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004006w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004005w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004004w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004003w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004002w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004001w) @@
-     ms.MEM8 (8w * w2w ms.procID + 0x2004000w) <=+
-     ms.MEM8 0x200BFFFw @@ ms.MEM8 0x200BFFEw @@ ms.MEM8 0x200BFFDw @@
-     ms.MEM8 0x200BFFCw @@ ms.MEM8 0x200BFFBw @@ ms.MEM8 0x200BFFAw @@
-     ms.MEM8 0x200BFF9w @@ ms.MEM8 0x200BFF8w
-   then
-     128w
-   else 0w)`` failed *),
    "B00027F3" (* lifting of ``Imm64 (ms.c_cycles ms.procID)`` failed *),
+   "30101073" (* computing al_step and ms' failed *),
    "18C5A52F" (* computing al_mem failed *),
    "18C5B52F" (* computing al_mem failed *)
 ]

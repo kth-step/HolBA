@@ -23,14 +23,60 @@ assertion of the BIR block of the instruction:
     natural alignment of the address (H5); for 8-byte accesses also every
     PMP entry OFF or NAPOT (H4).
 
-The extra predicate of the machine record (riscv_state_is_OK in
+These are assertions, and not part of the extra predicate of the machine
+record, because that predicate must hold before and after every lifted
+instruction, and instructions change all of them: MRET the privilege,
+mstatus.MIE and mstatus.MPRV, and the CSR instructions mstatus and the PMP
+configuration.  The extra predicate (riscv_state_is_OK in
 src/theory/tools/lifter/bir_lifting_machinesScript.sml) holds only what no
 lifted instruction changes: no exception, no pending control transfer,
-RV64 (misa.MXL <> 1) and the C extension enabled (misa.C).  The lifted state
-is listed in riscv_bmr there: the general-purpose and floating-point
-registers, the memory, the privilege ("priv", 8 bits) and the CSRs mstatus,
-mtvec, mie, mscratch, mepc, mcause, mtval, mhartid, mcounteren,
-mcountinhibit, scounteren, pmpcfg0, pmpcfg2 and pmpaddr0 to pmpaddr15.
-Instructions that read other state (for example "csrr mip", which reads the
-CLINT and the platform interrupt inputs, "csrr mcycle", or SC, which depends
-on the load reservation) do not lift.
+RV64 (misa.MXL <> 1, which is read-only) and the C extension enabled
+(misa.C).  Only a write of misa can clear misa.C; the lifter proves the
+extra predicate after each instruction, so such a write lifts only where
+the written value keeps misa.C set (or where the model keeps it, at a pc
+that is not 4-byte aligned).  With misa.C, a compressed instruction, a jump
+or branch to an address with bit 1 set, and the jump of MRET (whose target
+the model masks to 4 bytes when misa.C is clear) need no assertion.
+
+The lifted state is listed in riscv_bmr there: the general-purpose and
+floating-point registers, the memory, the privilege ("priv", 8 bits: 3 for
+M-mode, 0 for U-mode), the CSRs mstatus, mtvec, mie, mip, mscratch, mepc,
+mcause, mtval, mhartid, mcounteren, mcountinhibit, scounteren, pmpcfg0,
+pmpcfg2 and pmpaddr0 to pmpaddr15 (mstatus, mie, mip and mcause as the
+64-bit words of their registers, so that their fields are bits of the BIR
+variables), the hart number ("procID", 8 bits) and the external interrupt
+lines ("extMEIP", "extSEIP", booleans).  No instruction changes the last
+three.
+
+The privileged instructions are lifted to the following blocks, after the
+assertions:
+
+  - ECALL, EBREAK and C.EBREAK take a trap to M-mode (NextRISCV_trap of
+    the step library; delegation does not apply to traps from M-mode):
+    priv := 3; mstatus := mstatus with MPP := 3, MPIE := 0 and MIE := 0
+    (MPP is the privilege and MPIE the old MIE, which are 3 and 0 by the
+    assertions H1 and H6); mepc := the pc of the instruction; mcause := 11
+    (environment call from M-mode) or 3 (breakpoint); mtval := 0 for ECALL
+    and the pc for EBREAK; and the block ends in a jump to the base of
+    mtvec, mtvec && 0xFFFFFFFFFFFFFFFC (where an exception goes in both
+    the direct and the vectored mode).
+  - MRET returns from a trap (NextRISCV_mret): priv := if MPP = 2 then 0
+    else MPP (the model maps the reserved encoding to U-mode), with MPP
+    read from mstatus as (mstatus >> 11) & 3; mstatus := mstatus with
+    MIE := MPIE, MPIE := 1, MPP := 0 and MPRV := MPRV && (MPP = 3), so
+    MPRV is cleared unless MRET returns to M-mode; and the block ends in a
+    jump to mepc.  When MRET returns to U-mode, the assertion priv = 3 of
+    the next lifted block fails: the lifter does not describe U-mode code.
+  - WFI and SFENCE.VMA do nothing in M-mode, as FENCE and FENCE.I: their
+    blocks have only the assertions.
+  - "csrr rd, mip" reads the stored SSIP, STIP and SEIP from the BIR
+    variable mip, MSIP and MTIP from the CLINT in the memory (msip at
+    0x2000000 + 4 * procID, MTIP set if mtimecmp, the doubleword at
+    0x2004000 + 8 * procID, is at most mtime, the doubleword at
+    0x200BFF8), and MEIP and SEIP from the interrupt lines.
+
+Instructions that read other state, or that need a step theorem that the
+step library does not have, do not lift: "csrr mcycle" and the other
+counters (NextRISCV does not count), "csrr misa" (misa is not lifted), SC.W
+and SC.D (the load reservation is not lifted), a write of misa that clears
+misa.C, floating-point arithmetic, and illegal instructions.

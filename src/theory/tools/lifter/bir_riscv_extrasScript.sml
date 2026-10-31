@@ -863,9 +863,9 @@ val riscv_is_lifted_imm_exp_2EQ =
 (* CSRs of a register type of the model, as 64-bit words *)
 (******************************************************)
 
-(* The lifter lifts mstatus, mie and mcause as the 64-bit words of their
- * registers (reg'mstatus, reg'mie and reg'mcause; the BIR variables
- * "mstatus", "mie" and "mcause" of riscv_bmr).  The step theorems read and
+(* The lifter lifts mstatus, mie, mip and mcause as the 64-bit words of
+ * their registers (reg'mstatus, reg'mie, reg'mip and reg'mcause; the BIR
+ * variables "mstatus", "mie", "mip" and "mcause" of riscv_bmr).  The step theorems read and
  * write these CSRs field by field, and build written values from words with
  * rec'mstatus and so on.  The theorems below state all of this on the
  * words, so that the lifter can express it over the BIR variables.  The
@@ -877,13 +877,15 @@ val riscv_is_lifted_imm_exp_2EQ =
 Theorem riscv_csr_rec_reg_id:
   (!r. rec'mstatus (reg'mstatus r) = r) /\
   (!r. rec'mie (reg'mie r) = r) /\
-  (!r. rec'mcause (reg'mcause r) = r)
+  (!r. rec'mcause (reg'mcause r) = r) /\
+  (!r. rec'mip (reg'mip r) = r)
 Proof
   rpt conj_tac \\ Cases
   \\ simp_tac (srw_ss())
        [riscvTheory.reg'mstatus_def, riscvTheory.rec'mstatus_def,
         riscvTheory.reg'mie_def, riscvTheory.rec'mie_def,
-        riscvTheory.reg'mcause_def, riscvTheory.rec'mcause_def]
+        riscvTheory.reg'mcause_def, riscvTheory.rec'mcause_def,
+        riscvTheory.reg'mip_def, riscvTheory.rec'mip_def]
   \\ blastLib.BBLAST_TAC
 QED
 
@@ -908,11 +910,17 @@ Theorem riscv_csr_rec_fields:
   (!w. (rec'mie w).SEIE = word_bit 9 w) /\
   (!w. (rec'mie w).MEIE = word_bit 11 w) /\
   (!w. (rec'mcause w).EC = (62 >< 0) w) /\
-  (!w. (rec'mcause w).Int = word_bit 63 w)
+  (!w. (rec'mcause w).Int = word_bit 63 w) /\
+  (!w. (rec'mip w).SSIP = word_bit 1 w) /\
+  (!w. (rec'mip w).MSIP = word_bit 3 w) /\
+  (!w. (rec'mip w).STIP = word_bit 5 w) /\
+  (!w. (rec'mip w).MTIP = word_bit 7 w) /\
+  (!w. (rec'mip w).SEIP = word_bit 9 w) /\
+  (!w. (rec'mip w).MEIP = word_bit 11 w)
 Proof
   simp_tac (srw_ss())
     [riscvTheory.rec'mstatus_def, riscvTheory.rec'mie_def,
-     riscvTheory.rec'mcause_def]
+     riscvTheory.rec'mcause_def, riscvTheory.rec'mip_def]
 QED
 
 (* The fields of a register as bits of its word: for the CSRs that are
@@ -938,12 +946,18 @@ Theorem riscv_csr_reg_fields:
   (!r. r.SEIE = word_bit 9 (reg'mie r)) /\
   (!r. r.MEIE = word_bit 11 (reg'mie r)) /\
   (!r. r.EC = (62 >< 0) (reg'mcause r)) /\
-  (!r. r.Int = word_bit 63 (reg'mcause r))
+  (!r. r.Int = word_bit 63 (reg'mcause r)) /\
+  (!r. r.SSIP = word_bit 1 (reg'mip r)) /\
+  (!r. r.MSIP = word_bit 3 (reg'mip r)) /\
+  (!r. r.STIP = word_bit 5 (reg'mip r)) /\
+  (!r. r.MTIP = word_bit 7 (reg'mip r)) /\
+  (!r. r.SEIP = word_bit 9 (reg'mip r)) /\
+  (!r. r.MEIP = word_bit 11 (reg'mip r))
 Proof
   rpt conj_tac \\ Cases
   \\ simp_tac (srw_ss())
        [riscvTheory.reg'mstatus_def, riscvTheory.reg'mie_def,
-        riscvTheory.reg'mcause_def]
+        riscvTheory.reg'mcause_def, riscvTheory.reg'mip_def]
   \\ blastLib.BBLAST_TAC
 QED
 
@@ -989,14 +1003,26 @@ Theorem riscv_csr_reg_updates:
          reg'mcause r && 0x8000000000000000w || w2w v) /\
   (!r b. reg'mcause (r with Int := b) =
          reg'mcause r && 0x7FFFFFFFFFFFFFFFw ||
-         (if b then 0x8000000000000000w else 0w))
+         (if b then 0x8000000000000000w else 0w)) /\
+  (!r b. reg'mip (r with SSIP := b) =
+         reg'mip r && ~0x2w || (if b then 0x2w else 0w)) /\
+  (!r b. reg'mip (r with MSIP := b) =
+         reg'mip r && ~0x8w || (if b then 0x8w else 0w)) /\
+  (!r b. reg'mip (r with STIP := b) =
+         reg'mip r && ~0x20w || (if b then 0x20w else 0w)) /\
+  (!r b. reg'mip (r with MTIP := b) =
+         reg'mip r && ~0x80w || (if b then 0x80w else 0w)) /\
+  (!r b. reg'mip (r with SEIP := b) =
+         reg'mip r && ~0x200w || (if b then 0x200w else 0w)) /\
+  (!r b. reg'mip (r with MEIP := b) =
+         reg'mip r && ~0x800w || (if b then 0x800w else 0w))
 Proof
   rpt conj_tac \\ Cases \\ rpt gen_tac
   \\ simp_tac (srw_ss())
        ([riscvTheory.reg'mstatus_def, riscvTheory.reg'mie_def,
-         riscvTheory.reg'mcause_def] @
+         riscvTheory.reg'mcause_def, riscvTheory.reg'mip_def] @
         TypeBase.updates_of ``:mstatus`` @ TypeBase.updates_of ``:mie`` @
-        TypeBase.updates_of ``:mcause``)
+        TypeBase.updates_of ``:mcause`` @ TypeBase.updates_of ``:mip``)
   \\ rpt COND_CASES_TAC
   \\ blastLib.BBLAST_TAC
 QED
@@ -1012,7 +1038,9 @@ Theorem riscv_csr_cond_rand:
   (!b r1 r2. reg'mie (if b then r1 else r2) =
              if b then reg'mie r1 else reg'mie r2) /\
   (!b r1 r2. reg'mcause (if b then r1 else r2) =
-             if b then reg'mcause r1 else reg'mcause r2)
+             if b then reg'mcause r1 else reg'mcause r2) /\
+  (!b r1 r2. reg'mip (if b then r1 else r2) =
+             if b then reg'mip r1 else reg'mip r2)
 Proof
   rpt conj_tac \\ rpt gen_tac \\ Cases_on `b` \\ simp_tac std_ss []
 QED

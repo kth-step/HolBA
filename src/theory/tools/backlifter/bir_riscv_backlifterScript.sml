@@ -255,6 +255,8 @@ Definition riscv_vars_def:
   (BVar "tmp_mtvec" (BType_Imm Bit64));
   (BVar "mie" (BType_Imm Bit64));
   (BVar "tmp_mie" (BType_Imm Bit64));
+  (BVar "mip" (BType_Imm Bit64));
+  (BVar "tmp_mip" (BType_Imm Bit64));
   (BVar "mscratch" (BType_Imm Bit64));
   (BVar "tmp_mscratch" (BType_Imm Bit64));
   (BVar "mepc" (BType_Imm Bit64));
@@ -306,7 +308,13 @@ Definition riscv_vars_def:
   (BVar "pmpaddr14" (BType_Imm Bit64));
   (BVar "tmp_pmpaddr14" (BType_Imm Bit64));
   (BVar "pmpaddr15" (BType_Imm Bit64));
-  (BVar "tmp_pmpaddr15" (BType_Imm Bit64))
+  (BVar "tmp_pmpaddr15" (BType_Imm Bit64));
+  (BVar "procID" (BType_Imm Bit8));
+  (BVar "tmp_procID" (BType_Imm Bit8));
+  (BVar "extMEIP" (BType_Imm Bit1));
+  (BVar "tmp_extMEIP" (BType_Imm Bit1));
+  (BVar "extSEIP" (BType_Imm Bit1));
+  (BVar "tmp_extSEIP" (BType_Imm Bit1))
  }
 End
 
@@ -476,6 +484,7 @@ Definition default_riscv_bir_env_CSRS_def:
   (("mstatus" =+ SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus))))
   (("mtvec" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)))
   (("mie" =+ SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))))
+  (("mip" =+ SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))))
   (("mscratch" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)))
   (("mepc" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)))
   (("mcause" =+ SOME (BVal_Imm (Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause))))
@@ -502,7 +511,10 @@ Definition default_riscv_bir_env_CSRS_def:
   (("pmpaddr13" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr13)))
   (("pmpaddr14" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)))
   (("pmpaddr15" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)))
-  env_map)))))))))))))))))))))))))))))
+  (("procID" =+ SOME (BVal_Imm (Imm8 ms.procID)))
+  (("extMEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))))
+  (("extSEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID))))
+  env_map)))))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_env_CSRS_tmp_def:
@@ -511,6 +523,7 @@ Definition default_riscv_bir_env_CSRS_tmp_def:
   (("tmp_mstatus" =+ SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus))))
   (("tmp_mtvec" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)))
   (("tmp_mie" =+ SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))))
+  (("tmp_mip" =+ SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))))
   (("tmp_mscratch" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)))
   (("tmp_mepc" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)))
   (("tmp_mcause" =+ SOME (BVal_Imm (Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause))))
@@ -537,7 +550,10 @@ Definition default_riscv_bir_env_CSRS_tmp_def:
   (("tmp_pmpaddr13" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr13)))
   (("tmp_pmpaddr14" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)))
   (("tmp_pmpaddr15" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)))
-  env_map)))))))))))))))))))))))))))))
+  (("tmp_procID" =+ SOME (BVal_Imm (Imm8 ms.procID)))
+  (("tmp_extMEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))))
+  (("tmp_extSEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID))))
+  env_map)))))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_state_def:
@@ -1225,6 +1241,8 @@ Theorem default_riscv_bir_state_MCSRS_read[local]:
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)) /\
   bir_env_read (BVar "mie" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))) /\
+  bir_env_read (BVar "mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))) /\
   bir_env_read (BVar "mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)) /\
   bir_env_read (BVar "mepc" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
@@ -1276,7 +1294,13 @@ Theorem default_riscv_bir_state_MCSRS_read[local]:
   bir_env_read (BVar "pmpaddr14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)) /\
   bir_env_read (BVar "pmpaddr15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15))
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)) /\
+  bir_env_read (BVar "procID" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 ms.procID)) /\
+  bir_env_read (BVar "extMEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))) /\
+  bir_env_read (BVar "extSEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID)))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,
@@ -1303,6 +1327,8 @@ Theorem default_riscv_bir_state_MCSRS_read_tmp[local]:
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)) /\
   bir_env_read (BVar "tmp_mie" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))) /\
+  bir_env_read (BVar "tmp_mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))) /\
   bir_env_read (BVar "tmp_mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)) /\
   bir_env_read (BVar "tmp_mepc" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
@@ -1354,7 +1380,13 @@ Theorem default_riscv_bir_state_MCSRS_read_tmp[local]:
   bir_env_read (BVar "tmp_pmpaddr14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)) /\
   bir_env_read (BVar "tmp_pmpaddr15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15))
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)) /\
+  bir_env_read (BVar "tmp_procID" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 ms.procID)) /\
+  bir_env_read (BVar "tmp_extMEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))) /\
+  bir_env_read (BVar "tmp_extSEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID)))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,
@@ -1381,6 +1413,8 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
    SOME (bir_var_type (BVar "mtvec" (BType_Imm Bit64))) /\
   bir_env_lookup_type "mie" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "mie" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mip" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mip" (BType_Imm Bit64))) /\
   bir_env_lookup_type "mscratch" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "mscratch" (BType_Imm Bit64))) /\
   bir_env_lookup_type "mepc" (default_riscv_bir_state ms).bst_environ =
@@ -1432,7 +1466,13 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
   bir_env_lookup_type "pmpaddr14" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "pmpaddr14" (BType_Imm Bit64))) /\
   bir_env_lookup_type "pmpaddr15" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "pmpaddr15" (BType_Imm Bit64)))
+   SOME (bir_var_type (BVar "pmpaddr15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "procID" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "procID" (BType_Imm Bit8))) /\
+  bir_env_lookup_type "extMEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "extMEIP" (BType_Imm Bit1))) /\
+  bir_env_lookup_type "extSEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "extSEIP" (BType_Imm Bit1)))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,
@@ -1448,7 +1488,8 @@ Proof
       bir_envTheory.bir_var_type_def,
       bir_envTheory.bir_env_lookup_type_def,
       bir_valuesTheory.type_of_bir_val_def,
-     type_of_bir_imm_def]
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
 QED
 
 Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
@@ -1461,6 +1502,8 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
    SOME (bir_var_type (BVar "tmp_mtvec" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_mie" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_mie" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mip" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mip" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_mscratch" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_mscratch" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_mepc" (default_riscv_bir_state ms).bst_environ =
@@ -1512,7 +1555,13 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
   bir_env_lookup_type "tmp_pmpaddr14" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_pmpaddr14" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_pmpaddr15" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "tmp_pmpaddr15" (BType_Imm Bit64)))
+   SOME (bir_var_type (BVar "tmp_pmpaddr15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_procID" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_procID" (BType_Imm Bit8))) /\
+  bir_env_lookup_type "tmp_extMEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_extMEIP" (BType_Imm Bit1))) /\
+  bir_env_lookup_type "tmp_extSEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_extSEIP" (BType_Imm Bit1)))
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_CSRS_def,
@@ -1528,7 +1577,8 @@ Proof
       bir_envTheory.bir_var_type_def,
       bir_envTheory.bir_env_lookup_type_def,
       bir_valuesTheory.type_of_bir_val_def,
-     type_of_bir_imm_def]
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
 QED
 
 
