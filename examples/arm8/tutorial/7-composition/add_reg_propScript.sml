@@ -2,8 +2,8 @@ Theory add_reg_prop
 
 Ancestors
  bir_prog_add_reg
- add_reg_spec_arm8
- add_reg_spec_bir
+ add_reg_arm8
+ add_reg_bir
  add_reg_composition
 
 Libs bir_backlifterLib

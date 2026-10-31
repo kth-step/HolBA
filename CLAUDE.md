@@ -42,6 +42,7 @@
 - Durations vary widely on modern 8+ multicore machines:
   - small arm8 examples: about 1–2 min each
   - riscv chacha20 chain: about 10 min (z3 heavy)
+  - `examples/arm8/aes/wp` (excluded from the build): `aesWpsTheory` and `aesM0WpsTheory` ran for about 1.5 h without finishing (~15 of ~70 labels left), each peaking above 20 GB of memory. Labels slow down as the wp expressions grow, from several per minute to under one per 10 min. Whether they ever finish is unknown.
   - from scratch (HOL + HolBA + one example): about 25 min
 - A quiet log is not a hang. Judge progress by CPU-time deltas of `hol`/`z3` (`/proc/PID/stat` fields 14+15), not by `ps %CPU`, which is a lifetime average. z3 busy while `hol` waits is progress.
 - Known hang patterns:

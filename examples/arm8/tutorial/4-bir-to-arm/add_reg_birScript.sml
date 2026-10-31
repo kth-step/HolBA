@@ -25,9 +25,9 @@ open HolBASimps;
 open bir_arm8_backlifterTheory;
 open bslSyntax;
 
-open add_reg_spec_arm8Theory;
+open add_reg_arm8Theory;
 
-val _ = new_theory "add_reg_spec_bir";
+val _ = new_theory "add_reg_bir";
 
 (* BIR variables *)
 val get_y = bden (bvar "R5" ``(BType_Imm Bit64)``);

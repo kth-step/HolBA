@@ -9,7 +9,7 @@ open bslSyntax;
 open pretty_exnLib;
 
 (* From examples: *)
-open add_reg_spec_birTheory;
+open add_reg_birTheory;
 open add_reg_wpTheory;
 
 val _ = new_theory "add_reg_smt";

@@ -18,7 +18,7 @@ open HolBASimps;
 open bir_arm8_backlifterTheory;
 open bslSyntax;
 
-val _ = new_theory "add_reg_spec_arm8";
+val _ = new_theory "add_reg_arm8";
 
 (* whole program *)
 

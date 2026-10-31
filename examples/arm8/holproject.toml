@@ -22,19 +22,46 @@ rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"
 [build]
 members = [
   "add_reg",
+  "aes",
   "incr",
   "isqrt",
   "max",
   "swap",
+  "tutorial",
   "update_sat",
+]
+# Test scripts (e.g. aes/exec/aes-test.sml, aes/wp-test.sml) are not built.
+# Neither is aes/wp: its wp theories run for hours and need >20 GB of memory
+# each, without being known to finish. tutorial/8-symbexec is obsolete, and
+# the other loose tutorial .sml files are scripts to run interactively.
+exclude_globs = [
+  "*/test-*.sml",
+  "*-test.sml",
+  "aes/wp/*",
+  "tutorial/8-symbexec/*",
+  "tutorial/2-lift/print-prog.sml",
+  "tutorial/3-exec/exec.sml",
+  "tutorial/6-smt/tutorial-smt-playground.sml",
 ]
 # holba declares roots, so without explicit roots/root_groups here a plain
 # `holbuild build` would only build holba's roots.
-root_groups = ["add_reg", "incr", "isqrt", "max", "swap", "update_sat"]
+root_groups = [
+  "add_reg",
+  "aes",
+  "incr",
+  "isqrt",
+  "max",
+  "swap",
+  "tutorial",
+  "update_sat",
+]
 tactic_timeout = 600.0
 
 [build.groups.add_reg]
 include = ["add_reg"]
+
+[build.groups.aes]
+include = ["aes"]
 
 [build.groups.incr]
 include = ["incr"]
@@ -47,6 +74,9 @@ include = ["max"]
 
 [build.groups.swap]
 include = ["swap"]
+
+[build.groups.tutorial]
+include = ["tutorial"]
 
 [build.groups.update_sat]
 include = ["update_sat"]

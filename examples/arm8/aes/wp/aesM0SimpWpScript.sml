@@ -15,7 +15,7 @@ val timer_start = Lib.start_time ();
 val lbl_list = (gen_lbl_list o snd o dest_eq o concl) aes_wps1_def;
 
 
-val varexps_thms = preproc_vars [] (tl (rev lbl_list));
+val varexps_thms = preproc_vars [] (rev lbl_list);
 
 
 (* provide the number of arm instructions to take for the simplification, counted from the end of the computed block *)
@@ -23,13 +23,13 @@ val take_all = true;
 val i = 50; (*60 - 230;*)
 
 val i_min = 1;
-val i_max = (List.length lbl_list) - 1;
+val i_max = List.length lbl_list;
 val i = if take_all then
           i_max
         else
           Int.max (i_min, Int.min (i_max, i));
 
-val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i + 1);
+val lbl_str = List.nth (lbl_list, (List.length lbl_list) - i);
 
 val def_thm = lookup_def (bir_wpLib.wps_id_prefix ^ lbl_str);
 val def_const = (fst o dest_eq o concl) def_thm;
