@@ -96,6 +96,15 @@ val _ = lift_da_and_store "incr" "incr.da" da_riscv
   model's step theorems (see the RISC-V section of `src/tools/lifter/README`), so a precondition
   includes `riscv_mmode m` (`bir_riscv_backlifterTheory`): the privilege is M, `mstatus.MIE` and
   `mstatus.MPRV` are clear, and no PMP entry is locked or anything but OFF or NAPOT
+- the postconditions of the examples do not state `riscv_mmode m` again, so a contract does not
+  say that the M-mode contract still holds where it ends; a contract that is to be followed by
+  another one (composition, `src/tools/comp`) has to state it in its postconditions too, which
+  symbolic execution shows for code that writes none of `priv`, `mstatus`, `pmpcfg0` and
+  `pmpcfg2` (the BIR variables of the contract keep their initial values):
+  `bir_post_bir_to_riscv_mmode_conj` (`bir_riscv_backlifterTheory`) adds `riscv_mmode m` to the
+  RISC-V postcondition and `bir_riscv_mmode_post` to the BIR postcondition of the implication
+  between them (`bir_riscv_mmode_post` is the M-mode contract written without `BExp_word_bit`,
+  which the transfer of a BIR contract does not accept in a postcondition)
 
 Example:
 

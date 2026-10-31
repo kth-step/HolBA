@@ -1887,4 +1887,113 @@ Proof
   ASM_SIMP_TAC std_ss [GSYM bir_riscv_mmode_pre_def, bir_riscv_mmode_pre_thm]
 QED
 
+(* The M-mode contract in the postconditions of a contract, so that a
+ * contract that follows, whose precondition states it, can be composed with
+ * it: bir_riscv_mmode_post is the contract as a BIR expression without the
+ * abbreviation BExp_word_bit, which the transfer of a BIR contract from
+ * symbolic execution (bir_symbLib.bir_symb_transfer_thm) does not accept in
+ * a postcondition, and bir_post_bir_to_riscv_mmode_conj adds it and
+ * riscv_mmode to the postconditions of a contract.  Symbolic execution
+ * shows it at the end of code that writes none of priv, mstatus, pmpcfg0
+ * and pmpcfg2, from the precondition. *)
+Definition bir_riscv_mmode_post_def:
+  bir_riscv_mmode_post =
+  BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+       (BExp_Const (Imm8 3w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Den (BVar "mstatus" (BType_Imm Bit64)))
+          (BExp_Const (Imm64 8w)))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Den (BVar "mstatus" (BType_Imm Bit64)))
+          (BExp_Const (Imm64 0x20000w)))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w)))
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w))))))))
+End
+
+(* The lifted variables of the contract, in a BIR state that is related to
+ * a RISC-V state. *)
+Theorem bir_riscv_mmode_reads[local]:
+  !bs ms. bmr_rel riscv_bmr bs ms ==>
+   (bir_env_read (BVar "priv" (BType_Imm Bit8)) bs.bst_environ =
+      SOME (BVal_Imm (Imm8 (w2w (ms.c_privilege ms.procID))))) /\
+   (bir_env_read (BVar "mstatus" (BType_Imm Bit64)) bs.bst_environ =
+      SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus)))) /\
+   (bir_env_read (BVar "pmpcfg0" (BType_Imm Bit64)) bs.bst_environ =
+      SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0))) /\
+   (bir_env_read (BVar "pmpcfg2" (BType_Imm Bit64)) bs.bst_environ =
+      SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)))
+Proof
+  rpt GEN_TAC >> SIMP_TAC std_ss [riscv_bmr_rel_EVAL] >> rpt strip_tac >>
+  ASM_REWRITE_TAC []
+QED
+
+(* Where bir_riscv_mmode_post holds in a BIR state, riscv_mmode holds in
+ * the related RISC-V state. *)
+Theorem bir_riscv_mmode_post_thm:
+  !bs ms. bmr_rel riscv_bmr bs ms ==>
+    (bir_eval_exp bir_riscv_mmode_post bs.bst_environ = SOME bir_val_true) ==>
+    riscv_mmode ms
+Proof
+  rpt GEN_TAC >>
+  DISCH_THEN (fn th =>
+    PURE_REWRITE_TAC [bir_riscv_mmode_post_def,
+                      GSYM bir_exp_equivTheory.bir_and_equiv] >>
+    SIMP_TAC (srw_ss()++holBACore_ss)
+      [bir_bool_expTheory.bir_val_true_def, riscv_mmode_words,
+       MATCH_MP bir_riscv_mmode_reads th] >>
+    blastLib.BBLAST_TAC)
+QED
+
+Theorem bir_post_bir_to_riscv_mmode_conj:
+  !post post_bir ls.
+    bir_post_bir_to_riscv post post_bir ls ==>
+    bir_post_bir_to_riscv (\ms. riscv_mmode ms /\ post ms)
+      (\l. BExp_BinExp BIExp_And ^(rhs (concl bir_riscv_mmode_post_def))
+             (post_bir l)) ls
+Proof
+  REWRITE_TAC [bir_post_bir_to_riscv_def, GSYM bir_riscv_mmode_post_def] >>
+  BETA_TAC >>
+  REWRITE_TAC [GSYM bir_exp_equivTheory.bir_and_equiv] >>
+  rpt strip_tac >-
+   METIS_TAC [bir_riscv_mmode_post_thm] >>
+  METIS_TAC []
+QED
+
 val _ = export_theory();
