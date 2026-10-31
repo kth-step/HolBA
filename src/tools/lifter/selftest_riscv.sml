@@ -367,8 +367,10 @@ val _ = riscv_test_hex_print_asm "CSRRWI x1, mcounteren(0x306), 0x1" "3060D0F3";
 val _ = riscv_test_hex_print_asm "CSRRSI x1, mcounteren(0x306), 0x1" "3060E0F3";
 val _ = riscv_test_hex_print_asm "CSRRCI x1, mcounteren(0x306), 0x1" "3060F0F3";
 
-(* A write of misa that clears misa.C, which riscv_state_is_OK requires *)
+(* Writes of misa, one that clears misa.C and one that sets it: no write of
+ * misa lifts (see the RISC-V section of README) *)
 val _ = riscv_test_hex_print_asm "CSRW misa(0x301), zero" "30101073";
+val _ = riscv_test_hex_print_asm "CSRSI misa(0x301), 0x4" "30126073";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64 Privileged Instructions (M-mode)";
@@ -552,8 +554,10 @@ val riscv_expected_failed_hexcodes:string list =
 [
    (* Zicsr *)
    "B00027F3" (* CSRR mcycle: c_cycles is not lifted *),
-   "30101073" (* CSRW misa, zero at a 4-byte aligned pc: clears misa.C, so
-                 riscv_state_is_OK does not hold after it *),
+   (* writes of misa: the lifter cannot show riscv_state_is_OK after one, at
+      any pc and whatever the written value *)
+   "30101073" (* CSRW misa, zero *),
+   "30126073" (* CSRSI misa, 0x4 *),
    (* A *)
    "18C5A52F" (* SC.W: depends on the load reservation, which is not lifted *),
    "18C5B52F" (* SC.D: likewise *)

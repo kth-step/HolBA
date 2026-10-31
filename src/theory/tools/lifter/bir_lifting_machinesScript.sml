@@ -951,10 +951,10 @@ Definition riscv_state_is_OK_def:
     (* The C extension is enabled.  The step theorems need misa.C for every
      * compressed instruction and for every instruction, jump target or
      * return address whose bit 1 is set, and a read of mepc depends on it.
-     * Only a write of misa (CSR 0x301) changes misa.C; such a write lifts
-     * only if the lifter can prove that it leaves misa.C set (otherwise the
-     * proof that this predicate holds after the instruction fails, and so
-     * does the lifting of the instruction). *)
+     * Only a write of misa (CSR 0x301) changes misa.C, and no write of misa
+     * lifts: the lifter cannot prove this predicate after one, at any pc
+     * and whatever the written value (see the RISC-V section of
+     * src/tools/lifter/README), so misa.C holds throughout lifted code. *)
     (ms.c_MCSR ms.procID).misa.C
   )
 End

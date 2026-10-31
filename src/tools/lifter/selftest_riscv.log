@@ -5064,6 +5064,9 @@ CSRRCI x1, mcounteren(0x306), 0x1: 3060F0F3 @ 0x10030 - OK
 CSRW misa(0x301), zero: 30101073 @ 0x10030 - FAILED
    computing al_step and ms' failed
 
+CSRSI misa(0x301), 0x4: 30126073 @ 0x10030 - FAILED
+   computing al_step and ms' failed
+
 
 RV64 Privileged Instructions (M-mode)
 
@@ -8756,10 +8759,11 @@ C.SDSP a0, 8(sp): E42A @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 4/188
+Instructions FAILED: 5/189
 
    "B00027F3" (* lifting of ``Imm64 (ms.c_cycles ms.procID)`` failed *),
    "30101073" (* computing al_step and ms' failed *),
+   "30126073" (* computing al_step and ms' failed *),
    "18C5A52F" (* computing al_mem failed *),
    "18C5B52F" (* computing al_mem failed *)
 ]

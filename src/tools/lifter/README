@@ -31,12 +31,18 @@ configuration.  The extra predicate (riscv_state_is_OK in
 src/theory/tools/lifter/bir_lifting_machinesScript.sml) holds only what no
 lifted instruction changes: no exception, no pending control transfer,
 RV64 (misa.MXL <> 1, which is read-only) and the C extension enabled
-(misa.C).  Only a write of misa can clear misa.C; the lifter proves the
-extra predicate after each instruction, so such a write lifts only where
-the written value keeps misa.C set (or where the model keeps it, at a pc
-that is not 4-byte aligned).  With misa.C, a compressed instruction, a jump
-or branch to an address with bit 1 set, and the jump of MRET (whose target
-the model masks to 4 bytes when misa.C is clear) need no assertion.
+(misa.C).  Only a write of misa can change misa.C, and no write of misa
+lifts, whatever the written value: the lifter proves the extra predicate
+after each instruction for a symbolic pc (it places the lifted block at
+its address afterwards), and after a write of misa that proof fails, in
+"computing al_step and ms'", since misa.C then depends on the written
+value and on the pc (the model keeps misa.C set where clearing it would
+misalign the next instruction, at a pc that is not 4-byte aligned) and
+the lifter does not simplify the misa record that the model writes.  So
+misa.C and misa.MXL hold throughout lifted code.  With misa.C, a
+compressed instruction, a jump or branch to an address with bit 1 set, and
+the jump of MRET (whose target the model masks to 4 bytes when misa.C is
+clear) need no assertion.
 
 The lifted state is listed in riscv_bmr there: the general-purpose and
 floating-point registers, the memory, the privilege ("priv", 8 bits: 3 for
@@ -88,5 +94,5 @@ Instructions that read other state, or that need a step theorem that the
 step library does not have, do not lift: "csrr mcycle" and the other
 counters (NextRISCV does not count), reads of the CSRs that are not lifted
 (misa, medeleg, mideleg and so on), SC.W and SC.D (the load reservation is
-not lifted), a write of misa that clears misa.C, floating-point arithmetic,
-and illegal instructions.
+not lifted), writes of misa (see above), floating-point arithmetic, and
+illegal instructions.
