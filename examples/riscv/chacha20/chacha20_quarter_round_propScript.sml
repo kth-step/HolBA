@@ -45,22 +45,16 @@ open chacha20_quarter_round_symb_transfTheory;
 
 val _ = new_theory "chacha20_quarter_round_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_chacha20_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_line_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_line_post_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val riscv_cont_chacha20_line_thm =
- get_riscv_contract
+ get_riscv_contract_thm
   bspec_cont_chacha20_line
-  progbin_tm riscv_pre_tm riscv_post_tm
+  chacha20_line_init_addr_def [chacha20_line_end_addr_def]
+  bir_chacha20_progbin_def
+  riscv_chacha20_line_pre_def riscv_chacha20_line_post_def
   bir_chacha20_prog_def
   [bspec_chacha20_line_pre_def]
   bspec_chacha20_line_pre_def chacha20_line_riscv_pre_imp_bspec_pre_thm
@@ -72,7 +66,6 @@ Theorem riscv_cont_chacha20_line:
  (riscv_chacha20_line_pre pre_a pre_b pre_d)
  (riscv_chacha20_line_post pre_a pre_b pre_d)
 Proof
- rw [chacha20_line_init_addr_def,chacha20_line_end_addr_def] >>
  ACCEPT_TAC riscv_cont_chacha20_line_thm
 QED
 

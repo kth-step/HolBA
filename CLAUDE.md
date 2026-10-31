@@ -82,6 +82,9 @@
   - Symbolic execution and transfer scale poorly with fragment size; large symbolic states can make z3 blow up. So if scaling has been determined to be a likely problem, split larger loop-free code into fragments too, and compose their contracts with the sequencing rules.
   - Choose the loop head where the loop condition is a predicate on registers, e.g., before the `cmp`, not at the conditional branch, where it only exists in the flags.
 - Run each symbolic execution/transfer once, producing the strongest contract needed. Derive weaker variants in `*_prop` with `riscv_cont_subset_rule` / `riscv_cont_conseq_rule` (arm8: `arm8_cont_subset_rule` / `arm8_cont_conseq_rule`). `*_spec_*` theories may contain such auxiliary, stronger specifications.
+- Write labels in contracts and their supporting lemmas as the named address definitions from `*_spec_<arch>` (e.g. `isqrt_end_addr_2`, `chacha20_column_round_end_addr`), not hex literals. This covers `arm8_cont`/`riscv_cont` statements, PC conditions in pre/postconditions, and label cases (`BL_Address (Imm64 ...)`) in BIR postcondition lemmas.
+  - The BIR contracts from symbolic transfer (`bspec_cont_*`) contain the hex values. Backlift with `get_riscv_contract_thm` / `get_arm8_contract_thm`, which take the address definitions and state the result with the names. `get_riscv_contract` / `get_arm8_contract` are legacy.
+  - If a BIR postcondition lemma names labels, also pass the address definitions in the `bir_post_defs` argument, so that it matches the hex labels of the BIR contract (see `examples/riscv/chacha20/chacha20_column_round_propScript.sml`).
 
 ## Git
 - Main branch is `master`. The HOL4 revision is pinned in `holproject.toml`.
