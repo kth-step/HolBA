@@ -69,14 +69,24 @@ assertions:
     the next lifted block fails: the lifter does not describe U-mode code.
   - WFI and SFENCE.VMA do nothing in M-mode, as FENCE and FENCE.I: their
     blocks have only the assertions.
-  - "csrr rd, mip" reads the stored SSIP, STIP and SEIP from the BIR
-    variable mip, MSIP and MTIP from the CLINT in the memory (msip at
-    0x2000000 + 4 * procID, MTIP set if mtimecmp, the doubleword at
-    0x2004000 + 8 * procID, is at most mtime, the doubleword at
-    0x200BFF8), and MEIP and SEIP from the interrupt lines.
+  - "csrr rd, mip" reads SSIP and STIP from the BIR variable mip, MSIP
+    and MTIP from the CLINT in the memory (bit 0 of msip at 0x2000000 +
+    4 * procID; MTIP is set if mtimecmp, the doubleword at 0x2004000 +
+    8 * procID, is at most mtime, the doubleword at 0x200BFF8), SEIP from
+    mip or the line extSEIP, and MEIP from the line extMEIP.
+
+A write of a CSR that the model stores but the lifter does not lift
+(medeleg, mideleg, menvcfg, and of the S-mode CSRs stvec, sscratch, sepc,
+scause, stval, senvcfg and satp) lifts to a block without an assignment
+for it: the CSR is not part of the BIR state, and it has no effect on the
+lifted code, since a trap from M-mode is never delegated and M-mode
+accesses are not translated (mstatus.MPRV being clear).  A write of the
+view sstatus lifts to an assignment of mstatus; the views sie and sip
+depend on mideleg, so their reads and writes do not lift.
 
 Instructions that read other state, or that need a step theorem that the
 step library does not have, do not lift: "csrr mcycle" and the other
-counters (NextRISCV does not count), "csrr misa" (misa is not lifted), SC.W
-and SC.D (the load reservation is not lifted), a write of misa that clears
-misa.C, floating-point arithmetic, and illegal instructions.
+counters (NextRISCV does not count), reads of the CSRs that are not lifted
+(misa, medeleg, mideleg and so on), SC.W and SC.D (the load reservation is
+not lifted), a write of misa that clears misa.C, floating-point arithmetic,
+and illegal instructions.
