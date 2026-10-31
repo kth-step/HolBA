@@ -25,6 +25,7 @@
   val _ = holbuild_extra_deps ["foo.da"]
   ```
   holbuild picks up the `holbuild_extra_deps [...]` call when scanning the script. The local no-op definition keeps the script valid under Holmake. Every lifted example (`<prog>Script.sml`) needs this for its `.da` file.
+- Theory names must be unique across the whole holbuild project, i.e., all `members` directories, including `tutorial/`. Holmake only sees each directory's `INCLUDES`, so clashes that were harmless there fail under holbuild with `duplicate logical name`. Before adding `fooScript.sml`, check that no other `fooScript.sml` exists in the project.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 (still mentioned in the README) has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
@@ -35,6 +36,7 @@
 - So leverage the cache first, then apply the short timeout only to the goal file:
   1. build its dependencies with the regular timeout, e.g. `holbuild build isqrt_symb_transfTheory`
   2. iterate with `holbuild build --tactic-timeout 30 isqrt_propTheory`
+- The short timeout applies to every theory holbuild builds in that invocation, not just the target. So any dependency that is not already up to date at the regular timeout gets built under it. This also applies when writing a new pipeline theory by theory: build each finished theory once with the regular timeout before iterating with the short one on the next.
 - Never pass `--tactic-timeout` to a broad target (`@group`, no target) or in a project whose `.holbuild` is cold (e.g. the repo root when only the examples have been built: they build HolBA in their own `.holbuild/packages/holba`). That rebuilds everything without cache.
 - Theories built under the short timeout are rebuilt once by the next regular build; this is cheap for small theories.
 
@@ -77,6 +79,9 @@
   - Symbolic transfer can only exclude labels outside the analysed fragment, and a fragment's own start label is always inside. So no fragment contract can show that a loop iteration reaches the loop head *first*, which the standard loop rule (`total_loop_rule_thm`) requires. This holds for both arm8 and riscv.
   - Instead, use a loop rule over avoidance contracts, which only require that the loop exit is not encountered before returning to the head. arm8: `arm8_cont_avoid` and `arm8_cont_loop_rule`, used in `examples/arm8/isqrt`. riscv: `riscv_cont_avoid` and `riscv_cont_loop_rule`, which mirror the arm8 rules.
   - Avoidance contracts come from ordinary contracts via `*_cont_avoid_intro`, and compose with `*_cont_avoid_seq_rule` / `*_cont_avoid_cont_seq_rule`.
+  - Templates: small loop-free code can be one fragment (`examples/arm8/update_sat`). For loops, fragments cut at the loop head, so that no symbolic execution runs around the loop, composed with the loop rule (`examples/arm8/isqrt`, `examples/arm8/add_reg`).
+  - Symbolic execution and transfer scale poorly with fragment size; large symbolic states can make z3 blow up. So if scaling has been determined to be a likely problem, split larger loop-free code into fragments too, and compose their contracts with the sequencing rules.
+  - Choose the loop head where the loop condition is a predicate on registers, e.g., before the `cmp`, not at the conditional branch, where it only exists in the flags.
 - Run each symbolic execution/transfer once, producing the strongest contract needed. Derive weaker variants in `*_prop` with `riscv_cont_subset_rule` / `riscv_cont_conseq_rule` (arm8: `arm8_cont_subset_rule` / `arm8_cont_conseq_rule`). `*_spec_*` theories may contain such auxiliary, stronger specifications.
 
 ## Git

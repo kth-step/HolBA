@@ -29,6 +29,12 @@ fun QINST_IRULE substs thm =
     MATCH_MP_TAC (REWRITE_RULE [boolTheory.AND_IMP_INTRO] (INST (map inst1 substs) th))
   end;
 
+(* Like irule, but first rewrites both the goal and thm with the
+ * theorems ths, e.g. definitions of constants that name the same
+ * value differently in the goal and in thm. *)
+fun UNFOLD_IRULE ths thm =
+  REWRITE_TAC ths >> irule (REWRITE_RULE ths thm);
+
 (* Utility rules *)
 fun HO_MATCH_MPL thm []     = thm
   | HO_MATCH_MPL thm (h::t) = HO_MATCH_MPL (HO_MATCH_MP thm h) t;

@@ -112,18 +112,15 @@ QED
    require that the loop exit is not encountered on the way back to
    the loop head. *)
 
+(* Some addresses have several names, e.g., add_reg_end_addr_1 and
+   add_reg_init_addr_2. A theorem whose address names differ from
+   those of the goal is used with UNFOLD_IRULE addr_defs. *)
 val addr_defs = [
  add_reg_init_addr_def,
  add_reg_init_addr_1_def, add_reg_end_addr_1_def,
  add_reg_init_addr_2_def, add_reg_end_addr_2_loop_def, add_reg_end_addr_2_ret_def,
  add_reg_init_addr_3_def, add_reg_end_addr_3_def,
  add_reg_end_addr_def];
-
-(* Some addresses have several names, e.g., add_reg_end_addr_1 and
-   add_reg_init_addr_2. To use a theorem whose address names differ
-   from those of the goal, unfold both. *)
-fun addr_irule thm =
- REWRITE_TAC addr_defs >> irule (REWRITE_RULE addr_defs thm);
 
 (* signed decrement of a positive value stays nonnegative
    and decreases the unsigned value (a - 1w, as normalised by rw) *)
@@ -220,7 +217,7 @@ Proof
   rpt conj_tac >- rw [arm8_add_reg_pre_def, arm8_add_reg_pre_1_def] >- (
    rw ([arm8_add_reg_post_1_def, arm8_add_reg_inv_def] @ addr_defs)
   ) >>
-  addr_irule arm8_cont_add_reg_1_avoid
+  UNFOLD_IRULE addr_defs arm8_cont_add_reg_1_avoid
  ) >>
  rw [arm8_cont_avoid_def, arm8_add_reg_pre_def, WORD_GREATER_EQ]
 QED
@@ -254,7 +251,7 @@ Proof
    QINST_IRULE [("pre1", `arm8_add_reg_pre_2 a b`),
   ("post1", `\ms. ms.PC = add_reg_end_addr_2_loop /\ arm8_add_reg_post_2_loop a b ms`)] arm8_cont_avoid_conseq_rule >>
    rpt conj_tac >- rw [arm8_add_reg_pre_2_def] >- simp [] >>
-   addr_irule arm8_cont_add_reg_2_loop_avoid >>
+   UNFOLD_IRULE addr_defs arm8_cont_add_reg_2_loop_avoid >>
    fs []
   ) >- rw ([arm8_add_reg_post_2_loop_def, arm8_add_reg_pre_3_def] @ addr_defs) >>
   QINST_IRULE [("pre1", `arm8_add_reg_pre_3 a b`),
@@ -284,7 +281,7 @@ Proof
   `ms.REG 2w = 0w` by METIS_TAC [add_reg_zero] >>
   fs []
  ) >- rw [arm8_add_reg_post_2_ret_def, arm8_add_reg_post_def] >>
- addr_irule arm8_cont_add_reg_2_exit >>
+ UNFOLD_IRULE addr_defs arm8_cont_add_reg_2_exit >>
  simp []
 QED
 
