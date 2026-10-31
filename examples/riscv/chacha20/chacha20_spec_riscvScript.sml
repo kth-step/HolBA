@@ -206,6 +206,11 @@ Definition riscv_chacha20_column_round_pre_def:
   n2w (w2n (m.c_gpr m.procID 23w)) = pre_arr_15)
 End
 
+(* The postcondition fixes the PC to the end label, so that the
+   contract can also list the end of the double round as an ending
+   label that is never reached first, as needed for sequential
+   composition with the diagonal round *)
+
 Definition riscv_chacha20_column_round_post_def:
  riscv_chacha20_column_round_post
   (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
@@ -219,6 +224,7 @@ Definition riscv_chacha20_column_round_post_def:
      pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
      pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
   in
+  m.c_PC m.procID = chacha20_column_round_end_addr /\
   n2w (w2n (m.c_gpr m.procID 20w)) = arr_0 /\
   n2w (w2n (m.c_gpr m.procID 19w)) = arr_1 /\
   n2w (w2n (m.c_gpr m.procID 18w)) = arr_2 /\
@@ -293,24 +299,6 @@ Definition riscv_chacha20_diagonal_round_post_def:
   n2w (w2n (m.c_gpr m.procID 25w)) = arr_13 /\
   n2w (w2n (m.c_gpr m.procID 24w)) = arr_14 /\
   n2w (w2n (m.c_gpr m.procID 23w)) = arr_15)
-End
-
-(* column round contract for composition with diagonal round,
-   asserting that the column round ends where the diagonal round starts *)
-
-Definition riscv_chacha20_column_round_excl_post_def:
- riscv_chacha20_column_round_excl_post
-  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
-  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
-  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
-  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
- (m:riscv_state) : bool =
- (if m.c_PC m.procID = chacha20_column_round_end_addr then
-   riscv_chacha20_column_round_post
-     pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
-     pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
-     m
-  else F)
 End
 
 (* double round contract *)

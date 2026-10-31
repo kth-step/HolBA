@@ -973,10 +973,13 @@ Proof
  EVAL_TAC
 QED
 
-Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
+(* register part of the column round postcondition, which holds
+   whenever the PC is at the end label *)
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_regs_thm[local]:
  !ls. bir_post_bir_to_riscv
-   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
-     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\m. m.c_PC m.procID = chacha20_column_round_end_addr ==>
+     riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+      pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15 m)
    (\l. (bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
           pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
    ls
@@ -1016,6 +1019,30 @@ Proof
  ] >>
 
  rw [] >> fs [if_bool_1w]
+QED
+
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\l. if l = BL_Address (Imm64 0x109e0w) then
+          bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+        else if l = BL_Address (Imm64 0x10b64w) then bir_exp_false
+        else bir_exp_false)
+   ls
+Proof
+ rw [bir_post_bir_to_riscv_def] >>
+ Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x109e0w)` >> fs [] >| [
+  `ms.c_PC ms.procID = 0x109e0w`
+   by (Cases_on `bs` >> fs [] >> METIS_TAC [bir_riscv_extrasTheory.riscv_bmr_bpc_label_c_PC_equiv]) >>
+  ASSUME_TAC (Q.SPEC `ls` chacha20_column_round_riscv_post_imp_bspec_post_regs_thm) >>
+  fs [bir_post_bir_to_riscv_def, chacha20_column_round_end_addr_def] >>
+  METIS_TAC [],
+
+  Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x10b64w)` >>
+  fs [bir_exp_false_def,bir_eval_exp_def,bir_val_true_def]
+ ]
 QED
 
 (* diagonal round *)
@@ -1082,33 +1109,6 @@ Proof
  ] >>
  
  rw [] >> fs [if_bool_1w]
-QED
-
-(* column round with excluded double round end label *)
-
-Theorem chacha20_column_round_riscv_excl_post_imp_bspec_post_thm:
- !ls. bir_post_bir_to_riscv
-   (riscv_chacha20_column_round_excl_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
-     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
-   (\l. if l = BL_Address (Imm64 0x109e0w) then
-          bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
-     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
-        else if l = BL_Address (Imm64 0x10b64w) then bir_exp_false
-        else bir_exp_false)
-   ls
-Proof
- rw [bir_post_bir_to_riscv_def] >>
- Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x109e0w)` >> fs [] >| [
-  `ms.c_PC ms.procID = 0x109e0w`
-   by (Cases_on `bs` >> fs [] >> METIS_TAC [bir_riscv_extrasTheory.riscv_bmr_bpc_label_c_PC_equiv]) >>
-  rw [riscv_chacha20_column_round_excl_post_def,chacha20_column_round_end_addr_def] >>
-  ASSUME_TAC (Q.SPEC `ls` chacha20_column_round_riscv_post_imp_bspec_post_thm) >>
-  fs [bir_post_bir_to_riscv_def] >>
-  METIS_TAC [],
-
-  Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x10b64w)` >>
-  fs [bir_exp_false_def,bir_eval_exp_def,bir_val_true_def]
- ]
 QED
 
 val _ = export_theory ();

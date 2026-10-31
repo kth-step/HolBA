@@ -91,7 +91,7 @@ Proof
  ASM_REWRITE_TAC [] >>
  MATCH_MP_TAC (REWRITE_RULE [AND_IMP_INTRO] riscv_cont_seq_rule) >>
  qexistsl_tac [`chacha20_diagonal_round_init_addr`,
-  `riscv_chacha20_column_round_excl_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+  `riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
    pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15`,
   `riscv_chacha20_diagonal_round_pre x0 x1 x2 x3 x4 x5 x6 x7
    x8 x9 x10 x11 x12 x13 x14 x15`] >>
@@ -105,7 +105,7 @@ Proof
       chacha20_diagonal_round_init_addr_def]
  ) >- (
   (* column round postcondition implies diagonal round precondition *)
-  fs [riscv_chacha20_column_round_excl_post_def, riscv_chacha20_column_round_post_def,
+  fs [riscv_chacha20_column_round_post_def,
       riscv_chacha20_diagonal_round_pre_def] >>
   rw []
  ) >>
