@@ -1,4 +1,4 @@
-Theory add_reg_prop
+Theory add_reg_contract
 
 Ancestors
  bir_prog_add_reg
