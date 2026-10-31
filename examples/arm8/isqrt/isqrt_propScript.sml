@@ -53,7 +53,8 @@ val arm8_cont_isqrt_1_thm =
   bir_isqrt_prog_def
   [bspec_isqrt_pre_1_def]
   bspec_isqrt_pre_1_def isqrt_arm8_pre_1_imp_bspec_pre_1_thm
-  [bspec_isqrt_post_1_def] isqrt_arm8_post_1_imp_bspec_post_1_thm
+  [bspec_isqrt_post_1_def, isqrt_end_addr_1_def, isqrt_end_addr_def]
+  isqrt_arm8_post_1_imp_bspec_post_1_thm
   bir_isqrt_arm8_lift_THM;
 
 Theorem arm8_cont_isqrt_1:
@@ -72,7 +73,8 @@ val arm8_cont_isqrt_2_thm =
   bir_isqrt_prog_def
   [bspec_isqrt_pre_2_def]
   bspec_isqrt_pre_2_def isqrt_arm8_pre_2_imp_bspec_pre_2_thm
-  [bspec_isqrt_post_2_def] isqrt_arm8_post_2_imp_bspec_post_2_thm
+  [bspec_isqrt_post_2_def, isqrt_end_addr_2_def, isqrt_end_addr_def]
+  isqrt_arm8_post_2_imp_bspec_post_2_thm
   bir_isqrt_arm8_lift_THM;
 
 Theorem arm8_cont_isqrt_2:
@@ -91,7 +93,9 @@ val arm8_cont_isqrt_3_thm =
   bir_isqrt_prog_def
   [bspec_isqrt_pre_3_def]
   bspec_isqrt_pre_3_def isqrt_arm8_pre_3_imp_bspec_pre_3_thm
-  [bspec_isqrt_post_3_loop_def,bspec_isqrt_post_3_ret_def] isqrt_arm8_post_3_imp_bspec_post_3_thm
+  [bspec_isqrt_post_3_loop_def, bspec_isqrt_post_3_ret_def,
+   isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
+  isqrt_arm8_post_3_imp_bspec_post_3_thm
   bir_isqrt_arm8_lift_THM;
 
 Theorem arm8_cont_isqrt_3:
