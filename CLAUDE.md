@@ -32,13 +32,12 @@
 
 ## Iterating on proofs using holbuild with a short tactic timeout
 - The default tactic timeout is 600s (`tactic_timeout`), so a looping `simp`/`rw` costs 10 min. When developing proofs, use `--tactic-timeout N` (e.g. 30–120) so a bad tactic fails fast.
-- Cache entries record the timeout they were built under; a different `--tactic-timeout` makes them unusable and forces rebuilds. Up-to-date local objects in the project's `.holbuild/obj` are still reused.
-- So leverage the cache first, then apply the short timeout only to the goal file:
-  1. build its dependencies with the regular timeout, e.g. `holbuild build isqrt_symb_transfTheory`
-  2. iterate with `holbuild build --tactic-timeout 30 isqrt_propTheory`
-- The short timeout applies to every theory holbuild builds in that invocation, not just the target. So any dependency that is not already up to date at the regular timeout gets built under it. This also applies when writing a new pipeline theory by theory: build each finished theory once with the regular timeout before iterating with the short one on the next.
+- The reuse behaviour below was observed with **holbuild 0.12.0**. It differed in 0.11.0, and holbuild changes quickly, so recheck it after upgrading (`holbuild --version`).
+- Built theories record the timeout they were built under. This holds for both cache entries and local objects in `.holbuild/obj`. A theory built under timeout T is reused only by builds whose timeout is at least T.
+  - So a short-timeout build of a goal theory also rebuilds every project theory it depends on that was built at the regular timeout. Building the dependencies first at the regular timeout does not prevent this. Dependency packages such as HolBA in `.holbuild/packages/holba` were not rebuilt.
+  - Later short-timeout iterations reuse those rebuilt theories, and so does the next regular build, which then has nothing to do.
+  - The cost is one extra build of the project chain, e.g. about 3.5 min for `isqrt_propTheory`. If some dependency has a tactic slower than N, that rebuild fails. Then pick a larger N.
 - Never pass `--tactic-timeout` to a broad target (`@group`, no target) or in a project whose `.holbuild` is cold (e.g. the repo root when only the examples have been built: they build HolBA in their own `.holbuild/packages/holba`). That rebuilds everything without cache.
-- Theories built under the short timeout are rebuilt once by the next regular build; this is cheap for small theories.
 
 ## Long builds and hangs
 - Durations vary widely on modern 8+ multicore machines:

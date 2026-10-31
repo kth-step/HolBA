@@ -38,9 +38,9 @@ open isqrt_symb_transfTheory;
 
 val _ = new_theory "isqrt_prop";
 
-(* ---------------------------------- *)
-(* Backlifting BIR contract to RISC-V *)
-(* ---------------------------------- *)
+(* -------------------------------- *)
+(* Backlifting BIR contract to ARMv8 *)
+(* -------------------------------- *)
 
 (* contracts 1 and 2 also list the loop exit as ending label,
    which is never reached first, for composition *)
@@ -106,117 +106,122 @@ QED
 (* Whole program contract          *)
 (* ------------------------------ *)
 
-(* The loop head is 0x720 and the loop exit 0x734. Since the piece
-   contracts cannot state that execution does not return to their own
-   start label, iterations are expressed as avoidance contracts
-   (arm8_cont_avoid), which only require that the loop exit is not
-   encountered on the way back to the loop head. *)
+(* The loop head is isqrt_init_addr_2 and the loop exit
+   isqrt_end_addr. Since the piece contracts cannot state that
+   execution does not return to their own start label, iterations are
+   expressed as avoidance contracts (arm8_cont_avoid), which only
+   require that the loop exit is not encountered on the way back to
+   the loop head. *)
 
+(* Some addresses have several names, e.g., isqrt_end_addr_1 and
+   isqrt_init_addr_2. A theorem whose address names differ from
+   those of the goal is used with UNFOLD_IRULE addr_defs. *)
 val addr_defs = [
+ isqrt_init_addr_def,
  isqrt_init_addr_1_def, isqrt_end_addr_1_def,
  isqrt_init_addr_2_def, isqrt_end_addr_2_def,
  isqrt_init_addr_3_def, isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def,
  isqrt_end_addr_def];
 
 Theorem arm8_cont_isqrt_1_avoid:
- arm8_cont_avoid bir_isqrt_progbin 0x718w {0x734w}
+ arm8_cont_avoid bir_isqrt_progbin isqrt_init_addr_1 {isqrt_end_addr}
   (arm8_isqrt_pre_1 pre_x0)
   (arm8_isqrt_post_1 pre_x0)
 Proof
- QINST_IRULE [("ls", `{0x720w}`)] arm8_cont_avoid_intro >>
- conj_tac >- rw [arm8_isqrt_post_1_def, isqrt_end_addr_1_def] >>
+ QINST_IRULE [("ls", `{isqrt_end_addr_1}`)] arm8_cont_avoid_intro >>
+ conj_tac >- rw (arm8_isqrt_post_1_def :: addr_defs) >>
  REWRITE_TAC [GSYM INSERT_SING_UNION] >>
- ACCEPT_TAC (REWRITE_RULE addr_defs arm8_cont_isqrt_1)
+ ACCEPT_TAC arm8_cont_isqrt_1
 QED
 
 Theorem arm8_cont_isqrt_2_avoid:
- arm8_cont_avoid bir_isqrt_progbin 0x720w {0x734w}
+ arm8_cont_avoid bir_isqrt_progbin isqrt_init_addr_2 {isqrt_end_addr}
   (arm8_isqrt_pre_2 pre_x1 pre_x3)
   (arm8_isqrt_post_2 pre_x1 pre_x3)
 Proof
- QINST_IRULE [("ls", `{0x72cw}`)] arm8_cont_avoid_intro >>
- conj_tac >- rw [arm8_isqrt_post_2_def, isqrt_end_addr_2_def] >>
+ QINST_IRULE [("ls", `{isqrt_end_addr_2}`)] arm8_cont_avoid_intro >>
+ conj_tac >- rw (arm8_isqrt_post_2_def :: addr_defs) >>
  REWRITE_TAC [GSYM INSERT_SING_UNION] >>
- ACCEPT_TAC (REWRITE_RULE addr_defs arm8_cont_isqrt_2)
+ ACCEPT_TAC arm8_cont_isqrt_2
 QED
 
 (* loop branch when the loop condition holds *)
 Theorem arm8_cont_isqrt_3_loop_avoid:
  pre_x2 <=+ pre_x3 ==>
- arm8_cont_avoid bir_isqrt_progbin 0x72cw {0x734w}
+ arm8_cont_avoid bir_isqrt_progbin isqrt_init_addr_3 {isqrt_end_addr_3_ret}
   (arm8_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3)
-  (\ms. ms.PC = 0x720w /\ arm8_isqrt_post_3_loop pre_x0 pre_x1 pre_x2 pre_x3 ms)
+  (\ms. ms.PC = isqrt_end_addr_3_loop /\ arm8_isqrt_post_3_loop pre_x0 pre_x1 pre_x2 pre_x3 ms)
 Proof
  strip_tac >>
- QINST_IRULE [("ls", `{0x720w}`)] arm8_cont_avoid_intro >>
- conj_tac >- simp [] >>
+ QINST_IRULE [("ls", `{isqrt_end_addr_3_loop}`)] arm8_cont_avoid_intro >>
+ conj_tac >- simp addr_defs >>
  REWRITE_TAC [GSYM INSERT_SING_UNION] >>
  QINST_IRULE [("pre1", `arm8_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3`),
   ("post1", `arm8_isqrt_post_3 pre_x0 pre_x1 pre_x2 pre_x3`)] arm8_cont_conseq_rule >>
  rpt conj_tac >- simp [] >- (
   rpt strip_tac >>
-  Cases_on `ms.PC = 0x720w` >>
-  fs [arm8_isqrt_post_3_def, arm8_isqrt_post_3_ret_def,
-      isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def] >>
+  Cases_on `ms.PC = isqrt_end_addr_3_loop` >>
+  fs ([arm8_isqrt_post_3_def, arm8_isqrt_post_3_ret_def] @ addr_defs) >>
   METIS_TAC [WORD_NOT_LOWER]
  ) >>
- ACCEPT_TAC (REWRITE_RULE addr_defs arm8_cont_isqrt_3)
+ ACCEPT_TAC arm8_cont_isqrt_3
 QED
 
 (* loop branch when the loop condition does not hold *)
 Theorem arm8_cont_isqrt_3_exit:
  pre_x3 <+ pre_x2 ==>
- arm8_cont bir_isqrt_progbin 0x72cw {0x734w}
+ arm8_cont bir_isqrt_progbin isqrt_init_addr_3 {isqrt_end_addr_3_ret}
   (arm8_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3)
-  (\ms. ms.PC = 0x734w /\ arm8_isqrt_post_3_ret pre_x0 pre_x1 pre_x2 pre_x3 ms)
+  (\ms. ms.PC = isqrt_end_addr_3_ret /\ arm8_isqrt_post_3_ret pre_x0 pre_x1 pre_x2 pre_x3 ms)
 Proof
  strip_tac >>
- QINST_IRULE [("ls2", `{0x720w}`)] arm8_cont_subset_rule >>
- conj_tac >- simp [] >>
- `{0x734w} UNION {0x720w} = {0x720w; 0x734w:word64}`
+ QINST_IRULE [("ls2", `{isqrt_end_addr_3_loop}`)] arm8_cont_subset_rule >>
+ conj_tac >- simp addr_defs >>
+ `{isqrt_end_addr_3_ret} UNION {isqrt_end_addr_3_loop} =
+  {isqrt_end_addr_3_loop; isqrt_end_addr_3_ret}`
   by (rw [EXTENSION] >> METIS_TAC []) >>
  pop_assum (fn thm => REWRITE_TAC [thm]) >>
  QINST_IRULE [("pre1", `arm8_isqrt_pre_3 pre_x0 pre_x1 pre_x2 pre_x3`),
   ("post1", `arm8_isqrt_post_3 pre_x0 pre_x1 pre_x2 pre_x3`)] arm8_cont_conseq_rule >>
  rpt conj_tac >- simp [] >- (
   rpt strip_tac >>
-  Cases_on `ms.PC = 0x720w` >>
-  fs [arm8_isqrt_post_3_def, arm8_isqrt_post_3_loop_def,
-      isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def] >>
+  Cases_on `ms.PC = isqrt_end_addr_3_loop` >>
+  fs ([arm8_isqrt_post_3_def, arm8_isqrt_post_3_loop_def] @ addr_defs) >>
   METIS_TAC [WORD_NOT_LOWER]
  ) >>
- ACCEPT_TAC (REWRITE_RULE addr_defs arm8_cont_isqrt_3)
+ ACCEPT_TAC arm8_cont_isqrt_3
 QED
 
 (* before loop: establish the loop invariant *)
 Theorem arm8_cont_isqrt_before_loop:
- arm8_cont_avoid bir_isqrt_progbin 0x718w {0x734w}
+ arm8_cont_avoid bir_isqrt_progbin isqrt_init_addr {isqrt_end_addr}
   (arm8_isqrt_pre pre_x0)
-  (\ms. ms.PC = 0x720w /\ arm8_isqrt_inv pre_x0 ms)
+  (\ms. ms.PC = isqrt_init_addr_2 /\ arm8_isqrt_inv pre_x0 ms)
 Proof
  Cases_on `pre_x0 <+ 0xFFFFFFFE00000001w` >- (
   QINST_IRULE [("pre1", `arm8_isqrt_pre_1 pre_x0`),
   ("post1", `arm8_isqrt_post_1 pre_x0`)] arm8_cont_avoid_conseq_rule >>
   rpt conj_tac >- rw [arm8_isqrt_pre_def, arm8_isqrt_pre_1_def] >- (
-   rw [arm8_isqrt_post_1_def, isqrt_end_addr_1_def, arm8_isqrt_inv_def] >>
+   rw ([arm8_isqrt_post_1_def, arm8_isqrt_inv_def] @ addr_defs) >>
    EVAL_TAC
   ) >>
-  MATCH_ACCEPT_TAC arm8_cont_isqrt_1_avoid
+  UNFOLD_IRULE addr_defs arm8_cont_isqrt_1_avoid
  ) >>
  rw [arm8_cont_avoid_def, arm8_isqrt_pre_def]
 QED
 
 (* one loop iteration: loop body followed by loop branch back to the head *)
 Theorem arm8_cont_isqrt_iter:
- !x. arm8_cont_avoid bir_isqrt_progbin 0x720w {0x734w}
+ !x. arm8_cont_avoid bir_isqrt_progbin isqrt_init_addr_2 {isqrt_end_addr}
   (\ms. arm8_isqrt_inv pre_x0 ms /\ arm8_isqrt_cond ms /\ arm8_isqrt_variant ms = x)
-  (\ms. ms.PC = 0x720w /\ arm8_isqrt_inv pre_x0 ms /\ arm8_isqrt_variant ms < x)
+  (\ms. ms.PC = isqrt_init_addr_2 /\ arm8_isqrt_inv pre_x0 ms /\ arm8_isqrt_variant ms < x)
 Proof
  gen_tac >>
  QINST_IRULE [("pre1", `\ms. ?y. ms.REG 1w = y /\ ms.REG 3w = pre_x0 /\
      pre_x0 <+ 0xFFFFFFFE00000001w /\ y <+ 0xFFFFFFFFw /\
      (y + 1w) * (y + 1w) <=+ pre_x0 /\ w2n pre_x0 - w2n y = x`),
-  ("post1", `\ms. ms.PC = 0x720w /\ arm8_isqrt_inv pre_x0 ms /\ arm8_isqrt_variant ms < x`)] arm8_cont_avoid_conseq_rule >>
+  ("post1", `\ms. ms.PC = isqrt_init_addr_2 /\ arm8_isqrt_inv pre_x0 ms /\
+     arm8_isqrt_variant ms < x`)] arm8_cont_avoid_conseq_rule >>
  rpt conj_tac >- (
   rw [arm8_isqrt_inv_def, arm8_isqrt_cond_def, arm8_isqrt_variant_def] >>
   METIS_TAC []
@@ -226,7 +231,7 @@ Proof
  BETA_TAC >>
  Cases_on `pre_x0 <+ 0xFFFFFFFE00000001w /\ y <+ 0xFFFFFFFFw /\
    (y + 1w) * (y + 1w) <=+ pre_x0 /\ w2n pre_x0 - w2n y = x` >- (
-  QINST_IRULE [("l2", `0x72cw`),
+  QINST_IRULE [("l2", `isqrt_init_addr_3`),
   ("post1", `arm8_isqrt_post_2 y pre_x0`),
   ("pre2", `arm8_isqrt_pre_3 y (y + 1w) ((y + 1w) * (y + 1w)) pre_x0`)] arm8_cont_avoid_seq_rule >>
   rpt conj_tac >- (
@@ -234,16 +239,16 @@ Proof
   ("post1", `arm8_isqrt_post_2 y pre_x0`)] arm8_cont_avoid_conseq_rule >>
    rpt conj_tac >- rw [arm8_isqrt_pre_2_def] >- simp [] >>
    MATCH_ACCEPT_TAC arm8_cont_isqrt_2_avoid
-  ) >- rw [arm8_isqrt_post_2_def, isqrt_end_addr_2_def, arm8_isqrt_pre_3_def] >>
+  ) >- rw ([arm8_isqrt_post_2_def, arm8_isqrt_pre_3_def] @ addr_defs) >>
   QINST_IRULE [("pre1", `arm8_isqrt_pre_3 y (y + 1w) ((y + 1w) * (y + 1w)) pre_x0`),
-  ("post1", `\ms. ms.PC = 0x720w /\
+  ("post1", `\ms. ms.PC = isqrt_end_addr_3_loop /\
      arm8_isqrt_post_3_loop y (y + 1w) ((y + 1w) * (y + 1w)) pre_x0 ms`)] arm8_cont_avoid_conseq_rule >>
   rpt conj_tac >- simp [] >- (
-   rw [arm8_isqrt_post_3_loop_def, arm8_isqrt_inv_def, arm8_isqrt_variant_def] >>
+   rw ([arm8_isqrt_post_3_loop_def, arm8_isqrt_inv_def, arm8_isqrt_variant_def] @ addr_defs) >>
    qspecl_then [`ms.REG 0w`, `ms.REG 3w`] mp_tac isqrt_step >>
    simp []
   ) >>
-  irule arm8_cont_isqrt_3_loop_avoid >>
+  UNFOLD_IRULE addr_defs arm8_cont_isqrt_3_loop_avoid >>
   fs []
  ) >>
  rw [arm8_cont_avoid_def] >>
@@ -252,7 +257,7 @@ QED
 
 (* loop exit: loop body followed by loop branch to the exit *)
 Theorem arm8_cont_isqrt_exit:
- arm8_cont bir_isqrt_progbin 0x720w {0x734w}
+ arm8_cont bir_isqrt_progbin isqrt_init_addr_2 {isqrt_end_addr}
   (\ms. arm8_isqrt_inv pre_x0 ms /\ ~arm8_isqrt_cond ms)
   (arm8_isqrt_post pre_x0)
 Proof
@@ -267,7 +272,7 @@ Proof
  gen_tac >>
  BETA_TAC >>
  Cases_on `y <+ 0xFFFFFFFFw /\ y * y <=+ pre_x0 /\ pre_x0 <+ (y + 1w) * (y + 1w)` >- (
-  QINST_IRULE [("l2", `0x72cw`),
+  QINST_IRULE [("l2", `isqrt_init_addr_3`),
   ("post1", `arm8_isqrt_post_2 y pre_x0`),
   ("pre2", `arm8_isqrt_pre_3 y (y + 1w) ((y + 1w) * (y + 1w)) pre_x0`)] arm8_cont_avoid_cont_seq_rule >>
   rpt conj_tac >- (
@@ -275,12 +280,12 @@ Proof
   ("post1", `arm8_isqrt_post_2 y pre_x0`)] arm8_cont_avoid_conseq_rule >>
    rpt conj_tac >- rw [arm8_isqrt_pre_2_def] >- simp [] >>
    MATCH_ACCEPT_TAC arm8_cont_isqrt_2_avoid
-  ) >- rw [arm8_isqrt_post_2_def, isqrt_end_addr_2_def, arm8_isqrt_pre_3_def] >>
+  ) >- rw ([arm8_isqrt_post_2_def, arm8_isqrt_pre_3_def] @ addr_defs) >>
   QINST_IRULE [("pre1", `arm8_isqrt_pre_3 y (y + 1w) ((y + 1w) * (y + 1w)) pre_x0`),
-  ("post1", `\ms. ms.PC = 0x734w /\
+  ("post1", `\ms. ms.PC = isqrt_end_addr_3_ret /\
      arm8_isqrt_post_3_ret y (y + 1w) ((y + 1w) * (y + 1w)) pre_x0 ms`)] arm8_cont_conseq_rule >>
   rpt conj_tac >- simp [] >- rw [arm8_isqrt_post_3_ret_def, arm8_isqrt_post_def] >>
-  irule arm8_cont_isqrt_3_exit >>
+  UNFOLD_IRULE addr_defs arm8_cont_isqrt_3_exit >>
   fs []
  ) >>
  rw [arm8_cont_def, total_program_logicTheory.t_jgmt_def] >>
@@ -288,7 +293,7 @@ Proof
 QED
 
 Theorem arm8_cont_isqrt_loop:
- arm8_cont bir_isqrt_progbin 0x720w {0x734w}
+ arm8_cont bir_isqrt_progbin isqrt_init_addr_2 {isqrt_end_addr}
   (arm8_isqrt_inv pre_x0)
   (arm8_isqrt_post pre_x0)
 Proof
@@ -302,9 +307,8 @@ Theorem arm8_cont_isqrt:
   (arm8_isqrt_pre pre_x0)
   (arm8_isqrt_post pre_x0)
 Proof
- REWRITE_TAC [isqrt_init_addr_def, isqrt_end_addr_def] >>
- QINST_IRULE [("l2", `0x720w`),
-  ("post1", `\ms. ms.PC = 0x720w /\ arm8_isqrt_inv pre_x0 ms`),
+ QINST_IRULE [("l2", `isqrt_init_addr_2`),
+  ("post1", `\ms. ms.PC = isqrt_init_addr_2 /\ arm8_isqrt_inv pre_x0 ms`),
   ("pre2", `arm8_isqrt_inv pre_x0`)] arm8_cont_avoid_cont_seq_rule >>
  rpt conj_tac >- MATCH_ACCEPT_TAC arm8_cont_isqrt_before_loop >- simp [] >>
  MATCH_ACCEPT_TAC arm8_cont_isqrt_loop
