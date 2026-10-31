@@ -64,7 +64,8 @@ writes `step/riscv_step_selftest.log`. With the patches it passes under `trindem
 it reports the same hypotheses for every class of instruction as unpatched upstream does
 under `develop`. The step theorems of a sample of 47 instructions (loads, stores, jumps,
 compressed instructions, AMOs, `LR`/`SC`, the CSR instructions on the CSRs that HolBA lifts,
-`ECALL`, `EBREAK`, `MRET` and `WFI`) are identical in the two settings.
+`ECALL`, `EBREAK`, `MRET` and `WFI`) are identical in the two settings. The patched files
+also build, and pass the selftest, under `develop`.
 
 ## Resynchronising
 
