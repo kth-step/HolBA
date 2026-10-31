@@ -58,8 +58,9 @@ The lifter lifts code that runs in M-mode, one instruction at a time:
 - the C extension (compressed instructions);
 - `fence`, `fence.i`, and the Zicsr instructions on the CSRs that are lifted (listed below);
 - writes of the CSRs that the model stores but the lifter does not lift (`medeleg`, `mideleg`,
-  `menvcfg` and the S-mode CSRs), as blocks without an assignment: these CSRs have no effect on
-  M-mode code;
+  `menvcfg`, and the S-mode CSRs `stvec`, `sscratch`, `sepc`, `scause`, `stval`, `senvcfg` and
+  `satp`), as blocks without an assignment: these CSRs have no effect on M-mode code; a write of
+  `sstatus`, a view of `mstatus`, assigns `mstatus`;
 - `ecall`, `ebreak` and `c.ebreak`, a trap to M-mode: the block sets `priv` (to 3), `mstatus`,
   `mepc`, `mcause` and `mtval`, and ends in a jump to the base address in `mtvec`;
 - `mret`: the block sets `priv` to the privilege in `mstatus.MPP` and updates `mstatus`, and it
