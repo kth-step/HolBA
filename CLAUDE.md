@@ -89,6 +89,20 @@
   - Longer term, the aim is to remove the need to write explicit BIR in contract proof files at all.
   - Until then, `*_spec_bir` should, as a rule, be an explicit record of the BIR counterpart of each `*_spec_<arch>` contract condition. Write one clause per conjunct of the RISC-V/arm8 condition, in the same order, so the two can be read side by side. Don't generate clauses (e.g. with `List.tabulate`/`List.map` over registers or offsets) or hide them behind non-`bslSyntax` helper functions.
 
+## What arm8 and riscv examples prove, and what is trusted
+- The output of a typical binary verification example in `examples/arm8/` or `examples/riscv/` is an ISA-level contract theorem in its `*_prop` theory (e.g. `riscv_cont_kernel_trap_entry`, `arm8_cont_isqrt`). Its `*_full` variant unfolds the contract into a statement about the L3 ISA model alone: the step function `NextRISCV` / `NextStateARM8` (`bmr_step_fun` in `bir_lifting_machinesTheory`) running the program bytes (`*_progbin`) in memory.
+- Trusting a folded ISA contract theorem requires trusting the L3 model of the corresponding ISA, the general contract definitions (`riscv_cont`/`arm8_cont`, `t_jgmt`), the `*_spec_<arch>` pre/postconditions with their address definitions, and the program bytes (generated from the `.da` file).
+- BIR language definitions and BIR expressions do not appear in any ISA contract theorem. The lifter, `*_spec_bir`, symbolic execution and transfer are intermediate proof devices that don't need to be trusted if one trusts the HOL4 kernel.
+- The exception is the conversion from BIR to SMT, which **is** part of the trusted base.
+  - Symbolic execution and transfer ask z3 about BIR expressions, e.g., implications, path-condition contradictions and transfer side conditions.
+  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3` and `BIRS_CONTR_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
+  - These oracle theorems state facts about BIR semantics. So the final theorem can be trusted only if z3 is sound and the BIR-to-SMT-LIB translation (`src/shared/smt/`, including `holba_z3Lib_prelude.z3`) agrees with BIR expression semantics.
+  - The final example theorems carry these tags. Check with `Tag.dest_tag (Thm.tag th)` (`DISK_THM` only marks theorems loaded from disk).
+- Consequences for auditing changes to examples and the library:
+  - The trusted part is the conversion mechanism, not its inputs. BIR expressions used in contract proof (typically in `*_spec_bir`) only affect what is sent to z3. So changes to them that keep the build passing need no semantic review, even if they change the BIR terms, as long as the mechanism is unchanged.
+  - Changes to a contract statement, `*_spec_<arch>`, the L3 model, or anything else the `*_full` statement depends on do.
+  - So do changes to the BIR-to-SMT conversion or to where the oracles are invoked.
+
 ## Git
 - Main branch is `master`. The HOL4 revision is pinned in `holproject.toml`.
 - Never commit `.holbuild/` or `opt/`, or any `.hol/` directory.

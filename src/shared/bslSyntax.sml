@@ -219,6 +219,15 @@ struct
   val bconst32 = bconstii 32
   val bconst64 = bconstii 64
   val bconst128 = bconstii 128
+  (* constant whose value is a HOL word variable, e.g. bconstvar64 "pre_x5" *)
+  fun bconstvar len_int name = bconst (mk_var (name, wordsSyntax.mk_int_word_type len_int))
+    handle e => raise wrap_exn "bconstvar" e
+  val bconstvar1 = bconstvar 1
+  val bconstvar8 = bconstvar 8
+  val bconstvar16 = bconstvar 16
+  val bconstvar32 = bconstvar 32
+  val bconstvar64 = bconstvar 64
+  val bconstvar128 = bconstvar 128
   val btrue = bconst1 1
   val bfalse = bconst1 0
 

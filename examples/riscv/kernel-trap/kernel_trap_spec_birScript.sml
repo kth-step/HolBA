@@ -56,87 +56,87 @@ fun addr_word_tm def = (rhs o concl) def;
 fun addr_num_tm def = (numSyntax.mk_numeral o wordsSyntax.dest_word_literal o addr_word_tm) def;
 
 val bspec_kernel_trap_entry_pre_tm = bandl [
-  beq (bden (bvarimm 8 "MPRV"), bconst8 3),
+  beq (bden (bvarimm8 "MPRV"), bconst8 3),
 
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "mscratch",
 
   ``BExp_unchanged_mem_interval_distinct Bit64
      (^(addr_num_tm kernel_trap_entry_init_addr_def) - 256)
      ^(addr_num_tm kernel_trap_return_end_addr_def)
-     ^(bden (bvarimm 64 "mscratch"))
+     ^(bden (bvarimm64 "mscratch"))
      8``,
 
-  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_mscratch:word64``),
+  beq (bden (bvarimm64 "mscratch"), bconstvar64 "pre_mscratch"),
 
-  beq (bden (bvarimm 64 "mepc"), bconst ``pre_mepc:word64``),
+  beq (bden (bvarimm64 "mepc"), bconstvar64 "pre_mepc"),
 
-  beq (bden (bvarimm 64 "mcause"), bconst ``pre_mcause:word64``),
+  beq (bden (bvarimm64 "mcause"), bconstvar64 "pre_mcause"),
 
-  beq (bden (bvarimm 64 "mhartid"), bconst ``pre_mhartid:word64``),
+  beq (bden (bvarimm64 "mhartid"), bconstvar64 "pre_mhartid"),
 
-  beq (bden (bvarimm 64 "mtval"), bconst ``pre_mtval:word64``),
+  beq (bden (bvarimm64 "mtval"), bconstvar64 "pre_mtval"),
 
-  beq (bden (bvarimm 64 "x1"), bconst ``pre_x1:word64``),
+  beq (bden (bvarimm64 "x1"), bconstvar64 "pre_x1"),
 
-  beq (bden (bvarimm 64 "x2"), bconst ``pre_x2:word64``),
+  beq (bden (bvarimm64 "x2"), bconstvar64 "pre_x2"),
 
-  beq (bden (bvarimm 64 "x3"), bconst ``pre_x3:word64``),
+  beq (bden (bvarimm64 "x3"), bconstvar64 "pre_x3"),
 
-  beq (bden (bvarimm 64 "x4"), bconst ``pre_x4:word64``),
+  beq (bden (bvarimm64 "x4"), bconstvar64 "pre_x4"),
 
-  beq (bden (bvarimm 64 "x5"), bconst ``pre_x5:word64``),
+  beq (bden (bvarimm64 "x5"), bconstvar64 "pre_x5"),
 
-  beq (bden (bvarimm 64 "x6"), bconst ``pre_x6:word64``),
+  beq (bden (bvarimm64 "x6"), bconstvar64 "pre_x6"),
 
-  beq (bden (bvarimm 64 "x7"), bconst ``pre_x7:word64``),
+  beq (bden (bvarimm64 "x7"), bconstvar64 "pre_x7"),
 
-  beq (bden (bvarimm 64 "x8"), bconst ``pre_x8:word64``),
+  beq (bden (bvarimm64 "x8"), bconstvar64 "pre_x8"),
 
-  beq (bden (bvarimm 64 "x9"), bconst ``pre_x9:word64``),
+  beq (bden (bvarimm64 "x9"), bconstvar64 "pre_x9"),
 
-  beq (bden (bvarimm 64 "x10"), bconst ``pre_x10:word64``),
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10"),
 
-  beq (bden (bvarimm 64 "x11"), bconst ``pre_x11:word64``),
+  beq (bden (bvarimm64 "x11"), bconstvar64 "pre_x11"),
 
-  beq (bden (bvarimm 64 "x12"), bconst ``pre_x12:word64``),
+  beq (bden (bvarimm64 "x12"), bconstvar64 "pre_x12"),
 
-  beq (bden (bvarimm 64 "x13"), bconst ``pre_x13:word64``),
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13"),
 
-  beq (bden (bvarimm 64 "x14"), bconst ``pre_x14:word64``),
+  beq (bden (bvarimm64 "x14"), bconstvar64 "pre_x14"),
 
-  beq (bden (bvarimm 64 "x15"), bconst ``pre_x15:word64``),
+  beq (bden (bvarimm64 "x15"), bconstvar64 "pre_x15"),
 
-  beq (bden (bvarimm 64 "x16"), bconst ``pre_x16:word64``),
+  beq (bden (bvarimm64 "x16"), bconstvar64 "pre_x16"),
 
-  beq (bden (bvarimm 64 "x17"), bconst ``pre_x17:word64``),
+  beq (bden (bvarimm64 "x17"), bconstvar64 "pre_x17"),
 
-  beq (bden (bvarimm 64 "x18"), bconst ``pre_x18:word64``),
+  beq (bden (bvarimm64 "x18"), bconstvar64 "pre_x18"),
 
-  beq (bden (bvarimm 64 "x19"), bconst ``pre_x19:word64``),
+  beq (bden (bvarimm64 "x19"), bconstvar64 "pre_x19"),
 
-  beq (bden (bvarimm 64 "x20"), bconst ``pre_x20:word64``),
+  beq (bden (bvarimm64 "x20"), bconstvar64 "pre_x20"),
 
-  beq (bden (bvarimm 64 "x21"), bconst ``pre_x21:word64``),
+  beq (bden (bvarimm64 "x21"), bconstvar64 "pre_x21"),
 
-  beq (bden (bvarimm 64 "x22"), bconst ``pre_x22:word64``),
+  beq (bden (bvarimm64 "x22"), bconstvar64 "pre_x22"),
 
-  beq (bden (bvarimm 64 "x23"), bconst ``pre_x23:word64``),
+  beq (bden (bvarimm64 "x23"), bconstvar64 "pre_x23"),
 
-  beq (bden (bvarimm 64 "x24"), bconst ``pre_x24:word64``),
+  beq (bden (bvarimm64 "x24"), bconstvar64 "pre_x24"),
 
-  beq (bden (bvarimm 64 "x25"), bconst ``pre_x25:word64``),
+  beq (bden (bvarimm64 "x25"), bconstvar64 "pre_x25"),
 
-  beq (bden (bvarimm 64 "x26"), bconst ``pre_x26:word64``),
+  beq (bden (bvarimm64 "x26"), bconstvar64 "pre_x26"),
 
-  beq (bden (bvarimm 64 "x27"), bconst ``pre_x27:word64``),
+  beq (bden (bvarimm64 "x27"), bconstvar64 "pre_x27"),
 
-  beq (bden (bvarimm 64 "x28"), bconst ``pre_x28:word64``),
+  beq (bden (bvarimm64 "x28"), bconstvar64 "pre_x28"),
 
-  beq (bden (bvarimm 64 "x29"), bconst ``pre_x29:word64``),
+  beq (bden (bvarimm64 "x29"), bconstvar64 "pre_x29"),
 
-  beq (bden (bvarimm 64 "x30"), bconst ``pre_x30:word64``),
+  beq (bden (bvarimm64 "x30"), bconstvar64 "pre_x30"),
 
-  beq (bden (bvarimm 64 "x31"), bconst ``pre_x31:word64``)
+  beq (bden (bvarimm64 "x31"), bconstvar64 "pre_x31")
 ];
 
 Definition bspec_kernel_trap_entry_pre_def:
@@ -165,116 +165,116 @@ Definition bspec_kernel_trap_entry_pre_def:
 End
 
 val bspec_kernel_trap_entry_post_tm = bandl [
-  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_x10:word64``),
+  beq (bden (bvarimm64 "mscratch"), bconstvar64 "pre_x10"),
 
-  beq (bden (bvarimm 64 "x2"),
+  beq (bden (bvarimm64 "x2"),
        bplus (bmult (bconst ``0xFFFFFFFFFFFFFFFFw:word64``,
-                     blshift (bconst ``pre_mhartid:word64``, bconst64 10)),
+                     blshift (bconstvar64 "pre_mhartid", bconst64 10)),
               bconst (addr_word_tm kernel_trap_slots_addr_def))),
 
-  beq (bden (bvarimm 64 "x3"), bconst (addr_word_tm kernel_trap_global_pointer_addr_def)),
+  beq (bden (bvarimm64 "x3"), bconst (addr_word_tm kernel_trap_global_pointer_addr_def)),
 
-  beq (bden (bvarimm 64 "x10"), bconst ``pre_mscratch:word64``),
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_mscratch"),
 
-  beq (bden (bvarimm 64 "x11"), bconst ``pre_mcause:word64``),
+  beq (bden (bvarimm64 "x11"), bconstvar64 "pre_mcause"),
 
-  beq (bden (bvarimm 64 "x12"), bconst ``pre_mtval:word64``),
+  beq (bden (bvarimm64 "x12"), bconstvar64 "pre_mtval"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 8)),
-       bconst ``pre_mepc:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 8)),
+       bconstvar64 "pre_mepc"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 16)),
-       bconst ``pre_x1:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 16)),
+       bconstvar64 "pre_x1"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 24)),
-       bconst ``pre_x2:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 24)),
+       bconstvar64 "pre_x2"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 32)),
-       bconst ``pre_x3:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 32)),
+       bconstvar64 "pre_x3"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 40)),
-       bconst ``pre_x4:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 40)),
+       bconstvar64 "pre_x4"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 48)),
-       bconst ``pre_x5:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 48)),
+       bconstvar64 "pre_x5"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 56)),
-       bconst ``pre_x6:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 56)),
+       bconstvar64 "pre_x6"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 64)),
-       bconst ``pre_x7:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 64)),
+       bconstvar64 "pre_x7"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 72)),
-       bconst ``pre_x8:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 72)),
+       bconstvar64 "pre_x8"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 80)),
-       bconst ``pre_x9:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 80)),
+       bconstvar64 "pre_x9"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 88)),
-       bconst ``pre_x10:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 88)),
+       bconstvar64 "pre_x10"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 96)),
-       bconst ``pre_x11:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 96)),
+       bconstvar64 "pre_x11"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 104)),
-       bconst ``pre_x12:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 104)),
+       bconstvar64 "pre_x12"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 112)),
-       bconst ``pre_x13:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 112)),
+       bconstvar64 "pre_x13"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 120)),
-       bconst ``pre_x14:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 120)),
+       bconstvar64 "pre_x14"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 128)),
-       bconst ``pre_x15:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 128)),
+       bconstvar64 "pre_x15"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 136)),
-       bconst ``pre_x16:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 136)),
+       bconstvar64 "pre_x16"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 144)),
-       bconst ``pre_x17:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 144)),
+       bconstvar64 "pre_x17"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 152)),
-       bconst ``pre_x18:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 152)),
+       bconstvar64 "pre_x18"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 160)),
-       bconst ``pre_x19:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 160)),
+       bconstvar64 "pre_x19"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 168)),
-       bconst ``pre_x20:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 168)),
+       bconstvar64 "pre_x20"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 176)),
-       bconst ``pre_x21:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 176)),
+       bconstvar64 "pre_x21"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 184)),
-       bconst ``pre_x22:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 184)),
+       bconstvar64 "pre_x22"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 192)),
-       bconst ``pre_x23:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 192)),
+       bconstvar64 "pre_x23"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 200)),
-       bconst ``pre_x24:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 200)),
+       bconstvar64 "pre_x24"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 208)),
-       bconst ``pre_x25:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 208)),
+       bconstvar64 "pre_x25"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 216)),
-       bconst ``pre_x26:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 216)),
+       bconstvar64 "pre_x26"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 224)),
-       bconst ``pre_x27:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 224)),
+       bconstvar64 "pre_x27"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 232)),
-       bconst ``pre_x28:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 232)),
+       bconstvar64 "pre_x28"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 240)),
-       bconst ``pre_x29:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 240)),
+       bconstvar64 "pre_x29"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 248)),
-       bconst ``pre_x30:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 248)),
+       bconstvar64 "pre_x30"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 256)),
-       bconst ``pre_x31:word64``)
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_mscratch", bconst64 256)),
+       bconstvar64 "pre_x31")
 ];
 
 Definition bspec_kernel_trap_entry_post_def:
@@ -307,109 +307,109 @@ End
 (* -------------------------- *)
 
 val bspec_kernel_trap_return_pre_tm = bandl [
-  beq (bden (bvarimm 8 "MPRV"), bconst8 3),
+  beq (bden (bvarimm8 "MPRV"), bconst8 3),
 
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
 
-  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_mscratch:word64``),
+  beq (bden (bvarimm64 "mscratch"), bconstvar64 "pre_mscratch"),
 
-  beq (bden (bvarimm 64 "x10"), bconst ``pre_x10:word64``),
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 8)),
-       bconst ``pre_mepc_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 8)),
+       bconstvar64 "pre_mepc_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 16)),
-       bconst ``pre_x1_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 16)),
+       bconstvar64 "pre_x1_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 24)),
-       bconst ``pre_x2_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 24)),
+       bconstvar64 "pre_x2_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 32)),
-       bconst ``pre_x3_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 32)),
+       bconstvar64 "pre_x3_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 40)),
-       bconst ``pre_x4_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 40)),
+       bconstvar64 "pre_x4_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 48)),
-       bconst ``pre_x5_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 48)),
+       bconstvar64 "pre_x5_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 56)),
-       bconst ``pre_x6_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 56)),
+       bconstvar64 "pre_x6_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 64)),
-       bconst ``pre_x7_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 64)),
+       bconstvar64 "pre_x7_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 72)),
-       bconst ``pre_x8_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 72)),
+       bconstvar64 "pre_x8_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 80)),
-       bconst ``pre_x9_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 80)),
+       bconstvar64 "pre_x9_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 88)),
-       bconst ``pre_x10_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 88)),
+       bconstvar64 "pre_x10_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 96)),
-       bconst ``pre_x11_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 96)),
+       bconstvar64 "pre_x11_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 104)),
-       bconst ``pre_x12_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 104)),
+       bconstvar64 "pre_x12_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 112)),
-       bconst ``pre_x13_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 112)),
+       bconstvar64 "pre_x13_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 120)),
-       bconst ``pre_x14_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 120)),
+       bconstvar64 "pre_x14_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 128)),
-       bconst ``pre_x15_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 128)),
+       bconstvar64 "pre_x15_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 136)),
-       bconst ``pre_x16_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 136)),
+       bconstvar64 "pre_x16_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 144)),
-       bconst ``pre_x17_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 144)),
+       bconstvar64 "pre_x17_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 152)),
-       bconst ``pre_x18_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 152)),
+       bconstvar64 "pre_x18_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 160)),
-       bconst ``pre_x19_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 160)),
+       bconstvar64 "pre_x19_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 168)),
-       bconst ``pre_x20_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 168)),
+       bconstvar64 "pre_x20_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 176)),
-       bconst ``pre_x21_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 176)),
+       bconstvar64 "pre_x21_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 184)),
-       bconst ``pre_x22_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 184)),
+       bconstvar64 "pre_x22_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 192)),
-       bconst ``pre_x23_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 192)),
+       bconstvar64 "pre_x23_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 200)),
-       bconst ``pre_x24_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 200)),
+       bconstvar64 "pre_x24_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 208)),
-       bconst ``pre_x25_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 208)),
+       bconstvar64 "pre_x25_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 216)),
-       bconst ``pre_x26_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 216)),
+       bconstvar64 "pre_x26_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 224)),
-       bconst ``pre_x27_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 224)),
+       bconstvar64 "pre_x27_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 232)),
-       bconst ``pre_x28_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 232)),
+       bconstvar64 "pre_x28_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 240)),
-       bconst ``pre_x29_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 240)),
+       bconstvar64 "pre_x29_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 248)),
-       bconst ``pre_x30_mem:word64``),
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 248)),
+       bconstvar64 "pre_x30_mem"),
 
-  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 256)),
-       bconst ``pre_x31_mem:word64``)
+  beq (bload64_le (bden (bvarmem64_8 "MEM8")) (bplus (bconstvar64 "pre_x10", bconst64 256)),
+       bconstvar64 "pre_x31_mem")
 ];
 
 Definition bspec_kernel_trap_return_pre_def:
@@ -437,72 +437,72 @@ Definition bspec_kernel_trap_return_pre_def:
 End
 
 val bspec_kernel_trap_return_post_tm = bandl [
-  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_x10:word64``),
+  beq (bden (bvarimm64 "mscratch"), bconstvar64 "pre_x10"),
 
-  beq (bden (bvarimm 64 "mepc"),
-       band (bconst ``0xFFFFFFFFFFFFFFFCw:word64``, bconst ``pre_mepc_mem:word64``)),
+  beq (bden (bvarimm64 "mepc"),
+       band (bconst ``0xFFFFFFFFFFFFFFFCw:word64``, bconstvar64 "pre_mepc_mem")),
 
-  beq (bden (bvarimm 64 "x1"), bconst ``pre_x1_mem:word64``),
+  beq (bden (bvarimm64 "x1"), bconstvar64 "pre_x1_mem"),
 
-  beq (bden (bvarimm 64 "x2"), bconst ``pre_x2_mem:word64``),
+  beq (bden (bvarimm64 "x2"), bconstvar64 "pre_x2_mem"),
 
-  beq (bden (bvarimm 64 "x3"), bconst ``pre_x3_mem:word64``),
+  beq (bden (bvarimm64 "x3"), bconstvar64 "pre_x3_mem"),
 
-  beq (bden (bvarimm 64 "x4"), bconst ``pre_x4_mem:word64``),
+  beq (bden (bvarimm64 "x4"), bconstvar64 "pre_x4_mem"),
 
-  beq (bden (bvarimm 64 "x5"), bconst ``pre_x5_mem:word64``),
+  beq (bden (bvarimm64 "x5"), bconstvar64 "pre_x5_mem"),
 
-  beq (bden (bvarimm 64 "x6"), bconst ``pre_x6_mem:word64``),
+  beq (bden (bvarimm64 "x6"), bconstvar64 "pre_x6_mem"),
 
-  beq (bden (bvarimm 64 "x7"), bconst ``pre_x7_mem:word64``),
+  beq (bden (bvarimm64 "x7"), bconstvar64 "pre_x7_mem"),
 
-  beq (bden (bvarimm 64 "x8"), bconst ``pre_x8_mem:word64``),
+  beq (bden (bvarimm64 "x8"), bconstvar64 "pre_x8_mem"),
 
-  beq (bden (bvarimm 64 "x9"), bconst ``pre_x9_mem:word64``),
+  beq (bden (bvarimm64 "x9"), bconstvar64 "pre_x9_mem"),
 
-  beq (bden (bvarimm 64 "x10"), bconst ``pre_x10_mem:word64``),
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10_mem"),
 
-  beq (bden (bvarimm 64 "x11"), bconst ``pre_x11_mem:word64``),
+  beq (bden (bvarimm64 "x11"), bconstvar64 "pre_x11_mem"),
 
-  beq (bden (bvarimm 64 "x12"), bconst ``pre_x12_mem:word64``),
+  beq (bden (bvarimm64 "x12"), bconstvar64 "pre_x12_mem"),
 
-  beq (bden (bvarimm 64 "x13"), bconst ``pre_x13_mem:word64``),
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13_mem"),
 
-  beq (bden (bvarimm 64 "x14"), bconst ``pre_x14_mem:word64``),
+  beq (bden (bvarimm64 "x14"), bconstvar64 "pre_x14_mem"),
 
-  beq (bden (bvarimm 64 "x15"), bconst ``pre_x15_mem:word64``),
+  beq (bden (bvarimm64 "x15"), bconstvar64 "pre_x15_mem"),
 
-  beq (bden (bvarimm 64 "x16"), bconst ``pre_x16_mem:word64``),
+  beq (bden (bvarimm64 "x16"), bconstvar64 "pre_x16_mem"),
 
-  beq (bden (bvarimm 64 "x17"), bconst ``pre_x17_mem:word64``),
+  beq (bden (bvarimm64 "x17"), bconstvar64 "pre_x17_mem"),
 
-  beq (bden (bvarimm 64 "x18"), bconst ``pre_x18_mem:word64``),
+  beq (bden (bvarimm64 "x18"), bconstvar64 "pre_x18_mem"),
 
-  beq (bden (bvarimm 64 "x19"), bconst ``pre_x19_mem:word64``),
+  beq (bden (bvarimm64 "x19"), bconstvar64 "pre_x19_mem"),
 
-  beq (bden (bvarimm 64 "x20"), bconst ``pre_x20_mem:word64``),
+  beq (bden (bvarimm64 "x20"), bconstvar64 "pre_x20_mem"),
 
-  beq (bden (bvarimm 64 "x21"), bconst ``pre_x21_mem:word64``),
+  beq (bden (bvarimm64 "x21"), bconstvar64 "pre_x21_mem"),
 
-  beq (bden (bvarimm 64 "x22"), bconst ``pre_x22_mem:word64``),
+  beq (bden (bvarimm64 "x22"), bconstvar64 "pre_x22_mem"),
 
-  beq (bden (bvarimm 64 "x23"), bconst ``pre_x23_mem:word64``),
+  beq (bden (bvarimm64 "x23"), bconstvar64 "pre_x23_mem"),
 
-  beq (bden (bvarimm 64 "x24"), bconst ``pre_x24_mem:word64``),
+  beq (bden (bvarimm64 "x24"), bconstvar64 "pre_x24_mem"),
 
-  beq (bden (bvarimm 64 "x25"), bconst ``pre_x25_mem:word64``),
+  beq (bden (bvarimm64 "x25"), bconstvar64 "pre_x25_mem"),
 
-  beq (bden (bvarimm 64 "x26"), bconst ``pre_x26_mem:word64``),
+  beq (bden (bvarimm64 "x26"), bconstvar64 "pre_x26_mem"),
 
-  beq (bden (bvarimm 64 "x27"), bconst ``pre_x27_mem:word64``),
+  beq (bden (bvarimm64 "x27"), bconstvar64 "pre_x27_mem"),
 
-  beq (bden (bvarimm 64 "x28"), bconst ``pre_x28_mem:word64``),
+  beq (bden (bvarimm64 "x28"), bconstvar64 "pre_x28_mem"),
 
-  beq (bden (bvarimm 64 "x29"), bconst ``pre_x29_mem:word64``),
+  beq (bden (bvarimm64 "x29"), bconstvar64 "pre_x29_mem"),
 
-  beq (bden (bvarimm 64 "x30"), bconst ``pre_x30_mem:word64``),
+  beq (bden (bvarimm64 "x30"), bconstvar64 "pre_x30_mem"),
 
-  beq (bden (bvarimm 64 "x31"), bconst ``pre_x31_mem:word64``)
+  beq (bden (bvarimm64 "x31"), bconstvar64 "pre_x31_mem")
 ];
 
 Definition bspec_kernel_trap_return_post_def:

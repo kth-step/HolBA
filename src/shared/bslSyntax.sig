@@ -295,6 +295,14 @@ sig
      * bconstii:  int (length) -> int (value) -> bir_exp_t
      * bconstimm: bir_imm_t -> bir_exp_t
      *
+     * bconstvar:    int (length) -> string (HOL variable name) -> bir_exp_t
+     * bconstvar1:   string -> bir_exp_t
+     * bconstvar8:   string -> bir_exp_t
+     * bconstvar16:  string -> bir_exp_t
+     * bconstvar32:  string -> bir_exp_t
+     * bconstvar64:  string -> bir_exp_t
+     * bconstvar128: string -> bir_exp_t
+     *
      * btrue:     bir_exp_t
      * bfalse:    bir_exp_t
      *)
@@ -309,6 +317,14 @@ sig
 
     val bconstii:   int -> int -> term
     val bconstimm:  term -> term
+
+    val bconstvar:     int -> string -> term
+    val bconstvar1:    string -> term
+    val bconstvar8:    string -> term
+    val bconstvar16:   string -> term
+    val bconstvar32:   string -> term
+    val bconstvar64:   string -> term
+    val bconstvar128:  string -> term
 
     val btrue:      term
     val bfalse:     term

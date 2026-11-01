@@ -49,23 +49,23 @@ val _ = new_theory "update_sat_spec_bir";
 (* -------------- *)
 
 val bspec_update_sat_pre_tm = bandl [
-  bslt (bminus (bchsign (bconst64 2147483647), bconst64 1), bconst ``pre_x2:word64``),
+  bslt (bminus (bchsign (bconst64 2147483647), bconst64 1), bconstvar64 "pre_x2"),
 
-  bslt (bconst ``pre_x2:word64``, bconst ``pre_x3:word64``),
+  bslt (bconstvar64 "pre_x2", bconstvar64 "pre_x3"),
 
-  bsle (bconst ``pre_x2:word64``, bconst ``pre_x1:word64``),
+  bsle (bconstvar64 "pre_x2", bconstvar64 "pre_x1"),
 
-  bsle (bconst ``pre_x1:word64``, bconst ``pre_x3:word64``),
+  bsle (bconstvar64 "pre_x1", bconstvar64 "pre_x3"),
 
-  bslt (bden (bvarimm 64 "R3"), bconst64 2147483647),
+  bslt (bden (bvarimm64 "R3"), bconst64 2147483647),
 
-  beq (bden (bvarimm 64 "R3"), bconst ``pre_x3:word64``),
+  beq (bden (bvarimm64 "R3"), bconstvar64 "pre_x3"),
 
-  beq (bden (bvarimm 64 "R2"), bconst ``pre_x2:word64``),
+  beq (bden (bvarimm64 "R2"), bconstvar64 "pre_x2"),
 
-  beq (bden (bvarimm 64 "R1"), bconst ``pre_x1:word64``),
+  beq (bden (bvarimm64 "R1"), bconstvar64 "pre_x1"),
 
-  beq (bden (bvarimm 64 "R0"), bconst ``pre_x0:word64``)
+  beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x0")
 ];
 
 Definition bspec_update_sat_pre_def:
@@ -74,33 +74,33 @@ Definition bspec_update_sat_pre_def:
 End
 
 val bspec_update_sat_post_or_1_tm = borl [
-  bnot (band (beq (bconst ``pre_x0:word64``, bconst64 0),
-   bslt (bminus (bconst ``pre_x1:word64``, bconst64 1), bconst ``pre_x2:word64``))),
+  bnot (band (beq (bconstvar64 "pre_x0", bconst64 0),
+   bslt (bminus (bconstvar64 "pre_x1", bconst64 1), bconstvar64 "pre_x2"))),
 
-  beq (bden (bvarimm 64 "R0"), bconst ``pre_x2:word64``)
+  beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x2")
 ];
 
 val bspec_update_sat_post_or_2_tm = borl [
-  bnot (band (beq (bconst ``pre_x0:word64``, bconst64 0),
-   bsle (bconst ``pre_x2:word64``, bminus (bconst ``pre_x1:word64``, bconst64 1)))),
+  bnot (band (beq (bconstvar64 "pre_x0", bconst64 0),
+   bsle (bconstvar64 "pre_x2", bminus (bconstvar64 "pre_x1", bconst64 1)))),
 
-  beq (bden (bvarimm 64 "R0"),
-   bminus (bconst ``pre_x1:word64``, bconst64 1))
+  beq (bden (bvarimm64 "R0"),
+   bminus (bconstvar64 "pre_x1", bconst64 1))
 ];
 
 val bspec_update_sat_post_or_3_tm = borl [
-  bnot (band (bnot (beq (bconst ``pre_x0:word64``, bconst64 0)),
-   bslt (bconst ``pre_x3:word64``, bplus (bconst ``pre_x1:word64``, bconst64 1)))),
+  bnot (band (bnot (beq (bconstvar64 "pre_x0", bconst64 0)),
+   bslt (bconstvar64 "pre_x3", bplus (bconstvar64 "pre_x1", bconst64 1)))),
 
-   beq (bden (bvarimm 64 "R0"), bconst ``pre_x3:word64``)
+   beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x3")
 ];
 
 val bspec_update_sat_post_or_4_tm = borl [
-  bnot (band (bnot (beq (bconst ``pre_x0:word64``, bconst64 0)),
-   bsle (bplus (bconst ``pre_x1:word64``, bconst64 1), bconst ``pre_x3:word64``))),
+  bnot (band (bnot (beq (bconstvar64 "pre_x0", bconst64 0)),
+   bsle (bplus (bconstvar64 "pre_x1", bconst64 1), bconstvar64 "pre_x3"))),
 
-   beq (bden (bvarimm 64 "R0"),
-    bplus (bconst ``pre_x1:word64``, bconst64 1))
+   beq (bden (bvarimm64 "R0"),
+    bplus (bconstvar64 "pre_x1", bconst64 1))
 ];
 
 val bspec_update_sat_post_tm = bandl [
