@@ -58,7 +58,7 @@
 
 ## Code layout
 - `src/theory/`: BIR semantics, program logic (`program_logic/`: `t_jgmt`, `t_ext_jgmt`, `transition_system`), backlifter theories.
-- `src/tools/`: lifter, backlifter (`get_riscv_contract`), symbolic execution (`bir_symbLib`), composition (`bir_compositionLib`).
+- `src/tools/`: lifter, backlifter (`get_riscv_contract_thm` / `get_arm8_contract_thm`), symbolic execution (`bir_symbLib`), composition (`bir_compositionLib`).
 - Verification pipeline in a client project (e.g. `examples/riscv/chacha20`), per code fragment:
   1. `<prog>Script`: lift the binary
   2. `*_spec_riscv`: addresses, RISC-V pre/postconditions
