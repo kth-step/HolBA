@@ -9,9 +9,9 @@ open bir_immTheory bir_valuesTheory bir_expTheory;
 open bir_tsTheory bir_bool_expTheory bir_programTheory;
 open bir_exp_equivTheory;
 
-open bir_riscv_backlifterTheory;
+open bir_arm8_backlifterTheory;
 open bir_backlifterLib;
-open bir_riscv_extrasTheory;
+open bir_arm8_extrasTheory;
 open bir_compositionLib;
 
 open bir_lifting_machinesTheory;
