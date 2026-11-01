@@ -87,7 +87,8 @@
   - If a BIR postcondition lemma names labels, also pass the address definitions in the `bir_post_defs` argument, so that it matches the hex labels of the BIR contract (see `examples/riscv/chacha20/chacha20_column_round_propScript.sml`).
 - Write BIR terms (e.g. the BIR pre/postconditions in `*_spec_bir`) with `bslSyntax` constructors (`beq`, `bden`, `bconst`, `bplus`, `bandl`, ...), not raw BIR abstract syntax (`BExp_BinPred BIExp_Equal (BExp_Den (BVar ...)) ...`). This limits verbosity and makes the terms clearer. Examples: `examples/arm8/update_sat/update_sat_spec_birScript.sml`, `examples/arm8/isqrt/isqrt_spec_birScript.sml`.
   - Longer term, the aim is to remove the need to write explicit BIR in contract proof files at all.
+  - Until then, `*_spec_bir` should, as a rule, be an explicit record of the BIR counterpart of each `*_spec_<arch>` contract condition. Write one clause per conjunct of the RISC-V/arm8 condition, in the same order, so the two can be read side by side. Don't generate clauses (e.g. with `List.tabulate`/`List.map` over registers or offsets) or hide them behind non-`bslSyntax` helper functions.
 
 ## Git
 - Main branch is `master`. The HOL4 revision is pinned in `holproject.toml`.
-- Never commit `.holbuild/` or `opt/`.
+- Never commit `.holbuild/` or `opt/`, or any `.hol/` directory.

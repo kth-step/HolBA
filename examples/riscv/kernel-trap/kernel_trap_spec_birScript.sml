@@ -43,6 +43,8 @@ open bir_program_varsTheory;
 
 open kernel_trap_spec_riscvTheory;
 
+open bslSyntax;
+
 val _ = new_theory "kernel_trap_spec_bir";
 
 (* ------------------------- *)
@@ -53,199 +55,89 @@ val _ = new_theory "kernel_trap_spec_bir";
 fun addr_word_tm def = (rhs o concl) def;
 fun addr_num_tm def = (numSyntax.mk_numeral o wordsSyntax.dest_word_literal o addr_word_tm) def;
 
-val bspec_kernel_trap_entry_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
-    (BExp_Const (Imm8 3w))``,
+val bspec_kernel_trap_entry_pre_tm = bandl [
+  beq (bden (bvarimm 8 "MPRV"), bconst8 3),
 
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "mscratch",
 
- ``BExp_unchanged_mem_interval_distinct Bit64
-    (^(addr_num_tm kernel_trap_entry_init_addr_def) - 256)
-    ^(addr_num_tm kernel_trap_return_end_addr_def)
-    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
-    8``,
+  ``BExp_unchanged_mem_interval_distinct Bit64
+     (^(addr_num_tm kernel_trap_entry_init_addr_def) - 256)
+     ^(addr_num_tm kernel_trap_return_end_addr_def)
+     ^(bden (bvarimm 64 "mscratch"))
+     8``,
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_mscratch))``,
+  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_mscratch:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "mepc" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_mepc))``,
+  beq (bden (bvarimm 64 "mepc"), bconst ``pre_mepc:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "mcause" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_mcause))``,
+  beq (bden (bvarimm 64 "mcause"), bconst ``pre_mcause:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "mhartid" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_mhartid))``,
+  beq (bden (bvarimm 64 "mhartid"), bconst ``pre_mhartid:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "mtval" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_mtval))``,
+  beq (bden (bvarimm 64 "mtval"), bconst ``pre_mtval:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x1" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x1))``,
+  beq (bden (bvarimm 64 "x1"), bconst ``pre_x1:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x2" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x2))``,
+  beq (bden (bvarimm 64 "x2"), bconst ``pre_x2:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x3" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x3))``,
+  beq (bden (bvarimm 64 "x3"), bconst ``pre_x3:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x4" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x4))``,
+  beq (bden (bvarimm 64 "x4"), bconst ``pre_x4:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x5" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x5))``,
+  beq (bden (bvarimm 64 "x5"), bconst ``pre_x5:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x6" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x6))``,
+  beq (bden (bvarimm 64 "x6"), bconst ``pre_x6:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x7" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x7))``,
+  beq (bden (bvarimm 64 "x7"), bconst ``pre_x7:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x8" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x8))``,
+  beq (bden (bvarimm 64 "x8"), bconst ``pre_x8:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x9" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x9))``,
+  beq (bden (bvarimm 64 "x9"), bconst ``pre_x9:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x10))``,
+  beq (bden (bvarimm 64 "x10"), bconst ``pre_x10:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x11" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x11))``,
+  beq (bden (bvarimm 64 "x11"), bconst ``pre_x11:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x12" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x12))``,
+  beq (bden (bvarimm 64 "x12"), bconst ``pre_x12:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x13))``,
+  beq (bden (bvarimm 64 "x13"), bconst ``pre_x13:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x14))``,
+  beq (bden (bvarimm 64 "x14"), bconst ``pre_x14:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x15))``,
+  beq (bden (bvarimm 64 "x15"), bconst ``pre_x15:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x16" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x16))``,
+  beq (bden (bvarimm 64 "x16"), bconst ``pre_x16:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x17" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x17))``,
+  beq (bden (bvarimm 64 "x17"), bconst ``pre_x17:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x18" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x18))``,
+  beq (bden (bvarimm 64 "x18"), bconst ``pre_x18:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x19" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x19))``,
+  beq (bden (bvarimm 64 "x19"), bconst ``pre_x19:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x20" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x20))``,
+  beq (bden (bvarimm 64 "x20"), bconst ``pre_x20:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x21" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x21))``,
+  beq (bden (bvarimm 64 "x21"), bconst ``pre_x21:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x22" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x22))``,
+  beq (bden (bvarimm 64 "x22"), bconst ``pre_x22:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x23" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x23))``,
+  beq (bden (bvarimm 64 "x23"), bconst ``pre_x23:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x24" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x24))``,
+  beq (bden (bvarimm 64 "x24"), bconst ``pre_x24:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x25" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x25))``,
+  beq (bden (bvarimm 64 "x25"), bconst ``pre_x25:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x26" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x26))``,
+  beq (bden (bvarimm 64 "x26"), bconst ``pre_x26:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x27" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x27))``,
+  beq (bden (bvarimm 64 "x27"), bconst ``pre_x27:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x28" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x28))``,
+  beq (bden (bvarimm 64 "x28"), bconst ``pre_x28:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x29" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x29))``,
+  beq (bden (bvarimm 64 "x29"), bconst ``pre_x29:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x30" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x30))``,
+  beq (bden (bvarimm 64 "x30"), bconst ``pre_x30:word64``),
 
-   ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x31" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x31))``
-]
+  beq (bden (bvarimm 64 "x31"), bconst ``pre_x31:word64``)
+];
 
 Definition bspec_kernel_trap_entry_pre_def:
  bspec_kernel_trap_entry_pre
@@ -272,325 +164,118 @@ Definition bspec_kernel_trap_entry_pre_def:
   ^bspec_kernel_trap_entry_pre_tm
 End
 
-val bspec_kernel_trap_entry_post_tm = bslSyntax.bandl [
- ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
+val bspec_kernel_trap_entry_post_tm = bandl [
+  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_x10:word64``),
 
-``BExp_BinPred BIExp_Equal
-   (BExp_Den (BVar "x2" (BType_Imm Bit64)))
-   (BExp_BinExp BIExp_Plus
-     (BExp_BinExp BIExp_Mult
-       (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFFw))
-       (BExp_BinExp BIExp_LeftShift
-         (BExp_Const (Imm64 pre_mhartid))
-         (BExp_Const (Imm64 10w))))
-     (BExp_Const (Imm64 ^(addr_word_tm kernel_trap_slots_addr_def))))``,
+  beq (bden (bvarimm 64 "x2"),
+       bplus (bmult (bconst ``0xFFFFFFFFFFFFFFFFw:word64``,
+                     blshift (bconst ``pre_mhartid:word64``, bconst64 10)),
+              bconst (addr_word_tm kernel_trap_slots_addr_def))),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "x3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 ^(addr_word_tm kernel_trap_global_pointer_addr_def)))``,
+  beq (bden (bvarimm 64 "x3"), bconst (addr_word_tm kernel_trap_global_pointer_addr_def)),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_mscratch))``,
+  beq (bden (bvarimm 64 "x10"), bconst ``pre_mscratch:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "x11" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_mcause))``,
+  beq (bden (bvarimm 64 "x11"), bconst ``pre_mcause:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "x12" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_mtval))``,
+  beq (bden (bvarimm 64 "x12"), bconst ``pre_mtval:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 8w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_mepc))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 8)),
+       bconst ``pre_mepc:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 16w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x1))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 16)),
+       bconst ``pre_x1:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 24w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x2))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 24)),
+       bconst ``pre_x2:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 32w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x3))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 32)),
+       bconst ``pre_x3:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 40w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x4))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 40)),
+       bconst ``pre_x4:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 48w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x5))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 48)),
+       bconst ``pre_x5:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 56w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x6))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 56)),
+       bconst ``pre_x6:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 64w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x7))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 64)),
+       bconst ``pre_x7:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 72w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x8))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 72)),
+       bconst ``pre_x8:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 80w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x9))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 80)),
+       bconst ``pre_x9:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 88w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x10))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 88)),
+       bconst ``pre_x10:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 96w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x11))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 96)),
+       bconst ``pre_x11:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 104w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x12))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 104)),
+       bconst ``pre_x12:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 112w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x13))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 112)),
+       bconst ``pre_x13:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 120w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x14))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 120)),
+       bconst ``pre_x14:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 128w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x15))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 128)),
+       bconst ``pre_x15:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 136w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x16))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 136)),
+       bconst ``pre_x16:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 144w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x17))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 144)),
+       bconst ``pre_x17:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 152w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x18))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 152)),
+       bconst ``pre_x18:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 160w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x19))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 160)),
+       bconst ``pre_x19:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 168w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x20))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 168)),
+       bconst ``pre_x20:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 176w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x21))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 176)),
+       bconst ``pre_x21:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 184w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x22))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 184)),
+       bconst ``pre_x22:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 192w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x23))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 192)),
+       bconst ``pre_x23:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 200w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x24))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 200)),
+       bconst ``pre_x24:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 208w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x25))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 208)),
+       bconst ``pre_x25:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 216w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x26))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 216)),
+       bconst ``pre_x26:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 224w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x27))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 224)),
+       bconst ``pre_x27:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 232w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x28))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 232)),
+       bconst ``pre_x28:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 240w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x29))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 240)),
+       bconst ``pre_x29:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 248w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x30))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 248)),
+       bconst ``pre_x30:word64``),
 
- ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-      (BExp_Const (Imm64 pre_mscratch))
-      (BExp_Const (Imm64 256w)))
-     BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x31))``
-]
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_mscratch:word64``, bconst64 256)),
+       bconst ``pre_x31:word64``)
+];
 
 Definition bspec_kernel_trap_entry_post_def:
  bspec_kernel_trap_entry_post
@@ -621,311 +306,111 @@ End
 (* BSPEC trap_return contract *)
 (* -------------------------- *)
 
-val bspec_kernel_trap_return_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
-    (BExp_Const (Imm8 3w))``,
+val bspec_kernel_trap_return_pre_tm = bandl [
+  beq (bden (bvarimm 8 "MPRV"), bconst8 3),
 
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_mscratch))``,
+  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_mscratch:word64``),
 
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-     (BExp_Const (Imm64 pre_x10))``,
+  beq (bden (bvarimm 64 "x10"), bconst ``pre_x10:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 8w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_mepc_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 8)),
+       bconst ``pre_mepc_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 16w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x1_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 16)),
+       bconst ``pre_x1_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 24w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x2_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 24)),
+       bconst ``pre_x2_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 32w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x3_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 32)),
+       bconst ``pre_x3_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 40w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x4_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 40)),
+       bconst ``pre_x4_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 48w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x5_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 48)),
+       bconst ``pre_x5_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 56w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x6_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 56)),
+       bconst ``pre_x6_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 64w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x7_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 64)),
+       bconst ``pre_x7_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 72w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x8_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 72)),
+       bconst ``pre_x8_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 80w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x9_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 80)),
+       bconst ``pre_x9_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 88w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x10_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 88)),
+       bconst ``pre_x10_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 96w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x11_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 96)),
+       bconst ``pre_x11_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 104w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x12_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 104)),
+       bconst ``pre_x12_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 112w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x13_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 112)),
+       bconst ``pre_x13_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 120w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x14_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 120)),
+       bconst ``pre_x14_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 128w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x15_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 128)),
+       bconst ``pre_x15_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 136w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x16_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 136)),
+       bconst ``pre_x16_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 144w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x17_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 144)),
+       bconst ``pre_x17_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 152w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x18_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 152)),
+       bconst ``pre_x18_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 160w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x19_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 160)),
+       bconst ``pre_x19_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 168w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x20_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 168)),
+       bconst ``pre_x20_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 176w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x21_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 176)),
+       bconst ``pre_x21_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 184w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x22_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 184)),
+       bconst ``pre_x22_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 192w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x23_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 192)),
+       bconst ``pre_x23_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 200w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x24_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 200)),
+       bconst ``pre_x24_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 208w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x25_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 208)),
+       bconst ``pre_x25_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 216w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x26_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 216)),
+       bconst ``pre_x26_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 224w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x27_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 224)),
+       bconst ``pre_x27_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 232w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x28_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 232)),
+       bconst ``pre_x28_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 240w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x29_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 240)),
+       bconst ``pre_x29_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 248w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x30_mem))``,
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 248)),
+       bconst ``pre_x30_mem:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Load
-     (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-     (BExp_BinExp BIExp_Plus
-       (BExp_Const (Imm64 pre_x10))
-       (BExp_Const (Imm64 256w)))
-       BEnd_LittleEndian Bit64)
-    (BExp_Const (Imm64 pre_x31_mem))``
-]
+  beq (bload64_le (bden (bvarmem (64, 8) "MEM8")) (bplus (bconst ``pre_x10:word64``, bconst64 256)),
+       bconst ``pre_x31_mem:word64``)
+];
 
 Definition bspec_kernel_trap_return_pre_def:
  bspec_kernel_trap_return_pre
@@ -951,172 +436,73 @@ Definition bspec_kernel_trap_return_pre_def:
   ^bspec_kernel_trap_return_pre_tm
 End
 
-val bspec_kernel_trap_return_post_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
+val bspec_kernel_trap_return_post_tm = bandl [
+  beq (bden (bvarimm 64 "mscratch"), bconst ``pre_x10:word64``),
 
-  ``BExp_BinPred BIExp_Equal
-    (BExp_Den (BVar "mepc" (BType_Imm Bit64)))
-    (BExp_BinExp BIExp_And
-     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFCw))
-     (BExp_Const (Imm64 pre_mepc_mem)))``,
+  beq (bden (bvarimm 64 "mepc"),
+       band (bconst ``0xFFFFFFFFFFFFFFFCw:word64``, bconst ``pre_mepc_mem:word64``)),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1_mem))``,
+  beq (bden (bvarimm 64 "x1"), bconst ``pre_x1_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x2" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x2_mem))``,
+  beq (bden (bvarimm 64 "x2"), bconst ``pre_x2_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x3_mem))``,
+  beq (bden (bvarimm 64 "x3"), bconst ``pre_x3_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x4" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x4_mem))``,
+  beq (bden (bvarimm 64 "x4"), bconst ``pre_x4_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x5" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x5_mem))``,
+  beq (bden (bvarimm 64 "x5"), bconst ``pre_x5_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x6" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x6_mem))``,
+  beq (bden (bvarimm 64 "x6"), bconst ``pre_x6_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x7" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x7_mem))``,
+  beq (bden (bvarimm 64 "x7"), bconst ``pre_x7_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x8" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x8_mem))``,
+  beq (bden (bvarimm 64 "x8"), bconst ``pre_x8_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x9" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x9_mem))``,
+  beq (bden (bvarimm 64 "x9"), bconst ``pre_x9_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10_mem))``,
+  beq (bden (bvarimm 64 "x10"), bconst ``pre_x10_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x11" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x11_mem))``,
+  beq (bden (bvarimm 64 "x11"), bconst ``pre_x11_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x12" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x12_mem))``,
+  beq (bden (bvarimm 64 "x12"), bconst ``pre_x12_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13_mem))``,
+  beq (bden (bvarimm 64 "x13"), bconst ``pre_x13_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x14_mem))``,
+  beq (bden (bvarimm 64 "x14"), bconst ``pre_x14_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15_mem))``,
+  beq (bden (bvarimm 64 "x15"), bconst ``pre_x15_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x16" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x16_mem))``,
+  beq (bden (bvarimm 64 "x16"), bconst ``pre_x16_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x17" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x17_mem))``,
+  beq (bden (bvarimm 64 "x17"), bconst ``pre_x17_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x18" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x18_mem))``,
+  beq (bden (bvarimm 64 "x18"), bconst ``pre_x18_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x19" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x19_mem))``,
+  beq (bden (bvarimm 64 "x19"), bconst ``pre_x19_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x20" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x20_mem))``,
+  beq (bden (bvarimm 64 "x20"), bconst ``pre_x20_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x21" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x21_mem))``,
+  beq (bden (bvarimm 64 "x21"), bconst ``pre_x21_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x22" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x22_mem))``,
+  beq (bden (bvarimm 64 "x22"), bconst ``pre_x22_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x23" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x23_mem))``,
+  beq (bden (bvarimm 64 "x23"), bconst ``pre_x23_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x24" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x24_mem))``,
+  beq (bden (bvarimm 64 "x24"), bconst ``pre_x24_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x25" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x25_mem))``,
+  beq (bden (bvarimm 64 "x25"), bconst ``pre_x25_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x26" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x26_mem))``,
+  beq (bden (bvarimm 64 "x26"), bconst ``pre_x26_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x27" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x27_mem))``,
+  beq (bden (bvarimm 64 "x27"), bconst ``pre_x27_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x28" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x28_mem))``,
+  beq (bden (bvarimm 64 "x28"), bconst ``pre_x28_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x29" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x29_mem))``,
+  beq (bden (bvarimm 64 "x29"), bconst ``pre_x29_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x30" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x30_mem))``,
+  beq (bden (bvarimm 64 "x30"), bconst ``pre_x30_mem:word64``),
 
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x31" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x31_mem))``
+  beq (bden (bvarimm 64 "x31"), bconst ``pre_x31_mem:word64``)
 ];
 
 Definition bspec_kernel_trap_return_post_def:
