@@ -62,6 +62,20 @@ Definition kernel_trap_return_end_addr_def:
  kernel_trap_return_end_addr : word64 = 0x80000268w
 End
 
+(* ------------------------------ *)
+(* Data addresses in the program  *)
+(* ------------------------------ *)
+
+(* symbol slots *)
+Definition kernel_trap_slots_addr_def:
+ kernel_trap_slots_addr : word64 = 0x80006400w
+End
+
+(* symbol __global_pointer$ *)
+Definition kernel_trap_global_pointer_addr_def:
+ kernel_trap_global_pointer_addr : word64 = 0x80005804w
+End
+
 (* -------------------------- *)
 (* RISC-V trap_entry contract *)
 (* -------------------------- *)
@@ -91,9 +105,13 @@ Definition riscv_kernel_trap_entry_pre_def:
  : bool =
  ((m.c_MCSR m.procID).mstatus.MPRV = 3w /\
   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_mscratch") /\
+  (* the 8 bytes at mscratch do not overlap the code,
+     from 256 bytes before trap_entry to the end of trap_return *)
   (pre_mscratch ≤₊ 0xFFFFFFFFFFFFFFF7w /\
-    ((0x7FFFFFE0w <₊ pre_mscratch \/ 8w + pre_mscratch ≤₊ 0x7FFFFFE0w) /\
-     (pre_mscratch <₊ 0x7FFFFFE0w \/ 0x80000268w ≤₊ pre_mscratch))) /\
+    ((kernel_trap_entry_init_addr - 256w <₊ pre_mscratch \/
+      8w + pre_mscratch ≤₊ kernel_trap_entry_init_addr - 256w) /\
+     (pre_mscratch <₊ kernel_trap_entry_init_addr - 256w \/
+      kernel_trap_return_end_addr ≤₊ pre_mscratch))) /\
   (m.c_MCSR m.procID).mscratch = pre_mscratch /\
   (m.c_MCSR m.procID).mepc = pre_mepc /\
   (reg'mcause $ (m.c_MCSR m.procID).mcause) = pre_mcause /\
@@ -157,8 +175,8 @@ Definition riscv_kernel_trap_entry_post_def:
  : bool =
  ((m.c_MCSR m.procID).mscratch = pre_x10 /\
   m.c_gpr m.procID 2w =
-   (0xFFFFFFFFFFFFFFFFw * (pre_mhartid <<~ 10w)) + 0x80006400w /\
-  m.c_gpr m.procID 3w = 0x80005804w /\
+   (0xFFFFFFFFFFFFFFFFw * (pre_mhartid <<~ 10w)) + kernel_trap_slots_addr /\
+  m.c_gpr m.procID 3w = kernel_trap_global_pointer_addr /\
   m.c_gpr m.procID 10w = pre_mscratch /\
   m.c_gpr m.procID 11w = pre_mcause /\
   m.c_gpr m.procID 12w = pre_mtval /\

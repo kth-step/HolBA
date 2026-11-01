@@ -49,6 +49,10 @@ val _ = new_theory "kernel_trap_spec_bir";
 (* BSPEC trap_entry contract *)
 (* ------------------------- *)
 
+(* address values from the RISC-V specification, as BIR constants *)
+fun addr_word_tm def = (rhs o concl) def;
+fun addr_num_tm def = (numSyntax.mk_numeral o wordsSyntax.dest_word_literal o addr_word_tm) def;
+
 val bspec_kernel_trap_entry_pre_tm = bslSyntax.bandl [
   ``BExp_BinPred BIExp_Equal
     (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
@@ -57,7 +61,8 @@ val bspec_kernel_trap_entry_pre_tm = bslSyntax.bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "mscratch",
 
  ``BExp_unchanged_mem_interval_distinct Bit64
-    (0x800000e0 - 256) 0x80000268
+    (^(addr_num_tm kernel_trap_entry_init_addr_def) - 256)
+    ^(addr_num_tm kernel_trap_return_end_addr_def)
     (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
     8``,
 
@@ -280,11 +285,11 @@ val bspec_kernel_trap_entry_post_tm = bslSyntax.bandl [
        (BExp_BinExp BIExp_LeftShift
          (BExp_Const (Imm64 pre_mhartid))
          (BExp_Const (Imm64 10w))))
-     (BExp_Const (Imm64 0x80006400w)))``,
+     (BExp_Const (Imm64 ^(addr_word_tm kernel_trap_slots_addr_def))))``,
 
  ``BExp_BinPred BIExp_Equal
     (BExp_Den (BVar "x3" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 0x80005804w))``,
+    (BExp_Const (Imm64 ^(addr_word_tm kernel_trap_global_pointer_addr_def)))``,
 
  ``BExp_BinPred BIExp_Equal
     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
@@ -1168,6 +1173,7 @@ Proof
   
   FULL_SIMP_TAC (std_ss) [
    riscv_kernel_trap_entry_pre_def,
+   kernel_trap_entry_init_addr_def, kernel_trap_return_end_addr_def,
    bspec_kernel_trap_entry_pre_def,
    bir_extra_expsTheory.BExp_Aligned_def
   ] >>
@@ -1213,7 +1219,8 @@ Proof
   bir_eval_bin_pred_exists_64_eq
  ] >>
 
- rw [riscv_kernel_trap_entry_post_def] >>
+ rw [riscv_kernel_trap_entry_post_def,
+     kernel_trap_slots_addr_def, kernel_trap_global_pointer_addr_def] >>
 
  METIS_TAC [
   bir_load_from_mem_riscv_mem_load_dword,
