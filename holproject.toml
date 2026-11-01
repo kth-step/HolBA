@@ -7,6 +7,7 @@ name = "holba"
 
 [dependencies.hol]
 git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+# HOL4 tag trindemossen-2-v9
 rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
 
 [dependencies.hol_machine_code_hoare_triple]

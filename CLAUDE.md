@@ -27,6 +27,10 @@
   holbuild picks up the `holbuild_extra_deps [...]` call when scanning the script. The local no-op definition keeps the script valid under Holmake. Every lifted example (`<prog>Script.sml`) needs this for its `.da` file.
 - Logical names must be unique across the whole holbuild build graph: all `members` directories of the project and all its dependencies (HolBA, HOL4). `fooScript.sml` has logical name `fooTheory`, while `foo.sml` and `foo.sig` both have `foo`; only a `.sig`/`.sml` pair in the same package may share one. Holmake only sees each directory's `INCLUDES`, so clashes that were harmless there fail under holbuild with `duplicate logical name`. Before adding a file, check that no other source in the project or its dependencies has the same logical name.
   - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8` or `riscv`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
+- HolBA builds against a tagged HOL4 release. holbuild currently only accepts a commit SHA for `[dependencies.hol]` `rev`, so:
+  - `rev` must be the commit of a HOL4 tag, i.e., `git ls-remote https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`, not the annotated tag object's own SHA.
+  - The root `holproject.toml` names the tag in a comment above `rev`.
+  - All `holproject.toml` files (root, `examples/arm8`, `examples/riscv`) use the same `rev`; change them together.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 (still mentioned in the README) has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
@@ -105,5 +109,5 @@
   - So do changes to the BIR-to-SMT conversion or to where the oracles are invoked.
 
 ## Git
-- Main branch is `master`. The HOL4 revision is pinned in `holproject.toml`.
+- Main branch is `master`.
 - Never commit `.holbuild/` or `opt/`, or any `.hol/` directory.
