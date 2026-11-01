@@ -1,0 +1,32 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.0"
+
+[project]
+name = "holba_examples_bir"
+
+# Must match the HOL revision used by the HolBA root holproject.toml.
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
+
+# compute is self-contained and does not depend on HolBA. Several of its
+# theories share logical names with HolBA's (e.g. bir_programTheory), so
+# adding HolBA as a dependency here fails with `duplicate logical name`.
+
+[build]
+members = [
+  "compute",
+]
+# Test and benchmark scripts (e.g. compute/test-compute.sml) are not built.
+exclude_globs = [
+  "*/test-*.sml",
+  "compute/examples/benchmark-examples.sml",
+]
+root_groups = [
+  "compute",
+]
+tactic_timeout = 600.0
+
+[build.groups.compute]
+include = ["compute"]
