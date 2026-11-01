@@ -52,7 +52,8 @@ val arm8_cont_add_reg_1_thm =
   bir_add_reg_prog_def
   [bspec_add_reg_pre_1_def]
   bspec_add_reg_pre_1_def add_reg_arm8_pre_1_imp_bspec_pre_1_thm
-  [bspec_add_reg_post_1_def] add_reg_arm8_post_1_imp_bspec_post_1_thm
+  [bspec_add_reg_post_1_def, add_reg_end_addr_1_def, add_reg_end_addr_def]
+  add_reg_arm8_post_1_imp_bspec_post_1_thm
   bir_add_reg_arm8_lift_THM;
 
 Theorem arm8_cont_add_reg_1:
@@ -71,7 +72,9 @@ val arm8_cont_add_reg_2_thm =
   bir_add_reg_prog_def
   [bspec_add_reg_pre_2_def]
   bspec_add_reg_pre_2_def add_reg_arm8_pre_2_imp_bspec_pre_2_thm
-  [bspec_add_reg_post_2_loop_def,bspec_add_reg_post_2_ret_def] add_reg_arm8_post_2_imp_bspec_post_2_thm
+  [bspec_add_reg_post_2_loop_def, bspec_add_reg_post_2_ret_def,
+   add_reg_end_addr_2_loop_def, add_reg_end_addr_2_ret_def]
+  add_reg_arm8_post_2_imp_bspec_post_2_thm
   bir_add_reg_arm8_lift_THM;
 
 Theorem arm8_cont_add_reg_2:
@@ -90,7 +93,8 @@ val arm8_cont_add_reg_3_thm =
   bir_add_reg_prog_def
   [bspec_add_reg_pre_3_def]
   bspec_add_reg_pre_3_def add_reg_arm8_pre_3_imp_bspec_pre_3_thm
-  [bspec_add_reg_post_3_def] add_reg_arm8_post_3_imp_bspec_post_3_thm
+  [bspec_add_reg_post_3_def, add_reg_end_addr_3_def, add_reg_end_addr_def]
+  add_reg_arm8_post_3_imp_bspec_post_3_thm
   bir_add_reg_arm8_lift_THM;
 
 Theorem arm8_cont_add_reg_3:
