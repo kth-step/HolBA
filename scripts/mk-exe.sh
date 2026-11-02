@@ -17,19 +17,18 @@ function mk_exe_for_sml_file {
     # This function must be inside the directory containing the .sml test file
 
     declare HOLBINDIR=$(find_hol4_bin_dir)
-    declare BUILDHEAP="$HOLBINDIR/buildheap"
-    declare HEAPNAME="$HOLBINDIR/heapname"
+    declare HOL="$HOLBINDIR/hol"
 
     # Determine in which heap to execute by looking at the Holmakefile file
     declare HEAP=$(grep -E '^HOLHEAP' Holmakefile | sed -r 's/HOLHEAP\s*=\s*(\S+)/\1/')
     if [ ! -f "$HEAP" ]; then
-        declare HEAP=`$HEAPNAME`
+        declare HEAP=`"$HOL" heapname`
     fi
 
     declare SML_MODULE=$(echo $1 | sed -r 's/.sml//')
 
     # Generate the .exe file as executable
-    RUN_CMD="\"${BUILDHEAP}\" --gcthreads=1 --holstate=\"${HEAP}\" ${SML_MODULE}"
+    RUN_CMD="\"${HOL}\" --gcthreads=1 run --holstate=\"${HEAP}\" ${SML_MODULE}"
     EXE_FILE_CONTENTS="#!/bin/sh\nset -e\n${RUN_CMD}\nexit 0"
     echo -e ${EXE_FILE_CONTENTS} > ${SML_MODULE}.exe
     chmod +x ${SML_MODULE}.exe

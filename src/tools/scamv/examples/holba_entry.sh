@@ -45,12 +45,12 @@ set -e
 #       lines up and require that the current dir heap is subsumed in the one defined here
 #HEAPNAME=${HOLBA_DIR}/src/HolBA-heap
 HEAPNAME=${SCAMV_EXAMPLES_DIR}/../HolBATools_ScamV-heap
-BUILDHEAP=${HOLBA_HOL_DIR}/bin/buildheap
+HOL=${HOLBA_HOL_DIR}/bin/hol
 
 echo
-#"${BUILDHEAP}" --gcthreads=1 --holstate="${HEAPNAME}" "${SCRIPT_NAME}" --extra="${FORWARD_ARGS}"
+#"${HOL}" --gcthreads=1 run --holstate="${HEAPNAME}" "${SCRIPT_NAME}" --extra="${FORWARD_ARGS}"
 echo "Building executable now."
-"${BUILDHEAP}" --holstate="${HEAPNAME}" "${SCRIPT_NAME}" -o main_holba.exe --exe main_holba --extra="${FORWARD_ARGS}"
+"${HOL}" buildheap --holstate="${HEAPNAME}" "${SCRIPT_NAME}" -o main_holba.exe --exe main_holba --extra="${FORWARD_ARGS}"
 echo "Done building executable."
 ./main_holba.exe --gcthreads=1 --extra="${FORWARD_ARGS}"
 

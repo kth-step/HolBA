@@ -24,8 +24,8 @@ set -e
 
 SCRIPT_NAME=driver-entry
 HEAPNAME=../HolBATools_ScamV-heap
-BUILDHEAP=${HOLBA_HOL_DIR}/bin/buildheap
+HOL=${HOLBA_HOL_DIR}/bin/hol
 
-"${BUILDHEAP}" --gcthreads=1 --holstate="${HEAPNAME}" driver-test.sml "${SCRIPT_NAME}" --extra="${FORWARD_ARGS}"
+"${HOL}" --gcthreads=1 run --holstate="${HEAPNAME}" driver-test.sml "${SCRIPT_NAME}" --extra="${FORWARD_ARGS}"
 
 exit 0
