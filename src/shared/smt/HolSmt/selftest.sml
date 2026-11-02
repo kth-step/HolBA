@@ -2,6 +2,9 @@
 
 (* Unit tests for HolBA_HolSmtLib *)
 
+(* proofs and Datatype need a current theory, which HOL4 no longer opens by default *)
+val _ = Theory.new_theory "scratch"
+
 val _ = print "Testing HolBA_HolSmtLib\n"
 
 (*****************************************************************************)
@@ -50,11 +53,12 @@ fun expect_thm name smt_tac t =
   let
     open boolLib
     val thm = Tactical.TAC_PROOF (([], t), smt_tac)
-      handle Feedback.HOL_ERR {origin_structure, origin_function, message, source_location} =>
+      handle Feedback.HOL_ERR holerr =>
         die ("Test of solver '" ^ name ^ "' failed on term '" ^
           Hol_pp.term_to_string t ^ "': exception HOL_ERR (in " ^
-          origin_structure ^ "." ^ origin_function ^
-          "at location " ^ (locn.toString source_location) ^ ", message: " ^ message ^
+          Feedback.top_structure_of holerr ^ "." ^ Feedback.top_function_of holerr ^
+          "at location " ^ (locn.toString (Feedback.top_location_of holerr)) ^
+          ", message: " ^ Feedback.message_of holerr ^
           ")")
   in
     if null (Thm.hyp thm) andalso Thm.concl thm ~~ t then ()
@@ -71,18 +75,20 @@ fun expect_sat name smt_tac t =
   in
     die ("Test of solver '" ^ name ^ "' failed on term '" ^
       Hol_pp.term_to_string t ^ "': exception expected")
-  end handle Feedback.HOL_ERR {origin_structure, origin_function, message, source_location} =>
-    if origin_structure = "HolBA_HolSmtLib" andalso
-       origin_function = "GENERIC_SMT_TAC" andalso
-       (message = "solver reports negated term to be 'satisfiable'" orelse
-        message = "solver reports negated term to be 'satisfiable' (model returned)")
+  end handle Feedback.HOL_ERR holerr =>
+    if Feedback.top_structure_of holerr = "HolBA_HolSmtLib" andalso
+       Feedback.top_function_of holerr = "GENERIC_SMT_TAC" andalso
+       (Feedback.message_of holerr = "solver reports negated term to be 'satisfiable'" orelse
+        Feedback.message_of holerr = "solver reports negated term to be 'satisfiable' (model returned)")
     then
       ()
     else
       die ("Test of solver '" ^ name ^ "' failed on term '" ^
         Hol_pp.term_to_string t ^
         "': exception HOL_ERR has unexpected argument values (in " ^
-        origin_structure ^ "." ^ origin_function ^ "at location " ^ (locn.toString source_location) ^ ", message: " ^ message ^
+        Feedback.top_structure_of holerr ^ "." ^ Feedback.top_function_of holerr ^
+        "at location " ^ (locn.toString (Feedback.top_location_of holerr)) ^
+        ", message: " ^ Feedback.message_of holerr ^
         ")")
 
 fun mk_test_fun is_configured expect_fun name smt_tac =
@@ -97,7 +103,7 @@ fun mk_test_fun is_configured expect_fun name smt_tac =
 (* performance)                                                              *)
 (*****************************************************************************)
 
-fun auto_tac (_, t) =
+fun auto_tac (_, t) (_ : Context.t) =
   let
     val simpset = bossLib.++ (bossLib.srw_ss (), wordsLib.WORD_ss)
     val t_eq_t' = simpLib.SIMP_CONV simpset [integerTheory.INT_ABS,
