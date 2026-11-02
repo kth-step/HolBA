@@ -2,8 +2,6 @@ open HolKernel boolLib Parse bossLib;
 
 open markerTheory;
 
-open holba_auxiliaryTheory;
-
 open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
@@ -146,29 +144,21 @@ Theorem update_sat_arm8_post_imp_bspec_post_thm:
   (arm8_update_sat_post pre_x0 pre_x1 pre_x2 pre_x3)
   (\l. bspec_update_sat_post pre_x0 pre_x1 pre_x2 pre_x3) ls
 Proof
- once_rewrite_tac [bir_post_bir_to_arm8_def,bspec_update_sat_post_def] >>
- once_rewrite_tac [bspec_update_sat_post_def] >>
- once_rewrite_tac [bspec_update_sat_post_def] >>
-
+ rw [bir_post_bir_to_arm8_def] >>
  Cases_on `bs` >> Cases_on `b0` >>
-
- FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
-
- Q.ABBREV_TAC `g = ?z. f "R0" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
-
- Cases_on `g` >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
-   fs [Abbrev_def] >>
-   Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >>
-   once_rewrite_tac [arm8_update_sat_post_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [arm8_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-    bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
-   rw [] >> fs [if_bool_1w]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) []
+ `f "R0" = SOME (BVal_Imm (Imm64 (ms.REG 0w)))` by METIS_TAC [arm8_bmr_x0_equiv] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bspec_update_sat_post_def,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_val_true_def,
+  bool2b_def,
+  bool2w_def
+ ] >>
+ rpt (pop_assum mp_tac) >> rw [arm8_update_sat_post_def]
 QED
 
 val _ = export_theory ();
