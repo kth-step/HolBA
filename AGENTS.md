@@ -4,6 +4,7 @@
 - The **library** (`src/`, root `holproject.toml`) provides HOL4 theories and tools for binary analysis and verification: BIR semantics, lifters, backlifters, program logics, symbolic execution, contract composition.
 - How these are actually used to verify programs is shown **only in the examples**, chiefly `examples/riscv/` and `examples/arm8/`. These are separate holbuild projects that depend on the library, i.e., "client projects".
 - Their `holproject.toml` files are templates for setting up other client projects that use HolBA.
+- `examples/bir/` is a third client project, not about binary verification. So far it builds only `compute` (group `@compute`): "Smol BIR", an independent fragment of BIR with cv-based evaluation. Its files are prefixed `smol_bir` so that their logical names don't clash with the library's BIR theories. The other subdirectories of `examples/bir/` are not built yet.
 
 ## z3 is for clients, not for the library
 - Building anything in the base library must **not** require z3, and changes must keep it that way. Don't make `src/` theories/libs call SMT at build time.
@@ -13,7 +14,7 @@
 
 ## Building
 - Prefer **holbuild** (fast, incremental, resumes failed proofs from checkpoints). Holmake with `configure.sh`/`env.sh` (see README) is the legacy path.
-- Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, or `examples/arm8/`):
+- Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, `examples/arm8/`, or `examples/bir/`):
   - one theory: `holbuild build chacha20_double_round_propTheory`
   - a group from `[build.groups.*]`: `holbuild build @chacha20`, or `holbuild build @examples` at the root for examples under `src/`
   - no target: the project's root groups
@@ -26,11 +27,11 @@
   ```
   holbuild picks up the `holbuild_extra_deps [...]` call when scanning the script. The local no-op definition keeps the script valid under Holmake. Every lifted example (`<prog>Script.sml`) needs this for its `.da` file.
 - Logical names must be unique across the whole holbuild build graph: all `members` directories of the project and all its dependencies (HolBA, HOL4). `fooScript.sml` has logical name `fooTheory`, while `foo.sml` and `foo.sig` both have `foo`; only a `.sig`/`.sml` pair in the same package may share one. Holmake only sees each directory's `INCLUDES`, so clashes that were harmless there fail under holbuild with `duplicate logical name`. Before adding a file, check that no other source in the project or its dependencies has the same logical name.
-  - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8` or `riscv`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
+  - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8`, `riscv` or `bir`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
 - HolBA builds against a tagged HOL4 release. holbuild currently only accepts a commit SHA for `[dependencies.hol]` `rev`, so:
   - `rev` must be the commit of a HOL4 tag, i.e., `git ls-remote https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`, not the annotated tag object's own SHA.
   - The root `holproject.toml` names the tag in a comment above `rev`.
-  - All `holproject.toml` files (root, `examples/arm8`, `examples/riscv`) use the same `rev`; change them together.
+  - All `holproject.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`) use the same `rev`; change them together.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 (still mentioned in the README) has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
