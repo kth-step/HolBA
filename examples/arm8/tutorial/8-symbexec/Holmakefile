@@ -10,7 +10,7 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/examples/arm8/tutorial/2-lift \
            $(HOLBADIR)/src
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-symbexec.exe
 .PHONY: all
 
 ifdef POLY
@@ -18,3 +18,12 @@ ifndef HOLBA_POLYML_HEAPLESS
 HOLHEAP = $(HOLBADIR)/src/holba-heap
 endif
 endif
+
+test-symbexec.exe: test-symbexec.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-symbexec.exe
+	./test-symbexec.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-symbexec.exe
