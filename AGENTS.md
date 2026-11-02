@@ -56,6 +56,9 @@
 - Known hang patterns:
   - a child `hol` with zero CPU that never exec'd z3 (fork-before-exec deadlock)
   - a holbuild child with no HOL process under it
+- Memory: HolBA and the built examples should build comfortably with 32 GB of physical memory with 1–8 jobs.
+  - Watch the RSS of `hol` processes during builds (`VmRSS` in `/proc/PID/status`), not only CPU.
+  - A single process above ~20 GB means something is wrong, not slow progress. Stop the build before the machine stalls and an OOM kill hits, then investigate. Example: a generated BIR precondition that `EVAL` could not unfold made `max_symb_exec` (normally under a minute) reach 26 GB in 8 minutes.
 - Before killing a hang: capture a backtrace (`gdb -p PID -batch -ex "thread apply all bt"`) and the Poly/ML and holbuild versions. Then kill the holbuild process tree and rerun; cached work resumes.
 
 ## Code layout
