@@ -1,14 +1,14 @@
-structure bir_cv_programLib :> bir_cv_programLib =
+structure smol_bir_cv_programLib :> smol_bir_cv_programLib =
 struct
 
 open HolKernel Parse boolLib bossLib;
-open bir_cv_programTheory;
-open bir_programSyntax bir_cv_programSyntax;
-open bir_cv_basicLib bir_cv_envLib;
+open smol_bir_cv_programTheory;
+open smol_bir_programSyntax smol_bir_cv_programSyntax;
+open smol_bir_cv_basicLib smol_bir_cv_envLib;
 open listSyntax;
 
 
-val ERR = mk_HOL_ERR "bir_cv_programLib";
+val ERR = mk_HOL_ERR "smol_bir_cv_programLib";
 
 
 fun assert_correct tm thm = assert (fn (x,y) => (Term.compare (x, y)) = EQUAL) (tm, lhs (concl thm));

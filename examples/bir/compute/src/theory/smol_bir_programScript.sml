@@ -4,11 +4,11 @@
 
 
 open HolKernel Parse bossLib boolLib;
-open birTheory;
-open bir_computeTheory;
+open smol_birTheory;
+open smol_bir_computeTheory;
 open listTheory;
 
-val _ = new_theory "bir_program";
+val _ = new_theory "smol_bir_program";
 
 (* Compute a label expression *)
 Definition bir_compute_label_exp_def:

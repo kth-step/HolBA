@@ -3,10 +3,10 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open birTheory bir_computeTheory bir_cv_basicTheory;
+open smol_birTheory smol_bir_computeTheory smol_bir_cv_basicTheory;
 
 
-val _ = new_theory "bir_cv_ifthenelse";
+val _ = new_theory "smol_bir_cv_ifthenelse";
 
 
 (* Computes an ifthenelse expression of two values *)

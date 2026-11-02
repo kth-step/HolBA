@@ -1,17 +1,17 @@
-structure bir_cv_basicLib :> bir_cv_basicLib =
+structure smol_bir_cv_basicLib :> smol_bir_cv_basicLib =
 struct
 
 open HolKernel Parse boolLib bossLib;
 open finite_mapSyntax;
-open bir_basicSyntax bir_cv_basicSyntax;
-open bir_cv_basicTheory;
+open smol_bir_basicSyntax smol_bir_cv_basicSyntax;
+open smol_bir_cv_basicTheory;
 open optionSyntax;
 
 
 fun assert_correct tm thm = assert (fn (x,y) => (Term.compare (x, y)) = EQUAL) (tm, lhs (concl thm));
 
 
-val ERR = mk_HOL_ERR "bir_cv_basicLib";
+val ERR = mk_HOL_ERR "smol_bir_cv_basicLib";
 
 (* TODO : Handle FUPDATE_LIST (|++) as well *)
 (* Given a term representing an fmap made from successive FUPDATE, 

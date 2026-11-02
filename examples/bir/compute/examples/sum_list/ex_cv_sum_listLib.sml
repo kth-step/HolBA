@@ -3,7 +3,7 @@ struct
 
 open HolKernel Parse bossLib boolLib;
 open ex_cv_sum_listTheory;
-open bir_computeLib;
+open smol_bir_computeLib;
 open numSyntax;
 open cv_transLib;
 

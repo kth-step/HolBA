@@ -4,10 +4,10 @@
 
 open HolKernel Parse bossLib boolLib;
 open wordsTheory;
-open birTheory;
+open smol_birTheory;
 open alistTheory;
 
-val _ = new_theory "bir_cv_basic";
+val _ = new_theory "smol_bir_cv_basic";
 
 
 (* Values for evaluation relation *)
@@ -82,7 +82,7 @@ Definition from_cv_val_def:
 End
 
 (* WARNING : the to_cv_ variants aren’t computable through EVAL.
- * The existing conv from bir_cv_basicLib should be used instead.
+ * The existing conv from smol_bir_cv_basicLib should be used instead.
  * Use only from_cv_ instead *)
 Definition to_cv_val_def:
   (to_cv_val (BVal_Imm imm) = BCVVal_Imm imm) /\

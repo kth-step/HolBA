@@ -3,10 +3,10 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open ottTheory birTheory bir_metaTheory;
-open bir_cv_basicLib;
-open bir_cv_envLib;
-open bir_cv_programLib;
+open ottTheory smol_birTheory smol_bir_metaTheory;
+open smol_bir_cv_basicLib;
+open smol_bir_cv_envLib;
+open smol_bir_cv_programLib;
 
 (* ------------------------------------------------- *)
 (* ------------------- Utilities ------------------- *)
@@ -82,7 +82,7 @@ val _ = prove (``
 
 
 (* ------------------------------------------------- *)
-(* ---------------- bir_cv_basicLib ---------------- *)
+(* ---------------- smol_bir_cv_basicLib ---------------- *)
 (* ------------------------------------------------- *)
 
 val _ = print_and_check_conv
@@ -166,7 +166,7 @@ val _ = print_and_check_conv
 
 
 (* ------------------------------------------------- *)
-(* ----------------- bir_cv_envLib ----------------- *)
+(* ----------------- smol_bir_cv_envLib ----------------- *)
 (* ------------------------------------------------- *)
 
 val _ = print_and_check_conv
@@ -177,7 +177,7 @@ val _ = print_and_check_conv
 
 
 (* ------------------------------------------------- *)
-(* --------------- bir_cv_programLib --------------- *)
+(* --------------- smol_bir_cv_programLib --------------- *)
 (* ------------------------------------------------- *)
 
 val _ = print_and_check_conv

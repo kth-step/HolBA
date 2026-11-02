@@ -3,13 +3,13 @@
 (* ------------------------------------------------------------------------- *)
 
 
-structure bir_cv_basicSyntax :> bir_cv_basicSyntax =
+structure smol_bir_cv_basicSyntax :> smol_bir_cv_basicSyntax =
 struct
 
 open HolKernel Parse bossLib boolLib;
-open bir_cv_basicTheory;
+open smol_bir_cv_basicTheory;
 
-val ERR = mk_HOL_ERR "bir_cv_basicSyntax";
+val ERR = mk_HOL_ERR "smol_bir_cv_basicSyntax";
 
 
 

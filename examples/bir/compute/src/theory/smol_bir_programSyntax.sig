@@ -1,4 +1,4 @@
-signature bir_programSyntax =
+signature smol_bir_programSyntax =
 sig
   include Abbrev;
 

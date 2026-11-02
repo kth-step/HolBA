@@ -11,10 +11,10 @@ git = "https://github.com/HOL-Theorem-Prover/HOL.git"
 rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
 
 # HolBA itself (the root holproject.toml of this repository). holbuild has no
-# path dependencies; to build against the enclosing checkout, put
+# path dependencies, so examples/riscv/.holconfig.toml overrides this with
 #   [overrides.holba]
 #   path = "../.."
-# in examples/riscv/.holconfig.toml.
+# to build against the enclosing checkout instead of this rev.
 [dependencies.holba]
 git = "https://github.com/kth-step/HolBA"
 rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"

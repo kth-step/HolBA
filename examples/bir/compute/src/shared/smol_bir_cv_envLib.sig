@@ -1,4 +1,4 @@
-signature bir_cv_envLib = 
+signature smol_bir_cv_envLib = 
 sig
   include Abbrev;
 

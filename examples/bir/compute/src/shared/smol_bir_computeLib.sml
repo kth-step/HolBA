@@ -2,20 +2,20 @@
 (*  Computation lib to evaluate BIR expressions                              *)
 (* ------------------------------------------------------------------------- *)
 
-structure bir_computeLib :> bir_computeLib =
+structure smol_bir_computeLib :> smol_bir_computeLib =
 struct
 
 open HolKernel Parse boolLib bossLib;
-open birTheory bir_cv_basicTheory;
-open bir_computeTheory;
+open smol_birTheory smol_bir_cv_basicTheory;
+open smol_bir_computeTheory;
 open wordsLib;
 open cv_transLib cv_stdTheory cvTheory;
-open bir_cv_computeTheory bir_cv_envLib;
-open bir_cv_memTheory;
-open bir_cv_basicLib;
-open bir_programTheory bir_cv_programTheory;
-open bir_cv_programLib;
-open optionSyntax listSyntax bir_cv_programSyntax;
+open smol_bir_cv_computeTheory smol_bir_cv_envLib;
+open smol_bir_cv_memTheory;
+open smol_bir_cv_basicLib;
+open smol_bir_programTheory smol_bir_cv_programTheory;
+open smol_bir_cv_programLib;
+open optionSyntax listSyntax smol_bir_cv_programSyntax;
 open computeLib;
 
 
@@ -24,7 +24,7 @@ open computeLib;
 (* ------------------- UTILITIES ------------------ *)
 (* ------------------------------------------------ *)
 
-val ERR = mk_HOL_ERR "bir_computeLib";
+val ERR = mk_HOL_ERR "smol_bir_computeLib";
 
 (* Map the function f on a list by feeding arguments name1, name2 etc… *)
 fun map_string_increasing (name : string) (f : string -> 'a -> 'b) (l : 'a list): 'b list  = 

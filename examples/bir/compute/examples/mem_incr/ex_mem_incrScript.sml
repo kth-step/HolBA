@@ -4,9 +4,9 @@
 
 
 open HolKernel Parse bossLib boolLib;
-open birTheory;
+open smol_birTheory;
 open finite_mapTheory;
-open bir_computeTheory;
+open smol_bir_computeTheory;
 
 
 val _ = new_theory "ex_mem_incr";

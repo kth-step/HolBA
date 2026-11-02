@@ -3,13 +3,13 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse boolLib bossLib;
-open bir_cv_basicTheory bir_cv_binexpTheory bir_cv_unaryexpTheory bir_cv_binpredTheory bir_cv_ifthenelseTheory;
-open bir_cv_memTheory;
-open bir_cv_envTheory;
-open bir_computeTheory;
+open smol_bir_cv_basicTheory smol_bir_cv_binexpTheory smol_bir_cv_unaryexpTheory smol_bir_cv_binpredTheory smol_bir_cv_ifthenelseTheory;
+open smol_bir_cv_memTheory;
+open smol_bir_cv_envTheory;
+open smol_bir_computeTheory;
 
 
-val _ = new_theory "bir_cv_compute";
+val _ = new_theory "smol_bir_cv_compute";
 
 (* General Computation function *)
 Definition bir_cv_compute_exp_def:

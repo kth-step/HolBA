@@ -3,12 +3,12 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_cv_basicTheory;
-open birTheory bir_computeTheory;
+open smol_bir_cv_basicTheory;
+open smol_birTheory smol_bir_computeTheory;
 open wordsTheory;
 
 
-val _ = new_theory "bir_cv_unaryexp";
+val _ = new_theory "smol_bir_cv_unaryexp";
 
 
 (* Computes Unary expression *)

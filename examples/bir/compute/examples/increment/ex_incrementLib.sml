@@ -6,9 +6,9 @@ structure ex_incrementLib :> ex_incrementLib =
 struct
 
 open HolKernel Parse bossLib boolLib;
-open birTheory;
+open smol_birTheory;
 open ex_incrementTheory;
-open bir_computeLib;
+open smol_bir_computeLib;
 
 
 fun generate_bigger_inc (term:term) (n:int) : term =

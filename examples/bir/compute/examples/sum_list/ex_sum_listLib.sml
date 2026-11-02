@@ -3,7 +3,7 @@ struct
 
 open HolKernel Parse bossLib boolLib;
 open ex_sum_listTheory;
-open bir_computeLib;
+open smol_bir_computeLib;
 open numSyntax;
 
 (* Create an initial state *)

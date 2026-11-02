@@ -3,9 +3,9 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open ottTheory birTheory;
+open ottTheory smol_birTheory;
 
-val _ = new_theory "bir_compute";
+val _ = new_theory "smol_bir_compute";
 
 (* Computes a binary expression of two immediates *)
 Definition bir_compute_binexp_imm_def:
@@ -181,7 +181,7 @@ Proof
   rw [bir_eval_binexp_cases, bir_compute_binexp_def] >>
   rw [bir_eval_binexp_imm_cases, bir_compute_binexp_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >> Cases_on `b''` >>
-  rw [bir_compute_binexp_imm_def, fetch "bir" "bir_imm_t_nchotomy", bir_binexp_get_oper_def] >>
+  rw [bir_compute_binexp_imm_def, fetch "smol_bir" "bir_imm_t_nchotomy", bir_binexp_get_oper_def] >>
   rw [val_from_imm_option_def,clause_name_def] >>
   metis_tac []
 QED
@@ -196,7 +196,7 @@ Proof
   rw [bir_eval_unaryexp_cases, bir_compute_unaryexp_def] >>
   rw [bir_eval_unaryexp_imm_cases, bir_compute_unaryexp_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >>
-  rw [bir_compute_unaryexp_imm_def, fetch "bir" "bir_imm_t_nchotomy", bir_unaryexp_get_oper_def] >>
+  rw [bir_compute_unaryexp_imm_def, fetch "smol_bir" "bir_imm_t_nchotomy", bir_unaryexp_get_oper_def] >>
   rw [val_from_imm_option_def,clause_name_def] >>
   metis_tac []
 QED
@@ -210,7 +210,7 @@ Proof
   rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
   rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >>
-  rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "bir" "bir_imm_t_nchotomy"] >>
+  rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "smol_bir" "bir_imm_t_nchotomy"] >>
   fs [bir_eval_binpred_imm_cases, bir_binpred_get_oper_def] >>
   metis_tac []
 QED
@@ -227,7 +227,7 @@ Proof
   rw [bir_eval_binpred_cases, bir_compute_binpred_def] >>
   rw [bir_eval_binpred_imm_cases, bir_compute_binpred_imm_def] >>
   Cases_on `b` >> Cases_on `b'` >>
-  rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "bir" "bir_imm_t_nchotomy"] >>
+  rw [bool2b_def, bool2w_def, bir_compute_binpred_imm_def, fetch "smol_bir" "bir_imm_t_nchotomy"] >>
   fs [bir_eval_binpred_imm_cases, type_of_bir_val_def,
       type_of_bir_imm_def, bir_binpred_get_oper_def,clause_name_def] >>
   metis_tac []

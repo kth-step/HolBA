@@ -1,4 +1,4 @@
-signature bir_computeLib = 
+signature smol_bir_computeLib = 
 sig
   include Abbrev;
 

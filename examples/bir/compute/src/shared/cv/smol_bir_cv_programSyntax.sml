@@ -1,10 +1,10 @@
-structure bir_cv_programSyntax :>  bir_cv_programSyntax =
+structure smol_bir_cv_programSyntax :>  smol_bir_cv_programSyntax =
 struct
 
 open HolKernel Parse bossLib boolLib;
-open bir_cv_programTheory;
+open smol_bir_cv_programTheory;
 
-val ERR = mk_HOL_ERR "bir_cv_programSyntax";
+val ERR = mk_HOL_ERR "smol_bir_cv_programSyntax";
 
 
 (* Utilities *)

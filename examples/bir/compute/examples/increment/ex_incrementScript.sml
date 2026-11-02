@@ -3,9 +3,9 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse boolLib bossLib;
-open birTheory;
-open bir_computeTheory;
-open bir_metaTheory;
+open smol_birTheory;
+open smol_bir_computeTheory;
+open smol_bir_metaTheory;
 
 val _ = new_theory "ex_increment";
 

@@ -3,13 +3,13 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open birTheory bir_programTheory;
-open bir_cv_basicTheory bir_cv_envTheory;
-open bir_cv_computeTheory;
+open smol_birTheory smol_bir_programTheory;
+open smol_bir_cv_basicTheory smol_bir_cv_envTheory;
+open smol_bir_cv_computeTheory;
 open listTheory;
 open optionTheory;
 
-val _ = new_theory "bir_cv_program";
+val _ = new_theory "smol_bir_cv_program";
 
 
 (* Label expressions that may be computed *)

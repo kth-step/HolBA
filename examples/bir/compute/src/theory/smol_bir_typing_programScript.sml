@@ -4,11 +4,11 @@
 
 
 open HolKernel Parse bossLib boolLib;
-open birTheory;
-open bir_programTheory;
+open smol_birTheory;
+open smol_bir_programTheory;
 open listTheory;
 
-val _ = new_theory "bir_typing_program";
+val _ = new_theory "smol_bir_typing_program";
 
 (* We say that a basic statement is typed when its operands are typed *)
 Definition is_stmt_basic_typed_in_env_def:

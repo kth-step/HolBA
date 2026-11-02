@@ -3,10 +3,10 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open birTheory bir_metaTheory bir_cv_basicTheory;
+open smol_birTheory smol_bir_metaTheory smol_bir_cv_basicTheory;
 open alistTheory;
 
-val _ = new_theory "bir_cv_env";
+val _ = new_theory "smol_bir_cv_env";
 
 
 Datatype:

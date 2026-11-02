@@ -6,9 +6,9 @@ structure ex_mem_incrLib :> ex_mem_incrLib =
 struct
 
 open HolKernel Parse bossLib boolLib;
-open birTheory;
+open smol_birTheory;
 open ex_mem_incrTheory;
-open bir_computeLib;
+open smol_bir_computeLib;
 open wordsTheory;
 open numSyntax;
 

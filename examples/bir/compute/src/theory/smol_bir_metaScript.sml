@@ -4,11 +4,11 @@
 
 open HolKernel Parse boolLib bossLib;
 open wordsTheory;
-open birTheory bir_computeTheory;
-open bir_programTheory bir_typing_programTheory;
+open smol_birTheory smol_bir_computeTheory;
+open smol_bir_programTheory smol_bir_typing_programTheory;
 open ottTheory;
 
-val _ = new_theory "bir_meta";
+val _ = new_theory "smol_bir_meta";
 
 (* Correction Theorems of boolean functions *)
 Theorem bool2w_T_eq_birT:
@@ -69,7 +69,7 @@ Theorem bir_env_lookup_update_neq:
       bir_env_lookup (bir_env_update env var1 v) var2 = bir_env_lookup env var2
 Proof
   Cases_on `var1` >> Cases_on `var2` >>
-  rw [fetch "bir" "bir_var_t_11"] >>
+  rw [fetch "smol_bir" "bir_var_t_11"] >>
   Cases_on `env` >>
   simp [bir_env_update_def] >>
   rw [bir_env_lookup_def] >>

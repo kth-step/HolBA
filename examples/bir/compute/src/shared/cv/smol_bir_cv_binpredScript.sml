@@ -3,11 +3,11 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse boolLib bossLib;
-open bir_cv_basicTheory;
-open birTheory bir_computeTheory;
+open smol_bir_cv_basicTheory;
+open smol_birTheory smol_bir_computeTheory;
 
 
-val _ = new_theory "bir_cv_binpred";
+val _ = new_theory "smol_bir_cv_binpred";
 
 
 (* Computes a general binary predicate with values as parameters *)

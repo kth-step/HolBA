@@ -3,12 +3,12 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse boolLib bossLib;
-open birTheory bir_computeTheory bir_cv_basicTheory;
+open smol_birTheory smol_bir_computeTheory smol_bir_cv_basicTheory;
 open bitstringTheory numeral_bitTheory numposrepTheory;
 
 
 
-val _ = new_theory "bir_cv_mem";
+val _ = new_theory "smol_bir_cv_mem";
 
 
 (* ------------------------------------------ *)

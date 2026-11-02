@@ -3,13 +3,13 @@
 (* ------------------------------------------------------------------------- *)
 
 
-structure bir_cv_envLib :> bir_cv_envLib =
+structure smol_bir_cv_envLib :> smol_bir_cv_envLib =
 struct
 
 open HolKernel Parse boolLib bossLib;
-open bir_cv_basicTheory;
-open bir_cv_basicLib;
-open bir_cv_envTheory birTheory;
+open smol_bir_cv_basicTheory;
+open smol_bir_cv_basicLib;
+open smol_bir_cv_envTheory smol_birTheory;
 open combinSyntax;
 open optionSyntax;
 
