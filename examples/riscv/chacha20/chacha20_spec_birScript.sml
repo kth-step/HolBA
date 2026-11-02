@@ -700,7 +700,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
 
  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
@@ -760,7 +760,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
 
  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
@@ -828,7 +828,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_chacha20_column_round_post_def,
@@ -917,7 +917,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_chacha20_diagonal_round_post_def,
