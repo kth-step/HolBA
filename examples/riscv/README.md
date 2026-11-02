@@ -56,6 +56,8 @@ Compile and link `incr.c` to produce the binary program `incr`:
 /path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O1 -o incr incr.c
 ```
 
+To also use 16-bit compressed instructions, compile with `-march=rv64gc` instead (see the `swap_compressed` example).
+
 Disassemble `incr`:
 ```shell
 /path/to/riscv/bin/riscv64-unknown-linux-gnu-objdump -d incr > incr.da
