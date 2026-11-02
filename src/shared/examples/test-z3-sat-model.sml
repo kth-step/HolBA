@@ -5,6 +5,9 @@ val use_holsmt = true;
 
 open finite_mapTheory;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 (* Load the dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
   load "../Z3_SAT_modelLib"; (* ../ *)
