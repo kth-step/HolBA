@@ -8,6 +8,9 @@ open smol_bir_cv_basicLib;
 open smol_bir_cv_envLib;
 open smol_bir_cv_programLib;
 
+(* the proofs below need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 (* ------------------------------------------------- *)
 (* ------------------- Utilities ------------------- *)
 (* ------------------------------------------------- *)

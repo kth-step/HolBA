@@ -24,12 +24,12 @@ fun dest_tri_record (ty : hol_type) (err : exn) (tm: term) =
     | _ => raise err end
 
 
-val le_label_tm = prim_mk_const{Name="BLE_Label", Thy="bir"};
-val le_exp_tm = prim_mk_const{Name="BLE_Exp", Thy="bir"};
-val stmt_assign_tm = prim_mk_const{Name="BStmt_Assign", Thy="bir"};
-val stmt_jmp_tm = prim_mk_const{Name="BStmt_Jmp", Thy="bir"};
-val stmt_cjmp_tm = prim_mk_const{Name="BStmt_CJmp", Thy="bir"};
-val program_tm = prim_mk_const{Name="BirProgram", Thy="bir"};
+val le_label_tm = prim_mk_const{Name="BLE_Label", Thy="smol_bir"};
+val le_exp_tm = prim_mk_const{Name="BLE_Exp", Thy="smol_bir"};
+val stmt_assign_tm = prim_mk_const{Name="BStmt_Assign", Thy="smol_bir"};
+val stmt_jmp_tm = prim_mk_const{Name="BStmt_Jmp", Thy="smol_bir"};
+val stmt_cjmp_tm = prim_mk_const{Name="BStmt_CJmp", Thy="smol_bir"};
+val program_tm = prim_mk_const{Name="BirProgram", Thy="smol_bir"};
 
 
 fun mk_le_label tm =

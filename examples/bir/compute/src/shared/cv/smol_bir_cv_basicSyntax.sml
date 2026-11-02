@@ -13,17 +13,17 @@ val ERR = mk_HOL_ERR "smol_bir_cv_basicSyntax";
 
 
 
-val cv_val_imm_tm = prim_mk_const{Name="BCVVal_Imm", Thy="bir_cv_basic"};
-val cv_val_mem_tm = prim_mk_const{Name="BCVVal_Mem", Thy="bir_cv_basic"};
-val cv_exp_const_tm = prim_mk_const{Name="BCVExp_Const", Thy="bir_cv_basic"};
-val cv_exp_mem_const_tm = prim_mk_const{Name="BCVExp_MemConst", Thy="bir_cv_basic"};
-val cv_exp_den_tm = prim_mk_const{Name="BCVExp_Den", Thy="bir_cv_basic"};
-val cv_exp_bin_exp_tm = prim_mk_const{Name="BCVExp_BinExp", Thy="bir_cv_basic"};
-val cv_exp_unary_exp_tm = prim_mk_const{Name="BCVExp_UnaryExp", Thy="bir_cv_basic"};
-val cv_exp_bin_pred_tm = prim_mk_const{Name="BCVExp_BinPred", Thy="bir_cv_basic"};
-val cv_exp_if_then_else_tm = prim_mk_const{Name="BCVExp_IfThenElse", Thy="bir_cv_basic"};
-val cv_exp_load_tm = prim_mk_const{Name="BCVExp_Load", Thy="bir_cv_basic"};
-val cv_exp_store_tm = prim_mk_const{Name="BCVExp_Store", Thy="bir_cv_basic"};
+val cv_val_imm_tm = prim_mk_const{Name="BCVVal_Imm", Thy="smol_bir_cv_basic"};
+val cv_val_mem_tm = prim_mk_const{Name="BCVVal_Mem", Thy="smol_bir_cv_basic"};
+val cv_exp_const_tm = prim_mk_const{Name="BCVExp_Const", Thy="smol_bir_cv_basic"};
+val cv_exp_mem_const_tm = prim_mk_const{Name="BCVExp_MemConst", Thy="smol_bir_cv_basic"};
+val cv_exp_den_tm = prim_mk_const{Name="BCVExp_Den", Thy="smol_bir_cv_basic"};
+val cv_exp_bin_exp_tm = prim_mk_const{Name="BCVExp_BinExp", Thy="smol_bir_cv_basic"};
+val cv_exp_unary_exp_tm = prim_mk_const{Name="BCVExp_UnaryExp", Thy="smol_bir_cv_basic"};
+val cv_exp_bin_pred_tm = prim_mk_const{Name="BCVExp_BinPred", Thy="smol_bir_cv_basic"};
+val cv_exp_if_then_else_tm = prim_mk_const{Name="BCVExp_IfThenElse", Thy="smol_bir_cv_basic"};
+val cv_exp_load_tm = prim_mk_const{Name="BCVExp_Load", Thy="smol_bir_cv_basic"};
+val cv_exp_store_tm = prim_mk_const{Name="BCVExp_Store", Thy="smol_bir_cv_basic"};
 
 
 fun mk_cv_val_imm tm =

@@ -16,15 +16,15 @@ fun dest_tri_record (ty : hol_type) (err : exn) (tm: term) =
     | _ => raise err end
 
 
-val cv_le_label_tm = prim_mk_const{Name="BCVLE_Label", Thy="bir_cv_program"};
-val cv_le_exp_tm = prim_mk_const{Name="BCVLE_Exp", Thy="bir_cv_program"};
-val cv_stmt_assign_tm = prim_mk_const{Name="BCVStmt_Assign", Thy="bir_cv_program"};
-val cv_stmt_jmp_tm = prim_mk_const{Name="BCVStmt_Jmp", Thy="bir_cv_program"};
-val cv_stmt_cjmp_tm = prim_mk_const{Name="BCVStmt_CJmp", Thy="bir_cv_program"};
-val cv_block_tm = prim_mk_const{Name="BCVBlock", Thy="bir_cv_program"};
-val cv_program_tm = prim_mk_const{Name="BirCVProgram", Thy="bir_cv_program"};
-val cv_programcounter_tm = prim_mk_const{Name="BCVProgramCounter", Thy="bir_cv_program"};
-val cv_state_tm = prim_mk_const{Name="BCVState", Thy="bir_cv_program"};
+val cv_le_label_tm = prim_mk_const{Name="BCVLE_Label", Thy="smol_bir_cv_program"};
+val cv_le_exp_tm = prim_mk_const{Name="BCVLE_Exp", Thy="smol_bir_cv_program"};
+val cv_stmt_assign_tm = prim_mk_const{Name="BCVStmt_Assign", Thy="smol_bir_cv_program"};
+val cv_stmt_jmp_tm = prim_mk_const{Name="BCVStmt_Jmp", Thy="smol_bir_cv_program"};
+val cv_stmt_cjmp_tm = prim_mk_const{Name="BCVStmt_CJmp", Thy="smol_bir_cv_program"};
+val cv_block_tm = prim_mk_const{Name="BCVBlock", Thy="smol_bir_cv_program"};
+val cv_program_tm = prim_mk_const{Name="BirCVProgram", Thy="smol_bir_cv_program"};
+val cv_programcounter_tm = prim_mk_const{Name="BCVProgramCounter", Thy="smol_bir_cv_program"};
+val cv_state_tm = prim_mk_const{Name="BCVState", Thy="smol_bir_cv_program"};
 
 
 fun mk_cv_le_label tm =
