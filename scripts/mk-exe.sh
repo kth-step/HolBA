@@ -3,6 +3,9 @@
 set -e
 SML_PATH=$1
 
+# HolBA root, for $(HOLBADIR) in Holmakefiles (computed before changing directory)
+HOLBA_DIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")
+
 function find_hol4_bin_dir {
     declare HOLBA_HOLMAKE=${HOLBA_HOLMAKE:-"Holmake"}
     declare HOLMAKE_NOFLAGS=$(echo $HOLBA_HOLMAKE | awk '{print $1;}')
@@ -19,10 +22,17 @@ function mk_exe_for_sml_file {
     declare HOLBINDIR=$(find_hol4_bin_dir)
     declare HOL="$HOLBINDIR/hol"
 
-    # Determine in which heap to execute by looking at the Holmakefile file
-    declare HEAP=$(grep -E '^HOLHEAP' Holmakefile | sed -r 's/HOLHEAP\s*=\s*(\S+)/\1/')
-    if [ ! -f "$HEAP" ]; then
-        declare HEAP=`"$HOL" heapname`
+    # Determine in which heap to execute by looking at the Holmakefile file;
+    # like the Holmakefiles, use the default heap under HOLBA_POLYML_HEAPLESS.
+    # The heap need not exist yet: Holmake builds it in this directory before
+    # the tests run.
+    declare HEAP=""
+    if [[ -z "${HOLBA_POLYML_HEAPLESS}" ]]; then
+        HEAP=$(grep -E '^HOLHEAP' Holmakefile | sed -r 's/HOLHEAP\s*=\s*(\S+)/\1/' \
+               | sed "s|\$(HOLBADIR)|${HOLBADIR:-${HOLBA_DIR}}|")
+    fi
+    if [[ -z "${HEAP}" ]]; then
+        HEAP=`"$HOL" heapname`
     fi
 
     declare SML_MODULE=$(echo $1 | sed -r 's/.sml//')
