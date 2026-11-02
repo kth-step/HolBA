@@ -4,6 +4,9 @@ open HolKernel Parse boolLib bossLib;
 open birs_simpLib;
 open birs_simp_instancesLib;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 val default_exp_simp = birs_simp_default_core_exp_simp;
 val armcm0_simp = birs_simp_default_armcm0_gen false birs_simpLib.birs_simp_ID_fun [];
 val riscv_simp = birs_simp_default_riscv_gen false birs_simpLib.birs_simp_ID_fun [];

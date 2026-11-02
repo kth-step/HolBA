@@ -22,6 +22,9 @@ open bir_exp_substitutionsTheory;
 open birs_composeLib;
 open birs_auxTheory;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 (* testing *)

@@ -4,8 +4,45 @@ INCLUDES = $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/tools/symbexec/examples/binaries \
            $(HOLBADIR)/src
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-aux_setLib.exe test-birs_compose.exe test-birs_transfer.exe test-birs_utils.exe test-instantiationLib.exe test-instantiationLib_rename.exe test-merge.exe test-simps.exe
 .PHONY: all
+
+test-aux_setLib.exe: test-aux_setLib.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-birs_compose.exe: test-birs_compose.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-birs_transfer.exe: test-birs_transfer.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-birs_utils.exe: test-birs_utils.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-instantiationLib.exe: test-instantiationLib.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-instantiationLib_rename.exe: test-instantiationLib_rename.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-merge.exe: test-merge.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-simps.exe: test-simps.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-aux_setLib.exe test-birs_compose.exe test-birs_transfer.exe test-birs_utils.exe test-instantiationLib.exe test-instantiationLib_rename.exe test-merge.exe test-simps.exe
+	./test-aux_setLib.exe
+	./test-birs_compose.exe
+	./test-birs_transfer.exe
+	./test-birs_utils.exe
+	./test-instantiationLib.exe
+	./test-instantiationLib_rename.exe
+	./test-merge.exe
+	./test-simps.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-aux_setLib.exe test-birs_compose.exe test-birs_transfer.exe test-birs_utils.exe test-instantiationLib.exe test-instantiationLib_rename.exe test-merge.exe test-simps.exe
 
 ifdef POLY
 ifndef HOLBA_POLYML_HEAPLESS

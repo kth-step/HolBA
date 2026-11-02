@@ -2,6 +2,9 @@ open HolKernel Parse boolLib bossLib;
 open birs_instantiationLib;
 open birsSyntax;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 val thm_test1 = aux_moveawayLib.mk_oracle_preserve_tags [] "TESTFILE" ``
   birs_symb_exec prog (<|bsst_pc :=
                <|bpc_label := BL_Address (Imm32 0x0w);
