@@ -673,8 +673,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
@@ -701,7 +700,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
 
  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
@@ -734,8 +733,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
@@ -762,7 +760,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
 
  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
@@ -798,8 +796,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
@@ -831,7 +828,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_chacha20_column_round_post_def,
@@ -891,8 +888,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
@@ -921,7 +917,7 @@ Proof
   bir_eval_bin_pred_def
  ] >>
 
- rw [bir_eval_bin_pred_exists_64_lowcast_32_eq] >>
+ rw [bir_eval_bin_pred_exists_64_lowcast_32_eq, GSYM w2w_n2w_w2n_64_32] >>
  
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_chacha20_diagonal_round_post_def,
