@@ -8,6 +8,7 @@ open smol_bir_cv_basicTheory smol_bir_cv_envTheory;
 open smol_bir_cv_computeTheory;
 open listTheory;
 open optionTheory;
+open wordsLib cv_transLib;
 
 val _ = new_theory "smol_bir_cv_program";
 
@@ -565,6 +566,10 @@ Proof
     rw [from_cv_stmt_option_def]
   ]
 QED
+
+
+(* CV translation of the step function *)
+val _ = cv_auto_trans bir_cv_compute_step_def;
 
 
 val _ = export_theory ()

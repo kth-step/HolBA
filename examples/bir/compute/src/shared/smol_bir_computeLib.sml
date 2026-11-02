@@ -45,7 +45,7 @@ let
   val deep_constant = mk_const (deep_name, type_of tm);
   val deep_constant_def = new_definition (deep_name ^ "_def", ``^deep_constant = ^tm``);
   (* Add to compset / stateful simpset *)
-  val _ = add_thms [deep_constant_def] the_compset;
+  val _ = computeLib.add_funs [deep_constant_def];
   val _ = export_rewrites [deep_name ^ "_def"];
 
   (* val _ = print "Translating with deep embedding...\n"; *)
@@ -95,17 +95,8 @@ fun compute_exp_EVAL (exp : term) (env: term) : thm =
 
 
 (* CV COMPUTE *)
-(* Translate computation function when loading lib *)
-val _  = cv_auto_trans_rec cv_n2l_def 
-  (WF_REL_TAC `measure (cv_size)` >> Cases_on `cv_n` >> rw [cv_size_def]);
-
-
-val bir_cv_compute_exp_pre_cases  = cv_auto_trans_pre "" bir_cv_compute_exp_def;
-val _ = store_thm("bir_cv_compute_exp_pre[cv_pre]", ``!v env. bir_cv_compute_exp_pre v env``,
-  Induct_on `v` >>
-  rw [Once bir_cv_compute_exp_pre_cases]);
-
-val _ = cv_auto_trans bir_cv_compute_step_def;
+(* The computation functions are translated in smol_bir_cv_computeTheory and
+   smol_bir_cv_programTheory *)
 
 (* Deep embedding of our expression *)
 (* WARNING : this creates theorems suffixed by _bir_cv_def, _bir_cv_eq. *)

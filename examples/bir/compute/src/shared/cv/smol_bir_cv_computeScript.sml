@@ -7,9 +7,14 @@ open smol_bir_cv_basicTheory smol_bir_cv_binexpTheory smol_bir_cv_unaryexpTheory
 open smol_bir_cv_memTheory;
 open smol_bir_cv_envTheory;
 open smol_bir_computeTheory;
+open wordsLib cv_transLib cv_stdTheory cvTheory;
 
 
 val _ = new_theory "smol_bir_cv_compute";
+
+(* cv_stdTheory has ratTheory as ancestor, which makes numerals default to rat;
+   prefer num again, here and in descendant theories *)
+val _ = numLib.prefer_num ();
 
 (* General Computation function *)
 Definition bir_cv_compute_exp_def:
@@ -89,6 +94,16 @@ Proof
   ]
 QED
 
+
+(* CV translation of the computation function *)
+val _  = cv_auto_trans_rec cv_n2l_def
+  (WF_REL_TAC `measure (cv_size)` >> Cases_on `cv_n` >> rw [cv_size_def]);
+
+
+val bir_cv_compute_exp_pre_cases  = cv_auto_trans_pre "" bir_cv_compute_exp_def;
+val _ = store_thm("bir_cv_compute_exp_pre[cv_pre]", ``!v env. bir_cv_compute_exp_pre v env``,
+  Induct_on `v` >>
+  rw [Once bir_cv_compute_exp_pre_cases]);
 
 
 val _ = export_theory ()
