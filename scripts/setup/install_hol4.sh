@@ -93,7 +93,7 @@ if [[ ! -d "${HOL4_DIR}" ]]; then
     echo "val polymllibdir = \"/usr/lib/x86_64-linux-gnu\";" > tools-poly/poly-includes.ML
   fi
   poly < tools/smart-configure.sml
-  bin/build --nograph
+  bin/build
 fi
 cd "${HOLBA_OPT_DIR}"
 
