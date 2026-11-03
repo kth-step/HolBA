@@ -31,21 +31,41 @@ fun unsupported what tm =
   raise ERR "arm8_cond_to_bir"
     ("unsupported " ^ what ^ ": " ^ term_to_string tm);
 
-(* m.REG k with k a literal, a free word64 variable among the
-   parameters, or a word64 literal *)
+(* The word sizes of BIR immediates, except Bit1 and Bit128 *)
+fun is_supported_word_ty ty =
+  mem (fcpSyntax.dest_int_numeric_type (wordsSyntax.dest_word_type ty))
+    [8, 16, 32, 64]
+  handle HOL_ERR _ => false;
+
+(* Word operations, applied to supported words *)
+val word_unops = [``word_2comp``, ``word_1comp``, ``w2w``, ``sw2sw``];
+val word_binops = [
+  ``word_add``, ``word_sub``, ``word_mul``,
+  ``word_div``, ``word_quot``, ``word_mod``,
+  ``word_and``, ``word_or``, ``word_xor``];
+
+(* Words built with the operations above from m.REG k with k a literal,
+   free variables among the parameters, and literals *)
 fun check_word params m tm =
-  if not (type_of tm = word64_ty) then unsupported "word type" tm
+  if not (is_supported_word_ty (type_of tm)) then unsupported "word type" tm
   else if wordsSyntax.is_word_literal tm then ()
   else if is_var tm then
     (if tmem tm params then () else unsupported "free variable" tm)
   else let
     val (f, args) = strip_comb tm
+    fun is_op ops = is_const f andalso exists (same_const f) ops
   in
     case args of
-      [m', k] =>
-        if same_const f REG_tm andalso aconv m m'
-           andalso wordsSyntax.is_word_literal k
-        then () else unsupported "word term" tm
+      [a] =>
+        if is_op word_unops then check_word params m a
+        else unsupported "word term" tm
+    | [a, b] =>
+        if same_const f REG_tm andalso aconv m a then
+          (if wordsSyntax.is_word_literal b then ()
+           else unsupported "register index" b)
+        else if is_op word_binops then
+          (check_word params m a; check_word params m b)
+        else unsupported "word term" tm
     | _ => unsupported "word term" tm
   end;
 
@@ -95,16 +115,21 @@ in
     (K is_imm_var)
 end;
 
-(* The comparisons not directly covered by bir_exp_liftingLib *)
-val word_flip_thms =
-  [WORD_GREATER, WORD_GREATER_EQ, WORD_HIGHER, WORD_HIGHER_EQ];
+(* Rewrites before lifting: the comparisons not directly covered by
+   bir_exp_liftingLib, and ==>, which it lifts as BIExp_LessOrEqual on
+   Bit1 values. The latter is correct, but symbolic transfer's typing
+   tactic for postconditions (in bir_symb_transfer_thm) can't show that
+   such expressions are bool, and ~a \/ b is also easier to read *)
+val preprocess_thms =
+  [WORD_GREATER, WORD_GREATER_EQ, WORD_HIGHER, WORD_HIGHER_EQ,
+   IMP_DISJ_THM];
 
 fun lift_cond bs m q = let
   val bmr_tm = ``bmr_rel arm8_bmr ^bs ^m``
   val eln = eln_insert
     (eln_add_thms eln_default [bs, m] [SPECL [bs, m] arm8_bmr_LIFTED])
     elf_var_imm
-  val q_eq = QCONV (PURE_REWRITE_CONV word_flip_thms) q
+  val q_eq = QCONV (PURE_REWRITE_CONV preprocess_thms) q
   val env_t = ``^bs.bst_environ``
   val th = bir_exp_lift env_t eln (mk_comb (``bool2b``, rhs (concl q_eq)))
   val _ = if is_bir_is_lifted_exp (concl th) andalso
@@ -187,7 +212,7 @@ fun bridge lemma insts lifted_thm def = let
             [bir_is_bool_exp_def, bir_typing_expTheory.type_of_bir_exp_def,
              bir_valuesTheory.BType_Bool_def])
         else prove (prem,
-          GEN_TAC >> REWRITE_TAC (def :: word_flip_thms) >> tautLib.TAUT_TAC)
+          GEN_TAC >> REWRITE_TAC (def :: preprocess_thms) >> tautLib.TAUT_TAC)
     in discharge (MP th pth) end
 in discharge th0 end;
 

@@ -10,9 +10,11 @@ sig
 
      where m : arm8_state and body is in the supported fragment:
        - /\, \/, ~, ==>
-       - =, <+, <=+, >+, >=+, <, <=, >, >= on word64
-       - m.REG k with k a word literal, free word64 variables
-         (among x1 ... xn) and word64 literals
+       - =, <+, <=+, >+, >=+, <, <=, >, >= on words of size 8, 16, 32
+         or 64
+       - words built with +, -, unary -, *, //, /, word_mod, &&, ||,
+         ??, ~, w2w and sw2sw from m.REG k with k a word literal, free
+         variables (among x1 ... xn) and word literals
        - at most one top-level conjunct m.PC = A, with A a closed
          word64 term (a literal or an address constant)
 

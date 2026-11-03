@@ -38,127 +38,28 @@ open bir_program_varsTheory;
 
 open update_sat_spec_arm8Theory;
 
-open bslSyntax;
+open arm8_bir_condLib;
 
 val _ = new_theory "update_sat_spec_bir";
 
-(* -------------- *)
-(* BSPEC contract *)
-(* -------------- *)
+(* ------------------------------------------------- *)
+(* BSPEC contract, translated from the ARMv8 contract *)
+(* ------------------------------------------------- *)
 
-val bspec_update_sat_pre_tm = bandl [
-  bslt (bminus (bchsign (bconst64 2147483647), bconst64 1), bconstvar64 "pre_x2"),
+(* Defines bspec_update_sat_pre and bspec_update_sat_post *)
 
-  bslt (bconstvar64 "pre_x2", bconstvar64 "pre_x3"),
+val (_, update_sat_arm8_pre_imp_bspec_pre) =
+ arm8_pre_to_bir arm8_update_sat_pre_def;
 
-  bsle (bconstvar64 "pre_x2", bconstvar64 "pre_x1"),
-
-  bsle (bconstvar64 "pre_x1", bconstvar64 "pre_x3"),
-
-  bslt (bden (bvarimm64 "R3"), bconst64 2147483647),
-
-  beq (bden (bvarimm64 "R3"), bconstvar64 "pre_x3"),
-
-  beq (bden (bvarimm64 "R2"), bconstvar64 "pre_x2"),
-
-  beq (bden (bvarimm64 "R1"), bconstvar64 "pre_x1"),
-
-  beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x0")
-];
-
-Definition bspec_update_sat_pre_def:
- bspec_update_sat_pre (pre_x0:word64) (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
-  ^bspec_update_sat_pre_tm
-End
-
-val bspec_update_sat_post_or_1_tm = borl [
-  bnot (band (beq (bconstvar64 "pre_x0", bconst64 0),
-   bslt (bminus (bconstvar64 "pre_x1", bconst64 1), bconstvar64 "pre_x2"))),
-
-  beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x2")
-];
-
-val bspec_update_sat_post_or_2_tm = borl [
-  bnot (band (beq (bconstvar64 "pre_x0", bconst64 0),
-   bsle (bconstvar64 "pre_x2", bminus (bconstvar64 "pre_x1", bconst64 1)))),
-
-  beq (bden (bvarimm64 "R0"),
-   bminus (bconstvar64 "pre_x1", bconst64 1))
-];
-
-val bspec_update_sat_post_or_3_tm = borl [
-  bnot (band (bnot (beq (bconstvar64 "pre_x0", bconst64 0)),
-   bslt (bconstvar64 "pre_x3", bplus (bconstvar64 "pre_x1", bconst64 1)))),
-
-   beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x3")
-];
-
-val bspec_update_sat_post_or_4_tm = borl [
-  bnot (band (bnot (beq (bconstvar64 "pre_x0", bconst64 0)),
-   bsle (bplus (bconstvar64 "pre_x1", bconst64 1), bconstvar64 "pre_x3"))),
-
-   beq (bden (bvarimm64 "R0"),
-    bplus (bconstvar64 "pre_x1", bconst64 1))
-];
-
-val bspec_update_sat_post_tm = bandl [
-  bspec_update_sat_post_or_1_tm,
-  bspec_update_sat_post_or_2_tm,
-  bspec_update_sat_post_or_3_tm,
-  bspec_update_sat_post_or_4_tm
-];
-
-Definition bspec_update_sat_post_def:
- bspec_update_sat_post (pre_x0:word64) (pre_x1:word64) (pre_x2:word64) (pre_x3:word64) : bir_exp_t =
-  ^bspec_update_sat_post_tm
-End
+val (_, update_sat_arm8_post_imp_bspec_post) =
+ arm8_post_to_bir arm8_update_sat_post_def;
 
 (* ------------------------------------ *)
 (* Connecting ARMv8 and BSPEC contracts *)
 (* ------------------------------------ *)
 
-Theorem update_sat_arm8_pre_imp_bspec_pre_thm:
-  bir_pre_arm8_to_bir
-   (arm8_update_sat_pre pre_x0 pre_x1 pre_x2 pre_x3)
-   (bspec_update_sat_pre pre_x0 pre_x1 pre_x2 pre_x3)
-Proof
- rw [bir_pre_arm8_to_bir_def,arm8_update_sat_pre_def,bspec_update_sat_pre_def] >-
-  (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
+Theorem update_sat_arm8_pre_imp_bspec_pre_thm = update_sat_arm8_pre_imp_bspec_pre
 
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-   bir_eval_bin_pred_def,
-   arm8_bmr_rel_EVAL,
-   bir_immTheory.bool2b_def,
-   bir_immTheory.bool2w_def,
-   bir_envTheory.bir_env_read_def,
-   bir_envTheory.bir_env_lookup_def,
-   bir_val_TF_bool2b_DEF
-  ] >>
-
-  rw []
-QED
-
-Theorem update_sat_arm8_post_imp_bspec_post_thm:
- !ls. bir_post_bir_to_arm8
-  (arm8_update_sat_post pre_x0 pre_x1 pre_x2 pre_x3)
-  (\l. bspec_update_sat_post pre_x0 pre_x1 pre_x2 pre_x3) ls
-Proof
- rw [bir_post_bir_to_arm8_def] >>
- Cases_on `bs` >> Cases_on `b0` >>
- `f "R0" = SOME (BVal_Imm (Imm64 (ms.REG 0w)))` by METIS_TAC [arm8_bmr_x0_equiv] >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bspec_update_sat_post_def,
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,
-  bir_eval_bin_pred_def,
-  bir_val_true_def,
-  bool2b_def,
-  bool2w_def
- ] >>
- rpt (pop_assum mp_tac) >> rw [arm8_update_sat_post_def]
-QED
+Theorem update_sat_arm8_post_imp_bspec_post_thm = update_sat_arm8_post_imp_bspec_post
 
 val _ = export_theory ();
