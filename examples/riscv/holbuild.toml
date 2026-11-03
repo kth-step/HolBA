@@ -1,16 +1,16 @@
 [holbuild]
 schema = 2
-minimum_version = "0.11.0"
+minimum_version = "0.11.6"
 
 [project]
 name = "holba_examples_riscv"
 
-# Must match the HOL revision used by the HolBA root holproject.toml.
+# Must match the HOL revision used by the HolBA root holbuild.toml.
 [dependencies.hol]
 git = "https://github.com/HOL-Theorem-Prover/HOL.git"
 rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
 
-# HolBA itself (the root holproject.toml of this repository). holbuild has no
+# HolBA itself (the root holbuild.toml of this repository). holbuild has no
 # path dependencies, so examples/riscv/.holconfig.toml overrides this with
 #   [overrides.holba]
 #   path = "../.."

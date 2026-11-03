@@ -12,8 +12,7 @@ MAKETARGET_PARAM=$1
 
 # compile the project
 # -------------------------------
-# --no-project: ignore the holproject.toml files, which are for holbuild
-export HOLBA_HOLMAKE_OPTS="--qof --no-project"
+export HOLBA_HOLMAKE_OPTS="--qof"
 make ${MAKETARGET_PARAM}
 
 

@@ -1,6 +1,6 @@
 [holbuild]
 schema = 2
-minimum_version = "0.11.0"
+minimum_version = "0.11.6"
 
 [project]
 name = "holba"

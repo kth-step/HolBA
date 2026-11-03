@@ -6,10 +6,6 @@
 HOLBA_DIR=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")/../..
 export HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
-# Holmakefiles refer to $(HOLBADIR); Holmake would get it from .holpath,
-# but holproject.toml (for holbuild) in the same directory shadows .holpath
-export HOLBADIR="${HOLBA_DIR}"
-
 
 #####################################################
 # check that this script is sourced

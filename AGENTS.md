@@ -1,9 +1,9 @@
 # HolBA – notes for agents
 
 ## What this repository is
-- The **library** (`src/`, root `holproject.toml`) provides HOL4 theories and tools for binary analysis and verification: BIR semantics, lifters, backlifters, program logics, symbolic execution, contract composition.
+- The **library** (`src/`, root `holbuild.toml`) provides HOL4 theories and tools for binary analysis and verification: BIR semantics, lifters, backlifters, program logics, symbolic execution, contract composition.
 - How these are actually used to verify programs is shown **only in the examples**, chiefly `examples/riscv/` and `examples/arm8/`. These are separate holbuild projects that depend on the library, i.e., "client projects".
-- Their `holproject.toml` files are templates for setting up other client projects that use HolBA.
+- Their `holbuild.toml` files are templates for setting up other client projects that use HolBA.
 - `examples/bir/` is a third client project, not about binary verification. So far it builds only `compute` (group `@compute`): "Smol BIR", an independent fragment of BIR with cv-based evaluation. Its files are prefixed `smol_bir` so that their logical names don't clash with the library's BIR theories. The other subdirectories of `examples/bir/` are not built yet.
 
 ## z3 is for clients, not for the library
@@ -14,6 +14,9 @@
 
 ## Building
 - Prefer **holbuild** (fast, incremental, resumes failed proofs from checkpoints). Holmake with `configure.sh`/`env.sh` (see README) is the legacy path.
+- holbuild manifests are named `holbuild.toml`, not `holproject.toml`. Don't add a `holproject.toml` anywhere in the repository:
+  - Holmake reads `holproject.toml` as its own project file, with a different schema.
+  - In a directory that has one, Holmake ignores `.holpath`. So a `holproject.toml` at the root would leave `$(HOLBADIR)` in the Holmakefiles undefined.
 - Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, `examples/arm8/`, or `examples/bir/`):
   - one theory: `holbuild build chacha20_double_round_propTheory`
   - a group from `[build.groups.*]`: `holbuild build @chacha20`, or `holbuild build @examples` at the root for examples under `src/`
@@ -31,10 +34,10 @@
   - When renaming a theory, also update theory names in strings: `Thy="..."` in `prim_mk_const`/`mk_thy_const`, `syntax_fns`, `DB.fetch`. No build catches stale ones: holbuild does not execute plain `.sml` modules, so they fail only when loaded (e.g. by a test).
 - HolBA builds against a tagged HOL4 release. holbuild currently only accepts a commit SHA for `[dependencies.hol]` `rev`, so:
   - `rev` must be the commit of a HOL4 tag, i.e., `git ls-remote https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`, not the annotated tag object's own SHA.
-  - The root `holproject.toml` names the tag in a comment above `rev`.
-  - All `holproject.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`) use the same `rev`; change them together.
+  - The root `holbuild.toml` names the tag in a comment above `rev`.
+  - All `holbuild.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`) use the same `rev`; change them together.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
-- Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 (still mentioned in the README) has been associated with intermittent deadlocks when spawning z3.
+- Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
 
 ## Iterating on proofs using holbuild with a short tactic timeout
