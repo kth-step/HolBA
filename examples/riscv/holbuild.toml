@@ -31,6 +31,7 @@ members = [
   "modexp",
   "motor",
   "swap",
+  "swap-compressed",
 ]
 # Test scripts (e.g. aes/test-aes.sml) are not built by default.
 exclude_globs = ["*/test-*.sml"]
@@ -47,6 +48,7 @@ root_groups = [
   "modexp",
   "motor",
   "swap",
+  "swap-compressed",
 ]
 tactic_timeout = 600.0
 
@@ -79,3 +81,6 @@ include = ["motor"]
 
 [build.groups.swap]
 include = ["swap"]
+
+[build.groups.swap-compressed]
+include = ["swap-compressed"]

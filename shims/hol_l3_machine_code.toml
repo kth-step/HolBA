@@ -19,21 +19,24 @@ members = [
 loads = ["fp-sig", "fp-functor"]
 
 # The following mirror Holmake rules in examples/l3-machine-code that compile
-# with -toplevel, which holbuild does not infer from load/open.
+# with -toplevel, which holbuild does not infer from load/open. These modules
+# are in this package, so they are deps, not loads: holbuild records a load by
+# its bare name in the .uo, which then resolves only if the module happens to
+# be loaded already.
 [actions.FP32]
-loads = ["FP"]
+deps = ["FP"]
 
 [actions.FP64]
-loads = ["FP"]
+deps = ["FP"]
 
 [actions.MutableMap16]
-loads = ["Ptree", "Map", "MutableMapFunctor"]
+deps = ["Ptree", "Map", "MutableMapFunctor"]
 
 [actions.PureMap]
-loads = ["Ptree", "Map"]
+deps = ["Ptree", "Map"]
 
 [actions.arm8]
-loads = ["assemblerLib", "MutableMap16"]
+deps = ["assemblerLib", "MutableMap16"]
 
 [actions.m0]
-loads = ["assemblerLib", "MutableMap16"]
+deps = ["assemblerLib", "MutableMap16"]
