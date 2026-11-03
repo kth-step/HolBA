@@ -1,4 +1,5 @@
 INCLUDES = $(HOLBADIR)/examples/riscv/swap \
+           $(HOLBADIR)/examples/riscv/swap-compressed \
            $(HOLBADIR)/examples/riscv/isqrt \
            $(HOLBADIR)/examples/riscv/mod2 \
            $(HOLBADIR)/examples/riscv/incr \

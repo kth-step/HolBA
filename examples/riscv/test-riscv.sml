@@ -10,6 +10,7 @@ open bir_programSyntax bir_program_labelsTheory bir_immTheory;
 open swapTheory swap_symb_transfTheory swap_propTheory;
 open mod2Theory mod2_symb_transfTheory mod2_propTheory;
 open incrTheory incr_symb_transfTheory incr_propTheory;
+open swap_compressedTheory;
 
 fun print_and_check_thm name thm t_concl =
   let
@@ -56,6 +57,19 @@ val _ = print_and_check_thm
      swap_init_addr {swap_end_addr}
      (riscv_swap_pre pre_x10 pre_x11 pre_x10_deref pre_x11_deref)
      (riscv_swap_post pre_x10 pre_x11 pre_x10_deref pre_x11_deref)``;
+
+(* --------------- *)
+(* swap_compressed *)
+(* --------------- *)
+
+val _ = print_and_check_thm
+  "swap_compressed RISC-V lift theorem"
+  bir_swap_compressed_riscv_lift_THM
+  ``
+  bir_is_lifted_prog riscv_bmr (WI_end (0x10488w : word64) (0x1049Aw : word64))
+   bir_swap_compressed_progbin
+   (bir_swap_compressed_prog : 'obs_type bir_program_t)
+  ``;
 
 (* ---- *)
 (* incr *)

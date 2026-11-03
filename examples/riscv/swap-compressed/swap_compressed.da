@@ -1,0 +1,17 @@
+
+swap_compressed:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000010488 <swap>:
+   10488:	611c                	ld	a5,0(a0)
+   1048a:	6198                	ld	a4,0(a1)
+   1048c:	00e78463          	beq	a5,a4,10494 <swap+0xc>
+   10490:	e118                	sd	a4,0(a0)
+   10492:	e19c                	sd	a5,0(a1)
+   10494:	8082                	ret
+
+0000000000010496 <main>:
+   10496:	4501                	li	a0,0
+   10498:	8082                	ret
