@@ -6,6 +6,9 @@ open PPBackEnd
 open riscv_assemblerLib;
 open selftestLib;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 (* Flags for determining type of output *)
 val unicode = false;
 val raw_output = false;

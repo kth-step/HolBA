@@ -1,3 +1,7 @@
+(* lets holbuild stage update_sat.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["update_sat.da"]
+
 open HolKernel Parse;
 
 open bir_lifter_interfaceLib;

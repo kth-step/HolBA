@@ -1,0 +1,86 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.6"
+
+[project]
+name = "holba_examples_riscv"
+
+# Must match the HOL revision used by the HolBA root holbuild.toml.
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
+
+# HolBA itself (the root holbuild.toml of this repository). holbuild has no
+# path dependencies, so examples/riscv/.holconfig.toml overrides this with
+#   [overrides.holba]
+#   path = "../.."
+# to build against the enclosing checkout instead of this rev.
+[dependencies.holba]
+git = "https://github.com/kth-step/HolBA"
+rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"
+
+[build]
+members = [
+  "aes",
+  "aes-unopt",
+  "chacha20",
+  "incr",
+  "isqrt",
+  "kernel-trap",
+  "mod2",
+  "modexp",
+  "motor",
+  "swap",
+  "swap-compressed",
+]
+# Test scripts (e.g. aes/test-aes.sml) are not built by default.
+exclude_globs = ["*/test-*.sml"]
+# holba declares roots, so without explicit roots/root_groups here a plain
+# `holbuild build` would only build holba's roots.
+root_groups = [
+  "aes",
+  "aes-unopt",
+  "chacha20",
+  "incr",
+  "isqrt",
+  "kernel-trap",
+  "mod2",
+  "modexp",
+  "motor",
+  "swap",
+  "swap-compressed",
+]
+tactic_timeout = 600.0
+
+[build.groups.aes]
+include = ["aes"]
+
+[build.groups.aes-unopt]
+include = ["aes-unopt"]
+
+[build.groups.chacha20]
+include = ["chacha20"]
+
+[build.groups.incr]
+include = ["incr"]
+
+[build.groups.isqrt]
+include = ["isqrt"]
+
+[build.groups.kernel-trap]
+include = ["kernel-trap"]
+
+[build.groups.mod2]
+include = ["mod2"]
+
+[build.groups.modexp]
+include = ["modexp"]
+
+[build.groups.motor]
+include = ["motor"]
+
+[build.groups.swap]
+include = ["swap"]
+
+[build.groups.swap-compressed]
+include = ["swap-compressed"]

@@ -122,16 +122,16 @@ fun mk_branch (consts, TAC) =
  TAC);
 
 fun THENcases (rws:thm list) (tac1:tactic) (branches:((term list * term -> bool) * tactic) list) : tactic =
-fn g =>
+fn g => fn ctxt =>
 let val tac2 = SIMP_TAC (srw_ss()) rws;
     fun apply_branch subgoal =
       case List.find (fn (pred, T) => pred subgoal) branches of
-        NONE => tac2 subgoal
+        NONE => tac2 subgoal ctxt
       | SOME (pred, T) =>
-          (case (tac2 THEN T) subgoal of
+          (case (tac2 THEN T) subgoal ctxt of
              ([], vf) => let val th = vf [] in ([], fn [] => th) end
            | x => x);
-    val (gl, vf) = tac1 g;
+    val (gl, vf) = tac1 g ctxt;
     val (G,V,lengths) =
       itlist (fn goal => fn (G,V,lengths) =>
                 let val (goals, vfun) = apply_branch goal in

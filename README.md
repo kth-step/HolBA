@@ -23,9 +23,8 @@ HolBA is built using the `Holmake` tool bundled with HOL4.
 
 ### Dependencies
 
-- [HOL4](https://github.com/HOL-Theorem-Prover/HOL), tag `trindemossen-2`.
+- [HOL4](https://github.com/HOL-Theorem-Prover/HOL), tag `trindemossen-2-v9`.
 - [Poly/ML](https://github.com/polyml/polyml), 5.9.2
-  - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 24.04)
 - [Z3](https://github.com/Z3Prover/z3), 4.14.1
 
 ### Build using existing HOL4 installation
@@ -40,11 +39,14 @@ Holmake
 ```
 
 To build examples, you need to set the path to the Z3
-binary and then run `Holmake` in the `examples` directory:
+binary and then run `Holmake` in the `examples/arm8` and
+`examples/riscv` directories:
 
 ```bash
 export HOL4_Z3_EXECUTABLE=/path/to/z3
-cd examples
+cd examples/arm8
+Holmake
+cd ../riscv
 Holmake
 ```
 
@@ -76,11 +78,13 @@ cd HolBA
 source env.sh
 
 # This builds the whole library, excluding examples
-${HOLBA_HOLMAKE}
+Holmake
 
-# This builds the examples
-cd examples
-${HOLBA_HOLMAKE}
+# This builds the ARMv8 and RISC-V examples
+cd examples/arm8
+Holmake
+cd ../riscv
+Holmake
 ```
 
 ## Library organization

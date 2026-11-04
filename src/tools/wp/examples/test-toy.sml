@@ -6,6 +6,9 @@
 open HolKernel Parse;
 open bir_wpTheory bir_wpLib;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;

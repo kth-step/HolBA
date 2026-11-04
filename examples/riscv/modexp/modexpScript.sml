@@ -1,3 +1,7 @@
+(* lets holbuild stage modexp.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["modexp.da"]
+
 open HolKernel Parse;
 
 open bir_lifter_interfaceLib;

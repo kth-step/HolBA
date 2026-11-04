@@ -34,6 +34,6 @@ EXTRA_CLEANS += $(HEAP)
 all: $(DEFAULT_TARGETS) $(HEAP)
 
 $(HEAP): $(DEPS)
-	$(protect $(HOLDIR)/bin/buildheap) $(if $(HOLHEAP),-b $(HOLHEAP),) -o $@ $(patsubst %.uo,-f %.uo,$(DEPS))
+	$(HOLDIR)/bin/hol buildheap $(if $(HOLHEAP),-b $(HOLHEAP),) -o $@ $(patsubst %.uo,-f %.uo,$(DEPS))
 endif
 endif

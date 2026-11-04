@@ -1,3 +1,7 @@
+(* lets holbuild stage swap.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["swap.da"]
+
 open HolKernel Parse
 open PPBackEnd;
 

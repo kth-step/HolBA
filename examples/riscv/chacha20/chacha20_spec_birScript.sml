@@ -41,36 +41,41 @@ open bir_program_varsTheory;
 open chachaTheory;
 open chacha20_spec_riscvTheory;
 
+open bslSyntax;
+
 val _ = new_theory "chacha20_spec_bir";
 
 (* ----------------- *)
 (* BIR specification *)
 (* ----------------- *)
 
+val bir_var_equal_32_lowcast_64_tm =
+  beq (blowcast32 (bden (bvarimmvar64 "var")), bexpvar "exp");
+
 Definition bir_var_equal_32_lowcast_64_def:
- bir_var_equal_32_lowcast_64 var exp =
-  BExp_BinPred
-   BIExp_Equal
-   (BExp_Cast BIExp_LowCast (BExp_Den (BVar var (BType_Imm Bit64))) Bit32)
-   exp
+ bir_var_equal_32_lowcast_64 (var:string) (exp:bir_exp_t) : bir_exp_t =
+  ^bir_var_equal_32_lowcast_64_tm
 End
 
 (* a =+ (m a) + (m b) *)
+val chacha_line_bir_exp_fst_tm =
+  bplus (bexpvar "pre_a_exp", bexpvar "pre_b_exp");
+
 Definition chacha_line_bir_exp_fst_def:
- chacha_line_bir_exp_fst pre_a_exp pre_b_exp : bir_exp_t =
-  BExp_BinExp BIExp_Plus pre_a_exp pre_b_exp
+ chacha_line_bir_exp_fst (pre_a_exp:bir_exp_t) (pre_b_exp:bir_exp_t) : bir_exp_t =
+  ^chacha_line_bir_exp_fst_tm
 End
 
 (* d =+ (((m d) ?? (m a)) <<~ s) || (((m d) ?? (m a)) >>>~ (32w - s)) *)
+val chacha_line_bir_exp_snd_tm =
+  bor (blshift (bxor (bexpvar "pre_a_exp", bexpvar "pre_d_exp"),
+                bconstvar32 "s"),
+       brshift (bxor (bexpvar "pre_a_exp", bexpvar "pre_d_exp"),
+                bconst ``32w - (s:word32)``));
+
 Definition chacha_line_bir_exp_snd_def:
- chacha_line_bir_exp_snd pre_a_exp pre_d_exp (s:word32) : bir_exp_t =
-   BExp_BinExp BIExp_Or
-     (BExp_BinExp BIExp_LeftShift 
-      (BExp_BinExp BIExp_Xor pre_a_exp pre_d_exp)
-     (BExp_Const (Imm32 s)))
-     (BExp_BinExp BIExp_RightShift
-      (BExp_BinExp BIExp_Xor pre_a_exp pre_d_exp)
-      (BExp_Const (Imm32 (32w-s))))
+ chacha_line_bir_exp_snd (pre_a_exp:bir_exp_t) (pre_d_exp:bir_exp_t) (s:word32) : bir_exp_t =
+  ^chacha_line_bir_exp_snd_tm
 End
 
 Definition chacha_quarter_round_bir_exprs_def:
@@ -187,7 +192,7 @@ End
 
 (* keysetup *)
 
-val bspec_chacha20_keysetup_pre_tm = bslSyntax.bandl [
+val bspec_chacha20_keysetup_pre_tm = bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
@@ -199,7 +204,7 @@ End
 
 (* ivsetup *)
 
-val bspec_chacha20_ivsetup_pre_tm = bslSyntax.bandl [
+val bspec_chacha20_ivsetup_pre_tm = bandl [
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
@@ -211,19 +216,10 @@ End
 
 (* first line *)
 
-val bspec_chacha20_line_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_a))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_b))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x26" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_d))``  
+val bspec_chacha20_line_pre_tm = bandl [
+  beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_a"),
+  beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_b"),
+  beq (blowcast32 (bden (bvarimm64 "x26")), bconstvar32 "pre_d")
 ];
 
 Definition bspec_chacha20_line_pre_def:
@@ -231,16 +227,16 @@ Definition bspec_chacha20_line_pre_def:
   ^bspec_chacha20_line_pre_tm
 End
 
-val bspec_chacha20_line_post_tm = bslSyntax.bandl [
+val bspec_chacha20_line_post_tm = bandl [
   (snd o dest_eq o concl)
    (EVAL ``bir_var_equal_32_lowcast_64 "x20"
     (chacha_line_bir_exp_fst
-     (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))``),
+     ^(bconstvar32 "pre_a") ^(bconstvar32 "pre_b"))``),
   (snd o dest_eq o concl)
    (EVAL ``bir_var_equal_32_lowcast_64 "x10"
     (chacha_line_bir_exp_snd
-     (chacha_line_bir_exp_fst (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))
-     (BExp_Const (Imm32 pre_d)) 16w)``)
+     (chacha_line_bir_exp_fst ^(bconstvar32 "pre_a") ^(bconstvar32 "pre_b"))
+     ^(bconstvar32 "pre_d") 16w)``)
 ];
 
 Definition bspec_chacha20_line_post_def:
@@ -250,19 +246,10 @@ End
 
 (* second line *)
 
-val bspec_chacha20_line_pre_other_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_b))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_d))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_a))``  
+val bspec_chacha20_line_pre_other_tm = bandl [
+  beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_b"),
+  beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_d"),
+  beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_a")
 ];
 
 Definition bspec_chacha20_line_pre_other_def:
@@ -270,16 +257,16 @@ Definition bspec_chacha20_line_pre_other_def:
   ^bspec_chacha20_line_pre_other_tm
 End
 
-val bspec_chacha20_line_post_other_tm = bslSyntax.bandl [
+val bspec_chacha20_line_post_other_tm = bandl [
   (snd o dest_eq o concl)
    (EVAL ``bir_var_equal_32_lowcast_64 "x8"
     (chacha_line_bir_exp_fst
-     (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))``),
+     ^(bconstvar32 "pre_a") ^(bconstvar32 "pre_b"))``),
   (snd o dest_eq o concl)
    (EVAL ``bir_var_equal_32_lowcast_64 "x15"
     (chacha_line_bir_exp_snd
-     (chacha_line_bir_exp_fst (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b)))
-     (BExp_Const (Imm32 pre_d)) 12w)``)
+     (chacha_line_bir_exp_fst ^(bconstvar32 "pre_a") ^(bconstvar32 "pre_b"))
+     ^(bconstvar32 "pre_d") 12w)``)
 ];
 
 Definition bspec_chacha20_line_post_other_def:
@@ -289,23 +276,11 @@ End
 
 (* first quarter round *)
 
-val bspec_chacha20_quarter_round_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_a))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_b))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_c))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x26" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_d))``  
+val bspec_chacha20_quarter_round_pre_tm = bandl [
+  beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_a"),
+  beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_b"),
+  beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_c"),
+  beq (blowcast32 (bden (bvarimm64 "x26")), bconstvar32 "pre_d")
 ];
 
 Definition bspec_chacha20_quarter_round_pre_def:
@@ -318,13 +293,13 @@ val bspec_chacha20_quarter_round_post_tm =
  let
    val bir_exprs = (snd o dest_eq o concl)
     (EVAL ``chacha_quarter_round_bir_exprs 
-     (BExp_Const (Imm32 pre_a)) (BExp_Const (Imm32 pre_b))
-     (BExp_Const (Imm32 pre_c)) (BExp_Const (Imm32 pre_d))``);
+     ^(bconstvar32 "pre_a") ^(bconstvar32 "pre_b")
+     ^(bconstvar32 "pre_c") ^(bconstvar32 "pre_d")``);
    val (a_exp, bir_exprs) = dest_pair bir_exprs;
    val (b_exp, bir_exprs) = dest_pair bir_exprs;
    val (c_exp, d_exp) = dest_pair bir_exprs;
  in
-   bslSyntax.bandl [
+   bandl [
     (snd o dest_eq o concl)
      (EVAL ``bir_var_equal_32_lowcast_64 "x20" ^a_exp``),
     (snd o dest_eq o concl)
@@ -344,71 +319,23 @@ End
 
 (* column round *)
 
-val bspec_chacha20_column_round_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_0))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x16" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_1))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x17" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_2))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x6" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_3))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_4))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x11" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_5))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x13" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_6))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x14" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_7))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_8))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x29" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_9))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x30" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_10))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x31" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_11))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x26" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_12))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x25" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_13))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x24" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_14))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x23" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_15))``
+val bspec_chacha20_column_round_pre_tm = bandl [
+  beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_arr_0"),
+  beq (blowcast32 (bden (bvarimm64 "x16")), bconstvar32 "pre_arr_1"),
+  beq (blowcast32 (bden (bvarimm64 "x17")), bconstvar32 "pre_arr_2"),
+  beq (blowcast32 (bden (bvarimm64 "x6")), bconstvar32 "pre_arr_3"),
+  beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_arr_4"),
+  beq (blowcast32 (bden (bvarimm64 "x11")), bconstvar32 "pre_arr_5"),
+  beq (blowcast32 (bden (bvarimm64 "x13")), bconstvar32 "pre_arr_6"),
+  beq (blowcast32 (bden (bvarimm64 "x14")), bconstvar32 "pre_arr_7"),
+  beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_arr_8"),
+  beq (blowcast32 (bden (bvarimm64 "x29")), bconstvar32 "pre_arr_9"),
+  beq (blowcast32 (bden (bvarimm64 "x30")), bconstvar32 "pre_arr_10"),
+  beq (blowcast32 (bden (bvarimm64 "x31")), bconstvar32 "pre_arr_11"),
+  beq (blowcast32 (bden (bvarimm64 "x26")), bconstvar32 "pre_arr_12"),
+  beq (blowcast32 (bden (bvarimm64 "x25")), bconstvar32 "pre_arr_13"),
+  beq (blowcast32 (bden (bvarimm64 "x24")), bconstvar32 "pre_arr_14"),
+  beq (blowcast32 (bden (bvarimm64 "x23")), bconstvar32 "pre_arr_15")
 ];
 
 Definition bspec_chacha20_column_round_pre_def:
@@ -425,22 +352,22 @@ val bspec_chacha20_column_round_post_tm =
  let
    val bir_exprs = (snd o dest_eq o concl)
     (EVAL ``chacha_column_round_bir_exprs 
-     (BExp_Const (Imm32 pre_arr_0))
-     (BExp_Const (Imm32 pre_arr_1))
-     (BExp_Const (Imm32 pre_arr_2))
-     (BExp_Const (Imm32 pre_arr_3))
-     (BExp_Const (Imm32 pre_arr_4))
-     (BExp_Const (Imm32 pre_arr_5))
-     (BExp_Const (Imm32 pre_arr_6))
-     (BExp_Const (Imm32 pre_arr_7))
-     (BExp_Const (Imm32 pre_arr_8))
-     (BExp_Const (Imm32 pre_arr_9))
-     (BExp_Const (Imm32 pre_arr_10))
-     (BExp_Const (Imm32 pre_arr_11))
-     (BExp_Const (Imm32 pre_arr_12))
-     (BExp_Const (Imm32 pre_arr_13))
-     (BExp_Const (Imm32 pre_arr_14))
-     (BExp_Const (Imm32 pre_arr_15))``);
+     ^(bconstvar32 "pre_arr_0")
+     ^(bconstvar32 "pre_arr_1")
+     ^(bconstvar32 "pre_arr_2")
+     ^(bconstvar32 "pre_arr_3")
+     ^(bconstvar32 "pre_arr_4")
+     ^(bconstvar32 "pre_arr_5")
+     ^(bconstvar32 "pre_arr_6")
+     ^(bconstvar32 "pre_arr_7")
+     ^(bconstvar32 "pre_arr_8")
+     ^(bconstvar32 "pre_arr_9")
+     ^(bconstvar32 "pre_arr_10")
+     ^(bconstvar32 "pre_arr_11")
+     ^(bconstvar32 "pre_arr_12")
+     ^(bconstvar32 "pre_arr_13")
+     ^(bconstvar32 "pre_arr_14")
+     ^(bconstvar32 "pre_arr_15")``);
    val (arr_0_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_1_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_2_exp, bir_exprs) = dest_pair bir_exprs;
@@ -457,7 +384,7 @@ val bspec_chacha20_column_round_post_tm =
    val (arr_13_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_14_exp, arr_15_exp) = dest_pair bir_exprs;
  in
-   bslSyntax.bandl [
+   bandl [
     (snd o dest_eq o concl)
      (EVAL ``bir_var_equal_32_lowcast_64 "x20" ^arr_0_exp``),
     (snd o dest_eq o concl)
@@ -505,71 +432,23 @@ End
 
 (* diagonal round *)
 
-val bspec_chacha20_diagonal_round_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x20" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_0))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x19" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_1))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x18" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_2))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x9" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_3))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x21" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_4))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_5))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x13" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_6))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x14" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_7))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x8" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_8))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x7" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_9))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x5" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_10))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x15" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_11))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_12))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_13))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x29" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_14))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x16" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_15))``
+val bspec_chacha20_diagonal_round_pre_tm = bandl [
+  beq (blowcast32 (bden (bvarimm64 "x20")), bconstvar32 "pre_arr_0"),
+  beq (blowcast32 (bden (bvarimm64 "x19")), bconstvar32 "pre_arr_1"),
+  beq (blowcast32 (bden (bvarimm64 "x18")), bconstvar32 "pre_arr_2"),
+  beq (blowcast32 (bden (bvarimm64 "x9")), bconstvar32 "pre_arr_3"),
+  beq (blowcast32 (bden (bvarimm64 "x21")), bconstvar32 "pre_arr_4"),
+  beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_arr_5"),
+  beq (blowcast32 (bden (bvarimm64 "x13")), bconstvar32 "pre_arr_6"),
+  beq (blowcast32 (bden (bvarimm64 "x14")), bconstvar32 "pre_arr_7"),
+  beq (blowcast32 (bden (bvarimm64 "x8")), bconstvar32 "pre_arr_8"),
+  beq (blowcast32 (bden (bvarimm64 "x7")), bconstvar32 "pre_arr_9"),
+  beq (blowcast32 (bden (bvarimm64 "x5")), bconstvar32 "pre_arr_10"),
+  beq (blowcast32 (bden (bvarimm64 "x15")), bconstvar32 "pre_arr_11"),
+  beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_arr_12"),
+  beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_arr_13"),
+  beq (blowcast32 (bden (bvarimm64 "x29")), bconstvar32 "pre_arr_14"),
+  beq (blowcast32 (bden (bvarimm64 "x16")), bconstvar32 "pre_arr_15")
 ];
 
 Definition bspec_chacha20_diagonal_round_pre_def:
@@ -586,22 +465,22 @@ val bspec_chacha20_diagonal_round_post_tm =
  let
    val bir_exprs = (snd o dest_eq o concl)
     (EVAL ``chacha_diagonal_round_bir_exprs 
-     (BExp_Const (Imm32 pre_arr_0))
-     (BExp_Const (Imm32 pre_arr_1))
-     (BExp_Const (Imm32 pre_arr_2))
-     (BExp_Const (Imm32 pre_arr_3))
-     (BExp_Const (Imm32 pre_arr_4))
-     (BExp_Const (Imm32 pre_arr_5))
-     (BExp_Const (Imm32 pre_arr_6))
-     (BExp_Const (Imm32 pre_arr_7))
-     (BExp_Const (Imm32 pre_arr_8))
-     (BExp_Const (Imm32 pre_arr_9))
-     (BExp_Const (Imm32 pre_arr_10))
-     (BExp_Const (Imm32 pre_arr_11))
-     (BExp_Const (Imm32 pre_arr_12))
-     (BExp_Const (Imm32 pre_arr_13))
-     (BExp_Const (Imm32 pre_arr_14))
-     (BExp_Const (Imm32 pre_arr_15))``);
+     ^(bconstvar32 "pre_arr_0")
+     ^(bconstvar32 "pre_arr_1")
+     ^(bconstvar32 "pre_arr_2")
+     ^(bconstvar32 "pre_arr_3")
+     ^(bconstvar32 "pre_arr_4")
+     ^(bconstvar32 "pre_arr_5")
+     ^(bconstvar32 "pre_arr_6")
+     ^(bconstvar32 "pre_arr_7")
+     ^(bconstvar32 "pre_arr_8")
+     ^(bconstvar32 "pre_arr_9")
+     ^(bconstvar32 "pre_arr_10")
+     ^(bconstvar32 "pre_arr_11")
+     ^(bconstvar32 "pre_arr_12")
+     ^(bconstvar32 "pre_arr_13")
+     ^(bconstvar32 "pre_arr_14")
+     ^(bconstvar32 "pre_arr_15")``);
    val (arr_0_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_1_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_2_exp, bir_exprs) = dest_pair bir_exprs;
@@ -618,7 +497,7 @@ val bspec_chacha20_diagonal_round_post_tm =
    val (arr_13_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_14_exp, arr_15_exp) = dest_pair bir_exprs;
  in
-   bslSyntax.bandl [
+   bandl [
     (snd o dest_eq o concl)
      (EVAL ``bir_var_equal_32_lowcast_64 "x10" ^arr_0_exp``),
     (snd o dest_eq o concl)
@@ -666,71 +545,23 @@ End
 
 (* double round *)
 
-val bspec_chacha20_double_round_pre_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_0))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x16" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_1))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x17" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_2))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x6" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_3))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x22" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_4))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x11" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_5))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x13" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_6))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x14" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_7))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x28" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_8))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x29" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_9))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x30" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_10))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x31" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_11))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x26" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_12))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x25" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_13))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x24" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_14))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x23" (BType_Imm Bit64))) Bit32)
-    (BExp_Const (Imm32 pre_arr_15))``
+val bspec_chacha20_double_round_pre_tm = bandl [
+  beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_arr_0"),
+  beq (blowcast32 (bden (bvarimm64 "x16")), bconstvar32 "pre_arr_1"),
+  beq (blowcast32 (bden (bvarimm64 "x17")), bconstvar32 "pre_arr_2"),
+  beq (blowcast32 (bden (bvarimm64 "x6")), bconstvar32 "pre_arr_3"),
+  beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_arr_4"),
+  beq (blowcast32 (bden (bvarimm64 "x11")), bconstvar32 "pre_arr_5"),
+  beq (blowcast32 (bden (bvarimm64 "x13")), bconstvar32 "pre_arr_6"),
+  beq (blowcast32 (bden (bvarimm64 "x14")), bconstvar32 "pre_arr_7"),
+  beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_arr_8"),
+  beq (blowcast32 (bden (bvarimm64 "x29")), bconstvar32 "pre_arr_9"),
+  beq (blowcast32 (bden (bvarimm64 "x30")), bconstvar32 "pre_arr_10"),
+  beq (blowcast32 (bden (bvarimm64 "x31")), bconstvar32 "pre_arr_11"),
+  beq (blowcast32 (bden (bvarimm64 "x26")), bconstvar32 "pre_arr_12"),
+  beq (blowcast32 (bden (bvarimm64 "x25")), bconstvar32 "pre_arr_13"),
+  beq (blowcast32 (bden (bvarimm64 "x24")), bconstvar32 "pre_arr_14"),
+  beq (blowcast32 (bden (bvarimm64 "x23")), bconstvar32 "pre_arr_15")
 ];
 
 Definition bspec_chacha20_double_round_pre_def:
@@ -747,22 +578,22 @@ val bspec_chacha20_double_round_post_tm =
  let
    val bir_exprs = (snd o dest_eq o concl)
     (EVAL ``chacha_double_round_bir_exprs 
-     (BExp_Const (Imm32 pre_arr_0))
-     (BExp_Const (Imm32 pre_arr_1))
-     (BExp_Const (Imm32 pre_arr_2))
-     (BExp_Const (Imm32 pre_arr_3))
-     (BExp_Const (Imm32 pre_arr_4))
-     (BExp_Const (Imm32 pre_arr_5))
-     (BExp_Const (Imm32 pre_arr_6))
-     (BExp_Const (Imm32 pre_arr_7))
-     (BExp_Const (Imm32 pre_arr_8))
-     (BExp_Const (Imm32 pre_arr_9))
-     (BExp_Const (Imm32 pre_arr_10))
-     (BExp_Const (Imm32 pre_arr_11))
-     (BExp_Const (Imm32 pre_arr_12))
-     (BExp_Const (Imm32 pre_arr_13))
-     (BExp_Const (Imm32 pre_arr_14))
-     (BExp_Const (Imm32 pre_arr_15))``);
+     ^(bconstvar32 "pre_arr_0")
+     ^(bconstvar32 "pre_arr_1")
+     ^(bconstvar32 "pre_arr_2")
+     ^(bconstvar32 "pre_arr_3")
+     ^(bconstvar32 "pre_arr_4")
+     ^(bconstvar32 "pre_arr_5")
+     ^(bconstvar32 "pre_arr_6")
+     ^(bconstvar32 "pre_arr_7")
+     ^(bconstvar32 "pre_arr_8")
+     ^(bconstvar32 "pre_arr_9")
+     ^(bconstvar32 "pre_arr_10")
+     ^(bconstvar32 "pre_arr_11")
+     ^(bconstvar32 "pre_arr_12")
+     ^(bconstvar32 "pre_arr_13")
+     ^(bconstvar32 "pre_arr_14")
+     ^(bconstvar32 "pre_arr_15")``);
    val (arr_0_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_1_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_2_exp, bir_exprs) = dest_pair bir_exprs;
@@ -779,7 +610,7 @@ val bspec_chacha20_double_round_post_tm =
    val (arr_13_exp, bir_exprs) = dest_pair bir_exprs;
    val (arr_14_exp, arr_15_exp) = dest_pair bir_exprs;
  in
-   bslSyntax.bandl [
+   bandl [
     (snd o dest_eq o concl)
      (EVAL ``bir_var_equal_32_lowcast_64 "x10" ^arr_0_exp``),
     (snd o dest_eq o concl)
@@ -842,8 +673,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
@@ -903,8 +733,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
@@ -967,16 +796,18 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED
 
-Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
+(* register part of the column round postcondition, which holds
+   whenever the PC is at the end label *)
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_regs_thm[local]:
  !ls. bir_post_bir_to_riscv
-   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
-     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\m. m.c_PC m.procID = chacha20_column_round_end_addr ==>
+     riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+      pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15 m)
    (\l. (bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
           pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
    ls
@@ -1018,6 +849,28 @@ Proof
  rw [] >> fs [if_bool_1w]
 QED
 
+Theorem chacha20_column_round_riscv_post_imp_bspec_post_thm:
+ !ls. bir_post_bir_to_riscv
+   (riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
+   (\l. if l = BL_Address (Imm64 chacha20_column_round_end_addr) then
+          bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
+     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+        else bir_exp_false)
+   ls
+Proof
+ rw [bir_post_bir_to_riscv_def] >>
+ Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 chacha20_column_round_end_addr)` >> fs [] >| [
+  `ms.c_PC ms.procID = chacha20_column_round_end_addr`
+   by (Cases_on `bs` >> fs [] >> METIS_TAC [bir_riscv_extrasTheory.riscv_bmr_bpc_label_c_PC_equiv]) >>
+  ASSUME_TAC (Q.SPEC `ls` chacha20_column_round_riscv_post_imp_bspec_post_regs_thm) >>
+  fs [bir_post_bir_to_riscv_def] >>
+  METIS_TAC [],
+
+  fs [bir_exp_false_def,bir_eval_exp_def,bir_val_true_def]
+ ]
+QED
+
 (* diagonal round *)
 
 Theorem chacha20_diagonal_round_riscv_pre_imp_bspec_pre_thm:
@@ -1033,8 +886,7 @@ Proof
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   riscv_bmr_rel_EVAL,bir_val_TF_bool2b_DEF,
   bool2b_def,
-  bool2w_def,
-  w2w_n2w_w2n_64_32
+  bool2w_def
  ] >>
  EVAL_TAC
 QED

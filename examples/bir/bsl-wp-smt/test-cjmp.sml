@@ -3,6 +3,9 @@ open bslSyntax;
 open pretty_exnLib;
 open bir_smtLib;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 (* Load dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
   load "easy_noproof_wpLib"; (* ../lib *)

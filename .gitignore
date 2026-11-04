@@ -3,6 +3,7 @@
 *.exe
 *-heap
 .hol/
+.holbuild/
 
 # Makefile related stuff
 Makefile.local

@@ -1,0 +1,47 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.0"
+
+[project]
+name = "hol_l3_machine_code"
+
+[build]
+members = [
+  "common",
+  "lib",
+  "arm8/model",
+  "arm8/step",
+  "m0/model",
+  "m0/step",
+]
+
+# Import needs fp-sig and fp-functor from HOL's src/floating-point. As loads,
+# they were recorded by bare name in Import.uo, which only resolved when the
+# theory using Import was restored from cache, not when it was built. As deps,
+# they are recorded by path. machine_ieeeTheory comes first because HOL's
+# fp-functor.uo itself records it by bare name, so it must be loaded already.
+[actions.Import]
+deps = ["machine_ieeeTheory", "fp-sig", "fp-functor"]
+
+# The following mirror Holmake rules in examples/l3-machine-code that compile
+# with -toplevel, which holbuild does not infer from load/open. These modules
+# are in this package, so they are deps, not loads: holbuild records a load by
+# its bare name in the .uo, which then resolves only if the module happens to
+# be loaded already.
+[actions.FP32]
+deps = ["FP"]
+
+[actions.FP64]
+deps = ["FP"]
+
+[actions.MutableMap16]
+deps = ["Ptree", "Map", "MutableMapFunctor"]
+
+[actions.PureMap]
+deps = ["Ptree", "Map"]
+
+[actions.arm8]
+deps = ["assemblerLib", "MutableMap16"]
+
+[actions.m0]
+deps = ["assemblerLib", "MutableMap16"]

@@ -1,0 +1,66 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.6"
+
+[project]
+name = "holba"
+
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+# HOL4 tag trindemossen-2-v9
+rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
+
+[dependencies.hol_machine_code_hoare_triple]
+from = "hol"
+path = "examples/machine-code/hoare-triple"
+manifest = "shims/hol_machine_code_hoare_triple.toml"
+
+[dependencies.hol_l3_machine_code]
+from = "hol"
+path = "examples/l3-machine-code"
+manifest = "shims/hol_l3_machine_code.toml"
+
+[build]
+members = ["src"]
+exclude_globs = [
+  "*/selftest.sml",
+  "*/selftest_*.sml",
+  "*/test-*.sml",
+]
+root_groups = ["lib"]
+tactic_timeout = 600.0
+
+# Everything HolBA provides as a library.
+[build.groups.lib]
+include = ["src"]
+exclude_globs = ["*/examples/*", "*/benchmark/*"]
+
+# Examples under src, built on demand: `holbuild build @examples`.
+[build.groups.examples]
+include_globs = ["*/examples/*"]
+exclude = [
+  "src/tools/symbexec/examples/analysis",
+  "src/tools/symbexec/examples/analysis_modexp",
+  "src/tools/symbexec/examples/analysis_shortprogs",
+  "src/tools/symbexec/examples/riscv",
+]
+
+# Benchmarks under src, built on demand: `holbuild build @benchmarks`.
+[build.groups.benchmarks]
+include_globs = ["*/benchmark/*"]
+exclude = ["src/tools/wp/benchmark"]
+
+# Known not to build: the symbexec examples use birs_rule_STEP_prog_fun, which
+# birs_execLib no longer exports; the wp benchmark needs .da files not in the repo.
+[build.groups.stale]
+include = [
+  "src/tools/symbexec/examples/analysis",
+  "src/tools/symbexec/examples/analysis_modexp",
+  "src/tools/symbexec/examples/analysis_shortprogs",
+  "src/tools/symbexec/examples/riscv",
+  "src/tools/wp/benchmark",
+]
+
+# riscv.sml is compiled with -toplevel by Holmake (see its Holmakefile).
+[actions.riscv]
+loads = ["assemblerLib", "MutableMap16"]

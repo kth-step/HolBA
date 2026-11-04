@@ -4,6 +4,9 @@ open bslSyntax;
 open bir_compositionLib;
 open bir_bool_expTheory;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 val observe_type = Type `: 'a`
 val bdefprog_list = bdefprog_list observe_type
 

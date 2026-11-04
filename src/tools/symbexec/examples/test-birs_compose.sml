@@ -6,6 +6,9 @@ open birs_execLib;
 open birs_stepLib;
 open birs_composeLib;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 (* testing *)
 val bprog = ``
 BirProgram [

@@ -40,22 +40,16 @@ open kernel_trap_entry_symb_transfTheory;
 
 val _ = new_theory "kernel_trap_entry_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_kernel_trap_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_kernel_trap_entry_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_kernel_trap_entry_post_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val riscv_cont_kernel_trap_entry_thm =
- get_riscv_contract
+ get_riscv_contract_thm
   bspec_cont_kernel_trap_entry
-  progbin_tm riscv_pre_tm riscv_post_tm
+  kernel_trap_entry_init_addr_def [kernel_trap_entry_end_addr_def]
+  bir_kernel_trap_progbin_def
+  riscv_kernel_trap_entry_pre_def riscv_kernel_trap_entry_post_def
   bir_kernel_trap_prog_def
   [bspec_kernel_trap_entry_pre_def]
   bspec_kernel_trap_entry_pre_def kernel_trap_entry_riscv_pre_imp_bspec_pre_thm
@@ -75,7 +69,6 @@ Theorem riscv_cont_kernel_trap_entry:
       pre_x18 pre_x19 pre_x20 pre_x21 pre_x22 pre_x23 pre_x24 pre_x25 pre_x26
       pre_x27 pre_x28 pre_x29 pre_x30 pre_x31)
 Proof
- rw [kernel_trap_entry_init_addr_def,kernel_trap_entry_end_addr_def] >>
  ACCEPT_TAC riscv_cont_kernel_trap_entry_thm
 QED
 

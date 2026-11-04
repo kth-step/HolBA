@@ -2,8 +2,6 @@ open HolKernel boolLib Parse bossLib;
 
 open markerTheory;
 
-open holba_auxiliaryTheory;
-
 open bir_bool_expSyntax;
 open bir_programSyntax bir_program_labelsTheory;
 open bir_immTheory bir_valuesTheory bir_expTheory;
@@ -40,22 +38,18 @@ open bir_program_varsTheory;
 
 open max_spec_arm8Theory;
 
+open bslSyntax;
+
 val _ = new_theory "max_spec_bir";
 
 (* -------------- *)
 (* BSPEC contract *)
 (* -------------- *)
 
-val bspec_max_pre_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))``,
+val bspec_max_pre_tm = bandl [
+  beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x0"),
 
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``
+  beq (bden (bvarimm64 "R1"), bconstvar64 "pre_x1")
 ];
 
 Definition bspec_max_pre_def:
@@ -63,30 +57,16 @@ Definition bspec_max_pre_def:
   ^bspec_max_pre_tm
 End
 
-val bspec_max_post_or_tm = bslSyntax.borl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x0))``,
+val bspec_max_post_tm = bandl [
+  borl [
+    beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x0"),
 
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x1))``
-];
+    beq (bden (bvarimm64 "R0"), bconstvar64 "pre_x1")
+  ],
 
-val bspec_max_post_tm = bslSyntax.bandl [
-  bspec_max_post_or_tm,
+  ble (bconstvar64 "pre_x0", bden (bvarimm64 "R0")),
 
-  ``BExp_BinPred
-     BIExp_LessOrEqual
-      (BExp_Const (Imm64 pre_x0))
-      (BExp_Den (BVar "R0" (BType_Imm Bit64)))``,
-
-  ``BExp_BinPred
-     BIExp_LessOrEqual
-      (BExp_Const (Imm64 pre_x1))
-      (BExp_Den (BVar "R0" (BType_Imm Bit64)))``
+  ble (bconstvar64 "pre_x1", bden (bvarimm64 "R0"))
 ];
 
 Definition bspec_max_post_def:
@@ -121,29 +101,21 @@ QED
 Theorem max_arm8_post_imp_bspec_post_thm:
  !ls. bir_post_bir_to_arm8 (arm8_max_post pre_x0 pre_x1) (\l. bspec_max_post pre_x0 pre_x1) ls
 Proof
- once_rewrite_tac [bir_post_bir_to_arm8_def,bspec_max_post_def] >>
- once_rewrite_tac [bspec_max_post_def] >>
- once_rewrite_tac [bspec_max_post_def] >>
-
+ rw [bir_post_bir_to_arm8_def] >>
  Cases_on `bs` >> Cases_on `b0` >>
-
- FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
-
- Q.ABBREV_TAC `g = ?z. f "R0" = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
-
- Cases_on `g` >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def] >>
-   fs [Abbrev_def] >>
-   Cases_on `z` >> fs [type_of_bir_val_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_pred_def,bir_immTheory.bool2b_def,bir_val_true_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_Equal_REWR] >>
-   once_rewrite_tac [arm8_max_post_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [arm8_bmr_rel_EVAL,bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def,
-    bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def,bir_eval_bin_pred_def] >>
-   rw [] >> fs [if_bool_1w]) >>
- FULL_SIMP_TAC (std_ss++holBACore_ss) []
+ `f "R0" = SOME (BVal_Imm (Imm64 (ms.REG 0w)))` by METIS_TAC [arm8_bmr_x0_equiv] >>
+ FULL_SIMP_TAC (std_ss++holBACore_ss) [
+  bspec_max_post_def,
+  bir_envTheory.bir_env_read_def,
+  bir_envTheory.bir_env_check_type_def,
+  bir_envTheory.bir_env_lookup_type_def,
+  bir_envTheory.bir_env_lookup_def,
+  bir_eval_bin_pred_def,
+  bir_val_true_def,
+  bool2b_def,
+  bool2w_def
+ ] >>
+ rpt (pop_assum mp_tac) >> rw [arm8_max_post_def]
 QED
 
 val _ = export_theory ();

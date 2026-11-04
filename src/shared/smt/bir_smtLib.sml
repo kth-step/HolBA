@@ -100,7 +100,7 @@ val goal = ``^(mk_bir_eval_exp (band (btrue, btrue), env)) = SOME (BVal_Imm (Imm
 (* TODO: Add proof and use w_thm to replace the oracle here *)
 val oracletag = "bir_smtLib";
 val SmtSupportLibThm = mk_oracle_thm oracletag;
-fun prove_bir_eval_exp_with_SMT_then_oracle_TAC (assum_list, goal) =
+fun prove_bir_eval_exp_with_SMT_then_oracle_TAC (assum_list, goal) (_ : Context.t) =
   let
     val (eval_tm, rhs_opt_tm) = dest_eq goal
     val _ = if (is_some rhs_opt_tm) then () else

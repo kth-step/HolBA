@@ -653,13 +653,12 @@ in (* local *)
       default_op thm)
     end;
 
-  val INSERT_INSERT_EQ_thm = prove(``
+  (* derived without TAC_PROOF, which requires a current theory at load time *)
+  val INSERT_INSERT_EQ_thm = simpLib.SIMP_PROVE bool_ss [pred_setTheory.INSERT_INSERT] ``
     !x1 x2 xs.
     (x1 = x2) ==>
     (x1 INSERT x2 INSERT xs) = (x1 INSERT xs)
-  ``,
-    METIS_TAC [pred_setTheory.INSERT_INSERT]
-  );
+  ``;
 
   (* the merge function for the first two Pi states *)
   fun birs_Pi_merge_2_RULE thm =

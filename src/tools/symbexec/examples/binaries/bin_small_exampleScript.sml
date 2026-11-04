@@ -1,3 +1,7 @@
+(* lets holbuild stage small_example.da for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["small_example.da"]
+
 open HolKernel Parse
 open PPBackEnd;
 

@@ -4,7 +4,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_tags := true;
 
 open add_reg_compositionTheory;
-open add_reg_propTheory;
+open add_reg_contractTheory;
 open freuse_compositionTheory;
 open mutrec_compositionTheory;
 

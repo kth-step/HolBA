@@ -18,10 +18,10 @@ These two uses the same datatypes.
 Here are the key files of the directory :
   - `bir_basicScript.sml` : Most datatypes used by BIR.
   - `bir_envScript.sml` : Datatype for variable environment
-  - `bir_metaScript.sml` : proofs regarding meta-theory (cf. below for more information regarding meta-theory)
-  - `bir_computeScript.sml / bir_evalScript.sml` contain the general expression semantics of the two representation.
+  - `smol_bir_metaScript.sml` : proofs regarding meta-theory (cf. below for more information regarding meta-theory)
+  - `smol_bir_computeScript.sml / bir_evalScript.sml` contain the general expression semantics of the two representation.
   - `bir_typingScript.sml` : Typing relation for BIR expressions. Useful for meta-theory
-  - `bir_programSyntax.sml` : Statements and programs. Contains both an `eval` and `compute` definition of step
+  - `smol_bir_programSyntax.sml` : Statements and programs. Contains both an `eval` and `compute` definition of step
   - All other files contains semantics of the particular expression (ie. `bir_binexpScript.sml` contains semantics for Binary Expressions) for both `compute` and `eval`, as well as theorems about them.
 
 

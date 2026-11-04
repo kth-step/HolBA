@@ -3,8 +3,8 @@
 (* ------------------------------------------------------------------------- *)
 
 open HolKernel Parse bossLib boolLib;
-open bir_cv_basicTheory bir_cv_envTheory;
-open bir_cv_programTheory;
+open smol_bir_cv_basicTheory smol_bir_cv_envTheory;
+open smol_bir_cv_programTheory;
 
 
 val _ = new_theory "ex_cv_sum_list";

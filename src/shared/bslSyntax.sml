@@ -60,6 +60,17 @@ struct
   val bvarimm64 = bvarimm 64
   val bvarimm128 = bvarimm 128
 
+  (* variable whose name is a HOL string variable, e.g. bvarimmvar64 "var" *)
+  fun bvarimmvar len_int name =
+    mk_BVar (mk_var (name, stringSyntax.string_ty), gen_mk_BType_Imm len_int)
+    handle e => raise wrap_exn "bvarimmvar" e
+  val bvarimmvar1 = bvarimmvar 1
+  val bvarimmvar8 = bvarimmvar 8
+  val bvarimmvar16 = bvarimmvar 16
+  val bvarimmvar32 = bvarimmvar 32
+  val bvarimmvar64 = bvarimmvar 64
+  val bvarimmvar128 = bvarimmvar 128
+
   fun bvarmem (lty_int, rty_int) name =
     mk_BVar_string (name, mk_BType_Mem
       (bir_immtype_t_of_size lty_int, bir_immtype_t_of_size rty_int))
@@ -206,6 +217,10 @@ struct
   (* Expressions: bir_exp_t                                                   *)
   (****************************************************************************)
 
+  (* HOL variables of type bir_exp_t, e.g. bexpvar "pre_a_exp" *)
+  fun bexpvar name = mk_var (name, bir_exp_t_ty)
+    handle e => raise wrap_exn "bexpvar" e
+
   (* Constants (BExp_Const: bir_exp_t) *)
   fun bconstimm bir_imm = mk_BExp_Const bir_imm
     handle e => raise wrap_exn "bconstimm" e
@@ -219,6 +234,15 @@ struct
   val bconst32 = bconstii 32
   val bconst64 = bconstii 64
   val bconst128 = bconstii 128
+  (* constant whose value is a HOL word variable, e.g. bconstvar64 "pre_x5" *)
+  fun bconstvar len_int name = bconst (mk_var (name, wordsSyntax.mk_int_word_type len_int))
+    handle e => raise wrap_exn "bconstvar" e
+  val bconstvar1 = bconstvar 1
+  val bconstvar8 = bconstvar 8
+  val bconstvar16 = bconstvar 16
+  val bconstvar32 = bconstvar 32
+  val bconstvar64 = bconstvar 64
+  val bconstvar128 = bconstvar 128
   val btrue = bconst1 1
   val bfalse = bconst1 0
 

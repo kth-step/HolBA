@@ -547,7 +547,7 @@ Theorem bir_eval_bin_pred_exists_64_lowcast_32_eq:
     then f reg else NONE) Bit32) (SOME (BVal_Imm (Imm32 w))) =
  SOME bir_val_true) 
  <=>
- (?(z:word64). f reg = SOME (BVal_Imm (Imm64 z)) /\ n2w (w2n z) = w)
+ (?(z:word64). f reg = SOME (BVal_Imm (Imm64 z)) /\ w2w z = w)
 Proof
  REPEAT STRIP_TAC >>
  Q.ABBREV_TAC `g = ?z. f reg = SOME z /\ BType_Imm Bit64 = type_of_bir_val z` >>
@@ -555,7 +555,7 @@ Proof
  fs [Abbrev_def] >-
   (Cases_on `z` >> fs [type_of_bir_val_def] >>
    Cases_on `b` >> fs [type_of_bir_imm_def] >>
-   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def,w2w_n2w_w2n_64_32] >>
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2b_def,bool2w_def] >>
    rw [if_bool_1w,bir_val_true_def]) >>
  rw [] >>
  fs [type_of_bir_val_def,type_of_bir_imm_def]

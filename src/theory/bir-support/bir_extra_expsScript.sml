@@ -60,9 +60,7 @@ REPEAT CASE_TAC >> (
 )
 QED
 
-
-val align_AND_INTROS = save_thm ("align_AND_INTROS", let
-Theorem thm0[local]:
+Theorem align_thm0[local]:
   !w:'a word p.
      (MEM p (COUNT_LIST (dimindex (:'a)))) ==> (0 < p) ==>
      (((w && n2w (dimword (:'a) - 2 ** p) = align p w)) /\
@@ -72,9 +70,11 @@ SIMP_TAC std_ss [alignmentTheory.align_bitwise_and, LSL_UINT_MAX] >>
    METIS_TAC[wordsTheory.WORD_AND_COMM]
 QED
 
+val align_AND_INTROS = save_thm ("align_AND_INTROS", let
+
   val words_sizes = List.map (fn sz => fcpLib.index_type (Arbnum.fromInt sz))
           bir_immSyntax.known_imm_sizes;
-  val thm2 = LIST_CONJ (List.map (fn sz => INST_TYPE [``:'a`` |-> sz] thm0) words_sizes)
+  val thm2 = LIST_CONJ (List.map (fn sz => INST_TYPE [``:'a`` |-> sz] align_thm0) words_sizes)
 
   val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [rich_listTheory.COUNT_LIST_compute,
     rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM, FORALL_AND_THM, GSYM CONJ_ASSOC] thm2
@@ -231,7 +231,7 @@ QED
 
 (* To increase power of EVAL_TAC against nasty bit manipulation stuff *)
 (* TODO: Change the below proof to something less brutal later... *)
-val _ = bitLib.add_bit_compset computeLib.the_compset
+(*val compset = bitLib.add_bit_compset computeLib.the_compset*)
 
 Theorem BExp_word_reverse_1_eval:
   (!e env. bir_eval_exp (BExp_word_reverse_1_8 e) env =

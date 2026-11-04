@@ -1,3 +1,7 @@
+(* lets holbuild stage the .da files for the relative reads below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["../bin/aes-aarch64.da", "../bin/aes-m0-cortex.da"]
+
 open HolKernel Parse PPBackEnd;
 
 open bir_inst_liftingLib;
@@ -6,6 +10,8 @@ open bir_execLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+
+val _ = new_theory "aesBinary";
 
 
 
@@ -27,7 +33,6 @@ val (thm_m0, errors) = bmil_m0_LittleEnd_Process.bir_lift_prog_gen ((Arbnum.from
 
 val _ = print "\n\n";
 
-val _ = new_theory "aesBinary";
 val _ = save_thm ("aes_arm8_program_THM", thm_arm8);
 val _ = save_thm ("aes_m0_program_THM", thm_m0);
 val _ = export_theory();

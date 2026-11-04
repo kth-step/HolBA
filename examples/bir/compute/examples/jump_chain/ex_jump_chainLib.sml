@@ -7,9 +7,9 @@ structure ex_jump_chainLib :> ex_jump_chainLib =
 struct
 
 open HolKernel Parse bossLib boolLib;
-open bir_programTheory bir_programSyntax;
+open smol_bir_programTheory smol_bir_programSyntax;
 open stringSyntax;
-open bir_computeLib;
+open smol_bir_computeLib;
 
 fun create_block (n : int) : term = 
 let val name = "block_" ^ (Int.toString n);
@@ -24,7 +24,7 @@ fun generate_big_program (n : int) =
 let fun aux n k blist = if n = 0 then blist else aux (n-1) (k+1) ((create_block k)::blist)
   val blist = rev $ aux n 0 [];
   val blist_tm = listSyntax.mk_list (blist, ``:bir_block_t``);
-in bir_programSyntax.mk_program blist_tm end;
+in smol_bir_programSyntax.mk_program blist_tm end;
 
 
 val init_state_tm = ``<|bst_pc := <| bpc_label := BL_Label "block_0"; 

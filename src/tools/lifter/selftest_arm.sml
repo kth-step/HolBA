@@ -11,6 +11,9 @@ open PPBackEnd;
 
 open selftestLib;
 
+(* proofs (also inside libraries) need a current theory, which HOL4 no longer opens by default *)
+val _ = new_theory "scratch";
+
 (******************)
 (* Config options *)
 (******************)

@@ -38,6 +38,8 @@ open bir_program_varsTheory;
 
 open isqrt_spec_riscvTheory;
 
+open bslSyntax;
+
 val _ = new_theory "isqrt_spec_bir";
 
 (* --------------- *)
@@ -46,23 +48,18 @@ val _ = new_theory "isqrt_spec_bir";
 
 (* before loop contract *)
 
+val bspec_isqrt_pre_1_tm =
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10");
+
 Definition bspec_isqrt_pre_1_def:
  bspec_isqrt_pre_1 (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
+  ^bspec_isqrt_pre_1_tm
 End
 
-val bspec_isqrt_post_1_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 0w))``
+val bspec_isqrt_post_1_tm = bandl [
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x10"),
+
+  beq (bden (bvarimm64 "x15"), bconst64 0)
 ];
 
 Definition bspec_isqrt_post_1_def:
@@ -72,15 +69,10 @@ End
 
 (* loop body contract *)
 
-val bspec_isqrt_pre_2_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15))``
+val bspec_isqrt_pre_2_tm = bandl [
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13"),
+
+  beq (bden (bvarimm64 "x15"), bconstvar64 "pre_x15")
 ];
 
 Definition bspec_isqrt_pre_2_def:
@@ -88,27 +80,16 @@ Definition bspec_isqrt_pre_2_def:
   ^bspec_isqrt_pre_2_tm
 End
 
-val bspec_isqrt_post_2_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x15))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``,
-  ``BExp_BinPred
-     BIExp_Equal
-     (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-     (BExp_BinExp
-       BIExp_Mult
-        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))
-        (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w))))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x15" (BType_Imm Bit64)))
-    (BExp_BinExp
-      BIExp_Plus (BExp_Const (Imm64 pre_x15)) (BExp_Const (Imm64 1w)))``
+val bspec_isqrt_post_2_tm = bandl [
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x15"),
+
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13"),
+
+  beq (bden (bvarimm64 "x14"),
+   bmult (bplus (bconstvar64 "pre_x15", bconst64 1),
+          bplus (bconstvar64 "pre_x15", bconst64 1))),
+
+  beq (bden (bvarimm64 "x15"), bplus (bconstvar64 "pre_x15", bconst64 1))
 ];
 
 Definition bspec_isqrt_post_2_def:
@@ -118,71 +99,52 @@ End
 
 (* branch contract *)
 
-val bspec_isqrt_pre_3_tm = bslSyntax.bandl [
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``,
- ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x14))``
+val bspec_isqrt_pre_3_tm = bandl [
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10"),
+
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13"),
+
+  beq (bden (bvarimm64 "x14"), bconstvar64 "pre_x14"),
+
+  beq (bden (bvarimm64 "x15"), bconstvar64 "pre_x15")
 ];
 
 Definition bspec_isqrt_pre_3_def:
- bspec_isqrt_pre_3 (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+ bspec_isqrt_pre_3 (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) (pre_x15:word64) : bir_exp_t =
   ^bspec_isqrt_pre_3_tm
 End
 
-val bspec_isqrt_post_3_loop_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x14))``,
-  ``BExp_BinPred
-     BIExp_LessOrEqual
-      (BExp_Const (Imm64 pre_x14))
-      (BExp_Const (Imm64 pre_x13))``
+val bspec_isqrt_post_3_loop_tm = bandl [
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10"),
+
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13"),
+
+  beq (bden (bvarimm64 "x14"), bconstvar64 "pre_x14"),
+
+  beq (bden (bvarimm64 "x15"), bconstvar64 "pre_x15"),
+
+  ble (bconstvar64 "pre_x14", bconstvar64 "pre_x13")
 ];
 
 Definition bspec_isqrt_post_3_loop_def:
- bspec_isqrt_post_3_loop (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+ bspec_isqrt_post_3_loop (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) (pre_x15:word64) : bir_exp_t =
   ^bspec_isqrt_post_3_loop_tm
 End
 
-val bspec_isqrt_post_3_ret_tm = bslSyntax.bandl [
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x13" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x13))``,
-  ``BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x14" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x14))``,
-  ``BExp_BinPred
-    BIExp_LessThan
-    (BExp_Const (Imm64 pre_x13))
-    (BExp_Const (Imm64 pre_x14))``
+val bspec_isqrt_post_3_ret_tm = bandl [
+  beq (bden (bvarimm64 "x10"), bconstvar64 "pre_x10"),
+
+  beq (bden (bvarimm64 "x13"), bconstvar64 "pre_x13"),
+
+  beq (bden (bvarimm64 "x14"), bconstvar64 "pre_x14"),
+
+  beq (bden (bvarimm64 "x15"), bconstvar64 "pre_x15"),
+
+  blt (bconstvar64 "pre_x13", bconstvar64 "pre_x14")
 ];
 
 Definition bspec_isqrt_post_3_ret_def:
- bspec_isqrt_post_3_ret (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) : bir_exp_t =
+ bspec_isqrt_post_3_ret (pre_x10:word64) (pre_x13:word64) (pre_x14:word64) (pre_x15:word64) : bir_exp_t =
   ^bspec_isqrt_post_3_ret_tm
 End
 
@@ -204,32 +166,27 @@ QED
 Theorem isqrt_riscv_post_1_imp_bspec_post_1_thm:
  !ls. bir_post_bir_to_riscv
    (riscv_isqrt_post_1 pre_x10)
-   (\l. bspec_isqrt_post_1 pre_x10)
+   (\l. if l = BL_Address (Imm64 isqrt_end_addr_1) then bspec_isqrt_post_1 pre_x10
+        else bir_exp_false)
    ls
 Proof
- fs [
-  bir_post_bir_to_riscv_def,
-  bspec_isqrt_post_1_def,
-  GSYM bir_and_equiv
- ] >>
-
- Cases_on `bs` >> Cases_on `b0` >>
-
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,
-  bir_eval_bin_pred_def,
-  bir_eval_bin_pred_exists_64_eq
- ] >>
-
- rw [riscv_isqrt_post_1_def] >>
-
- METIS_TAC [
-  riscv_bmr_x13_equiv,
-  riscv_bmr_x15_equiv
- ]
+ rw [bir_post_bir_to_riscv_def] >>
+ Cases_on `bs` >> Cases_on `b0` >> fs [] >>
+ Cases_on `b.bpc_label = BL_Address (Imm64 isqrt_end_addr_1)` >> fs [] >- (
+  `ms.c_PC ms.procID = isqrt_end_addr_1` by METIS_TAC [riscv_bmr_bpc_label_c_PC_equiv] >>
+  fs [bspec_isqrt_post_1_def, GSYM bir_and_equiv] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [
+   bir_envTheory.bir_env_read_def,
+   bir_envTheory.bir_env_check_type_def,
+   bir_envTheory.bir_env_lookup_type_def,
+   bir_envTheory.bir_env_lookup_def,
+   bir_eval_bin_pred_def,
+   bir_eval_bin_pred_exists_64_eq
+  ] >>
+  rw [riscv_isqrt_post_1_def] >>
+  METIS_TAC [riscv_bmr_x13_equiv, riscv_bmr_x15_equiv]
+ ) >>
+ fs [bir_exp_false_def, bir_eval_exp_def, bir_val_true_def]
 QED
 
 Theorem isqrt_riscv_pre_2_imp_bspec_pre_2_thm:
@@ -247,40 +204,33 @@ QED
 Theorem isqrt_riscv_post_2_imp_bspec_post_2_thm:
  !ls. bir_post_bir_to_riscv
    (riscv_isqrt_post_2 pre_x13 pre_x15)
-   (\l. bspec_isqrt_post_2 pre_x13 pre_x15)
+   (\l. if l = BL_Address (Imm64 isqrt_end_addr_2) then bspec_isqrt_post_2 pre_x13 pre_x15
+        else bir_exp_false)
    ls
 Proof
- fs [
-  bir_post_bir_to_riscv_def,
-  bspec_isqrt_post_2_def,
-  GSYM bir_and_equiv
- ] >>
-
- Cases_on `bs` >> Cases_on `b0` >>
-
- FULL_SIMP_TAC (std_ss++holBACore_ss) [
-  bir_envTheory.bir_env_read_def,
-  bir_envTheory.bir_env_check_type_def,
-  bir_envTheory.bir_env_lookup_type_def,
-  bir_envTheory.bir_env_lookup_def,
-  bir_eval_bin_pred_def,
-  bir_eval_bin_pred_exists_64_eq
- ] >>
-
- rw [riscv_isqrt_post_2_def] >>
-
- METIS_TAC [
-  riscv_bmr_x10_equiv,
-  riscv_bmr_x13_equiv,
-  riscv_bmr_x14_equiv,
-  riscv_bmr_x15_equiv
- ]
+ rw [bir_post_bir_to_riscv_def] >>
+ Cases_on `bs` >> Cases_on `b0` >> fs [] >>
+ Cases_on `b.bpc_label = BL_Address (Imm64 isqrt_end_addr_2)` >> fs [] >- (
+  `ms.c_PC ms.procID = isqrt_end_addr_2` by METIS_TAC [riscv_bmr_bpc_label_c_PC_equiv] >>
+  fs [bspec_isqrt_post_2_def, GSYM bir_and_equiv] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [
+   bir_envTheory.bir_env_read_def,
+   bir_envTheory.bir_env_check_type_def,
+   bir_envTheory.bir_env_lookup_type_def,
+   bir_envTheory.bir_env_lookup_def,
+   bir_eval_bin_pred_def,
+   bir_eval_bin_pred_exists_64_eq
+  ] >>
+  rw [riscv_isqrt_post_2_def] >>
+  METIS_TAC [riscv_bmr_x10_equiv, riscv_bmr_x13_equiv, riscv_bmr_x14_equiv, riscv_bmr_x15_equiv]
+ ) >>
+ fs [bir_exp_false_def, bir_eval_exp_def, bir_val_true_def]
 QED
 
 Theorem isqrt_riscv_pre_3_imp_bspec_pre_3_thm:
  bir_pre_riscv_to_bir
-  (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
-  (bspec_isqrt_pre_3 pre_x10 pre_x13 pre_x14)
+  (riscv_isqrt_pre_3 pre_x10 pre_x13 pre_x14 pre_x15)
+  (bspec_isqrt_pre_3 pre_x10 pre_x13 pre_x14 pre_x15)
 Proof
  rw [bir_pre_riscv_to_bir_def,riscv_isqrt_pre_3_def,bspec_isqrt_pre_3_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
@@ -291,16 +241,16 @@ QED
 
 Theorem isqrt_riscv_post_3_imp_bspec_post_3_thm:
  !ls. bir_post_bir_to_riscv
-   (riscv_isqrt_post_3 pre_x10 pre_x13 pre_x14)
-   (\l. if l = BL_Address (Imm64 0x10490w) then bspec_isqrt_post_3_loop pre_x10 pre_x13 pre_x14
-     else if l = BL_Address (Imm64 0x104A0w) then bspec_isqrt_post_3_ret pre_x10 pre_x13 pre_x14
+   (riscv_isqrt_post_3 pre_x10 pre_x13 pre_x14 pre_x15)
+   (\l. if l = BL_Address (Imm64 isqrt_end_addr_3_loop) then bspec_isqrt_post_3_loop pre_x10 pre_x13 pre_x14 pre_x15
+     else if l = BL_Address (Imm64 isqrt_end_addr_3_ret) then bspec_isqrt_post_3_ret pre_x10 pre_x13 pre_x14 pre_x15
      else bir_exp_false)
    ls
 Proof
  fs [bir_post_bir_to_riscv_def] >>
  strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >>
 
- Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x10490w)` >> fs [] >-
+ Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 isqrt_end_addr_3_loop)` >> fs [] >-
   (fs [bspec_isqrt_post_3_loop_def,GSYM bir_and_equiv] >>
 
    Cases_on `bs` >> Cases_on `b0` >>
@@ -315,22 +265,18 @@ Proof
     bool2b_def,
     bool2w_def
    ] >>
-   
+
    rw [bir_val_true_def,riscv_isqrt_post_3_def] >>
-   `ms.c_PC ms.procID = 0x10490w` by METIS_TAC [riscv_bmr_bpc_label_c_PC_equiv] >| [
-      rw [riscv_isqrt_post_3_loop_def] >>
-      METIS_TAC [
-       riscv_bmr_x10_equiv,
-       riscv_bmr_x13_equiv,
-       riscv_bmr_x14_equiv,
-       riscv_bmr_x15_equiv
-      ],
-
-     fs [isqrt_end_addr_3_loop_def],
-
-     fs [isqrt_end_addr_3_loop_def]
+   `ms.c_PC ms.procID = isqrt_end_addr_3_loop` by METIS_TAC [riscv_bmr_bpc_label_c_PC_equiv] >>
+   fs [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def] >>
+   rw [riscv_isqrt_post_3_loop_def] >>
+   METIS_TAC [
+    riscv_bmr_x10_equiv,
+    riscv_bmr_x13_equiv,
+    riscv_bmr_x14_equiv,
+    riscv_bmr_x15_equiv
    ]) >>
- Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 0x104A0w)` >> fs [] >-
+ Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 isqrt_end_addr_3_ret)` >> fs [] >-
   (fs [bspec_isqrt_post_3_ret_def,GSYM bir_and_equiv] >>
 
    Cases_on `bs` >> Cases_on `b0` >>
@@ -345,20 +291,16 @@ Proof
     bool2b_def,
     bool2w_def
    ] >>
-   
-   rw [bir_val_true_def,riscv_isqrt_post_3_def] >>
-   `ms.c_PC ms.procID = 0x104A0w` by METIS_TAC [riscv_bmr_bpc_label_c_PC_equiv] >| [
-     fs [isqrt_end_addr_3_loop_def],
-   
-     fs [isqrt_end_addr_3_ret_def],
 
-     rw [riscv_isqrt_post_3_ret_def] >>
-     METIS_TAC [
-      riscv_bmr_x10_equiv,
-      riscv_bmr_x13_equiv,
-      riscv_bmr_x14_equiv,
-      riscv_bmr_x15_equiv
-     ]
+   rw [bir_val_true_def,riscv_isqrt_post_3_def] >>
+   `ms.c_PC ms.procID = isqrt_end_addr_3_ret` by METIS_TAC [riscv_bmr_bpc_label_c_PC_equiv] >>
+   fs [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def] >>
+   rw [riscv_isqrt_post_3_ret_def] >>
+   METIS_TAC [
+    riscv_bmr_x10_equiv,
+    riscv_bmr_x13_equiv,
+    riscv_bmr_x14_equiv,
+    riscv_bmr_x15_equiv
    ]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
   bir_exp_false_def,

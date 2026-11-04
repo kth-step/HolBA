@@ -45,22 +45,16 @@ open chacha20_diagonal_round_symb_transfTheory;
 
 val _ = new_theory "chacha20_diagonal_round_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_chacha20_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_diagonal_round_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_chacha20_diagonal_round_post_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val riscv_cont_chacha20_diagonal_round_thm =
- get_riscv_contract
+ get_riscv_contract_thm
   bspec_cont_chacha20_diagonal_round
-  progbin_tm riscv_pre_tm riscv_post_tm
+  chacha20_diagonal_round_init_addr_def [chacha20_diagonal_round_end_addr_def]
+  bir_chacha20_progbin_def
+  riscv_chacha20_diagonal_round_pre_def riscv_chacha20_diagonal_round_post_def
   bir_chacha20_prog_def
   [bspec_chacha20_diagonal_round_pre_def]
   bspec_chacha20_diagonal_round_pre_def chacha20_diagonal_round_riscv_pre_imp_bspec_pre_thm
@@ -74,7 +68,6 @@ Theorem riscv_cont_chacha20_diagonal_round:
  (riscv_chacha20_diagonal_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
    pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof
- rw [chacha20_diagonal_round_init_addr_def,chacha20_diagonal_round_end_addr_def] >>
  ACCEPT_TAC riscv_cont_chacha20_diagonal_round_thm
 QED
 

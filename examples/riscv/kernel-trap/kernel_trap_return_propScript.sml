@@ -38,22 +38,16 @@ open kernel_trap_return_symb_transfTheory;
 
 val _ = new_theory "kernel_trap_return_prop";
 
-(* --------------------- *)
-(* Auxiliary definitions *)
-(* --------------------- *)
-
-val progbin_tm = (fst o dest_eq o concl) bir_kernel_trap_progbin_def;
-val riscv_pre_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_kernel_trap_return_pre_def;
-val riscv_post_tm = (fst o dest_comb o lhs o snd o strip_forall o concl) riscv_kernel_trap_return_post_def;
-
 (* ---------------------------------- *)
 (* Backlifting BIR contract to RISC-V *)
 (* ---------------------------------- *)
 
 val riscv_cont_kernel_trap_return_thm =
- get_riscv_contract
+ get_riscv_contract_thm
   bspec_cont_kernel_trap_return
-  progbin_tm riscv_pre_tm riscv_post_tm
+  kernel_trap_return_init_addr_def [kernel_trap_return_end_addr_def]
+  bir_kernel_trap_progbin_def
+  riscv_kernel_trap_return_pre_def riscv_kernel_trap_return_post_def
   bir_kernel_trap_prog_def
   [bspec_kernel_trap_return_pre_def]
   bspec_kernel_trap_return_pre_def kernel_trap_return_riscv_pre_imp_bspec_pre_thm
@@ -75,7 +69,6 @@ Theorem riscv_cont_kernel_trap_return:
       pre_x20_mem pre_x21_mem pre_x22_mem pre_x23_mem pre_x24_mem pre_x25_mem
       pre_x26_mem pre_x27_mem pre_x28_mem pre_x29_mem pre_x30_mem pre_x31_mem)
 Proof
- rw [kernel_trap_return_init_addr_def,kernel_trap_return_end_addr_def] >>
  ACCEPT_TAC riscv_cont_kernel_trap_return_thm
 QED
 

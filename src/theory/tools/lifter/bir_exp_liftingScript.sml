@@ -498,8 +498,6 @@ SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
 QED
 
 
-val bir_is_lifted_imm_exp_SHIFTS_w2n = save_thm ("bir_is_lifted_imm_exp_SHIFTS_w2n",
-let
 Theorem aux_thm[local]:
   dimword (:'b) <= n ==> (w2n (w:'b word) < n)
 Proof
@@ -508,6 +506,8 @@ REPEAT STRIP_TAC >>
     DECIDE_TAC
 QED
 
+val bir_is_lifted_imm_exp_SHIFTS_w2n = save_thm ("bir_is_lifted_imm_exp_SHIFTS_w2n",
+let
   val thm0 = bir_is_lifted_imm_exp_SHIFTS_w2n0
   val thm1 = SIMP_RULE (list_ss++wordsLib.SIZES_ss) [
     bir_bin_exp_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id,
@@ -904,9 +904,7 @@ in
 end);
 
 
-val bir_store_in_mem_words_REWRS = save_thm ("bir_store_in_mem_words_REWRS",
-let
-Theorem thm_def[local]:
+Theorem bir_store_in_mem_words_REWRS0[local]:
   !(value_ty :bir_immtype_t) (a_ty :bir_immtype_t) (result :bir_imm_t)
       (mmap :'a word -> 'v word) (en :bir_endian_t) (a :'a word).
      (size_of_bir_immtype value_ty = dimindex (:'v)) ==>
@@ -937,8 +935,11 @@ Proof
 SIMP_TAC std_ss [bir_store_in_mem_words_def]
 QED
 
+val bir_store_in_mem_words_REWRS = save_thm ("bir_store_in_mem_words_REWRS",
+let
 
-  val thms1 = MP_size_of_bir_immtype_t_EQ_dimindex thm_def
+
+  val thms1 = MP_size_of_bir_immtype_t_EQ_dimindex bir_store_in_mem_words_REWRS0
   val thms2 = flatten (map MP_size_of_bir_immtype_t_EQ_dimindex thms1)
   val thm0 = LIST_CONJ thms2
 
@@ -1673,14 +1674,6 @@ QED
 
 val bir_is_lifted_imm_exp_ROR_EXP_w2n = save_thm ("bir_is_lifted_imm_exp_ROR_EXP_w2n",
 let
-Theorem aux_thm[local]:
-  dimword (:'b) <= n ==> (w2n (w:'b word) < n)
-Proof
-REPEAT STRIP_TAC >>
-    `w2n w < dimword (:'b)` by METIS_TAC[w2n_lt] >>
-    DECIDE_TAC
-QED
-
   val thm0 = bir_is_lifted_imm_exp_ROR_EXP_w2n0
   val thm1 = SIMP_RULE (list_ss++wordsLib.SIZES_ss) [
     bir_bin_exp_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id,
@@ -1783,14 +1776,6 @@ QED
 
 val bir_is_lifted_imm_exp_ROL_EXP_w2n = save_thm ("bir_is_lifted_imm_exp_ROL_EXP_w2n",
 let
-Theorem aux_thm[local]:
-  dimword (:'b) <= n ==> (w2n (w:'b word) < n)
-Proof
-REPEAT STRIP_TAC >>
-    `w2n w < dimword (:'b)` by METIS_TAC[w2n_lt] >>
-    DECIDE_TAC
-QED
-
   val thm0 = bir_is_lifted_imm_exp_ROL_EXP_w2n0
   val thm1 = SIMP_RULE (list_ss++wordsLib.SIZES_ss) [
     bir_bin_exp_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id,

@@ -21,8 +21,8 @@ open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples: *)
 open bir_prog_add_regTheory;
-open add_reg_spec_arm8Theory;
-open add_reg_spec_birTheory;
+open add_reg_arm8Theory;
+open add_reg_birTheory;
 
 (* From HOL4: *)
 open finite_mapSyntax;

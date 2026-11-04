@@ -125,7 +125,7 @@ val birs_strongpostcond_impl_pat_tm = ``
   bir_eval_exp BPRE  bs1.bst_environ = SOME bir_val_true ==>
   birs_symb_matchstate sys2 H bs2 ==>
   bir_eval_exp BPOST bs2.bst_environ = SOME bir_val_true``;
-fun birs_strongpostcond_impl_TAC (assum_list, goal) =
+fun birs_strongpostcond_impl_TAC (assum_list, goal) (_ : Context.t) =
   let
     val _ = if List.null assum_list then () else raise mk_HOL_ERR "symbexec_transfer_lib" "birs_strongpostcond_impl_TAC" "assumption list not empty";
     val tm_subst =

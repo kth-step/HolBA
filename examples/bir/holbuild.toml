@@ -1,0 +1,37 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.6"
+
+[project]
+name = "holba_examples_bir"
+
+# Must match the HOL revision used by the HolBA root holbuild.toml.
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
+
+# HolBA itself (the root holbuild.toml of this repository). holbuild has no
+# path dependencies, so examples/bir/.holconfig.toml overrides this with
+#   [overrides.holba]
+#   path = "../.."
+# to build against the enclosing checkout instead of this rev.
+[dependencies.holba]
+git = "https://github.com/kth-step/HolBA"
+rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"
+
+[build]
+members = [
+  "compute",
+]
+# Test and benchmark scripts (e.g. compute/test-compute.sml) are not built.
+exclude_globs = [
+  "*/test-*.sml",
+  "compute/examples/benchmark-examples.sml",
+]
+root_groups = [
+  "compute",
+]
+tactic_timeout = 600.0
+
+[build.groups.compute]
+include = ["compute"]

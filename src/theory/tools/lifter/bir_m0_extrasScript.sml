@@ -42,15 +42,15 @@ Theorem EQ_15w_EVAL = LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_lis
 
 
 
-val RName_distinct = save_thm ("RName_distinct", let
-Theorem thm0[local]:
+Theorem RName_distinct0[local]:
   !r r'.
      r < 17 ==> r' < r ==> ((num2RName r = num2RName r') <=> (r = r'))
 Proof
 SIMP_TAC arith_ss [m0Theory.num2RName_11]
 QED
 
-  val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] thm0
+val RName_distinct = save_thm ("RName_distinct", let
+  val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] RName_distinct0
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
      rich_listTheory.COUNT_LIST_AUX_compute, listTheory.MEM,
      DISJ_IMP_THM, FORALL_AND_THM, m0Theory.num2RName_thm] thm1
@@ -529,7 +529,7 @@ ASM_SIMP_TAC std_ss [integer_wordTheory.w2i_n2w_pos] >>
      METIS_TAC[]
   ) >>
   Q.ABBREV_TAC `m = LEAST i. w ' i` >>
-  `w ' m /\ (!i. i < m ==> ~(w ' i))` by METIS_TAC[whileTheory.LEAST_EXISTS_IMP] >>
+  `w ' m /\ (!i. i < m ==> ~(w ' i))` by METIS_TAC[WhileTheory.LEAST_EXISTS_IMP] >>
   `m < dimindex (:'a)` by (
      `~(i < m)` by METIS_TAC[] >>
      DECIDE_TAC
@@ -574,7 +574,7 @@ Q.SUBGOAL_THEN `(n MOD dimword (:'a) = 0) = (n2w n = (0w:'a word))` SUBST1_TAC >
 Cases_on `n2w n = (0w:'a word)` >> ASM_SIMP_TAC std_ss [LowestSetBit_ALT_DEF] >>
 FULL_SIMP_TAC std_ss [word_eq_0] >>
 Q.ABBREV_TAC `m = LEAST i. (n2w n) ' i` >>
-`((n2w n):'a word) ' m /\ (!i. i < m ==> ~(((n2w n):'a word) ' i))` by METIS_TAC[whileTheory.LEAST_EXISTS_IMP] >>
+`((n2w n):'a word) ' m /\ (!i. i < m ==> ~(((n2w n):'a word) ' i))` by METIS_TAC[WhileTheory.LEAST_EXISTS_IMP] >>
 `m < dimindex (:'a)` by (
    `~(i < m)` by METIS_TAC[] >>
    DECIDE_TAC

@@ -144,17 +144,17 @@ End
 Definition riscv_chacha20_line_pre_def:
  riscv_chacha20_line_pre (pre_a:word32) (pre_b:word32) (pre_d:word32)
   (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
+ (w2w (m.c_gpr m.procID 10w) = pre_a /\
+  w2w (m.c_gpr m.procID 22w) = pre_b /\
+  w2w (m.c_gpr m.procID 26w) = pre_d)
 End
 
 Definition riscv_chacha20_line_post_def:
  riscv_chacha20_line_post (pre_a:word32) (pre_b:word32) (pre_d:word32)
   (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 20w)) =
+ (w2w (m.c_gpr m.procID 20w) =
    chacha_line_exp_fst pre_a pre_b /\
-  n2w (w2n (m.c_gpr m.procID 10w)) =
+  w2w (m.c_gpr m.procID 10w) =
    chacha_line_exp_snd (chacha_line_exp_fst pre_a pre_b) pre_d 16w)
 End
 
@@ -163,20 +163,20 @@ End
 Definition riscv_chacha20_quarter_round_pre_def:
  riscv_chacha20_quarter_round_pre (pre_a:word32) (pre_b:word32) (pre_c:word32) (pre_d:word32)
   (m:riscv_state) : bool =
-  (n2w (w2n (m.c_gpr m.procID 10w)) = pre_a /\
-   n2w (w2n (m.c_gpr m.procID 22w)) = pre_b /\
-   n2w (w2n (m.c_gpr m.procID 28w)) = pre_c /\
-   n2w (w2n (m.c_gpr m.procID 26w)) = pre_d)
+  (w2w (m.c_gpr m.procID 10w) = pre_a /\
+   w2w (m.c_gpr m.procID 22w) = pre_b /\
+   w2w (m.c_gpr m.procID 28w) = pre_c /\
+   w2w (m.c_gpr m.procID 26w) = pre_d)
 End
 
 Definition riscv_chacha20_quarter_round_post_def:
  riscv_chacha20_quarter_round_post (pre_a:word32) (pre_b:word32) (pre_c:word32) (pre_d:word32)
   (m:riscv_state) : bool =
   (let (a,b,c,d) = chacha_quarter_round_exprs pre_a pre_b pre_c pre_d in
-   n2w (w2n (m.c_gpr m.procID 20w)) = a /\
-   n2w (w2n (m.c_gpr m.procID 21w)) = b /\
-   n2w (w2n (m.c_gpr m.procID 8w)) = c /\
-   n2w (w2n (m.c_gpr m.procID 22w)) = d)
+   w2w (m.c_gpr m.procID 20w) = a /\
+   w2w (m.c_gpr m.procID 21w) = b /\
+   w2w (m.c_gpr m.procID 8w) = c /\
+   w2w (m.c_gpr m.procID 22w) = d)
 End
 
 (* column round contract *)
@@ -188,23 +188,28 @@ Definition riscv_chacha20_column_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = pre_arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 17w)) = pre_arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 6w))  = pre_arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 11w)) = pre_arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = pre_arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = pre_arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = pre_arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = pre_arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 30w)) = pre_arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 31w)) = pre_arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = pre_arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 25w)) = pre_arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 24w)) = pre_arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 23w)) = pre_arr_15)
+ (w2w (m.c_gpr m.procID 10w) = pre_arr_0 /\
+  w2w (m.c_gpr m.procID 16w) = pre_arr_1 /\
+  w2w (m.c_gpr m.procID 17w) = pre_arr_2 /\
+  w2w (m.c_gpr m.procID 6w)  = pre_arr_3 /\
+  w2w (m.c_gpr m.procID 22w) = pre_arr_4 /\
+  w2w (m.c_gpr m.procID 11w) = pre_arr_5 /\
+  w2w (m.c_gpr m.procID 13w) = pre_arr_6 /\
+  w2w (m.c_gpr m.procID 14w) = pre_arr_7 /\
+  w2w (m.c_gpr m.procID 28w) = pre_arr_8 /\
+  w2w (m.c_gpr m.procID 29w) = pre_arr_9 /\
+  w2w (m.c_gpr m.procID 30w) = pre_arr_10 /\
+  w2w (m.c_gpr m.procID 31w) = pre_arr_11 /\
+  w2w (m.c_gpr m.procID 26w) = pre_arr_12 /\
+  w2w (m.c_gpr m.procID 25w) = pre_arr_13 /\
+  w2w (m.c_gpr m.procID 24w) = pre_arr_14 /\
+  w2w (m.c_gpr m.procID 23w) = pre_arr_15)
 End
+
+(* The postcondition fixes the PC to the end label, so that the
+   contract can also list the end of the double round as an ending
+   label that is never reached first, as needed for sequential
+   composition with the diagonal round *)
 
 Definition riscv_chacha20_column_round_post_def:
  riscv_chacha20_column_round_post
@@ -219,22 +224,23 @@ Definition riscv_chacha20_column_round_post_def:
      pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
      pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
   in
-  n2w (w2n (m.c_gpr m.procID 20w)) = arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 19w)) = arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 18w)) = arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 9w)) = arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 21w)) = arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 10w)) = arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 8w)) = arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 7w)) = arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 5w)) = arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 15w)) = arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = arr_15)
+  m.c_PC m.procID = chacha20_column_round_end_addr /\
+  w2w (m.c_gpr m.procID 20w) = arr_0 /\
+  w2w (m.c_gpr m.procID 19w) = arr_1 /\
+  w2w (m.c_gpr m.procID 18w) = arr_2 /\
+  w2w (m.c_gpr m.procID 9w) = arr_3 /\
+  w2w (m.c_gpr m.procID 21w) = arr_4 /\
+  w2w (m.c_gpr m.procID 10w) = arr_5 /\
+  w2w (m.c_gpr m.procID 13w) = arr_6 /\
+  w2w (m.c_gpr m.procID 14w) = arr_7 /\
+  w2w (m.c_gpr m.procID 8w) = arr_8 /\
+  w2w (m.c_gpr m.procID 7w) = arr_9 /\
+  w2w (m.c_gpr m.procID 5w) = arr_10 /\
+  w2w (m.c_gpr m.procID 15w) = arr_11 /\
+  w2w (m.c_gpr m.procID 22w) = arr_12 /\
+  w2w (m.c_gpr m.procID 28w) = arr_13 /\
+  w2w (m.c_gpr m.procID 29w) = arr_14 /\
+  w2w (m.c_gpr m.procID 16w) = arr_15)
 End
 
 (* diagonal round contract *)
@@ -246,22 +252,22 @@ Definition riscv_chacha20_diagonal_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (n2w (w2n (m.c_gpr m.procID 20w)) = pre_arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 19w)) = pre_arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 18w)) = pre_arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 9w)) = pre_arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 21w)) = pre_arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 10w)) = pre_arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = pre_arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = pre_arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 8w)) = pre_arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 7w)) = pre_arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 5w)) = pre_arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 15w)) = pre_arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = pre_arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = pre_arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = pre_arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = pre_arr_15)
+ (w2w (m.c_gpr m.procID 20w) = pre_arr_0 /\
+  w2w (m.c_gpr m.procID 19w) = pre_arr_1 /\
+  w2w (m.c_gpr m.procID 18w) = pre_arr_2 /\
+  w2w (m.c_gpr m.procID 9w) = pre_arr_3 /\
+  w2w (m.c_gpr m.procID 21w) = pre_arr_4 /\
+  w2w (m.c_gpr m.procID 10w) = pre_arr_5 /\
+  w2w (m.c_gpr m.procID 13w) = pre_arr_6 /\
+  w2w (m.c_gpr m.procID 14w) = pre_arr_7 /\
+  w2w (m.c_gpr m.procID 8w) = pre_arr_8 /\
+  w2w (m.c_gpr m.procID 7w) = pre_arr_9 /\
+  w2w (m.c_gpr m.procID 5w) = pre_arr_10 /\
+  w2w (m.c_gpr m.procID 15w) = pre_arr_11 /\
+  w2w (m.c_gpr m.procID 22w) = pre_arr_12 /\
+  w2w (m.c_gpr m.procID 28w) = pre_arr_13 /\
+  w2w (m.c_gpr m.procID 29w) = pre_arr_14 /\
+  w2w (m.c_gpr m.procID 16w) = pre_arr_15)
 End
 
 Definition riscv_chacha20_diagonal_round_post_def:
@@ -277,22 +283,80 @@ Definition riscv_chacha20_diagonal_round_post_def:
      pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
      pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
   in
-  n2w (w2n (m.c_gpr m.procID 10w)) = arr_0 /\
-  n2w (w2n (m.c_gpr m.procID 16w)) = arr_1 /\
-  n2w (w2n (m.c_gpr m.procID 17w)) = arr_2 /\
-  n2w (w2n (m.c_gpr m.procID 6w)) = arr_3 /\
-  n2w (w2n (m.c_gpr m.procID 22w)) = arr_4 /\
-  n2w (w2n (m.c_gpr m.procID 11w)) = arr_5 /\
-  n2w (w2n (m.c_gpr m.procID 13w)) = arr_6 /\
-  n2w (w2n (m.c_gpr m.procID 14w)) = arr_7 /\
-  n2w (w2n (m.c_gpr m.procID 28w)) = arr_8 /\
-  n2w (w2n (m.c_gpr m.procID 29w)) = arr_9 /\
-  n2w (w2n (m.c_gpr m.procID 30w)) = arr_10 /\
-  n2w (w2n (m.c_gpr m.procID 31w)) = arr_11 /\
-  n2w (w2n (m.c_gpr m.procID 26w)) = arr_12 /\
-  n2w (w2n (m.c_gpr m.procID 25w)) = arr_13 /\
-  n2w (w2n (m.c_gpr m.procID 24w)) = arr_14 /\
-  n2w (w2n (m.c_gpr m.procID 23w)) = arr_15)
+  w2w (m.c_gpr m.procID 10w) = arr_0 /\
+  w2w (m.c_gpr m.procID 16w) = arr_1 /\
+  w2w (m.c_gpr m.procID 17w) = arr_2 /\
+  w2w (m.c_gpr m.procID 6w) = arr_3 /\
+  w2w (m.c_gpr m.procID 22w) = arr_4 /\
+  w2w (m.c_gpr m.procID 11w) = arr_5 /\
+  w2w (m.c_gpr m.procID 13w) = arr_6 /\
+  w2w (m.c_gpr m.procID 14w) = arr_7 /\
+  w2w (m.c_gpr m.procID 28w) = arr_8 /\
+  w2w (m.c_gpr m.procID 29w) = arr_9 /\
+  w2w (m.c_gpr m.procID 30w) = arr_10 /\
+  w2w (m.c_gpr m.procID 31w) = arr_11 /\
+  w2w (m.c_gpr m.procID 26w) = arr_12 /\
+  w2w (m.c_gpr m.procID 25w) = arr_13 /\
+  w2w (m.c_gpr m.procID 24w) = arr_14 /\
+  w2w (m.c_gpr m.procID 23w) = arr_15)
+End
+
+(* double round contract *)
+
+Definition riscv_chacha20_double_round_pre_def:
+ riscv_chacha20_double_round_pre 
+  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
+  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
+  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
+  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
+ (m:riscv_state) : bool =
+ (w2w (m.c_gpr m.procID 10w) = pre_arr_0 /\
+  w2w (m.c_gpr m.procID 16w) = pre_arr_1 /\
+  w2w (m.c_gpr m.procID 17w) = pre_arr_2 /\
+  w2w (m.c_gpr m.procID 6w)  = pre_arr_3 /\
+  w2w (m.c_gpr m.procID 22w) = pre_arr_4 /\
+  w2w (m.c_gpr m.procID 11w) = pre_arr_5 /\
+  w2w (m.c_gpr m.procID 13w) = pre_arr_6 /\
+  w2w (m.c_gpr m.procID 14w) = pre_arr_7 /\
+  w2w (m.c_gpr m.procID 28w) = pre_arr_8 /\
+  w2w (m.c_gpr m.procID 29w) = pre_arr_9 /\
+  w2w (m.c_gpr m.procID 30w) = pre_arr_10 /\
+  w2w (m.c_gpr m.procID 31w) = pre_arr_11 /\
+  w2w (m.c_gpr m.procID 26w) = pre_arr_12 /\
+  w2w (m.c_gpr m.procID 25w) = pre_arr_13 /\
+  w2w (m.c_gpr m.procID 24w) = pre_arr_14 /\
+  w2w (m.c_gpr m.procID 23w) = pre_arr_15)
+End
+
+Definition riscv_chacha20_double_round_post_def:
+ riscv_chacha20_double_round_post
+  (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
+  (pre_arr_4:word32) (pre_arr_5:word32) (pre_arr_6:word32) (pre_arr_7:word32) 
+  (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
+  (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
+ (m:riscv_state) : bool =
+ (let (arr_0,arr_1,arr_2,arr_3,arr_4,arr_5,arr_6,arr_7,arr_8,
+       arr_9,arr_10,arr_11,arr_12,arr_13,arr_14,arr_15) =
+   chacha_double_round_exprs
+     pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6 pre_arr_7
+     pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
+  in
+  w2w (m.c_gpr m.procID 10w) = arr_0 /\
+  w2w (m.c_gpr m.procID 16w) = arr_1 /\
+  w2w (m.c_gpr m.procID 17w) = arr_2 /\
+  w2w (m.c_gpr m.procID 6w) = arr_3 /\
+  w2w (m.c_gpr m.procID 22w) = arr_4 /\
+  w2w (m.c_gpr m.procID 11w) = arr_5 /\
+  w2w (m.c_gpr m.procID 13w) = arr_6 /\
+  w2w (m.c_gpr m.procID 14w) = arr_7 /\
+  w2w (m.c_gpr m.procID 28w) = arr_8 /\
+  w2w (m.c_gpr m.procID 29w) = arr_9 /\
+  w2w (m.c_gpr m.procID 30w) = arr_10 /\
+  w2w (m.c_gpr m.procID 31w) = arr_11 /\
+  w2w (m.c_gpr m.procID 26w) = arr_12 /\
+  w2w (m.c_gpr m.procID 25w) = arr_13 /\
+  w2w (m.c_gpr m.procID 24w) = arr_14 /\
+  w2w (m.c_gpr m.procID 23w) = arr_15)
 End
 
 val _ = export_theory ();

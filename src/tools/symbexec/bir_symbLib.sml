@@ -343,6 +343,295 @@ fun bir_symb_transfer_thm
      symb_analysis_thm pcond_gen_inst_o prog_vars_thm
  end (* let *)
 
+
+(* Like bir_symb_transfer, but the resulting contract also has the
+ * label of end_addr_excl in its ending label set, with postcondition
+ * false. That is, the contract states that the excluded label is not
+ * reached before the end label, which is needed for sequential composition
+ * with a contract that ends at the excluded label. *)
+fun bir_symb_transfer_excl
+ init_addr_tm end_addr_tm end_addr_excl_tm
+ bspec_pre_tm bspec_post_tm
+ bir_prog_def birenvtyl_def
+ bspec_pre_def bspec_post_def prog_vars_list_def
+ symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
+ let
+   val _ = print "\n======\n > bir_symb_transfer_excl started\n";
+   val timer = holba_miscLib.timer_start 0;
+
+   val pcond_gen_inst =
+     case pcond_gen_inst_o of
+         SOME x => x
+       | NONE => ``BExp_Const (Imm1 1w)``;
+   val (bsysprecond_thm, symb_analysis_thm) =
+     birs_transferLib.prepare_transfer
+       birenvtyl_def
+       pcond_gen_inst
+       ((lhs o snd o strip_forall o concl) bspec_pre_def)
+       symb_analysis_thm;
+
+   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+   val bprog_tm = (fst o dest_eq o concl) bir_prog_def;
+   val prog_vars_list_tm = (fst o dest_eq o concl) prog_vars_list_def;
+   val birenvtyl_tm = (fst o dest_eq o concl) birenvtyl_def;
+   val bir_init_lbl_tm = ``BL_Address ^(gen_mk_Imm init_addr_tm)``;
+   val bir_end_lbl_tm = ``BL_Address ^(gen_mk_Imm end_addr_tm)``;
+   val bir_excl_lbl_tm = ``BL_Address ^(gen_mk_Imm end_addr_excl_tm)``;
+   val bir_state_init_lbl_tm = (snd o dest_eq o concl o EVAL)
+    ``bir_block_pc (BL_Address ^(gen_mk_Imm init_addr_tm))``;
+   val birs_state_end_lbl_tm = (snd o dest_eq o concl o EVAL)
+    ``bir_block_pc (BL_Address ^(gen_mk_Imm end_addr_tm))``;
+   val birs_state_excl_lbl_tm = (snd o dest_eq o concl o EVAL)
+    ``bir_block_pc (BL_Address ^(gen_mk_Imm end_addr_excl_tm))``;
+   val birs_state_init_pre_tm =
+    ``birs_state_init_pre_GEN ^bir_state_init_lbl_tm ^birenvtyl_tm
+      (mk_bsysprecond ^bspec_pre_tm ^birenvtyl_tm)``;
+
+   val (sys_i, L_s, Pi_f) = (get_birs_sysLPi o concl) symb_analysis_thm;
+
+   val analysis_L_NOTIN_thm = prove (``^birs_state_end_lbl_tm NOTIN ^L_s``,
+     REWRITE_TAC [birs_auxTheory.bir_pc_set_lbls_IN_thm] >> EVAL_TAC);
+   (* the excluded label is not passed by the analyzed fragment *)
+   val analysis_L_NOTIN_excl_thm = prove (``^birs_state_excl_lbl_tm NOTIN ^L_s``,
+     REWRITE_TAC [birs_auxTheory.bir_pc_set_lbls_IN_thm] >> EVAL_TAC);
+
+   val birs_state_init_pre_EQ_thm =
+    prove (``^(sys_i) = ^birs_state_init_pre_tm``,
+     REWRITE_TAC [birs_state_init_pre_GEN_def, mk_bsysprecond_def, bsysprecond_thm] >>
+     CONV_TAC (
+       computeLib.RESTR_EVAL_CONV [birs_eval_exp_tm] THENC
+       REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+       GEN_match_conv is_birs_eval_exp birs_stepLib.birs_eval_exp_CONV THENC
+       EVAL));
+
+   val analysis_thm =
+    REWRITE_RULE [birs_state_init_pre_EQ_thm, GSYM bir_prog_def] symb_analysis_thm;
+
+   val birenvtyl_EVAL_thm =
+    (REWRITE_CONV [
+        birenvtyl_def,
+        bir_lifting_machinesTheory.riscv_bmr_vars_EVAL,
+        bir_lifting_machinesTheory.riscv_bmr_temp_vars_EVAL] THENC EVAL)
+      birenvtyl_tm;
+
+   val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre_tm;
+
+   val birs_symb_symbols_f_sound_prog_thm =
+     (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog_tm)
+       bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
+
+   val birs_prop_transfer_thm =
+     (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm
+       birs_symb_symbols_f_sound_prog_thm);
+
+   val bprog_P_entails_thm =
+    prove (``P_entails_an_interpret
+     (bir_symb_rec_sbir ^bprog_tm)
+     (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
+     (birs_symb_to_symbst ^birs_state_init_pre_tm)``,
+
+    ASSUME_TAC (GSYM prog_vars_thm) >>
+    `^prog_vars_list_tm = MAP PairToBVar ^birenvtyl_tm` by (
+     SIMP_TAC std_ss [birenvtyl_def, listTheory.MAP_MAP_o,
+      PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]) >>
+    POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+    IMP_RES_TAC (SIMP_RULE std_ss [] P_bircont_entails_thm) >>
+    SIMP_TAC std_ss [] >>
+    POP_ASSUM (ASSUME_TAC o SPEC bspec_pre_tm) >>
+    `bir_vars_of_exp ^bspec_pre_tm SUBSET set (MAP PairToBVar ^birenvtyl_tm)` by EVAL_TAC >>
+    POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+    `ALL_DISTINCT (MAP FST ^birenvtyl_tm)` by EVAL_TAC >>
+    POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+    `IS_SOME (type_of_bir_exp ^bspec_pre_tm)` by (
+      SIMP_TAC std_ss [bspec_pre_def] >>
+      CONV_TAC (RAND_CONV (bir_exp_typecheckLib.type_of_bir_exp_gen_CONV)) >>
+      SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES]
+    ) >>
+    POP_ASSUM (fn thm => FULL_SIMP_TAC std_ss [thm]));
+
+   val sys1 = (snd o dest_eq o concl o REWRITE_CONV [bsysprecond_thm]) birs_state_init_pre_tm;
+   val sys2s = pred_setSyntax.strip_set Pi_f;
+
+   val strongpostcond_goals = List.map (fn sys2 => ``
+    sys1 = ^sys1 ==>
+    sys2 = ^sys2 ==>
+    birs_symb_matchstate sys1 H' bs ==>
+    bir_eval_exp ^bspec_pre_tm bs.bst_environ = SOME bir_val_true ==>
+    birs_symb_matchstate sys2 H' bs' ==>
+    bir_eval_exp ^bspec_post_tm bs'.bst_environ = SOME bir_val_true``) 
+   sys2s;
+
+   val _ = print "\nproving strong postcondition implications for each symbolic execution leaf with the smt solver";
+   val strongpostcond_thms = List.map (fn goal =>
+    Profile.profile "bir_symbLib.strongpost" prove (``^goal``, birs_strongpostcond_impl_TAC)) strongpostcond_goals;
+   val _ = print " - done\n";
+
+   val Pi_thms_idx = ref 0;
+   val Pi_thms = List.map (fn sys2 =>
+    let
+      val idx = (!Pi_thms_idx);
+      (*
+      val sys2 = List.nth(sys2s, idx);
+      *)
+      val _ = print ("proving leaf #" ^ (Int.toString idx) ^ "\n");
+      val _ = Pi_thms_idx := idx + 1;
+    in Profile.profile "bir_symbLib.Pi"
+    prove(``
+     sys1 = ^sys1 ==>
+     sys2 = ^sys2 ==>
+     birs_symb_matchstate sys1 H bs ==>
+     P_bircont ^birenvtyl_tm ^bspec_pre_tm (birs_symb_to_concst bs) ==>
+     symb_interpr_ext H' H ==>
+     birs_symb_matchstate sys2 H' bs' ==>
+     Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^bspec_post_tm
+      (birs_symb_to_concst bs) (birs_symb_to_concst bs')``,
+
+    REPEAT STRIP_TAC >>
+    (* TODO: this proof is overall not very suited as automation, quite slow *)
+    Profile.profile "bir_symbLib.Pi.3CONJS" (Q_bircont_SOLVE3CONJS_TAC prog_vars_thm) >> (* val varset_thm = prog_vars_thm; *)
+    (*TODO: the following two metis_tac are a bit slow for larger expressions*)
+    `birs_symb_matchstate sys1 H' bs` by
+     METIS_TAC [bir_symb_soundTheory.birs_symb_matchstate_interpr_ext_IMP_matchstate_thm] >>
+    FULL_SIMP_TAC std_ss [P_bircont_thm] >>
+    METIS_TAC strongpostcond_thms) end)
+   sys2s;
+
+   val bprog_Pi_overapprox_Q_thm =
+    prove (``Pi_overapprox_Q
+     (bir_symb_rec_sbir ^bprog_tm)
+     (P_bircont ^birenvtyl_tm ^bspec_pre_tm)
+     (birs_symb_to_symbst ^birs_state_init_pre_tm) (IMAGE birs_symb_to_symbst ^Pi_f)
+     (\st st'.
+       Q_bircont ^birs_state_end_lbl_tm (set ^prog_vars_list_tm) ^bspec_post_tm st st' \/
+       Q_bircont ^birs_state_excl_lbl_tm (set ^prog_vars_list_tm) bir_exp_false st st')``,
+
+    REWRITE_TAC [bir_prop_transferTheory.bir_Pi_overapprox_Q_thm, bsysprecond_thm] >>
+    REPEAT GEN_TAC >>
+    REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
+    REPEAT STRIP_TAC >> (
+     FULL_SIMP_TAC std_ss [] >>
+     METIS_TAC Pi_thms));
+
+   val bprog_prop_holds_thm =
+     SIMP_RULE (std_ss++birs_state_ss)
+      [birs_state_init_pre_GEN_def, birs_symb_symbst_pc_thm] (
+        MATCH_MP
+        (MATCH_MP
+         (MATCH_MP
+          birs_prop_transfer_thm
+          bprog_P_entails_thm)
+         bprog_Pi_overapprox_Q_thm)
+        (REWRITE_RULE [birs_rulesTheory.birs_symb_exec_def] analysis_thm));
+
+   val bir_abstract_jgmt_rel_thm =
+    (MATCH_MP
+     (MATCH_MP
+       (MATCH_MP prop_holds_TO_abstract_jgmt_rel_two_thm analysis_L_NOTIN_thm)
+       analysis_L_NOTIN_excl_thm)
+     (REWRITE_RULE [] bprog_prop_holds_thm));
+
+   val abstract_jgmt_rel_thm =
+    prove (``abstract_jgmt_rel (bir_ts ^bprog_tm)
+     (^bir_init_lbl_tm) {^bir_end_lbl_tm; ^bir_excl_lbl_tm}
+     (\st. bir_exec_to_labels_triple_precond st ^bspec_pre_tm ^bprog_tm)
+     (\st st'. bir_exec_to_labels_triple_postcond st'
+     (\l. if l = ^bir_end_lbl_tm then ^bspec_post_tm
+          else if l = ^bir_excl_lbl_tm then bir_exp_false
+          else bir_exp_false) ^bprog_tm)``,
+
+    MATCH_MP_TAC (REWRITE_RULE
+     [boolTheory.AND_IMP_INTRO] abstract_jgmt_rel_bir_exec_to_two_labels_triple_thm) >>
+    SIMP_TAC std_ss [] >>
+    EXISTS_TAC birenvtyl_tm >>
+    CONJ_TAC >- rw [] >>
+    CONJ_TAC >- (
+     (* bpre subset *)
+     REWRITE_TAC [bspec_pre_def] >>
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT] >>
+     EVAL_TAC
+    ) >>
+    CONJ_TAC >- (
+     (* bpost subset *)
+     REWRITE_TAC [bspec_post_def] >>
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [GSYM prog_vars_thm, prog_vars_list_def] >>
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [listTheory.MEM, pred_setTheory.IN_INSERT]
+    ) >>
+    CONJ_TAC >- (
+     (* bir_exp_false subset *)
+     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++holBACore_ss) [bir_exp_false_def]
+    ) >>
+    CONJ_TAC >- (
+     (* bpost is bool *)
+     REWRITE_TAC [bspec_post_def] >>
+     SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_REWRS, type_of_bir_exp_def]
+    ) >>
+    CONJ_TAC >- (
+     (* bir_exp_false is bool *)
+     SIMP_TAC (std_ss++holBACore_ss) [bir_exp_false_def, bir_is_bool_exp_REWRS, type_of_bir_exp_def]
+    ) >>
+    CONJ_TAC >- (
+     (* ALL_DISTINCT envtyl *)
+     SIMP_TAC (std_ss++listSimps.LIST_ss) [birenvtyl_EVAL_thm] >>
+     EVAL_TAC
+    ) >>
+    CONJ_TAC >- (
+     (* envtyl = vars_of_prog *)
+     REWRITE_TAC [GSYM prog_vars_thm] >>
+     SIMP_TAC std_ss [birenvtyl_def, listTheory.MAP_MAP_o, PairToBVar_BVarToPair_I_thm, listTheory.MAP_ID]
+    ) >>
+    METIS_TAC [bir_abstract_jgmt_rel_thm, prog_vars_thm]);
+
+  val bspec_cont_thm =
+   prove (``bir_cont ^bprog_tm bir_exp_true
+    (^bir_init_lbl_tm) {^bir_end_lbl_tm; ^bir_excl_lbl_tm} {}
+    ^bspec_pre_tm
+    (\l. if l = ^bir_end_lbl_tm then ^bspec_post_tm
+         else if l = ^bir_excl_lbl_tm then bir_exp_false
+         else bir_exp_false)``,
+
+    `{^bir_end_lbl_tm; ^bir_excl_lbl_tm} <> {}` by fs [] >>
+    MP_TAC ((Q.SPECL [
+     `^bir_init_lbl_tm`,
+      `{^bir_end_lbl_tm; ^bir_excl_lbl_tm}`,
+      `^bspec_pre_tm`,
+      `\l. if l = ^bir_end_lbl_tm then ^bspec_post_tm
+           else if l = ^bir_excl_lbl_tm then bir_exp_false
+           else bir_exp_false`
+    ] o SPEC bprog_tm o INST_TYPE [Type.alpha |-> Type`:'obs_type`])
+    abstract_jgmt_rel_bir_cont) >>
+    rw [] >>
+    METIS_TAC [abstract_jgmt_rel_thm]);
+
+   (* the excluded label's postcondition is bir_exp_false, like the default,
+      so state the postcondition as if l = end then post else bir_exp_false *)
+   val bspec_cont_excl_thm = REWRITE_RULE [boolTheory.COND_ID] bspec_cont_thm;
+
+   val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_transfer_excl took " ^ delta_s ^ "\n")) timer;
+ in
+   bspec_cont_excl_thm
+ end (* let *)
+
+fun bir_symb_transfer_excl_thm
+ bir_prog_def init_addr_def end_addr_def end_addr_excl_def
+ bspec_pre_def bspec_post_def
+ birenvtyl_def prog_vars_list_def
+ symb_analysis_thm pcond_gen_inst_o prog_vars_thm =
+ let
+   val init_addr_tm = (snd o dest_eq o concl) init_addr_def;
+   val end_addr_tm = (snd o dest_eq o concl) end_addr_def;
+   val end_addr_excl_tm = (snd o dest_eq o concl) end_addr_excl_def;
+   val bspec_pre_tm = (lhs o snd o strip_forall o concl) bspec_pre_def;
+   val bspec_post_tm = (lhs o snd o strip_forall o concl) bspec_post_def;
+ in
+   bir_symb_transfer_excl
+     init_addr_tm end_addr_tm end_addr_excl_tm
+     bspec_pre_tm bspec_post_tm
+     bir_prog_def birenvtyl_def
+     bspec_pre_def bspec_post_def prog_vars_list_def
+     symb_analysis_thm pcond_gen_inst_o prog_vars_thm
+ end (* let *)
+
 end (* local *)
 
 local

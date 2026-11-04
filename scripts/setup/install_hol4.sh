@@ -29,7 +29,7 @@ if [[ ! "${POLY_VERSION}" == "PREPACKAGED" ]]; then
 fi
 
 # use a default hol4 version if it is not specified in the environment
-HOL4_VERSION="trindemossen-2"
+HOL4_VERSION="trindemossen-2-v9"
 if [[ ! -z "${HOLBA_HOL4_VERSION}" ]]; then
   HOL4_VERSION=${HOLBA_HOL4_VERSION}
 fi
@@ -38,7 +38,7 @@ fi
 GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
 GIT_IS_TAG=1
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_t2
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_t2v9
 
 
 ##################################################################
@@ -93,7 +93,7 @@ if [[ ! -d "${HOL4_DIR}" ]]; then
     echo "val polymllibdir = \"/usr/lib/x86_64-linux-gnu\";" > tools-poly/poly-includes.ML
   fi
   poly < tools/smart-configure.sml
-  bin/build --nograph
+  bin/build
 fi
 cd "${HOLBA_OPT_DIR}"
 
