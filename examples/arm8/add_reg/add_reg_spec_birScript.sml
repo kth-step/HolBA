@@ -166,7 +166,6 @@ Theorem add_reg_arm8_post_1_imp_bspec_post_1_thm:
  !ls. bir_post_bir_to_arm8
    (arm8_add_reg_post_1 pre_x2 pre_x3)
    (\l. if l = BL_Address (Imm64 add_reg_end_addr_1) then bspec_add_reg_post_1 pre_x2 pre_x3
-        else if l = BL_Address (Imm64 add_reg_end_addr) then bir_exp_false
         else bir_exp_false)
    ls
 Proof
@@ -179,7 +178,6 @@ Proof
   rw [arm8_add_reg_post_1_def] >>
   METIS_TAC [arm8_bmr_x2_equiv, arm8_bmr_x3_equiv]
  ) >>
- Cases_on `b.bpc_label = BL_Address (Imm64 add_reg_end_addr)` >>
  fs [bir_exp_false_def, bir_eval_exp_def, bir_val_true_def]
 QED
 
@@ -242,7 +240,6 @@ Theorem add_reg_arm8_post_3_imp_bspec_post_3_thm:
  !ls. bir_post_bir_to_arm8
    (arm8_add_reg_post_3 pre_x2 pre_x3)
    (\l. if l = BL_Address (Imm64 add_reg_end_addr_3) then bspec_add_reg_post_3 pre_x2 pre_x3
-        else if l = BL_Address (Imm64 add_reg_end_addr) then bir_exp_false
         else bir_exp_false)
    ls
 Proof
@@ -256,7 +253,6 @@ Proof
    by METIS_TAC [arm8_bmr_x2_equiv, arm8_bmr_x3_equiv] >>
   rw [arm8_add_reg_post_3_def]
  ) >>
- Cases_on `b.bpc_label = BL_Address (Imm64 add_reg_end_addr)` >>
  fs [bir_exp_false_def, bir_eval_exp_def, bir_val_true_def]
 QED
 

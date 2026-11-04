@@ -41,7 +41,6 @@ Theorem bspec_cont_chacha20_column_round_excl:
   {BL_Address (Imm64 ^end_addr_tm); BL_Address (Imm64 ^excl_addr_tm)} {}
   ^bspec_pre_tm
   (\l. if l = BL_Address (Imm64 ^end_addr_tm) then ^bspec_post_tm
-       else if l = BL_Address (Imm64 ^excl_addr_tm) then bir_exp_false
        else bir_exp_false)
 Proof
  rw [bspec_cont_thm]

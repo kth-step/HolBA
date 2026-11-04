@@ -603,9 +603,13 @@ fun bir_symb_transfer_excl
     rw [] >>
     METIS_TAC [abstract_jgmt_rel_thm]);
 
+   (* the excluded label's postcondition is bir_exp_false, like the default,
+      so state the postcondition as if l = end then post else bir_exp_false *)
+   val bspec_cont_excl_thm = REWRITE_RULE [boolTheory.COND_ID] bspec_cont_thm;
+
    val _ = holba_miscLib.timer_stop (fn delta_s => print ("\n======\n > bir_symb_transfer_excl took " ^ delta_s ^ "\n")) timer;
  in
-   bspec_cont_thm
+   bspec_cont_excl_thm
  end (* let *)
 
 fun bir_symb_transfer_excl_thm
