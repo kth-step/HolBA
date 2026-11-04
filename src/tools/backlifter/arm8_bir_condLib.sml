@@ -26,6 +26,8 @@ val word64_ty = wordsSyntax.mk_int_word_type 64;
 val arm8_state_ty = ``:arm8_state``;
 val REG_tm = ``arm8_state_REG``;
 val PC_tm = ``arm8_state_PC``;
+val MEM_tm = ``arm8_state_MEM``;
+val load_64_tm = ``bir_arm8_backlifter$arm8_load_64``;
 
 fun unsupported what tm =
   raise ERR "arm8_cond_to_bir"
@@ -45,7 +47,8 @@ val word_binops = [
   ``word_and``, ``word_or``, ``word_xor``];
 
 (* Words built with the operations above from m.REG k with k a literal,
-   free variables among the parameters, and literals *)
+   64-bit loads arm8_load_64 m.MEM a with a such a word, free variables
+   among the parameters, and literals *)
 fun check_word params m tm =
   if not (is_supported_word_ty (type_of tm)) then unsupported "word type" tm
   else if wordsSyntax.is_word_literal tm then ()
@@ -63,6 +66,9 @@ fun check_word params m tm =
         if same_const f REG_tm andalso aconv m a then
           (if wordsSyntax.is_word_literal b then ()
            else unsupported "register index" b)
+        else if same_const f load_64_tm then
+          (if aconv a (mk_comb (MEM_tm, m)) then check_word params m b
+           else unsupported "memory" a)
         else if is_op word_binops then
           (check_word params m a; check_word params m b)
         else unsupported "word term" tm
@@ -119,10 +125,16 @@ end;
    bir_exp_liftingLib, and ==>, which it lifts as BIExp_LessOrEqual on
    Bit1 values. The latter is correct, but symbolic transfer's typing
    tactic for postconditions (in bir_symb_transfer_thm) can't show that
-   such expressions are bool, and ~a \/ b is also easier to read *)
+   such expressions are bool, and ~a \/ b is also easier to read.
+   Loads are unfolded to the byte concatenation that bir_exp_liftingLib
+   lifts to a little-endian BExp_Load from MEM, with the lowest byte at
+   a, not a + 0w *)
+val arm8_load_64_bytes =
+  REWRITE_RULE [WORD_ADD_0] bir_arm8_backlifterTheory.arm8_load_64_def;
+
 val preprocess_thms =
   [WORD_GREATER, WORD_GREATER_EQ, WORD_HIGHER, WORD_HIGHER_EQ,
-   IMP_DISJ_THM];
+   IMP_DISJ_THM, arm8_load_64_bytes];
 
 fun lift_cond bs m q = let
   val bmr_tm = ``bmr_rel arm8_bmr ^bs ^m``
