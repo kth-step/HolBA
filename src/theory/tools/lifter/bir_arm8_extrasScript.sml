@@ -5,6 +5,7 @@ open arm8_stepTheory
 open bir_lifter_general_auxTheory;
 
 open bir_interval_expTheory bir_extra_expsTheory
+open bir_arch_extrasTheory
 open bitstringTheory
 open bir_exp_immTheory
 
@@ -533,14 +534,6 @@ Definition mem_store_half_def:
   ((a + 0w =+ (7  >< 0)  w) mmap)
 End
 
-Definition mem_store_byte_def:
-  mem_store_byte (a:word64) (w:word8) (mmap : (word64 -> word8)) =
-  ((a      =+ w) mmap)
-End
-
-val elim_zero_for_def_thm = GEN_ALL (SIMP_CONV (std_ss++wordsLib.WORD_ss) [] ``a + 0w  =+ w``);
-
-
 val arm8_mem_store_FOLDS = save_thm ("arm8_mem_store_FOLDS",
 let
   val thm0 = GSYM mem_store_byte_def
@@ -638,34 +631,6 @@ Theorem arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL:
 Proof
 SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]
 QED
-
-
-(****************)
-(* Add to sub   *)
-(****************)
-
-Theorem word_add_to_sub_GEN:
-  !w:'a word n.
-
-   INT_MAX (:'a) < n /\ n < dimword (:'a) ==>
-   (w + n2w n = w - n2w (dimword (:'a) - n))
-Proof
-REPEAT STRIP_TAC >>
-ASM_SIMP_TAC arith_ss [wordsTheory.word_sub_def,
-  wordsTheory.word_2comp_n2w]
-QED
-
-
-val word_add_to_sub_TYPES = save_thm ("word_add_to_sub_TYPES",
-let
-  fun inst wty =
-    INST_TYPE [``:'a`` |-> wty] word_add_to_sub_GEN;
-
-  val thm1 = LIST_CONJ ([inst ``:32``, inst ``:64``, inst ``:16``, inst ``:8``])
-  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [] thm1
-in
-  thm2
-end)
 
 
 (***************)
