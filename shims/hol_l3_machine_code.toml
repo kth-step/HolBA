@@ -15,8 +15,13 @@ members = [
   "m0/step",
 ]
 
+# Import needs fp-sig and fp-functor from HOL's src/floating-point. As loads,
+# they were recorded by bare name in Import.uo, which only resolved when the
+# theory using Import was restored from cache, not when it was built. As deps,
+# they are recorded by path. machine_ieeeTheory comes first because HOL's
+# fp-functor.uo itself records it by bare name, so it must be loaded already.
 [actions.Import]
-loads = ["fp-sig", "fp-functor"]
+deps = ["machine_ieeeTheory", "fp-sig", "fp-functor"]
 
 # The following mirror Holmake rules in examples/l3-machine-code that compile
 # with -toplevel, which holbuild does not infer from load/open. These modules
