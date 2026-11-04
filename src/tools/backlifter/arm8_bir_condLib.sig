@@ -2,7 +2,8 @@ signature arm8_bir_condLib =
 sig
   include Abbrev
 
-  (* Proof-producing translation of ARMv8 state conditions to BIR.
+  (* Proof-producing translation of ARMv8 state conditions to BIR, the
+     ARMv8 instance of bir_condLib (riscv_bir_condLib is the RISC-V one).
 
      The input is a definition of the form
 
