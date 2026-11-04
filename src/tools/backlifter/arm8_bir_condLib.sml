@@ -240,4 +240,87 @@ in
   def
 end;
 
+(* Postconditions by cases on the PC *)
+
+(* From if m.PC = A1 then t1 else ... if m.PC = An then tn else F:
+   [(A1, t1), ..., (An, tn)] *)
+fun dest_pc_cases m tm =
+  if aconv tm F then []
+  else let
+    val (c, t, rest) = dest_cond tm
+      handle HOL_ERR _ => unsupported "PC case" tm
+    val a = if is_eq c andalso aconv (lhs c) (mk_comb (PC_tm, m))
+            then rhs c else unsupported "PC case condition" c
+    val _ = if null (free_vars a) andalso type_of a = word64_ty then ()
+            else unsupported "PC address" a
+  in (a, t) :: dest_pc_cases m rest end;
+
+(* The lifting theorem of a case condition, stated for c y1 ... yk m
+   instead of its body *)
+fun fold_case_lifted def lifted =
+  CONV_RULE (STRIP_QUANT_CONV (RAND_CONV (RAND_CONV (RAND_CONV
+    (REWR_CONV (GSYM (SPEC_ALL def))))))) lifted;
+
+fun arm8_post_cases_to_bir def case_defs = let
+  val (c, params, m, body) = dest_cond_def def
+  val cases = dest_pc_cases m body
+  val _ = if null cases then unsupported "postcondition by PC cases" body
+          else ()
+  (* each case condition must be a translatable condition without a PC
+     conjunct, applied to terms over the parameters *)
+  val lifts = map (fn d => let
+      val (ci, ps, _, pc_addr, _, e, lifted) = lift_arm8_cond d
+      val _ = if isSome pc_addr then raise ERR "arm8_post_cases_to_bir"
+                ("PC conjunct in case condition " ^ fst (dest_const ci))
+              else ()
+    in (ci, (d, ps, e, fold_case_lifted d lifted)) end) case_defs
+  fun lookup t = let
+    val (ci, args) = strip_comb t
+    val ys = butlast args
+    val _ = if not (null args) andalso aconv (last args) m andalso
+               List.all (fn y => List.all (fn v => tmem v params)
+                 (free_vars y)) ys
+            then () else unsupported "PC case" t
+  in case List.find (fn (cj, _) => aconv cj ci) lifts of
+      SOME (_, (d, ps, e, lifted)) => let
+        val s = map2 (curry op |->) ps ys
+      in (ci, ys, subst s e, INST s lifted) end
+    | NONE => unsupported "PC case (no case definition given)" t
+  end
+  val cases' = map (fn (a, t) => (a, lookup t)) cases
+  val _ = case List.find (fn (ci, _) =>
+                not (exists (fn (_, (cj, _, _, _)) => aconv ci cj) cases'))
+              lifts of
+      NONE => ()
+    | SOME (ci, _) => raise ERR "arm8_post_cases_to_bir"
+        ("case definition not used: " ^ fst (dest_const ci))
+  val ls = mk_var ("ls", ``:bir_label_t -> bool``)
+  val p_top = list_mk_comb (c, params)
+  (* the relation theorem for the cases from the k-th on, with p the
+     ARMv8 postcondition to state it for *)
+  fun rel p [] = SPEC ls bir_post_bir_to_arm8_cases_nil
+    | rel p ((a, (ci, ys, e, lifted)) :: rest) = let
+        val tail_tm = foldr (fn ((a', (cj, ys', _, _)), acc) =>
+            mk_cond (mk_eq (mk_comb (PC_tm, m), a'),
+                     list_mk_comb (cj, ys' @ [m]), acc))
+          F rest
+        val r = mk_abs (m, tail_tm)
+        val r_thm = rel r rest
+        val f = (rand o rator o concl) r_thm
+        val q = list_mk_comb (ci, ys)
+        val th0 = BETA_RULE (ISPECL [p, q, r, a, e, f, ls]
+                    bir_post_bir_to_arm8_cases_cons)
+        val th1 = MP (MP th0 lifted) r_thm
+        val prem = fst (dest_imp (concl th1))
+      in MP th1 (prove (prem, GEN_TAC >> REWRITE_TAC [def])) end
+  val rel_thm = GEN ls (rel p_top cases')
+  (* only now define the BIR constants, once for each case definition,
+     and fold them into the relation theorem *)
+  val bir_defs = map (fn (ci, (_, ps, e, _)) =>
+      (ci, fst (define_bspec ci ps e))) lifts
+  fun fold_case ((_, (ci, ys, _, _)), th) = let
+    val bir_def = snd (valOf (List.find (fn (cj, _) => aconv ci cj) bir_defs))
+  in SUBS [SYM (ISPECL ys bir_def)] th end
+in (map snd bir_defs, foldl fold_case rel_thm cases') end;
+
 end

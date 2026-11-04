@@ -58,4 +58,42 @@ Proof
  fs [bool2b_def, bool2w_def]
 QED
 
+(* Postconditions by cases on the PC,
+     if ms.PC = A1 then Q1 ms else ... if ms.PC = An then Qn ms else F,
+   built from the last case to the first *)
+
+Theorem bir_post_bir_to_arm8_cases_nil:
+ !ls. bir_post_bir_to_arm8 (\ms. F) (\l. bir_exp_false) ls
+Proof
+ rw [bir_post_bir_to_arm8_def, bir_exp_false_def, bir_eval_exp_def,
+     bir_val_true_def]
+QED
+
+Theorem bir_post_bir_to_arm8_cases_cons:
+ !P Q R A e f ls.
+  (!bs ms. bmr_rel arm8_bmr bs ms ==>
+    bir_is_lifted_imm_exp bs.bst_environ e (bool2b (Q ms))) ==>
+  bir_post_bir_to_arm8 R f ls ==>
+  (!ms. (if ms.PC = A then Q ms else R ms) ==> P ms) ==>
+  bir_post_bir_to_arm8 P
+   (\l. if l = BL_Address (Imm64 A) then e else f l) ls
+Proof
+ rw [bir_post_bir_to_arm8_def] >>
+ Cases_on `bs` >> Cases_on `b0` >> fs [] >>
+ Cases_on `b.bpc_label = BL_Address (Imm64 A)` >> fs [] >| [
+  `ms.PC = A` by METIS_TAC [arm8_bmr_bpc_label_PC_equiv] >>
+  res_tac >>
+  fs [bir_is_lifted_imm_exp_def] >>
+  Cases_on `Q ms` >>
+  fs [bir_val_true_def, bool2b_def, bool2w_def] >>
+  METIS_TAC [],
+
+  `ms.PC <> A` by METIS_TAC [arm8_bmr_bpc_label_PC_equiv] >>
+  Q.PAT_X_ASSUM `!ms bs. _`
+   (MP_TAC o Q.SPECL [`ms`, `bir_state_t b (BEnv f') b1`]) >>
+  fs [] >>
+  METIS_TAC []
+ ]
+QED
+
 val _ = export_theory ();
