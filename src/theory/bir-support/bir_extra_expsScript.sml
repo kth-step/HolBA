@@ -229,10 +229,6 @@ REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
 )
 QED
 
-(* To increase power of EVAL_TAC against nasty bit manipulation stuff *)
-(* TODO: Change the below proof to something less brutal later... *)
-(*val compset = bitLib.add_bit_compset computeLib.the_compset*)
-
 Theorem BExp_word_reverse_1_eval:
   (!e env. bir_eval_exp (BExp_word_reverse_1_8 e) env =
      case (bir_eval_exp e env) of
@@ -261,21 +257,8 @@ SIMP_TAC (std_ss++holBACore_ss)
    BExp_word_reverse_1_128_def] >>
 REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) []
-) >> (
-  ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
-  SIMP_TAC (std_ss++wordsLib.SIZES_ss) [word_or_def, fcpTheory.FCP_BETA,
-    word_and_def, word_index, bitTheory.BIT_TWO_POW] >>
-  SIMP_TAC (std_ss++boolSimps.CONJ_ss++wordsLib.SIZES_ss) [wordsTheory.word_lsl_bv_def,
-    word_lsr_bv_def, w2n_n2w, word_lsl_def, fcpTheory.FCP_BETA,
-    word_lsr_def, word_reverse_def] >>
-  REPEAT STRIP_TAC >>
-  Q.PAT_X_ASSUM `i < _` (STRIP_ASSUME_TAC o SIMP_RULE std_ss [GSYM rich_listTheory.MEM_COUNT_LIST,
-    rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_compute, listTheory.MEM]) >>
-  ASM_SIMP_TAC std_ss [] >> (
-      EVAL_TAC
-  )
-)
+) >>
+blastLib.BBLAST_TAC
 QED
 
 (******************)
