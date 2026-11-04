@@ -16,9 +16,16 @@ sig
        - =, <+, <=+, >+, >=+, <, <=, >, >= on words of size 8, 16, 32
          or 64
        - words built with +, -, unary -, *, //, /, word_mod, &&, ||,
-         ??, ~, w2w and sw2sw from register reads of m with a word
-         literal index, 64-bit loads from the memory of m at such a
-         word, free variables (among x1 ... xn) and word literals
+         ??, ~, <<~, >>>~, >>~, w2w and sw2sw from
+         - state reads of m that the architecture's lifting theorem
+           lifts, e.g. registers and control/status registers,
+         - 64-bit loads from the memory of m at such a word,
+         - free variables (among x1 ... xn),
+         - closed words, e.g. address constants, which are evaluated
+           to literals with EVAL
+       - an equation t = c or c = t with c a literal and t a narrow state
+         component that the lifting theorem lifts only as a widening
+         cast w2w t (e.g. a 2-bit field), translated as w2w t = w2w c
        - at most one top-level conjunct PC = A, with PC the program
          counter of m and A a closed word64 term (a literal or an
          address constant)
@@ -32,9 +39,9 @@ sig
        arch            its name, e.g. "arm8"
        state_ty        the type of its states
        bmr             its bir_lifting_machine_rec_t, e.g. arm8_bmr
-       bmr_lifted      lifting theorems for its registers and memory,
-                       e.g. arm8_bmr_LIFTED
-       dest_reg m tm   SOME k if tm reads register k of m
+       bmr_lifted      lifting theorems for the parts of its state
+                       (registers, memory), e.g. arm8_bmr_LIFTED; the
+                       lifted state reads are the readable ones
        dest_load m tm  SOME a if tm is a 64-bit load at a from the memory
                        of m
        pc_of m         the program counter of m
@@ -51,7 +58,6 @@ sig
       state_ty        : hol_type,
       bmr             : term,
       bmr_lifted      : thm,
-      dest_reg        : term -> term -> term option,
       dest_load       : term -> term -> term option,
       pc_of           : term -> term,
       load_thms       : thm list,

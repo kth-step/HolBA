@@ -15,7 +15,6 @@ type arch_info =
     state_ty        : hol_type,
     bmr             : term,
     bmr_lifted      : thm,
-    dest_reg        : term -> term -> term option,
     dest_load       : term -> term -> term option,
     pc_of           : term -> term,
     load_thms       : thm list,
@@ -54,32 +53,43 @@ val word_unops = [``word_2comp``, ``word_1comp``, ``w2w``, ``sw2sw``];
 val word_binops = [
   ``word_add``, ``word_sub``, ``word_mul``,
   ``word_div``, ``word_quot``, ``word_mod``,
-  ``word_and``, ``word_or``, ``word_xor``];
+  ``word_and``, ``word_or``, ``word_xor``,
+  ``word_lsl_bv``, ``word_lsr_bv``, ``word_asr_bv``];
 
-(* Words built with the operations above from register reads with a
-   literal index, loads from such words, free variables among the
-   parameters, and literals *)
-fun check_word (a : arch_info) params m tm =
-  if not (is_supported_word_ty (type_of tm)) then unsupported a "word type" tm
+(* The state reads of m that the architecture's lifting theorem lifts to
+   BIR variables, e.g. m.REG 0w or (m.c_MCSR m.procID).mscratch, some as
+   casts, e.g. w2w (m.c_MCSR m.procID).mstatus.MPRV *)
+fun state_reads (a : arch_info) m = let
+  val bs = variant [m] ``bs:bir_state_t``
+  val lifted = (snd o dest_imp o concl o SPECL [bs, m]) (#bmr_lifted a)
+  fun read c = let
+    val v = rand c
+  in if is_BLV_Imm v then SOME (rand (dest_BLV_Imm v)) else NONE end
+    handle HOL_ERR _ => NONE
+in List.mapPartial read (strip_conj lifted) end;
+
+(* Words built with the operations above from state reads, loads from
+   such words, free variables among the parameters, and literals *)
+fun check_word (a : arch_info) reads params m tm =
+  if tmem tm reads then ()
+  else if not (is_supported_word_ty (type_of tm)) then
+    unsupported a "word type" tm
   else if wordsSyntax.is_word_literal tm then ()
   else if is_var tm then
     (if tmem tm params then () else unsupported a "free variable" tm)
-  else case (#dest_reg a m tm, #dest_load a m tm) of
-    (SOME k, _) =>
-      if wordsSyntax.is_word_literal k then ()
-      else unsupported a "register index" k
-  | (NONE, SOME addr) => check_word a params m addr
-  | (NONE, NONE) => let
+  else case #dest_load a m tm of
+    SOME addr => check_word a reads params m addr
+  | NONE => let
       val (f, args) = strip_comb tm
       fun is_op ops = is_const f andalso exists (same_const f) ops
     in
       case args of
         [x] =>
-          if is_op word_unops then check_word a params m x
+          if is_op word_unops then check_word a reads params m x
           else unsupported a "word term" tm
       | [x, y] =>
           if is_op word_binops then
-            (check_word a params m x; check_word a params m y)
+            (check_word a reads params m x; check_word a reads params m y)
           else unsupported a "word term" tm
       | _ => unsupported a "word term" tm
     end;
@@ -90,16 +100,16 @@ val word_preds = [
   wordsSyntax.dest_word_lt, wordsSyntax.dest_word_le,
   wordsSyntax.dest_word_gt, wordsSyntax.dest_word_ge];
 
-fun check_bool a params m tm =
+fun check_bool a reads params m tm =
   if is_conj tm orelse is_disj tm orelse is_imp_only tm then
     let val (x, y) = dest_comb tm |> (fn (l, r) => (rand l, r))
-    in (check_bool a params m x; check_bool a params m y) end
-  else if is_neg tm then check_bool a params m (dest_neg tm)
+    in (check_bool a reads params m x; check_bool a reads params m y) end
+  else if is_neg tm then check_bool a reads params m (dest_neg tm)
   else if is_eq tm then let
     val (x, y) = dest_eq tm
-  in (check_word a params m x; check_word a params m y) end
+  in (check_word a reads params m x; check_word a reads params m y) end
   else case List.mapPartial (fn d => SOME (d tm) handle HOL_ERR _ => NONE) word_preds of
-    [(x, y)] => (check_word a params m x; check_word a params m y)
+    [(x, y)] => (check_word a reads params m x; check_word a reads params m y)
   | _ => unsupported a "condition" tm;
 
 fun check_pc_addr a addr =
@@ -116,6 +126,53 @@ fun split_pc (a : arch_info) m body = let
     | _ => raise ERR a "cond_to_bir" "more than one PC conjunct"
   val q = if null rest then T else list_mk_conj rest
 in (pc_addr, q) end;
+
+(* ------------- *)
+(* Normalization *)
+(* ------------- *)
+
+(* Before the fragment check: closed word terms that are not literals,
+   e.g. address constants such as kernel_trap_slots_addr or
+   init_addr - 256w, are evaluated to literals, so that the BIR
+   expression has literal constants that the SMT translation can use *)
+fun closed_words_conv tm =
+  if wordsSyntax.is_word_type (type_of tm) andalso null (free_vars tm) andalso
+     not (wordsSyntax.is_word_literal tm)
+  then let
+    val th = EVAL tm
+  in if wordsSyntax.is_word_literal (rhs (concl th)) then th else ALL_CONV tm end
+  else SUB_CONV closed_words_conv tm;
+
+(* Narrow state components that are lifted only as a cast w2w t to a
+   wider word, e.g. the 2-bit (m.c_MCSR m.procID).mstatus.MPRV, lifted as
+   w2w ... : word8: an equation t = c or c = t with a literal c becomes
+   w2w t = c' or c' = w2w t, with c' the literal w2w c. w2w is injective
+   on such widening casts *)
+fun narrow_eq_conv reads tm = let
+  fun widened t = List.find (fn r =>
+      wordsSyntax.is_w2w r andalso aconv (fst (wordsSyntax.dest_w2w r)) t)
+    reads
+  fun rule t c r flip = let
+    val wide_ty = type_of r
+    val c' = rhs (concl (EVAL (wordsSyntax.mk_w2w (c, wordsSyntax.dest_word_type wide_ty))))
+    val x = genvar (type_of t)
+    val (l1, l2) = if flip then (mk_eq (c, x), mk_eq (c', subst [t |-> x] r))
+                   else (mk_eq (x, c), mk_eq (subst [t |-> x] r, c'))
+    val th = blastLib.BBLAST_PROVE (mk_forall (x, mk_eq (l1, l2)))
+  in SPEC t th end
+in
+  if is_eq tm andalso wordsSyntax.is_word_type (type_of (lhs tm)) then let
+    val (l, r) = dest_eq tm
+  in
+    case (widened l, widened r) of
+      (SOME w, _) =>
+        if wordsSyntax.is_word_literal r then rule l r w false else ALL_CONV tm
+    | (NONE, SOME w) =>
+        if wordsSyntax.is_word_literal l then rule r l w true else ALL_CONV tm
+    | _ => ALL_CONV tm
+  end
+  else SUB_CONV (narrow_eq_conv reads) tm
+end;
 
 (* ------------------ *)
 (* Expression lifting *)
@@ -194,9 +251,15 @@ in (c, butlast args, last args, body) end;
 fun lift_def_cond a def = let
   val (c, params, m, body) = dest_cond_def a def
   val (pc_addr, q) = split_pc a m body
-  val _ = if aconv q T then () else check_bool a params m q
+  val reads = state_reads a m
+  val norm_eq = QCONV (closed_words_conv THENC narrow_eq_conv reads) q
+  val q1 = rhs (concl norm_eq)
+  val _ = if aconv q1 T then () else check_bool a reads params m q1
   val bs = variant (m :: params) ``bs:bir_state_t``
-  val lifted = lift_cond a bs m q
+  val lifted = lift_cond a bs m q1
+  val lifted = if aconv q q1 then lifted
+               else GENL [bs, m] (PURE_ONCE_REWRITE_RULE [GSYM norm_eq]
+                                    (SPECL [bs, m] lifted))
   val e = (rand o rator o snd o strip_imp o snd o strip_forall o concl) lifted
 in (c, params, m, pc_addr, q, e, lifted) end;
 

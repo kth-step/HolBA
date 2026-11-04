@@ -14,9 +14,11 @@ sig
        - =, <+, <=+, >+, >=+, <, <=, >, >= on words of size 8, 16, 32
          or 64
        - words built with +, -, unary -, *, //, /, word_mod, &&, ||,
-         ??, ~, w2w and sw2sw from m.REG k with k a word literal,
-         64-bit little-endian loads arm8_load_64 m.MEM a with a such a
-         word, free variables (among x1 ... xn) and word literals
+         ??, ~, <<~, >>>~, >>~, w2w and sw2sw from m.REG k with k a
+         word literal (and the other state reads arm8_bmr_LIFTED lifts,
+         e.g. m.SP_EL0), 64-bit little-endian loads arm8_load_64 m.MEM a
+         with a such a word, free variables (among x1 ... xn), word
+         literals and closed words (evaluated to literals)
        - at most one top-level conjunct m.PC = A, with A a closed
          word64 term (a literal or an address constant)
 

@@ -8,19 +8,9 @@ open riscv_bir_condTheory;
 
 type riscv_bir_cond_result = bir_condLib.bir_cond_result
 
-val c_gpr_tm = ``riscv_state_c_gpr``;
 val procID_tm = ``riscv_state_procID``;
 val MEM8_tm = ``riscv_state_MEM8``;
 val load_dword_tm = ``bir_riscv_extras$riscv_mem_load_dword``;
-
-(* m.c_gpr m.procID k *)
-fun dest_reg m tm =
-  case strip_comb tm of
-    (f, [x, p, k]) =>
-      if same_const f c_gpr_tm andalso aconv x m andalso
-         aconv p (mk_comb (procID_tm, m))
-      then SOME k else NONE
-  | _ => NONE;
 
 (* riscv_mem_load_dword m.MEM8 a *)
 fun dest_load m tm =
@@ -35,7 +25,6 @@ val riscv_info : bir_condLib.arch_info =
     state_ty = ``:riscv_state``,
     bmr = ``riscv_bmr``,
     bmr_lifted = riscv_bmr_LIFTED,
-    dest_reg = dest_reg,
     dest_load = dest_load,
     pc_of = fn m => list_mk_comb (``riscv_state_c_PC``,
                                   [m, mk_comb (procID_tm, m)]),

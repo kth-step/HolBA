@@ -8,16 +8,8 @@ open arm8_bir_condTheory;
 
 type arm8_bir_cond_result = bir_condLib.bir_cond_result
 
-val REG_tm = ``arm8_state_REG``;
 val MEM_tm = ``arm8_state_MEM``;
 val load_64_tm = ``bir_arm8_backlifter$arm8_load_64``;
-
-(* m.REG k *)
-fun dest_reg m tm =
-  case strip_comb tm of
-    (f, [x, k]) =>
-      if same_const f REG_tm andalso aconv x m then SOME k else NONE
-  | _ => NONE;
 
 (* arm8_load_64 m.MEM a *)
 fun dest_load m tm =
@@ -32,7 +24,6 @@ val arm8_info : bir_condLib.arch_info =
     state_ty = ``:arm8_state``,
     bmr = ``arm8_bmr``,
     bmr_lifted = arm8_bmr_LIFTED,
-    dest_reg = dest_reg,
     dest_load = dest_load,
     pc_of = fn m => mk_comb (``arm8_state_PC``, m),
     (* the lowest byte at a, not a + 0w *)

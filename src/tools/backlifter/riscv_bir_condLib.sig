@@ -14,10 +14,15 @@ sig
        - =, <+, <=+, >+, >=+, <, <=, >, >= on words of size 8, 16, 32
          or 64
        - words built with +, -, unary -, *, //, /, word_mod, &&, ||,
-         ??, ~, w2w and sw2sw from m.c_gpr m.procID k with k a word
-         literal, 64-bit little-endian loads
-         riscv_mem_load_dword m.MEM8 a with a such a word, free
-         variables (among x1 ... xn) and word literals
+         ??, ~, <<~, >>>~, >>~, w2w and sw2sw from m.c_gpr m.procID k
+         with k a word literal (and the other state reads
+         riscv_bmr_LIFTED lifts, e.g. (m.c_MCSR m.procID).mscratch),
+         64-bit little-endian loads riscv_mem_load_dword m.MEM8 a with
+         a such a word, free variables (among x1 ... xn), word literals
+         and closed words (evaluated to literals)
+       - an equation t = c with c a literal and t a narrow field that
+         riscv_bmr_LIFTED lifts only as w2w t, e.g.
+         (m.c_MCSR m.procID).mstatus.MPRV = 3w
        - at most one top-level conjunct m.c_PC m.procID = A, with A a
          closed word64 term (a literal or an address constant)
 
