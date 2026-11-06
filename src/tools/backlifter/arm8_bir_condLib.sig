@@ -28,9 +28,8 @@ sig
      the translation first checks that the names of the new constant,
      its definition and the saved theorem are free.
 
-     The translation defines a new constant b (named as c with a
-     leading "arm8_" replaced by "bspec_", otherwise prefixed with
-     "bspec_") in the current theory:
+     The translation defines a new constant b, named c_bir, in the
+     current theory:
 
        |- !x1 ... xn. b x1 ... xn = <BIR expression>
 

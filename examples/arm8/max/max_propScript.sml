@@ -39,13 +39,13 @@ val _ = new_theory "max_prop";
 
 val arm8_cont_max_thm =
  get_arm8_contract_thm
-  bspec_cont_max max_init_addr_def [max_end_addr_def]
+  bir_cont_max max_init_addr_def [max_end_addr_def]
   bir_max_progbin_def
   arm8_max_pre_def arm8_max_post_def
   bir_max_prog_def
-  [bspec_max_pre_def]
-  bspec_max_pre_def arm8_max_pre_to_bir_thm
-  [bspec_max_post_def] arm8_max_post_to_bir_thm
+  [arm8_max_pre_bir_def]
+  arm8_max_pre_bir_def arm8_max_pre_to_bir_thm
+  [arm8_max_post_bir_def] arm8_max_post_to_bir_thm
   bir_max_arm8_lift_THM;
 
 Theorem arm8_cont_max:

@@ -25,7 +25,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_max_prog_def
   max_init_addr_def [max_end_addr_def]
-  bspec_max_pre_def max_birenvtyl_def;
+  arm8_max_pre_bir_def max_birenvtyl_def;
 
 val _ = show_tags := true;
 

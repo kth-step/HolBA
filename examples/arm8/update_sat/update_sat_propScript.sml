@@ -39,13 +39,13 @@ val _ = new_theory "update_sat_prop";
 
 val arm8_cont_update_sat_thm =
  get_arm8_contract_thm
-  bspec_cont_update_sat update_sat_init_addr_def [update_sat_end_addr_def]
+  bir_cont_update_sat update_sat_init_addr_def [update_sat_end_addr_def]
   bir_update_sat_progbin_def
   arm8_update_sat_pre_def arm8_update_sat_post_def
   bir_update_sat_prog_def
-  [bspec_update_sat_pre_def]
-  bspec_update_sat_pre_def arm8_update_sat_pre_to_bir_thm
-  [bspec_update_sat_post_def] arm8_update_sat_post_to_bir_thm
+  [arm8_update_sat_pre_bir_def]
+  arm8_update_sat_pre_bir_def arm8_update_sat_pre_to_bir_thm
+  [arm8_update_sat_post_bir_def] arm8_update_sat_post_to_bir_thm
   bir_update_sat_arm8_lift_THM;
 
 Theorem arm8_cont_update_sat:

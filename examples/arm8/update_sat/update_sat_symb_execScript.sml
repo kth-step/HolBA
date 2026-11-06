@@ -25,7 +25,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_update_sat_prog_def
   update_sat_init_addr_def [update_sat_end_addr_def]
-  bspec_update_sat_pre_def update_sat_birenvtyl_def;
+  arm8_update_sat_pre_bir_def update_sat_birenvtyl_def;
 
 val _ = show_tags := true;
 

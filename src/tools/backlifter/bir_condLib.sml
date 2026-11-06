@@ -222,13 +222,8 @@ end;
 (* Translation *)
 (* ----------- *)
 
-fun bspec_name (a : arch_info) c_name = let
-  val prefix = #arch a ^ "_"
-in
-  if String.isPrefix prefix c_name
-  then "bspec_" ^ String.extract (c_name, size prefix, NONE)
-  else "bspec_" ^ c_name
-end;
+(* The name of the BIR constant for the condition named c_name *)
+fun bir_name c_name = c_name ^ "_bir";
 
 (* The name of the saved relation theorem for the condition c *)
 fun rel_thm_name c = fst (dest_const c) ^ "_to_bir_thm";
@@ -252,7 +247,7 @@ in () end;
 (* Checks that the BIR constants for the conditions cs and the relation
    theorem for c are fresh *)
 fun check_fresh_for a c cs = let
-  val bnames = map (fn ci => bspec_name a (fst (dest_const ci))) cs
+  val bnames = map (fn ci => bir_name (fst (dest_const ci))) cs
 in check_fresh a (rel_thm_name c :: map (fn n => n ^ "_def") bnames) bnames
 end;
 
@@ -292,8 +287,8 @@ in (c, params, m, pc_addr, q, e, lifted) end;
 (* The only side effect of the translation, done last so that a failing
    translation leaves the current theory unchanged. Returns the definition
    and a function folding the BIR expression into the new constant *)
-fun define_bspec a c params e = let
-  val name = bspec_name a (fst (dest_const c))
+fun define_bir_cond a c params e = let
+  val name = bir_name (fst (dest_const c))
   val b_var = mk_var (name, list_mk_fun (map type_of params, type_of e))
   val bir_def = new_definition (name ^ "_def",
     mk_eq (list_mk_comb (b_var, params), e))
@@ -304,9 +299,9 @@ in (bir_def, SUBS [SYM (SPECL params bir_def)]) end;
 
 fun cond_to_bir a def = let
   val (c, params, _, pc_addr, _, e, lifted) = lift_def_cond a def
-  val bname = bspec_name a (fst (dest_const c))
+  val bname = bir_name (fst (dest_const c))
   val _ = check_fresh a [bname ^ "_def"] [bname]
-  val (bir_def, fold) = define_bspec a c params e
+  val (bir_def, fold) = define_bir_cond a c params e
 in
   { bir_def = bir_def, lifted_thm = fold lifted, pc_addr = pc_addr }
 end;
@@ -338,7 +333,7 @@ fun translate_with a mk_rel_thm def = let
   val _ = check_fresh_for a c [c]
   val p = list_mk_comb (c, params)
   val rel_thm = mk_rel_thm (p, mk_abs (m, q), e, pc_addr, lifted)
-  val (bir_def, fold) = define_bspec a c params e
+  val (bir_def, fold) = define_bir_cond a c params e
 in (bir_def, save_thm (rel_thm_name c, fold rel_thm)) end;
 
 fun pre_to_bir a def = translate_with a (fn (p, q, e, _, lifted) =>
@@ -431,7 +426,7 @@ fun post_cases_to_bir a def case_defs = let
   (* only now define the BIR constants, once for each case definition,
      and fold them into the relation theorem *)
   val bir_defs = map (fn (ci, (_, ps, e, _)) =>
-      (ci, fst (define_bspec a ci ps e))) lifts
+      (ci, fst (define_bir_cond a ci ps e))) lifts
   fun fold_case ((_, (ci, ys, _, _)), th) = let
     val bir_def = snd (valOf (List.find (fn (cj, _) => aconv ci cj) bir_defs))
   in SUBS [SYM (ISPECL ys bir_def)] th end

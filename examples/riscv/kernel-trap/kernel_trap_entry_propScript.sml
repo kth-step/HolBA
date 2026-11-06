@@ -46,14 +46,14 @@ val _ = new_theory "kernel_trap_entry_prop";
 
 val riscv_cont_kernel_trap_entry_thm =
  get_riscv_contract_thm
-  bspec_cont_kernel_trap_entry
+  bir_cont_kernel_trap_entry
   kernel_trap_entry_init_addr_def [kernel_trap_entry_end_addr_def]
   bir_kernel_trap_progbin_def
   riscv_kernel_trap_entry_pre_def riscv_kernel_trap_entry_post_def
   bir_kernel_trap_prog_def
-  [bspec_kernel_trap_entry_pre_def]
-  bspec_kernel_trap_entry_pre_def riscv_kernel_trap_entry_pre_to_bir_thm
-  [bspec_kernel_trap_entry_post_def] riscv_kernel_trap_entry_post_to_bir_thm
+  [riscv_kernel_trap_entry_pre_bir_def]
+  riscv_kernel_trap_entry_pre_bir_def riscv_kernel_trap_entry_pre_to_bir_thm
+  [riscv_kernel_trap_entry_post_bir_def] riscv_kernel_trap_entry_post_to_bir_thm
   bir_kernel_trap_riscv_lift_THM;
 
 Theorem riscv_cont_kernel_trap_entry:

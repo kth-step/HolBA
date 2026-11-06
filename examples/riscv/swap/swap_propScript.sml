@@ -39,13 +39,13 @@ val _ = new_theory "swap_prop";
 
 val riscv_cont_swap_thm =
  get_riscv_contract_thm
-  bspec_cont_swap swap_init_addr_def [swap_end_addr_def]
+  bir_cont_swap swap_init_addr_def [swap_end_addr_def]
   bir_swap_progbin_def
   riscv_swap_pre_def riscv_swap_post_def
   bir_swap_prog_def
-  [bspec_swap_pre_def]
-  bspec_swap_pre_def riscv_swap_pre_to_bir_thm
-  [bspec_swap_post_def] riscv_swap_post_to_bir_thm
+  [riscv_swap_pre_bir_def]
+  riscv_swap_pre_bir_def riscv_swap_pre_to_bir_thm
+  [riscv_swap_post_bir_def] riscv_swap_post_to_bir_thm
   bir_swap_riscv_lift_THM;
 
 Theorem riscv_cont_swap:

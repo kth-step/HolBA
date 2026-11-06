@@ -30,8 +30,7 @@ sig
          counter of m and A a closed word64 term (a literal or an
          address constant)
 
-     The translation defines a new constant b, named as c with a leading
-     "<arch>_" replaced by "bspec_", otherwise prefixed with "bspec_".
+     The translation defines a new constant b named c_bir.
      pre_to_bir, post_to_bir and post_cases_to_bir also save the relation
      theorem as c_to_bir_thm. The names are checked to be free first, and
      the constant is defined last, so that a failing translation leaves

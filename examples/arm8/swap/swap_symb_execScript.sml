@@ -25,7 +25,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_swap_prog_def
   swap_init_addr_def [swap_end_addr_def]
-  bspec_swap_pre_def swap_birenvtyl_def;
+  arm8_swap_pre_bir_def swap_birenvtyl_def;
 
 val _ = show_tags := true;
 

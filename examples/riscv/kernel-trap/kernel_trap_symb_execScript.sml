@@ -31,7 +31,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_kernel_trap_prog_def
   kernel_trap_entry_init_addr_def [kernel_trap_entry_end_addr_def]
-  bspec_kernel_trap_entry_pre_def kernel_trap_birenvtyl_def;
+  riscv_kernel_trap_entry_pre_bir_def kernel_trap_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
@@ -45,7 +45,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_kernel_trap_prog_def
   kernel_trap_return_init_addr_def [kernel_trap_return_end_addr_def]
-  bspec_kernel_trap_return_pre_def kernel_trap_birenvtyl_def;
+  riscv_kernel_trap_return_pre_bir_def kernel_trap_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
