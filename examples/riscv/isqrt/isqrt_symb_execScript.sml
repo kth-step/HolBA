@@ -31,7 +31,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_1_def [isqrt_end_addr_1_def]
-  bspec_isqrt_pre_1_def isqrt_birenvtyl_def;
+  riscv_isqrt_pre_1_bir_def isqrt_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
@@ -45,7 +45,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_2_def [isqrt_end_addr_2_def]
-  bspec_isqrt_pre_2_def isqrt_birenvtyl_def;
+  riscv_isqrt_pre_2_bir_def isqrt_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 
@@ -59,7 +59,7 @@ val symb_analysis_thm =
  bir_symb_analysis_thm
   bir_isqrt_prog_def
   isqrt_init_addr_3_def [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
-  bspec_isqrt_pre_3_def isqrt_birenvtyl_def;
+  riscv_isqrt_pre_3_bir_def isqrt_birenvtyl_def;
 
 val _ = Portable.pprint Tag.pp_tag (tag symb_analysis_thm);
 

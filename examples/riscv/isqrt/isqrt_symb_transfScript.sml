@@ -21,44 +21,44 @@ val _ = show_tags := true;
 
 (* before loop contract, excluding the loop exit *)
 
-val bspec_cont_1_thm =
+val bir_cont_1_thm =
  bir_symb_transfer_excl_thm
   bir_isqrt_prog_def
   isqrt_init_addr_1_def isqrt_end_addr_1_def isqrt_end_addr_def
-  bspec_isqrt_pre_1_def bspec_isqrt_post_1_def
+  riscv_isqrt_pre_1_bir_def riscv_isqrt_post_1_bir_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_1_thm NONE isqrt_prog_vars_thm;
 
-val _ = Portable.pprint Tag.pp_tag (tag bspec_cont_1_thm);
+val _ = Portable.pprint Tag.pp_tag (tag bir_cont_1_thm);
 
-Theorem bspec_cont_isqrt_1 = bspec_cont_1_thm
+Theorem bir_cont_isqrt_1 = bir_cont_1_thm
 
 (* loop body contract, excluding the loop exit *)
 
-val bspec_cont_2_thm =
+val bir_cont_2_thm =
  bir_symb_transfer_excl_thm
   bir_isqrt_prog_def
   isqrt_init_addr_2_def isqrt_end_addr_2_def isqrt_end_addr_def
-  bspec_isqrt_pre_2_def bspec_isqrt_post_2_def
+  riscv_isqrt_pre_2_bir_def riscv_isqrt_post_2_bir_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_2_thm NONE isqrt_prog_vars_thm;
 
-val _ = Portable.pprint Tag.pp_tag (tag bspec_cont_2_thm);
+val _ = Portable.pprint Tag.pp_tag (tag bir_cont_2_thm);
 
-Theorem bspec_cont_isqrt_2 = bspec_cont_2_thm
+Theorem bir_cont_isqrt_2 = bir_cont_2_thm
 
 (* branch contract *)
 
-val bspec_cont_3_thm =
+val bir_cont_3_thm =
  bir_symb_transfer_two_thm
   bir_isqrt_prog_def
   isqrt_init_addr_3_def isqrt_end_addr_3_loop_def isqrt_end_addr_3_ret_def
-  bspec_isqrt_pre_3_def bspec_isqrt_post_3_loop_def bspec_isqrt_post_3_ret_def
+  riscv_isqrt_pre_3_bir_def riscv_isqrt_post_3_loop_bir_def riscv_isqrt_post_3_ret_bir_def
   isqrt_birenvtyl_def isqrt_prog_vars_list_def
   isqrt_symb_analysis_3_thm NONE isqrt_prog_vars_thm;
 
-val _ = Portable.pprint Tag.pp_tag (tag bspec_cont_3_thm);
+val _ = Portable.pprint Tag.pp_tag (tag bir_cont_3_thm);
 
-Theorem bspec_cont_isqrt_3 = bspec_cont_3_thm
+Theorem bir_cont_isqrt_3 = bir_cont_3_thm
 
 val _ = export_theory ();

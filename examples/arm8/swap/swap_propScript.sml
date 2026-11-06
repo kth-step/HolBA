@@ -39,13 +39,13 @@ val _ = new_theory "swap_prop";
 
 val arm8_cont_swap_thm =
  get_arm8_contract_thm
-  bspec_cont_swap swap_init_addr_def [swap_end_addr_def]
+  bir_cont_swap swap_init_addr_def [swap_end_addr_def]
   bir_swap_progbin_def
   arm8_swap_pre_def arm8_swap_post_def
   bir_swap_prog_def
-  [bspec_swap_pre_def]
-  bspec_swap_pre_def swap_arm8_pre_imp_bspec_pre_thm
-  [bspec_swap_post_def] swap_arm8_post_imp_bspec_post_thm
+  [arm8_swap_pre_bir_def]
+  arm8_swap_pre_bir_def arm8_swap_pre_to_bir_thm
+  [arm8_swap_post_bir_def] arm8_swap_post_to_bir_thm
   bir_swap_arm8_lift_THM;
 
 Theorem arm8_cont_swap:

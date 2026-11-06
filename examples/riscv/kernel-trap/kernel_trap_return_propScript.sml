@@ -44,14 +44,14 @@ val _ = new_theory "kernel_trap_return_prop";
 
 val riscv_cont_kernel_trap_return_thm =
  get_riscv_contract_thm
-  bspec_cont_kernel_trap_return
+  bir_cont_kernel_trap_return
   kernel_trap_return_init_addr_def [kernel_trap_return_end_addr_def]
   bir_kernel_trap_progbin_def
   riscv_kernel_trap_return_pre_def riscv_kernel_trap_return_post_def
   bir_kernel_trap_prog_def
-  [bspec_kernel_trap_return_pre_def]
-  bspec_kernel_trap_return_pre_def kernel_trap_return_riscv_pre_imp_bspec_pre_thm
-  [bspec_kernel_trap_return_post_def] kernel_trap_return_riscv_post_imp_bspec_post_thm
+  [riscv_kernel_trap_return_pre_bir_def]
+  riscv_kernel_trap_return_pre_bir_def riscv_kernel_trap_return_pre_to_bir_thm
+  [riscv_kernel_trap_return_post_bir_def] riscv_kernel_trap_return_post_to_bir_thm
   bir_kernel_trap_riscv_lift_THM;
 
 Theorem riscv_cont_kernel_trap_return:

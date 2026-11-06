@@ -47,14 +47,14 @@ val _ = new_theory "isqrt_prop";
 
 val riscv_cont_isqrt_1_thm =
  get_riscv_contract_thm
-  bspec_cont_isqrt_1 isqrt_init_addr_1_def [isqrt_end_addr_1_def, isqrt_end_addr_def]
+  bir_cont_isqrt_1 isqrt_init_addr_1_def [isqrt_end_addr_1_def, isqrt_end_addr_def]
   bir_isqrt_progbin_def
   riscv_isqrt_pre_1_def riscv_isqrt_post_1_def
   bir_isqrt_prog_def
-  [bspec_isqrt_pre_1_def]
-  bspec_isqrt_pre_1_def isqrt_riscv_pre_1_imp_bspec_pre_1_thm
-  [bspec_isqrt_post_1_def, isqrt_end_addr_1_def, isqrt_end_addr_def]
-  isqrt_riscv_post_1_imp_bspec_post_1_thm
+  [riscv_isqrt_pre_1_bir_def]
+  riscv_isqrt_pre_1_bir_def riscv_isqrt_pre_1_to_bir_thm
+  [riscv_isqrt_post_1_bir_def, isqrt_end_addr_1_def, isqrt_end_addr_def]
+  riscv_isqrt_post_1_to_bir_thm
   bir_isqrt_riscv_lift_THM;
 
 Theorem riscv_cont_isqrt_1:
@@ -67,14 +67,14 @@ QED
 
 val riscv_cont_isqrt_2_thm =
  get_riscv_contract_thm
-  bspec_cont_isqrt_2 isqrt_init_addr_2_def [isqrt_end_addr_2_def, isqrt_end_addr_def]
+  bir_cont_isqrt_2 isqrt_init_addr_2_def [isqrt_end_addr_2_def, isqrt_end_addr_def]
   bir_isqrt_progbin_def
   riscv_isqrt_pre_2_def riscv_isqrt_post_2_def
   bir_isqrt_prog_def
-  [bspec_isqrt_pre_2_def]
-  bspec_isqrt_pre_2_def isqrt_riscv_pre_2_imp_bspec_pre_2_thm
-  [bspec_isqrt_post_2_def, isqrt_end_addr_2_def, isqrt_end_addr_def]
-  isqrt_riscv_post_2_imp_bspec_post_2_thm
+  [riscv_isqrt_pre_2_bir_def]
+  riscv_isqrt_pre_2_bir_def riscv_isqrt_pre_2_to_bir_thm
+  [riscv_isqrt_post_2_bir_def, isqrt_end_addr_2_def, isqrt_end_addr_def]
+  riscv_isqrt_post_2_to_bir_thm
   bir_isqrt_riscv_lift_THM;
 
 Theorem riscv_cont_isqrt_2:
@@ -87,15 +87,15 @@ QED
 
 val riscv_cont_isqrt_3_thm =
  get_riscv_contract_thm
-  bspec_cont_isqrt_3 isqrt_init_addr_3_def [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
+  bir_cont_isqrt_3 isqrt_init_addr_3_def [isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
   bir_isqrt_progbin_def
   riscv_isqrt_pre_3_def riscv_isqrt_post_3_def
   bir_isqrt_prog_def
-  [bspec_isqrt_pre_3_def]
-  bspec_isqrt_pre_3_def isqrt_riscv_pre_3_imp_bspec_pre_3_thm
-  [bspec_isqrt_post_3_loop_def, bspec_isqrt_post_3_ret_def,
+  [riscv_isqrt_pre_3_bir_def]
+  riscv_isqrt_pre_3_bir_def riscv_isqrt_pre_3_to_bir_thm
+  [riscv_isqrt_post_3_loop_bir_def, riscv_isqrt_post_3_ret_bir_def,
    isqrt_end_addr_3_loop_def, isqrt_end_addr_3_ret_def]
-  isqrt_riscv_post_3_imp_bspec_post_3_thm
+  riscv_isqrt_post_3_to_bir_thm
   bir_isqrt_riscv_lift_THM;
 
 Theorem riscv_cont_isqrt_3:
