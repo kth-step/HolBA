@@ -24,7 +24,9 @@ sig
 
      Anything else makes the translation fail with a HOL_ERR naming
      the offending subterm. A failing translation leaves the current
-     theory unchanged: the new constant below is defined last.
+     theory unchanged: the new constant below is defined last, and
+     the translation first checks that the names of the new constant,
+     its definition and the saved theorem are free.
 
      The translation defines a new constant b (named as c with a
      leading "arm8_" replaced by "bspec_", otherwise prefixed with
@@ -46,7 +48,9 @@ sig
 
   val arm8_cond_to_bir : thm -> arm8_bir_cond_result
 
-  (* Both return the new BIR definition and the relation theorem:
+  (* Both return the new BIR definition and the relation theorem, which
+     they also save in the current theory as c_to_bir_thm (so a script
+     can just call them with val _ = ...):
 
        |- bir_pre_arm8_to_bir (c x1 ... xn) (b x1 ... xn)
 
@@ -80,6 +84,7 @@ sig
                  else ... if l = BL_Address (Imm64 Ak) then bk ysk
                  else bir_exp_false) ls
 
-     As above, the BIR constants are defined last. *)
+     The relation theorem is saved as c_to_bir_thm. As above, the BIR
+     constants are defined last. *)
   val arm8_post_cases_to_bir : thm -> thm list -> thm list * thm
 end

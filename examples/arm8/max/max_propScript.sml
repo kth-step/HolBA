@@ -44,8 +44,8 @@ val arm8_cont_max_thm =
   arm8_max_pre_def arm8_max_post_def
   bir_max_prog_def
   [bspec_max_pre_def]
-  bspec_max_pre_def max_arm8_pre_imp_bspec_pre_thm
-  [bspec_max_post_def] max_arm8_post_imp_bspec_post_thm
+  bspec_max_pre_def arm8_max_pre_to_bir_thm
+  [bspec_max_post_def] arm8_max_post_to_bir_thm
   bir_max_arm8_lift_THM;
 
 Theorem arm8_cont_max:

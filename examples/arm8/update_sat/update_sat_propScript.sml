@@ -44,8 +44,8 @@ val arm8_cont_update_sat_thm =
   arm8_update_sat_pre_def arm8_update_sat_post_def
   bir_update_sat_prog_def
   [bspec_update_sat_pre_def]
-  bspec_update_sat_pre_def update_sat_arm8_pre_imp_bspec_pre_thm
-  [bspec_update_sat_post_def] update_sat_arm8_post_imp_bspec_post_thm
+  bspec_update_sat_pre_def arm8_update_sat_pre_to_bir_thm
+  [bspec_update_sat_post_def] arm8_update_sat_post_to_bir_thm
   bir_update_sat_arm8_lift_THM;
 
 Theorem arm8_cont_update_sat:

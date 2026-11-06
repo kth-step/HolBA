@@ -230,6 +230,32 @@ in
   else "bspec_" ^ c_name
 end;
 
+(* The name of the saved relation theorem for the condition c *)
+fun rel_thm_name c = fst (dest_const c) ^ "_to_bir_thm";
+
+(* Fails, before any side effect, if the current theory already has a
+   theorem or definition with one of the given names, or a constant
+   named as one of the given BIR constants *)
+fun check_fresh (a : arch_info) thm_names const_names = let
+  val thy = current_theory ()
+  fun clash msg = raise ERR a "check_fresh" msg
+  val _ = case List.find (can (DB.fetch thy)) thm_names of
+      SOME n => clash ("theorem already exists: " ^ n)
+    | NONE => ()
+  fun in_thy n =
+    List.exists (fn t => #Thy (dest_thy_const t) = thy) (Term.decls n)
+  val _ = case List.find in_thy const_names of
+      SOME n => clash ("constant already exists: " ^ n)
+    | NONE => ()
+in () end;
+
+(* Checks that the BIR constants for the conditions cs and the relation
+   theorem for c are fresh *)
+fun check_fresh_for a c cs = let
+  val bnames = map (fn ci => bspec_name a (fst (dest_const ci))) cs
+in check_fresh a (rel_thm_name c :: map (fn n => n ^ "_def") bnames) bnames
+end;
+
 (* From |- !x1 ... xn m. c x1 ... xn m = body:
    (c, [x1, ..., xn], m, body) *)
 fun dest_cond_def (a : arch_info) def = let
@@ -278,6 +304,8 @@ in (bir_def, SUBS [SYM (SPECL params bir_def)]) end;
 
 fun cond_to_bir a def = let
   val (c, params, _, pc_addr, _, e, lifted) = lift_def_cond a def
+  val bname = bspec_name a (fst (dest_const c))
+  val _ = check_fresh a [bname ^ "_def"] [bname]
   val (bir_def, fold) = define_bspec a c params e
 in
   { bir_def = bir_def, lifted_thm = fold lifted, pc_addr = pc_addr }
@@ -303,13 +331,15 @@ fun bridge a lemma insts lifted_thm def = let
 in discharge th0 end;
 
 (* Proves the relation theorem for the BIR expression with mk_rel_thm,
-   then defines the BIR constant and folds it into the theorem *)
+   then defines the BIR constant, folds it into the theorem and saves
+   the theorem *)
 fun translate_with a mk_rel_thm def = let
   val (c, params, m, pc_addr, q, e, lifted) = lift_def_cond a def
+  val _ = check_fresh_for a c [c]
   val p = list_mk_comb (c, params)
   val rel_thm = mk_rel_thm (p, mk_abs (m, q), e, pc_addr, lifted)
   val (bir_def, fold) = define_bspec a c params e
-in (bir_def, fold rel_thm) end;
+in (bir_def, save_thm (rel_thm_name c, fold rel_thm)) end;
 
 fun pre_to_bir a def = translate_with a (fn (p, q, e, _, lifted) =>
     bridge a (#pre_lifted a) [p, q, e] lifted def)
@@ -378,6 +408,7 @@ fun post_cases_to_bir a def case_defs = let
       NONE => ()
     | SOME (ci, _) => raise ERR a "post_cases_to_bir"
         ("case definition not used: " ^ fst (dest_const ci))
+  val _ = check_fresh_for a c (map fst lifts)
   val p_top = list_mk_comb (c, params)
   (* the relation theorem for the cases from the k-th on, with p the
      ISA postcondition to state it for *)
@@ -404,6 +435,7 @@ fun post_cases_to_bir a def case_defs = let
   fun fold_case ((_, (ci, ys, _, _)), th) = let
     val bir_def = snd (valOf (List.find (fn (cj, _) => aconv ci cj) bir_defs))
   in SUBS [SYM (ISPECL ys bir_def)] th end
-in (map snd bir_defs, foldl fold_case rel_thm cases') end;
+in (map snd bir_defs,
+    save_thm (rel_thm_name c, foldl fold_case rel_thm cases')) end;
 
 end

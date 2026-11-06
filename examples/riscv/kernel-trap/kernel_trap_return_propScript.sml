@@ -50,8 +50,8 @@ val riscv_cont_kernel_trap_return_thm =
   riscv_kernel_trap_return_pre_def riscv_kernel_trap_return_post_def
   bir_kernel_trap_prog_def
   [bspec_kernel_trap_return_pre_def]
-  bspec_kernel_trap_return_pre_def kernel_trap_return_riscv_pre_imp_bspec_pre_thm
-  [bspec_kernel_trap_return_post_def] kernel_trap_return_riscv_post_imp_bspec_post_thm
+  bspec_kernel_trap_return_pre_def riscv_kernel_trap_return_pre_to_bir_thm
+  [bspec_kernel_trap_return_post_def] riscv_kernel_trap_return_post_to_bir_thm
   bir_kernel_trap_riscv_lift_THM;
 
 Theorem riscv_cont_kernel_trap_return:
