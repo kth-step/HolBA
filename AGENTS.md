@@ -6,7 +6,7 @@
 - How these are actually used to verify programs is shown **only in the examples**, chiefly `examples/riscv/` and `examples/arm8/`. These are separate holbuild projects that depend on the library, i.e., "client projects".
 - Their `holbuild.toml` files are templates for setting up other client projects that use HolBA.
 - `examples/bir/` is a third client project, not about binary verification. So far it builds only `compute` (group `@compute`): "Smol BIR", an independent fragment of BIR with cv-based evaluation. Its files are prefixed `smol_bir` so that their logical names don't clash with the library's BIR theories. The other subdirectories of `examples/bir/` are not built yet.
-- `examples/arm_cm0/` is a fourth client project about Cortex-M0. It is built only when explicitly run from that directory, never as part of a standard build. It builds `tiny`, `modexp_simple`, `motor_set`, `aes` and `balrob` (groups `@tiny`, `@modexp_simple`, `@motor_set`, `@aes` and `@balrob`), with their `support` libraries. The examples produce symbolic execution summaries with cycle bounds (and for `balrob` also a BIR contract), not ISA contract theorems.
+- `examples/arm_cm0/` is a fourth client project about Cortex-M0 (CM0). It is built only when explicitly run from that directory, never as part of a standard build. It builds `tiny`, `modexp_simple`, `motor_set`, `aes` and `balrob` (groups `@tiny`, `@modexp_simple`, `@motor_set`, `@aes` and `@balrob`), with their `support` libraries. The examples produce symbolic execution summaries with cycle bounds (and for `balrob` also a BIR contract), not ISA contract theorems.
   - `balrob` builds only `v2-fast`, `.holconfig.toml` sets `jobs = 3` here to limit memory use.
   - `balrob/v1-slow` is excluded: it defines the same theory names as `v2-fast`, so holbuild rejects them as duplicates. It remains Holmake-only (`Holmake` from its directory, where only `v1-slow` is on `INCLUDES`), and is not confirmed to build on the current HOL4 tag. It uses substantial amounts of memory even with a single job.
   - When porting one of these, move the `birs_auxLib.prepare_program_lookups` call out of its `*Lib.sml` and into the script, after `new_theory`. holbuild loads libraries before a theory exists, and the call fails there with `no current theory when proving`.
@@ -119,20 +119,25 @@
     - Users: `examples/arm8/{max,update_sat,isqrt,swap}` and `examples/riscv/{isqrt,swap,kernel-trap}`. isqrt uses `*_post_cases_to_bir` for a postcondition by cases on the PC (`*_isqrt_post_3`); swap uses 64-bit memory loads (`arm8_load_64 ms.MEM a`, `riscv_mem_load_dword m.MEM8 a`); kernel-trap uses control/status registers, a narrow field (`mstatus.MPRV`), shifts and address constants.
     - The supported fragment is documented in `bir_condLib.sig` and the instances' `.sig` files. `examples/arm8/add_reg` stays hand-written. Don't switch other examples to it unless asked.
 
-## What arm8 and riscv examples prove, and what is trusted
+## What arm8, arm_cm0, and riscv examples prove, and what is trusted
 
 - The output of a typical binary verification example in `examples/arm8/` or `examples/riscv/` is an ISA-level contract theorem in its `*_prop` theory (e.g. `riscv_cont_kernel_trap_entry`, `arm8_cont_isqrt`). Its `*_full` variant unfolds the contract into a statement about the L3 ISA model alone: the step function `NextRISCV` / `NextStateARM8` (`bmr_step_fun` in `bir_lifting_machinesTheory`) running the program bytes (`*_progbin`) in memory.
 - Trusting a folded ISA contract theorem requires trusting the L3 model of the corresponding ISA, the general contract definitions (`riscv_cont`/`arm8_cont`, `t_jgmt`), the `*_spec_<arch>` pre/postconditions with their address definitions, and the program bytes (generated from the `.da` file).
 - BIR language definitions and BIR expressions do not appear in any ISA contract theorem. The lifter, `*_spec_bir`, symbolic execution and transfer are intermediate proof devices that don't need to be trusted if one trusts the HOL4 kernel.
 - The exception is the conversion from BIR to SMT, which **is** part of the trusted base.
   - Symbolic execution and transfer ask z3 about BIR expressions, e.g., implications, path-condition contradictions and transfer side conditions.
-  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3`, `BIRS_CONTR_Z3` and `BIRS_SIMP_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
+  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3`, `BIRS_CONTR_Z3`, `BIRS_SIMP_Z3` and `BIRS_PCOND_SAT_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
   - These oracle theorems state facts about BIR semantics. So the final theorem can be trusted only if z3 is sound and the BIR-to-SMT-LIB translation (`src/shared/smt/`, including `holba_z3Lib_prelude.z3`) agrees with BIR expression semantics.
   - The final example theorems carry these tags. Check with `Tag.dest_tag (Thm.tag th)` (`DISK_THM` only marks theorems loaded from disk).
 - Consequences for auditing changes to examples and the library:
   - The trusted part is the conversion mechanism, not its inputs. BIR expressions used in contract proof (typically in `*_spec_bir`) only affect what is sent to z3. So changes to them that keep the build passing need no semantic review, even if they change the BIR terms, as long as the mechanism is unchanged.
   - Changes to a contract statement, `*_spec_<arch>`, the L3 model, or anything else the `*_full` statement depends on do.
   - So do changes to the BIR-to-SMT conversion or to where the oracles are invoked.
+- The `examples/arm_cm0/` examples produce symbolic execution summaries with cycle bounds, not ISA contract theorems, so what they prove is stated in terms of BIR, and the BIR semantics are part of what they rely on. Their theorems carry the z3 tags above.
+- Three further oracle tags are specific to Cortex-M0 verification, and are not based on z3. None occur in the built arm8 and riscv theories, so it would be notable if one shows up in a non-CM0 project.
+  - `BIRS_CONST_LOAD` (`examples/arm_cm0/support/birs_armcm0_constmemLib.sml`; on `motor_set`, `aes`, `balrob` theorems): a 32-bit load from the initial memory `sy_MEM` at a given address yields the value read from the program binary, under any path condition.
+  - `BIRS_INDIRJMP_MEM` (`examples/arm_cm0/support/birs_armcm0_concretizationLib.sml`; on `balrob` theorems): the possible targets of an indirect jump are the values read from the program binary. The set may be an overapproximation.
+  - `BIR_step_patch` (`src/tools/lifter/bir_inst_liftingLib.sml`; on `balrob` theorems, from lifting onward): a hand-written step theorem for the instruction encoding `a202` (`adr r2, ...`). It is in the library, but only applies to the `m0_mod` machine configuration used by these examples.
 
 ## Git
 
