@@ -5,8 +5,8 @@
 [workflow-badge]: https://github.com/kth-step/HolBA/actions/workflows/build.yaml/badge.svg?branch=master
 [workflow-link]: https://github.com/kth-step/HolBA/actions/workflows/build.yaml
 
-HolBA is a library based on the HOL4 theorem prover that provides
-tools for analysis and formal proofs of properties of programs in binary
+HolBA is a library based on the [HOL4 theorem prover](https://github.com/HOL-Theorem-Prover/HOL)
+that provides tools for analysis and formal proofs of properties of programs in binary
 format that use the ARMv8, RISC-V and Cortex-M0 instruction sets.
 
 Applications of HolBA include automated verification of contracts for
@@ -19,11 +19,13 @@ See the [publications](#related-publications) for more technical details and
 
 ## Building
 
-HolBA is built using the `Holmake` tool bundled with HOL4.
+As default, HolBA is built using the `Holmake` tool bundled with HOL4.
+Alternatively, the [holbuild](https://github.com/hol-theorem-prover/holbuild)
+tool can be used for building and is recommended for [agents](AGENTS.md).
 
 ### Dependencies
 
-- [HOL4](https://github.com/HOL-Theorem-Prover/HOL), tag `trindemossen-2-v9`.
+- [HOL4](https://github.com/HOL-Theorem-Prover/HOL/tags), tag `trindemossen-2-v9`
 - [Poly/ML](https://github.com/polyml/polyml), 5.9.2
 - [Z3](https://github.com/Z3Prover/z3), 4.14.1
 
