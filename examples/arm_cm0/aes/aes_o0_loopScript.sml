@@ -6,6 +6,8 @@ open bir_pred_cm0Lib;
 
 val _ = new_theory "aes_o0_loop";
 
+val _ = birs_auxLib.prepare_program_lookups aes_o0Lib.lift_thm;
+
 val birs_prog_config = ((fst o dest_eq o concl) aes_o0Lib.prog_def, aes_o0Lib.birenvtyl_def);
 
 val _ = set_default_cheat_setting ();

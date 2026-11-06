@@ -6,6 +6,10 @@
 - How these are actually used to verify programs is shown **only in the examples**, chiefly `examples/riscv/` and `examples/arm8/`. These are separate holbuild projects that depend on the library, i.e., "client projects".
 - Their `holbuild.toml` files are templates for setting up other client projects that use HolBA.
 - `examples/bir/` is a third client project, not about binary verification. So far it builds only `compute` (group `@compute`): "Smol BIR", an independent fragment of BIR with cv-based evaluation. Its files are prefixed `smol_bir` so that their logical names don't clash with the library's BIR theories. The other subdirectories of `examples/bir/` are not built yet.
+- `examples/arm_cm0/` is a fourth client project about Cortex-M0. It is built only when explicitly run from that directory, never as part of a standard build. It builds `tiny`, `modexp_simple`, `motor_set`, `aes` and `balrob` (groups `@tiny`, `@modexp_simple`, `@motor_set`, `@aes` and `@balrob`), with their `support` libraries. The examples produce symbolic execution summaries with cycle bounds (and for `balrob` also a BIR contract), not ISA contract theorems.
+  - `balrob` builds only `v2-fast`, `.holconfig.toml` sets `jobs = 3` here to limit memory use.
+  - `balrob/v1-slow` is excluded: it defines the same theory names as `v2-fast`, so holbuild rejects them as duplicates. It remains Holmake-only (`Holmake` from its directory, where only `v1-slow` is on `INCLUDES`), and is not confirmed to build on the current HOL4 tag. It uses substantial amounts of memory even with a single job.
+  - When porting one of these, move the `birs_auxLib.prepare_program_lookups` call out of its `*Lib.sml` and into the script, after `new_theory`. holbuild loads libraries before a theory exists, and the call fails there with `no current theory when proving`.
 
 ## z3 is for clients, not for the library
 
@@ -20,7 +24,7 @@
 - holbuild manifests are named `holbuild.toml`, not `holproject.toml`. Don't add a `holproject.toml` anywhere in the repository:
   - Holmake reads `holproject.toml` as its own project file, with a different schema.
   - In a directory that has one, Holmake ignores `.holpath`. So a `holproject.toml` at the root would leave `$(HOLBADIR)` in the Holmakefiles undefined.
-- Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, `examples/arm8/`, or `examples/bir/`):
+- Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, `examples/arm8/`, `examples/bir/`, or `examples/arm_cm0/`):
   - one theory: `holbuild build chacha20_double_round_propTheory`
   - a group from `[build.groups.*]`: `holbuild build @chacha20`, or `holbuild build @examples` at the root for examples under `src/`
   - no target: the project's root groups
@@ -33,12 +37,12 @@
   ```
   holbuild picks up the `holbuild_extra_deps [...]` call when scanning the script. The local no-op definition keeps the script valid under Holmake. Every lifted example (`<prog>Script.sml`) needs this for its `.da` file.
 - Logical names must be unique across the whole holbuild build graph: all `members` directories of the project and all its dependencies (HolBA, HOL4). `fooScript.sml` has logical name `fooTheory`, while `foo.sml` and `foo.sig` both have `foo`; only a `.sig`/`.sml` pair in the same package may share one. Holmake only sees each directory's `INCLUDES`, so clashes that were harmless there fail under holbuild with `duplicate logical name`. Before adding a file, check that no other source in the project or its dependencies has the same logical name.
-  - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8`, `riscv` or `bir`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
+  - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8`, `riscv`, `bir` or `arm_cm0`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
   - When renaming a theory, also update theory names in strings: `Thy="..."` in `prim_mk_const`/`mk_thy_const`, `syntax_fns`, `DB.fetch`. No build catches stale ones: holbuild does not execute plain `.sml` modules, so they fail only when loaded (e.g. by a test).
 - HolBA builds against a tagged HOL4 release. holbuild currently only accepts a commit SHA for `[dependencies.hol]` `rev`, so:
   - `rev` must be the commit of a HOL4 tag, i.e., `git ls-remote https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`, not the annotated tag object's own SHA.
   - The root `holbuild.toml` names the tag in a comment above `rev`.
-  - All `holbuild.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`) use the same `rev`; change them together.
+  - All `holbuild.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`, `examples/arm_cm0`) use the same `rev`; change them together.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
@@ -122,7 +126,7 @@
 - BIR language definitions and BIR expressions do not appear in any ISA contract theorem. The lifter, `*_spec_bir`, symbolic execution and transfer are intermediate proof devices that don't need to be trusted if one trusts the HOL4 kernel.
 - The exception is the conversion from BIR to SMT, which **is** part of the trusted base.
   - Symbolic execution and transfer ask z3 about BIR expressions, e.g., implications, path-condition contradictions and transfer side conditions.
-  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3` and `BIRS_CONTR_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
+  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3`, `BIRS_CONTR_Z3` and `BIRS_SIMP_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
   - These oracle theorems state facts about BIR semantics. So the final theorem can be trusted only if z3 is sound and the BIR-to-SMT-LIB translation (`src/shared/smt/`, including `holba_z3Lib_prelude.z3`) agrees with BIR expression semantics.
   - The final example theorems carry these tags. Check with `Tag.dest_tag (Thm.tag th)` (`DISK_THM` only marks theorems loaded from disk).
 - Consequences for auditing changes to examples and the library:

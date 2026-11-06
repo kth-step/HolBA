@@ -4,6 +4,8 @@ open birs_armcm0_supportLib;
 
 val _ = new_theory "tiny_analysis";
 
+val _ = birs_auxLib.prepare_program_lookups tinyLib.lift_thm;
+
 val birs_prog_config = ((fst o dest_eq o concl) tinyLib.prog_def, tinyLib.birenvtyl_def);
 
 val _ = set_default_cheat_setting ();

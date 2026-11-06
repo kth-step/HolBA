@@ -19,6 +19,8 @@ open balrob_ftopTheory;
 
 val _ = new_theory "balrob_top";
 
+val _ = birs_auxLib.prepare_program_lookups balrobLib.bir_lift_thm;
+
 val birs_prog_config = balrobLib.birs_prog_config;
 
 val _ = set_default_cheat_setting ();

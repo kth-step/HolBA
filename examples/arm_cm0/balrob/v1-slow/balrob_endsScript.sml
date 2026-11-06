@@ -4,6 +4,8 @@ open birs_armcm0_supportLib;
 
 val _ = new_theory "balrob_ends";
 
+val _ = birs_auxLib.prepare_program_lookups balrobLib.bir_lift_thm;
+
 val birs_prog_config = balrobLib.birs_prog_config;
 
 val _ = set_default_cheat_setting ();
