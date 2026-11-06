@@ -6,7 +6,7 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 (* Local theories: *)
 open bir_exp_liftingLib bir_lifting_machinesTheory
      bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
-     bir_riscv_extrasTheory
+     bir_riscv_extrasTheory bir_arch_extrasTheory
 (* Local function libraries: *)
 open bir_lifting_machinesLib;
 (* Function libraries from examples/l3-machine-code: *)
@@ -639,7 +639,7 @@ local
                 wordsLib.WORD_LOGIC_ss) []
     ) THENC
     (SIMP_CONV std_ss
-               [bir_riscv_extrasTheory.word_add_to_sub_TYPES,
+               [bir_arch_extrasTheory.word_add_to_sub_TYPES,
                 alignmentTheory.aligned_numeric,
                 wordsTheory.WORD_SUB_INTRO,
                 wordsTheory.WORD_MULT_CLAUSES]

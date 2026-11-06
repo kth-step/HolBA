@@ -10,7 +10,7 @@ open riscv_stepTheory
 open bir_lifter_general_auxTheory;
 open bir_lifting_machinesTheory;
 open bir_interval_expTheory bir_extra_expsTheory
-open bir_arm8_extrasTheory
+open bir_arch_extrasTheory
 open bitstringTheory
 open combinTheory
 open bir_expTheory;
@@ -250,9 +250,6 @@ WORD_CONTR_TAC
 QED
 
 val mem_dword_rev_simp = SIMP_RULE (std_ss++wordsLib.WORD_ss++wordsLib.WORD_ARITH_EQ_ss) [] mem_dword_rev;
-
-val elim_zero_for_def_thm =
-  GEN_ALL (SIMP_CONV (std_ss++wordsLib.WORD_ss) [] ``a + 0w  =+ w``);
 
 Theorem riscv_word_add1_neq[local]:
   a + 1w <> a
@@ -774,31 +771,6 @@ SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
   bir_unary_exp_BOOL_OPER_EVAL, GSYM WORD_NOT_LOWER_EQUAL, GSYM WORD_HIGHER_EQ]
 QED
 
-
-(****************)
-(* Add to sub   *)
-(****************)
-
-Theorem word_add_to_sub_GEN:
-  !w:'a word n.
-   INT_MAX (:'a) < n /\ n < dimword (:'a) ==>
-   (w + n2w n = w - n2w (dimword (:'a) - n))
-Proof
-REPEAT STRIP_TAC >>
-ASM_SIMP_TAC arith_ss [word_sub_def,
-  word_2comp_n2w]
-QED
-
-val word_add_to_sub_TYPES = save_thm ("word_add_to_sub_TYPES",
-let
-  fun inst wty =
-    INST_TYPE [``:'a`` |-> wty] word_add_to_sub_GEN;
-
-  val thm1 = LIST_CONJ ([inst ``:32``, inst ``:64``, inst ``:16``, inst ``:8``])
-  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [] thm1
-in
-  thm2
-end)
 
 (****************************************)
 (* Lifting 2-word predicates            *)

@@ -955,7 +955,7 @@ let
   val thm5 = SIMP_RULE (std_ss++wordsLib.WORD_ss) [bir_update_mmap_words_def, bitstringTheory.v2w_w2v, v2w_w2v_SEG_REWRS] thm4
 
 
-  val thm6 = SIMP_RULE list_ss [GSYM CONJ_ASSOC, FORALL_AND_THM] thm5
+  val thm6 = SIMP_RULE pure_ss [GSYM CONJ_ASSOC, FORALL_AND_THM] thm5
 
 in thm6
 end);
