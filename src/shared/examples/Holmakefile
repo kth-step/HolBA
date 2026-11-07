@@ -4,7 +4,7 @@ INCLUDES = $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support
 
-all: $(DEFAULT_TARGETS) test-bir-to-word-to-z3-sat-model.exe test-bir-to-word.exe test-bsl-progs.exe test-json.exe test-smtlibLib.exe test-z3-sat-model.exe test-z3_wrapper.exe
+all: $(DEFAULT_TARGETS) test-bir-to-word-to-z3-sat-model.exe test-bir-to-word.exe test-bsl-progs.exe test-json.exe test-smtlibLib.exe test-smtlibLib-casts.exe test-z3-sat-model.exe test-z3_wrapper.exe
 .PHONY: all
 
 test-bir-to-word-to-z3-sat-model.exe: test-bir-to-word-to-z3-sat-model.uo
@@ -22,20 +22,24 @@ test-json.exe: test-json.uo
 test-smtlibLib.exe: test-smtlibLib.uo
 	$(HOLMOSMLC) -o $@ $<
 
+test-smtlibLib-casts.exe: test-smtlibLib-casts.uo
+	$(HOLMOSMLC) -o $@ $<
+
 test-z3-sat-model.exe: test-z3-sat-model.uo
 	$(HOLMOSMLC) -o $@ $<
 
 test-z3_wrapper.exe: test-z3_wrapper.uo
 	$(HOLMOSMLC) -o $@ $<
 
-test: test-bir-to-word-to-z3-sat-model.exe test-bir-to-word.exe test-bsl-progs.exe test-json.exe test-smtlibLib.exe test-z3-sat-model.exe test-z3_wrapper.exe
+test: test-bir-to-word-to-z3-sat-model.exe test-bir-to-word.exe test-bsl-progs.exe test-json.exe test-smtlibLib.exe test-smtlibLib-casts.exe test-z3-sat-model.exe test-z3_wrapper.exe
 	./test-bir-to-word-to-z3-sat-model.exe
 	./test-bir-to-word.exe
 	./test-bsl-progs.exe
 	./test-json.exe
 	./test-smtlibLib.exe
+	./test-smtlibLib-casts.exe
 	./test-z3-sat-model.exe
 	./test-z3_wrapper.exe
 .PHONY: test
 
-EXTRA_CLEANS = test-bir-to-word-to-z3-sat-model.exe test-bir-to-word.exe test-bsl-progs.exe test-json.exe test-smtlibLib.exe test-z3-sat-model.exe test-z3_wrapper.exe
+EXTRA_CLEANS = test-bir-to-word-to-z3-sat-model.exe test-bir-to-word.exe test-bsl-progs.exe test-json.exe test-smtlibLib.exe test-smtlibLib-casts.exe test-z3-sat-model.exe test-z3_wrapper.exe
