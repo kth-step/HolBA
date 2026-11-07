@@ -97,6 +97,20 @@ in
         "((_ sign_extend " ^ (Int.toString (szi_to - szi_from)) ^ ") " ^ str ^ ")"
       else raise ERR "castt_to_smtlib" "don't know casttype";
 
+  (* one-bit values are SMT Bools; BIR zero-extends them for all four cast kinds
+     (bir_casts_Bit1 in bir_exp_immTheory), so castt_to_smtlib does not apply:
+     its sign_extend would turn 1 into all ones *)
+  fun boolcast_to_smtlib str szi_to =
+    if szi_to = 1 then
+      (str, SMTTY_Bool)
+    else
+      let
+        val szstr = Int.toString szi_to;
+      in
+        ("(ite " ^ str ^ " (_ bv1 " ^ szstr ^ ") (_ bv0 " ^ szstr ^ "))",
+         SMTTY_BV szi_to)
+      end;
+
   fun bop_to_smtlib sty bop =
     if smt_type_is_bv sty then
       if is_BIExp_And bop then "bvand"
@@ -429,18 +443,22 @@ BExp_Cast BIExp_LowCast
 
           val szi = size_of_bir_immtype_t sz;
           val sty = SMTTY_BV szi;
-          val exp_szi = case stye of
-                           SMTTY_BV i => i
-                         | _ => problem exp "cast can only be applied to imm (not imm1): ";
+          fun bvcast_to_smtlib exp_szi =
+            let
+              val caststr = castt_to_smtlib castt stre exp_szi szi;
 
-          val caststr = castt_to_smtlib castt stre exp_szi szi;
+              val castval = (caststr, sty);
+            in
+              if sty = SMTTY_BV 1 then
+                ("(= " ^ caststr ^ " (_ bv1 1))", SMTTY_Bool)
+              else
+                castval
+            end;
 
-          val castval = (caststr, sty);
-          val castval_fixed =
-            if sty = SMTTY_BV 1 then
-              ("(= " ^ caststr ^ " (_ bv1 1))", SMTTY_Bool)
-            else
-              castval;
+          val castval_fixed = case stye of
+                           SMTTY_BV i => bvcast_to_smtlib i
+                         | SMTTY_Bool => boolcast_to_smtlib stre szi
+                         | _ => problem exp "cast can only be applied to imm: ";
         in
           (exst1, castval_fixed)
         end
