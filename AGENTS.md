@@ -8,7 +8,9 @@
 - `examples/bir/` is a third client project, not about binary verification. So far it builds only `compute` (group `@compute`): "Smol BIR", an independent fragment of BIR with cv-based evaluation. Its files are prefixed `smol_bir` so that their logical names don't clash with the library's BIR theories. The other subdirectories of `examples/bir/` are not built yet.
 - `examples/arm_cm0/` is a fourth client project about Cortex-M0 (CM0). It is built only when explicitly run from that directory, never as part of a standard build. It builds `tiny`, `modexp_simple`, `motor_set`, `aes` and `balrob` (groups `@tiny`, `@modexp_simple`, `@motor_set`, `@aes` and `@balrob`), with their `support` libraries. The examples produce symbolic execution summaries with cycle bounds (and for `balrob` also a BIR contract), not ISA contract theorems.
   - `balrob` builds only `v2-fast`, `.holconfig.toml` sets `jobs = 3` here to limit memory use.
-  - `balrob/v1-slow` is excluded: it defines the same theory names as `v2-fast`, so holbuild rejects them as duplicates. It remains Holmake-only (`Holmake` from its directory, where only `v1-slow` is on `INCLUDES`), and is not confirmed to build on the current HOL4 tag. It uses substantial amounts of memory even with a single job.
+  - `balrob/v1-slow` is excluded: it defines the same theory names as `v2-fast`, so holbuild rejects them as duplicates. It remains Holmake-only (`Holmake` from its directory, where only `v1-slow` is on `INCLUDES`).
+    - Confirmed to build on trindemossen-2-v9 (2026-11-08) with `Holmake -j 1` (dependencies already built), set `HOL4_Z3_EXECUTABLE` as for the other examples. On a 16-thread, 31 GB machine this took 7 h wall clock, of which `balrob_fmul` alone took about 4.3 h. The other seven theories took 1 min to 1 h each.
+    - Several theories (`balrob_fadd`, `balrob_fdiv`, `balrob_fmul`) grew their `hol` process to about 25 GB. This is Poly/ML's default heap cap (80% of physical memory) rather than a measured requirement: the heap grows toward the cap when that lowers GC cost. The minimum heap these theories need is unknown. Without a per-process heap cap (Poly/ML `--maxheap`), never run v1-slow with more than one job: each process would size its heap independently toward 80% of physical memory.
   - When porting one of these, move the `birs_auxLib.prepare_program_lookups` call out of its `*Lib.sml` and into the script, after `new_theory`. holbuild loads libraries before a theory exists, and the call fails there with `no current theory when proving`.
 
 ## z3 is for clients, not for the library
@@ -68,9 +70,20 @@
 - Known hang patterns:
   - a child `hol` with zero CPU that never exec'd z3 (fork-before-exec deadlock)
   - a holbuild child with no HOL process under it
-- Memory: HolBA and the built examples should build comfortably with 32 GB of physical memory with 1–8 jobs.
+- Memory: HolBA and the built examples should build comfortably with 32 GB of physical memory with 1–8 jobs. The working baseline is 32 GB plus 16 GB of swap.
+  - Prefer holbuild's memory options (holbuild 0.12.2 or later), which only set runtime limits and do not affect cache reuse:
+    ```bash
+    holbuild --cooperate-dir ~/.local/state/holbuild-memory --max-heap 20000 build <target>
+    ```
+    - `--cooperate-dir` shares a memory budget between all holbuild processes using that directory, so concurrent builds hold back new children when memory is short. The budget and the margin kept free follow the machine's `MemTotal`. Waiting children log `waiting for machine memory`.
+    - `--max-heap` caps each `hol` child, so a runaway proof fails instead of exhausting the machine. A theory that really needs more can be rerun with a higher cap.
+    - Leave `--child-charge` at its default (3072 MB). It is an expected size, not a ceiling: setting it to `--max-heap` would run one child at a time on a 32 GB machine.
+    - These options can't go in `.holconfig.toml`, which rejects unknown fields. `HOLBUILD_COOPERATE_DIR` can replace `--cooperate-dir`, but `--max-heap` has no environment variable.
+    - `--cooperate-dir` limits only when children start: running children can still grow together up to `--max-heap`. `check`, `run`, `repl` and HOL toolchain builds reserve nothing.
+    - Measured on the root library (`holbuild build`, 16 threads, 31 GB, `jobs = 8`): about 13 min from cold (no cache or checkpoints), largest child 5 GB (`bir_exp_liftingTheory`), at most 5.7 GB in total, about 4–5 children at once. The limit comes from admission, which counts each child started in the last 30 s at its full charge. A lower `--child-charge 1536` reached 8 children, but saved only about 10% in a checkpoint-resumed rebuild.
+    - Not yet measured on the example projects, whose children grow larger and also run z3.
   - Watch the RSS of `hol` processes during builds (`VmRSS` in `/proc/PID/status`), not only CPU.
-  - A single process above ~20 GB means something is wrong, not slow progress. Stop the build before the machine stalls and an OOM kill hits, then investigate. Example: a generated BIR precondition that `EVAL` could not unfold made `max_symb_exec` (normally under a minute) reach 26 GB in 8 minutes.
+  - A single process above ~20 GB means something is wrong, not slow progress. Stop the build before the machine stalls and an OOM kill hits, then investigate. Example: a generated BIR precondition that `EVAL` could not unfold made `max_symb_exec` (normally under a minute) reach 26 GB in 8 minutes. Exception: `balrob/v1-slow` in arm_cm0, where about 25 GB is normal on a machine with 31 GB (see above).
 - Before killing a hang: capture a backtrace (`gdb -p PID -batch -ex "thread apply all bt"`) and the Poly/ML and holbuild versions. Then kill the holbuild process tree and rerun; cached work resumes.
 
 ## Code layout
