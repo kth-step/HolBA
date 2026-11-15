@@ -14,5 +14,14 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/tools/lifter \
            $(HOLBADIR)/src/tools/comp
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) selftest.exe
 .PHONY: all
+
+selftest.exe: selftest.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: selftest.exe
+	./selftest.exe
+.PHONY: test
+
+EXTRA_CLEANS = selftest.exe
