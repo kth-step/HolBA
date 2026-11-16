@@ -1,0 +1,8 @@
+[overrides.holba]
+path = "../.."
+
+[build]
+# balrob's theories each grow beyond 3.5 GB (balrob_fsub to about 14 GB), so
+# more parallel jobs can exhaust the memory of a 32 GB machine.
+jobs = 3
+checkpoint_limit_gb = 20

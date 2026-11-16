@@ -6,6 +6,12 @@
 - How these are actually used to verify programs is shown **only in the examples**, chiefly `examples/riscv/` and `examples/arm8/`. These are separate holbuild projects that depend on the library, i.e., "client projects".
 - Their `holbuild.toml` files are templates for setting up other client projects that use HolBA.
 - `examples/bir/` is a third client project, not about binary verification. So far it builds only `compute` (group `@compute`): "Smol BIR", an independent fragment of BIR with cv-based evaluation. Its files are prefixed `smol_bir` so that their logical names don't clash with the library's BIR theories. The other subdirectories of `examples/bir/` are not built yet.
+- `examples/arm_cm0/` is a fourth client project about Cortex-M0 (CM0). It is built only when explicitly run from that directory, never as part of a standard build. It builds `tiny`, `modexp_simple`, `motor_set`, `aes` and `balrob` (groups `@tiny`, `@modexp_simple`, `@motor_set`, `@aes` and `@balrob`), with their `support` libraries. The examples produce symbolic execution summaries with cycle bounds (and for `balrob` also a BIR contract), not ISA contract theorems.
+  - `balrob` builds only `v2-fast`, `.holconfig.toml` sets `jobs = 3` here to limit memory use.
+  - `balrob/v1-slow` is excluded: it defines the same theory names as `v2-fast`, so holbuild rejects them as duplicates. It remains Holmake-only (`Holmake` from its directory, where only `v1-slow` is on `INCLUDES`).
+    - Confirmed to build on trindemossen-2-v9 (2026-11-08) with `Holmake -j 1` (dependencies already built), set `HOL4_Z3_EXECUTABLE` as for the other examples. On a 16-thread, 31 GB machine this took 7 h wall clock, of which `balrob_fmul` alone took about 4.3 h. The other seven theories took 1 min to 1 h each.
+    - Several theories (`balrob_fadd`, `balrob_fdiv`, `balrob_fmul`) grew their `hol` process to about 25 GB. This is Poly/ML's default heap cap (80% of physical memory) rather than a measured requirement: the heap grows toward the cap when that lowers GC cost. The minimum heap these theories need is unknown. Without a per-process heap cap (Poly/ML `--maxheap`), never run v1-slow with more than one job: each process would size its heap independently toward 80% of physical memory.
+  - When porting one of these, move the `birs_auxLib.prepare_program_lookups` call out of its `*Lib.sml` and into the script, after `new_theory`. holbuild loads libraries before a theory exists, and the call fails there with `no current theory when proving`.
 
 ## z3 is for clients, not for the library
 
@@ -20,7 +26,7 @@
 - holbuild manifests are named `holbuild.toml`, not `holproject.toml`. Don't add a `holproject.toml` anywhere in the repository:
   - Holmake reads `holproject.toml` as its own project file, with a different schema.
   - In a directory that has one, Holmake ignores `.holpath`. So a `holproject.toml` at the root would leave `$(HOLBADIR)` in the Holmakefiles undefined.
-- Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, `examples/arm8/`, or `examples/bir/`):
+- Run holbuild from the directory of the project you're building (repo root, `examples/riscv/`, `examples/arm8/`, `examples/bir/`, or `examples/arm_cm0/`):
   - one theory: `holbuild build chacha20_double_round_propTheory`
   - a group from `[build.groups.*]`: `holbuild build @chacha20`, or `holbuild build @examples` at the root for examples under `src/`
   - no target: the project's root groups
@@ -33,12 +39,12 @@
   ```
   holbuild picks up the `holbuild_extra_deps [...]` call when scanning the script. The local no-op definition keeps the script valid under Holmake. Every lifted example (`<prog>Script.sml`) needs this for its `.da` file.
 - Logical names must be unique across the whole holbuild build graph: all `members` directories of the project and all its dependencies (HolBA, HOL4). `fooScript.sml` has logical name `fooTheory`, while `foo.sml` and `foo.sig` both have `foo`; only a `.sig`/`.sml` pair in the same package may share one. Holmake only sees each directory's `INCLUDES`, so clashes that were harmless there fail under holbuild with `duplicate logical name`. Before adding a file, check that no other source in the project or its dependencies has the same logical name.
-  - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8`, `riscv` or `bir`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
+  - This means that a built file is unambiguously identified by its filename and project (root/`holba`, `arm8`, `riscv`, `bir` or `arm_cm0`): "`isqrt_spec_arm8Script.sml` in arm8" refers to `examples/arm8/isqrt/isqrt_spec_arm8Script.sml`. Files holbuild does not build (outside `members` or excluded, e.g., `selftest.sml`, `examples/riscv/poly1305*`) are not checked and may repeat names.
   - When renaming a theory, also update theory names in strings: `Thy="..."` in `prim_mk_const`/`mk_thy_const`, `syntax_fns`, `DB.fetch`. No build catches stale ones: holbuild does not execute plain `.sml` modules, so they fail only when loaded (e.g. by a test).
 - HolBA builds against a tagged HOL4 release. holbuild currently only accepts a commit SHA for `[dependencies.hol]` `rev`, so:
   - `rev` must be the commit of a HOL4 tag, i.e., `git ls-remote https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`, not the annotated tag object's own SHA.
   - The root `holbuild.toml` names the tag in a comment above `rev`.
-  - All `holbuild.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`) use the same `rev`; change them together.
+  - All `holbuild.toml` files (root, `examples/arm8`, `examples/riscv`, `examples/bir`, `examples/arm_cm0`) use the same `rev`; change them together.
 - `.holconfig.toml` settings are **not** inherited between projects: `[build]` options such as `jobs` and `checkpoint_limit_gb` must be repeated in each project.
 - Poly/ML: use 5.9.2. Ubuntu's packaged 5.7.1 has been associated with intermittent deadlocks when spawning z3.
 - Changing a library file (e.g. `bir_symbLib`, `bir_riscv_backlifterTheory`) rebuilds every dependent example. Symbolic execution and transfer theories are the slow part.
@@ -64,9 +70,20 @@
 - Known hang patterns:
   - a child `hol` with zero CPU that never exec'd z3 (fork-before-exec deadlock)
   - a holbuild child with no HOL process under it
-- Memory: HolBA and the built examples should build comfortably with 32 GB of physical memory with 1–8 jobs.
+- Memory: HolBA and the built examples should build comfortably with 32 GB of physical memory with 1–8 jobs. The working baseline is 32 GB plus 16 GB of swap.
+  - Prefer holbuild's memory options (holbuild 0.12.2 or later), which only set runtime limits and do not affect cache reuse:
+    ```bash
+    holbuild --cooperate-dir ~/.local/state/holbuild-memory --max-heap 20000 build <target>
+    ```
+    - `--cooperate-dir` shares a memory budget between all holbuild processes using that directory, so concurrent builds hold back new children when memory is short. The budget and the margin kept free follow the machine's `MemTotal`. Waiting children log `waiting for machine memory`.
+    - `--max-heap` caps each `hol` child, so a runaway proof fails instead of exhausting the machine. A theory that really needs more can be rerun with a higher cap.
+    - Leave `--child-charge` at its default (3072 MB). It is an expected size, not a ceiling: setting it to `--max-heap` would run one child at a time on a 32 GB machine.
+    - These options can't go in `.holconfig.toml`, which rejects unknown fields. `HOLBUILD_COOPERATE_DIR` can replace `--cooperate-dir`, but `--max-heap` has no environment variable.
+    - `--cooperate-dir` limits only when children start: running children can still grow together up to `--max-heap`. `check`, `run`, `repl` and HOL toolchain builds reserve nothing.
+    - Measured on the root library (`holbuild build`, 16 threads, 31 GB, `jobs = 8`): about 13 min from cold (no cache or checkpoints), largest child 5 GB (`bir_exp_liftingTheory`), at most 5.7 GB in total, about 4–5 children at once. The limit comes from admission, which counts each child started in the last 30 s at its full charge. A lower `--child-charge 1536` reached 8 children, but saved only about 10% in a checkpoint-resumed rebuild.
+    - Not yet measured on the example projects, whose children grow larger and also run z3.
   - Watch the RSS of `hol` processes during builds (`VmRSS` in `/proc/PID/status`), not only CPU.
-  - A single process above ~20 GB means something is wrong, not slow progress. Stop the build before the machine stalls and an OOM kill hits, then investigate. Example: a generated BIR precondition that `EVAL` could not unfold made `max_symb_exec` (normally under a minute) reach 26 GB in 8 minutes.
+  - A single process above ~20 GB means something is wrong, not slow progress. Stop the build before the machine stalls and an OOM kill hits, then investigate. Example: a generated BIR precondition that `EVAL` could not unfold made `max_symb_exec` (normally under a minute) reach 26 GB in 8 minutes. Exception: `balrob/v1-slow` in arm_cm0, where about 25 GB is normal on a machine with 31 GB (see above).
 - Before killing a hang: capture a backtrace (`gdb -p PID -batch -ex "thread apply all bt"`) and the Poly/ML and holbuild versions. Then kill the holbuild process tree and rerun; cached work resumes.
 
 ## Code layout
@@ -115,20 +132,25 @@
     - Users: `examples/arm8/{max,update_sat,isqrt,swap}` and `examples/riscv/{isqrt,swap,kernel-trap}`. isqrt uses `*_post_cases_to_bir` for a postcondition by cases on the PC (`*_isqrt_post_3`); swap uses 64-bit memory loads (`arm8_load_64 ms.MEM a`, `riscv_mem_load_dword m.MEM8 a`); kernel-trap uses control/status registers, a narrow field (`mstatus.MPRV`), shifts and address constants.
     - The supported fragment is documented in `bir_condLib.sig` and the instances' `.sig` files. `examples/arm8/add_reg` stays hand-written. Don't switch other examples to it unless asked.
 
-## What arm8 and riscv examples prove, and what is trusted
+## What arm8, arm_cm0, and riscv examples prove, and what is trusted
 
 - The output of a typical binary verification example in `examples/arm8/` or `examples/riscv/` is an ISA-level contract theorem in its `*_prop` theory (e.g. `riscv_cont_kernel_trap_entry`, `arm8_cont_isqrt`). Its `*_full` variant unfolds the contract into a statement about the L3 ISA model alone: the step function `NextRISCV` / `NextStateARM8` (`bmr_step_fun` in `bir_lifting_machinesTheory`) running the program bytes (`*_progbin`) in memory.
 - Trusting a folded ISA contract theorem requires trusting the L3 model of the corresponding ISA, the general contract definitions (`riscv_cont`/`arm8_cont`, `t_jgmt`), the `*_spec_<arch>` pre/postconditions with their address definitions, and the program bytes (generated from the `.da` file).
 - BIR language definitions and BIR expressions do not appear in any ISA contract theorem. The lifter, `*_spec_bir`, symbolic execution and transfer are intermediate proof devices that don't need to be trusted if one trusts the HOL4 kernel.
 - The exception is the conversion from BIR to SMT, which **is** part of the trusted base.
   - Symbolic execution and transfer ask z3 about BIR expressions, e.g., implications, path-condition contradictions and transfer side conditions.
-  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3` and `BIRS_CONTR_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
+  - They turn z3's answers into theorems with `mk_oracle_thm`: tags `BIRS_IMP_Z3`, `BIRS_CONTR_Z3`, `BIRS_SIMP_Z3` and `BIRS_PCOND_SAT_Z3` in `src/tools/symbexec/birs_utilsLib.sml`, `BIRS_TRANSF_LIB_Z3` in `distribute_generic_stuffLib.sml`, all via `bir_smtLib`.
   - These oracle theorems state facts about BIR semantics. So the final theorem can be trusted only if z3 is sound and the BIR-to-SMT-LIB translation (`src/shared/smt/`, including `holba_z3Lib_prelude.z3`) agrees with BIR expression semantics.
   - The final example theorems carry these tags. Check with `Tag.dest_tag (Thm.tag th)` (`DISK_THM` only marks theorems loaded from disk).
 - Consequences for auditing changes to examples and the library:
   - The trusted part is the conversion mechanism, not its inputs. BIR expressions used in contract proof (typically in `*_spec_bir`) only affect what is sent to z3. So changes to them that keep the build passing need no semantic review, even if they change the BIR terms, as long as the mechanism is unchanged.
   - Changes to a contract statement, `*_spec_<arch>`, the L3 model, or anything else the `*_full` statement depends on do.
   - So do changes to the BIR-to-SMT conversion or to where the oracles are invoked.
+- The `examples/arm_cm0/` examples produce symbolic execution summaries with cycle bounds, not ISA contract theorems, so what they prove is stated in terms of BIR, and the BIR semantics are part of what they rely on. Their theorems carry the z3 tags above.
+- Three further oracle tags are specific to Cortex-M0 verification, and are not based on z3. None occur in the built arm8 and riscv theories, so it would be notable if one shows up in a non-CM0 project.
+  - `BIRS_CONST_LOAD` (`examples/arm_cm0/support/birs_armcm0_constmemLib.sml`; on `motor_set`, `aes`, `balrob` theorems): a 32-bit load from the initial memory `sy_MEM` at a given address yields the value read from the program binary, under any path condition.
+  - `BIRS_INDIRJMP_MEM` (`examples/arm_cm0/support/birs_armcm0_concretizationLib.sml`; on `balrob` theorems): the possible targets of an indirect jump are the values read from the program binary. The set may be an overapproximation.
+  - `BIR_step_patch` (`src/tools/lifter/bir_inst_liftingLib.sml`; on `balrob` theorems, from lifting onward): a hand-written step theorem for the instruction encoding `a202` (`adr r2, ...`). It is in the library, but only applies to the `m0_mod` machine configuration used by these examples.
 
 ## Git
 

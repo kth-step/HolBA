@@ -6,6 +6,8 @@ open modexp_asm_uidivmodTheory;
 
 val _ = new_theory "modexp_asm";
 
+val _ = birs_auxLib.prepare_program_lookups modexp_asmLib.lift_thm;
+
 val birs_prog_config = ((fst o dest_eq o concl) modexp_asmLib.prog_def, modexp_asmLib.birenvtyl_def);
 
 val _ = set_default_cheat_setting ();

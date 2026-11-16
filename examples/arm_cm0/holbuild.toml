@@ -1,0 +1,64 @@
+[holbuild]
+schema = 2
+minimum_version = "0.11.6"
+
+# Only built when explicitly run from this directory. This project is not part
+# of the root project (members = ["src"]) or any other example project.
+[project]
+name = "holba_examples_arm_cm0"
+
+# Must match the HOL revision used by the HolBA root holbuild.toml.
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "9783a49979c94c401ff8c0e51b2eefae7ea95ae3"
+
+# HolBA itself (the root holbuild.toml of this repository). holbuild has no
+# path dependencies, so examples/arm_cm0/.holconfig.toml overrides this with
+#   [overrides.holba]
+#   path = "../.."
+# to build against the enclosing checkout instead of this rev.
+[dependencies.holba]
+git = "https://github.com/kth-step/HolBA"
+rev = "ca8cb0bce028f0ad0f4f48cf846a5ab004b4577d"
+
+[build]
+members = [
+  "aes",
+  "balrob",
+  "modexp_simple",
+  "motor_set",
+  "support",
+  "tiny",
+]
+# The cfg/showcfg.sml files are scripts to run interactively.
+# balrob/v1-slow is excluded because it defines the same theory names as
+# balrob/v2-fast, and logical names must be unique across the build graph.
+exclude_globs = [
+  "*/cfg/*",
+  "balrob/v1-slow/*",
+]
+# holba declares roots, so without explicit roots/root_groups here a plain
+# `holbuild build` would only build holba's roots.
+root_groups = [
+  "aes",
+  "balrob",
+  "modexp_simple",
+  "motor_set",
+  "tiny",
+]
+tactic_timeout = 600.0
+
+[build.groups.aes]
+include = ["aes"]
+
+[build.groups.balrob]
+include = ["balrob"]
+
+[build.groups.modexp_simple]
+include = ["modexp_simple"]
+
+[build.groups.motor_set]
+include = ["motor_set"]
+
+[build.groups.tiny]
+include = ["tiny"]

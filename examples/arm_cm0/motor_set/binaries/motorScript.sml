@@ -3,6 +3,10 @@ open HolKernel Parse boolLib bossLib;
 open bir_lifter_interfaceLib;
 open birs_auxLib;
 
+(* lets holbuild stage the .da files for the relative reads below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["balrob_morebenchs_o0_motor.elf.da", "balrob_morebenchs_o3_motor.elf.da"]
+
 val progname = "motor";
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;

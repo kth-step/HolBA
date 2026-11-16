@@ -14,6 +14,8 @@ open balrob_endsTheory;
 
 val _ = new_theory "balrob_symb_transf";
 
+val _ = birs_auxLib.prepare_program_lookups balrobLib.bir_lift_thm;
+
 
 val symb_analysis_thm = balrob_summary___clzsi2_thm;
 

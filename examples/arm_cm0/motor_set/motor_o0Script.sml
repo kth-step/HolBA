@@ -5,6 +5,8 @@ open birs_armcm0_constmemLib;
 
 val _ = new_theory "motor_o0";
 
+val _ = birs_auxLib.prepare_program_lookups motor_set_o0Lib.lift_thm;
+
 val birs_prog_config = ((fst o dest_eq o concl) motor_set_o0Lib.prog_def, motor_set_o0Lib.birenvtyl_def);
 
 val bin_offset = 0x080000dc (*new*) - 0x10000000 (*old*);

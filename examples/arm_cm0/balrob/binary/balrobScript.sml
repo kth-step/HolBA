@@ -3,6 +3,10 @@ open HolKernel Parse boolLib bossLib;
 open bir_lifter_interfaceLib;
 open birs_auxLib;
 
+(* lets holbuild stage the .da file for the relative read below; no-op otherwise *)
+fun holbuild_extra_deps (_ : string list) = ()
+val _ = holbuild_extra_deps ["balrob.elf.da"]
+
 val progname = "balrob";
 val dafilename = progname^".elf.da";
 
