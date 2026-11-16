@@ -25,7 +25,7 @@ tool can be used for building and is recommended for [agents](AGENTS.md).
 
 ### Dependencies
 
-- [HOL4](https://github.com/HOL-Theorem-Prover/HOL/tags), tag `trindemossen-2-v9`
+- [HOL4](https://github.com/HOL-Theorem-Prover/HOL/tags), tag `trindemossen-2-v10`
 - [Poly/ML](https://github.com/polyml/polyml), 5.9.2
 - [Z3](https://github.com/Z3Prover/z3), 4.14.1
 
