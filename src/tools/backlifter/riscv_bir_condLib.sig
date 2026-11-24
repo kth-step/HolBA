@@ -20,9 +20,13 @@ sig
          64-bit little-endian loads riscv_mem_load_dword m.MEM8 a with
          a such a word, free variables (among x1 ... xn), word literals
          and closed words (evaluated to literals)
-       - an equation t = c with c a literal and t a narrow field that
-         riscv_bmr_LIFTED lifts only as w2w t, e.g.
-         (m.c_MCSR m.procID).mstatus.MPRV = 3w
+       - an equation t = c with c a literal and t a narrow state
+         component that riscv_bmr_LIFTED lifts only as w2w t, e.g.
+         m.c_privilege m.procID = 3w
+       - riscv_mmode m, the M-mode contract that every lifted block
+         asserts (bir_riscv_backlifterTheory), which is translated as
+         the condition of riscv_mmode_cond, to the BIR expression
+         bir_riscv_mmode_post
        - at most one top-level conjunct m.c_PC m.procID = A, with A a
          closed word64 term (a literal or an address constant)
 

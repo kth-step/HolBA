@@ -468,10 +468,16 @@ Definition riscv_vars_def:
   (BVar "tmp_PC" (BType_Imm Bit64));
   (BVar "tmp_COND" (BType_Imm Bit1));
 
-  (BVar "mhartid" (BType_Imm Bit64));
-  (BVar "tmp_mhartid" (BType_Imm Bit64));
-  (BVar "MPRV" (BType_Imm Bit8));
-  (BVar "tmp_MPRV" (BType_Imm Bit8));
+  (BVar "priv" (BType_Imm Bit8));
+  (BVar "tmp_priv" (BType_Imm Bit8));
+  (BVar "mstatus" (BType_Imm Bit64));
+  (BVar "tmp_mstatus" (BType_Imm Bit64));
+  (BVar "mtvec" (BType_Imm Bit64));
+  (BVar "tmp_mtvec" (BType_Imm Bit64));
+  (BVar "mie" (BType_Imm Bit64));
+  (BVar "tmp_mie" (BType_Imm Bit64));
+  (BVar "mip" (BType_Imm Bit64));
+  (BVar "tmp_mip" (BType_Imm Bit64));
   (BVar "mscratch" (BType_Imm Bit64));
   (BVar "tmp_mscratch" (BType_Imm Bit64));
   (BVar "mepc" (BType_Imm Bit64));
@@ -480,8 +486,58 @@ Definition riscv_vars_def:
   (BVar "tmp_mcause" (BType_Imm Bit64));
   (BVar "mtval" (BType_Imm Bit64));
   (BVar "tmp_mtval" (BType_Imm Bit64));
-  (BVar "mip" (BType_Imm Bit64));
-  (BVar "tmp_mip" (BType_Imm Bit64))
+  (BVar "mhartid" (BType_Imm Bit64));
+  (BVar "tmp_mhartid" (BType_Imm Bit64));
+  (BVar "mcounteren" (BType_Imm Bit64));
+  (BVar "tmp_mcounteren" (BType_Imm Bit64));
+  (BVar "mcountinhibit" (BType_Imm Bit64));
+  (BVar "tmp_mcountinhibit" (BType_Imm Bit64));
+  (BVar "scounteren" (BType_Imm Bit64));
+  (BVar "tmp_scounteren" (BType_Imm Bit64));
+  (BVar "satp" (BType_Imm Bit64));
+  (BVar "tmp_satp" (BType_Imm Bit64));
+  (BVar "pmpcfg0" (BType_Imm Bit64));
+  (BVar "tmp_pmpcfg0" (BType_Imm Bit64));
+  (BVar "pmpcfg2" (BType_Imm Bit64));
+  (BVar "tmp_pmpcfg2" (BType_Imm Bit64));
+  (BVar "pmpaddr0" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr0" (BType_Imm Bit64));
+  (BVar "pmpaddr1" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr1" (BType_Imm Bit64));
+  (BVar "pmpaddr2" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr2" (BType_Imm Bit64));
+  (BVar "pmpaddr3" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr3" (BType_Imm Bit64));
+  (BVar "pmpaddr4" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr4" (BType_Imm Bit64));
+  (BVar "pmpaddr5" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr5" (BType_Imm Bit64));
+  (BVar "pmpaddr6" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr6" (BType_Imm Bit64));
+  (BVar "pmpaddr7" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr7" (BType_Imm Bit64));
+  (BVar "pmpaddr8" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr8" (BType_Imm Bit64));
+  (BVar "pmpaddr9" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr9" (BType_Imm Bit64));
+  (BVar "pmpaddr10" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr10" (BType_Imm Bit64));
+  (BVar "pmpaddr11" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr11" (BType_Imm Bit64));
+  (BVar "pmpaddr12" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr12" (BType_Imm Bit64));
+  (BVar "pmpaddr13" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr13" (BType_Imm Bit64));
+  (BVar "pmpaddr14" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr14" (BType_Imm Bit64));
+  (BVar "pmpaddr15" (BType_Imm Bit64));
+  (BVar "tmp_pmpaddr15" (BType_Imm Bit64));
+  (BVar "procID" (BType_Imm Bit8));
+  (BVar "tmp_procID" (BType_Imm Bit8));
+  (BVar "extMEIP" (BType_Imm Bit1));
+  (BVar "tmp_extMEIP" (BType_Imm Bit1));
+  (BVar "extSEIP" (BType_Imm Bit1));
+  (BVar "tmp_extSEIP" (BType_Imm Bit1))
  }
 End
 
@@ -647,26 +703,82 @@ End
 
 Definition default_riscv_bir_env_CSRS_def:
  default_riscv_bir_env_CSRS ms env_map =
-  ("mhartid"   =+ SOME (BVal_Imm (Imm64 ( ((ms.c_MCSR ms.procID).mhartid) ))))
-  (("MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
-  (("mscratch"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mscratch  ))))
-  (("mepc"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mepc  ))))
-  (("mcause"   =+ SOME (BVal_Imm (Imm64 ( reg'mcause $ (ms.c_MCSR ms.procID).mcause  ))))
-  (("mtval"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mtval  ))))
-  (("mip"   =+ SOME (BVal_Imm (Imm64 ( reg'mip $ (ms.c_MCSR ms.procID).mip  ))))
-  env_map))))))
+  ("priv" =+ SOME (BVal_Imm (Imm8 (w2w (ms.c_privilege ms.procID)))))
+  (("mstatus" =+ SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus))))
+  (("mtvec" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)))
+  (("mie" =+ SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))))
+  (("mip" =+ SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))))
+  (("mscratch" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)))
+  (("mepc" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)))
+  (("mcause" =+ SOME (BVal_Imm (Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause))))
+  (("mtval" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtval)))
+  (("mhartid" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)))
+  (("mcounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcounteren)))
+  (("mcountinhibit" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)))
+  (("scounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)))
+  (("satp" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)))
+  (("pmpcfg0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)))
+  (("pmpcfg2" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)))
+  (("pmpaddr0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr0)))
+  (("pmpaddr1" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr1)))
+  (("pmpaddr2" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr2)))
+  (("pmpaddr3" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr3)))
+  (("pmpaddr4" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr4)))
+  (("pmpaddr5" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr5)))
+  (("pmpaddr6" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr6)))
+  (("pmpaddr7" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr7)))
+  (("pmpaddr8" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr8)))
+  (("pmpaddr9" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr9)))
+  (("pmpaddr10" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr10)))
+  (("pmpaddr11" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr11)))
+  (("pmpaddr12" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr12)))
+  (("pmpaddr13" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr13)))
+  (("pmpaddr14" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)))
+  (("pmpaddr15" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)))
+  (("procID" =+ SOME (BVal_Imm (Imm8 ms.procID)))
+  (("extMEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))))
+  (("extSEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID))))
+  env_map))))))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_env_CSRS_tmp_def:
  default_riscv_bir_env_CSRS_tmp ms env_map =
-  ("tmp_mhartid"   =+ SOME (BVal_Imm (Imm64 ( ((ms.c_MCSR ms.procID).mhartid) ))))
-  (("tmp_MPRV"   =+ SOME (BVal_Imm (Imm8 (  w2w((ms.c_MCSR ms.procID).mstatus.MPRV)  ))))
-  (("tmp_mscratch"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mscratch  ))))
-  (("tmp_mepc"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mepc  ))))
-  (("tmp_mcause"   =+ SOME (BVal_Imm (Imm64 ( reg'mcause $ (ms.c_MCSR ms.procID).mcause  ))))
-  (("tmp_mtval"   =+ SOME (BVal_Imm (Imm64 ( (ms.c_MCSR ms.procID).mtval  ))))
-  (("tmp_mip"   =+ SOME (BVal_Imm (Imm64 ( reg'mip $ (ms.c_MCSR ms.procID).mip  ))))
-  env_map))))))
+  ("tmp_priv" =+ SOME (BVal_Imm (Imm8 (w2w (ms.c_privilege ms.procID)))))
+  (("tmp_mstatus" =+ SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus))))
+  (("tmp_mtvec" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)))
+  (("tmp_mie" =+ SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))))
+  (("tmp_mip" =+ SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))))
+  (("tmp_mscratch" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)))
+  (("tmp_mepc" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)))
+  (("tmp_mcause" =+ SOME (BVal_Imm (Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause))))
+  (("tmp_mtval" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtval)))
+  (("tmp_mhartid" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)))
+  (("tmp_mcounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcounteren)))
+  (("tmp_mcountinhibit" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)))
+  (("tmp_scounteren" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)))
+  (("tmp_satp" =+ SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)))
+  (("tmp_pmpcfg0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)))
+  (("tmp_pmpcfg2" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)))
+  (("tmp_pmpaddr0" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr0)))
+  (("tmp_pmpaddr1" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr1)))
+  (("tmp_pmpaddr2" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr2)))
+  (("tmp_pmpaddr3" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr3)))
+  (("tmp_pmpaddr4" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr4)))
+  (("tmp_pmpaddr5" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr5)))
+  (("tmp_pmpaddr6" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr6)))
+  (("tmp_pmpaddr7" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr7)))
+  (("tmp_pmpaddr8" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr8)))
+  (("tmp_pmpaddr9" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr9)))
+  (("tmp_pmpaddr10" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr10)))
+  (("tmp_pmpaddr11" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr11)))
+  (("tmp_pmpaddr12" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr12)))
+  (("tmp_pmpaddr13" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr13)))
+  (("tmp_pmpaddr14" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)))
+  (("tmp_pmpaddr15" =+ SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)))
+  (("tmp_procID" =+ SOME (BVal_Imm (Imm8 ms.procID)))
+  (("tmp_extMEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))))
+  (("tmp_extSEIP" =+ SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID))))
+  env_map))))))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_state_def:
@@ -1254,20 +1366,76 @@ QED
 
 Theorem default_riscv_bir_state_MCSRS_read[local]:
  !ms.
-  bir_env_read (BVar "mhartid" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)) /\
-  bir_env_read (BVar "MPRV" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm8 (w2w (ms.c_MCSR ms.procID).mstatus.MPRV))) /\
+  bir_env_read (BVar "priv" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 (w2w (ms.c_privilege ms.procID)))) /\
+  bir_env_read (BVar "mstatus" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus))) /\
+  bir_env_read (BVar "mtvec" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)) /\
+  bir_env_read (BVar "mie" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))) /\
+  bir_env_read (BVar "mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))) /\
   bir_env_read (BVar "mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)) /\
   bir_env_read (BVar "mepc" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)) /\
   bir_env_read (BVar "mcause" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 $ reg'mcause (ms.c_MCSR ms.procID).mcause)) /\
+   SOME (BVal_Imm (Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause))) /\
   bir_env_read (BVar "mtval" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtval)) /\
-  bir_env_read (BVar "mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 $ reg'mip  (ms.c_MCSR ms.procID).mip))
+  bir_env_read (BVar "mhartid" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)) /\
+  bir_env_read (BVar "mcounteren" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcounteren)) /\
+  bir_env_read (BVar "mcountinhibit" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)) /\
+  bir_env_read (BVar "scounteren" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)) /\
+  bir_env_read (BVar "satp" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)) /\
+  bir_env_read (BVar "pmpcfg0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)) /\
+  bir_env_read (BVar "pmpcfg2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)) /\
+  bir_env_read (BVar "pmpaddr0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr0)) /\
+  bir_env_read (BVar "pmpaddr1" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr1)) /\
+  bir_env_read (BVar "pmpaddr2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr2)) /\
+  bir_env_read (BVar "pmpaddr3" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr3)) /\
+  bir_env_read (BVar "pmpaddr4" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr4)) /\
+  bir_env_read (BVar "pmpaddr5" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr5)) /\
+  bir_env_read (BVar "pmpaddr6" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr6)) /\
+  bir_env_read (BVar "pmpaddr7" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr7)) /\
+  bir_env_read (BVar "pmpaddr8" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr8)) /\
+  bir_env_read (BVar "pmpaddr9" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr9)) /\
+  bir_env_read (BVar "pmpaddr10" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr10)) /\
+  bir_env_read (BVar "pmpaddr11" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr11)) /\
+  bir_env_read (BVar "pmpaddr12" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr12)) /\
+  bir_env_read (BVar "pmpaddr13" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr13)) /\
+  bir_env_read (BVar "pmpaddr14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)) /\
+  bir_env_read (BVar "pmpaddr15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)) /\
+  bir_env_read (BVar "procID" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 ms.procID)) /\
+  bir_env_read (BVar "extMEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))) /\
+  bir_env_read (BVar "extSEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID)))
 Proof
   rw [default_riscv_bir_state_def] >>
   EVAL_TAC
@@ -1275,31 +1443,93 @@ QED
 
 Theorem default_riscv_bir_state_MCSRS_read_tmp[local]:
  !ms.
-  bir_env_read (BVar "tmp_mhartid" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)) /\
-  bir_env_read (BVar "tmp_MPRV" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm8 (w2w (ms.c_MCSR ms.procID).mstatus.MPRV))) /\
+  bir_env_read (BVar "tmp_priv" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 (w2w (ms.c_privilege ms.procID)))) /\
+  bir_env_read (BVar "tmp_mstatus" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus))) /\
+  bir_env_read (BVar "tmp_mtvec" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtvec)) /\
+  bir_env_read (BVar "tmp_mie" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mie (ms.c_MCSR ms.procID).mie))) /\
+  bir_env_read (BVar "tmp_mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (reg'mip (ms.c_MCSR ms.procID).mip))) /\
   bir_env_read (BVar "tmp_mscratch" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mscratch)) /\
   bir_env_read (BVar "tmp_mepc" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mepc)) /\
   bir_env_read (BVar "tmp_mcause" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 $ reg'mcause (ms.c_MCSR ms.procID).mcause)) /\
+   SOME (BVal_Imm (Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause))) /\
   bir_env_read (BVar "tmp_mtval" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
    SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mtval)) /\
-  bir_env_read (BVar "tmp_mip" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
-   SOME (BVal_Imm (Imm64 $ reg'mip  (ms.c_MCSR ms.procID).mip))
+  bir_env_read (BVar "tmp_mhartid" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mhartid)) /\
+  bir_env_read (BVar "tmp_mcounteren" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcounteren)) /\
+  bir_env_read (BVar "tmp_mcountinhibit" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).mcountinhibit)) /\
+  bir_env_read (BVar "tmp_scounteren" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).scounteren)) /\
+  bir_env_read (BVar "tmp_satp" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_SCSR ms.procID).satp)) /\
+  bir_env_read (BVar "tmp_pmpcfg0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0)) /\
+  bir_env_read (BVar "tmp_pmpcfg2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)) /\
+  bir_env_read (BVar "tmp_pmpaddr0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr0)) /\
+  bir_env_read (BVar "tmp_pmpaddr1" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr1)) /\
+  bir_env_read (BVar "tmp_pmpaddr2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr2)) /\
+  bir_env_read (BVar "tmp_pmpaddr3" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr3)) /\
+  bir_env_read (BVar "tmp_pmpaddr4" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr4)) /\
+  bir_env_read (BVar "tmp_pmpaddr5" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr5)) /\
+  bir_env_read (BVar "tmp_pmpaddr6" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr6)) /\
+  bir_env_read (BVar "tmp_pmpaddr7" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr7)) /\
+  bir_env_read (BVar "tmp_pmpaddr8" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr8)) /\
+  bir_env_read (BVar "tmp_pmpaddr9" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr9)) /\
+  bir_env_read (BVar "tmp_pmpaddr10" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr10)) /\
+  bir_env_read (BVar "tmp_pmpaddr11" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr11)) /\
+  bir_env_read (BVar "tmp_pmpaddr12" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr12)) /\
+  bir_env_read (BVar "tmp_pmpaddr13" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr13)) /\
+  bir_env_read (BVar "tmp_pmpaddr14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr14)) /\
+  bir_env_read (BVar "tmp_pmpaddr15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpaddr15)) /\
+  bir_env_read (BVar "tmp_procID" (BType_Imm Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm8 ms.procID)) /\
+  bir_env_read (BVar "tmp_extMEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extMEIP ms.procID))) /\
+  bir_env_read (BVar "tmp_extSEIP" (BType_Imm Bit1)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (bool2b (ms.c_extSEIP ms.procID)))
 Proof
   rw [default_riscv_bir_state_def] >>
   EVAL_TAC
 QED
 
 Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
-  !ms.
-  bir_env_lookup_type "mhartid" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "mhartid" (BType_Imm Bit64))) /\
-  bir_env_lookup_type "MPRV" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "MPRV" (BType_Imm Bit8))) /\
+ !ms.
+  bir_env_lookup_type "priv" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "priv" (BType_Imm Bit8))) /\
+  bir_env_lookup_type "mstatus" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mstatus" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mtvec" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mtvec" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mie" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mie" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mip" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mip" (BType_Imm Bit64))) /\
   bir_env_lookup_type "mscratch" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "mscratch" (BType_Imm Bit64))) /\
   bir_env_lookup_type "mepc" (default_riscv_bir_state ms).bst_environ =
@@ -1308,19 +1538,75 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type[local]:
    SOME (bir_var_type (BVar "mcause" (BType_Imm Bit64))) /\
   bir_env_lookup_type "mtval" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "mtval" (BType_Imm Bit64))) /\
-  bir_env_lookup_type "mip" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "mip" (BType_Imm Bit64)))
+  bir_env_lookup_type "mhartid" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mhartid" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mcounteren" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mcounteren" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "mcountinhibit" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "mcountinhibit" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "scounteren" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "scounteren" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "satp" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "satp" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpcfg0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpcfg0" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpcfg2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpcfg2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr0" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr1" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr1" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr3" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr3" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr4" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr4" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr5" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr5" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr6" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr6" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr7" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr7" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr8" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr9" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr9" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr10" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr10" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr11" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr11" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr12" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr12" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr13" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr13" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr14" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr14" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "pmpaddr15" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "pmpaddr15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "procID" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "procID" (BType_Imm Bit8))) /\
+  bir_env_lookup_type "extMEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "extMEIP" (BType_Imm Bit1))) /\
+  bir_env_lookup_type "extSEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "extSEIP" (BType_Imm Bit1)))
 Proof
   rw [default_riscv_bir_state_def] >>
   EVAL_TAC
 QED
 
 Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
-  !ms.
-  bir_env_lookup_type "tmp_mhartid" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "tmp_mhartid" (BType_Imm Bit64))) /\
-  bir_env_lookup_type "tmp_MPRV" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "tmp_MPRV" (BType_Imm Bit8))) /\
+ !ms.
+  bir_env_lookup_type "tmp_priv" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_priv" (BType_Imm Bit8))) /\
+  bir_env_lookup_type "tmp_mstatus" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mstatus" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mtvec" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mtvec" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mie" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mie" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mip" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mip" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_mscratch" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_mscratch" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_mepc" (default_riscv_bir_state ms).bst_environ =
@@ -1329,8 +1615,58 @@ Theorem default_riscv_bir_state_MCSRS_lookup_type_tmp[local]:
    SOME (bir_var_type (BVar "tmp_mcause" (BType_Imm Bit64))) /\
   bir_env_lookup_type "tmp_mtval" (default_riscv_bir_state ms).bst_environ =
    SOME (bir_var_type (BVar "tmp_mtval" (BType_Imm Bit64))) /\
-  bir_env_lookup_type "tmp_mip" (default_riscv_bir_state ms).bst_environ =
-   SOME (bir_var_type (BVar "tmp_mip" (BType_Imm Bit64)))
+  bir_env_lookup_type "tmp_mhartid" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mhartid" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mcounteren" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mcounteren" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_mcountinhibit" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_mcountinhibit" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_scounteren" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_scounteren" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_satp" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_satp" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpcfg0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpcfg0" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpcfg2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpcfg2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr0" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr1" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr1" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr3" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr3" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr4" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr4" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr5" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr5" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr6" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr6" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr7" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr7" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr8" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr9" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr9" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr10" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr10" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr11" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr11" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr12" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr12" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr13" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr13" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr14" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr14" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_pmpaddr15" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_pmpaddr15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_procID" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_procID" (BType_Imm Bit8))) /\
+  bir_env_lookup_type "tmp_extMEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_extMEIP" (BType_Imm Bit1))) /\
+  bir_env_lookup_type "tmp_extSEIP" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_extSEIP" (BType_Imm Bit1)))
 Proof
   rw [default_riscv_bir_state_def] >>
   EVAL_TAC
@@ -1637,6 +1973,276 @@ Q.EXISTS_TAC `c_addr_labels` >>
 IMP_RES_TAC bir_riscv_exec_in_end_label_set >>
 FULL_SIMP_TAC std_ss [] >>
 METIS_TAC [bir_state_is_terminated_def, bir_riscv_inter_exec]
+QED
+
+(* ------------------------------------------------------------------------ *)
+(* The M-mode contract of lifted code                                        *)
+(* ------------------------------------------------------------------------ *)
+
+(* Every block that the lifter makes of RISC-V code asserts the M-mode
+ * contract of the step theorems on the lifted privilege, mstatus and PMP
+ * configuration (see bir_lifting_machinesScript and riscv_stepTheory), and
+ * symbolic execution must show that each assertion holds.  So the BIR
+ * precondition of a contract of lifted code implies the assertions, and the
+ * RISC-V precondition implies the contract: riscv_mmode is the contract
+ * (but for the alignment of the addresses of the data accesses, which the
+ * precondition of a contract states on its registers),
+ * bir_riscv_mmode_pre its BIR expression, made of the expressions of the
+ * assertions, and bir_pre_riscv_to_bir_mmode_conj adds the two to the
+ * preconditions of a contract. *)
+Definition riscv_mmode_def:
+  riscv_mmode (ms:riscv_state) <=>
+    (ms.c_privilege ms.procID = 3w) /\
+    ~(ms.c_MCSR ms.procID).mstatus.MIE /\
+    ~(ms.c_MCSR ms.procID).mstatus.MPRV /\
+    pmp_unlocked (ms.c_MCSR ms.procID) /\
+    pmp_off_or_napot (ms.c_MCSR ms.procID)
+End
+
+Definition bir_riscv_mmode_pre_def:
+  bir_riscv_mmode_pre =
+  BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+       (BExp_Const (Imm8 3w)))
+  (BExp_BinExp BIExp_And
+    (BExp_UnaryExp BIExp_Not
+       (BExp_word_bit Bit64 (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 3))
+  (BExp_BinExp BIExp_And
+    (BExp_UnaryExp BIExp_Not
+       (BExp_word_bit Bit64 (BExp_Den (BVar "mstatus" (BType_Imm Bit64))) 17))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w)))
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w))))))))
+End
+
+(* The contract on the words that the BIR variables hold. *)
+Theorem riscv_mmode_words[local]:
+  !ms. riscv_mmode ms <=>
+    (w2w (ms.c_privilege ms.procID) = (3w:word8)) /\
+    ~word_bit 3 (reg'mstatus (ms.c_MCSR ms.procID).mstatus) /\
+    ~word_bit 17 (reg'mstatus (ms.c_MCSR ms.procID).mstatus) /\
+    (0x8080808080808080w && (ms.c_MCSR ms.procID).pmpcfg0 = 0w) /\
+    (0x8080808080808080w && (ms.c_MCSR ms.procID).pmpcfg2 = 0w) /\
+    (0x808080808080808w &&
+     ((ms.c_MCSR ms.procID).pmpcfg0 ?? (ms.c_MCSR ms.procID).pmpcfg0 >>>~ 1w) =
+     0w) /\
+    (0x808080808080808w &&
+     ((ms.c_MCSR ms.procID).pmpcfg2 ?? (ms.c_MCSR ms.procID).pmpcfg2 >>>~ 1w) =
+     0w)
+Proof
+  rw [riscv_mmode_def, riscv_stepTheory.pmp_unlocked_def,
+      riscv_stepTheory.pmp_off_or_napot_def,
+      GSYM riscv_csr_reg_fields, wordsTheory.word_lsr_bv_def] >>
+  blastLib.BBLAST_TAC
+QED
+
+(* The contract on the state components that riscv_bmr_LIFTED lifts, with the
+ * bits of mstatus as masks: a condition that riscv_bir_condLib translates,
+ * which unfolds riscv_mmode with this theorem, and whose translation is
+ * bir_riscv_mmode_post below. *)
+Theorem riscv_mmode_cond:
+  !ms. riscv_mmode ms <=>
+    (ms.c_privilege ms.procID = 3w) /\
+    (reg'mstatus (ms.c_MCSR ms.procID).mstatus && 0x8w = 0w) /\
+    (reg'mstatus (ms.c_MCSR ms.procID).mstatus && 0x20000w = 0w) /\
+    (0x8080808080808080w && (ms.c_MCSR ms.procID).pmpcfg0 = 0w) /\
+    (0x8080808080808080w && (ms.c_MCSR ms.procID).pmpcfg2 = 0w) /\
+    (0x808080808080808w &&
+     ((ms.c_MCSR ms.procID).pmpcfg0 ?? (ms.c_MCSR ms.procID).pmpcfg0 >>>~ 1w) =
+     0w) /\
+    (0x808080808080808w &&
+     ((ms.c_MCSR ms.procID).pmpcfg2 ?? (ms.c_MCSR ms.procID).pmpcfg2 >>>~ 1w) =
+     0w)
+Proof
+  REWRITE_TAC [riscv_mmode_words] >> GEN_TAC >> blastLib.BBLAST_TAC
+QED
+
+Theorem bir_riscv_mmode_pre_thm:
+  bir_pre_riscv_to_bir riscv_mmode bir_riscv_mmode_pre
+Proof
+  rw [bir_pre_riscv_to_bir_def, bir_riscv_mmode_pre_def] >-
+   SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss)
+     [bir_extra_expsTheory.BExp_word_bit_def, n2bs_def] >>
+  FULL_SIMP_TAC std_ss [riscv_mmode_words] >>
+  FULL_SIMP_TAC (srw_ss()++holBACore_ss)
+    [riscv_bmr_rel_EVAL, bir_extra_expsTheory.BExp_word_bit_eval,
+     bir_bool_expTheory.bir_val_true_def] >>
+  EVAL_TAC
+QED
+
+(* A precondition that implies two preconditions implies their
+ * conjunction. *)
+Theorem bir_pre_riscv_to_bir_conj:
+  !pre pre1 pre2 pre_bir1 pre_bir2.
+    (!ms. pre ms ==> pre1 ms /\ pre2 ms) /\
+    bir_pre_riscv_to_bir pre1 pre_bir1 /\
+    bir_pre_riscv_to_bir pre2 pre_bir2 ==>
+    bir_pre_riscv_to_bir pre (BExp_BinExp BIExp_And pre_bir1 pre_bir2)
+Proof
+  rw [bir_pre_riscv_to_bir_def] >-
+   FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_is_bool_exp_REWRS] >>
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def,
+    bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+  `pre1 ms /\ pre2 ms` by METIS_TAC [] >>
+  `(bir_eval_exp pre_bir1 bs.bst_environ = SOME bir_val_true) /\
+   (bir_eval_exp pre_bir2 bs.bst_environ = SOME bir_val_true)` by METIS_TAC [] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss)
+    [bir_expTheory.bir_eval_exp_def, bir_bool_expTheory.bir_val_true_def] >>
+  EVAL_TAC
+QED
+
+(* The M-mode contract added to the RISC-V and BIR preconditions of a
+ * contract: the BIR precondition is the conjunction of bir_riscv_mmode_pre,
+ * as an expression, and the BIR precondition of the contract. *)
+Theorem bir_pre_riscv_to_bir_mmode_conj:
+  !pre pre_bir.
+    (!ms. pre ms ==> riscv_mmode ms) /\
+    bir_pre_riscv_to_bir pre pre_bir ==>
+    bir_pre_riscv_to_bir pre
+      (BExp_BinExp BIExp_And ^(rhs (concl bir_riscv_mmode_pre_def)) pre_bir)
+Proof
+  rpt strip_tac >>
+  MATCH_MP_TAC bir_pre_riscv_to_bir_conj >>
+  qexistsl_tac [`riscv_mmode`, `pre`] >>
+  ASM_SIMP_TAC std_ss [GSYM bir_riscv_mmode_pre_def, bir_riscv_mmode_pre_thm]
+QED
+
+(* The M-mode contract in the postconditions of a contract, so that a
+ * contract that follows, whose precondition states it, can be composed with
+ * it: bir_riscv_mmode_post is the contract as a BIR expression without the
+ * abbreviation BExp_word_bit, which the transfer of a BIR contract from
+ * symbolic execution (bir_symbLib.bir_symb_transfer_thm) does not accept in
+ * a postcondition, and bir_post_bir_to_riscv_mmode_conj adds it and
+ * riscv_mmode to the postconditions of a contract.  Symbolic execution
+ * shows it at the end of code that writes none of priv, mstatus, pmpcfg0
+ * and pmpcfg2, from the precondition. *)
+Definition bir_riscv_mmode_post_def:
+  bir_riscv_mmode_post =
+  BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_Den (BVar "priv" (BType_Imm Bit8)))
+       (BExp_Const (Imm8 3w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Den (BVar "mstatus" (BType_Imm Bit64)))
+          (BExp_Const (Imm64 8w)))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Den (BVar "mstatus" (BType_Imm Bit64)))
+          (BExp_Const (Imm64 0x20000w)))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x8080808080808080w))
+          (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64))))
+       (BExp_Const (Imm64 0w)))
+  (BExp_BinExp BIExp_And
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg0" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w)))
+    (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Const (Imm64 0x808080808080808w))
+          (BExp_BinExp BIExp_Xor
+             (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+             (BExp_BinExp BIExp_RightShift
+                (BExp_Den (BVar "pmpcfg2" (BType_Imm Bit64)))
+                (BExp_Const (Imm64 1w)))))
+       (BExp_Const (Imm64 0w))))))))
+End
+
+(* The lifted variables of the contract, in a BIR state that is related to
+ * a RISC-V state. *)
+Theorem bir_riscv_mmode_reads[local]:
+  !bs ms. bmr_rel riscv_bmr bs ms ==>
+   (bir_env_read (BVar "priv" (BType_Imm Bit8)) bs.bst_environ =
+      SOME (BVal_Imm (Imm8 (w2w (ms.c_privilege ms.procID))))) /\
+   (bir_env_read (BVar "mstatus" (BType_Imm Bit64)) bs.bst_environ =
+      SOME (BVal_Imm (Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus)))) /\
+   (bir_env_read (BVar "pmpcfg0" (BType_Imm Bit64)) bs.bst_environ =
+      SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg0))) /\
+   (bir_env_read (BVar "pmpcfg2" (BType_Imm Bit64)) bs.bst_environ =
+      SOME (BVal_Imm (Imm64 (ms.c_MCSR ms.procID).pmpcfg2)))
+Proof
+  rpt GEN_TAC >> SIMP_TAC std_ss [riscv_bmr_rel_EVAL] >> rpt strip_tac >>
+  ASM_REWRITE_TAC []
+QED
+
+(* Where bir_riscv_mmode_post holds in a BIR state, riscv_mmode holds in
+ * the related RISC-V state. *)
+Theorem bir_riscv_mmode_post_thm:
+  !bs ms. bmr_rel riscv_bmr bs ms ==>
+    (bir_eval_exp bir_riscv_mmode_post bs.bst_environ = SOME bir_val_true) ==>
+    riscv_mmode ms
+Proof
+  rpt GEN_TAC >>
+  DISCH_THEN (fn th =>
+    PURE_REWRITE_TAC [bir_riscv_mmode_post_def,
+                      GSYM bir_exp_equivTheory.bir_and_equiv] >>
+    SIMP_TAC (srw_ss()++holBACore_ss)
+      [bir_bool_expTheory.bir_val_true_def, riscv_mmode_words,
+       MATCH_MP bir_riscv_mmode_reads th] >>
+    blastLib.BBLAST_TAC)
+QED
+
+Theorem bir_post_bir_to_riscv_mmode_conj:
+  !post post_bir ls.
+    bir_post_bir_to_riscv post post_bir ls ==>
+    bir_post_bir_to_riscv (\ms. riscv_mmode ms /\ post ms)
+      (\l. BExp_BinExp BIExp_And ^(rhs (concl bir_riscv_mmode_post_def))
+             (post_bir l)) ls
+Proof
+  REWRITE_TAC [bir_post_bir_to_riscv_def, GSYM bir_riscv_mmode_post_def] >>
+  BETA_TAC >>
+  REWRITE_TAC [GSYM bir_exp_equivTheory.bir_and_equiv] >>
+  rpt strip_tac >-
+   METIS_TAC [bir_riscv_mmode_post_thm] >>
+  METIS_TAC []
 QED
 
 val _ = export_theory();

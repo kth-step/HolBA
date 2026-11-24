@@ -29,6 +29,7 @@ val riscv_info : bir_condLib.arch_info =
     pc_of = fn m => list_mk_comb (``riscv_state_c_PC``,
                                   [m, mk_comb (procID_tm, m)]),
     load_thms = [bir_riscv_extrasTheory.riscv_mem_load_dword_def],
+    cond_thms = [bir_riscv_backlifterTheory.riscv_mmode_cond],
     pre_lifted = bir_pre_riscv_to_bir_lifted,
     post_lifted = bir_post_bir_to_riscv_lifted,
     post_lifted_PC = bir_post_bir_to_riscv_lifted_PC,

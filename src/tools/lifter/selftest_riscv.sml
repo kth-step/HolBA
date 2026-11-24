@@ -76,10 +76,7 @@ val _ = print_header "RV64I Base Instruction Set (instructions inherited from RV
 val _ = print_msg "\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* 75 instructions in initial scope (including M extension) *)
-(* 2 still TODO:
- *  environment call and breakpoint *)
-(* TODO: Instructions from privileged instruction set: MRET (exists in latest L3 version), SRET (S ext., exists in latest L3 version), URET (N ext., exists in latest L3 version) *)
-(* TODO: Rest of the A extension: SC.W and SC.D, and AMOMIN.W, AMOMAX.W, AMOMINU.W and AMOMAXU.W *)
+(* TODO: SC.W and SC.D, whose result depends on the load reservation *)
 (* TODO: Are NOPs in riscv_stepLib correct? *)
 (* TODO: Take second look at stepLib code for Sail model (test.sml) *)
 
@@ -88,9 +85,15 @@ val _ = print_msg "\n\n";
  * exp_lift_fn in bir_inst_liftingLib *)
 (* When you get something like
  *
- *   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
+ *   lifting of ``ms.c_cycles ms.procID`` failed
  *
- * you must lift more registers (mstatus in this case). *)
+ * the step theorem depends on state that is not lifted (riscv_bmr in
+ * bir_lifting_machinesScript.sml lists the lifted state). *)
+(* Every instruction is lifted with the assertions of the M-mode contract
+ * of the step theorems (see riscv_state_is_OK_def): priv = 3, no locked
+ * PMP entry in pmpcfg0 and pmpcfg2, mstatus.MIE clear, and for loads,
+ * stores and AMOs mstatus.MPRV clear, natural alignment of the address
+ * and, for 8-byte accesses, PMP entries OFF or NAPOT. *)
 
 (* U-format *)
 (* TODO: Integrate with assembler *)
@@ -227,23 +230,11 @@ Not sure about asm formatting...
 *)
 val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
 
-(* Environment Call and Breakpoints (opcode SYSTEM) *)
-(*
-
-  open riscv_stepLib;
-  val _ = riscv_step_hex "00000073";
-
-val _ = fail_with_msg "ECALL not yet supported by stepLib";
-*)
+(* Environment Call and Breakpoints (opcode SYSTEM): a trap to M-mode,
+ * which sets mepc, mcause, mtval, mstatus and the privilege and jumps to
+ * the base of mtvec *)
 val _ = riscv_test_hex_print_asm "ECALL" "00000073";
 
-(* 
-
-  open riscv_stepLib;
-  val _ = riscv_step_hex "00100073";
-
-val _ = fail_with_msg "EBREAK not yet supported by stepLib";
-*)
 val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
 
 val _ = print_msg "\n";
@@ -301,9 +292,7 @@ val _ = print_msg "\n";
 val _ = print_header "RV64 Zicsr Standard Extension";
 val _ = print_msg "\n\n";
 
-(* CSR instructions (opcode SYSTEM) *)
-(* TODO: Note that machine mode is currently assumed for these instructions
- * (see bottom of riscv_stepScript.sml) *)
+(* CSR instructions (opcode SYSTEM), in M-mode, as every instruction *)
 (* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011 *)
 val _ = riscv_test_hex_print_asm "CSRRW x1, mscratch(0x340), x2" "340110F3";
 val _ = riscv_test_hex_print_asm "CSRW mie(0x304), 0" "30405073";
@@ -328,7 +317,95 @@ val _ = riscv_test_hex_print_asm "CSRR a5, mcause(0x342)" "342027F3";
 
 val _ = riscv_test_hex_print_asm "CSRR a5, mtval(0x343)" "343027F3";
 
+(* A read of mip: the stored SSIP, STIP and SEIP, MSIP and MTIP from the
+ * CLINT in memory (msip and mtimecmp of the hart procID, and mtime), and
+ * the external interrupt lines *)
 val _ = riscv_test_hex_print_asm "CSRR a5, mip(0x344)" "344027F3";
+(* Writes of mip store only SSIP, STIP and SEIP; CSRRS and CSRRC read SEIP
+ * as stored, without the external line *)
+val _ = riscv_test_hex_print_asm "CSRRW x1, mip(0x344), x2" "344110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, mip(0x344), x2" "344120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, mip(0x344), x2" "344130F3";
+
+(* mcycle is not lifted: NextRISCV does not count cycles *)
+val _ = riscv_test_hex_print_asm "CSRR a5, mcycle(0xB00)" "B00027F3";
+
+(* The six forms of CSR instruction on CSRs that S3K writes, with rd = x1
+ * and rs1 = x2 or an immediate *)
+val _ = riscv_test_hex_print_asm "CSRRW x1, mstatus(0x300), x2" "300110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, mstatus(0x300), x2" "300120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, mstatus(0x300), x2" "300130F3";
+val _ = riscv_test_hex_print_asm "CSRRWI x1, mstatus(0x300), 0x8" "300450F3";
+val _ = riscv_test_hex_print_asm "CSRRSI x1, mstatus(0x300), 0x8" "300460F3";
+val _ = riscv_test_hex_print_asm "CSRRCI x1, mstatus(0x300), 0x8" "300470F3";
+val _ = riscv_test_hex_print_asm "CSRRW x1, mtvec(0x305), x2" "305110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, mtvec(0x305), x2" "305120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, mtvec(0x305), x2" "305130F3";
+val _ = riscv_test_hex_print_asm "CSRRWI x1, mtvec(0x305), 0x1" "3050D0F3";
+val _ = riscv_test_hex_print_asm "CSRRSI x1, mtvec(0x305), 0x1" "3050E0F3";
+val _ = riscv_test_hex_print_asm "CSRRCI x1, mtvec(0x305), 0x1" "3050F0F3";
+val _ = riscv_test_hex_print_asm "CSRRW x1, mie(0x304), x2" "304110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, mie(0x304), x2" "304120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, mie(0x304), x2" "304130F3";
+val _ = riscv_test_hex_print_asm "CSRRWI x1, mie(0x304), 0x8" "304450F3";
+val _ = riscv_test_hex_print_asm "CSRRSI x1, mie(0x304), 0x8" "304460F3";
+val _ = riscv_test_hex_print_asm "CSRRCI x1, mie(0x304), 0x8" "304470F3";
+val _ = riscv_test_hex_print_asm "CSRRW x1, pmpcfg0(0x3A0), x2" "3A0110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, pmpcfg0(0x3A0), x2" "3A0120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, pmpcfg0(0x3A0), x2" "3A0130F3";
+val _ = riscv_test_hex_print_asm "CSRRWI x1, pmpcfg0(0x3A0), 0x1" "3A00D0F3";
+val _ = riscv_test_hex_print_asm "CSRRSI x1, pmpcfg0(0x3A0), 0x1" "3A00E0F3";
+val _ = riscv_test_hex_print_asm "CSRRCI x1, pmpcfg0(0x3A0), 0x1" "3A00F0F3";
+val _ = riscv_test_hex_print_asm "CSRRW x1, pmpaddr0(0x3B0), x2" "3B0110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, pmpaddr0(0x3B0), x2" "3B0120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, pmpaddr0(0x3B0), x2" "3B0130F3";
+val _ = riscv_test_hex_print_asm "CSRRWI x1, pmpaddr0(0x3B0), 0x1" "3B00D0F3";
+val _ = riscv_test_hex_print_asm "CSRRSI x1, pmpaddr0(0x3B0), 0x1" "3B00E0F3";
+val _ = riscv_test_hex_print_asm "CSRRCI x1, pmpaddr0(0x3B0), 0x1" "3B00F0F3";
+val _ = riscv_test_hex_print_asm "CSRRW x1, mcounteren(0x306), x2" "306110F3";
+val _ = riscv_test_hex_print_asm "CSRRS x1, mcounteren(0x306), x2" "306120F3";
+val _ = riscv_test_hex_print_asm "CSRRC x1, mcounteren(0x306), x2" "306130F3";
+val _ = riscv_test_hex_print_asm "CSRRWI x1, mcounteren(0x306), 0x1" "3060D0F3";
+val _ = riscv_test_hex_print_asm "CSRRSI x1, mcounteren(0x306), 0x1" "3060E0F3";
+val _ = riscv_test_hex_print_asm "CSRRCI x1, mcounteren(0x306), 0x1" "3060F0F3";
+
+(* satp has no effect in M-mode, where address translation is off, and no
+ * step theorem has a hypothesis on it.  It is lifted, so that a contract
+ * can state its value: a write lifts to an assignment of the value that
+ * legalize_satp keeps (the written value if its MODE, bits 63 to 60, is
+ * Bare, Sv39, Sv48 or Sv57, and the old value otherwise), and a read to
+ * the BIR variable *)
+val _ = riscv_test_hex_print_asm "CSRW satp(0x180), t0" "18029073";
+val _ = riscv_test_hex_print_asm "CSRWI satp(0x180), 0" "18005073";
+val _ = riscv_test_hex_print_asm "CSRR t0, satp(0x180)" "180022F3";
+
+(* sstatus, a view of mstatus: a write stores SIE, SPIE, SPP, FS, SUM and
+ * MXR of the written value and keeps the other fields of mstatus, and a
+ * read shows these six fields, UXL (2) and SD (set iff FS is Dirty).  SUM
+ * (bit 18) is writable, in mstatus too, since satp can select a
+ * translation mode *)
+val _ = riscv_test_hex_print_asm "CSRW sstatus(0x100), t0" "10029073";
+val _ = riscv_test_hex_print_asm "CSRR t0, sstatus(0x100)" "100022F3";
+
+(* Writes of misa, one that clears misa.C and one that sets it: no write of
+ * misa lifts (see the RISC-V section of README) *)
+val _ = riscv_test_hex_print_asm "CSRW misa(0x301), zero" "30101073";
+val _ = riscv_test_hex_print_asm "CSRSI misa(0x301), 0x4" "30126073";
+
+val _ = print_msg "\n";
+val _ = print_header "RV64 Privileged Instructions (M-mode)";
+val _ = print_msg "\n\n";
+
+(* Return from a trap: the privilege becomes mstatus.MPP (U-mode for the
+ * reserved encoding 2), MIE becomes MPIE, MPIE becomes 1, MPP becomes U,
+ * MPRV is cleared unless MPP is M, and the block ends in a jump to mepc *)
+val _ = riscv_test_hex_print_asm "MRET" "30200073";
+
+(* Wait for interrupt: does nothing in the model *)
+val _ = riscv_test_hex_print_asm "WFI" "10500073";
+
+(* Fence for address translation: does nothing in M-mode *)
+val _ = riscv_test_hex_print_asm "SFENCE.VMA x0, x0" "12000073";
 
 
 val _ = print_msg "\n";
@@ -383,7 +460,6 @@ val _ = riscv_test_hex_print_asm "AMOADD.W a0, a2, (a1)" "00C5A52F";
 val _ = riscv_test_hex_print_asm "AMOXOR.W a0, a2, (a1)" "20C5A52F";
 val _ = riscv_test_hex_print_asm "AMOAND.W a0, a2, (a1)" "60C5A52F";
 val _ = riscv_test_hex_print_asm "AMOOR.W a0, a2, (a1)" "40C5A52F";
-(* TODO: the model compares 64 bits instead of 32 *)
 val _ = riscv_test_hex_print_asm "AMOMIN.W a0, a2, (a1)" "80C5A52F";
 val _ = riscv_test_hex_print_asm "AMOMAX.W a0, a2, (a1)" "A0C5A52F";
 val _ = riscv_test_hex_print_asm "AMOMINU.W a0, a2, (a1)" "C0C5A52F";
@@ -482,7 +558,7 @@ val _ = print_msg "\n\n";
   val _ = riscv_test_hex_print_asm "C.JR ra" "8082";
   (* add a0, x0, a1 *)
   val _ = riscv_test_hex_print_asm "C.MV a0, a1" "852E";
-  (* ebreak (not yet supported by stepLib, as EBREAK above) *)
+  (* ebreak *)
   val _ = riscv_test_hex_print_asm "C.EBREAK" "9002";
   (* jalr ra, 0(a5) *)
   val _ = riscv_test_hex_print_asm "C.JALR a5" "9782";
@@ -493,21 +569,49 @@ val _ = print_msg "\n\n";
   (* sd a0, 8(sp) *)
   val _ = riscv_test_hex_print_asm "C.SDSP a0, 8(sp)" "E42A";
 
+val _ = print_msg "\n";
+val _ = print_header "RV64F and RV64D Standard Extensions (loads, stores and moves)";
+val _ = print_msg "\n\n";
+
+(* The F and D instructions have the hypothesis mstatus.FS <> 0w (the
+ * floating-point unit is not Off), which is lifted to an assertion on
+ * mstatus, and those that write a floating-point register set FS to
+ * Dirty. *)
+val _ = riscv_test_hex_print_asm "FLD fa0, 0(s0)" "00043507";
+val _ = riscv_test_hex_print_asm "FSD fa5, 16(s0)" "00F43827";
+val _ = riscv_test_hex_print_asm "FSW fa0, 0(a1)" "00A5A027";
+val _ = riscv_test_hex_print_asm "FMV.X.D a0, fa2" "E2060553";
+val _ = riscv_test_hex_print_asm "FMV.D.X fa0, a0" "F2050553";
+val _ = riscv_test_hex_print_asm "FMV.X.W a0, fa0" "E0050553";
+val _ = riscv_test_hex_print_asm "C.FLD fa0, 8(a1)" "2588";
+val _ = riscv_test_hex_print_asm "C.FSD fa0, 8(a1)" "A588";
+val _ = riscv_test_hex_print_asm "C.FLDSP fa0, 8(sp)" "2522";
+val _ = riscv_test_hex_print_asm "C.FSDSP fa0, 8(sp)" "A42A";
+(* These write the 32-bit value NaN-boxed, as 0xFFFFFFFFw @@ v, a
+ * concatenation that the expression lifter does not lift. *)
+val _ = riscv_test_hex_print_asm "FLW fa0, 0(a0)" "00052507";
+val _ = riscv_test_hex_print_asm "FMV.W.X fa0, a0" "F0050553";
+(* Arithmetic does not lift: BIR has no floating-point operations, and
+ * already the hypothesis on the rounding mode (a field of fcsr, which is
+ * not lifted) fails to lift. *)
+val _ = riscv_test_hex_print_asm "FADD.D fa0, fa1, fa2" "02C5F553";
+
 
 val riscv_expected_failed_hexcodes:string list =
 [
-   (* Base *)
-   "00000073" (* ECALL *),
-   "00100073" (* EBREAK *),
+   (* Zicsr *)
+   "B00027F3" (* CSRR mcycle: c_cycles is not lifted *),
+   (* writes of misa: the lifter cannot show riscv_state_is_OK after one, at
+      any pc and whatever the written value *)
+   "30101073" (* CSRW misa, zero *),
+   "30126073" (* CSRSI misa, 0x4 *),
    (* A *)
-   "80C5A52F" (* AMOMIN.W *),
-   "A0C5A52F" (* AMOMAX.W *),
-   "C0C5A52F" (* AMOMINU.W *),
-   "E0C5A52F" (* AMOMAXU.W *),
-   "18C5A52F" (* SC.W *),
-   "18C5B52F" (* SC.D *),
-   (* C *)
-   "9002" (* C.EBREAK *)
+   "18C5A52F" (* SC.W: depends on the load reservation, which is not lifted *),
+   "18C5B52F" (* SC.D: likewise *),
+   (* F and D *)
+   "00052507" (* FLW: the NaN-boxed value is not lifted *),
+   "F0050553" (* FMV.W.X: likewise *),
+   "02C5F553" (* FADD.D: no floating-point arithmetic in BIR *)
 ];
 
 val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;

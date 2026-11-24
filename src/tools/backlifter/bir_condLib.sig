@@ -29,6 +29,8 @@ sig
        - at most one top-level conjunct PC = A, with PC the program
          counter of m and A a closed word64 term (a literal or an
          address constant)
+       - state predicates that the architecture unfolds to conditions
+         as above (cond_thms), e.g. riscv_mmode m
 
      The translation defines a new constant b named c_bir.
      pre_to_bir, post_to_bir and post_cases_to_bir also save the relation
@@ -49,6 +51,9 @@ sig
        load_thms       rewrites unfolding loads to the byte concatenation
                        that bir_exp_liftingLib lifts to a little-endian
                        BExp_Load
+       cond_thms       rewrites unfolding state predicates of the
+                       architecture to conditions of the fragment,
+                       applied before the fragment check
        pre_lifted, post_lifted, post_lifted_PC, post_cases_nil,
        post_cases_cons
                        the bridge lemmas from the lifting judgment to the
@@ -62,6 +67,7 @@ sig
       dest_load       : term -> term -> term option,
       pc_of           : term -> term,
       load_thms       : thm list,
+      cond_thms       : thm list,
       pre_lifted      : thm,
       post_lifted     : thm,
       post_lifted_PC  : thm,

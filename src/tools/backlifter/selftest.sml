@@ -102,6 +102,25 @@ val riscv_ok_post_def = def "riscv_ok_post"
 val _ = translates "riscv postcondition" "riscv_ok_post"
   (fn () => riscv_post_to_bir riscv_ok_post_def);
 
+(* The M-mode contract of lifted RISC-V code, which the translation unfolds
+   with riscv_mmode_cond: its translation is bir_riscv_mmode_post *)
+val riscv_mmode_ok_pre_def = def "riscv_mmode_ok_pre"
+  ``riscv_mmode_ok_pre (x:word64) (m:riscv_state) =
+    (riscv_mmode m /\ m.c_gpr m.procID 10w = x)``;
+val _ = translates "riscv precondition with the M-mode contract"
+  "riscv_mmode_ok_pre" (fn () => riscv_pre_to_bir riscv_mmode_ok_pre_def);
+
+val riscv_mmode_ok_post_def = def "riscv_mmode_ok_post"
+  ``riscv_mmode_ok_post (m:riscv_state) =
+    (m.c_PC m.procID = 0x104w /\ riscv_mmode m)``;
+val _ = tprint "riscv postcondition with the M-mode contract";
+val (riscv_mmode_ok_post_bir_def, _) =
+  riscv_post_to_bir riscv_mmode_ok_post_def;
+val _ =
+  if aconv (rhs (concl riscv_mmode_ok_post_bir_def))
+       (rhs (concl bir_riscv_backlifterTheory.bir_riscv_mmode_post_def))
+  then OK () else die "translation is not bir_riscv_mmode_post";
+
 val case_a_def = def "case_a"
   ``case_a (x:word64) (m:arm8_state) = (m.REG 0w = x)``;
 val case_b_def = def "case_b"

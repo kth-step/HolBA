@@ -29,6 +29,7 @@ val arm8_info : bir_condLib.arch_info =
     (* the lowest byte at a, not a + 0w *)
     load_thms = [REWRITE_RULE [wordsTheory.WORD_ADD_0]
                    bir_arm8_backlifterTheory.arm8_load_64_def],
+    cond_thms = [],
     pre_lifted = bir_pre_arm8_to_bir_lifted,
     post_lifted = bir_post_bir_to_arm8_lifted,
     post_lifted_PC = bir_post_bir_to_arm8_lifted_PC,

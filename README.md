@@ -104,7 +104,7 @@ Holmake
   - `extra`: General theories and libraries
   - `shared`: Libraries shared between tools
     - `convs`: conversion tactics
-    - `l3-machine-code`: extensions to L3 models from HOL4 examples
+    - `l3-machine-code`: a copy of HOL4's L3 model of RISC-V (privileged architecture 1.13) and its step library, as of HOL4 pull request 2204 (see `riscv/VENDORING.md`)
     - `smt`: custom interfaces to SMT solvers via SMTLIB (currently Z3)
     - `sml-simplejson`: JSON parser
   - `theory`: Domain-specific theories
@@ -150,7 +150,7 @@ Holmake
   * Proof-producing
   * Stable
   * Widely used in examples
-  * Supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycle counter, RISC-V
+  * Supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycle counter, RISC-V (RV64GC code running in M-mode)
 - `tools/pass`:
   * Non-proof-producing
   * Experimental passification transformation to SSA

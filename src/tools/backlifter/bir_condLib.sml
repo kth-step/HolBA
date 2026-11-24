@@ -18,6 +18,7 @@ type arch_info =
     dest_load       : term -> term -> term option,
     pc_of           : term -> term,
     load_thms       : thm list,
+    cond_thms       : thm list,
     pre_lifted      : thm,
     post_lifted     : thm,
     post_lifted_PC  : thm,
@@ -58,7 +59,7 @@ val word_binops = [
 
 (* The state reads of m that the architecture's lifting theorem lifts to
    BIR variables, e.g. m.REG 0w or (m.c_MCSR m.procID).mscratch, some as
-   casts, e.g. w2w (m.c_MCSR m.procID).mstatus.MPRV *)
+   casts, e.g. w2w (m.c_privilege m.procID) *)
 fun state_reads (a : arch_info) m = let
   val bs = variant [m] ``bs:bir_state_t``
   val lifted = (snd o dest_imp o concl o SPECL [bs, m]) (#bmr_lifted a)
@@ -134,7 +135,9 @@ in (pc_addr, q) end;
 (* Before the fragment check: closed word terms that are not literals,
    e.g. address constants such as kernel_trap_slots_addr or
    init_addr - 256w, are evaluated to literals, so that the BIR
-   expression has literal constants that the SMT translation can use *)
+   expression has literal constants that the SMT translation can use.
+   Before that, the architecture's cond_thms unfold its state predicates,
+   e.g. riscv_mmode m, to conditions of the fragment *)
 fun closed_words_conv tm =
   if wordsSyntax.is_word_type (type_of tm) andalso null (free_vars tm) andalso
      not (wordsSyntax.is_word_literal tm)
@@ -144,7 +147,7 @@ fun closed_words_conv tm =
   else SUB_CONV closed_words_conv tm;
 
 (* Narrow state components that are lifted only as a cast w2w t to a
-   wider word, e.g. the 2-bit (m.c_MCSR m.procID).mstatus.MPRV, lifted as
+   wider word, e.g. the 2-bit m.c_privilege m.procID, lifted as
    w2w ... : word8: an equation t = c or c = t with a literal c becomes
    w2w t = c' or c' = w2w t, with c' the literal w2w c. w2w is injective
    on such widening casts *)
@@ -273,7 +276,8 @@ fun lift_def_cond a def = let
   val (c, params, m, body) = dest_cond_def a def
   val (pc_addr, q) = split_pc a m body
   val reads = state_reads a m
-  val norm_eq = QCONV (closed_words_conv THENC narrow_eq_conv reads) q
+  val norm_eq = QCONV (PURE_REWRITE_CONV (#cond_thms a) THENC
+                       closed_words_conv THENC narrow_eq_conv reads) q
   val q1 = rhs (concl norm_eq)
   val _ = if aconv q1 T then () else check_bool a reads params m q1
   val bs = variant (m :: params) ``bs:bir_state_t``

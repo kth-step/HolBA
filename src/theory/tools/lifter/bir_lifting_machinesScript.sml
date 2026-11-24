@@ -888,22 +888,48 @@ QED
 (**********)
 (* RISC-V *)
 (**********)
-(* Hmmm.... Looking at riscv_state, it seems like everything except
- * clock, memory, done (whatever that is?), exception, log and
- * totalCore is dependent upon a process ID. procID is a 8-bit
- * field, meaning you could have up to 256 hardware processes.
+(* The model is HOL4's L3 model of RISC-V as of HOL4 pull request 2204
+ * (privileged architecture 1.13: M-mode, S-mode and U-mode, PMP, and Sv39,
+ * Sv48 and Sv57 address translation), vendored in
+ * src/shared/l3-machine-code/riscv (see VENDORING.md there).
+ * Every component of riscv_state except MEM8, exception, log, totalCore
+ * and procID is a map from the hart number (procID, 8 bits) to the
+ * component of that hart; the lifter works on the hart procID.
  *
- * This is just a complete guess as to what the things mean though.
+ * The step theorems of riscv_stepLib describe one step of NextRISCV of a
+ * hart in M-mode, and carry the hypotheses of the M-mode contract, which
+ * the header of the step library's selftest lists (riscv_step_selftest.sml
+ * in the vendored copy).  None is on satp: address translation is off in
+ * M-mode, for fetches because the hart is in M-mode and for data accesses
+ * because mstatus.MPRV is clear as well (privileged specification,
+ * sections 12.1.11 and 3.1.6.4):
  *
- * These processes are typically known as hardware threads or
- * "harts". See https://wiki.osdev.org/RISC-V#Hardware_Threads
- * and Section 2.7 of the RISC-V User-Level ISA.
+ *   ms.c_privilege ms.procID = 3w                every instruction
+ *   ~(ms.c_MCSR ms.procID).mstatus.MIE           every instruction
+ *   pmpcfg0 && 0x8080808080808080w = 0w,
+ *   pmpcfg2 && 0x8080808080808080w = 0w          every instruction
+ *   ~(ms.c_MCSR ms.procID).mstatus.MPRV          loads, stores, AMOs
+ *   alignment of the data address                accesses of 2, 4, 8 bytes
+ *   (pmpcfg0 >>> 1 ?? pmpcfg0) && 0x0808080808080808w = 0w,
+ *   and the same for pmpcfg2                     8-byte data accesses
  *
- * c_gpr and c_fpr are the candidates for general-purpose registers,
- * but c_fpr is probably the registers in the extended RV64I base
- * integer instruction set. *)
+ * and, depending on the instruction, misa.C (compressed instructions, and
+ * jumps and branches to a target with bit 1 set), misa.MXL <> 1w (the
+ * RV64-only instructions) and mstatus.FS <> 0w (floating point).
+ *
+ * The extra predicate riscv_state_is_OK below must hold before and after
+ * every lifted instruction (bir_inst_liftingTheory proves it of the state
+ * after the instruction for each lifted instruction).  It therefore holds
+ * only conditions that no lifted instruction can falsify.  Everything that
+ * an instruction can change and that a contract hypothesis constrains is a
+ * lifted BIR variable instead (riscv_sysregs_lifted_imms_LIST), and the
+ * lifter turns the hypothesis into a BIR assertion on it: the privilege on
+ * "priv" (changed by MRET), mstatus.MIE and mstatus.MPRV on "mstatus"
+ * (changed by every write of mstatus, by MRET and by trap entry), the two
+ * conditions on the PMP configuration on "pmpcfg0" and "pmpcfg2" (changed
+ * by their writes), and the alignment on the general-purpose registers. *)
 
-(* With starting point in bir_lifting_machinesLib_instances.riscv_bmr_rec, 
+(* With starting point in bir_lifting_machinesLib_instances.riscv_bmr_rec,
  * we try to prove all the fields, starting from the top:
 
      bir_lifting_machinesScript.riscv_bmr_OK
@@ -918,91 +944,26 @@ QED
 
 Definition riscv_state_is_OK_def:
   riscv_state_is_OK (ms:riscv_state) <=> (
-    (* Interpreted from https://github.com/SRI-CSL/l3riscv/blob/master/src/l3/riscv.spec
-     * specifically from the older version https://github.com/SRI-CSL/l3riscv/blob/3d1cd4f8f922fb60a04f75ebcdbfd74919c4e585/src/l3/riscv.spec
-*)
+    (* NextRISCV returns NONE from a state with an exception; no instruction
+     * that steps sets one. *)
     (ms.exception = NoException) /\
-(*   
-     * MCSRs are machine mode control and status registers, mstatus is status register,
-     * "VM" is "memory management and virtualization", 5 bits.
-     * Page 23 of https://people.eecs.berkeley.edu/~krste/papers/riscv-privileged-v1.9.1.pdf
-     * explains that memory management field being zero corresponds to "Mbare", no translation or
-     * protection.
-     * Don't know why this must always be 0 for a simple add, but it is checked only in
-     * "translateAddr" in the Fetch step of Next. Perhaps it is some limitation of the model (version).
-*)
-    ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
-(* 
-     * Fetch state from interpreter execution context must be NONE. Type is
-     * TransferControl option:
-
-         type SynchronousTrap = { badaddr: BitsN.nbit option, trap: ExceptionType }
-
-           datatype TransferControl
-             = BranchTo of BitsN.nbit | Ereturn | Mrts | Trap of SynchronousTrap
-
-     * we see in riscv.sml that in the Next function, after Fetch-Decode-Run
-     * "NextFetch" is accessed, which returns a tuple where the first element is a TransferControl
-     * option. This has been written to NextFetch in the Run step. Effects on PC are resolved and
-     * NextFetch is then set to NONE.
-     * The reason for why this must be NONE in the initial state is likely that in regular situations
-     * when non-control transfer instructions are executed, NextFetch is never written to (instead of
-     * explicitly writing NONE).
-*)
+    (* NextFetch holds the control transfer of the instruction being
+     * executed (BranchTo, Mret, Trap); NextRISCV consumes it and sets it to
+     * NONE, so it is NONE between instructions. *)
     (ms.c_NextFetch ms.procID = NONE) /\
-(*
-
-     * It seems the size of the general-purpose registers is hard-coded as 64-bit in the L3 model.
-     * When trying to store values of 64-bit registers as 32-bit words, the lifter runs into
-     * a lot of trouble. For this reason, we fix the architecture to 64-bit.
-
-     * TODO: For technical reasons, we don't write this as
-
-         ((ms.c_MCSR ms.procID).mcpuid.ArchBase = 2w)
-
-     * which is a more direct representation of what is really stored, but rather as two separate
-     * conjuncts to be able to lift without performing additional word arithmetic (effectively,
-     * comparing 2w to 0w and 1w)
-*)
-     ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
-     ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
+    (* The hart is RV64: misa.MXL is read-only (legalize_misa writes only
+     * misa.C), so no instruction changes it.  The RV64-only instructions
+     * have the hypothesis misa.MXL <> 1w (in32BitMode is misa.MXL = 1w). *)
+    ((ms.c_MCSR ms.procID).misa.MXL <> 1w) /\
+    (* The C extension is enabled.  The step theorems need misa.C for every
+     * compressed instruction and for every instruction, jump target or
+     * return address whose bit 1 is set, and a read of mepc depends on it.
+     * Only a write of misa (CSR 0x301) changes misa.C, and no write of misa
+     * lifts: the lifter cannot prove this predicate after one, at any pc
+     * and whatever the written value (see the RISC-V section of
+     * src/tools/lifter/README), so misa.C holds throughout lifted code. *)
+    (ms.c_MCSR ms.procID).misa.C
   )
-(* For ARM8:
-    (* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
-     * tells us that
-     * ELn: Exception level n. EL0 is user, EL1 kernel, EL2 Hypervisor, EL3 firmware (p. 4 of PDF).
-     * SCTLR: System control register; for EL1, EL2 and EL3 (p. 24 of PDF). 
-     * PSTATE: Processor state flags, accessed through special-purpose registers. (p. 16 of PDF)
-     * TCR: Translation Control Register; for EL1, EL2 and EL3. Determines
-     *      Translation Table Base Register. *)
-
-    (* Explicit data accesses at EL0 MUST be little-endian. *)
-    ~ms.SCTLR_EL1.E0E /\
-    (* Exception level must be 0 (user) *)
-    (ms.PSTATE.EL = 0w) /\
-    (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
-     * UNDEFINED_FAULT and ASSERT).*)
-    (ms.exception = NoException) /\
-    (* Stack Alignment Check MUST NOT be enabled for EL0. *)
-    ~ms.SCTLR_EL1.SA0 /\
-    (* Translation control register for EL1 must not be TBI0 or TBI1,
-     * meaning it must be "tcr_el1'rst", which is a 62-bit field.
-     * TODO: What is TBI0 and TBI1? *)
-    ~ms.TCR_EL1.TBI0 /\
-    ~ms.TCR_EL1.TBI1
-  )
-*)
-(* For Cortex-M0:
-    (* AIRCR: Application Interrupt and Reset Control Register.
-     * CONTROL: Special register in Cortex-M processor. Can be accessed using MSR and MRS. *)
-
-    (* Endianness must match argument ef. *)
-    (s.AIRCR.ENDIANNESS = ef) /\
-    (* Stack pointer selection bit in the control register must match argument sel. *)
-    (s.CONTROL.SPSEL = sel) /\
-    (* Exception must be NoException. *)
-    (s.exception = NoException)
-*)
 End
 
 (* Lifting RISC-V general-purpose registers. Note that while these are referred
@@ -1024,39 +985,119 @@ Definition riscv_FPRS_lifted_imms_LIST_def:
 End
 Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
 
-(* NOTE: Since the L3 model uses separate immediate values for the fields
- * of a single system register (instead of letting the entire system register
- * be represented as one immediate), we do so here as well. *)
+(* Lifting the RISC-V privilege and control and status registers.
+ *
+ * The current privilege, a 2-bit word (3w for M-mode, 0w for U-mode), is
+ * lifted as an 8-bit immediate.  A CSR that the model stores as a 64-bit
+ * word is lifted as it is stored; a CSR of a register type of the model
+ * (mstatus, mie, mip, mcause) as the 64-bit word of the register
+ * (reg'mstatus and so on), whose bit fields are those of the CSR in the
+ * privileged specification.  A field that the model keeps in no CSR word
+ * is not lifted: the stored image of mstatus has no SD, UXL and SXL bits
+ * (which read_mstatus adds when mstatus is read), and the stored PMP
+ * addresses and configurations are those that the CSR instructions read
+ * and write.
+ *
+ * The stored mip holds only SSIP, STIP and the software-written SEIP.  A
+ * read of mip (read_mip) adds MSIP and MTIP, which the model computes from
+ * the memory-mapped msip, mtimecmp and mtime of the CLINT, at addresses
+ * that depend on the hart number procID, and MEIP and SEIP from the
+ * platform's interrupt lines c_extMEIP and c_extSEIP.  These inputs are
+ * lifted too ("procID" as an 8-bit immediate, "extMEIP" and "extSEIP" as
+ * booleans), so that "csrr mip" lifts to an expression on them and on
+ * loads from the memory, the CLINT being part of it.  No instruction
+ * changes them.  mcycle and minstret (c_cycles, c_instret) are not lifted:
+ * NextRISCV does not count, so in the lifted semantics they would be
+ * constants.
+ *
+ * satp is lifted as stored, with no assertion and no conjunct of
+ * riscv_state_is_OK.  It has no effect on lifted code, which runs in
+ * M-mode, where satp is not active (privileged specification, section
+ * 12.1.11).  It is lifted so that a contract of an M-mode kernel can state
+ * its value, for example that satp.MODE (bits 63 to 60) is Bare when the
+ * kernel returns to U-mode.  A write of satp lifts to an assignment of the
+ * value that legalize_satp keeps: the written value if its MODE is Bare,
+ * Sv39, Sv48 or Sv57, and the old value otherwise (section 12.1.11: a
+ * write of another MODE has no effect).  riscv_state_is_OK cannot say that
+ * satp is Bare, since a lifted write of satp can change that. *)
 Definition riscv_sysregs_lifted_imms_LIST_def:
   riscv_sysregs_lifted_imms_LIST = [
-    (BMLI (BVar "mhartid" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mhartid))
-    );
-    (* MPRV (from the mstatus register) is really a 2-bit value,
-     * but is represented as an 8-bit immediate *)
-    (BMLI (BVar "MPRV" (BType_Imm Bit8))
-          (\ms:riscv_state. Imm8 (w2w((ms.c_MCSR ms.procID).mstatus.MPRV)))
-    );
-    (BMLI (BVar "mscratch" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mscratch))
-    );
-    (BMLI (BVar "mepc" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mepc))
-    );
-    (BMLI (BVar "mcause" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 $ reg'mcause ((ms.c_MCSR ms.procID).mcause))
-    );
-    (BMLI (BVar "mtval" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mtval))
-    );
+    (BMLI (BVar "priv" (BType_Imm Bit8))
+          (\ms:riscv_state. Imm8 (w2w (ms.c_privilege ms.procID))));
+    (BMLI (BVar "mstatus" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 (reg'mstatus (ms.c_MCSR ms.procID).mstatus)));
+    (BMLI (BVar "mtvec" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mtvec)));
+    (BMLI (BVar "mie" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 (reg'mie (ms.c_MCSR ms.procID).mie)));
     (BMLI (BVar "mip" (BType_Imm Bit64))
-          (\ms:riscv_state. Imm64 $ reg'mip ((ms.c_MCSR ms.procID).mip))
-    )
+          (\ms:riscv_state. Imm64 (reg'mip (ms.c_MCSR ms.procID).mip)));
+    (BMLI (BVar "mscratch" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mscratch)));
+    (BMLI (BVar "mepc" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mepc)));
+    (BMLI (BVar "mcause" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 (reg'mcause (ms.c_MCSR ms.procID).mcause)));
+    (BMLI (BVar "mtval" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mtval)));
+    (BMLI (BVar "mhartid" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mhartid)));
+    (BMLI (BVar "mcounteren" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mcounteren)));
+    (BMLI (BVar "mcountinhibit" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mcountinhibit)));
+    (BMLI (BVar "scounteren" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_SCSR ms.procID).scounteren)));
+    (BMLI (BVar "satp" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_SCSR ms.procID).satp)));
+    (BMLI (BVar "pmpcfg0" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpcfg0)));
+    (BMLI (BVar "pmpcfg2" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpcfg2)));
+    (BMLI (BVar "pmpaddr0" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr0)));
+    (BMLI (BVar "pmpaddr1" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr1)));
+    (BMLI (BVar "pmpaddr2" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr2)));
+    (BMLI (BVar "pmpaddr3" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr3)));
+    (BMLI (BVar "pmpaddr4" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr4)));
+    (BMLI (BVar "pmpaddr5" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr5)));
+    (BMLI (BVar "pmpaddr6" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr6)));
+    (BMLI (BVar "pmpaddr7" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr7)));
+    (BMLI (BVar "pmpaddr8" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr8)));
+    (BMLI (BVar "pmpaddr9" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr9)));
+    (BMLI (BVar "pmpaddr10" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr10)));
+    (BMLI (BVar "pmpaddr11" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr11)));
+    (BMLI (BVar "pmpaddr12" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr12)));
+    (BMLI (BVar "pmpaddr13" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr13)));
+    (BMLI (BVar "pmpaddr14" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr14)));
+    (BMLI (BVar "pmpaddr15" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).pmpaddr15)));
+    (BMLI (BVar "procID" (BType_Imm Bit8))
+          (\ms:riscv_state. Imm8 ms.procID));
+    (BMLI (BVar "extMEIP" BType_Bool)
+          (\ms:riscv_state. bool2b (ms.c_extMEIP ms.procID)));
+    (BMLI (BVar "extSEIP" BType_Bool)
+          (\ms:riscv_state. bool2b (ms.c_extSEIP ms.procID)))
   ]
 End
-val riscv_sysregs_lifted_imms_LIST_EVAL = save_thm("riscv_sysregs_lifted_imms_LIST_EVAL",
-  EVAL ``riscv_sysregs_lifted_imms_LIST``
-);
+(* Not by EVAL, which would unfold bool2b in the lifted interrupt lines, so
+ * that the lifter would not find them. *)
+Theorem riscv_sysregs_lifted_imms_LIST_EVAL =
+  REWRITE_CONV [riscv_sysregs_lifted_imms_LIST_def] ``riscv_sysregs_lifted_imms_LIST``
 
 (* Note: For some reason, MEM is named MEM8 in the RISC-V state.
  * Since memory is shared between processes, this does not require
@@ -1075,22 +1116,15 @@ Definition riscv_lifted_pc_def:
 End
 
 (* HOL definition of RISC-V BIR machine record. *)
-(* Prerequisites: riscv_lifted_pc, riscv_lifted_mem,
- * riscv_PSTATE_lifted_imms_LIST, riscv_REGS_lifted_imms_LIST,
- * riscv_EXTRA_lifted_imms_LIST *)
 Definition riscv_bmr_def:
   riscv_bmr = <|
-    (* TODO: This needs to be expended upon, the definition of
-     * OK state is now minimal. *)
     bmr_extra := \ms. riscv_state_is_OK ms;
-    (* Registers are the 32 general-purpose registers as well as the
-     * 32 floating-point registers. *)
+    (* The 32 general-purpose registers, the 32 floating-point registers,
+     * the privilege, the lifted CSRs, the hart number and the external
+     * interrupt lines. *)
     bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST++riscv_sysregs_lifted_imms_LIST);
-    (* Done! *)
     bmr_mem := riscv_lifted_mem;
-    (* Done! *)
     bmr_pc := riscv_lifted_pc;
-    (* Done! *)
     bmr_step_fun := NextRISCV
   |>
 End
@@ -1107,7 +1141,7 @@ Theorem riscv_bmr_EVAL = SIMP_CONV list_ss [riscv_bmr_def, riscv_state_is_OK_def
 (* Evaluation theorem of variables in a RISC-V BMR. *)
 Theorem riscv_bmr_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def] ``bmr_vars riscv_bmr``
 
-(* Evaluation theorem of variables + temporary variables (???) in a RISC-V BMR. *)
+(* Evaluation theorem of the temporary variables of a RISC-V BMR. *)
 Theorem riscv_bmr_temp_vars_EVAL = SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
                              bir_temp_var_def, bir_temp_var_name_def]
           ``bmr_temp_vars riscv_bmr``
@@ -1181,12 +1215,11 @@ QED
  * riscv_state_is_OK_def *)
 Theorem bmr_extra_RISCV:
   !ms.
-    riscv_bmr.bmr_extra ms = 
+    riscv_bmr.bmr_extra ms =
       ((ms.exception = NoException) /\
-       ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
        (ms.c_NextFetch ms.procID = NONE) /\
-       ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
-       ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
+       ((ms.c_MCSR ms.procID).misa.MXL <> 1w) /\
+       (ms.c_MCSR ms.procID).misa.C
       )
 Proof
 SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss)

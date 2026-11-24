@@ -6,3 +6,117 @@ performing such liftings. Please look at its signature for details.
 A large component of the lifter is the expression lifter, which is
 able to construct bir-expressions corresponding to terms of word types.
 You might want to look at "bir_exp_liftingLib" for using it directly.
+
+RISC-V
+------
+
+The RISC-V instance lifts the hart procID of HOL4's L3 model of RISC-V
+(priv-1.13 M-mode, S-mode and U-mode with PMP and Sv39, Sv48 and Sv57
+address translation, vendored with its step library in
+src/shared/l3-machine-code/riscv, see VENDORING.md there).  The step
+theorems describe a step of the hart in M-mode and carry the M-mode
+contract of the step library as hypotheses; the lifter turns each into an
+assertion of the BIR block of the instruction:
+
+  - every instruction: priv = 3, no locked PMP entry in pmpcfg0 and
+    pmpcfg2, mstatus.MIE clear;
+  - loads, stores, AMOs, LR and SC: also mstatus.MPRV clear and the
+    natural alignment of the address; for 8-byte accesses also every PMP
+    entry OFF or NAPOT;
+  - the F and D instructions: also mstatus.FS not Off (mstatus && 0x6000
+    <> 0).
+
+These are assertions, and not part of the extra predicate of the machine
+record, because that predicate must hold before and after every lifted
+instruction, and instructions change all of them: MRET the privilege,
+mstatus.MIE and mstatus.MPRV, and the CSR instructions mstatus and the PMP
+configuration.  The extra predicate (riscv_state_is_OK in
+src/theory/tools/lifter/bir_lifting_machinesScript.sml) holds only what no
+lifted instruction changes: no exception, no pending control transfer,
+RV64 (misa.MXL <> 1, which is read-only) and the C extension enabled
+(misa.C).  Only a write of misa can change misa.C, and no write of misa
+lifts, whatever the written value: the lifter proves the extra predicate
+after each instruction for a symbolic pc (it places the lifted block at
+its address afterwards), and after a write of misa that proof fails, in
+"computing al_step and ms'", since misa.C then depends on the written
+value and on the pc (the model keeps misa.C set where clearing it would
+misalign the next instruction, at a pc that is not 4-byte aligned) and
+the lifter does not simplify the misa record that the model writes.  So
+misa.C and misa.MXL hold throughout lifted code.  With misa.C, a
+compressed instruction, a jump or branch to an address with bit 1 set, and
+the jump of MRET (whose target the model masks to 4 bytes when misa.C is
+clear) need no assertion.
+
+The lifted state is listed in riscv_bmr there: the general-purpose and
+floating-point registers, the memory, the privilege ("priv", 8 bits: 3 for
+M-mode, 0 for U-mode), the CSRs mstatus, mtvec, mie, mip, mscratch, mepc,
+mcause, mtval, mhartid, mcounteren, mcountinhibit, scounteren, satp,
+pmpcfg0, pmpcfg2 and pmpaddr0 to pmpaddr15 (mstatus, mie, mip and mcause as
+the 64-bit words of their registers, so that their fields are bits of the
+BIR variables), the hart number ("procID", 8 bits) and the external
+interrupt lines ("extMEIP", "extSEIP", booleans).  No instruction changes
+the last three.
+
+No step theorem has a hypothesis on satp, and no block asserts anything
+about it: address translation is off in M-mode (satp is active only when
+the effective privilege is S-mode or U-mode, and the hypotheses that the
+privilege is M and that mstatus.MPRV is clear make it M-mode).  satp is lifted so that a contract can state its value,
+for example that satp.MODE (bits 63 to 60) is Bare when an M-mode kernel
+returns to U-mode.  A write of satp lifts to an assignment of the value
+that the model keeps (legalize_satp): the written value if its MODE is
+Bare, Sv39, Sv48 or Sv57, and the old value otherwise.  The extra
+predicate says nothing about satp, since lifted writes change it.
+
+The privileged instructions are lifted to the following blocks, after the
+assertions:
+
+  - ECALL, EBREAK and C.EBREAK take a trap to M-mode (NextRISCV_trap of
+    the step library; delegation does not apply to traps from M-mode):
+    priv := 3; mstatus := mstatus with MPP := 3, MPIE := 0 and MIE := 0
+    (MPP is the privilege and MPIE the old MIE, which are 3 and 0 by the
+    assertions on priv and mstatus.MIE); mepc := the pc of the instruction;
+    mcause := 11 (environment call from M-mode) or 3 (breakpoint); mtval := 0
+    for ECALL
+    and the pc for EBREAK; and the block ends in a jump to the base of
+    mtvec, mtvec && 0xFFFFFFFFFFFFFFFC (where an exception goes in both
+    the direct and the vectored mode).
+  - MRET returns from a trap (NextRISCV_mret): priv := if MPP = 2 then 0
+    else MPP (the model maps the reserved encoding to U-mode), with MPP
+    read from mstatus as (mstatus >> 11) & 3; mstatus := mstatus with
+    MIE := MPIE, MPIE := 1, MPP := 0 and MPRV := MPRV && (MPP = 3), so
+    MPRV is cleared unless MRET returns to M-mode; and the block ends in a
+    jump to mepc.  When MRET returns to U-mode, the assertion priv = 3 of
+    the next lifted block fails: the lifter does not describe U-mode code.
+  - WFI and SFENCE.VMA do nothing in M-mode, as FENCE and FENCE.I: their
+    blocks have only the assertions.
+  - "csrr rd, mip" reads SSIP and STIP from the BIR variable mip, MSIP
+    and MTIP from the CLINT in the memory (bit 0 of msip at 0x2000000 +
+    4 * procID; MTIP is set if mtimecmp, the doubleword at 0x2004000 +
+    8 * procID, is at most mtime, the doubleword at 0x200BFF8), SEIP from
+    mip or the line extSEIP, and MEIP from the line extMEIP.
+
+A write of a CSR that the model stores but the lifter does not lift
+(medeleg, mideleg, menvcfg, and of the S-mode CSRs stvec, sscratch, sepc,
+scause, stval and senvcfg) lifts to a block without an assignment for it:
+the CSR is not part of the BIR state, and it has no effect on the lifted
+code, since a trap from M-mode is never delegated.  A write of the
+view sstatus lifts to an assignment of mstatus, and a read of it to an
+expression on mstatus; the views sie and sip depend on mideleg, so their
+reads and writes do not lift.
+
+The loads, stores and moves of the D extension lift (FLD, FSD and their
+compressed forms, FMV.X.D, FMV.D.X), and of the F extension FSW and
+FMV.X.W.  FLW and FMV.W.X do not: they write the 32-bit value NaN-boxed,
+as 0xFFFFFFFFw @@ v, and the expression lifter does not lift the
+concatenation.
+
+Instructions that read other state, or that need a step theorem that the
+step library does not have, do not lift: "csrr mcycle" and the other
+counters (NextRISCV does not count), reads of the CSRs that the model
+stores but the lifter does not lift (misa, medeleg, mideleg, menvcfg, the
+S-mode CSRs stvec, sscratch, sepc, scause, stval and senvcfg, and the
+floating-point CSRs fflags, frm and fcsr), SC.W and SC.D (the load
+reservation is not lifted), writes of misa (see above), floating-point
+arithmetic and conversions (BIR has no floating-point operations, and
+their rounding mode, a field of fcsr, is not lifted), SRET (the step
+library has no step theorem for it) and illegal instructions.
