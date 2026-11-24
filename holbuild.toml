@@ -26,6 +26,8 @@ exclude_globs = [
   "*/selftest.sml",
   "*/selftest_*.sml",
   "*/test-*.sml",
+  # the selftest of the vendored RISC-V step library (see VENDORING.md there)
+  "*/riscv_step_selftest.sml",
 ]
 root_groups = ["lib"]
 tactic_timeout = 600.0
