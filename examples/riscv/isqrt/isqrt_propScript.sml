@@ -221,7 +221,8 @@ Theorem riscv_cont_isqrt_iter:
   (\ms. ms.c_PC ms.procID = isqrt_init_addr_2 /\ riscv_isqrt_inv pre_x10 ms /\ riscv_isqrt_variant ms < x)
 Proof
  gen_tac >>
- QINST_IRULE [("pre1", `\ms. ?y. ms.c_gpr ms.procID 15w = y /\ ms.c_gpr ms.procID 13w = pre_x10 /\
+ QINST_IRULE [("pre1", `\ms. ?y. riscv_mmode ms /\
+     ms.c_gpr ms.procID 15w = y /\ ms.c_gpr ms.procID 13w = pre_x10 /\
      pre_x10 <+ 0xFFFFFFFE00000001w /\ y <+ 0xFFFFFFFFw /\
      (y + 1w) * (y + 1w) <=+ pre_x10 /\ w2n pre_x10 - w2n y = x`),
   ("post1", `\ms. ms.c_PC ms.procID = isqrt_init_addr_2 /\ riscv_isqrt_inv pre_x10 ms /\
@@ -265,7 +266,8 @@ Theorem riscv_cont_isqrt_exit:
   (\ms. riscv_isqrt_inv pre_x10 ms /\ ~riscv_isqrt_cond ms)
   (riscv_isqrt_post pre_x10)
 Proof
- QINST_IRULE [("pre1", `\ms. ?y. ms.c_gpr ms.procID 15w = y /\ ms.c_gpr ms.procID 13w = pre_x10 /\
+ QINST_IRULE [("pre1", `\ms. ?y. riscv_mmode ms /\
+     ms.c_gpr ms.procID 15w = y /\ ms.c_gpr ms.procID 13w = pre_x10 /\
      y <+ 0xFFFFFFFFw /\ y * y <=+ pre_x10 /\ pre_x10 <+ (y + 1w) * (y + 1w)`),
   ("post1", `riscv_isqrt_post pre_x10`)] riscv_cont_conseq_rule >>
  rpt conj_tac >- (

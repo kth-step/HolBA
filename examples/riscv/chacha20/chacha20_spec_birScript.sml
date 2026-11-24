@@ -190,9 +190,13 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
+(* Each precondition starts with the M-mode contract that the lifted blocks
+ * assert (bir_riscv_backlifterTheory) *)
+
 (* keysetup *)
 
 val bspec_chacha20_keysetup_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
@@ -205,6 +209,7 @@ End
 (* ivsetup *)
 
 val bspec_chacha20_ivsetup_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
   mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x11"
 ];
@@ -217,6 +222,7 @@ End
 (* first line *)
 
 val bspec_chacha20_line_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_a"),
   beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_b"),
   beq (blowcast32 (bden (bvarimm64 "x26")), bconstvar32 "pre_d")
@@ -247,6 +253,7 @@ End
 (* second line *)
 
 val bspec_chacha20_line_pre_other_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_b"),
   beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_d"),
   beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_a")
@@ -277,6 +284,7 @@ End
 (* first quarter round *)
 
 val bspec_chacha20_quarter_round_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_a"),
   beq (blowcast32 (bden (bvarimm64 "x22")), bconstvar32 "pre_b"),
   beq (blowcast32 (bden (bvarimm64 "x28")), bconstvar32 "pre_c"),
@@ -320,6 +328,7 @@ End
 (* column round *)
 
 val bspec_chacha20_column_round_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_arr_0"),
   beq (blowcast32 (bden (bvarimm64 "x16")), bconstvar32 "pre_arr_1"),
   beq (blowcast32 (bden (bvarimm64 "x17")), bconstvar32 "pre_arr_2"),
@@ -348,7 +357,7 @@ Definition bspec_chacha20_column_round_pre_def:
   ^bspec_chacha20_column_round_pre_tm
 End
 
-val bspec_chacha20_column_round_post_tm =
+val bspec_chacha20_column_round_post_regs_tm =
  let
    val bir_exprs = (snd o dest_eq o concl)
     (EVAL ``chacha_column_round_bir_exprs 
@@ -420,6 +429,14 @@ val bspec_chacha20_column_round_post_tm =
    ]
  end;
 
+(* The M-mode contract again, for the diagonal round that follows, written
+   without BExp_word_bit (bir_riscv_mmode_post) as symbolic transfer needs
+   it in a postcondition *)
+val bspec_chacha20_column_round_post_tm = bandl [
+  rhs (concl bir_riscv_mmode_post_def),
+  bspec_chacha20_column_round_post_regs_tm
+];
+
 Definition bspec_chacha20_column_round_post_def:
  bspec_chacha20_column_round_post
   (pre_arr_0:word32) (pre_arr_1:word32) (pre_arr_2:word32) (pre_arr_3:word32)
@@ -433,6 +450,7 @@ End
 (* diagonal round *)
 
 val bspec_chacha20_diagonal_round_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   beq (blowcast32 (bden (bvarimm64 "x20")), bconstvar32 "pre_arr_0"),
   beq (blowcast32 (bden (bvarimm64 "x19")), bconstvar32 "pre_arr_1"),
   beq (blowcast32 (bden (bvarimm64 "x18")), bconstvar32 "pre_arr_2"),
@@ -546,6 +564,7 @@ End
 (* double round *)
 
 val bspec_chacha20_double_round_pre_tm = bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   beq (blowcast32 (bden (bvarimm64 "x10")), bconstvar32 "pre_arr_0"),
   beq (blowcast32 (bden (bvarimm64 "x16")), bconstvar32 "pre_arr_1"),
   beq (blowcast32 (bden (bvarimm64 "x17")), bconstvar32 "pre_arr_2"),
@@ -667,7 +686,10 @@ Theorem chacha20_line_riscv_pre_imp_bspec_pre_thm:
   (riscv_chacha20_line_pre pre_a pre_b pre_d)
   (bspec_chacha20_line_pre pre_a pre_b pre_d)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_line_pre_def,bspec_chacha20_line_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_line_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_line_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_line_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -727,7 +749,10 @@ Theorem chacha20_quarter_round_riscv_pre_imp_bspec_pre_thm:
   (riscv_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
   (bspec_chacha20_quarter_round_pre pre_a pre_b pre_c pre_d)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_quarter_round_pre_def,bspec_chacha20_quarter_round_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_quarter_round_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_quarter_round_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_quarter_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -790,7 +815,10 @@ Theorem chacha20_column_round_riscv_pre_imp_bspec_pre_thm:
   (bspec_chacha20_column_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def,bspec_chacha20_column_round_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_column_round_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_column_round_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_column_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [
@@ -802,19 +830,17 @@ Proof
 QED
 
 (* register part of the column round postcondition, which holds
-   whenever the PC is at the end label *)
+   whenever the PC is at the end label and the M-mode contract holds *)
 Theorem chacha20_column_round_riscv_post_imp_bspec_post_regs_thm[local]:
  !ls. bir_post_bir_to_riscv
-   (\m. m.c_PC m.procID = chacha20_column_round_end_addr ==>
+   (\m. m.c_PC m.procID = chacha20_column_round_end_addr /\ riscv_mmode m ==>
      riscv_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
       pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15 m)
-   (\l. (bspec_chacha20_column_round_post pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
-          pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15))
+   (\l. ^bspec_chacha20_column_round_post_regs_tm)
    ls
 Proof
  fs [
   bir_post_bir_to_riscv_def,
-  bspec_chacha20_column_round_post_def,
   GSYM bir_and_equiv
  ] >>
 
@@ -863,6 +889,13 @@ Proof
  Cases_on `bs.bst_pc.bpc_label = BL_Address (Imm64 chacha20_column_round_end_addr)` >> fs [] >| [
   `ms.c_PC ms.procID = chacha20_column_round_end_addr`
    by (Cases_on `bs` >> fs [] >> METIS_TAC [bir_riscv_extrasTheory.riscv_bmr_bpc_label_c_PC_equiv]) >>
+  `bir_eval_exp bir_riscv_mmode_post bs.bst_environ = SOME bir_val_true /\
+   bir_eval_exp ^bspec_chacha20_column_round_post_regs_tm bs.bst_environ = SOME bir_val_true`
+   by (Q.PAT_X_ASSUM `bir_eval_exp _ _ = SOME bir_val_true` MP_TAC >>
+       REWRITE_TAC [bspec_chacha20_column_round_post_def, bir_riscv_mmode_post_def] >>
+       CONV_TAC (LAND_CONV (REWR_CONV (GSYM bir_and_equiv))) >>
+       REWRITE_TAC []) >>
+  `riscv_mmode ms` by METIS_TAC [bir_riscv_mmode_post_thm] >>
   ASSUME_TAC (Q.SPEC `ls` chacha20_column_round_riscv_post_imp_bspec_post_regs_thm) >>
   fs [bir_post_bir_to_riscv_def] >>
   METIS_TAC [],
@@ -880,7 +913,10 @@ Theorem chacha20_diagonal_round_riscv_pre_imp_bspec_pre_thm:
   (bspec_chacha20_diagonal_round_pre pre_arr_0 pre_arr_1 pre_arr_2 pre_arr_3 pre_arr_4 pre_arr_5 pre_arr_6
     pre_arr_7 pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15)
 Proof 
- rw [bir_pre_riscv_to_bir_def,riscv_chacha20_diagonal_round_pre_def,bspec_chacha20_diagonal_round_pre_def] >-
+ REWRITE_TAC [bspec_chacha20_diagonal_round_pre_def] >>
+ MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+ CONJ_TAC >- SIMP_TAC std_ss [riscv_chacha20_diagonal_round_pre_def] >>
+ rw [bir_pre_riscv_to_bir_def,riscv_chacha20_diagonal_round_pre_def] >-
   (rw [bir_is_bool_exp_REWRS,bir_is_bool_exp_env_REWRS] >>
    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def]) >>
  FULL_SIMP_TAC (std_ss++holBACore_ss) [

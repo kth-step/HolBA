@@ -2,6 +2,8 @@ open HolKernel boolLib Parse bossLib;
 
 open bir_predLib;
 
+open bir_riscv_backlifterTheory;
+
 val _ = new_theory "storeload_spec";
 
 (* ------------------ *)
@@ -17,7 +19,10 @@ Definition storeload_end_addr_def:
 End
 
 val sprn = "x2";
+(* The M-mode contract that the lifted blocks assert, and the conditions
+ * on the memory accesses *)
 val bspec_storeload_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   mem_area_disj_reg_bir_tm ("x11", 8) ("x12", 1),
   mem_addrs_stack_disj_reg_bir_tm sprn "x11",
   mem_addrs_stack_disj_reg_bir_tm sprn "x12",

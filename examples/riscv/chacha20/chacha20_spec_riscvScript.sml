@@ -144,7 +144,8 @@ End
 Definition riscv_chacha20_line_pre_def:
  riscv_chacha20_line_pre (pre_a:word32) (pre_b:word32) (pre_d:word32)
   (m:riscv_state) : bool =
- (w2w (m.c_gpr m.procID 10w) = pre_a /\
+ (riscv_mmode m /\
+  w2w (m.c_gpr m.procID 10w) = pre_a /\
   w2w (m.c_gpr m.procID 22w) = pre_b /\
   w2w (m.c_gpr m.procID 26w) = pre_d)
 End
@@ -163,7 +164,8 @@ End
 Definition riscv_chacha20_quarter_round_pre_def:
  riscv_chacha20_quarter_round_pre (pre_a:word32) (pre_b:word32) (pre_c:word32) (pre_d:word32)
   (m:riscv_state) : bool =
-  (w2w (m.c_gpr m.procID 10w) = pre_a /\
+  (riscv_mmode m /\
+   w2w (m.c_gpr m.procID 10w) = pre_a /\
    w2w (m.c_gpr m.procID 22w) = pre_b /\
    w2w (m.c_gpr m.procID 28w) = pre_c /\
    w2w (m.c_gpr m.procID 26w) = pre_d)
@@ -188,7 +190,8 @@ Definition riscv_chacha20_column_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (w2w (m.c_gpr m.procID 10w) = pre_arr_0 /\
+ (riscv_mmode m /\
+  w2w (m.c_gpr m.procID 10w) = pre_arr_0 /\
   w2w (m.c_gpr m.procID 16w) = pre_arr_1 /\
   w2w (m.c_gpr m.procID 17w) = pre_arr_2 /\
   w2w (m.c_gpr m.procID 6w)  = pre_arr_3 /\
@@ -209,7 +212,8 @@ End
 (* The postcondition fixes the PC to the end label, so that the
    contract can also list the end of the double round as an ending
    label that is never reached first, as needed for sequential
-   composition with the diagonal round *)
+   composition with the diagonal round. It states the M-mode contract
+   again, which the precondition of the diagonal round assumes *)
 
 Definition riscv_chacha20_column_round_post_def:
  riscv_chacha20_column_round_post
@@ -225,6 +229,7 @@ Definition riscv_chacha20_column_round_post_def:
      pre_arr_8 pre_arr_9 pre_arr_10 pre_arr_11 pre_arr_12 pre_arr_13 pre_arr_14 pre_arr_15
   in
   m.c_PC m.procID = chacha20_column_round_end_addr /\
+  riscv_mmode m /\
   w2w (m.c_gpr m.procID 20w) = arr_0 /\
   w2w (m.c_gpr m.procID 19w) = arr_1 /\
   w2w (m.c_gpr m.procID 18w) = arr_2 /\
@@ -252,7 +257,8 @@ Definition riscv_chacha20_diagonal_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (w2w (m.c_gpr m.procID 20w) = pre_arr_0 /\
+ (riscv_mmode m /\
+  w2w (m.c_gpr m.procID 20w) = pre_arr_0 /\
   w2w (m.c_gpr m.procID 19w) = pre_arr_1 /\
   w2w (m.c_gpr m.procID 18w) = pre_arr_2 /\
   w2w (m.c_gpr m.procID 9w) = pre_arr_3 /\
@@ -310,7 +316,8 @@ Definition riscv_chacha20_double_round_pre_def:
   (pre_arr_8:word32) (pre_arr_9:word32) (pre_arr_10:word32) (pre_arr_11:word32) 
   (pre_arr_12:word32) (pre_arr_13:word32) (pre_arr_14:word32) (pre_arr_15:word32)
  (m:riscv_state) : bool =
- (w2w (m.c_gpr m.procID 10w) = pre_arr_0 /\
+ (riscv_mmode m /\
+  w2w (m.c_gpr m.procID 10w) = pre_arr_0 /\
   w2w (m.c_gpr m.procID 16w) = pre_arr_1 /\
   w2w (m.c_gpr m.procID 17w) = pre_arr_2 /\
   w2w (m.c_gpr m.procID 6w)  = pre_arr_3 /\

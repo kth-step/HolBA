@@ -56,7 +56,8 @@ End
 
 Definition riscv_incr_pre_def:
  riscv_incr_pre (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_incr_post_def:

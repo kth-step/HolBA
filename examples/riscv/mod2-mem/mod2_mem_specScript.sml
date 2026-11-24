@@ -59,7 +59,8 @@ End
 
 Definition riscv_mod2_mem_pre_def:
  riscv_mod2_mem_pre (pre_x10:word64) (pre_x10_deref:word64) (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
+  (riscv_mmode m /\
+   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
    m.c_gpr m.procID 10w = pre_x10 /\
    riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref)
 End
@@ -74,6 +75,7 @@ End
 (* --------------- *)
 
 val bir_mod2_mem_pre_tm = bslSyntax.bandl [
+ rhs (concl bir_riscv_mmode_pre_def),
  mem_addrs_aligned_prog_disj_bir_tm mem_params_standard "x10",
  ``BExp_BinPred
     BIExp_Equal
@@ -128,6 +130,9 @@ Theorem mod2_mem_riscv_pre_imp_bir_pre_thm:
   (riscv_mod2_mem_pre pre_x10 pre_x10_deref)
   (bir_mod2_mem_pre pre_x10 pre_x10_deref)
 Proof
+  REWRITE_TAC [bir_mod2_mem_pre_def] >>
+  MATCH_MP_TAC bir_pre_riscv_to_bir_mmode_conj >>
+  CONJ_TAC >- SIMP_TAC std_ss [riscv_mod2_mem_pre_def] >>
   rw [bir_pre_riscv_to_bir_def] >-
    (rw [bir_mod2_mem_pre_def] >>
     FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [bir_extra_expsTheory.BExp_Aligned_def] >>

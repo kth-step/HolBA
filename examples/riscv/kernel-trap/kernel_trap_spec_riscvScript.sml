@@ -103,7 +103,7 @@ Definition riscv_kernel_trap_entry_pre_def:
   (pre_x31:word64)
   (m:riscv_state)
  : bool =
- ((m.c_MCSR m.procID).mstatus.MPRV = 3w /\
+ (riscv_mmode m /\
   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_mscratch") /\
   (* the 8 bytes at mscratch do not overlap the code,
      from 256 bytes before trap_entry to the end of trap_return *)
@@ -240,7 +240,7 @@ Definition riscv_kernel_trap_return_pre_def:
  (pre_x31_mem:word64)
  (m:riscv_state)
  : bool =
- ((m.c_MCSR m.procID).mstatus.MPRV = 3w /\
+ (riscv_mmode m /\
   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
   (m.c_MCSR m.procID).mscratch = pre_mscratch /\
   m.c_gpr m.procID 10w = pre_x10 /\
@@ -301,7 +301,7 @@ Definition riscv_kernel_trap_return_post_def:
  (m:riscv_state)
  : bool =
  ((m.c_MCSR m.procID).mscratch = pre_x10 /\
-  (m.c_MCSR m.procID).mepc = 0xFFFFFFFFFFFFFFFCw && pre_mepc_mem /\
+  (m.c_MCSR m.procID).mepc = 0xFFFFFFFFFFFFFFFEw && pre_mepc_mem /\
   m.c_gpr m.procID 1w = pre_x1_mem /\
   m.c_gpr m.procID 2w = pre_x2_mem /\
   m.c_gpr m.procID 3w = pre_x3_mem /\

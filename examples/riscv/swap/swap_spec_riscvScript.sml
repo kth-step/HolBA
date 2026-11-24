@@ -57,7 +57,8 @@ Definition riscv_swap_pre_def:
  riscv_swap_pre (pre_x10:word64) (pre_x11:word64)
   (pre_x10_deref:word64) (pre_x11_deref:word64)
   (m:riscv_state) : bool =
-  (^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
+  (riscv_mmode m /\
+   ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x10") /\
    m.c_gpr m.procID 10w = pre_x10 /\
    riscv_mem_load_dword m.MEM8 pre_x10 = pre_x10_deref /\
    ^(mem_addrs_aligned_prog_disj_riscv_tm mem_params_standard "pre_x11") /\

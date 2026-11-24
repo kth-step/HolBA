@@ -197,7 +197,9 @@ End
 (* BSPEC contracts *)
 (* --------------- *)
 
+(* The M-mode contract that the lifted blocks assert, and the arguments *)
 val bspec_chacha20_double_round_pre_tm = bslSyntax.bandl [
+  rhs (concl bir_riscv_mmode_pre_def),
   ``BExp_BinPred
     BIExp_Equal
     (BExp_Cast BIExp_LowCast (BExp_Den (BVar "x10" (BType_Imm Bit64))) Bit32)

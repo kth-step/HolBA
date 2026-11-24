@@ -29,11 +29,150 @@ make linux
 
 See the [general README](https://github.com/kth-step/HolBA/blob/master/README.md) for information on how to build HolBA.
 
+## The RISC-V model
+
+### Provenance
+
+HolBA lifts RISC-V machine code with HOL4's [L3](https://acjf3.github.io/l3/index.html) model of
+RISC-V and its step library, in the version of the `riscv-l3-smode` branch of a fork of HOL4
+(https://github.com/didriklundberg/HOL), the branch of HOL4's pull request 2204, which moves the
+model to the RISC-V privileged architecture 1.13: RV64GC with M-mode, S-mode and U-mode, physical
+memory protection (PMP), and the Sv39, Sv48 and Sv57 virtual memory of S-mode and U-mode. The
+lifter lifts M-mode code, where address translation is off. HolBA keeps a copy of the generated
+model and of the step library in
+[`src/shared/l3-machine-code/riscv`](../../src/shared/l3-machine-code/riscv); its `VENDORING.md`
+gives the upstream commit and how to update the copy. The L3 source of the model
+(`src/riscv.spec`), which cites the RISC-V specification by section and page, is in the upstream
+directory `examples/l3-machine-code/riscv`. The hypotheses of the M-mode step theorems are those
+that the header of the step library's selftest (`step/riscv_step_selftest.sml` in the copy) lists
+as the M-mode contract.
+
+This model replaces an earlier, hand-edited one of the privileged architecture 1.7, in which
+`mstatus` held the current privilege. For lifted programs this means that the BIR variable `MPRV`
+is now `priv`, that `mstatus` has the layout of version 1.13, and that every lifted block asserts
+the M-mode contract below.
+
+### What lifts
+
+The lifter lifts code that runs in M-mode, one instruction at a time:
+
+- RV64I and the M extension;
+- the A extension, except `sc.w` and `sc.d` (the load reservation is not lifted);
+- the C extension (compressed instructions);
+- `fence`, `fence.i`, and the Zicsr instructions on the CSRs that are lifted (listed below);
+- writes of the CSRs that the model stores but the lifter does not lift (`medeleg`, `mideleg`,
+  `menvcfg`, and the S-mode CSRs `stvec`, `sscratch`, `sepc`, `scause`, `stval` and `senvcfg`),
+  as blocks without an assignment: these CSRs have no effect on M-mode code; a write of
+  `sstatus`, a view of `mstatus`, assigns `mstatus`;
+- `ecall`, `ebreak` and `c.ebreak`, a trap to M-mode: the block sets `priv` (to 3), `mstatus`,
+  `mepc`, `mcause` and `mtval`, and ends in a jump to the base address in `mtvec`;
+- `mret`: the block sets `priv` to the privilege in `mstatus.MPP` and updates `mstatus`, and it
+  ends in a jump to `mepc`;
+- `wfi` and `sfence.vma`, which do nothing in M-mode;
+- the loads, stores and moves of the D extension (`fld`, `fsd`, `c.fld`, `c.fsd`, `c.fldsp`,
+  `c.fsdsp`, `fmv.x.d`, `fmv.d.x`), and `fsw` and `fmv.x.w` of the F extension.
+
+The BIR variables of a lifted program are `x0` to `x31`, `f0` to `f31`, `MEM8`, `priv` (the
+privilege, 8 bits: 3 for M-mode, 0 for U-mode), the CSRs `mstatus`, `mtvec`, `mie`, `mip`,
+`mscratch`, `mepc`, `mcause`, `mtval`, `mhartid`, `mcounteren`, `mcountinhibit`, `scounteren`,
+`satp`, `pmpcfg0`, `pmpcfg2` and `pmpaddr0` to `pmpaddr15` (64 bits each; `mstatus`, `mie`, `mip`
+and `mcause` with the bit layout of the privileged specification), and `procID` (the hart number),
+`extMEIP` and `extSEIP` (the external interrupt lines), which no instruction changes and which a
+read of `mip` depends on.
+
+`satp` has no effect on lifted code, since address translation is off in M-mode, and no lifted
+block asserts anything about it. It is lifted so that a contract can state its value, for example
+that `satp` is Bare (its MODE, bits 63 to 60, is 0) when an M-mode kernel returns to U-mode. A
+write of `satp` assigns the value that the model keeps: the written value if its MODE is Bare,
+Sv39, Sv48 or Sv57, and the old value otherwise (a write of another MODE has no effect).
+
+These do not lift: `sc.w` and `sc.d`; reads of the counters (`mcycle`, `minstret`, `cycle` and so
+on); reads of the CSRs that the model stores but the lifter does not lift (`misa`, `medeleg`,
+`mideleg`, `menvcfg`, the S-mode CSRs `stvec`, `sscratch`, `sepc`, `scause`, `stval` and
+`senvcfg`, and the floating-point CSRs; `sstatus`, a view of `mstatus`, lifts), and reads and
+writes of the views `sie` and `sip` (which depend on `mideleg`); writes of `misa`; `flw` and
+`fmv.w.x`, which write a NaN-boxed value (the 32-bit value with 32 one-bits above it, a
+concatenation that the lifter does not translate); floating-point arithmetic and conversions;
+`sret` and illegal instructions; and code that runs in S-mode or U-mode. Reads of the constant
+CSRs, such as `mvendorid`, lift.
+
+`src/tools/lifter/selftest_riscv.sml` lifts a sample of each class (its log is
+`selftest_riscv.log`). The RISC-V section of `src/tools/lifter/README` has the details.
+
+### What a lifted block asserts
+
+The step theorems of the model describe a step in M-mode under a contract on the machine state,
+and the lifter turns each hypothesis of a step theorem into an assertion at the start of the BIR
+block of the instruction. Symbolic execution has to show these assertions:
+
+| Hypothesis | BIR assertion | In the blocks of |
+|---|---|---|
+| the hart is in M-mode | `priv = 3` | every instruction |
+| no PMP entry is locked | `pmpcfg0 & 0x8080808080808080 = 0`, and the same for `pmpcfg2` | every instruction |
+| interrupts are disabled | bit 3 of `mstatus` (`MIE`) is clear | every instruction |
+| data accesses use the privilege M | bit 17 of `mstatus` (`MPRV`) is clear | loads, stores, AMOs, `lr` |
+| the address is aligned | `BExp_Aligned` of the address | loads, stores, AMOs and `lr` of 2, 4 and 8 bytes |
+| every PMP entry is OFF or NAPOT | `((pmpcfg0 >> 1) ^ pmpcfg0) & 0x0808080808080808 = 0`, and the same for `pmpcfg2` | loads, stores, AMOs and `lr` of 8 bytes |
+| floating point is on | `mstatus & 0x6000 <> 0` (`FS` is not Off) | the F and D instructions |
+
+The assertion of the alignment is not new, and a store also asserts, as before, that it does
+not write the lifted code (`BExp_unchanged_mem_interval_distinct`). The other assertions are new:
+4 in every block, 5 in the block of a data access of at most 4 bytes and 7 in that of an 8-byte
+access, and one more for floating point.
+
+They are assertions, and not part of `riscv_state_is_OK` (the predicate of the machine record in
+`src/theory/tools/lifter/bir_lifting_machinesScript.sml`, which must hold before and after every
+lifted instruction), because lifted instructions change them: `mret` the privilege and
+`mstatus`, the CSR instructions `mstatus` and the PMP configuration, and `ecall` and `ebreak`
+`mstatus`. `riscv_state_is_OK` holds only what no lifted instruction changes: there is no
+exception and no pending control transfer, the hart is RV64 (`misa.MXL`, which is read-only) and
+the C extension is enabled (`misa.C`, which only a write of `misa` can change, and no write of
+`misa` lifts). With `misa.C`, compressed instructions and jumps to targets that are not 4-byte
+aligned need no assertion.
+
+A contract therefore assumes the M-mode contract: its RISC-V precondition states `riscv_mmode m`
+and its BIR precondition `bir_riscv_mmode_pre` (both in `bir_riscv_backlifterTheory`), as the
+steps below show.
+
+### Changes from the previous model
+
+Every instruction that lifted with the previous model still lifts, to the same block apart from
+the new assertions, except for these changes (`src/tools/lifter/selftest_riscv.log` shows the
+blocks):
+
+- `jalr`, and with it `ret`, `c.jr` and `c.jalr`, no longer asserts that bit 0 of its target is
+  clear: the instruction clears it, and with `misa.C` a target needs no more alignment than that;
+- the lifting theorem of `jal` and `c.j` no longer has the hypothesis that bit 0 of the pc is
+  clear, which the lifter now discharges;
+- `csrwi` with a zero immediate writes the CSR, which the previous model, against the
+  specification, did not: `csrwi mstatus, 0` assigns 0 to `mstatus`, and `csrwi mie, 0` to `mie`,
+  which is now lifted;
+- the mask `~x` of `csrrc` is `BExp_UnaryExp BIExp_Not x` instead of `-1 * x - 1`;
+- `csrr mip` no longer reads a stored register only: as in the specification, MSIP and MTIP come
+  from the CLINT in the memory and MEIP and SEIP from the external interrupt lines;
+- the BIR variable `MPRV`, which held the privilege, is `priv`.
+
+New are the lifting of `ecall`, `ebreak` and `c.ebreak`, of `amomin`, `amomax`, `amominu` and
+`amomaxu`, of `mret`, `wfi` and `sfence.vma`, of the floating-point loads, stores and moves, and of
+the CSR instructions on the CSRs that the previous model did not have.
+
+With the addition of S-mode and virtual memory to the model, two things changed for lifted
+code, which runs in M-mode and is not translated; every other block is as before:
+
+- `satp` is a BIR variable. A write of `satp` assigns it the value that the model keeps (see
+  [What lifts](#what-lifts)), where it lifted to a block without an assignment before, and
+  `csrr` of `satp`, which did not lift before, reads the variable.
+- The `SUM` bit of `mstatus` (bit 18) is writable. A write of `mstatus` or `sstatus` stores bit 18
+  of the written value, and a read of either shows it, so the masks in the blocks of the CSR
+  instructions on `mstatus` have bit 18 set: `0x7E79AA` (before `0x7A79AA`) for the bits that a
+  read shows, and `0x7E61AA` or `0x7E61A2` (before `0x7A61AA` and `0x7A61A2`) in the value that a
+  write stores.
+
 ## Binary verification workflow
 
 ### 0. RISC-V program
 
-- RISC-V programs must be given in `.da` format for RV64G instruction set, optionally with 16-bit integer instructions from the C extension
+- RISC-V programs must be given in `.da` format for the RV64GC instruction set (see [What lifts](#what-lifts) for the instructions that the lifter supports)
 - we found that C programs compiled with `-O1` before disassembly are easier to specify and verify (fewer instructions, close correspondence to source code)
 - to enable linking, include a (dummy) `main` function
 
@@ -94,6 +233,18 @@ val _ = lift_da_and_store "incr" "incr.da" da_riscv
 - manually written in HOL4
 - expressed using the [L3](https://acjf3.github.io/l3/index.html) model of RISC-V on pre- and post-states
 - specifications must use variables to connect pre and post states
+- the lifted code runs in M-mode, and every lifted block asserts the M-mode contract of the
+  model's step theorems (see the RISC-V section of `src/tools/lifter/README`), so a precondition
+  includes `riscv_mmode m` (`bir_riscv_backlifterTheory`): the privilege is M, `mstatus.MIE` and
+  `mstatus.MPRV` are clear, and no PMP entry is locked or anything but OFF or NAPOT
+- most postconditions of the examples do not state `riscv_mmode m` again, so such a contract
+  does not say that the M-mode contract still holds where it ends; a contract that is to be
+  followed by another one (composition) has to state it in its postconditions too, as the
+  contracts of `isqrt` and of the column round of `chacha20` do. Symbolic execution shows it for
+  code that writes none of `priv`, `mstatus`, `pmpcfg0` and `pmpcfg2` (the BIR variables of the
+  contract keep their initial values). In the BIR postcondition the M-mode contract is
+  `bir_riscv_mmode_post` (`bir_riscv_backlifterTheory`), which is written without
+  `BExp_word_bit`: the transfer of a BIR contract does not accept that in a postcondition
 
 Example:
 
@@ -108,7 +259,8 @@ End
 
 Definition riscv_incr_pre_def:
  riscv_incr_pre (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10)
 End
 
 Definition riscv_incr_post_def:
@@ -120,6 +272,9 @@ End
 
 - uses BIR boolean expressions that are closed except for occurrences of free HOL4 variables
 - may require conditions on memory accesses (alignment)
+- the precondition starts with `bir_riscv_mmode_pre`, the M-mode contract as a BIR expression on
+  the variables `priv`, `mstatus`, `pmpcfg0` and `pmpcfg2`, so that symbolic execution can show
+  that the assertions of the lifted blocks hold
 - used for symbolic execution
 - manually written in HOL4
 - the subset of BIR used is referred to as BSPEC
@@ -129,10 +284,12 @@ Example:
 ```sml
 Definition bspec_incr_pre_def:
  bspec_incr_pre (pre_x10:word64) : bir_exp_t =
-  BExp_BinPred
-    BIExp_Equal
-    (BExp_Den (BVar "x10" (BType_Imm Bit64)))
-    (BExp_Const (Imm64 pre_x10))
+  BExp_BinExp BIExp_And
+   ^(rhs (concl bir_riscv_mmode_pre_def))
+   (BExp_BinPred
+     BIExp_Equal
+     (BExp_Den (BVar "x10" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 pre_x10)))
 End
 
 Definition bspec_incr_post_def:
@@ -150,6 +307,14 @@ End
 - RISC-V precondition implies BIR precondition
 - BIR postcondition implies RISC-V postcondition
 - manually written in HOL4
+- `bir_pre_riscv_to_bir_mmode_conj` (`bir_riscv_backlifterTheory`) takes care of the M-mode
+  conjuncts: applied with `MATCH_MP_TAC`, it leaves the implication of the rest of the
+  preconditions; for a postcondition that states `riscv_mmode m`,
+  `bir_post_bir_to_riscv_mmode_conj` and `bir_riscv_mmode_post_thm` do the same
+- the examples `swap`, `isqrt` and `kernel-trap` do not write steps 3 and 4 by hand: the
+  translator `riscv_bir_condLib` (`src/tools/backlifter`) makes the BIR condition and the
+  theorem that connects it from the RISC-V condition, and translates `riscv_mmode m` in a pre-
+  or a postcondition to `bir_riscv_mmode_post`
 
 Example:
 
@@ -171,8 +336,10 @@ QED
 
 - built on a [general theory of symbolic execution](https://arxiv.org/abs/2304.08848v2), instantiated for BIR
 - **automatic** inside HOL4 if parameters have the right shape
-- a summarizing collection of performance evaluations for the benchmark programs can be found in [experiment_data.log](experiment_data.log)
-- at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g., `aes/.hollogs/aes_symb_execTheory`
+- a summarizing collection of performance evaluations for the benchmark programs can be found in [experiment_data.log](experiment_data.log);
+  these were measured with an earlier version of HolBA and of the RISC-V model, before the lifted blocks asserted the M-mode contract,
+  whose assertions symbolic execution now also has to show, which makes it slower
+- at the end of an execution, a set of profiling measurements are printed into the respective HOL4 build log, e.g., `aes/.hol/logs/aes_symb_execTheory`
 
 Example:
 

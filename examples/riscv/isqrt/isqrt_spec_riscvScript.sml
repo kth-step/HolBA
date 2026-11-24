@@ -97,16 +97,21 @@ End
 
 Definition riscv_isqrt_pre_1_def:
  riscv_isqrt_pre_1 (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10)
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10)
 End
 
 (* The postconditions of contracts 1 and 2 fix the PC to the end
    label, so that the contracts can also list the loop exit as an
-   ending label that is never reached first, as needed for composition *)
+   ending label that is never reached first, as needed for composition.
+   The postconditions of the three contracts state the M-mode contract
+   again (riscv_mmode, which the code does not change), since the
+   precondition of the contract that follows assumes it *)
 
 Definition riscv_isqrt_post_1_def:
  riscv_isqrt_post_1 (pre_x10:word64) (m:riscv_state) : bool =
   (m.c_PC m.procID = isqrt_end_addr_1 /\
+   riscv_mmode m /\
    m.c_gpr m.procID 13w = pre_x10 /\
    m.c_gpr m.procID 15w = 0w)
 End
@@ -115,13 +120,15 @@ End
 
 Definition riscv_isqrt_pre_2_def:
  riscv_isqrt_pre_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 13w = pre_x13 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 15w = pre_x15)
 End
 
 Definition riscv_isqrt_post_2_def:
  riscv_isqrt_post_2 (pre_x13:word64) (pre_x15:word64) (m:riscv_state) : bool =
   (m.c_PC m.procID = isqrt_end_addr_2 /\
+   riscv_mmode m /\
    m.c_gpr m.procID 10w = pre_x15 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = (pre_x15 + 1w) * (pre_x15 + 1w) /\
@@ -136,7 +143,8 @@ End
 Definition riscv_isqrt_pre_3_def:
  riscv_isqrt_pre_3 (pre_x10:word64) (pre_x13:word64)
   (pre_x14:word64) (pre_x15:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
    m.c_gpr m.procID 15w = pre_x15)
@@ -145,7 +153,8 @@ End
 Definition riscv_isqrt_post_3_loop_def:
  riscv_isqrt_post_3_loop (pre_x10:word64) (pre_x13:word64)
   (pre_x14:word64) (pre_x15:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
    m.c_gpr m.procID 15w = pre_x15 /\
@@ -155,7 +164,8 @@ End
 Definition riscv_isqrt_post_3_ret_def:
  riscv_isqrt_post_3_ret (pre_x10:word64) (pre_x13:word64)
   (pre_x14:word64) (pre_x15:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10 /\
    m.c_gpr m.procID 13w = pre_x13 /\
    m.c_gpr m.procID 14w = pre_x14 /\
    m.c_gpr m.procID 15w = pre_x15 /\
@@ -188,7 +198,8 @@ End
 
 Definition riscv_isqrt_pre_def:
  riscv_isqrt_pre (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 10w = pre_x10 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 10w = pre_x10 /\
    pre_x10 <+ 0xFFFFFFFE00000001w)
 End
 
@@ -231,7 +242,8 @@ QED
 
 Definition riscv_isqrt_inv_def:
  riscv_isqrt_inv (pre_x10:word64) (m:riscv_state) : bool =
-  (m.c_gpr m.procID 13w = pre_x10 /\
+  (riscv_mmode m /\
+   m.c_gpr m.procID 13w = pre_x10 /\
    pre_x10 <+ 0xFFFFFFFE00000001w /\
    m.c_gpr m.procID 15w <+ 0xFFFFFFFFw /\
    m.c_gpr m.procID 15w * m.c_gpr m.procID 15w <=+ pre_x10)
