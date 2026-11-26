@@ -257,16 +257,18 @@ s = Solver()
 # q = "(declare-const x (_ BitVec 8))\n(assert (= x #xFF))\n"
 # preluded_query(q)
 def load_prelude(filename):
+    global prelude
     with open(filename, "r") as f:
-        pre = f.read()
-    s.from_string(pre)
-    s.push()
+        prelude = f.read()
 
+# each query is solved on its own: the solver is reset and given the prelude
+# again, so that Z3 does not switch to its incremental solver and the
+# declarations of a query do not reach the next one
 def preluded_query(q):
+    s.reset()
+    s.from_string(prelude)
     s.from_string(q)
     (r, model) = send_query(s)
-    s.pop()
-    s.push()
     if r == unsat:
         print("unsat")
     elif r == unknown:

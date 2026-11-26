@@ -27,10 +27,65 @@ fun openz3wrap z3wrap prelude_path =
 
 fun endmeexit p = Unix.fromStatus (Unix.reap p);
 
+(* also stops a process that is still working on a query *)
+fun stop_proc p =
+  let
+    val _ = Unix.kill (p, Posix.Signal.kill) handle _ => ();
+  in
+    endmeexit p
+  end;
+
 fun get_streams p = Unix.streamsOf p;
+
+(* How the z3 process is driven, set by z3_protocol. Z3 has a
+   non-incremental solver, which it calls solver1 and uses for a query that
+   is solved on its own, and an incremental solver, solver2, which it uses
+   after the first (push).
+   - Z3NonIncremental: each query is sent together with the options and the
+     prelude, and is followed by (reset), so that z3 solves it on its own,
+     with solver1. Z3 parses the prelude again for every query, which takes
+     a few milliseconds.
+   - Z3Incremental: the options and the prelude are sent once, when the
+     process starts, followed by (push), and each query is followed by (pop)
+     and (push). Z3 solves every query with solver2, which can be much
+     slower than solver1 on a large query; it uses solver1 only when solver2
+     gives unknown for a query without quantifiers.
+   - Z3IncrementalFallback, the default: as Z3Incremental, but the process
+     starts with z3_fallback_options, so that z3 gives solver2 10
+     milliseconds and solves the query with solver1 when solver2 has not
+     answered sat or unsat by then. A query that solver2 answers within 10
+     milliseconds, as most small queries are, is answered without parsing the
+     prelude again, and any other query is solved by solver1.
+   With every protocol, a timeout of querysmt_raw bounds the whole query,
+   both solvers included, and z3 gives unknown when it is reached. A
+   process that was started with another protocol is restarted, and every
+   new process, also the one that replaces a process stopped after a
+   failed query or a timeout, is prepared for the protocol. The wrapper,
+   which gives the models of querysmt_getmodel, solves each query on its
+   own with every protocol. *)
+datatype z3_protocol =
+    Z3NonIncremental
+  | Z3Incremental
+  | Z3IncrementalFallback;
+val z3_protocol = ref Z3IncrementalFallback;
+
+(* the options of Z3IncrementalFallback: solver2_timeout is the time in
+   milliseconds that z3 gives solver2 before it uses solver1, and with
+   solver2_unknown 2, z3 also uses solver1 when solver2 gives unknown for a
+   query with quantifiers *)
+val z3_fallback_options =
+  "(set-option :combined_solver.solver2_timeout 10)\n" ^
+  "(set-option :combined_solver.solver2_unknown 2)\n";
+
+(* option commands for z3, such as the model compaction setting of
+   querysmt_prepare_getmodel; they are sent before the prelude, with every
+   query with Z3NonIncremental, and when the process starts with the other
+   protocols *)
+val z3proc_options = ref ([] : string list);
 
 val z3proc_bin_o = ref (NONE : string option);
 val z3proc_o = ref (NONE : ((TextIO.instream, TextIO.outstream) Unix.proc) option);
+val z3proc_protocol = ref Z3NonIncremental;
 (* The prelude is located and read on first use, not at load time: under
    holbuild, $(HOLBADIR) is not registered in holpathdb, so fall back to the
    HOLBADIR environment variable. *)
@@ -50,45 +105,41 @@ fun prelude_z3 () =
      SOME x => x
    | NONE => let val x = read_from_file (prelude_z3_path ()) in (prelude_z3_o := SOME x; x) end;
 fun prelude_z3_n () = prelude_z3 () ^ "\n";
-val use_stack = true;
 val debug_print = ref false;
 fun kill_z3proc z3p =
   let
     val _ = z3proc_o := NONE;
     val _ = z3proc_bin_o := NONE;
-    val _ = endmeexit z3p;
+    val _ = stop_proc z3p;
   in
     ()
   end;
 fun get_z3proc z3bin =
-  let
-   val z3proc_ = !z3proc_o;
-   fun check_and_restart z3p =
-     if z3bin = valOf (!z3proc_bin_o) then z3p else
-       let
-         val _ = kill_z3proc z3p;
-       in
-         get_z3proc z3bin
-       end;
-   val p = if isSome z3proc_ then check_and_restart (valOf z3proc_) else
+  case !z3proc_o of
+      SOME z3p =>
+        if !z3proc_bin_o = SOME z3bin andalso !z3proc_protocol = !z3_protocol then z3p else
+          (kill_z3proc z3p; get_z3proc z3bin)
+    | NONE =>
       let
         val _ = if not (!debug_print) then () else
                 print ("starting: " ^ z3bin ^ "\n");
         val p = openz3 z3bin;
-    val _ = z3proc_bin_o := SOME z3bin;
-    val _ = if not use_stack then () else
-    let
-            val (_,s_out) = get_streams p;
-            (* prepare prelude and push *)
-            val () = TextIO.output (s_out, prelude_z3_n ());
-            val () = TextIO.output (s_out, "(push)\n");
-    in
-      ()
-    end;
-        in (z3proc_o := SOME p; p) end;
-  in
-    p
-  end;
+        val _ = z3proc_o := SOME p;
+        val _ = z3proc_bin_o := SOME z3bin;
+        val protocol = !z3_protocol;
+        val _ = z3proc_protocol := protocol;
+        val (_,s_out) = get_streams p;
+        (* prepare the options, the prelude and push *)
+        val _ = case protocol of
+                    Z3NonIncremental => ()
+                  | Z3Incremental =>
+                      TextIO.output (s_out, String.concat (!z3proc_options) ^ prelude_z3_n () ^ "(push)\n")
+                  | Z3IncrementalFallback =>
+                      TextIO.output (s_out, z3_fallback_options ^ String.concat (!z3proc_options) ^ prelude_z3_n () ^ "(push)\n");
+        val _ = TextIO.flushOut s_out;
+      in
+        p
+      end;
 
 fun reset_z3proc () =
   case !z3proc_o of
@@ -114,6 +165,13 @@ fun get_z3wrapproc () =
     p
   end;
 
+fun reset_z3wrapproc () =
+  case !z3wrapproc_o of
+      SOME p =>
+        ((z3wrapproc_o := NONE; stop_proc p; ())
+        handle _ => ())
+    | NONE => ();
+
 (* =========================================================== *)
 
 fun inputLines_until m ins acc =
@@ -132,19 +190,22 @@ fun inputLines_until m ins acc =
   end
 
 exception Z3EXN of exn;
+(* a query that fails, for example when it is interrupted, also stops the
+   process, so that the next query starts with a new one *)
 fun sendreceive_query z3bin q =
  let
    val _ = if not (!debug_print) then () else
            (print q; print "\n");
    val p = get_z3proc z3bin;
    val (s_in,s_out) = get_streams p;
-   val _ = if not use_stack then
-            TextIO.output (s_out, prelude_z3_n ())
-           else ();
+   val incremental = !z3proc_protocol <> Z3NonIncremental;
+   val _ = if incremental then () else
+           TextIO.output (s_out, String.concat (!z3proc_options) ^ prelude_z3_n ());
 
    val timer = holba_miscLib.timer_start 0;
    val z3_done_marker = "holba_z3 qdm";
    val () = TextIO.output (s_out, q ^ "(echo \"" ^ z3_done_marker ^ "\")\n");
+   val () = TextIO.flushOut s_out;
    val out_lines = inputLines_until (z3_done_marker ^ "\n") s_in [];
    val _ = if !debug_print then holba_miscLib.timer_stop
      (fn delta_s => print ("  query took " ^ delta_s ^ "\n")) timer else ();
@@ -152,15 +213,12 @@ fun sendreceive_query z3bin q =
    val _ = if not (!debug_print) then () else
            (map print out_lines; print "\n\n");
    (* https://microsoft.github.io/z3guide/docs/logic/basiccommands/ *)
-   val _ = if not use_stack then
-            TextIO.output (s_out, "(reset)\n")
-           else
-            (TextIO.output (s_out, "(pop)\n");
-             TextIO.output (s_out, "(push)\n"));
+   val () = TextIO.output (s_out, if incremental then "(pop)\n(push)\n" else "(reset)\n");
+   val () = TextIO.flushOut s_out;
  in
    out_lines
  end
- handle e => raise Z3EXN e;
+ handle e => (reset_z3proc (); raise Z3EXN e);
 
 fun sendreceive_wrap_query q =
  let
@@ -174,6 +232,7 @@ fun sendreceive_wrap_query q =
    val timer = holba_miscLib.timer_start 0;
    val z3wrap_done_marker = "z3_wrapper query done";
    val () = TextIO.output (s_out, q_fixed ^ "\n");
+   val () = TextIO.flushOut s_out;
    val out_lines = inputLines_until (z3wrap_done_marker ^ "\n") s_in [];
    val _ = if !debug_print then holba_miscLib.timer_stop
      (fn delta_s => print ("  wrapped query took " ^ delta_s ^ "\n")) timer else ();
@@ -182,7 +241,8 @@ fun sendreceive_wrap_query q =
            (map print out_lines; print "\n\n");
  in
    out_lines
- end;
+ end
+ handle e => (reset_z3wrapproc (); raise e);
 (*
   val q = "(declare-const x (_ BitVec 8))\n(assert (= x #xFF))\n";
   val q = "(declare-const x (_ BitVec 8))\n(assert (= x #xAA))\n(assert (= x #xFF))\n";
@@ -259,8 +319,18 @@ fun sendreceive_wrap_query q =
       out_lines
     end;
 
-  fun querysmt_prepare_getmodel z3bin_o =
-    querysmt_raw z3bin_o NONE "(set-option :model.compact false)\n";
+  local
+    val model_compact_off = "(set-option :model.compact false)\n";
+  in
+    (* the option also holds for the queries that follow *)
+    fun querysmt_prepare_getmodel z3bin_o =
+      let
+        val _ = if List.exists (fn x => x = model_compact_off) (!z3proc_options) then () else
+                z3proc_options := !z3proc_options @ [model_compact_off];
+      in
+        querysmt_raw z3bin_o NONE model_compact_off
+      end;
+  end;
 
 (*
 querysmt_raw NONE NONE "(simplify ((_ extract 3 2) #xFC))";
